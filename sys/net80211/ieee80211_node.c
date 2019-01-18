@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.158 2018/11/25 12:14:01 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.159 2019/01/18 20:24:59 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -356,10 +356,6 @@ ieee80211_add_ess(struct ieee80211com *ic, struct ieee80211_join *join)
 	if (ic->ic_opmode != IEEE80211_M_STA)
 		return (0);
 
-	/* Don't save an empty nwid */
-	if (join->i_len == 0)
-		return (0);
-
 	TAILQ_FOREACH(ess, &ic->ic_ess, ess_next) {
 		if (ess->esslen == join->i_len &&
 		    memcmp(ess->essid, join->i_nwid, ess->esslen) == 0)
@@ -455,6 +451,10 @@ ieee80211_ess_calculate_score(struct ieee80211com *ic,
 	else
 		min_5ghz_rssi = (uint8_t)IEEE80211_RSSI_THRES_5GHZ;
 
+	/* not using join any */
+	if (ieee80211_get_ess(ic, ni->ni_essid, ni->ni_esslen))
+		score += 32;
+
 	/* Calculate the crypto score */
 	if (ni->ni_rsnprotos & IEEE80211_PROTO_RSN)
 		score += 16;
@@ -513,9 +513,9 @@ ieee80211_ess_is_better(struct ieee80211com *ic,
 int
 ieee80211_match_ess(struct ieee80211_ess *ess, struct ieee80211_node *ni)
 {
-	if (ess->esslen != ni->ni_esslen)
-		return 0;
-	if (memcmp(ess->essid, ni->ni_essid, ess->esslen) != 0)
+	if (ess->esslen != 0 &&
+	    (ess->esslen != ni->ni_esslen ||
+	    memcmp(ess->essid, ni->ni_essid, ess->esslen) != 0))
 		return 0;
 
 	if (ess->flags & (IEEE80211_F_PSK | IEEE80211_F_RSNON)) {
@@ -533,6 +533,10 @@ ieee80211_match_ess(struct ieee80211_ess *ess, struct ieee80211_node *ni)
 		if ((ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) != 0)
 			return 0;
 	}
+
+	if (ess->esslen == 0 &&
+	    (ni->ni_capinfo & IEEE80211_CAPINFO_PRIVACY) != 0)
+		return 0;
 
 	return 1;
 }
@@ -599,6 +603,8 @@ ieee80211_switch_ess(struct ieee80211com *ic)
 			printf("%s: switching to network ", ifp->if_xname);
 			ieee80211_print_essid(selni->ni_essid,
 			    selni->ni_esslen);
+			if (seless->esslen == 0)
+				printf(" via join any");
 			printf("\n");
 
 		}
@@ -997,6 +1003,9 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 	rate = ieee80211_fix_rate(ic, ni, IEEE80211_F_DONEGO);
 	if (rate & IEEE80211_RATE_BASIC)
 		fail |= 0x08;
+	if (ISSET(ic->ic_flags, IEEE80211_F_AUTO_JOIN) &&
+	    ic->ic_des_esslen == 0)
+		fail |= 0x10;
 	if (ic->ic_des_esslen != 0 &&
 	    (ni->ni_esslen != ic->ic_des_esslen ||
 	     memcmp(ni->ni_essid, ic->ic_des_essid, ic->ic_des_esslen) != 0))

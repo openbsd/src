@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.69 2018/11/25 12:14:01 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.70 2019/01/18 20:24:59 phessler Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -510,7 +510,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		if (join.i_flags & IEEE80211_JOIN_DEL)
-			ieee80211_del_ess(ic, join.i_nwid, join.i_len ? 0 : 1);
+			ieee80211_del_ess(ic, join.i_nwid,
+			    join.i_flags & IEEE80211_JOIN_DEL_ALL ? 1 : 0);
 
 		/* save nwid for auto-join */
 		if (!(join.i_flags & IEEE80211_JOIN_DEL)) {
@@ -556,6 +557,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				join.i_flags |= IEEE80211_JOIN_8021X;
 			if (ess->flags & IEEE80211_F_WEPON)
 				join.i_flags |= IEEE80211_JOIN_NWKEY;
+			if (ess->flags & IEEE80211_JOIN_ANY)
+				join.i_flags |= IEEE80211_JOIN_ANY;
 			ieee80211_ess_getwpaparms(ess, &join.i_wpaparams);
 			error = copyout(&join, &ja->ja_node[ja->ja_nodes],
 			    sizeof(ja->ja_node[0]));
