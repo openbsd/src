@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.178 2019/01/18 01:46:11 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.179 2019/01/18 02:12:36 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -188,6 +188,7 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 {
 	struct client_lease	*lease, *lp, *nlp;
 	FILE			*cfile;
+	int			 i;
 
 	TAILQ_INIT(tq);
 
@@ -196,36 +197,34 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 
 	new_parse(path_lease_db);
 
-	for (;;) {
-		if (parse_lease(cfile, name, &lease) == 1) {
-			/*
-			 * The new lease will supersede a lease with the same
-			 * ssid AND the same Client Identifier AND the same
-			 * IP address.
-			 */
-			TAILQ_FOREACH_SAFE(lp, tq, next, nlp) {
-				if (lp->ssid_len != lease->ssid_len)
-					continue;
-				if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
-					continue;
-				if ((lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len != 0) &&
-				    ((lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len !=
-				    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].len) ||
-				    memcmp(lp->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
-				    lease->options[DHO_DHCP_CLIENT_IDENTIFIER].data,
-				    lp->options[DHO_DHCP_CLIENT_IDENTIFIER].len) != 0))
-					continue;
-				if (lp->address.s_addr != lease->address.s_addr)
-					continue;
+	i = DHO_DHCP_CLIENT_IDENTIFIER;
+	while (feof(cfile) == 0) {
+		if (parse_lease(cfile, name, &lease) == 0)
+			continue;
+		log_warnx("%s: got a lease", log_procname);
+		/*
+		 * The new lease will supersede a lease with the same
+		 * ssid AND the same Client Identifier AND the same
+		 * IP address.
+		 */
+		TAILQ_FOREACH_SAFE(lp, tq, next, nlp) {
+			if (lp->ssid_len != lease->ssid_len)
+				continue;
+			if (memcmp(lp->ssid, lease->ssid, lp->ssid_len) != 0)
+				continue;
+			if ((lease->options[i].len != 0) &&
+			    ((lp->options[i].len != lease->options[i].len) ||
+			    memcmp(lp->options[i].data, lease->options[i].data,
+			    lp->options[i].len) != 0))
+				continue;
+			if (lp->address.s_addr != lease->address.s_addr)
+				continue;
 
-				TAILQ_REMOVE(tq, lp, next);
-				free_client_lease(lp);
-			}
-
-			TAILQ_INSERT_TAIL(tq, lease, next);
+			TAILQ_REMOVE(tq, lp, next);
+			free_client_lease(lp);
 		}
-		if (feof(cfile) != 0)
-			break;
+
+		TAILQ_INSERT_TAIL(tq, lease, next);
 	}
 
 	fclose(cfile);
