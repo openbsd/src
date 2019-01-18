@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.38 2018/05/28 18:05:42 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.39 2019/01/18 09:36:47 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -84,6 +84,8 @@ struct timezone {
 /* Operations on timevals. */
 #define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0
 #define	timerisset(tvp)		((tvp)->tv_sec || (tvp)->tv_usec)
+#define	timerisvalid(tvp)						\
+	((tvp)->tv_usec >= 0 && (tvp)->tv_usec < 1000000)
 #define	timercmp(tvp, uvp, cmp)						\
 	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
 	    ((tvp)->tv_usec cmp (uvp)->tv_usec) :			\
@@ -110,6 +112,8 @@ struct timezone {
 /* Operations on timespecs. */
 #define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
 #define	timespecisset(tsp)		((tsp)->tv_sec || (tsp)->tv_nsec)
+#define	timespecisvalid(tsp)						\
+	((tsp)->tv_nsec >= 0 && (tsp)->tv_nsec < 1000000000L)
 #define	timespeccmp(tsp, usp, cmp)					\
 	(((tsp)->tv_sec == (usp)->tv_sec) ?				\
 	    ((tsp)->tv_nsec cmp (usp)->tv_nsec) :			\

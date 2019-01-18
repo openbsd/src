@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.29 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: getitimer.2,v 1.30 2019/01/18 09:36:47 cheloha Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: January 18 2019 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Nm setitimer ,
 .Nm timerclear ,
 .Nm timerisset ,
+.Nm timerisvalid ,
 .Nm timercmp ,
 .Nm timersub ,
 .Nm timeradd
@@ -56,6 +57,8 @@
 .Fn timerclear "struct timeval *"
 .Ft int
 .Fn timerisset "struct timeval *"
+.Ft int
+.Fn timerisvalid "struct timeval *"
 .Ft int
 .Fn timercmp "struct timeval *a" "struct timeval *b" CMP
 .Ft void
@@ -155,6 +158,11 @@ to zero.
 tests if the time value in
 .Fa a
 is non-zero.
+.Pp
+.Fn timerisvalid "a"
+tests if the microsecond value in
+.Fa a
+is greater than or equal to zero and less than 1 million.
 .Pp
 .Fn timercmp a b CMP
 compares two time values in the form
