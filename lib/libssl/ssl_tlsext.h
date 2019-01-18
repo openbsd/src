@@ -1,7 +1,8 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.16 2019/01/18 12:09:52 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.17 2019/01/18 12:18:10 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
+ * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
