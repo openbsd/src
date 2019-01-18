@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.176 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.177 2019/01/18 12:09:52 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1627,6 +1627,11 @@ ssl3_clear(SSL *s)
 
 	s->internal->packet_length = 0;
 	s->version = TLS1_VERSION;
+
+	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
+	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
+	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
+	freezero(S3I(s)->hs_tls13.x25519_peer_public, X25519_KEY_LENGTH);
 }
 
 static long

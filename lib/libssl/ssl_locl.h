@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.225 2018/11/21 15:13:29 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.226 2019/01/18 12:09:52 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,6 +162,7 @@
 
 #include "bytestring.h"
 #include "ssl_sigalgs.h"
+#include "tls13_internal.h"
 
 __BEGIN_HIDDEN_DECLS
 
@@ -429,6 +430,22 @@ typedef struct ssl_handshake_st {
 	int key_block_len;
 	unsigned char *key_block;
 } SSL_HANDSHAKE;
+
+typedef struct ssl_handshake_tls13_st {
+	uint16_t min_version;
+	uint16_t max_version;
+	uint16_t version;
+
+	/* Version proposed by peer server. */
+	uint16_t server_version;
+
+	/* X25519 key share. */
+	uint8_t *x25519_public;
+	uint8_t *x25519_private;
+	uint8_t *x25519_peer_public;
+
+	struct tls13_secrets *secrets;
+} SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
@@ -803,6 +820,7 @@ typedef struct ssl3_state_internal_st {
 	int in_read_app_data;
 
 	SSL_HANDSHAKE hs;
+	SSL_HANDSHAKE_TLS13 hs_tls13;
 
 	struct	{
 		int new_mac_secret_size;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.28 2019/01/18 03:39:27 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.29 2019/01/18 12:09:52 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -16,6 +16,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <openssl/curve25519.h>
 #include <openssl/ocsp.h>
 
 #include "ssl_locl.h"
@@ -1193,6 +1194,196 @@ tlsext_srtp_client_parse(SSL *s, CBS *cbs, int *alert)
 
 #endif /* OPENSSL_NO_SRTP */
 
+/*
+ * TLSv1.3 Key Share - RFC 8446 section 4.2.8.
+ */
+int
+tlsext_keyshare_client_needs(SSL *s)
+{
+	/* XXX once this gets initialized when we get tls13_client.c */
+	if (S3I(s)->hs_tls13.max_version == 0)
+		return 0;
+	return (!SSL_IS_DTLS(s) && S3I(s)->hs_tls13.max_version >=
+	    TLS1_3_VERSION);
+}
+
+int
+tlsext_keyshare_client_build(SSL *s, CBB *cbb)
+{
+	uint8_t *public_key = NULL, *private_key = NULL;
+	CBB client_shares, key_exchange;
+
+	/* Generate and provide key shares. */
+	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
+		return 0;
+
+	/* XXX - other groups. */
+
+	/* Generate X25519 key pair. */
+	if ((public_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	if ((private_key = malloc(X25519_KEY_LENGTH)) == NULL)
+		goto err;
+	X25519_keypair(public_key, private_key);
+
+	/* Add the group and serialize the public key. */
+	if (!CBB_add_u16(&client_shares, tls1_ec_nid2curve_id(NID_X25519)))
+		goto err;
+	if (!CBB_add_u16_length_prefixed(&client_shares, &key_exchange))
+		goto err;
+	if (!CBB_add_bytes(&key_exchange, public_key, X25519_KEY_LENGTH))
+		goto err;
+
+	if (!CBB_flush(cbb))
+		goto err;
+
+	S3I(s)->hs_tls13.x25519_public = public_key;
+	S3I(s)->hs_tls13.x25519_private = private_key;
+
+	return 1;
+
+err:
+	freezero(public_key, X25519_KEY_LENGTH);
+	freezero(private_key, X25519_KEY_LENGTH);
+
+	return 0;
+}
+
+int
+tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
+{
+	/* XXX we accept this but currently ignore it */
+	if (!CBS_skip(cbs, CBS_len(cbs))) {
+		*alert = TLS1_AD_INTERNAL_ERROR;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+tlsext_keyshare_server_needs(SSL *s)
+{
+	return (!SSL_IS_DTLS(s) && s->version >= TLS1_3_VERSION);
+}
+
+int
+tlsext_keyshare_server_build(SSL *s, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tlsext_keyshare_client_parse(SSL *s, CBS *cbs, int *alert)
+{
+	CBS key_exchange;
+	uint16_t group;
+	size_t out_len;
+
+	/* Unpack server share. */
+	if (!CBS_get_u16(cbs, &group))
+		goto err;
+
+	/* Handle other groups and verify that they're valid. */
+	if (group != tls1_ec_nid2curve_id(NID_X25519))
+		goto err;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &key_exchange))
+		goto err;
+	if (CBS_len(&key_exchange) != X25519_KEY_LENGTH)
+		goto err;
+	if (!CBS_stow(&key_exchange, &S3I(s)->hs_tls13.x25519_peer_public,
+		&out_len))
+		goto err;
+
+	return 1;
+
+ err:
+	*alert = SSL_AD_DECODE_ERROR;
+	return 0;
+}
+
+/*
+ * Supported Versions - RFC 8446 section 4.2.1.
+ */
+int
+tlsext_versions_client_needs(SSL *s)
+{
+	/* XXX once this gets initialized when we get tls13_client.c */
+	if (S3I(s)->hs_tls13.max_version == 0)
+		return 0;
+	return (!SSL_IS_DTLS(s) && S3I(s)->hs_tls13.max_version >=
+	    TLS1_3_VERSION);
+}
+
+int
+tlsext_versions_client_build(SSL *s, CBB *cbb)
+{
+	uint16_t version;
+	CBB versions;
+	uint16_t max, min;
+
+	max = S3I(s)->hs_tls13.max_version;
+	min = S3I(s)->hs_tls13.min_version;
+
+	if (min < TLS1_VERSION)
+		return 0;
+
+	if (!CBB_add_u8_length_prefixed(cbb, &versions))
+		return 0;
+
+	/* XXX - fix, but contiguous for now... */
+	for (version = max; version >= min; version--) {
+		if (!CBB_add_u16(&versions, version))
+			return 0;
+	}
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_versions_server_parse(SSL *s, CBS *cbs, int *alert)
+{
+	/* XXX we accept this but currently ignore it */
+	if (!CBS_skip(cbs, CBS_len(cbs))) {
+		*alert = TLS1_AD_INTERNAL_ERROR;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+tlsext_versions_server_needs(SSL *s)
+{
+	return (!SSL_IS_DTLS(s) && s->version >= TLS1_3_VERSION);
+}
+
+int
+tlsext_versions_server_build(SSL *s, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tlsext_versions_client_parse(SSL *s, CBS *cbs, int *alert)
+{
+	uint16_t selected_version;
+
+	if (!CBS_get_u16(cbs, &selected_version)) {
+		*alert = SSL_AD_DECODE_ERROR;
+		return 0;
+	}
+
+	/* XXX test between min and max once initialization code goes in */
+	S3I(s)->hs_tls13.server_version = selected_version;
+
+	return 1;
+}
+
 struct tls_extension_funcs {
 	int (*needs)(SSL *s);
 	int (*build)(SSL *s, CBB *cbb);
@@ -1207,6 +1398,36 @@ struct tls_extension {
 };
 
 static struct tls_extension tls_extensions[] = {
+	{
+		.type = TLSEXT_TYPE_supported_versions,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH |
+		    SSL_TLSEXT_MSG_HRR,
+		.client = {
+			.needs = tlsext_versions_client_needs,
+			.build = tlsext_versions_client_build,
+			.parse = tlsext_versions_server_parse,
+		},
+		.server = {
+			.needs = tlsext_versions_server_needs,
+			.build = tlsext_versions_server_build,
+			.parse = tlsext_versions_client_parse,
+		},
+	},
+	{
+		.type = TLSEXT_TYPE_key_share,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH |
+		    SSL_TLSEXT_MSG_HRR,
+		.client = {
+			.needs = tlsext_keyshare_client_needs,
+			.build = tlsext_keyshare_client_build,
+			.parse = tlsext_keyshare_server_parse,
+		},
+		.server = {
+			.needs = tlsext_keyshare_server_needs,
+			.build = tlsext_keyshare_server_build,
+			.parse = tlsext_keyshare_client_parse,
+		},
+	},
 	{
 		.type = TLSEXT_TYPE_server_name,
 		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
