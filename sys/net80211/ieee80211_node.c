@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.159 2019/01/18 20:24:59 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.160 2019/01/18 20:28:40 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -191,13 +191,13 @@ ieee80211_get_ess(struct ieee80211com *ic, const char *nwid, int len)
 }
 
 void
-ieee80211_del_ess(struct ieee80211com *ic, char *nwid, int all)
+ieee80211_del_ess(struct ieee80211com *ic, char *nwid, int len, int all)
 {
 	struct ieee80211_ess *ess, *next;
 
 	TAILQ_FOREACH_SAFE(ess, &ic->ic_ess, ess_next, next) {
-		if (all == 1 || (memcmp(ess->essid, nwid,
-		    IEEE80211_NWID_LEN) == 0)) {
+		if (all == 1 || (ess->esslen == len &&
+		    memcmp(ess->essid, nwid, len) == 0)) {
 			TAILQ_REMOVE(&ic->ic_ess, ess, ess_next);
 			explicit_bzero(ess, sizeof(*ess));
 			free(ess, M_DEVBUF, sizeof(*ess));
@@ -738,7 +738,7 @@ ieee80211_node_detach(struct ifnet *ifp)
 		(*ic->ic_node_free)(ic, ic->ic_bss);
 		ic->ic_bss = NULL;
 	}
-	ieee80211_del_ess(ic, NULL, 1);
+	ieee80211_del_ess(ic, NULL, 0, 1);
 	ieee80211_free_allnodes(ic, 1);
 #ifndef IEEE80211_STA_ONLY
 	free(ic->ic_aid_bitmap, M_DEVBUF,
