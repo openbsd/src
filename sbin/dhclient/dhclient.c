@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.612 2019/01/18 07:39:53 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.613 2019/01/18 08:07:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -258,8 +258,9 @@ get_link_ifa(const char *name, struct ifaddrs *ifap)
 void
 interface_state(struct interface_info *ifi)
 {
-	struct ifaddrs	*ifap, *ifa;
-	int		 newlinkup, oldlinkup;
+	struct ether_addr		 hw;
+	struct ifaddrs			*ifap, *ifa;
+	int				 newlinkup, oldlinkup;
 
 	oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
 
@@ -282,6 +283,16 @@ interface_state(struct interface_info *ifi)
 		log_debug("%s: link %s -> %s", log_procname,
 		    (oldlinkup != 0) ? "up" : "down",
 		    (newlinkup != 0) ? "up" : "down");
+	}
+
+	if (newlinkup != 0) {
+		memcpy(&hw, &ifi->hw_address, sizeof(hw));
+		get_hw_address(ifi);
+		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
+			tick_msg("", 0, INT64_MAX);
+			log_warnx("%s: LLADDR changed", log_procname);
+			quit = SIGHUP;
+		}
 	}
 }
 
@@ -342,12 +353,11 @@ routefd_handler(struct interface_info *ifi, int routefd)
 void
 rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 {
-	struct ether_addr		 hw;
 	struct if_msghdr		*ifm;
 	struct if_announcemsghdr	*ifan;
 	struct ifa_msghdr		*ifam;
 	struct if_ieee80211_data	*ifie;
-	int				 newlinkup, oldlinkup;
+	int				 oldlinkup;
 
 	switch (rtm->rtm_type) {
 	case RTM_PROPOSAL:
@@ -383,22 +393,11 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 
 		oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
 		interface_state(ifi);
-		newlinkup = LINK_STATE_IS_UP(ifi->link_state);
-
-		if (newlinkup != 0) {
-			memcpy(&hw, &ifi->hw_address, sizeof(hw));
-			get_hw_address(ifi);
-			if (memcmp(&hw, &ifi->hw_address, sizeof(hw)) != 0) {
-				tick_msg("", 0, INT64_MAX);
-				log_warnx("%s: LLADDR changed", log_procname);
-				quit = SIGHUP;
-				return;
+		if (quit == 0) {
+			if (LINK_STATE_IS_UP(ifi->link_state) != oldlinkup) {
+				ifi->state = S_PREBOOT;
+				state_preboot(ifi);
 			}
-		}
-
-		if (newlinkup != oldlinkup) {
-			ifi->state = S_PREBOOT;
-			state_preboot(ifi);
 		}
 		break;
 
@@ -695,6 +694,8 @@ state_preboot(struct interface_info *ifi)
 	time(&cur_time);
 
 	interface_state(ifi);
+	if (quit != 0)
+		return;
 	tick_msg("link", LINK_STATE_IS_UP(ifi->link_state), ifi->startup_time);
 
 	if (LINK_STATE_IS_UP(ifi->link_state)) {
