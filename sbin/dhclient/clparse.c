@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.179 2019/01/18 02:12:36 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.180 2019/01/18 02:16:31 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -201,7 +201,7 @@ read_lease_db(char *name, struct client_lease_tq *tq)
 	while (feof(cfile) == 0) {
 		if (parse_lease(cfile, name, &lease) == 0)
 			continue;
-		log_warnx("%s: got a lease", log_procname);
+
 		/*
 		 * The new lease will supersede a lease with the same
 		 * ssid AND the same Client Identifier AND the same
