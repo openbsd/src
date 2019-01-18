@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.258 2019/01/13 10:42:51 schwarze Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.259 2019/01/18 15:44:14 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -355,7 +355,7 @@ void	address_alloc(const char *, const char *, char ***, char ***, int *);
 int	socket_bind(const char *, const char *, const char *, int,
     int *, int *);
 int	unix_socket(char *, int, mode_t);
-void	double_sockbuf(int, int);
+void	double_sockbuf(int, int, int);
 void	set_sockbuf(int);
 void	tailify_replytext(char *, int);
 
@@ -557,15 +557,19 @@ main(int argc, char *argv[])
 				log_warnx("log socket %s failed", path_unix[i]);
 			continue;
 		}
-		double_sockbuf(fd_unix[i], SO_RCVBUF);
+		double_sockbuf(fd_unix[i], SO_RCVBUF, 0);
 	}
 
 	if (socketpair(AF_UNIX, SOCK_DGRAM, PF_UNSPEC, pair) == -1) {
 		log_warn("socketpair sendsyslog");
 		fd_sendsys = -1;
 	} else {
-		double_sockbuf(pair[0], SO_RCVBUF);
-		double_sockbuf(pair[1], SO_SNDBUF);
+		/*
+		 * Avoid to lose messages from sendsyslog(2).  A larger
+		 * 1 MB socket buffer compensates bursts.
+		 */
+		double_sockbuf(pair[0], SO_RCVBUF, 1<<20);
+		double_sockbuf(pair[1], SO_SNDBUF, 1<<20);
 		fd_sendsys = pair[0];
 	}
 
@@ -989,7 +993,7 @@ socket_bind(const char *proto, const char *host, const char *port,
 			continue;
 		}
 		if (!shutread && res->ai_protocol == IPPROTO_UDP)
-			double_sockbuf(*fdp, SO_RCVBUF);
+			double_sockbuf(*fdp, SO_RCVBUF, 0);
 		else if (res->ai_protocol == IPPROTO_TCP)
 			set_sockbuf(*fdp);
 		reuseaddr = 1;
@@ -3035,8 +3039,12 @@ unix_socket(char *path, int type, mode_t mode)
 	return (fd);
 }
 
+/*
+ * Increase socket buffer size in small steps to get partial success
+ * if we hit a kernel limit.  Allow an optional final step.
+ */
 void
-double_sockbuf(int fd, int optname)
+double_sockbuf(int fd, int optname, int bigsize)
 {
 	socklen_t len;
 	int i, newsize, oldsize = 0;
@@ -3046,12 +3054,18 @@ double_sockbuf(int fd, int optname)
 		log_warn("getsockopt bufsize");
 	len = sizeof(newsize);
 	newsize =  LOG_MAXLINE + 128;  /* data + control */
-	/* allow 8 full length messages */
+	/* allow 8 full length messages, that is 66560 bytes */
 	for (i = 0; i < 4; i++, newsize *= 2) {
 		if (newsize <= oldsize)
 			continue;
 		if (setsockopt(fd, SOL_SOCKET, optname, &newsize, len) == -1)
 			log_warn("setsockopt bufsize %d", newsize);
+		else
+			oldsize = newsize;
+	}
+	if (bigsize && bigsize > oldsize) {
+		if (setsockopt(fd, SOL_SOCKET, optname, &bigsize, len) == -1)
+			log_warn("setsockopt bufsize %d", bigsize);
 	}
 }
 
