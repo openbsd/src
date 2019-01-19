@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.159 2019/01/18 01:38:58 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.160 2019/01/19 02:20:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -146,24 +146,20 @@ dispatch(struct interface_info *ifi, int routefd)
 				continue;
 			log_warn("%s: poll(bpffd, routefd, unpriv_ibuf)",
 			    log_procname);
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
 
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
 			log_debug("%s: bpffd: ERR|HUP|NVAL", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
 		if ((fds[1].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
 			log_debug("%s: routefd: ERR|HUP|NVAL", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
 		if ((fds[2].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
 			log_debug("%s: unpriv_ibuf: ERR|HUP|NVAL", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
 
 		if (nfds == 0)
@@ -176,11 +172,8 @@ dispatch(struct interface_info *ifi, int routefd)
 		if ((fds[2].revents & POLLOUT) != 0)
 			flush_unpriv_ibuf();
 		if ((fds[2].revents & POLLIN) != 0)
-			quit = INTERNALSIG;
+			break;
 	}
-
-	if (quit != INTERNALSIG && quit != SIGHUP)
-		fatalx("%s", strsignal(quit));
 }
 
 void

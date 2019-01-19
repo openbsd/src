@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.614 2019/01/19 01:53:08 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.615 2019/01/19 02:20:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2221,25 +2221,20 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 			if (errno == EINTR)
 				continue;
 			log_warn("%s: poll(priv_ibuf)", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
-		if ((pfd[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-			quit = INTERNALSIG;
-			continue;
-		}
+		if ((pfd[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
+			break;
 		if (nfds == 0 || (pfd[0].revents & POLLIN) == 0)
 			continue;
 
 		if ((n = imsg_read(priv_ibuf)) == -1 && errno != EAGAIN) {
 			log_warn("%s: imsg_read(priv_ibuf)", log_procname);
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
 		if (n == 0) {
 			/* Connection closed - other end should log message. */
-			quit = INTERNALSIG;
-			continue;
+			break;
 		}
 
 		dispatch_imsg(ifi->name, ifi->rdomain, ioctlfd, routefd,
@@ -2257,9 +2252,6 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		execvp(saved_argv[0], saved_argv);
 		fatal("execvp(%s)", saved_argv[0]);
 	}
-
-	if (quit != INTERNALSIG)
-		fatalx("%s", strsignal(quit));
 
 	exit(1);
 }
