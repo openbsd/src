@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.9 2019/01/19 03:32:03 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.10 2019/01/19 04:02:29 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -351,6 +351,22 @@ int
 tls13_handshake_recv_action(struct tls13_ctx *ctx,
     struct tls13_handshake_action *action)
 {
+	uint8_t msg_type;
+
+	msg_type = 0; /* XXX */
+
+	/*
+	 * In TLSv1.3 there is no way to know if you're going to receive a
+	 * certificate request message or not, hence we have to special case it
+	 * here. The receive handler also knows how to deal with this situation.
+	 */
+	if (msg_type != action->handshake_type &&
+	    (msg_type != TLS13_MT_CERTIFICATE ||
+	     action->handshake_type != TLS13_MT_CERTIFICATE_REQUEST)) {
+		/* XXX send unexpected message alert */
+		return TLS13_IO_FAILURE;
+	}
+
 	return action->recv(ctx);
 }
 
@@ -482,6 +498,19 @@ tls13_server_certificate_send(struct tls13_ctx *ctx)
 int
 tls13_server_certificate_request_recv(struct tls13_ctx *ctx)
 {
+	uint8_t msg_type = 0; /* XXX */
+
+	/*
+	 * Thanks to poor state design in the RFC, this function can be called
+	 * when we actually have a certificate message instead of a certificate
+	 * request... in that case we call the certificate handler after
+	 * switching state, to avoid advancing state.
+	 */
+	if (msg_type == TLS13_MT_CERTIFICATE) {
+		ctx->handshake.hs_type |= WITHOUT_CR;
+		return tls13_server_certificate_recv(ctx);
+	}
+
 	return 0;
 }
 
