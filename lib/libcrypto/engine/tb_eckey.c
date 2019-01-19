@@ -1,9 +1,5 @@
-/* $OpenBSD: ecs_locl.h,v 1.6 2019/01/19 01:07:00 tb Exp $ */
-/*
- * Written by Nils Larsch for the OpenSSL project
- */
 /* ====================================================================
- * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,39 +52,72 @@
  *
  */
 
-#ifndef HEADER_ECS_LOCL_H
-#define HEADER_ECS_LOCL_H
+#include "eng_int.h"
 
-#include <openssl/ecdsa.h>
+static ENGINE_TABLE *ec_table = NULL;
+static const int dummy_nid = 1;
 
-__BEGIN_HIDDEN_DECLS
+void
+ENGINE_unregister_EC(ENGINE *e)
+{
+	engine_table_unregister(&ec_table, e);
+}
 
-typedef struct ecdsa_data_st {
-	/* EC_KEY_METH_DATA part */
-	int (*init)(EC_KEY *);
-	/* method (ECDSA) specific part */
-	ENGINE	*engine;
-	int	flags;
-	const ECDSA_METHOD *meth;
-	CRYPTO_EX_DATA ex_data;
-} ECDSA_DATA;
+static void
+engine_unregister_all_EC(void)
+{
+	engine_table_cleanup(&ec_table);
+}
 
-/** ecdsa_check
- * checks whether ECKEY->meth_data is a pointer to a ECDSA_DATA structure
- * and if not it removes the old meth_data and creates a ECDSA_DATA structure.
- * \param  eckey pointer to a EC_KEY object
- * \return pointer to a ECDSA_DATA structure
+int
+ENGINE_register_EC(ENGINE *e)
+{
+	if (e->ec_meth)
+		return engine_table_register(&ec_table,
+		    engine_unregister_all_EC, e, &dummy_nid, 1, 0);
+	return 1;
+}
+
+void
+ENGINE_register_all_EC(void)
+{
+	ENGINE *e;
+
+	for (e = ENGINE_get_first(); e != NULL; e = ENGINE_get_next(e))
+		ENGINE_register_EC(e);
+}
+
+int
+ENGINE_set_default_EC(ENGINE *e)
+{
+	if (e->ec_meth != NULL)
+		return engine_table_register(&ec_table,
+		    engine_unregister_all_EC, e, &dummy_nid, 1, 1);
+	return 1;
+}
+
+/*
+ * Exposed API function to get a functional reference from the implementation
+ * table (ie. try to get a functional reference from the tabled structural
+ * references).
  */
-ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
+ENGINE *
+ENGINE_get_default_EC(void)
+{
+	return engine_table_select(&ec_table, dummy_nid);
+}
 
-int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
-    BIGNUM **rp);
-int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
-    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
-    const BIGNUM *r, EC_KEY *eckey);
-ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
-    const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
+/* Obtains an EC_KEY implementation from an ENGINE functional reference */
+const EC_KEY_METHOD *
+ENGINE_get_EC(const ENGINE *e)
+{
+	return e->ec_meth;
+}
 
-__END_HIDDEN_DECLS
-
-#endif /* HEADER_ECS_LOCL_H */
+/* Sets an EC_KEY implementation in an ENGINE structure */
+int
+ENGINE_set_EC(ENGINE *e, const EC_KEY_METHOD *ec_meth)
+{
+	e->ec_meth = ec_meth;
+	return 1;
+}

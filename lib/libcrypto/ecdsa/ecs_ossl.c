@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.16 2018/07/10 21:36:02 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.17 2019/01/19 01:07:00 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -108,6 +108,21 @@ ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len, BIGNUM *order,
 		}
 	}
 
+	return 1;
+}
+
+int
+ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
+    unsigned int *siglen, const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
+{
+	ECDSA_SIG *s;
+
+	if ((s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey)) == NULL) {
+		*siglen = 0;
+		return 0;
+	}
+	*siglen = i2d_ECDSA_SIG(s, &sig);
+	ECDSA_SIG_free(s);
 	return 1;
 }
 
@@ -234,6 +249,16 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	return (ret);
 }
 
+/* replace w/ ecdsa_sign_setup() when ECDSA_METHOD gets removed */
+int
+ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+{
+	ECDSA_DATA *ecdsa;
+
+	if ((ecdsa = ecdsa_check(eckey)) == NULL)
+		return 0;
+	return ecdsa->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp);
+}
 
 static ECDSA_SIG *
 ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
@@ -382,6 +407,18 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	BN_free(order);
 	BN_free(range);
 	return ret;
+}
+
+/* replace w/ ecdsa_do_sign() when ECDSA_METHOD gets removed */
+ECDSA_SIG *
+ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+    const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
+{
+	ECDSA_DATA *ecdsa;
+
+	if ((ecdsa = ecdsa_check(eckey)) == NULL)
+		return NULL;
+	return ecdsa->meth->ecdsa_do_sign(dgst, dgst_len, in_kinv, in_r, eckey);
 }
 
 static int

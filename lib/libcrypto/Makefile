@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2018/11/11 06:53:31 tb Exp $
+# $OpenBSD: Makefile,v 1.31 2019/01/19 01:07:00 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -30,6 +30,10 @@ CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?
 CFLAGS+= -I${LCRYPTO_SRC}
 CFLAGS+= -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/bn -I${LCRYPTO_SRC}/evp
 CFLAGS+= -I${LCRYPTO_SRC}/modes
+
+# XXX FIXME ecdsa and ec should be merged
+CFLAGS+= -I${LCRYPTO_SRC}/ecdsa
+CFLAGS+= -I${LCRYPTO_SRC}/ec
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
@@ -125,7 +129,7 @@ SRCS+= dso_openssl.c
 # ec/
 SRCS+= ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c
 SRCS+= ec_err.c ec_curve.c ec_check.c ec_print.c ec_asn1.c ec_key.c
-SRCS+= ec2_smpl.c ec2_mult.c ec_ameth.c ec_pmeth.c eck_prn.c
+SRCS+= ec2_smpl.c ec2_mult.c ec_ameth.c ec_pmeth.c ec_kmeth.c eck_prn.c
 SRCS+= ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
 SRCS+= ecp_oct.c ec2_oct.c ec_oct.c
 
@@ -139,7 +143,7 @@ SRCS+= ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
 SRCS+= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c
 SRCS+= eng_table.c eng_pkey.c eng_fat.c eng_all.c
 SRCS+= tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c
-SRCS+= tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c
+SRCS+= tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c tb_eckey.c
 SRCS+= eng_openssl.c eng_cnf.c eng_dyn.c
 # XXX unnecessary? handled in EVP now...
 # SRCS+= eng_aesni.c # local addition

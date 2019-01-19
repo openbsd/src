@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.49 2018/11/11 16:32:28 bcook Exp $ */
+/* $OpenBSD: crypto.h,v 1.50 2019/01/19 01:07:00 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -286,6 +286,7 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 #define CRYPTO_EX_INDEX_ECDH		13
 #define CRYPTO_EX_INDEX_COMP		14
 #define CRYPTO_EX_INDEX_STORE		15
+#define CRYPTO_EX_INDEX_EC_KEY		16
 
 /* Dynamically assigned indexes start from this value (don't use directly, use
  * via CRYPTO_ex_data_new_class). */
