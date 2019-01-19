@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.628 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.629 2019/01/19 20:45:06 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -233,6 +233,7 @@ void	via_update_sensor(void *args);
 #endif
 int kbd_reset;
 int lid_action = 1;
+int pwr_action = 1;
 int forceukbd;
 
 /*

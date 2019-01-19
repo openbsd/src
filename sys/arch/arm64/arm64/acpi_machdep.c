@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.1 2018/07/01 19:30:37 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.2 2019/01/19 20:45:06 tedu Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -31,6 +31,7 @@
 #include <dev/acpi/acpivar.h>
 
 int	lid_action;
+int	pwr_action = 1;
 
 int	acpi_fdt_match(struct device *, void *, void *);
 void	acpi_fdt_attach(struct device *, struct device *, void *);

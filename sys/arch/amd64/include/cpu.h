@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.128 2018/12/05 10:28:21 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.129 2019/01/19 20:45:06 tedu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -443,7 +443,8 @@ void mp_setperf_init(void);
 #define CPU_FORCEUKBD		15	/* Force ukbd(4) as console keyboard */
 #define CPU_TSCFREQ		16	/* TSC frequency */
 #define CPU_INVARIANTTSC	17	/* has invariant TSC */
-#define CPU_MAXID		18	/* number of valid machdep ids */
+#define CPU_PWRACTION		18	/* action caused by power button */
+#define CPU_MAXID		19	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -464,6 +465,7 @@ void mp_setperf_init(void);
 	{ "forceukbd", CTLTYPE_INT }, \
 	{ "tscfreq", CTLTYPE_QUAD }, \
 	{ "invarianttsc", CTLTYPE_INT }, \
+	{ "pwraction", CTLTYPE_INT }, \
 }
 
 #endif /* !_MACHINE_CPU_H_ */

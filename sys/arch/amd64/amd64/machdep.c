@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.252 2019/01/11 06:25:06 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.253 2019/01/19 20:45:06 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -192,6 +192,7 @@ paddr_t tramp_pdirpa;
 
 int kbd_reset;
 int lid_action = 1;
+int pwr_action = 1;
 int forceukbd;
 
 /*
@@ -534,6 +535,16 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 				error = EINVAL;
 			else
 				lid_action = val;
+		}
+		return (error);
+	case CPU_PWRACTION:
+		val = pwr_action;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
+		if (!error) {
+			if (val < 0 || val > 2)
+				error = EINVAL;
+			else
+				pwr_action = val;
 		}
 		return (error);
 #if NPCKBC > 0 && NUKBD > 0

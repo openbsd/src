@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.360 2018/10/26 20:26:19 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.361 2019/01/19 20:45:06 tedu Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1954,6 +1954,7 @@ void
 acpi_pbtn_task(void *arg0, int dummy)
 {
 	struct acpi_softc *sc = arg0;
+	extern int pwr_action;
 	uint16_t en;
 	int s;
 
@@ -1966,7 +1967,16 @@ acpi_pbtn_task(void *arg0, int dummy)
 	    en | ACPI_PM1_PWRBTN_EN);
 	splx(s);
 
-	acpi_addtask(sc, acpi_powerdown_task, sc, 0);
+	switch (pwr_action) {
+	case 0:
+		break;
+	case 1:
+		acpi_addtask(sc, acpi_powerdown_task, sc, 0);
+		break;
+	case 2:
+		acpi_addtask(sc, acpi_sleep_task, sc, ACPI_SLEEP_SUSPEND);
+		break;
+	}
 }
 
 void
