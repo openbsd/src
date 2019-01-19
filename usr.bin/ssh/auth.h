@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.h,v 1.96 2018/04/10 00:10:49 djm Exp $ */
+/* $OpenBSD: auth.h,v 1.97 2019/01/19 21:38:24 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -147,7 +147,7 @@ int	auth_krb5_password(Authctxt *authctxt, const char *password);
 void	krb5_cleanup_proc(Authctxt *authctxt);
 #endif /* KRB5 */
 
-void	do_authentication2(Authctxt *);
+void	do_authentication2(struct ssh *);
 
 void	auth_log(Authctxt *, int, int, const char *, const char *);
 void	auth_maxtries_exceeded(Authctxt *) __attribute__((noreturn));
