@@ -1328,6 +1328,8 @@ EVP_DigestSignInit
 EVP_DigestUpdate
 EVP_DigestVerifyFinal
 EVP_DigestVerifyInit
+EVP_ENCODE_CTX_free
+EVP_ENCODE_CTX_new
 EVP_EncodeBlock
 EVP_EncodeFinal
 EVP_EncodeInit
