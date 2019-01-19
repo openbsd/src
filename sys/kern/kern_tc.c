@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.34 2018/09/18 20:47:11 bluhm Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.35 2019/01/19 01:53:44 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -70,6 +70,7 @@ struct timehands {
 	int64_t			th_adjustment;
 	u_int64_t		th_scale;
 	u_int	 		th_offset_count;
+	struct bintime		th_boottime;
 	struct bintime		th_offset;
 	struct timeval		th_microtime;
 	struct timespec		th_nanotime;
@@ -79,20 +80,21 @@ struct timehands {
 };
 
 static struct timehands th0;
-static struct timehands th9 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th0};
-static struct timehands th8 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th9};
-static struct timehands th7 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th8};
-static struct timehands th6 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th7};
-static struct timehands th5 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th6};
-static struct timehands th4 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th5};
-static struct timehands th3 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th4};
-static struct timehands th2 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th3};
-static struct timehands th1 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, 0, &th2};
+static struct timehands th9 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th0};
+static struct timehands th8 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th9};
+static struct timehands th7 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th8};
+static struct timehands th6 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th7};
+static struct timehands th5 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th6};
+static struct timehands th4 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th5};
+static struct timehands th3 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th4};
+static struct timehands th2 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th3};
+static struct timehands th1 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th2};
 static struct timehands th0 = {
 	&dummy_timecounter,
 	0,
 	(uint64_t)-1 / 1000000,
 	0,
+	{0, 0},
 	{1, 0},
 	{0, 0},
 	{0, 0},
@@ -108,7 +110,6 @@ volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
 
 struct bintime naptime;
-static struct bintime boottimebin;
 static int timestepwarnings;
 
 void tc_windup(void);
@@ -130,8 +131,32 @@ tc_delta(struct timehands *th)
 /*
  * Functions for reading the time.  We have to loop until we are sure that
  * the timehands that we operated on was not updated under our feet.  See
- * the comment in <sys/time.h> for a description of these 12 functions.
+ * the comment in <sys/time.h> for a description of these functions.
  */
+
+void
+binboottime(struct bintime *bt)
+{
+	struct timehands *th;
+	u_int gen;
+
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		*bt = th->th_boottime;
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
+}
+
+void
+microboottime(struct timeval *tvp)
+{
+	struct bintime bt;
+	
+	binboottime(&bt);
+	bintime2timeval(&bt, tvp);
+}
 
 void
 binuptime(struct bintime *bt)
@@ -170,9 +195,18 @@ microuptime(struct timeval *tvp)
 void
 bintime(struct bintime *bt)
 {
+	struct timehands *th;
+	u_int gen;
 
-	binuptime(bt);
-	bintime_add(bt, &boottimebin);
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		*bt = th->th_offset;
+		bintime_addx(bt, th->th_scale * tc_delta(th));
+		bintime_add(bt, &th->th_boottime);
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
 }
 
 void
@@ -316,9 +350,8 @@ tc_setrealtimeclock(const struct timespec *ts)
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
-	bintime_add(&bt2, &boottimebin);
-	boottimebin = bt;
-	bintime2timespec(&bt, &boottime);
+	bintime_add(&bt2, &timehands->th_boottime);
+	timehands->th_boottime = bt;
 	enqueue_randomness(ts->tv_sec);
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
@@ -340,24 +373,25 @@ void
 tc_setclock(const struct timespec *ts)
 {
 	struct bintime bt, bt2;
+	static int first = 1;
 #ifndef SMALL_KERNEL
 	long long adj_ticks;
 #endif
 
 	/*
 	 * When we're called for the first time, during boot when
-	 * the root partition is mounted, boottime is still zero:
-	 * we just need to set it.
+	 * the root partition is mounted, we need to set boottime.
 	 */
-	if (boottimebin.sec == 0) {
+	if (first) {
 		tc_setrealtimeclock(ts);
+		first = 0;
 		return;
 	}
 
 	enqueue_randomness(ts->tv_sec);
 
 	timespec2bintime(ts, &bt);
-	bintime_sub(&bt, &boottimebin);
+	bintime_sub(&bt, &timehands->th_boottime);
 	bt2 = timehands->th_offset;
 	timehands->th_offset = bt;
 
@@ -441,7 +475,7 @@ tc_windup(void)
 	 * case we missed a leap second.
 	 */
 	bt = th->th_offset;
-	bintime_add(&bt, &boottimebin);
+	bintime_add(&bt, &th->th_boottime);
 	i = bt.sec - tho->th_microtime.tv_sec;
 	if (i > LARGE_STEP)
 		i = 2;

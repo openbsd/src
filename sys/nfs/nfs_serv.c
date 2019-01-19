@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.118 2019/01/18 13:56:38 bluhm Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.119 2019/01/19 01:53:44 cheloha Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -685,6 +685,7 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	int i, cnt;
 	struct mbuf *mp;
 	struct nfs_fattr *fp;
+	struct timeval boottime;
 	struct vattr va, forat;
 	u_int32_t *tl;
 	int32_t t1;
@@ -829,8 +830,9 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		 * but it may make the values more human readable,
 		 * for debugging purposes.
 		 */
+		microboottime(&boottime);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_nsec/1000);
+		*tl = txdr_unsigned(boottime.tv_usec);
 	} else {
 		fp = nfsm_build(&info.nmi_mb, NFSX_V2FATTR);
 		nfsm_srvfattr(nfsd, &va, fp);
@@ -2506,6 +2508,7 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	struct vattr bfor, aft;
 	struct vnode *vp;
 	struct nfsm_info	info;
+	struct timeval boottime;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_int32_t *tl;
@@ -2548,8 +2551,9 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 	nfsm_srvwcc(nfsd, for_ret, &bfor, aft_ret, &aft, &info);
 	if (!error) {
 		tl = nfsm_build(&info.nmi_mb, NFSX_V3WRITEVERF);
+		microboottime(&boottime);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_nsec/1000);
+		*tl = txdr_unsigned(boottime.tv_usec);
 	} else
 		error = 0;
 nfsmout:
