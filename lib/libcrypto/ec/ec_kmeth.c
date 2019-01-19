@@ -262,7 +262,7 @@ EC_KEY_METHOD_set_verify(EC_KEY_METHOD *meth,
 
 
 void
-EC_KEY_METHOD_get_init(EC_KEY_METHOD *meth,
+EC_KEY_METHOD_get_init(const EC_KEY_METHOD *meth,
     int (**pinit)(EC_KEY *key),
     void (**pfinish)(EC_KEY *key),
     int (**pcopy)(EC_KEY *dest, const EC_KEY *src),
@@ -285,7 +285,7 @@ EC_KEY_METHOD_get_init(EC_KEY_METHOD *meth,
 }
 
 void
-EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
+EC_KEY_METHOD_get_keygen(const EC_KEY_METHOD *meth,
     int (**pkeygen)(EC_KEY *key))
 {
 	if (pkeygen != NULL)
@@ -293,7 +293,7 @@ EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
 }
 
 void
-EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
+EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
     int (**pck)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
     void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)))
 {
@@ -302,7 +302,7 @@ EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
 }
 
 void
-EC_KEY_METHOD_get_sign(EC_KEY_METHOD *meth,
+EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
     int (**psign)(int type, const unsigned char *dgst,
 	int dlen, unsigned char *sig, unsigned int *siglen,
 	const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey),
@@ -321,7 +321,7 @@ EC_KEY_METHOD_get_sign(EC_KEY_METHOD *meth,
 }
 
 void
-EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
+EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
     int (**pverify)(int type, const unsigned char *dgst, int dgst_len,
 	const unsigned char *sigbuf, int sig_len, EC_KEY *eckey),
     int (**pverify_sig)(const unsigned char *dgst, int dgst_len,

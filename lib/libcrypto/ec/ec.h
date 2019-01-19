@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.15 2019/01/19 01:12:48 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.16 2019/01/19 01:17:41 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -971,16 +971,16 @@ void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
     int (*ckey)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
 	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
-void EC_KEY_METHOD_get_init(EC_KEY_METHOD *meth,
+void EC_KEY_METHOD_get_init(const EC_KEY_METHOD *meth,
     int (**pinit)(EC_KEY *key),
     void (**pfinish)(EC_KEY *key),
     int (**pcopy)(EC_KEY *dest, const EC_KEY *src),
     int (**pset_group)(EC_KEY *key, const EC_GROUP *grp),
     int (**pset_private)(EC_KEY *key, const BIGNUM *priv_key),
     int (**pset_public)(EC_KEY *key, const EC_POINT *pub_key));
-void EC_KEY_METHOD_get_keygen(EC_KEY_METHOD *meth,
+void EC_KEY_METHOD_get_keygen(const EC_KEY_METHOD *meth,
     int (**pkeygen)(EC_KEY *key));
-void EC_KEY_METHOD_get_compute_key(EC_KEY_METHOD *meth,
+void EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
     int (**pck)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
 	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
 

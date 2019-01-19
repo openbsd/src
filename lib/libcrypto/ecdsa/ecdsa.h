@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.7 2019/01/19 01:12:48 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.8 2019/01/19 01:17:41 tb Exp $ */
 /**
  * \file   crypto/ecdsa/ecdsa.h Include file for the OpenSSL ECDSA functions
  * \author Written by Nils Larsch for the OpenSSL project
@@ -284,7 +284,7 @@ void EC_KEY_METHOD_set_verify(EC_KEY_METHOD *meth,
 	const unsigned char *sigbuf, int sig_len, EC_KEY *eckey),
     int (*verify_sig)(const unsigned char *dgst, int dgst_len,
 	const ECDSA_SIG *sig, EC_KEY *eckey));
-void EC_KEY_METHOD_get_sign(EC_KEY_METHOD *meth,
+void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
     int (**psign)(int type, const unsigned char *dgst,
 	int dlen, unsigned char *sig, unsigned int *siglen,
 	const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey),
@@ -293,7 +293,7 @@ void EC_KEY_METHOD_get_sign(EC_KEY_METHOD *meth,
     ECDSA_SIG *(**psign_sig)(const unsigned char *dgst,
 	int dgst_len, const BIGNUM *in_kinv, const BIGNUM *in_r,
 	EC_KEY *eckey));
-void EC_KEY_METHOD_get_verify(EC_KEY_METHOD *meth,
+void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
     int (**pverify)(int type, const unsigned char *dgst, int dgst_len,
 	const unsigned char *sigbuf, int sig_len, EC_KEY *eckey),
     int (**pverify_sig)(const unsigned char *dgst, int dgst_len,
