@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.47 2019/01/19 02:53:54 jsing Exp $
+# $OpenBSD: Makefile,v 1.48 2019/01/19 04:08:06 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -25,21 +25,49 @@ VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
 SRCS= \
-	ssl_srvr.c ssl_clnt.c s3_lib.c ssl_pkt.c ssl_both.c \
-	t1_lib.c t1_enc.c t1_hash.c \
-	d1_srvr.c d1_clnt.c d1_lib.c d1_pkt.c \
-	d1_both.c d1_enc.c d1_srtp.c \
-	ssl_lib.c ssl_cert.c ssl_sess.c \
-	ssl_ciph.c ssl_stat.c ssl_rsa.c \
-	ssl_asn1.c ssl_txt.c ssl_algs.c \
-	bio_ssl.c ssl_err.c ssl_methods.c \
-	ssl_packet.c ssl_tlsext.c ssl_versions.c pqueue.c ssl_init.c \
-	tls13_buffer.c tls13_handshake.c tls13_key_schedule.c \
-	tls13_record.c ssl_sigalgs.c
-SRCS+=	s3_cbc.c
-SRCS+=	bs_ber.c bs_cbb.c bs_cbs.c
+	bio_ssl.c \
+	bs_ber.c \
+	bs_cbb.c \
+	bs_cbs.c \
+	d1_both.c \
+	d1_clnt.c \
+	d1_enc.c \
+	d1_lib.c \
+	d1_pkt.c \
+	d1_srtp.c \
+	d1_srvr.c \
+	pqueue.c \
+	s3_cbc.c \
+	s3_lib.c \
+	ssl_algs.c \
+	ssl_asn1.c \
+	ssl_both.c \
+	ssl_cert.c \
+	ssl_ciph.c \
+	ssl_clnt.c \
+	ssl_err.c \
+	ssl_init.c \
+	ssl_lib.c \
+	ssl_methods.c \
+	ssl_packet.c \
+	ssl_pkt.c \
+	ssl_rsa.c \
+	ssl_sess.c \
+	ssl_sigalgs.c \
+	ssl_srvr.c \
+	ssl_stat.c \
+	ssl_tlsext.c \
+	ssl_txt.c \
+	ssl_versions.c \
+	t1_enc.c \
+	t1_hash.c \
+	t1_lib.c \
+	tls13_buffer.c \
+	tls13_handshake.c \
+	tls13_key_schedule.c \
+	tls13_record.c
 
-HDRS=	srtp.h ssl.h ssl2.h ssl3.h ssl23.h tls1.h dtls1.h
+HDRS=	dtls1.h srtp.h ssl.h ssl2.h ssl23.h ssl3.h tls1.h
 
 .PATH:	${.CURDIR}
 
