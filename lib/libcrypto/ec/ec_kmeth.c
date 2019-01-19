@@ -1,3 +1,4 @@
+/*	$OpenBSD: ec_kmeth.c,v 1.4 2019/01/19 01:18:56 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.

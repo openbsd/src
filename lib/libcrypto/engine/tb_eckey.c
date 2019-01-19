@@ -1,3 +1,4 @@
+/*	$OpenBSD: tb_eckey.c,v 1.2 2019/01/19 01:18:56 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
  *
