@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.617 2019/01/19 21:07:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.618 2019/01/19 21:23:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -438,8 +438,6 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		write_resolv_conf();
 }
 
-char **saved_argv;
-
 int
 main(int argc, char *argv[])
 {
@@ -454,8 +452,6 @@ main(int argc, char *argv[])
 	int			 fd, socket_fd[2];
 	int			 rtfilter, ioctlfd, routefd;
 	int			 ch;
-
-	saved_argv = argv;
 
 	if (isatty(STDERR_FILENO) != 0)
 		log_init(1, LOG_DEBUG); /* log to stderr until daemonized */
