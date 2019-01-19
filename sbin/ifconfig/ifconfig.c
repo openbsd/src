@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.389 2019/01/18 20:25:35 phessler Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.390 2019/01/19 21:06:02 phessler Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1752,7 +1752,7 @@ process_join_commands(void)
 
 	ifr.ifr_data = (caddr_t)&join;
 	if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
-		warn("SIOCS80211JOIN");
+		err(1, "SIOCS80211JOIN");
 }
 
 void
@@ -1799,8 +1799,7 @@ delifjoin(const char *val, int d)
 	if (d == -1) {
 		ifr.ifr_data = (caddr_t)&join;
 		if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
-			warn("SIOCS80211JOIN");
-		return;
+			err(1, "SIOCS80211JOIN");
 	}
 
 	len = sizeof(join.i_nwid);
@@ -1812,7 +1811,7 @@ delifjoin(const char *val, int d)
 	(void)strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&join;
 	if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
-		warn("SIOCS80211JOIN");
+		err(1, "SIOCS80211JOIN");
 }
 
 void
@@ -1828,13 +1827,13 @@ delifjoinlist(const char *val, int d)
 	if (d == -1) {
 		ifr.ifr_data = (caddr_t)&join;
 		if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
-			warn("SIOCS80211JOIN");
+			err(1, "SIOCS80211JOIN");
 		return;
 	}
 
 	ifr.ifr_data = (caddr_t)&join;
 	if (ioctl(s, SIOCS80211JOIN, (caddr_t)&ifr) < 0)
-		warn("SIOCS80211JOIN");
+		err(1, "SIOCS80211JOIN");
 }
 
 void
