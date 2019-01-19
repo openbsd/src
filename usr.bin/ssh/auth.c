@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.c,v 1.137 2019/01/19 21:37:48 djm Exp $ */
+/* $OpenBSD: auth.c,v 1.138 2019/01/19 21:41:18 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -65,9 +65,6 @@
 #include "compat.h"
 #include "channels.h"
 
-#include "opacket.h" /* XXX */
-extern struct ssh *active_state; /* XXX */
-
 /* import */
 extern ServerOptions options;
 extern int use_privsep;
@@ -86,9 +83,8 @@ static struct sshbuf *auth_debug;
  * Otherwise true is returned.
  */
 int
-allowed_user(struct passwd * pw)
+allowed_user(struct ssh *ssh, struct passwd * pw)
 {
-	struct ssh *ssh = active_state; /* XXX */
 	struct stat st;
 	const char *hostname = NULL, *ipaddr = NULL;
 	int r;
@@ -242,10 +238,10 @@ format_method_key(Authctxt *authctxt)
 }
 
 void
-auth_log(Authctxt *authctxt, int authenticated, int partial,
+auth_log(struct ssh *ssh, int authenticated, int partial,
     const char *method, const char *submethod)
 {
-	struct ssh *ssh = active_state; /* XXX */
+	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
 	int level = SYSLOG_LEVEL_VERBOSE;
 	const char *authmsg;
 	char *extra = NULL;
@@ -287,9 +283,9 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 }
 
 void
-auth_maxtries_exceeded(Authctxt *authctxt)
+auth_maxtries_exceeded(struct ssh *ssh)
 {
-	struct ssh *ssh = active_state; /* XXX */
+	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
 
 	error("maximum authentication attempts exceeded for "
 	    "%s%.100s from %.200s port %d ssh2",
@@ -297,7 +293,7 @@ auth_maxtries_exceeded(Authctxt *authctxt)
 	    authctxt->user,
 	    ssh_remote_ipaddr(ssh),
 	    ssh_remote_port(ssh));
-	packet_disconnect("Too many authentication failures");
+	ssh_packet_disconnect(ssh, "Too many authentication failures");
 	/* NOTREACHED */
 }
 
@@ -472,9 +468,8 @@ auth_openprincipals(const char *file, struct passwd *pw, int strict_modes)
 }
 
 struct passwd *
-getpwnamallow(const char *user)
+getpwnamallow(struct ssh *ssh, const char *user)
 {
-	struct ssh *ssh = active_state; /* XXX */
 	extern login_cap_t *lc;
 	auth_session_t *as;
 	struct passwd *pw;
@@ -492,7 +487,7 @@ getpwnamallow(const char *user)
 		    user, ssh_remote_ipaddr(ssh), ssh_remote_port(ssh));
 		return (NULL);
 	}
-	if (!allowed_user(pw))
+	if (!allowed_user(ssh, pw))
 		return (NULL);
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
 		debug("unable to get login class: %s", user);
@@ -567,9 +562,8 @@ auth_debug_add(const char *fmt,...)
 }
 
 void
-auth_debug_send(void)
+auth_debug_send(struct ssh *ssh)
 {
-	struct ssh *ssh = active_state;		/* XXX */
 	char *msg;
 	int r;
 
