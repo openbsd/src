@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.365 2019/01/11 03:09:24 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.366 2019/01/19 11:48:54 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1485,7 +1485,6 @@ pfctl_load_ruleset(struct pfctl *pf, char *path, struct pf_ruleset *rs,
 			}
 		} else if (pf->opts & PF_OPT_VERBOSE)
 			printf("\n");
-
 	}
 
 	if (pf->optimize)
@@ -1850,7 +1849,6 @@ int
 pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
 {
 	int i;
-
 
 	for (i = 0; pf_limits[i].name; i++) {
 		if (strcasecmp(opt, pf_limits[i].name) == 0) {
@@ -2217,7 +2215,7 @@ pfctl_show_anchors(int dev, int opts, char *anchorname)
 			err(1, "DIOCGETRULESET");
 		if (!strcmp(pr.name, PF_RESERVED_ANCHOR))
 			continue;
-		sub[0] = 0;
+		sub[0] = '\0';
 		if (pr.path[0]) {
 			strlcat(sub, pr.path, sizeof(sub));
 			strlcat(sub, "/", sizeof(sub));
@@ -2235,6 +2233,7 @@ const char *
 pfctl_lookup_option(char *cmd, const char **list)
 {
 	const char *item = NULL;
+
 	if (cmd != NULL && *cmd)
 		for (; *list; list++)
 			if (!strncmp(cmd, *list, strlen(cmd))) {
@@ -2580,15 +2579,15 @@ main(int argc, char *argv[])
 			opts |= PF_OPT_SHOWALL;
 			pfctl_load_fingerprints(dev, opts);
 
-			pfctl_show_rules(dev, path, opts, 0, anchorname,
-			    0, 0, -1);
+			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_RULES,
+			    anchorname, 0, 0, -1);
 			pfctl_show_queues(dev, ifaceopt, opts,
 			    opts & PF_OPT_VERBOSE2);
 			pfctl_show_states(dev, ifaceopt, opts, -1);
 			pfctl_show_src_nodes(dev, opts);
 			pfctl_show_status(dev, opts);
-			pfctl_show_rules(dev, path, opts, 1, anchorname,
-			    0, 0, -1);
+			pfctl_show_rules(dev, path, opts, PFCTL_SHOW_LABELS,
+			    anchorname, 0, 0, -1);
 			pfctl_show_timeouts(dev, opts);
 			pfctl_show_limits(dev, opts);
 			pfctl_show_tables(anchorname, opts);
