@@ -1,4 +1,4 @@
-/* $OpenBSD: opacket.c,v 1.8 2019/01/19 21:31:32 djm Exp $ */
+/* $OpenBSD: opacket.c,v 1.9 2019/01/19 21:33:14 djm Exp $ */
 /* Written by Markus Friedl. Placed in the public domain.  */
 
 #include "ssherr.h"
@@ -230,7 +230,7 @@ packet_read_seqnr(u_int32_t *seqnr)
 	int r;
 
 	if ((r = ssh_packet_read_seqnr(active_state, &type, seqnr)) != 0)
-		sshpkt_fatal(active_state, __func__, r);
+		sshpkt_fatal(active_state, r, "%s", __func__);
 	return type;
 }
 
@@ -241,7 +241,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr)
 	int r;
 
 	if ((r = ssh_packet_read_poll_seqnr(active_state, &type, seqnr)))
-		sshpkt_fatal(active_state, __func__, r);
+		sshpkt_fatal(active_state, r, "%s", __func__);
 	return type;
 }
 
@@ -258,7 +258,7 @@ packet_process_incoming(const char *buf, u_int len)
 	int r;
 
 	if ((r = ssh_packet_process_incoming(active_state, buf, len)) != 0)
-		sshpkt_fatal(active_state, __func__, r);
+		sshpkt_fatal(active_state, r, "%s", __func__);
 }
 
 void
@@ -267,7 +267,7 @@ packet_write_wait(void)
 	int r;
 
 	if ((r = ssh_packet_write_wait(active_state)) != 0)
-		sshpkt_fatal(active_state, __func__, r);
+		sshpkt_fatal(active_state, r, "%s", __func__);
 }
 
 void
@@ -276,7 +276,7 @@ packet_write_poll(void)
 	int r;
 
 	if ((r = ssh_packet_write_poll(active_state)) != 0)
-		sshpkt_fatal(active_state, __func__, r);
+		sshpkt_fatal(active_state, r, "%s", __func__);
 }
 
 void
@@ -285,5 +285,5 @@ packet_read_expect(int expected_type)
 	int r;
 
 	if ((r = ssh_packet_read_expect(active_state, expected_type)) != 0)
-		sshpkt_fatal(active_state, __func__, r);
+		sshpkt_fatal(active_state, r, "%s", __func__);
 }
