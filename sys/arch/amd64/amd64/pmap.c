@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.124 2019/01/17 01:52:27 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.125 2019/01/19 04:07:12 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -758,6 +758,7 @@ pmap_randomize(void)
 {
 	pd_entry_t *pml4va, *oldpml4va;
 	paddr_t pml4pa;
+	int i;
 
 	pml4va = km_alloc(PAGE_SIZE, &kv_page, &kp_zero, &kd_nowait);
 	if (pml4va == NULL)
@@ -779,10 +780,56 @@ pmap_randomize(void)
 	/* Fixup recursive PTE PML4E slot. We are only changing the PA */	
 	pml4va[PDIR_SLOT_PTE] = pml4pa | (pml4va[PDIR_SLOT_PTE] & ~PG_FRAME);
 
+	for (i = 0; i < NPDPG; i++) {
+		/* PTE slot already handled earlier */
+		if (i == PDIR_SLOT_PTE)
+			continue;
+
+		if (pml4va[i] & PG_FRAME)
+			pmap_randomize_level(&pml4va[i], 3);
+	}
+
 	/* Wipe out bootstrap PML4 */
 	memset(oldpml4va, 0, PAGE_SIZE);
+	tlbflush();
+}
+
+void
+pmap_randomize_level(pd_entry_t *pde, int level)
+{
+	pd_entry_t *new_pd_va;
+	paddr_t old_pd_pa, new_pd_pa;
+	vaddr_t old_pd_va;
+	struct vm_page *pg;
+	int i;
+
+	if (level == 0)
+		return;
+
+	if (level < 3 && (*pde & PG_PS))
+		return;
+
+	new_pd_va = km_alloc(PAGE_SIZE, &kv_page, &kp_zero, &kd_nowait);
+	if (new_pd_va == NULL)
+		panic("%s: cannot allocate page for L%d page directory",
+		    __func__, level);
+
+	old_pd_pa = *pde & PG_FRAME;
+	old_pd_va = PMAP_DIRECT_MAP(old_pd_pa);
+	pmap_extract(pmap_kernel(), (vaddr_t)new_pd_va, &new_pd_pa);
+	memcpy(new_pd_va, (void *)old_pd_va, PAGE_SIZE);
+	*pde = new_pd_pa | (*pde & ~PG_FRAME);
 
 	tlbflush();
+	memset((void *)old_pd_va, 0, PAGE_SIZE);
+
+	pg = PHYS_TO_VM_PAGE(old_pd_pa);
+	if (pg)
+		uvm_pagefree(pg);
+
+	for (i = 0; i < NPDPG; i++)
+		if (new_pd_va[i] & PG_FRAME)
+			pmap_randomize_level(&new_pd_va[i], level - 1);
 }
 
 /*
