@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.2 2019/01/08 16:23:01 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.3 2019/01/19 16:21:00 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -136,7 +136,6 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct viomb_softc *sc = (struct viomb_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
-	u_int32_t features;
 	int i;
 
 	if (vsc->sc_child != NULL) {
@@ -159,10 +158,8 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_BIO;
 	vsc->sc_config_change = viomb_config_change;
 
-	/* negotiate features */
-	features = VIRTIO_F_RING_INDIRECT_DESC;
-	features = virtio_negotiate_features(vsc, features,
-					     viomb_feature_names);
+	virtio_negotiate_features(vsc, VIRTIO_BALLOON_F_MUST_TELL_HOST,
+	    viomb_feature_names);
 
 	if ((virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE], VQ_INFLATE,
 	     sizeof(u_int32_t) * PGS_PER_REQ, 1, "inflate") != 0))
