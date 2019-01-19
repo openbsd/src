@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.46 2018/06/07 21:23:44 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.47 2019/01/19 13:27:49 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -122,8 +122,6 @@
                     ..
                     fvwm
                     ..
-                    proxymngr
-                    ..
                     x11perfcomp
                     ..
                     xedit
@@ -142,13 +140,7 @@
                     ..
                     extensions
                     ..
-                    fonts
-                    ..
                     input
-                    ..
-                    linux
-                    ..
-                    multimedia
                     ..
                 ..
                 pkgconfig
@@ -231,11 +223,7 @@
                         ..
                         ja.JIS
                         ..
-                        ja.S90
-                        ..
                         ja.SJIS
-                        ..
-                        ja.U90
                         ..
                         ja_JP.UTF-8
                         ..
