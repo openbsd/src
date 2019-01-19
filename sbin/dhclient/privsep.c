@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.71 2017/09/20 19:21:00 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.72 2019/01/19 02:45:05 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -52,7 +52,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 	index = if_nametoindex(name);
 	if (index == 0) {
 		log_warnx("%s: unknown interface", log_procname);
-		quit = INTERNALSIG;
+		quit = TERMINATE;
 		return;
 	}
 
@@ -152,7 +152,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 			if (imsg.hdr.len != IMSG_HEADER_SIZE)
 				log_warnx("%s: bad IMSG_HUP", log_procname);
 			else
-				quit = SIGHUP;
+				quit = RESTART;
 			break;
 
 		default:

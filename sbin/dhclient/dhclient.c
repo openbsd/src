@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.615 2019/01/19 02:20:25 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.616 2019/01/19 02:45:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -290,7 +290,7 @@ interface_state(struct interface_info *ifi)
 		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
 			tick_msg("", 0, INT64_MAX);
 			log_warnx("%s: LLADDR changed", log_procname);
-			quit = SIGHUP;
+			quit = RESTART;
 		}
 	}
 }
@@ -375,7 +375,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		} else if ((rtm->rtm_flags & RTF_PROTO2) != 0) {
 			release_lease(ifi); /* OK even if we sent it. */
 			ifi->state = S_PREBOOT;
-			quit = INTERNALSIG;
+			quit = TERMINATE;
 		}
 		break;
 
@@ -408,7 +408,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		    ifie->ifie_nwid, ifie->ifie_nwid_len) != 0) {
 			tick_msg("", 0, INT64_MAX);
 			log_warnx("%s: SSID changed", log_procname);
-			quit = SIGHUP;
+			quit = RESTART;
 			return;
 		}
 		break;
@@ -2246,7 +2246,7 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 	imsg_clear(priv_ibuf);
 	close(fd);
 
-	if (quit == SIGHUP) {
+	if (quit == RESTART) {
 		log_warnx("%s: restarting", log_procname);
 		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
 		execvp(saved_argv[0], saved_argv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.269 2019/01/19 01:53:08 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.270 2019/01/19 02:45:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,8 @@
 
 #define	LOCAL_PORT	68
 #define	REMOTE_PORT	67
-#define	INTERNALSIG	SIG_ATOMIC_MAX
+#define	TERMINATE	1
+#define	RESTART		2
 #define DB_TIMEFMT	"%w %Y/%m/%d %T UTC"
 #define	RT_BUF_SIZE	2048
 

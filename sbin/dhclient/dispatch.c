@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.160 2019/01/19 02:20:25 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.161 2019/01/19 02:45:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -89,8 +89,8 @@ dispatch(struct interface_info *ifi, int routefd)
 	time_t			 cur_time, howlong;
 	int			 nfds, to_msec;
 
-	while (quit == 0 || quit == SIGHUP) {
-		if (quit == SIGHUP) {
+	while (quit == 0 || quit == RESTART) {
+		if (quit == RESTART) {
 			/* Ignore any future packets, messages or timeouts. */
 			if (ifi->bpffd != -1) {
 				close(ifi->bpffd);
@@ -299,7 +299,7 @@ flush_unpriv_ibuf(void)
 			if (errno == EAGAIN)
 				break;
 			if (quit == 0)
-				quit = INTERNALSIG;
+				quit = TERMINATE;
 			if (errno != EPIPE && errno != 0)
 				log_warn("%s: msgbuf_write(unpriv_ibuf)",
 				    log_procname);
