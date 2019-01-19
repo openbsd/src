@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.268 2019/01/14 04:54:46 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.269 2019/01/19 01:53:08 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -206,7 +206,7 @@ extern char			*path_lease_db;
 extern char			*log_procname;
 extern struct client_config	*config;
 extern struct imsgbuf		*unpriv_ibuf;
-extern volatile sig_atomic_t	 quit;
+extern int			 quit;
 extern int			 cmd_opts;
 #define		OPT_NOACTION	1
 #define		OPT_VERBOSE	2
