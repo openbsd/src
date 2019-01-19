@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.7 2019/01/18 06:51:29 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.8 2019/01/19 03:32:03 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -25,7 +25,8 @@
 
 __BEGIN_HIDDEN_DECLS
 
-#define TLS13_IO_EOF		0
+#define TLS13_IO_SUCCESS	 1
+#define TLS13_IO_EOF		 0
 #define TLS13_IO_FAILURE	-1
 #define TLS13_IO_WANT_POLLIN	-2
 #define TLS13_IO_WANT_POLLOUT	-3
