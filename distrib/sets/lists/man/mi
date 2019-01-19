@@ -1453,6 +1453,7 @@
 ./usr/share/man/man4/iwn.4
 ./usr/share/man/man4/ix.4
 ./usr/share/man/man4/ixgb.4
+./usr/share/man/man4/ixl.4
 ./usr/share/man/man4/jmb.4
 ./usr/share/man/man4/jme.4
 ./usr/share/man/man4/jmphy.4
