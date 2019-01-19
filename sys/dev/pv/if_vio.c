@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.7 2019/01/08 16:23:01 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.8 2019/01/19 16:23:46 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -531,8 +531,8 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	 * VIRTIO_F_RING_EVENT_IDX can be switched off by setting bit 2 in the
 	 * driver flags, see config(8)
 	 */
-	if (!(sc->sc_dev.dv_cfdata->cf_flags & 2) &&
-	    !(vsc->sc_dev.dv_cfdata->cf_flags & 2))
+	if (!(sc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_EVENT_IDX) &&
+	    !(vsc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_EVENT_IDX))
 		features |= VIRTIO_F_RING_EVENT_IDX;
 	else
 		printf(": RingEventIdx disabled by UKC");

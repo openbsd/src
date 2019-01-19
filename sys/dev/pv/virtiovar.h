@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.9 2019/01/10 18:06:56 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.10 2019/01/19 16:23:46 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -78,6 +78,10 @@
 #ifndef VIRTIO_DEBUG
 #define VIRTIO_DEBUG		0
 #endif
+
+/* flags for config(8) */
+#define VIRTIO_CF_NO_INDIRECT		1
+#define VIRTIO_CF_NO_EVENT_IDX		2
 
 struct vq_entry {
 	SLIST_ENTRY(vq_entry)	 qe_list;	/* free list */
