@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.16 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: x509.c,v 1.17 2019/01/19 21:17:05 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -788,7 +788,7 @@ x509_main(int argc, char **argv)
 				const EVP_MD *fdig = digest;
 
 				if (!fdig)
-					fdig = EVP_sha1();
+					fdig = EVP_sha256();
 
 				if (!X509_digest(x, fdig, md, &n)) {
 					BIO_printf(bio_err, "out of memory\n");
