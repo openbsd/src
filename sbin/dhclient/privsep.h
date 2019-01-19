@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.57 2019/01/19 02:55:10 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.58 2019/01/19 21:07:13 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -18,7 +18,6 @@
 
 enum imsg_code {
 	IMSG_NONE,
-	IMSG_RESTART,
 	IMSG_DELETE_ADDRESS,
 	IMSG_SET_ADDRESS,
 	IMSG_FLUSH_ROUTES,

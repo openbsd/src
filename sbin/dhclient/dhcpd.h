@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.270 2019/01/19 02:45:05 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.271 2019/01/19 21:07:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -223,6 +223,7 @@ void		 bootreply(struct interface_info *, struct option_data *,
     const char *);
 void		 free_client_lease(struct client_lease *);
 void		 routefd_handler(struct interface_info *, int);
+void		 state_preboot(struct interface_info *);
 
 /* packet.c */
 void		 assemble_eh_header(struct ether_addr, struct ether_header *);

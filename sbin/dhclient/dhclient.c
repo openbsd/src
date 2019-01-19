@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.616 2019/01/19 02:45:05 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.617 2019/01/19 21:07:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -141,7 +141,6 @@ void		 rtm_dispatch(struct interface_info *, struct rt_msghdr *);
 struct client_lease *apply_defaults(struct client_lease *);
 struct client_lease *clone_lease(struct client_lease *);
 
-void state_preboot(struct interface_info *);
 void state_reboot(struct interface_info *);
 void state_init(struct interface_info *);
 void state_selecting(struct interface_info *);
@@ -289,7 +288,7 @@ interface_state(struct interface_info *ifi)
 		get_hw_address(ifi);
 		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
 			tick_msg("", 0, INT64_MAX);
-			log_warnx("%s: LLADDR changed", log_procname);
+			log_debug("%s: LLADDR changed", log_procname);
 			quit = RESTART;
 		}
 	}
@@ -393,10 +392,8 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
 		interface_state(ifi);
 		if (quit == 0) {
-			if (LINK_STATE_IS_UP(ifi->link_state) != oldlinkup) {
-				ifi->state = S_PREBOOT;
-				state_preboot(ifi);
-			}
+			if (LINK_STATE_IS_UP(ifi->link_state) != oldlinkup)
+				quit = RESTART;
 		}
 		break;
 
@@ -407,7 +404,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if (ifi->ssid_len != ifie->ifie_nwid_len || memcmp(ifi->ssid,
 		    ifie->ifie_nwid, ifie->ifie_nwid_len) != 0) {
 			tick_msg("", 0, INT64_MAX);
-			log_warnx("%s: SSID changed", log_procname);
+			log_debug("%s: SSID changed", log_procname);
 			quit = RESTART;
 			return;
 		}
@@ -664,10 +661,7 @@ main(int argc, char *argv[])
 			fatal("pledge");
 	}
 
-	time(&ifi->startup_time);
-	ifi->state = S_PREBOOT;
-	state_preboot(ifi);
-
+	quit = RESTART;
 	dispatch(ifi, routefd);
 
 	/* not reached */
@@ -2245,13 +2239,6 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 
 	imsg_clear(priv_ibuf);
 	close(fd);
-
-	if (quit == RESTART) {
-		log_warnx("%s: restarting", log_procname);
-		signal(SIGHUP, SIG_IGN); /* will be restored after exec */
-		execvp(saved_argv[0], saved_argv);
-		fatal("execvp(%s)", saved_argv[0]);
-	}
 
 	exit(1);
 }

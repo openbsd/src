@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.73 2019/01/19 02:55:10 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.74 2019/01/19 21:07:13 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -146,13 +146,6 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 					priv_write_resolv_conf(resolv_conf);
 				lastidx = newidx;
 			}
-			break;
-
-		case IMSG_RESTART:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE)
-				log_warnx("%s: bad IMSG_RESTART", log_procname);
-			else
-				quit = RESTART;
 			break;
 
 		default:

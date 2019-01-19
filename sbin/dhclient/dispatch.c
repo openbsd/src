@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.162 2019/01/19 02:55:10 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.163 2019/01/19 21:07:13 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -76,7 +76,6 @@ void bpffd_handler(struct interface_info *);
 void dhcp_packet_dispatch(struct interface_info *, struct sockaddr_in *,
     struct ether_addr *);
 void flush_unpriv_ibuf(void);
-void sendrestart(void);
 
 /*
  * Loop waiting for packets, timeouts or routing messages.
@@ -91,20 +90,12 @@ dispatch(struct interface_info *ifi, int routefd)
 
 	while (quit == 0 || quit == RESTART) {
 		if (quit == RESTART) {
-			/* Ignore any future packets, messages or timeouts. */
-			if (ifi->bpffd != -1) {
-				close(ifi->bpffd);
-				ifi->bpffd = -1;
-			}
-			if (routefd != -1) {
-				close(routefd);
-				routefd = -1;
-			}
-			if (ifi->timeout_func != NULL)
-				cancel_timeout(ifi);
-			sendrestart();
-			to_msec = 100;
-		} else if (ifi->timeout_func != NULL) {
+			quit = 0;
+			time(&ifi->startup_time);
+			ifi->state = S_PREBOOT;
+			state_preboot(ifi);
+		}
+		if (ifi->timeout_func != NULL) {
 			time(&cur_time);
 			if (ifi->timeout <= cur_time) {
 				func = ifi->timeout_func;
@@ -323,17 +314,4 @@ cancel_timeout(struct interface_info *ifi)
 {
 	ifi->timeout = 0;
 	ifi->timeout_func = NULL;
-}
-
-/*
- * Inform the [priv] process it needs to restart.
- */
-void
-sendrestart(void)
-{
-	int rslt;
-
-	rslt = imsg_compose(unpriv_ibuf, IMSG_RESTART, 0, 0, -1, NULL, 0);
-	if (rslt == -1)
-		log_warn("%s: imsg_compose(IMSG_RESTART)", log_procname);
 }
