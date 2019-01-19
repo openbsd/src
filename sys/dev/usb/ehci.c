@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.201 2019/01/08 13:49:47 uaa Exp $ */
+/*	$OpenBSD: ehci.c,v 1.202 2019/01/19 18:50:24 uaa Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1429,15 +1429,30 @@ ehci_open(struct usbd_pipe *pipe)
 		    EHCI_QH_CTL : 0) |
 		    EHCI_QH_SET_NRL(naks)
 		);
+		/*
+		 * To reduce conflict with split isochronous transfer,
+		 * schedule (split) interrupt trasnfer at latter half of
+		 * 1ms frame:
+		 *
+		 *         |<-------------- H-Frame -------------->|
+		 *         .H0  :H1   H2   H3   H4   H5   H6   H7  .H0" :H1"
+		 *         .    :                                  .    :
+		 * [HS]    .    :          SS        CS   CS'  CS" .    :
+		 * [FS/LS] .    :               |<== >>>> >>>|     .    :
+		 *         .    :                                  .    :
+		 *         .B7' :B0   B1   B2   B3   B4   B5   B6  .B7  :B0"
+		 *              |<-------------- B-Frame -------------->|
+		 *
+		 */
 		sqh->qh.qh_endphub = htole32(
 		    EHCI_QH_SET_MULT(1) |
-		    EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x01 : 0)
+		    EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x08 : 0)
 		);
 		if (speed != EHCI_QH_SPEED_HIGH) {
 			sqh->qh.qh_endphub |= htole32(
 			    EHCI_QH_SET_HUBA(hshubaddr) |
 			    EHCI_QH_SET_PORT(hshubport) |
-			    EHCI_QH_SET_CMASK(0x1c) /* XXX */
+			    EHCI_QH_SET_CMASK(0xe0)
 			);
 		}
 		sqh->qh.qh_curqtd = htole32(EHCI_LINK_TERMINATE);
