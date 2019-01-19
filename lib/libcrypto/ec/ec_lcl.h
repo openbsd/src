@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.12 2019/01/19 01:07:00 tb Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.13 2019/01/19 01:12:48 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -457,6 +457,9 @@ struct ec_key_method_st {
 	int (*set_group)(EC_KEY *key, const EC_GROUP *grp);
 	int (*set_private)(EC_KEY *key, const BIGNUM *priv_key);
 	int (*set_public)(EC_KEY *key, const EC_POINT *pub_key);
+	int (*keygen)(EC_KEY *key);
+	int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+	    void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen));
 	int (*sign)(int type, const unsigned char *dgst, int dlen, unsigned char
 	    *sig, unsigned int *siglen, const BIGNUM *kinv,
 	    const BIGNUM *r, EC_KEY *eckey);
@@ -465,9 +468,21 @@ struct ec_key_method_st {
 	ECDSA_SIG *(*sign_sig)(const unsigned char *dgst, int dgst_len,
 	    const BIGNUM *in_kinv, const BIGNUM *in_r,
 	    EC_KEY *eckey);
+	int (*verify)(int type, const unsigned char *dgst, int dgst_len,
+	    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
+	int (*verify_sig)(const unsigned char *dgst, int dgst_len,
+	    const ECDSA_SIG *sig, EC_KEY *eckey);
 } /* EC_KEY_METHOD */;
 
 #define EC_KEY_METHOD_DYNAMIC   1
+
+int ossl_ec_key_gen(EC_KEY *eckey);
+int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+    void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen));
+int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
+int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
+    const ECDSA_SIG *sig, EC_KEY *eckey);
 
 /* method functions in ecp_nistp521.c */
 int ec_GFp_nistp521_group_init(EC_GROUP *group);

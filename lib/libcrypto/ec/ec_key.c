@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.23 2019/01/19 01:07:00 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.24 2019/01/19 01:12:48 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -247,8 +247,17 @@ EC_KEY_get_ex_data(const EC_KEY *r, int idx)
 	return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
 
-int 
+int
 EC_KEY_generate_key(EC_KEY *eckey)
+{
+	if (eckey->meth->keygen != NULL)
+		return eckey->meth->keygen(eckey);
+	ECerror(EC_R_NOT_IMPLEMENTED);
+	return 0;
+}
+
+int
+ossl_ec_key_gen(EC_KEY *eckey)
 {
 	int ok = 0;
 	BN_CTX *ctx = NULL;

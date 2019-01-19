@@ -956,11 +956,17 @@ EC_GROUP_set_generator
 EC_GROUP_set_point_conversion_form
 EC_GROUP_set_seed
 EC_KEY_METHOD_free
+EC_KEY_METHOD_get_compute_key
 EC_KEY_METHOD_get_init
+EC_KEY_METHOD_get_keygen
 EC_KEY_METHOD_get_sign
+EC_KEY_METHOD_get_verify
 EC_KEY_METHOD_new
+EC_KEY_METHOD_set_compute_key
 EC_KEY_METHOD_set_init
+EC_KEY_METHOD_set_keygen
 EC_KEY_METHOD_set_sign
+EC_KEY_METHOD_set_verify
 EC_KEY_OpenSSL
 EC_KEY_check_key
 EC_KEY_clear_flags

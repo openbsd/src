@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.17 2019/01/19 01:07:00 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.18 2019/01/19 01:12:48 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -55,6 +55,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#include <string.h>
 
 #include <openssl/opensslconf.h>
 
@@ -421,6 +423,32 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	return ecdsa->meth->ecdsa_do_sign(dgst, dgst_len, in_kinv, in_r, eckey);
 }
 
+int
+ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
+{
+	ECDSA_SIG *s;
+	unsigned char *der = NULL;
+	const unsigned char *p = sigbuf;
+	int derlen = -1;
+	int ret = -1;
+
+	if ((s = ECDSA_SIG_new()) == NULL)
+		return (ret);
+	if (d2i_ECDSA_SIG(&s, &p, sig_len) == NULL)
+		goto err;
+	/* Ensure signature uses DER and doesn't have trailing garbage */
+	derlen = i2d_ECDSA_SIG(s, &der);
+	if (derlen != sig_len || memcmp(sigbuf, der, derlen))
+		goto err;
+	ret = ECDSA_do_verify(dgst, dgst_len, s, eckey);
+
+ err:
+	freezero(der, derlen);
+	ECDSA_SIG_free(s);
+	return (ret);
+}
+
 static int
 ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
     EC_KEY *eckey)
@@ -523,4 +551,16 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
 	return ret;
+}
+
+/* replace w/ ecdsa_do_verify() when ECDSA_METHOD gets removed */
+int
+ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
+    const ECDSA_SIG *sig, EC_KEY *eckey)
+{
+	ECDSA_DATA *ecdsa;
+
+	if ((ecdsa = ecdsa_check(eckey)) == NULL)
+		return 0;
+	return ecdsa->meth->ecdsa_do_verify(dgst, dgst_len, sig, eckey);
 }
