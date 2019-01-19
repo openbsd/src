@@ -1,8 +1,9 @@
-/* $OpenBSD: opacket.c,v 1.7 2017/10/20 01:56:39 djm Exp $ */
+/* $OpenBSD: opacket.c,v 1.8 2019/01/19 21:31:32 djm Exp $ */
 /* Written by Markus Friedl. Placed in the public domain.  */
 
 #include "ssherr.h"
 #include "packet.h"
+#include "opacket.h" /* XXX */
 #include "log.h"
 
 struct ssh *active_state, *backup_state;
