@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.161 2019/01/19 02:45:05 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.162 2019/01/19 02:55:10 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -76,7 +76,7 @@ void bpffd_handler(struct interface_info *);
 void dhcp_packet_dispatch(struct interface_info *, struct sockaddr_in *,
     struct ether_addr *);
 void flush_unpriv_ibuf(void);
-void sendhup(void);
+void sendrestart(void);
 
 /*
  * Loop waiting for packets, timeouts or routing messages.
@@ -102,7 +102,7 @@ dispatch(struct interface_info *ifi, int routefd)
 			}
 			if (ifi->timeout_func != NULL)
 				cancel_timeout(ifi);
-			sendhup();
+			sendrestart();
 			to_msec = 100;
 		} else if (ifi->timeout_func != NULL) {
 			time(&cur_time);
@@ -326,14 +326,14 @@ cancel_timeout(struct interface_info *ifi)
 }
 
 /*
- * Inform the [priv] process a HUP was received.
+ * Inform the [priv] process it needs to restart.
  */
 void
-sendhup(void)
+sendrestart(void)
 {
 	int rslt;
 
-	rslt = imsg_compose(unpriv_ibuf, IMSG_HUP, 0, 0, -1, NULL, 0);
+	rslt = imsg_compose(unpriv_ibuf, IMSG_RESTART, 0, 0, -1, NULL, 0);
 	if (rslt == -1)
-		log_warn("%s: imsg_compose(IMSG_HUP)", log_procname);
+		log_warn("%s: imsg_compose(IMSG_RESTART)", log_procname);
 }
