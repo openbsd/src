@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.48 2019/01/20 17:51:55 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.49 2019/01/20 17:56:55 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -14,8 +14,8 @@
             ..
             xinit
             ..
-	    xsm
-	    ..
+            xsm
+            ..
         ..
         fonts
             conf.avail
@@ -131,8 +131,8 @@
                         ..
                     ..
                 ..
-		locate
-		..
+                locate
+                ..
                 modules
                     dri
                     ..
@@ -162,8 +162,8 @@
             ..
             share
                 X11
-		    app-defaults
-		    ..
+                    app-defaults
+                    ..
                     locale
                         C
                         ..
@@ -171,8 +171,8 @@
                         ..
                         armscii-8
                         ..
-			cs_CZ.UTF-8
-			..
+                        cs_CZ.UTF-8
+                        ..
                         el_GR.UTF-8
                         ..
                         en_US.UTF-8
@@ -332,8 +332,8 @@
                         types
                         ..
                     ..
-		    xorg.conf.d
-		    ..
+                    xorg.conf.d
+                    ..
                 ..
                 aclocal
                 ..
@@ -425,8 +425,8 @@
                 ..
                 mk
                 ..
-		util-macros
-		..
+                util-macros
+                ..
                 xcb
                 ..
             ..
