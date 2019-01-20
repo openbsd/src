@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.30 2019/01/18 12:16:15 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.31 2019/01/20 02:53:56 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -170,7 +170,8 @@ tlsext_alpn_client_parse(SSL *s, CBS *cbs, int *alert)
 int
 tlsext_supportedgroups_client_needs(SSL *s)
 {
-	return ssl_has_ecc_ciphers(s);
+	return ssl_has_ecc_ciphers(s) ||
+	    (S3I(s)->hs_tls13.max_version >= TLS1_3_VERSION);
 }
 
 int
@@ -1293,7 +1294,7 @@ tlsext_keyshare_client_parse(SSL *s, CBS *cbs, int *alert)
 	if (CBS_len(&key_exchange) != X25519_KEY_LENGTH)
 		goto err;
 	if (!CBS_stow(&key_exchange, &S3I(s)->hs_tls13.x25519_peer_public,
-		&out_len))
+	    &out_len))
 		goto err;
 
 	return 1;
@@ -1319,9 +1320,9 @@ tlsext_versions_client_needs(SSL *s)
 int
 tlsext_versions_client_build(SSL *s, CBB *cbb)
 {
+	uint16_t max, min;
 	uint16_t version;
 	CBB versions;
-	uint16_t max, min;
 
 	max = S3I(s)->hs_tls13.max_version;
 	min = S3I(s)->hs_tls13.min_version;
