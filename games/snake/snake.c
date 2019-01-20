@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.31 2019/01/20 04:10:12 tedu Exp $	*/
+/*	$OpenBSD: snake.c,v 1.32 2019/01/20 04:12:58 tedu Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -36,9 +36,6 @@
  * You move around the screen with arrow keys trying to pick up money
  * without getting eaten by the snake.  hjkl work as in vi in place of
  * arrow keys.  You can leave at the exit any time.
- *
- * compile as follows:
- *	cc -O snake.c move.c -o snake -lm -lcurses
  */
 
 #include <curses.h>
@@ -664,20 +661,6 @@ void
 snap(void)
 {
 
-	/* I don't see the graphical purpose of the next block of code.
-	 * It just makes no sense.
-	 *
-	 * struct point p;
-	 *
-	 * if (you.line < 3)
-	 *	pchar(point(&p, you.col, 0), '-');
-	 * if (you.line > lcnt - 4)
-	 *	pchar(point(&p, you.col, lcnt - 1), '_');
-	 * if(you.col < 10)
-	 *	pchar(point(&p, 0, you.line), '(');
-	 * if(you.col > ccnt-10)
-	 *	pchar(point(&p, ccnt-1, you.line), ')');
-	 */
 	if (!stretch(&money))
 		if (!stretch(&finish)) {
 			pchar(&you, '?');
@@ -685,25 +668,6 @@ snap(void)
 			delay(10);
 			pchar(&you, ME);
 		}
-	/* Again, I don't see the point of the following either.
-	 *
-	 * if (you.line < 3) {
-	 * 	point(&p, you.col, 0);
-	 * 	chk(&p);
-	 * }
-	 * if (you.line > lcnt - 4) {
-	 * 	point(&p, you.col, lcnt - 1);
-	 * 	chk(&p);
-	 * }
-	 * if (you.col < 10) {
-	 * 	point(&p, 0, you.line);
-	 * 	chk(&p);
-	 * }
-	 * if (you.col > ccnt-10) {
-	 * 	point(&p, ccnt - 1, you.line);
-	 * 	chk(&p);
-	 * }
-	 */
 	refresh();
 }
 
@@ -836,12 +800,6 @@ pushsnake(void)
 	int	issame = 0;
 	struct point tmp;
 
-	/*
-	 * My manual says times doesn't return a value.  Furthermore, the
-	 * snake should get his turn every time no matter if the user is
-	 * on a fast terminal with typematic keys or not.
-	 * So I have taken the call to times out.
-	 */
 	for (i = 4; i >= 0; i--)
 		if (same(&snake[i], &snake[5]))
 			issame++;
