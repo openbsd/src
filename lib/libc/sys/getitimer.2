@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.30 2019/01/18 09:36:47 cheloha Exp $
+.\"	$OpenBSD: getitimer.2,v 1.31 2019/01/20 04:55:06 schwarze Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getitimer.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: January 18 2019 $
+.Dd $Mdocdate: January 20 2019 $
 .Dt GETITIMER 2
 .Os
 .Sh NAME
@@ -145,9 +145,7 @@ Because this signal may interrupt in-progress
 system calls, programs using this timer must be prepared to
 restart interrupted system calls.
 .Pp
-The remaining five functions are in fact macros for manipulating time
-values, defined in
-.In sys/time.h .
+The remaining functions are implemented as macros:
 .Pp
 .Fn timerclear "a"
 sets the time value in
@@ -160,9 +158,8 @@ tests if the time value in
 is non-zero.
 .Pp
 .Fn timerisvalid "a"
-tests if the microsecond value in
-.Fa a
-is greater than or equal to zero and less than 1 million.
+tests the validity of the microsecond value in
+.Fa a .
 .Pp
 .Fn timercmp a b CMP
 compares two time values in the form
@@ -185,7 +182,21 @@ and stores the result in
 adds two timers and stores the result in
 .Fa res .
 .Sh RETURN VALUES
-.Rv -std
+.Rv -std getitimer setitimer
+.Pp
+.Fn timerisset
+returns a non-zero value if the time value in
+.Fa a
+is non-zero or 0 otherwise.
+.Pp
+.Fn timerisvalid
+returns 1 if the microsecond value in
+.Fa a
+is greater than or equal to zero and less than 1 million,
+or 0 otherwise.
+.Pp
+.Fn timercmp
+returns 1 if the given relation is true or 0 otherwise.
 .Sh ERRORS
 .Fn getitimer
 and
@@ -232,3 +243,20 @@ and
 .Fn setitimer
 system calls first appeared in
 .Bx 4.1c .
+.Pp
+The macros
+.Fn timerclear ,
+.Fn timerisset ,
+and
+.Fn timercmp
+first appeared in
+.Bx 4.1c ,
+.Fn timersub
+and
+.Fn timeradd
+in
+.Nx 1.1 ,
+and
+.Fn timerisvalid
+in
+.Ox 6.5 .
