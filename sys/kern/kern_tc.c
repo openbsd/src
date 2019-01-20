@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.35 2019/01/19 01:53:44 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.36 2019/01/20 01:13:03 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -24,6 +24,7 @@
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/kernel.h>
+#include <sys/mutex.h>
 #include <sys/timeout.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
@@ -101,6 +102,12 @@ static struct timehands th0 = {
 	1,
 	&th1
 };
+
+/*
+ * Protects writes to anything accessed during tc_windup().
+ * tc_windup() must be called before leaving this mutex.
+ */
+struct mutex timecounter_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
 
 static struct timehands *volatile timehands = &th0;
 struct timecounter *timecounter = &dummy_timecounter;
@@ -339,7 +346,6 @@ tc_getfrequency(void)
 /*
  * Step our concept of UTC, aka the realtime clock.
  * This is done by modifying our estimate of when we booted.
- * XXX: not locked.
  */
 void
 tc_setrealtimeclock(const struct timespec *ts)
@@ -347,15 +353,19 @@ tc_setrealtimeclock(const struct timespec *ts)
 	struct timespec ts2;
 	struct bintime bt, bt2;
 
+	mtx_enter(&timecounter_mtx);
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
 	bintime_add(&bt2, &timehands->th_boottime);
 	timehands->th_boottime = bt;
-	enqueue_randomness(ts->tv_sec);
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
+	mtx_leave(&timecounter_mtx);
+
+	enqueue_randomness(ts->tv_sec);
+
 	if (timestepwarnings) {
 		bintime2timespec(&bt2, &ts2);
 		log(LOG_INFO, "Time stepped from %lld.%09ld to %lld.%09ld\n",
@@ -367,7 +377,6 @@ tc_setrealtimeclock(const struct timespec *ts)
 /*
  * Step the monotonic and realtime clocks, triggering any timeouts that
  * should have occurred across the interval.
- * XXX: not locked.
  */
 void
 tc_setclock(const struct timespec *ts)
@@ -390,6 +399,7 @@ tc_setclock(const struct timespec *ts)
 
 	enqueue_randomness(ts->tv_sec);
 
+	mtx_enter(&timecounter_mtx);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &timehands->th_boottime);
 	bt2 = timehands->th_offset;
@@ -397,6 +407,7 @@ tc_setclock(const struct timespec *ts)
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
+	mtx_leave(&timecounter_mtx);
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
@@ -425,6 +436,8 @@ tc_windup(void)
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
 	int i;
+
+	MUTEX_ASSERT_LOCKED(&timecounter_mtx);
 
 	/*
 	 * Make the next timehands a copy of the current one, but do not
@@ -605,8 +618,11 @@ tc_ticktock(void)
 
 	if (++count < tc_tick)
 		return;
+	if (!mtx_enter_try(&timecounter_mtx))
+		return;
 	count = 0;
 	tc_windup();
+	mtx_leave(&timecounter_mtx);
 }
 
 void
