@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.29 2018/08/24 11:14:49 mestre Exp $	*/
+/*	$OpenBSD: snake.c,v 1.30 2019/01/20 04:09:15 tedu Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -844,8 +844,12 @@ pushsnake(void)
 	for (i = 4; i >= 0; i--)
 		if (same(&snake[i], &snake[5]))
 			issame++;
-	if (!issame)
-		pchar(&snake[5], ' ');
+	if (!issame) {
+		char sp = ' ';
+		if (same(&money, &snake[5]))
+			sp = TREASURE;
+		pchar(&snake[5], sp);
+	}
 	/* Need the following to catch you if you step on the snake's tail */
 	tmp.col = snake[5].col;
 	tmp.line = snake[5].line;
