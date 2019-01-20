@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.84 2018/12/12 20:21:04 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.85 2019/01/20 23:30:15 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 12 2018 $
+.Dd $Mdocdate: January 20 2019 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -116,12 +116,16 @@ The
 .Ar reason
 cannot exceed 128 octets.
 .Ar peer
-may be the neighbor's address or description.
+may be the neighbor's address, description or the word
+.Cm group
+followed by a group description.
 .It Cm neighbor Ar peer Cm destroy
 Destroy a previously cloned peer.
 The peer must be down before calling this function.
 .Ar peer
-may be the neighbor's address or description.
+may be the neighbor's address, description or the word
+.Cm group
+followed by a group description.
 .It Cm neighbor Ar peer Cm down Op Ar reason
 Take the BGP session to the specified neighbor down.
 If a
@@ -133,17 +137,23 @@ The
 .Ar reason
 cannot exceed 128 octets.
 .Ar peer
-may be the neighbor's address or description.
+may be the neighbor's address, description or the word
+.Cm group
+followed by a group description.
 .It Cm neighbor Ar peer Cm refresh
 Request the neighbor to re-send all routes.
 Note that the neighbor is not obliged to re-send all routes, or any routes at
 all, even if it announced the route refresh capability.
 .Ar peer
-may be the neighbor's address or description.
+may be the neighbor's address, description or the word
+.Cm group
+followed by a group description.
 .It Cm neighbor Ar peer Cm up
 Bring the BGP session to the specified neighbor up.
 .Ar peer
-may be the neighbor's address or description.
+may be the neighbor's address, description or the word
+.Cm group
+followed by a group description.
 .It Cm network add Ar prefix Op Ar arguments
 Add the specified prefix to the list of announced networks.
 It is possible to set various path attributes with additional
@@ -283,7 +293,6 @@ Multiple options and filters can be used at the same time.
 .It Cm show neighbor Ar peer modifier
 Show detailed information about the neighbor identified by
 .Ar peer ,
-which may be the neighbor's address or description,
 according to the given
 .Ar modifier :
 .Pp
@@ -299,6 +308,10 @@ prefix count, the number of sent and received updates, and withdraws.
 .It Cm timers
 Show the BGP timers.
 .El
+.Ar peer
+may be the neighbor's address, description or the word
+.Cm group
+followed by a group description.
 .It Cm show nexthop
 Show the list of BGP nexthops and the result of their validity check.
 .It Xo
@@ -339,6 +352,8 @@ Show all entries that are internal routes with no AS's in the AS path.
 Show RIB memory statistics.
 .It Cm neighbor Ar peer
 Show only entries from the specified peer.
+.It Cm neighbor group Ar description
+Show only entries from the specified peer group.
 .It Cm peer-as Ar as
 Show all entries with
 .Ar as

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.227 2018/12/19 15:27:29 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.228 2019/01/20 23:30:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -156,6 +156,7 @@ main(int argc, char *argv[])
 
 	memcpy(&neighbor.addr, &res->peeraddr, sizeof(neighbor.addr));
 	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
+	neighbor.is_group = res->is_group;
 	strlcpy(neighbor.shutcomm, res->shutcomm, sizeof(neighbor.shutcomm));
 
 	switch (res->action) {

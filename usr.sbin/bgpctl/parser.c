@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.88 2018/12/19 15:27:29 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.89 2019/01/20 23:30:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -44,6 +44,7 @@ enum token_type {
 	ASTYPE,
 	PREFIX,
 	PEERDESC,
+	GROUPDESC,
 	RIBNAME,
 	SHUTDOWN_COMMUNICATION,
 	COMMUNITY,
@@ -220,7 +221,13 @@ static const struct token t_show_mrt_file[] = {
 	{ ENDTOKEN,	"",		NONE,	NULL}
 };
 
+static const struct token t_show_rib_neigh_group[] = {
+	{ GROUPDESC,	"",		NONE,	t_show_rib},
+	{ ENDTOKEN,	"",		NONE,	NULL}
+};
+
 static const struct token t_show_rib_neigh[] = {
+	{ KEYWORD,	"group",	NONE,	t_show_rib_neigh_group},
 	{ PEERADDRESS,	"",		NONE,	t_show_rib},
 	{ PEERDESC,	"",		NONE,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,	NULL}
@@ -236,19 +243,25 @@ static const struct token t_show_rib_rib[] = {
 	{ ENDTOKEN,	"",		NONE,	NULL}
 };
 
-static const struct token t_show_neighbor[] = {
-	{ NOTOKEN,	"",		NONE,	NULL},
-	{ PEERADDRESS,	"",		NONE,	t_show_neighbor_modifiers},
-	{ PEERDESC,	"",		NONE,	t_show_neighbor_modifiers},
-	{ ENDTOKEN,	"",		NONE,	NULL}
-};
-
 static const struct token t_show_neighbor_modifiers[] = {
 	{ NOTOKEN,	"",		NONE,			NULL},
 	{ KEYWORD,	"timers",	SHOW_NEIGHBOR_TIMERS,	NULL},
 	{ KEYWORD,	"messages",	SHOW_NEIGHBOR,		NULL},
 	{ KEYWORD,	"terse",	SHOW_NEIGHBOR_TERSE,	NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
+};
+
+static const struct token t_show_neighbor_group[] = {
+	{ GROUPDESC,	"",		NONE,	t_show_neighbor_modifiers},
+	{ ENDTOKEN,	"",		NONE,	NULL}
+};
+
+static const struct token t_show_neighbor[] = {
+	{ NOTOKEN,	"",		NONE,	NULL},
+	{ KEYWORD,	"group",	NONE,	t_show_neighbor_group},
+	{ PEERADDRESS,	"",		NONE,	t_show_neighbor_modifiers},
+	{ PEERDESC,	"",		NONE,	t_show_neighbor_modifiers},
+	{ ENDTOKEN,	"",		NONE,	NULL}
 };
 
 static const struct token t_fib[] = {
@@ -258,7 +271,13 @@ static const struct token t_fib[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
+static const struct token t_neighbor_group[] = {
+	{ GROUPDESC,	"",		NONE,		t_neighbor_modifiers},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
 static const struct token t_neighbor[] = {
+	{ KEYWORD,	"group",	NONE,		t_neighbor_group},
 	{ PEERADDRESS,	"",		NONE,		t_neighbor_modifiers},
 	{ PEERDESC,	"",		NONE,		t_neighbor_modifiers},
 	{ ENDTOKEN,	"",		NONE,		NULL}
@@ -622,6 +641,9 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case GROUPDESC:
+			res.is_group = 1;
+			/* FALLTHROUGH */
 		case PEERDESC:
 			if (!match && word != NULL && wordlen > 0) {
 				if (strlcpy(res.peerdesc, word,
@@ -788,6 +810,7 @@ show_valid_args(const struct token table[])
 		case ASNUM:
 			fprintf(stderr, "  <asnum>\n");
 			break;
+		case GROUPDESC:
 		case PEERDESC:
 			fprintf(stderr, "  <neighbor description>\n");
 			break;
