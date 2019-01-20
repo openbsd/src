@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.11 2019/01/19 17:23:32 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.12 2019/01/20 09:47:31 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -99,7 +99,7 @@ __sanitizer_cov_trace_pc(void)
 		return;
 
 	idx = kd->kd_buf[0];
-	if (idx < kd->kd_nmemb) {
+	if (idx + 1 <= kd->kd_nmemb) {
 		kd->kd_buf[idx + 1] = (uintptr_t)__builtin_return_address(0);
 		kd->kd_buf[0] = idx + 1;
 	}
