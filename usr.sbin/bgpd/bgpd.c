@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.206 2019/01/18 23:30:45 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.207 2019/01/20 06:13:40 bcook Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 	struct bgpd_config	*conf;
 	struct peer		*peer_l, *p;
 	struct pollfd		 pfd[POLL_MAX];
-	pid_t			 io_pid = 0, rde_pid = 0, pid;
+	pid_t			 se_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	char			*saved_argv0;
 	int			 debug = 0;
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
 	/* fork children */
 	rde_pid = start_child(PROC_RDE, saved_argv0, pipe_m2r[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
-	io_pid = start_child(PROC_SE, saved_argv0, pipe_m2s[1], debug,
+	se_pid = start_child(PROC_SE, saved_argv0, pipe_m2s[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
 
 	signal(SIGTERM, sighdlr);
@@ -360,10 +360,15 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		if (pid == -1) {
 			if (errno != EINTR && errno != ECHILD)
 				fatal("wait");
-		} else if (WIFSIGNALED(status))
-			log_warnx("%s terminated; signal %d",
-			    (pid == rde_pid) ? "route decision engine" :
-			    "session engine", WTERMSIG(status));
+		} else if (WIFSIGNALED(status)) {
+			char *name = "unknown process";
+			if (pid == rde_pid)
+				name = "route decision engine";
+			else if (pid == se_pid)
+				name = "session engine";
+			log_warnx("%s terminated; signal %d", name,
+				WTERMSIG(status));
+		}
 	} while (pid != -1 || (pid == -1 && errno == EINTR));
 
 	free(rcname);
@@ -605,7 +610,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_AS_SET_DONE, 0, 0, -1,
 		    NULL, 0) == -1)
 			return -1;
-		
+
 		set_free(aset->set);
 		free(aset);
 	}
