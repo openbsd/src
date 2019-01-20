@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.32 2019/01/20 04:12:58 tedu Exp $	*/
+/*	$OpenBSD: snake.c,v 1.33 2019/01/20 04:14:19 tedu Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -822,7 +822,6 @@ pushsnake(void)
 			surround(&you);
 			i = (cashvalue) % 10;
 			bonus = arc4random_uniform(10);
-			mvprintw(lcnt + 1, 0, "%d\n", bonus);
 			refresh();
 			delay(30);
 			if (bonus == i) {
