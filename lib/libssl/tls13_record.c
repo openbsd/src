@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.c,v 1.1 2019/01/19 02:53:54 jsing Exp $ */
+/* $OpenBSD: tls13_record.c,v 1.2 2019/01/20 09:12:05 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -62,6 +62,17 @@ tls13_record_free(struct tls13_record *rec)
 	freezero(rec, sizeof(struct tls13_record));
 }
 
+int
+tls13_record_header(struct tls13_record *rec, CBS *cbs)
+{
+	if (rec->data_len < TLS13_RECORD_HEADER_LEN)
+		return 0;
+
+	CBS_init(cbs, rec->data, TLS13_RECORD_HEADER_LEN);
+
+	return 1;
+}
+
 uint8_t
 tls13_record_content_type(struct tls13_record *rec)
 {
@@ -89,13 +100,18 @@ tls13_record_data(struct tls13_record *rec, CBS *cbs)
 	CBS_init(cbs, rec->data, rec->data_len);
 }
 
-void
+int
 tls13_record_set_data(struct tls13_record *rec, uint8_t *data, size_t data_len)
 {
+	if (data_len > TLS13_RECORD_MAX_LEN)
+		return 0;
+
 	freezero(rec->data, rec->data_len);
 	rec->data = data;
 	rec->data_len = data_len;
 	CBS_init(&rec->cbs, rec->data, rec->data_len);
+
+	return 1;
 }
 
 ssize_t
@@ -122,6 +138,10 @@ tls13_record_recv(struct tls13_record *rec, tls13_read_cb wire_read,
 		if (!CBS_get_u16(&cbs, &rec_version))
 			return TLS13_IO_FAILURE;
 		if (!CBS_get_u16(&cbs, &rec_len))
+			return TLS13_IO_FAILURE;
+
+		/* XXX - record overflow alert. */
+		if (rec_len > TLS13_RECORD_MAX_CIPHERTEXT_LEN)
 			return TLS13_IO_FAILURE;
 
 		rec->content_type = content_type;
