@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.10 2019/01/19 00:08:10 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.11 2019/01/20 01:32:08 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1020,6 +1020,14 @@ struct ixl_rx_ring {
 	unsigned int		 rxr_qid;
 };
 
+struct ixl_atq {
+	SIMPLEQ_ENTRY(ixl_atq)	  iatq_entry;
+	struct ixl_aq_desc	  iatq_desc;
+	void			 *iatq_arg;
+	void			(*iatq_fn)(struct ixl_softc *, void *);
+};
+SIMPLEQ_HEAD(ixl_atq_list, ixl_atq);
+
 struct ixl_softc {
 	struct device		 sc_dev;
 	struct arpcom		 sc_ac;
@@ -1063,6 +1071,9 @@ struct ixl_softc {
 	unsigned int		 sc_arq_prod;
 	unsigned int		 sc_arq_cons;
 
+	struct task		 sc_link_state_task;
+	struct ixl_atq		 sc_link_state_atq;
+
 	struct ixl_dmamem	 sc_hmc_sd;
 	struct ixl_dmamem	 sc_hmc_pd;
 	struct ixl_hmc_entry	 sc_hmc_entries[IXL_HMC_COUNT];
@@ -1074,14 +1085,6 @@ struct ixl_softc {
 	unsigned int		 sc_nqueues;	/* 1 << sc_nqueues */
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
-
-struct ixl_atq {
-	SIMPLEQ_ENTRY(ixl_atq)	  iatq_entry;
-	struct ixl_aq_desc	  iatq_desc;
-	void			 *iatq_arg;
-	void			(*iatq_fn)(struct ixl_softc *, void *);
-};
-SIMPLEQ_HEAD(ixl_atq_list, ixl_atq);
 
 #define delaymsec(_ms)	delay(1000 * (_ms))
 
@@ -1118,6 +1121,7 @@ static int	ixl_set_vsi(struct ixl_softc *);
 static int	ixl_get_link_status(struct ixl_softc *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
+static void	ixl_link_state_update(void *);
 static void	ixl_arq(void *);
 static void	ixl_hmc_pack(void *, const void *,
 		    const struct ixl_hmc_pack *, unsigned int);
@@ -1560,6 +1564,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	if_attach_queues(ifp, ixl_nqueues(sc));
 	if_attach_iqueues(ifp, ixl_nqueues(sc));
 
+	task_set(&sc->sc_link_state_task, ixl_link_state_update, sc);
 	ixl_wr(sc, I40E_PFINT_ICR0_ENA,
 	    I40E_PFINT_ICR0_ENA_LINK_STAT_CHANGE_MASK |
 	    I40E_PFINT_ICR0_ENA_ADMINQ_MASK);
@@ -2703,12 +2708,40 @@ ixl_intr(void *xsc)
 		rv = 1;
 	}
 
+	if (ISSET(icr, I40E_PFINT_ICR0_LINK_STAT_CHANGE_MASK)) {
+		task_add(systq, &sc->sc_link_state_task);
+		rv = 1;
+	}
+
 	if (ISSET(icr, I40E_INTR_NOTX_RX_MASK))
 		rv |= ixl_rxeof(sc, ifp->if_iqs[0]);
 	if (ISSET(icr, I40E_INTR_NOTX_TX_MASK))
 		rv |= ixl_txeof(sc, ifp->if_ifqs[0]);
 
 	return (rv);
+}
+
+static void
+ixl_link_state_update_done(struct ixl_softc *sc, void *arg)
+{
+	/* IXL_AQ_OP_PHY_LINK_STATUS already posted to admin reply queue */
+}
+
+static void
+ixl_link_state_update(void *xsc)
+{
+	struct ixl_softc *sc = xsc;
+	struct ixl_aq_desc *iaq;
+	struct ixl_aq_link_param *param;
+
+	memset(&sc->sc_link_state_atq, 0, sizeof(sc->sc_link_state_atq));
+	iaq = &sc->sc_link_state_atq.iatq_desc;
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_LINK_STATUS);
+	param = (struct ixl_aq_link_param *)iaq->iaq_param;
+	param->notify = IXL_AQ_LINK_NOTIFY;
+
+	ixl_atq_set(&sc->sc_link_state_atq, ixl_link_state_update_done, NULL);
+	ixl_atq_post(sc, &sc->sc_link_state_atq);
 }
 
 static void
