@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.8 2019/01/19 17:25:17 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.9 2019/01/20 10:02:38 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -84,6 +84,8 @@ main(int argc, char *argv[])
 		case 'm':
 			if (strcmp(optarg, "pc") == 0)
 				mode = KCOV_MODE_TRACE_PC;
+			else if (strcmp(optarg, "cmp") == 0)
+				mode = KCOV_MODE_TRACE_CMP;
 			else
 				errx(1, "unknown mode %s", optarg);
 			break;
@@ -157,6 +159,7 @@ static int
 check_coverage(const unsigned long *cover, int mode, unsigned long maxsize,
     int nonzero)
 {
+	unsigned long arg1, arg2, exp, i, pc, type;
 	int error = 0;
 
 	if (nonzero && cover[0] == 0) {
@@ -170,6 +173,30 @@ check_coverage(const unsigned long *cover, int mode, unsigned long maxsize,
 		return 1;
 	}
 
+	if (mode == KCOV_MODE_TRACE_CMP) {
+		if (*cover * 4 >= maxsize) {
+			warnx("coverage cmp overflow (count=%lu, max=%lu)\n",
+			    *cover * 4, maxsize);
+			return 1;
+		}
+
+		for (i = 0; i < cover[0]; i++) {
+			type = cover[i * 4 + 1];
+			arg1 = cover[i * 4 + 2];
+			arg2 = cover[i * 4 + 3];
+			pc = cover[i * 4 + 4];
+
+			exp = type >> 1;
+			if (exp <= 3)
+				continue;
+
+			warnx("coverage cmp invalid size (i=%lu, exp=%lx, "
+			    "const=%ld, arg1=%lu, arg2=%lu, pc=%p)\n",
+			    i, exp, type & 0x1, arg1, arg2, (void *)pc);
+			error = 1;
+		}
+	}
+
 	return error;
 }
 
@@ -178,6 +205,9 @@ dump(const unsigned long *cover, int mode)
 {
 	unsigned long i;
 	int stride = 1;
+
+	if (mode == KCOV_MODE_TRACE_CMP)
+		stride = 4;
 
 	for (i = 0; i < cover[0]; i++)
 		printf("%p\n", (void *)cover[i * stride + 1]);
