@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.222 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: cd.c,v 1.223 2019/01/20 03:28:19 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -483,9 +483,9 @@ cdstrategy(struct buf *bp)
 	return;
 
  bad:
-	bp->b_flags |= B_ERROR;
+	SET(bp->b_flags, B_ERROR);
 	bp->b_resid = bp->b_bcount;
- done:
+done:
 	s = splbio();
 	biodone(bp);
 	splx(s);
@@ -616,6 +616,7 @@ cd_buf_done(struct scsi_xfer *xs)
 	switch (xs->error) {
 	case XS_NOERROR:
 		bp->b_error = 0;
+		CLR(bp->b_flags, B_ERROR);
 		bp->b_resid = xs->resid;
 		break;
 
@@ -627,6 +628,7 @@ cd_buf_done(struct scsi_xfer *xs)
 		error = cd_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;
+			CLR(bp->b_flags, B_ERROR);
 			bp->b_resid = xs->resid;
 			break;
 		}
@@ -651,7 +653,7 @@ retry:
 
 	default:
 		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
+		SET(bp->b_flags, B_ERROR);
 		bp->b_resid = bp->b_bcount;
 		break;
 	}

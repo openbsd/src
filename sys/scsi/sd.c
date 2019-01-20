@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.275 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: sd.c,v 1.276 2019/01/20 03:28:19 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -601,9 +601,9 @@ sdstrategy(struct buf *bp)
 	return;
 
  bad:
-	bp->b_flags |= B_ERROR;
+	SET(bp->b_flags, B_ERROR);
 	bp->b_resid = bp->b_bcount;
- done:
+done:
 	s = splbio();
 	biodone(bp);
 	splx(s);
@@ -759,6 +759,7 @@ sd_buf_done(struct scsi_xfer *xs)
 	switch (xs->error) {
 	case XS_NOERROR:
 		bp->b_error = 0;
+		CLR(bp->b_flags, B_ERROR);
 		bp->b_resid = xs->resid;
 		break;
 
@@ -770,11 +771,13 @@ sd_buf_done(struct scsi_xfer *xs)
 		error = sd_interpret_sense(xs);
 		if (error == 0) {
 			bp->b_error = 0;
+			CLR(bp->b_flags, B_ERROR);
 			bp->b_resid = xs->resid;
 			break;
 		}
 		if (error != ERESTART) {
 			bp->b_error = error;
+			SET(bp->b_flags, B_ERROR);
 			xs->retries = 0;
 		}
 		goto retry;
@@ -797,7 +800,7 @@ retry:
 	default:
 		if (bp->b_error == 0)
 			bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
+		SET(bp->b_flags, B_ERROR);
 		bp->b_resid = bp->b_bcount;
 		break;
 	}
