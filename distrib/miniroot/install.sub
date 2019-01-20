@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1106 2019/01/16 23:50:37 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.1107 2019/01/20 21:13:56 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2797,9 +2797,8 @@ set -A _KERNV -- \$(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
 if ((\${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
 	_CKPATCH=\$(mktemp /tmp/_ckpatch.XXXXXXXXXX); then
-	echo -n "Checking for available binary patches..."
-	syspatch -c > \$_CKPATCH && echo -n " done."
-	echo
+	echo "Checking for available binary patches..."
+	syspatch -c > \$_CKPATCH
 	if [[ -s \$_CKPATCH ]]; then
 		echo "Run syspatch(8) to install:"
 		column -xc 80 \$_CKPATCH
