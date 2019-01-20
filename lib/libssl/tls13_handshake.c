@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.13 2019/01/20 06:38:18 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.14 2019/01/20 06:40:55 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -160,7 +160,7 @@ struct tls13_handshake_action state_machine[] = {
 	},
 	[APPLICATION_DATA] = {
 		.record_type = TLS13_APPLICATION_DATA,
-		.handshake_complete = 0,
+		.handshake_complete = 1,
 	},
 };
 
