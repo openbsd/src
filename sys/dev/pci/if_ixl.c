@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.11 2019/01/20 01:32:08 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.12 2019/01/20 04:58:45 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1162,6 +1162,7 @@ static void	ixl_rxr_free(struct ixl_softc *, struct ixl_rx_ring *);
 static int	ixl_rxeof(struct ixl_softc *, struct ifiqueue *);
 static void	ixl_rxfill(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxrefill(void *);
+static int	ixl_rxrinfo(struct ixl_softc *, struct if_rxrinfo *);
 
 struct cfdriver ixl_cd = {
 	NULL,
@@ -1678,11 +1679,9 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
-#if 0
 	case SIOCGIFRXR:
 		error = ixl_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
-#endif
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
@@ -2689,6 +2688,34 @@ ixl_rxrefill(void *arg)
 	struct ixl_softc *sc = rxr->rxr_sc;
 
 	ixl_rxfill(sc, rxr);
+}
+
+static int
+ixl_rxrinfo(struct ixl_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct if_rxring_info *ifr;
+	struct ixl_rx_ring *ring;
+	int i, rv;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return (ENOTTY);
+
+	ifr = mallocarray(sizeof(*ifr), ixl_nqueues(sc), M_TEMP,
+	    M_WAITOK|M_CANFAIL|M_ZERO);
+	if (ifr == NULL)
+		return (ENOMEM);
+
+	for (i = 0; i < ixl_nqueues(sc); i++) {
+		ring = ifp->if_iqs[i]->ifiq_softc;
+		ifr[i].ifr_size = MCLBYTES;	/* XXX */
+		ifr[i].ifr_info = ring->rxr_acct;
+	}
+
+	rv = if_rxr_info_ioctl(ifri, ixl_nqueues(sc), ifr);
+	free(ifr, M_TEMP, ixl_nqueues(sc) * sizeof(*ifr));
+
+	return (rv);
 }
 
 static int
