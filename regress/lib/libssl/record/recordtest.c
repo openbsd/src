@@ -44,7 +44,12 @@ static uint8_t test_record_1[] = {
 
 /* Truncated record. */
 static uint8_t test_record_2[] = {
-	0x17, 0x03, 0x03, 0xff, 0xff, 0x02, 0x00, 0x00,
+	0x17, 0x03, 0x03, 0x41, 0x00, 0x02, 0x00, 0x00,
+};
+
+/* Oversized and truncated record. */
+static uint8_t test_record_3[] = {
+	0x17, 0x03, 0x03, 0x41, 0x01, 0x02, 0x00, 0x00,
 };
 
 static void
@@ -230,6 +235,15 @@ struct record_recv_test record_recv_tests[] = {
 		},
 		.want_content_type = SSL3_RT_APPLICATION_DATA,
 	},
+	{
+		.read_buf = test_record_3,
+		.rt = {
+			{
+				.rw_len = sizeof(test_record_3),
+				.want_ret = TLS13_IO_FAILURE,
+			},
+		},
+	},
 };
 
 #define N_RECORD_RECV_TESTS (sizeof(record_recv_tests) / sizeof(record_recv_tests[0]))
@@ -388,7 +402,6 @@ test_record_recv(size_t test_no, struct record_recv_test *rrt)
 	}
 
 	tls13_record_data(rec, &cbs);
-
 	if (rrt->want_data == NULL) {
 		if (CBS_data(&cbs) != NULL || CBS_len(&cbs) != 0) {
 			fprintf(stderr, "FAIL: Test %zu - got CBS with data, "
@@ -397,7 +410,6 @@ test_record_recv(size_t test_no, struct record_recv_test *rrt)
 		}
 		goto done;
 	}
-
 	if (!CBS_mem_equal(&cbs, rrt->want_data, rrt->want_len)) {
 		fprintf(stderr, "FAIL: Test %zu - data mismatch\n", test_no);
 		fprintf(stderr, "Got record data:\n");
@@ -406,6 +418,21 @@ test_record_recv(size_t test_no, struct record_recv_test *rrt)
 		hexdump(rrt->want_data, rrt->want_len);
 		goto failure;
 	}
+
+	if (!tls13_record_header(rec, &cbs)) {
+		fprintf(stderr, "FAIL: Test %zu - fail to get record "
+		    "header", test_no);
+		goto failure;
+	}
+	if (!CBS_mem_equal(&cbs, rrt->want_data, TLS13_RECORD_HEADER_LEN)) {
+		fprintf(stderr, "FAIL: Test %zu - header mismatch\n", test_no);
+		fprintf(stderr, "Got record header:\n");
+		hexdump(CBS_data(&cbs), CBS_len(&cbs));
+		fprintf(stderr, "Want record header:\n");
+		hexdump(rrt->want_data, rrt->want_len);
+		goto failure;
+	}
+
 	if (!tls13_record_content(rec, &cbs)) {
 		fprintf(stderr, "FAIL: Test %zu - fail to get record "
 		    "content", test_no);
@@ -414,9 +441,9 @@ test_record_recv(size_t test_no, struct record_recv_test *rrt)
 	if (!CBS_mem_equal(&cbs, rrt->want_data + TLS13_RECORD_HEADER_LEN,
 	    rrt->want_len - TLS13_RECORD_HEADER_LEN)) {
 		fprintf(stderr, "FAIL: Test %zu - content mismatch\n", test_no);
-		fprintf(stderr, "Got record data:\n");
+		fprintf(stderr, "Got record content:\n");
 		hexdump(CBS_data(&cbs), CBS_len(&cbs));
-		fprintf(stderr, "Want record data:\n");
+		fprintf(stderr, "Want record content:\n");
 		hexdump(rrt->want_data, rrt->want_len);
 		goto failure;
 	}
@@ -452,7 +479,11 @@ test_record_send(size_t test_no, struct record_send_test *rst)
 		errx(1, "malloc");
 	memcpy(data, rst->data, rst->data_len);
 
-	tls13_record_set_data(rec, data, rst->data_len);
+	if (!tls13_record_set_data(rec, data, rst->data_len)) {
+		fprintf(stderr, "FAIL: Test %zu - failed to set record data\n",
+		    test_no);
+		goto failure;
+	}
 	data = NULL;
 
 	for (i = 0; rst->rt[i].rw_len != 0 || rst->rt[i].want_ret != 0; i++) {
