@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.129 2018/10/29 07:55:40 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.130 2019/01/20 04:52:07 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -316,7 +316,9 @@ fi
 
 readonly daemon_class
 unset _rcflags _rcrtable _rcuser _rctimeout
-pexp="${daemon}${daemon_flags:+ ${daemon_flags}}"
+# the shell will strip the quotes from daemon_flags when starting a daemon;
+# make sure pexp matches the process (i.e. doesn't include the quotes)
+pexp="$(eval echo ${daemon}${daemon_flags:+ ${daemon_flags}})"
 rcexec="su -l -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
 [ "${daemon_rtable}" -eq 0 ] ||
 	rcexec="route -T ${daemon_rtable} exec ${rcexec}"
