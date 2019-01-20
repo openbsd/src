@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.47 2019/01/19 13:27:49 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.48 2019/01/20 17:51:55 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -403,6 +403,18 @@
                     xcmiscproto
                     ..
                     xextproto
+                    ..
+                    xorgproto
+                        inputproto
+                        ..
+                        kbproto
+                        ..
+                        x11proto
+                        ..
+                        SIAddresses
+                        ..
+                        xextproto
+                        ..
                     ..
                     xorg-docs
                     ..
