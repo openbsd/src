@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.78 2019/01/01 03:19:37 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.79 2019/01/20 00:53:08 mlarkin Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -263,11 +263,12 @@ IDTVEC(trap0c)
 	TRAP(T_STKFLT)
 
 /*
- * The #GP (general protection fault) handler has a couple weird cases
+ * The #GP (general protection fault) handler has a few weird cases
  * to handle:
  *  - trapping in iretq to userspace and
  *  - trapping in xrstor in the kernel.
- * We detect both of these by examining the %rip in the iretq_frame.
+ *  - trapping when invalid MSRs are read in rdmsr_safe
+ * We detect these by examining the %rip in the iretq_frame.
  * Handling them is done by updating %rip in the iretq_frame to point
  * to a stub handler of some sort and then iretq'ing to it.  For the
  * iretq fault we resume in a stub which acts like we got a fresh #GP.
@@ -287,9 +288,17 @@ IDTVEC(trap0d)
 	leaq	xsetbv_fault(%rip),%rcx
 	cmpq	%rcx,%rdx
 	je	.Lhandle_xsetbv
+	leaq	rdmsr_safe_fault(%rip),%rcx
+	cmpq	%rcx,%rdx
+	je	.Lhandle_rdmsr_safe
 	popq	%rcx
 	popq	%rdx
 	TRAP(T_PROTFLT)
+
+.Lhandle_rdmsr_safe:
+	/* rdmsr faulted; just resume in rdmsr_resume */
+	leaq	rdmsr_resume(%rip),%rcx
+	jmp	1f
 
 .Lhandle_xrstor:
 	/* xrstor faulted; just resume in xrstor_resume */
