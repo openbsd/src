@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov.4,v 1.6 2018/12/27 19:33:08 anton Exp $
+.\"	$OpenBSD: kcov.4,v 1.7 2019/01/20 09:57:23 anton Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 27 2018 $
+.Dd $Mdocdate: January 20 2019 $
 .Dt KCOV 4
 .Os
 .Sh NAME
@@ -62,9 +62,35 @@ Enable code coverage tracing for the current thread.
 The
 .Fa mode
 must be one of the following:
-.Bl -tag -width KCOV_MODE_TRACE_PC
+.Bl -ohang
 .It Dv KCOV_MODE_TRACE_PC
 Trace the kernel program counter.
+.It Dv KCOV_MODE_TRACE_CMP
+Trace comparison instructions and switch statements.
+For switch statements, the number of traced comparison instructions is equal to
+the number of switch cases.
+Each traced comparison instruction is represented by 4 entries in the coverage
+buffer:
+.Bl -enum
+.It
+A mask where the least significant bit is set if one of the comparison operands
+is a compile-time constant, which is always true for switch statements.
+The remaining bits represents the log2 size of the operands, ranging from 0 to
+3.
+.It
+First comparison operand.
+For switch statements, this operand corresponds to the case value.
+.It
+Second comparison operand.
+For switch statements, this operand corresponds to the value passed to switch.
+.It
+Kernel program counter where the comparison instruction took place.
+.El
+.Pp
+In this mode, the first entry in the coverage buffer reflects the number of
+traced comparison instructions.
+Thus, the effective number of entries in the coverage buffer is given by
+multiplying the first entry by 4.
 .El
 .It Dv KIODISABLE Fa void
 Disable code coverage tracing for the current thread.

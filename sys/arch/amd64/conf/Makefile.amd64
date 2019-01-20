@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.108 2019/01/07 20:24:59 anton Exp $
+#	$OpenBSD: Makefile.amd64,v 1.109 2019/01/20 09:57:23 anton Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -95,7 +95,7 @@ LINKFLAGS+=	-S
 .endif
 
 .if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
-PROF=		-fsanitize-coverage=trace-pc
+PROF=		-fsanitize-coverage=trace-pc,trace-cmp
 .endif
 
 %LOAD
@@ -152,7 +152,7 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 
 .if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
 kcov.o: $S/dev/kcov.c
-	${NORMAL_C} -fno-sanitize-coverage=trace-pc
+	${NORMAL_C} -fno-sanitize-coverage=trace-pc,trace-cmp
 .endif
 
 clean:

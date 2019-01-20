@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.12 2019/01/20 09:47:31 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.13 2019/01/20 09:57:23 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -25,6 +25,9 @@
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
+
+#define KCOV_CMP_CONST		0x1
+#define KCOV_CMP_SIZE(x)	((x) << 1)
 
 /* #define KCOV_DEBUG */
 #ifdef KCOV_DEBUG
@@ -105,6 +108,134 @@ __sanitizer_cov_trace_pc(void)
 	}
 }
 
+/*
+ * Compiling the kernel with the `-fsanitize-coverage=trace-cmp' option will
+ * cause the following function to be called upon integer comparisons and switch
+ * statements.
+ *
+ * If kcov is enabled for the current thread, the comparison will be stored in
+ * its corresponding coverage buffer.
+ */
+void
+trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, uintptr_t pc)
+{
+	struct kcov_dev *kd;
+	uint64_t idx;
+
+	/*
+	 * Do not trace before kcovopen() has been called at least once.
+	 * At this point, all secondary CPUs have booted and accessing curcpu()
+	 * is safe.
+	 */
+	if (kcov_cold)
+		return;
+
+	/* Do not trace in interrupts to prevent noisy coverage. */
+	if (inintr())
+		return;
+
+	kd = curproc->p_kd;
+	if (kd == NULL || kd->kd_mode != KCOV_MODE_TRACE_CMP)
+		return;
+
+	idx = kd->kd_buf[0];
+	if (idx * 4 + 4 <= kd->kd_nmemb) {
+		kd->kd_buf[idx * 4 + 1] = type;
+		kd->kd_buf[idx * 4 + 2] = arg1;
+		kd->kd_buf[idx * 4 + 3] = arg2;
+		kd->kd_buf[idx * 4 + 4] = pc;
+		kd->kd_buf[0] = idx + 1;
+	}
+}
+
+void
+__sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(0), arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(1), arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(2), arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(3), arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(0) | KCOV_CMP_CONST, arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(1) | KCOV_CMP_CONST, arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(2) | KCOV_CMP_CONST, arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2)
+{
+	trace_cmp(KCOV_CMP_SIZE(3) | KCOV_CMP_CONST, arg1, arg2,
+	    (uintptr_t)__builtin_return_address(0));
+}
+
+void
+__sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases)
+{
+	uint64_t i, nbits, ncases, type;
+	uintptr_t pc;
+
+	pc = (uintptr_t)__builtin_return_address(0);
+	ncases = cases[0];
+	nbits = cases[1];
+
+	switch (nbits) {
+	case 8:
+		type = KCOV_CMP_SIZE(0);
+		break;
+	case 16:
+		type = KCOV_CMP_SIZE(1);
+		break;
+	case 32:
+		type = KCOV_CMP_SIZE(2);
+		break;
+	case 64:
+		type = KCOV_CMP_SIZE(3);
+		break;
+	default:
+		return;
+	}
+	type |= KCOV_CMP_CONST;
+
+	for (i = 0; i < ncases; i++)
+		trace_cmp(type, cases[i + 2], val, pc);
+}
+
 void
 kcovattach(int count)
 {
@@ -173,7 +304,7 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		}
 		mode = *((int *)data);
-		if (mode != KCOV_MODE_TRACE_PC) {
+		if (mode != KCOV_MODE_TRACE_PC && mode != KCOV_MODE_TRACE_CMP) {
 			error = EINVAL;
 			break;
 		}
