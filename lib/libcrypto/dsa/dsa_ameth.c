@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.26 2018/08/24 20:22:15 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.27 2019/01/20 01:56:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -515,7 +515,7 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	 * Check that q is not a composite number.
 	 */
 
-	if (BN_is_prime_ex(dsa->q, BN_prime_checks, ctx, NULL) == 0) {
+	if (BN_is_prime_ex(dsa->q, BN_prime_checks, ctx, NULL) <= 0) {
 		DSAerror(DSA_R_BAD_Q_VALUE);
 		goto err;
 	}
@@ -525,7 +525,7 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	EVP_PKEY_assign_DSA(pkey, dsa);
 	return 1;
 
-err:
+ err:
 	BN_CTX_free(ctx);
 	DSA_free(dsa);
 	return 0;
