@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.12 2019/01/20 04:58:45 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.13 2019/01/20 23:44:58 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -159,6 +159,8 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_ADD_VEB		0x0230
 #define IXL_AQ_OP_UPD_VEB_PARAMS	0x0231
 #define IXL_AQ_OP_GET_VEB_PARAMS	0x0232
+#define IXL_AQ_OP_ADD_MACVLAN		0x0250
+#define IXL_AQ_OP_REMOVE_MACVLAN	0x0251
 #define IXL_AQ_OP_SET_VSI_PROMISC	0x0254
 #define IXL_AQ_OP_PHY_GET_ABILITIES	0x0600
 #define IXL_AQ_OP_PHY_SET_CONFIG	0x0601
@@ -380,6 +382,43 @@ struct ixl_aq_vsi_param {
 
 	uint32_t	addr_hi;
 	uint32_t	addr_lo;
+} __packed __aligned(16);
+
+struct ixl_aq_add_macvlan {
+	uint16_t	num_addrs;
+	uint16_t	seid0;
+	uint16_t	seid1;
+	uint16_t	seid2;
+	uint32_t	addr_hi;
+	uint32_t	addr_lo;
+} __packed __aligned(16);
+
+struct ixl_aq_add_macvlan_elem {
+	uint8_t		macaddr[6];
+	uint16_t	vlan;
+	uint16_t	flags;
+#define IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH	0x0001
+#define IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN	0x0004
+	uint16_t	queue;
+	uint32_t	_reserved;
+} __packed __aligned(16);
+
+struct ixl_aq_remove_macvlan {
+	uint16_t	num_addrs;
+	uint16_t	seid0;
+	uint16_t	seid1;
+	uint16_t	seid2;
+	uint32_t	addr_hi;
+	uint32_t	addr_lo;
+} __packed __aligned(16);
+
+struct ixl_aq_remove_macvlan_elem {
+	uint8_t		macaddr[6];
+	uint16_t	vlan;
+	uint8_t		flags;
+#define IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH	0x0001
+#define IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN	0x0008
+	uint8_t		_reserved[7];
 } __packed __aligned(16);
 
 struct ixl_aq_vsi_reply {
@@ -1053,7 +1092,7 @@ struct ixl_softc {
 	uint16_t		 sc_seid;
 	unsigned int		 sc_base_queue;
 
-	struct ixl_dmamem	 sc_vsi;
+	struct ixl_dmamem	 sc_scratch;
 
 	const struct ixl_aq_regs *
 				 sc_aq_regs;
@@ -1121,6 +1160,10 @@ static int	ixl_set_vsi(struct ixl_softc *);
 static int	ixl_get_link_status(struct ixl_softc *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
+static int	ixl_add_macvlan(struct ixl_softc *, uint8_t *, uint16_t,
+		    uint16_t);
+static int	ixl_remove_macvlan(struct ixl_softc *, uint8_t *, uint16_t,
+		    uint16_t);
 static void	ixl_link_state_update(void *);
 static void	ixl_arq(void *);
 static void	ixl_hmc_pack(void *, const void *,
@@ -1512,20 +1555,20 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 		goto free_hmc;
 	}
 
-	if (ixl_dmamem_alloc(sc, &sc->sc_vsi,
+	if (ixl_dmamem_alloc(sc, &sc->sc_scratch,
 	    sizeof(struct ixl_aq_vsi_data), 8) != 0) {
-		printf("%s: unable to allocate VSI data\n", DEVNAME(sc));
+		printf("%s: unable to allocate scratch buffer\n", DEVNAME(sc));
 		goto free_hmc;
 	}
 
 	if (ixl_get_vsi(sc) != 0) {
 		/* error printed by ixl_get_vsi */
-		goto free_vsi;
+		goto free_hmc;
 	}
 
 	if (ixl_set_vsi(sc) != 0) {
 		/* error printed by ixl_set_vsi */
-		goto free_vsi;
+		goto free_scratch;
 	}
 
 	sc->sc_ihc = pci_intr_establish(sc->sc_pc, sc->sc_ih,
@@ -1533,7 +1576,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ihc == NULL) {
 		printf("%s: unable to establish interrupt handler\n",
 		    DEVNAME(sc));
-		goto free_vsi;
+		goto free_scratch;
 	}
 
 	ifp->if_softc = sc;
@@ -1572,12 +1615,18 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ixl_wr(sc, I40E_PFINT_STAT_CTL0,
 	    IXL_NOITR << I40E_PFINT_STAT_CTL0_OTHER_ITR_INDX_SHIFT);
 
+	/* remove default mac filter and replace it so we can see vlans */
+	ixl_remove_macvlan(sc, sc->sc_ac.ac_enaddr, 0, 0);
+	ixl_remove_macvlan(sc, sc->sc_ac.ac_enaddr, 0,
+	    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
+	ixl_add_macvlan(sc, sc->sc_ac.ac_enaddr, 0,
+	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
+
 	ixl_intr_enable(sc);
 
 	return;
-
-free_vsi:
-	ixl_dmamem_free(sc, &sc->sc_vsi);
+free_scratch:
+	ixl_dmamem_free(sc, &sc->sc_scratch);
 free_hmc:
 	ixl_hmc_free(sc);
 shutdown:
@@ -1859,13 +1908,15 @@ ixl_iff(struct ixl_softc *sc)
 	iaq->iaq_opcode = htole16(IXL_AQ_OP_SET_VSI_PROMISC);
 
 	param = (struct ixl_aq_vsi_promisc_param *)&iaq->iaq_param;
-	param->flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_BCAST);
-//	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
+	param->flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_BCAST |
+	    IXL_AQ_VSI_PROMISC_FLAG_VLAN);
+	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
 		param->flags |= htole16(IXL_AQ_VSI_PROMISC_FLAG_UCAST |
 		    IXL_AQ_VSI_PROMISC_FLAG_MCAST);
-//	}
+	}
 	param->valid_flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_UCAST |
-	    IXL_AQ_VSI_PROMISC_FLAG_MCAST | IXL_AQ_VSI_PROMISC_FLAG_BCAST);
+	    IXL_AQ_VSI_PROMISC_FLAG_MCAST | IXL_AQ_VSI_PROMISC_FLAG_BCAST |
+	    IXL_AQ_VSI_PROMISC_FLAG_VLAN);
 	param->seid = sc->sc_seid;
 
 	ixl_atq_exec(sc, &iatq, "ixliff");
@@ -2055,7 +2106,7 @@ static void
 ixl_txr_config(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 {
 	struct ixl_hmc_txq txq;
-	struct ixl_aq_vsi_data *data = IXL_DMA_KVA(&sc->sc_vsi);
+	struct ixl_aq_vsi_data *data = IXL_DMA_KVA(&sc->sc_scratch);
 	void *hmc;
 
 	memset(&txq, 0, sizeof(txq));
@@ -3350,7 +3401,7 @@ ixl_get_link_status(struct ixl_softc *sc)
 static int
 ixl_get_vsi(struct ixl_softc *sc)
 {
-	struct ixl_dmamem *vsi = &sc->sc_vsi;
+	struct ixl_dmamem *vsi = &sc->sc_scratch;
 	struct ixl_aq_desc iaq;
 	struct ixl_aq_vsi_param *param;
 	struct ixl_aq_vsi_reply *reply;
@@ -3396,7 +3447,7 @@ ixl_get_vsi(struct ixl_softc *sc)
 static int
 ixl_set_vsi(struct ixl_softc *sc)
 {
-	struct ixl_dmamem *vsi = &sc->sc_vsi;
+	struct ixl_dmamem *vsi = &sc->sc_scratch;
 	struct ixl_aq_desc iaq;
 	struct ixl_aq_vsi_param *param;
 	struct ixl_aq_vsi_data *data = IXL_DMA_KVA(vsi);
@@ -3547,6 +3598,72 @@ ixl_restart_an(struct ixl_softc *sc)
 	}
 
 	return (0);
+}
+
+static int
+ixl_add_macvlan(struct ixl_softc *sc, uint8_t *macaddr, uint16_t vlan, uint16_t flags)
+{
+	struct ixl_aq_desc iaq;
+	struct ixl_aq_add_macvlan *param;
+	struct ixl_aq_add_macvlan_elem *elem;
+
+	memset(&iaq, 0, sizeof(iaq));
+	iaq.iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD);
+	iaq.iaq_opcode = htole16(IXL_AQ_OP_ADD_MACVLAN);
+	iaq.iaq_datalen = htole16(sizeof(*elem));
+	ixl_aq_dva(&iaq, IXL_DMA_DVA(&sc->sc_scratch));
+
+	param = (struct ixl_aq_add_macvlan *)&iaq.iaq_param;
+	param->num_addrs = htole16(1);
+	param->seid0 = htole16(0x8000) | sc->sc_seid;
+	param->seid1 = 0;
+	param->seid2 = 0;
+
+	elem = IXL_DMA_KVA(&sc->sc_scratch);
+	memset(elem, 0, sizeof(*elem));
+	memcpy(elem->macaddr, macaddr, ETHER_ADDR_LEN);
+	elem->flags = htole16(IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH | flags);
+	elem->vlan = htole16(vlan);
+
+	if (ixl_atq_poll(sc, &iaq, 250) != 0) {
+		printf("%s: ADD_MACVLAN timeout\n", DEVNAME(sc));
+		return (IXL_AQ_RC_EINVAL);
+	}
+
+	return letoh16(iaq.iaq_retval);
+}
+
+static int
+ixl_remove_macvlan(struct ixl_softc *sc, uint8_t *macaddr, uint16_t vlan, uint16_t flags)
+{
+	struct ixl_aq_desc iaq;
+	struct ixl_aq_remove_macvlan *param;
+	struct ixl_aq_remove_macvlan_elem *elem;
+
+	memset(&iaq, 0, sizeof(iaq));
+	iaq.iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD);
+	iaq.iaq_opcode = htole16(IXL_AQ_OP_REMOVE_MACVLAN);
+	iaq.iaq_datalen = htole16(sizeof(*elem));
+	ixl_aq_dva(&iaq, IXL_DMA_DVA(&sc->sc_scratch));
+
+	param = (struct ixl_aq_remove_macvlan *)&iaq.iaq_param;
+	param->num_addrs = htole16(1);
+	param->seid0 = htole16(0x8000) | sc->sc_seid;
+	param->seid1 = 0;
+	param->seid2 = 0;
+
+	elem = IXL_DMA_KVA(&sc->sc_scratch);
+	memset(elem, 0, sizeof(*elem));
+	memcpy(elem->macaddr, macaddr, ETHER_ADDR_LEN);
+	elem->flags = htole16(IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH | flags);
+	elem->vlan = htole16(vlan);
+
+	if (ixl_atq_poll(sc, &iaq, 250) != 0) {
+		printf("%s: REMOVE_MACVLAN timeout\n", DEVNAME(sc));
+		return (IXL_AQ_RC_EINVAL);
+	}
+
+	return letoh16(iaq.iaq_retval);
 }
 
 static int
