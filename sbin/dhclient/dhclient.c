@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.618 2019/01/19 21:23:18 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.619 2019/01/20 02:42:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -550,6 +550,8 @@ main(int argc, char *argv[])
 			propose_release(ifi);
 		exit(0);
 	}
+
+	signal(SIGPIPE, SIG_IGN);	/* Don't wait for go_daemon()! */
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0,
 	    socket_fd) == -1)
