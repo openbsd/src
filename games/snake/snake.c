@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.30 2019/01/20 04:09:15 tedu Exp $	*/
+/*	$OpenBSD: snake.c,v 1.31 2019/01/20 04:10:12 tedu Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -652,6 +652,7 @@ spacewarp(int w)
 		refresh();
 		delay(5);
 		mvaddstr(p.line + 1, p.col + 1, str);
+		mvaddstr(0, 0, "");
 		refresh();
 		delay(10);
 	}
