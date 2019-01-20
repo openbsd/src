@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.131 2018/12/21 12:02:55 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.132 2019/01/20 23:07:51 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -931,9 +931,9 @@ patinit(struct cpu_info *ci)
 	/*
 	 * Set up PAT bits.
 	 * The default pat table is the following:
-	 * WB, WT, UC- UC, WB, WT, UC-, UC
+	 * WB, WT, UC-, UC, WB, WT, UC-, UC
 	 * We change it to:
-	 * WB, WC, UC-, UC, WB, WC, UC-, UC.
+	 * WB, WC, UC-, UC, WB, WC, UC-, UC
 	 * i.e change the WT bit to be WC.
 	 */
 	reg = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WC) |
