@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.12 2019/01/20 02:57:16 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.13 2019/01/20 06:38:18 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -57,6 +57,8 @@ enum tls13_message_type tls13_handshake_active_state(struct tls13_ctx *ctx);
 int tls13_connect(struct tls13_ctx *ctx);
 int tls13_accept(struct tls13_ctx *ctx);
 
+struct tls13_handshake_action *
+    tls13_handshake_active_action(struct tls13_ctx *ctx);
 int tls13_handshake_advance_state_machine(struct tls13_ctx *ctx);
 
 int tls13_handshake_send_action(struct tls13_ctx *ctx,
@@ -158,7 +160,7 @@ struct tls13_handshake_action state_machine[] = {
 	},
 	[APPLICATION_DATA] = {
 		.record_type = TLS13_APPLICATION_DATA,
-		.handshake_complete = 1,
+		.handshake_complete = 0,
 	},
 };
 
