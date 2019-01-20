@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.38 2018/11/29 14:25:07 tedu Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.39 2019/01/20 16:40:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -757,7 +757,9 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 int
 constraint_cmp(const void *a, const void *b)
 {
-	return (*(const time_t *)a - *(const time_t *)b);
+	time_t at = *(const time_t *)a;
+	time_t bt = *(const time_t *)b;
+	return at < bt ? -1 : (at > bt ? 1 : 0);
 }
 
 void
