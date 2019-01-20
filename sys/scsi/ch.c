@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.52 2016/03/12 15:16:04 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.53 2019/01/20 20:28:37 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ chopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 	return (0);
 
- bad:
+bad:
 	sc->sc_link->flags &= ~SDEV_OPEN;
 	return (error);
 }
@@ -610,7 +610,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 	/* Copy array out to userspace. */
 	error = copyout(user_data, cesr->cesr_data, udsize);
 
- done:
+done:
 	if (data != NULL)
 		dma_free(data, size);
 	if (user_data != NULL)

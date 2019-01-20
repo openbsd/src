@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.223 2019/01/20 03:28:19 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.224 2019/01/20 20:28:37 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -482,7 +482,7 @@ cdstrategy(struct buf *bp)
 	device_unref(&sc->sc_dev);
 	return;
 
- bad:
+bad:
 	SET(bp->b_flags, B_ERROR);
 	bp->b_resid = bp->b_bcount;
 done:
@@ -1035,7 +1035,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		error = scsi_start(sc->sc_link, SSS_STOP, 0);
 		break;
 
-	close_tray:
+close_tray:
 	case CDIOCCLOSE:
 		error = scsi_start(sc->sc_link, SSS_START|SSS_LOEJ,
 		    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
@@ -1095,7 +1095,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 	}
 
- exit:
+exit:
 
 	device_unref(&sc->sc_dev);
 	return (error);

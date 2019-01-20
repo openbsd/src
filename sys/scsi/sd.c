@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.276 2019/01/20 03:28:19 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.277 2019/01/20 20:28:37 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -600,7 +600,7 @@ sdstrategy(struct buf *bp)
 	device_unref(&sc->sc_dev);
 	return;
 
- bad:
+bad:
 	SET(bp->b_flags, B_ERROR);
 	bp->b_resid = bp->b_bcount;
 done:
@@ -1467,7 +1467,7 @@ sd_read_cap_10(struct sd_softc *sc, int flags)
 		CLR(sc->flags, SDF_THIN);
 	}
 
- done:
+done:
 	dma_free(rdcap, sizeof(*rdcap));
 	return (rv);
 }
@@ -1523,7 +1523,7 @@ sd_read_cap_16(struct sd_softc *sc, int flags)
 			CLR(sc->flags, SDF_THIN);
 	}
 
- done:
+done:
 	dma_free(rdcap, sizeof(*rdcap));
 	return (rv);
 }
@@ -1606,7 +1606,7 @@ sd_thin_pages(struct sd_softc *sc, int flags)
 	if (score < 2)
 		rv = EOPNOTSUPP;
 
- done:
+done:
 	dma_free(pg, sizeof(*pg) + len);
 	return (rv);
 }
@@ -1637,7 +1637,7 @@ sd_vpd_block_limits(struct sd_softc *sc, int flags)
 	} else
 		rv = EOPNOTSUPP;
 
- done:
+done:
 	dma_free(pg, sizeof(*pg));
 	return (rv);
 }
@@ -1672,7 +1672,7 @@ sd_vpd_thin(struct sd_softc *sc, int flags)
 		rv = EOPNOTSUPP;
 #endif
 
- done:
+done:
 	dma_free(pg, sizeof(*pg));
 	return (rv);
 }
