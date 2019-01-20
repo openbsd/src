@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_handshake.h,v 1.1 2019/01/18 06:51:29 tb Exp $ */
+/* $OpenBSD: tls13_handshake.h,v 1.2 2019/01/20 22:36:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -16,6 +16,9 @@
  */
 
 #ifndef HEADER_TLS13_HANDSHAKE_H
+#define HEADER_TLS13_HANDSHAKE_H
+
+#include <stddef.h>	/* for NULL */
 
 __BEGIN_HIDDEN_DECLS
 
@@ -49,4 +52,4 @@ enum tls13_message_type {
 
 __END_HIDDEN_DECLS
 
-#endif
+#endif /* !HEADER_TLS13_HANDSHAKE_H */
