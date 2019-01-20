@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.362 2019/01/18 23:30:45 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.363 2019/01/20 23:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -668,6 +668,7 @@ struct ctl_neighbor {
 	char			descr[PEER_DESCR_LEN];
 	char			shutcomm[SHUT_COMM_LEN];
 	int			show_timers;
+	int			is_group;
 };
 
 #define	F_PREF_ELIGIBLE	0x01
@@ -781,7 +782,6 @@ struct ctl_show_rib_request {
 	struct bgpd_addr	prefix;
 	struct filter_as	as;
 	struct filter_community community;
-	u_int32_t		peerid;
 	u_int32_t		flags;
 	u_int8_t		validation_state;
 	pid_t			pid;

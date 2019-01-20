@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.459 2019/01/18 23:30:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.460 2019/01/20 23:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2251,12 +2251,29 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags)
 		}
 }
 
+static int
+rde_dump_match_peer(struct ctl_neighbor *n, struct rde_peer *p)
+{
+	char *s;
+
+	if (n && n->addr.aid) {
+		if (memcmp(&p->conf.remote_addr, &n->addr,
+		    sizeof(p->conf.remote_addr)))
+			return 0;
+	} else if (n && n->descr[0]) {
+		s = n->is_group ? p->conf.group : p->conf.descr;
+		if (strcmp(s, n->descr))
+			return 0;
+	}
+	return 1;
+}
+
 static void
 rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req)
 {
 	struct rde_aspath	*asp;
 
-	if (req->peerid && req->peerid != prefix_peer(p)->conf.id)
+	if (!rde_dump_match_peer(&req->neighbor, prefix_peer(p)))
 		return;
 
 	asp = prefix_aspath(p);

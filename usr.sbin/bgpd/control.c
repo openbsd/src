@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.93 2018/12/27 20:23:24 remi Exp $ */
+/*	$OpenBSD: control.c,v 1.94 2019/01/20 23:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -225,7 +225,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	struct imsg		 imsg;
 	struct ctl_conn		*c;
 	ssize_t			 n;
-	int			 verbose;
+	int			 verbose, matched;
 	struct peer		*p;
 	struct ctl_neighbor	*neighbor;
 	struct ctl_show_rib_request	*ribreq;
@@ -288,24 +288,36 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_NONE:
 			/* message was filtered out, nothing to do */
 			break;
+		case IMSG_CTL_FIB_COUPLE:
+		case IMSG_CTL_FIB_DECOUPLE:
+			imsg_ctl_parent(imsg.hdr.type, imsg.hdr.peerid,
+			    0, NULL, 0);
+			break;
+		case IMSG_CTL_SHOW_TERSE:
+			for (p = peers; p != NULL; p = p->next)
+				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_NEIGHBOR,
+				    0, 0, -1, p, sizeof(struct peer));
+			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
+			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			c->ibuf.pid = imsg.hdr.pid;
+
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(struct ctl_neighbor)) {
 				neighbor = imsg.data;
-				p = getpeerbyaddr(&neighbor->addr);
-				if (p == NULL)
-					p = getpeerbydesc(neighbor->descr);
-				if (p == NULL) {
-					control_result(c, CTL_RES_NOSUCHPEER);
-					break;
-				}
-				if (!neighbor->show_timers) {
+				neighbor->descr[PEER_DESCR_LEN - 1] = 0;
+			} else {
+				neighbor = NULL;
+			}
+			for (matched = 0, p = peers; p != NULL; p = p->next) {
+				if (!peer_matched(p, neighbor))
+					continue;
+
+				matched = 1;
+				if (!neighbor || !neighbor->show_timers) {
 					imsg_ctl_rde(imsg.hdr.type,
 					    imsg.hdr.pid,
 					    p, sizeof(struct peer));
-					imsg_ctl_rde(IMSG_CTL_END,
-					    imsg.hdr.pid, NULL, 0);
 				} else {
 					u_int			 i;
 					time_t			 d;
@@ -323,45 +335,39 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 						    IMSG_CTL_SHOW_TIMER,
 						    0, 0, -1, &ct, sizeof(ct));
 					}
-					imsg_compose(&c->ibuf, IMSG_CTL_END,
-					    0, 0, -1, NULL, 0);
 				}
-			} else {
-				for (p = peers; p != NULL; p = p->next)
-					imsg_ctl_rde(imsg.hdr.type,
-					    imsg.hdr.pid,
-					    p, sizeof(struct peer));
-				imsg_ctl_rde(IMSG_CTL_END, imsg.hdr.pid,
-					NULL, 0);
 			}
-			break;
-		case IMSG_CTL_SHOW_TERSE:
-			for (p = peers; p != NULL; p = p->next)
-				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_NEIGHBOR,
-				    0, 0, -1, p, sizeof(struct peer));
-			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
-			break;
-		case IMSG_CTL_FIB_COUPLE:
-		case IMSG_CTL_FIB_DECOUPLE:
-			imsg_ctl_parent(imsg.hdr.type, imsg.hdr.peerid,
-			    0, NULL, 0);
+			if (!matched) {
+				control_result(c, CTL_RES_NOSUCHPEER);
+			} else if (!neighbor || !neighbor->show_timers) {
+				imsg_ctl_rde(IMSG_CTL_END, imsg.hdr.pid,
+				    NULL, 0);
+			} else {
+				imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1,
+				    NULL, 0);
+			}
 			break;
 		case IMSG_CTL_NEIGHBOR_UP:
 		case IMSG_CTL_NEIGHBOR_DOWN:
 		case IMSG_CTL_NEIGHBOR_CLEAR:
 		case IMSG_CTL_NEIGHBOR_RREFRESH:
 		case IMSG_CTL_NEIGHBOR_DESTROY:
-			if (imsg.hdr.len == IMSG_HEADER_SIZE +
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct ctl_neighbor)) {
-				neighbor = imsg.data;
-				neighbor->descr[PEER_DESCR_LEN - 1] = 0;
-				p = getpeerbyaddr(&neighbor->addr);
-				if (p == NULL)
-					p = getpeerbydesc(neighbor->descr);
-				if (p == NULL) {
-					control_result(c, CTL_RES_NOSUCHPEER);
-					break;
-				}
+				log_warnx("got IMSG_CTL_NEIGHBOR_ with "
+				    "wrong length");
+				break;
+			}
+
+			neighbor = imsg.data;
+			neighbor->descr[PEER_DESCR_LEN - 1] = 0;
+
+			for (matched = 0, p = peers; p != NULL; p = p->next) {
+				if (!peer_matched(p, neighbor))
+					continue;
+
+				matched = 1;
+
 				switch (imsg.hdr.type) {
 				case IMSG_CTL_NEIGHBOR_UP:
 					bgp_fsm(p, EVNT_START);
@@ -419,9 +425,9 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 				default:
 					fatal("king bula wants more humppa");
 				}
-			} else
-				log_warnx("got IMSG_CTL_NEIGHBOR_ with "
-				    "wrong length");
+			}
+			if (!matched)
+				control_result(c, CTL_RES_NOSUCHPEER);
 			break;
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_SHOW_INTERFACE:
@@ -440,53 +446,38 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			break;
 		case IMSG_CTL_SHOW_RIB:
 		case IMSG_CTL_SHOW_RIB_PREFIX:
-			if (imsg.hdr.len == IMSG_HEADER_SIZE +
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct ctl_show_rib_request)) {
-				ribreq = imsg.data;
-				neighbor = &ribreq->neighbor;
-				neighbor->descr[PEER_DESCR_LEN - 1] = 0;
-				ribreq->peerid = 0;
-				p = NULL;
-				if (neighbor->addr.aid) {
-					p = getpeerbyaddr(&neighbor->addr);
-					if (p == NULL) {
-						control_result(c,
-						    CTL_RES_NOSUCHPEER);
-						break;
-					}
-					ribreq->peerid = p->conf.id;
-				} else if (neighbor->descr[0]) {
-					p = getpeerbydesc(neighbor->descr);
-					if (p == NULL) {
-						control_result(c,
-						    CTL_RES_NOSUCHPEER);
-						break;
-					}
-					ribreq->peerid = p->conf.id;
-				}
-				if ((ribreq->flags &
-				     (F_CTL_ADJ_OUT | F_CTL_ADJ_IN)) && !p) {
-					/*
-					 * both in and out tables are only
-					 * meaningful if used on a single
-					 * peer.
-					 */
-					control_result(c, CTL_RES_NOSUCHPEER);
-					break;
-				}
-				if ((imsg.hdr.type == IMSG_CTL_SHOW_RIB_PREFIX)
-				    && (ribreq->prefix.aid == AID_UNSPEC)) {
-					/* malformed request, must specify af */
-					control_result(c, CTL_RES_PARSE_ERROR);
-					break;
-				}
-				c->ibuf.pid = imsg.hdr.pid;
-				c->terminate = 1;
-				imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
-				    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
-			} else
 				log_warnx("got IMSG_CTL_SHOW_RIB with "
 				    "wrong length");
+				break;
+			}
+
+			ribreq = imsg.data;
+			neighbor = &ribreq->neighbor;
+			neighbor->descr[PEER_DESCR_LEN - 1] = 0;
+
+			/* check if at least one neighbor exists */
+			for (p = peers; p != NULL; p = p->next)
+				if (peer_matched(p, neighbor))
+					break;
+			if (p == NULL) {
+				control_result(c, CTL_RES_NOSUCHPEER);
+				break;
+			}
+
+			if ((imsg.hdr.type == IMSG_CTL_SHOW_RIB_PREFIX)
+			    && (ribreq->prefix.aid == AID_UNSPEC)) {
+				/* malformed request, must specify af */
+				control_result(c, CTL_RES_PARSE_ERROR);
+				break;
+			}
+
+			c->ibuf.pid = imsg.hdr.pid;
+			c->terminate = 1;
+
+			imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
+			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
 			c->terminate = 1;

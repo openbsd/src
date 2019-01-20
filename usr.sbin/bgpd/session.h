@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.127 2018/12/27 20:23:24 remi Exp $ */
+/*	$OpenBSD: session.h,v 1.128 2019/01/20 23:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -296,6 +296,7 @@ void		 bgp_fsm(struct peer *, enum session_events);
 int		 session_neighbor_rrefresh(struct peer *p);
 struct peer	*getpeerbyaddr(struct bgpd_addr *);
 struct peer	*getpeerbydesc(const char *);
+int		 peer_matched(struct peer *, struct ctl_neighbor *);
 int		 imsg_ctl_parent(int, u_int32_t, pid_t, void *, u_int16_t);
 int		 imsg_ctl_rde(int, pid_t, void *, u_int16_t);
 void		 session_stop(struct peer *, u_int8_t);

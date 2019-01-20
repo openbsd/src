@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.370 2018/10/22 07:46:55 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.371 2019/01/20 23:27:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -100,10 +100,10 @@ int	session_link_state_is_up(int, int, int);
 
 int		 la_cmp(struct listen_addr *, struct listen_addr *);
 struct peer	*getpeerbyip(struct sockaddr *);
+struct peer	*getpeerbyid(u_int32_t);
 void		 session_template_clone(struct peer *, struct sockaddr *,
 		    u_int32_t, u_int32_t);
 int		 session_match_mask(struct peer *, struct bgpd_addr *);
-struct peer	*getpeerbyid(u_int32_t);
 
 struct bgpd_config	*conf, *nconf;
 struct bgpd_sysdep	 sysdep;
@@ -3114,6 +3114,36 @@ getpeerbyip(struct sockaddr *ip)
 	return (NULL);
 }
 
+struct peer *
+getpeerbyid(u_int32_t peerid)
+{
+	struct peer *p;
+
+	/* we might want a more effective way to find peers by IP */
+	for (p = peers; p != NULL &&
+	    p->conf.id != peerid; p = p->next)
+		;	/* nothing */
+
+	return (p);
+}
+
+int
+peer_matched(struct peer *p, struct ctl_neighbor *n)
+{
+	char *s;
+
+	if (n && n->addr.aid) {
+		if (memcmp(&p->conf.remote_addr, &n->addr,
+		    sizeof(p->conf.remote_addr)))
+			return 0;
+	} else if (n && n->descr[0]) {
+		s = n->is_group ? p->conf.group : p->conf.descr;
+		if (strcmp(s, n->descr))
+			return 0;
+	}
+	return 1;
+}
+
 void
 session_template_clone(struct peer *p, struct sockaddr *ip, u_int32_t id,
     u_int32_t as)
@@ -3170,19 +3200,6 @@ session_match_mask(struct peer *p, struct bgpd_addr *a)
 		return (0);
 	}
 	return (0);
-}
-
-struct peer *
-getpeerbyid(u_int32_t peerid)
-{
-	struct peer *p;
-
-	/* we might want a more effective way to find peers by IP */
-	for (p = peers; p != NULL &&
-	    p->conf.id != peerid; p = p->next)
-		;	/* nothing */
-
-	return (p);
 }
 
 void
