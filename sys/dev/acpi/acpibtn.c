@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.46 2019/01/19 20:45:06 tedu Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.47 2019/01/20 02:45:44 tedu Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -271,11 +271,18 @@ sleep:
 		break;
 	case ACPIBTN_POWER:
 		if (notify_type == 0x80) {
-			printf("power button\n");
-			if (pwr_action == 2)
+			switch (pwr_action) {
+			case 0:
+				break;
+			case 1:
+				acpi_addtask(sc->sc_acpi, acpi_powerdown_task,
+				    sc->sc_acpi, 0);
+				break;
+#ifndef SMALL_KERNEL
+			case 2:
 				goto sleep;
-			acpi_addtask(sc->sc_acpi, acpi_powerdown_task,
-			    sc->sc_acpi, 0);
+#endif
+			}
 		}
 		break;
 	default:
