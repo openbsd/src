@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.8 2019/01/19 03:32:03 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.9 2019/01/20 10:31:54 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -31,8 +31,12 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_IO_WANT_POLLIN	-2
 #define TLS13_IO_WANT_POLLOUT	-3
 
+typedef int (*tls13_alert_cb)(uint8_t _alert_level, uint8_t _alert_desc,
+    void *_cb_arg);
+typedef int (*tls13_post_handshake_cb)(void *_cb_arg);
 typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
-typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen, void *_cb_arg);
+typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
+    void *_cb_arg);
 
 struct tls13_buffer;
 
@@ -41,7 +45,8 @@ void tls13_buffer_free(struct tls13_buffer *buf);
 ssize_t tls13_buffer_extend(struct tls13_buffer *buf, size_t len,
     tls13_read_cb read_cb, void *cb_arg);
 void tls13_buffer_cbs(struct tls13_buffer *buf, CBS *cbs);
-int tls13_buffer_finish(struct tls13_buffer *buf, uint8_t **out, size_t *out_len);
+int tls13_buffer_finish(struct tls13_buffer *buf, uint8_t **out,
+    size_t *out_len);
 
 struct tls13_secret {
 	uint8_t *data;
@@ -91,6 +96,27 @@ int tls13_derive_application_secrets(struct tls13_secrets *secrets,
     const struct tls13_secret *context);
 
 struct tls13_ctx;
+
+struct tls13_record_layer;
+
+struct tls13_record_layer *tls13_record_layer_new(tls13_read_cb wire_read,
+    tls13_write_cb wire_write, tls13_alert_cb alert_cb,
+    tls13_post_handshake_cb post_handshake_cb, void *cb_arg);
+void tls13_record_layer_free(struct tls13_record_layer *rl);
+void tls13_record_layer_set_aead(struct tls13_record_layer *rl,
+    const EVP_AEAD *aead);
+void tls13_record_layer_set_hash(struct tls13_record_layer *rl,
+    const EVP_MD *hash);
+void tls13_record_layer_handshake_completed(struct tls13_record_layer *rl);
+int tls13_record_layer_set_traffic_keys(struct tls13_record_layer *rl,
+    struct tls13_secret *read_key, struct tls13_secret *write_key);
+
+ssize_t tls13_read_handshake_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
+ssize_t tls13_write_handshake_data(struct tls13_record_layer *rl, const uint8_t *buf,
+    size_t n);
+ssize_t tls13_read_application_data(struct tls13_record_layer *rl, uint8_t *buf, size_t n);
+ssize_t tls13_write_application_data(struct tls13_record_layer *rl, const uint8_t *buf,
+    size_t n);
 
 /*
  * RFC 8446, Section B.3
