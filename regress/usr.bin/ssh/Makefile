@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.99 2018/12/15 00:50:21 tedu Exp $
+#	$OpenBSD: Makefile,v 1.100 2019/01/20 23:24:19 djm Exp $
 
 .ifndef SKIP_UNIT
 SUBDIR=		unittests
@@ -82,7 +82,8 @@ LTESTS= 	connect \
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
-#LTESTS= 	cipher-speed
+EXTRA_TESTS=	agent-pkcs11
+#EXTRA_TESTS+= 	cipher-speed
 
 USERNAME!=	id -un
 CLEANFILES+=	*.core actual agent-key.* authorized_keys_${USERNAME} \
@@ -184,7 +185,7 @@ modpipe: modpipe.c
 
 t-integrity: modpipe
 
-.for t in ${LTESTS} ${INTEROP_TESTS}
+.for t in ${LTESTS} ${INTEROP_TESTS} ${EXTRA_TESTS}
 t-${t}:
 	env SUDO="${SUDO}" ${TEST_ENV} \
 	    sh ${.CURDIR}/test-exec.sh ${.OBJDIR} ${.CURDIR}/${t}.sh
@@ -200,6 +201,13 @@ INTEROP_TARGETS+=t-${t}
 
 # Not run by default
 interop: ${INTEROP_TARGETS}
+
+.for t in ${EXTRA_TESTS}
+EXTRA_TARGETS+=t-${t}
+.endfor
+
+# Not run by default
+extra: ${EXTRA_TARGETS}
 
 .for s in ${SUBDIR}
 CLEAN_SUBDIR+=c-${s}
