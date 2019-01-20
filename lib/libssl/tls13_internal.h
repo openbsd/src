@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.9 2019/01/20 10:31:54 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.10 2019/01/20 12:27:34 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -97,6 +97,9 @@ int tls13_derive_application_secrets(struct tls13_secrets *secrets,
 
 struct tls13_ctx;
 
+/*
+ * Record Layer.
+ */
 struct tls13_record_layer;
 
 struct tls13_record_layer *tls13_record_layer_new(tls13_read_cb wire_read,
@@ -119,7 +122,25 @@ ssize_t tls13_write_application_data(struct tls13_record_layer *rl, const uint8_
     size_t n);
 
 /*
- * RFC 8446, Section B.3
+ * Handshake Messages.
+ */
+struct tls13_handshake_msg;
+
+struct tls13_handshake_msg *tls13_handshake_msg_new(void);
+void tls13_handshake_msg_free(struct tls13_handshake_msg *msg);
+void tls13_handshake_msg_data(struct tls13_handshake_msg *msg, CBS *cbs);
+uint8_t tls13_handshake_msg_type(struct tls13_handshake_msg *msg);
+int tls13_handshake_msg_content(struct tls13_handshake_msg *msg, CBS *cbs);
+int tls13_handshake_msg_start(struct tls13_handshake_msg *msg, CBB *body,
+    uint8_t msg_type);
+int tls13_handshake_msg_finish(struct tls13_handshake_msg *msg);
+int tls13_handshake_msg_recv(struct tls13_handshake_msg *msg,
+    struct tls13_record_layer *rl);
+int tls13_handshake_msg_send(struct tls13_handshake_msg *msg,
+    struct tls13_record_layer *rl);
+
+/*
+ * Message Types - RFC 8446, Section B.3.
  *
  * Values listed as "_RESERVED" were used in previous versions of TLS and are
  * listed here for completeness.  TLS 1.3 implementations MUST NOT send them but
