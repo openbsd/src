@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.361 2019/01/19 20:45:06 tedu Exp $ */
+/* $OpenBSD: acpi.c,v 1.362 2019/01/20 00:19:50 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1973,9 +1973,11 @@ acpi_pbtn_task(void *arg0, int dummy)
 	case 1:
 		acpi_addtask(sc, acpi_powerdown_task, sc, 0);
 		break;
+#ifndef SMALL_KERNEL
 	case 2:
 		acpi_addtask(sc, acpi_sleep_task, sc, ACPI_SLEEP_SUSPEND);
 		break;
+#endif
 	}
 }
 
