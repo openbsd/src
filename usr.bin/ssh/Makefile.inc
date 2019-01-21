@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.65 2019/01/21 10:29:56 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.66 2019/01/21 10:38:54 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -54,6 +54,9 @@ SRCS_KEXS+=	kexgexs.c
 .endif
 SRCS_KEX+=	kexc25519.c
 SRCS_KEX+=	smult_curve25519_ref.c
+SRCS_KEX+=	kexgen.c
+SRCS_KEX+=	kexsntrup4591761x25519.c
+SRCS_KEX+=	sntrup4591761.c
 
 SRCS_KEY+=	sshkey.c
 SRCS_KEY+=	sshbuf-misc.c
@@ -121,10 +124,5 @@ SRCS_KEY+=	xmss_hash.c
 SRCS_KEY+=	xmss_hash_address.c
 SRCS_KEY+=	xmss_wots.c
 .endif
-
-SRCS_KEX+=	sntrup4591761.c
-SRCS_KEX+=	kexsntrup4591761x25519.c
-SRCS_KEXC+=	kexkemc.c
-SRCS_KEXS+=	kexkems.c
 
 .include <bsd.obj.mk>
