@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.224 2019/01/20 01:07:16 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.225 2019/01/21 01:40:35 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5610,9 +5610,8 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
 	uint64_t *rax, *rdx;
-#ifdef VMM_DEBUG
 	uint64_t *rcx;
-#endif /* VMM_DEBUG */
+	int ret;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -5626,14 +5625,26 @@ vmx_handle_rdmsr(struct vcpu *vcpu)
 	}
 
 	rax = &vcpu->vc_gueststate.vg_rax;
+	rcx = &vcpu->vc_gueststate.vg_rcx;
 	rdx = &vcpu->vc_gueststate.vg_rdx;
+
+	switch (*rcx) {
+	case MSR_SMBASE:
+		/*
+		 * 34.15.6.3 - Saving Guest State (SMM)
+		 *
+		 * Unsupported, so inject #GP and return without
+		 * advancing %rip.
+		 */
+		ret = vmm_inject_gp(vcpu);
+		return (ret);
+	}
 
 	*rax = 0;
 	*rdx = 0;
 
 #ifdef VMM_DEBUG
 	/* Log the access, to be able to identify unknown MSRs */
-	rcx = &vcpu->vc_gueststate.vg_rcx;
 	DPRINTF("%s: rdmsr exit, msr=0x%llx, data returned to "
 	    "guest=0x%llx:0x%llx\n", __func__, *rcx, *rdx, *rax);
 #endif /* VMM_DEBUG */
@@ -5794,6 +5805,7 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 {
 	uint64_t insn_length;
 	uint64_t *rax, *rdx, *rcx;
+	int ret;
 
 	if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_length)) {
 		printf("%s: can't obtain instruction length\n", __func__);
@@ -5814,6 +5826,15 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 		case MSR_MISC_ENABLE:
 			vmx_handle_misc_enable_msr(vcpu);
 			break;
+		case MSR_SMM_MONITOR_CTL:
+			/*
+			 * 34.15.5 - Enabling dual monitor treatment
+			 *
+			 * Unsupported, so inject #GP and return without
+			 * advancing %rip.
+			 */
+			ret = vmm_inject_gp(vcpu);
+			return (ret);
 #ifdef VMM_DEBUG
 		default:
 			/*

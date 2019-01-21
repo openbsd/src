@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.81 2018/09/11 07:13:23 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.82 2019/01/21 01:40:35 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -359,6 +359,8 @@
 #define	MSR_BBL_CR_D1		0x089	/* PII+ only */
 #define	MSR_BBL_CR_D2		0x08a	/* PII+ only */
 #define MSR_BIOS_SIGN		0x08b
+#define MSR_SMM_MONITOR_CTL	0x09b
+#define MSR_SMBASE		0x09e
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
