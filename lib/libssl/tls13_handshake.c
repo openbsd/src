@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.18 2019/01/21 13:45:57 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.19 2019/01/21 14:19:51 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -509,15 +509,13 @@ tls13_server_certificate_send(struct tls13_ctx *ctx)
 int
 tls13_server_certificate_request_recv(struct tls13_ctx *ctx)
 {
-	uint8_t msg_type = 0; /* XXX */
-
 	/*
 	 * Thanks to poor state design in the RFC, this function can be called
 	 * when we actually have a certificate message instead of a certificate
 	 * request... in that case we call the certificate handler after
 	 * switching state, to avoid advancing state.
 	 */
-	if (msg_type == TLS13_MT_CERTIFICATE) {
+	if (tls13_handshake_msg_type(ctx->hs_msg) == TLS13_MT_CERTIFICATE) {
 		ctx->handshake_stage.hs_type |= WITHOUT_CR;
 		return tls13_server_certificate_recv(ctx);
 	}
