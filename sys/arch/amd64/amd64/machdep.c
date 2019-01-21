@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.253 2019/01/19 20:45:06 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.254 2019/01/21 06:18:37 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1366,6 +1366,7 @@ init_x86_64(paddr_t first_avail)
 	struct region_descriptor region;
 	bios_memmap_t *bmp;
 	int x, ist;
+	uint64_t max_dm_size = ((uint64_t)512 * NUM_L4_SLOT_DIRECT) << 30;
 
 	cpu_init_msrs(&cpu_info_primary);
 
@@ -1496,11 +1497,11 @@ init_x86_64(paddr_t first_avail)
 		}
 
 		/*
-		 * The direct map is limited to 512GB of memory, so
-		 * discard anything above that.
+		 * The direct map is limited to 512GB * NUM_L4_SLOT_DIRECT of
+		 * memory, so discard anything above that.
 		 */
-		if (e1 >= (uint64_t)512*1024*1024*1024) {
-			e1 = (uint64_t)512*1024*1024*1024;
+		if (e1 >= max_dm_size) {
+			e1 = max_dm_size;
 			if (s1 > e1)
 				continue;
 		}

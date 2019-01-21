@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.72 2019/01/19 04:07:12 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.73 2019/01/21 06:18:37 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -94,7 +94,7 @@
  * The other obvious difference from i386 is that it has a direct map of all
  * physical memory in the VA range:
  *
- *     0xffffff0000000000 - 0xffffff7fffffffff
+ *     0xfffffd8000000000 - 0xffffff7fffffffff
  *
  * The direct map is used in some cases to access PTEs of non-current pmaps.
  *
@@ -104,7 +104,7 @@
  *  |         Kernel Image            |
  *  +---------------------------------+ 0xffffff8000000000
  *  |         Direct Map              |
- *  +---------------------------------+ 0xffffff0000000000
+ *  +---------------------------------+ 0xfffffd8000000000
  *  ~                                 ~
  *  |                                 |
  *  |         Kernel Space            |
@@ -141,7 +141,8 @@
 #define L4_SLOT_PTE		255
 #define L4_SLOT_KERN		256
 #define L4_SLOT_KERNBASE	511
-#define L4_SLOT_DIRECT		510
+#define NUM_L4_SLOT_DIRECT	4
+#define L4_SLOT_DIRECT		(L4_SLOT_KERNBASE - NUM_L4_SLOT_DIRECT)
 
 #define PDIR_SLOT_KERN		L4_SLOT_KERN
 #define PDIR_SLOT_PTE		L4_SLOT_PTE
@@ -157,7 +158,8 @@
 
 #define PTE_BASE  ((pt_entry_t *) (L4_SLOT_PTE * NBPD_L4))
 #define PMAP_DIRECT_BASE	(VA_SIGN_NEG((L4_SLOT_DIRECT * NBPD_L4)))
-#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + 1) * NBPD_L4)))
+#define PMAP_DIRECT_END		(VA_SIGN_NEG(((L4_SLOT_DIRECT + \
+    NUM_L4_SLOT_DIRECT) * NBPD_L4)))
 
 #define L1_BASE		PTE_BASE
 
@@ -178,6 +180,7 @@
 #define NKL3_KIMG_ENTRIES	1
 #define NKL2_KIMG_ENTRIES	64
 
+/* number of pages of direct map entries set up by locore0.S */
 #define NDML4_ENTRIES		1
 #define NDML3_ENTRIES		1
 #define NDML2_ENTRIES		4	/* 4GB */

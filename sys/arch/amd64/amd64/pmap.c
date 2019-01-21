@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.126 2019/01/21 05:40:11 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.127 2019/01/21 06:18:37 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -560,10 +560,11 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 {
 	vaddr_t kva_start = VM_MIN_KERNEL_ADDRESS;
 	struct pmap *kpm;
-	int i;
+	int curslot, i, j, k, p;
 	long ndmpdp;
-	paddr_t dmpd, dmpdp;
+	paddr_t dmpd, dmpdp, start_cur;
 	vaddr_t kva, kva_end;
+	pt_entry_t *pt, *pml2;
 
 	/*
 	 * define the boundaries of the managed kernel virtual address
@@ -657,10 +658,16 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	 * we map the rest if it exists. We actually use the direct map
 	 * here to set up the page tables, we're assuming that we're still
 	 * operating in the lower 4GB of memory.
+	 *
+	 * Map (up to) the first 512GB of physical memory first. This part
+	 * is handled differently than physical memory > 512GB since we have
+	 * already mapped part of this range in locore0.
 	 */
 	ndmpdp = (max_pa + NBPD_L3 - 1) >> L3_SHIFT;
 	if (ndmpdp < NDML2_ENTRIES)
 		ndmpdp = NDML2_ENTRIES;		/* At least 4GB */
+	if (ndmpdp > 512)
+		ndmpdp = 512;			/* At most 512GB */
 
 	dmpdp = kpm->pm_pdir[PDIR_SLOT_DIRECT] & PG_FRAME;
 
@@ -691,6 +698,57 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 
 	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_V | PG_KW | PG_U |
 	    PG_M | pg_nx;
+
+	/* Map any remaining physical memory > 512GB */	
+	for (curslot = 1 ; curslot < NUM_L4_SLOT_DIRECT ; curslot++) {
+		/*
+		 * Start of current range starts at PA (curslot) * 512GB
+		 */
+		start_cur = (paddr_t)(curslot * NBPD_L4);
+		if (max_pa > start_cur) {
+			/* Next 512GB, new PML4e and PML3 page */
+			dmpd = first_avail; first_avail += PAGE_SIZE;
+			pt = (pt_entry_t *)PMAP_DIRECT_MAP(dmpd);
+			kpm->pm_pdir[PDIR_SLOT_DIRECT + curslot] = dmpd |
+			    PG_KW | PG_V | PG_U | PG_M | pg_nx;
+
+			/* How many 1GB entries remain? */
+			p = ((max_pa - start_cur) >> L3_SHIFT);
+			if (max_pa & L2_MASK)
+				p++;
+
+			if (p > NPDPG)
+				p = NPDPG;
+
+			/* Allocate 'p' PML2 pages and populate */
+			for (i = 0; i < p; i++) {
+				dmpd = first_avail; first_avail += PAGE_SIZE;
+				pt[i] = dmpd |
+				    PG_RW | PG_V | PG_U | PG_M | pg_nx;
+
+				pml2 = (pt_entry_t *)PMAP_DIRECT_MAP(dmpd);
+			
+				/*
+				 * All PML2 pages except the last one will be
+				 * filled
+				 */	
+				if (i == p - 1) {
+					k = ((max_pa & L2_MASK) >> L2_SHIFT);
+					if (max_pa & L1_MASK)
+						k++;
+				} else
+					k = NPDPG;
+
+				for (j = 0; j < k; j++) {
+					pml2[j] = curslot * NBPD_L4 +
+					    (uint64_t)i * NBPD_L3 +
+					    (uint64_t)j * NBPD_L2;
+					pml2[j] |= PG_RW | PG_V | pg_g_kern |
+					    PG_U | PG_M | pg_nx | PG_PS;
+				}
+			}
+		}
+	}
 
 	tlbflush();
 
@@ -1108,10 +1166,11 @@ void
 pmap_pdp_ctor(pd_entry_t *pdir)
 {
 	paddr_t pdirpa;
-	int npde;
+	int npde, i;
+	struct pmap *kpm = pmap_kernel();
 
 	/* fetch the physical address of the page directory. */
-	(void) pmap_extract(pmap_kernel(), (vaddr_t) pdir, &pdirpa);
+	(void) pmap_extract(kpm, (vaddr_t) pdir, &pdirpa);
 
 	/* zero init area */
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
@@ -1129,7 +1188,8 @@ pmap_pdp_ctor(pd_entry_t *pdir)
 	memset(&pdir[PDIR_SLOT_KERN + npde], 0,
 	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
 
-	pdir[PDIR_SLOT_DIRECT] = pmap_kernel()->pm_pdir[PDIR_SLOT_DIRECT];
+	for (i = 0; i < NUM_L4_SLOT_DIRECT; i++)
+		pdir[PDIR_SLOT_DIRECT + i] = kpm->pm_pdir[PDIR_SLOT_DIRECT + i];
 
 #if VM_MIN_KERNEL_ADDRESS != KERNBASE
 	pdir[pl4_pi(KERNBASE)] = PDP_BASE[pl4_pi(KERNBASE)];
