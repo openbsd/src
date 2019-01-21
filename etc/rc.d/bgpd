@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: bgpd,v 1.4 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: bgpd,v 1.5 2019/01/21 01:41:16 claudio Exp $
 
 daemon="/usr/sbin/bgpd"
 
@@ -8,7 +8,8 @@ daemon="/usr/sbin/bgpd"
 
 # child will not return a config parsing error to the parent
 rc_pre() {
-	${daemon} -n ${daemon_flags}
+	# use rcexec here since daemon_flags may contain arguments with spaces
+	${rcexec} "${daemon} -n ${daemon_flags}"
 }
 
 rc_cmd $1
