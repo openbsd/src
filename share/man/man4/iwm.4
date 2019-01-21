@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.24 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: iwm.4,v 1.25 2019/01/21 09:58:40 jmc Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: January 21 2019 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -26,10 +26,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for
-.Tn Intel
-Wireless 7260, 7265, 3160, 3165, 3168, 8260, and 8265 PCIe Mini Card
-network adapters.
+driver provides support for Intel Wireless
+7260, 7265, 3160, 3165, 3168, 8260, and 8265
+PCIe Mini Card network adapters.
 .Pp
 These are the modes the
 .Nm
@@ -75,6 +74,7 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/iwm-3168-22
 .It Pa /etc/firmware/iwm-7260-16
 .It Pa /etc/firmware/iwm-7265-16
+.It Pa /etc/firmware/iwm-7265D-16
 .It Pa /etc/firmware/iwm-8000C-16
 .It Pa /etc/firmware/iwm-8265-22
 .El
