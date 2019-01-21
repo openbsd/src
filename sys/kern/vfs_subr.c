@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.284 2018/12/23 10:46:51 natano Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.285 2019/01/21 18:09:21 anton Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
+#include <sys/lockf.h>
 #include <sys/stat.h>
 #include <sys/acct.h>
 #include <sys/namei.h>
@@ -1150,6 +1151,7 @@ vgonel(struct vnode *vp, struct proc *p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
+		lf_purgelocks(vp->v_speclockf);
 		free(vp->v_specinfo, M_VNODE, sizeof(struct specinfo));
 		vp->v_specinfo = NULL;
 	}

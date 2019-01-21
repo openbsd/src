@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcntl.h,v 1.21 2015/05/17 01:22:01 deraadt Exp $	*/
+/*	$OpenBSD: fcntl.h,v 1.22 2019/01/21 18:09:21 anton Exp $	*/
 /*	$NetBSD: fcntl.h,v 1.8 1995/03/26 20:24:12 jtc Exp $	*/
 
 /*-
@@ -170,6 +170,7 @@
 #define	F_WAIT		0x010		/* Wait until lock is granted */
 #define	F_FLOCK		0x020	 	/* Use flock(2) semantics for lock */
 #define	F_POSIX		0x040	 	/* Use POSIX semantics for lock */
+#define	F_INTR		0x080	 	/* Lock operation interrupted */
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs.h,v 1.8 2016/06/19 11:54:33 natano Exp $	*/
+/*	$OpenBSD: tmpfs.h,v 1.9 2019/01/21 18:09:21 anton Exp $	*/
 /*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ typedef struct tmpfs_node {
 	struct timespec		tn_birthtime;
 
 	/* Head of byte-level lock list (used by tmpfs_advlock). */
-	struct lockf *		tn_lockf;
+	struct lockf_state *	tn_lockf;
 
 	union {
 		/* Type case: VBLK or VCHR. */

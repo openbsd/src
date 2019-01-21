@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.40 2018/05/05 11:54:11 mpi Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.41 2019/01/21 18:09:21 anton Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct nfsnode {
 	time_t			n_ctime;	/* Prev create time. */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vnode		*n_vnode;	/* associated vnode */
-	struct lockf		*n_lockf;	/* Locking record of file */
+	struct lockf_state	*n_lockf;	/* Locking record of file */
 	struct rrwlock		n_lock;		/* NFSnode lock */
 	int			n_error;	/* Save write error value */
 	union {
