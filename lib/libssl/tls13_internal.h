@@ -1,7 +1,8 @@
-/* $OpenBSD: tls13_internal.h,v 1.13 2019/01/21 10:44:08 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.14 2019/01/21 13:13:46 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -146,7 +147,9 @@ struct tls13_ctx {
 	SSL *ssl;
 	uint8_t	mode;
 	struct tls13_handshake_stage handshake_stage;
+
 	struct tls13_record_layer *rl;
+	struct tls13_handshake_msg *hs_msg;
 };
 
 /*
