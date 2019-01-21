@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.22 2019/01/17 03:26:19 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.23 2019/01/21 20:46:52 tedu Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -630,8 +630,6 @@ unveil_add(struct proc *p, struct nameidata *ndp, const char *permissions)
  done:
 	if (ret == 0)
 		unveil_add_traversed_vnodes(p, ndp);
-	unveil_free_traversed_vnodes(ndp);
-	pool_put(&namei_pool, ndp->ni_cnd.cn_pnbuf);
 	return ret;
 }
 

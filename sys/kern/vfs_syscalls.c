@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.310 2019/01/03 21:52:31 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.311 2019/01/21 20:46:52 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -92,6 +92,7 @@ int dofutimens(struct proc *, int, struct timespec [2]);
 int dounmount_leaf(struct mount *, int, struct proc *);
 int unveil_add(struct proc *, struct nameidata *, const char *);
 void unveil_removevnode(struct vnode *vp);
+void unveil_free_traversed_vnodes(struct nameidata *);
 ssize_t unveil_find_cover(struct vnode *, struct proc *);
 struct unveil *unveil_lookup(struct vnode *, struct proc *, ssize_t *);
 
@@ -911,7 +912,7 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 
 	nd.ni_pledge = PLEDGE_UNVEIL;
 	if ((error = namei(&nd)) != 0)
-		return (error);
+		goto end;
 
 	/*
 	 * XXX Any access to the file or directory will allow us to
@@ -948,6 +949,10 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 		vrele(nd.ni_vp);
 	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp)
 		vrele(nd.ni_dvp);
+
+	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+end:
+	unveil_free_traversed_vnodes(&nd);
 
 	return (error);
 }
