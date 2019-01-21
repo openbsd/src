@@ -214,6 +214,7 @@ lmtp_engine(FILE *conn, struct session *session)
 	enum phase phase = PHASE_BANNER;
 
 	do {
+		fflush(conn);
 		if ((linelen = getline(&line, &linesize, conn)) == -1)
 			err(1, "getline");
 		line[strcspn(line, "\n")] = '\0';
