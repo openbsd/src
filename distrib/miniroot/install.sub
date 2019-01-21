@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1108 2019/01/21 02:53:51 phessler Exp $
+#	$OpenBSD: install.sub,v 1.1109 2019/01/21 23:06:28 jsg Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1139,7 +1139,7 @@ v6_config() {
 			;;
 		esac
 
-		# Ask for prefix lenght if the user did not use CIDR notation.
+		# Ask for prefix length if the user did not use CIDR notation.
 		if [[ $_addr == */* ]]; then
 			_prefixlen=
 		else
