@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.14 2019/01/20 06:40:55 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.15 2019/01/21 06:58:44 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -26,17 +26,6 @@
 /* Record types */
 #define TLS13_HANDSHAKE		1
 #define TLS13_APPLICATION_DATA	2
-
-/* Indexing into the state machine */
-struct tls13_handshake {
-	uint8_t			hs_type;
-	uint8_t			message_number;
-};
-
-struct tls13_ctx {
-	uint8_t			mode;
-	struct tls13_handshake	handshake;
-};
 
 struct tls13_handshake_action {
 	uint8_t			record_type;
@@ -266,7 +255,7 @@ static enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 enum tls13_message_type
 tls13_handshake_active_state(struct tls13_ctx *ctx)
 {
-	struct tls13_handshake hs = ctx->handshake;
+	struct tls13_handshake_stage hs = ctx->handshake_stage;
 
 	if (hs.hs_type >= NUM_HANDSHAKES)
 		return INVALID;
@@ -290,7 +279,7 @@ tls13_handshake_active_action(struct tls13_ctx *ctx)
 int
 tls13_handshake_advance_state_machine(struct tls13_ctx *ctx)
 {
-	if (++ctx->handshake.message_number >= TLS13_NUM_MESSAGE_TYPES)
+	if (++ctx->handshake_stage.message_number >= TLS13_NUM_MESSAGE_TYPES)
 		return 0;
 
 	return 1;
@@ -472,7 +461,7 @@ tls13_client_key_update_recv(struct tls13_ctx *ctx)
 int
 tls13_server_hello_recv(struct tls13_ctx *ctx)
 {
-	ctx->handshake.hs_type |= NEGOTIATED;
+	ctx->handshake_stage.hs_type |= NEGOTIATED;
 
 	return 0;
 }
@@ -480,7 +469,7 @@ tls13_server_hello_recv(struct tls13_ctx *ctx)
 int
 tls13_server_hello_send(struct tls13_ctx *ctx)
 {
-	ctx->handshake.hs_type |= NEGOTIATED;
+	ctx->handshake_stage.hs_type |= NEGOTIATED;
 
 	return 0;
 }
@@ -521,7 +510,7 @@ tls13_server_certificate_request_recv(struct tls13_ctx *ctx)
 	 * switching state, to avoid advancing state.
 	 */
 	if (msg_type == TLS13_MT_CERTIFICATE) {
-		ctx->handshake.hs_type |= WITHOUT_CR;
+		ctx->handshake_stage.hs_type |= WITHOUT_CR;
 		return tls13_server_certificate_recv(ctx);
 	}
 

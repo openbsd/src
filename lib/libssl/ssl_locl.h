@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.226 2019/01/18 12:09:52 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.227 2019/01/21 06:58:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -609,6 +609,8 @@ typedef struct ssl_ctx_internal_st {
 } SSL_CTX_INTERNAL;
 
 typedef struct ssl_internal_st {
+	struct tls13_ctx *tls13;
+
 	uint16_t min_version;
 	uint16_t max_version;
 
