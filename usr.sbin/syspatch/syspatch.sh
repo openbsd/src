@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.141 2019/01/21 23:44:26 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.142 2019/01/21 23:50:36 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -187,7 +187,7 @@ rollback_patch()
 	local _edir _file _files _patch _ret=0
 
 	_patch="$(ls_installed | tail -1)"
-	[[ -n ${_patch} ]]
+	[[ -n ${_patch} ]] || return 0 # nothing to rollback
 
 	_edir=${_TMP}/${_patch}-rollback
 	_patch=${_OSrev}-${_patch}
