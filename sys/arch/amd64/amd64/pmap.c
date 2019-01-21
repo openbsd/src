@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.125 2019/01/19 04:07:12 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.126 2019/01/21 05:40:11 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2141,7 +2141,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
 			panic("%s: can't locate PDPT page\n", __func__);
 
-		pd[l4idx] = (npa | PG_u | PG_RW | PG_V);
+		pd[l4idx] = (npa | PG_RW | PG_V);
 
 		DPRINTF("%s: allocated new PDPT page at phys 0x%llx, "
 		    "setting PML4e[%lld] = 0x%llx\n", __func__,
@@ -2165,7 +2165,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
 			panic("%s: can't locate PD page\n", __func__);
 
-		pd[l3idx] = (npa | PG_u | PG_RW | PG_V);
+		pd[l3idx] = (npa | PG_RW | PG_V);
 
 		DPRINTF("%s: allocated new PD page at phys 0x%llx, "
 		    "setting PDPTe[%lld] = 0x%llx\n", __func__,
@@ -2189,7 +2189,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
 			panic("%s: can't locate PT page\n", __func__);
 
-		pd[l2idx] = (npa | PG_u | PG_RW | PG_V);
+		pd[l2idx] = (npa | PG_RW | PG_V);
 
 		DPRINTF("%s: allocated new PT page at phys 0x%llx, "
 		    "setting PDE[%lld] = 0x%llx\n", __func__,
