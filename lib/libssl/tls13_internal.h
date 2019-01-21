@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.11 2019/01/21 06:58:44 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.12 2019/01/21 09:10:58 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -146,7 +146,17 @@ struct tls13_ctx {
 	SSL *ssl;
 	uint8_t	mode;
 	struct tls13_handshake_stage handshake_stage;
+	struct tls13_record_layer *rl;
 };
+
+/*
+ * Legacy interfaces.
+ */
+ssize_t tls13_legacy_wire_read_cb(void *buf, size_t n, void *arg);
+ssize_t tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg);
+int tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len,
+    int peek);
+int tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len);
 
 /*
  * Message Types - RFC 8446, Section B.3.
