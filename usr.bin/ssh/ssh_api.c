@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh_api.c,v 1.12 2019/01/21 10:24:09 djm Exp $ */
+/* $OpenBSD: ssh_api.c,v 1.13 2019/01/21 10:28:02 djm Exp $ */
 /*
  * Copyright (c) 2012 Markus Friedl.  All rights reserved.
  *
@@ -95,11 +95,11 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 	ssh->kex->server = is_server;
 	if (is_server) {
 #ifdef WITH_OPENSSL
-		ssh->kex->kex[KEX_DH_GRP1_SHA1] = kexdh_server;
-		ssh->kex->kex[KEX_DH_GRP14_SHA1] = kexdh_server;
-		ssh->kex->kex[KEX_DH_GRP14_SHA256] = kexdh_server;
-		ssh->kex->kex[KEX_DH_GRP16_SHA512] = kexdh_server;
-		ssh->kex->kex[KEX_DH_GRP18_SHA512] = kexdh_server;
+		ssh->kex->kex[KEX_DH_GRP1_SHA1] = kex_kem_server;
+		ssh->kex->kex[KEX_DH_GRP14_SHA1] = kex_kem_server;
+		ssh->kex->kex[KEX_DH_GRP14_SHA256] = kex_kem_server;
+		ssh->kex->kex[KEX_DH_GRP16_SHA512] = kex_kem_server;
+		ssh->kex->kex[KEX_DH_GRP18_SHA512] = kex_kem_server;
 		ssh->kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 		ssh->kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
 		ssh->kex->kex[KEX_ECDH_SHA2] = kexecdh_server;
@@ -111,11 +111,11 @@ ssh_init(struct ssh **sshp, int is_server, struct kex_params *kex_params)
 		ssh->kex->sign=&_ssh_host_key_sign;
 	} else {
 #ifdef WITH_OPENSSL
-		ssh->kex->kex[KEX_DH_GRP1_SHA1] = kexdh_client;
-		ssh->kex->kex[KEX_DH_GRP14_SHA1] = kexdh_client;
-		ssh->kex->kex[KEX_DH_GRP14_SHA256] = kexdh_client;
-		ssh->kex->kex[KEX_DH_GRP16_SHA512] = kexdh_client;
-		ssh->kex->kex[KEX_DH_GRP18_SHA512] = kexdh_client;
+		ssh->kex->kex[KEX_DH_GRP1_SHA1] = kex_kem_client;
+		ssh->kex->kex[KEX_DH_GRP14_SHA1] = kex_kem_client;
+		ssh->kex->kex[KEX_DH_GRP14_SHA256] = kex_kem_client;
+		ssh->kex->kex[KEX_DH_GRP16_SHA512] = kex_kem_client;
+		ssh->kex->kex[KEX_DH_GRP18_SHA512] = kex_kem_client;
 		ssh->kex->kex[KEX_DH_GEX_SHA1] = kexgex_client;
 		ssh->kex->kex[KEX_DH_GEX_SHA256] = kexgex_client;
 		ssh->kex->kex[KEX_ECDH_SHA2] = kexecdh_client;
