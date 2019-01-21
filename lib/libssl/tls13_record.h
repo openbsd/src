@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.h,v 1.2 2019/01/20 09:12:05 jsing Exp $ */
+/* $OpenBSD: tls13_record.h,v 1.3 2019/01/21 00:24:19 jsing Exp $ */
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -46,10 +46,13 @@ __BEGIN_HIDDEN_DECLS
  */
 #define TLS13_RECORD_SEQ_NUM_LEN 8
 
+struct tls13_record;
+
 struct tls13_record *tls13_record_new(void);
 void tls13_record_free(struct tls13_record *_rec);
-int tls13_record_header(struct tls13_record *_rec, CBS *_cbs);
+uint16_t tls13_record_version(struct tls13_record *_rec);
 uint8_t tls13_record_content_type(struct tls13_record *_rec);
+int tls13_record_header(struct tls13_record *_rec, CBS *_cbs);
 int tls13_record_content(struct tls13_record *_rec, CBS *_cbs);
 void tls13_record_data(struct tls13_record *_rec, CBS *_cbs);
 int tls13_record_set_data(struct tls13_record *_rec, uint8_t *_data,

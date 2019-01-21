@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record.c,v 1.2 2019/01/20 09:12:05 jsing Exp $ */
+/* $OpenBSD: tls13_record.c,v 1.3 2019/01/21 00:24:19 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -23,6 +23,7 @@
 #include "tls13_record.h"
 
 struct tls13_record {
+	uint16_t version;
 	uint8_t content_type;
 	size_t rec_len;
 	uint8_t *data;
@@ -62,6 +63,18 @@ tls13_record_free(struct tls13_record *rec)
 	freezero(rec, sizeof(struct tls13_record));
 }
 
+uint16_t
+tls13_record_version(struct tls13_record *rec)
+{
+	return rec->version;
+}
+
+uint8_t
+tls13_record_content_type(struct tls13_record *rec)
+{
+	return rec->content_type;
+}
+
 int
 tls13_record_header(struct tls13_record *rec, CBS *cbs)
 {
@@ -71,12 +84,6 @@ tls13_record_header(struct tls13_record *rec, CBS *cbs)
 	CBS_init(cbs, rec->data, TLS13_RECORD_HEADER_LEN);
 
 	return 1;
-}
-
-uint8_t
-tls13_record_content_type(struct tls13_record *rec)
-{
-	return rec->content_type;
 }
 
 int
@@ -120,8 +127,8 @@ tls13_record_recv(struct tls13_record *rec, tls13_read_cb wire_read,
 {
 	uint16_t rec_len, rec_version;
 	uint8_t content_type;
+	ssize_t ret;
 	CBS cbs;
-	int ret;
 
 	if (rec->data != NULL)
 		return TLS13_IO_FAILURE;
@@ -145,6 +152,7 @@ tls13_record_recv(struct tls13_record *rec, tls13_read_cb wire_read,
 			return TLS13_IO_FAILURE;
 
 		rec->content_type = content_type;
+		rec->version = rec_version;
 		rec->rec_len = rec_len;
 	}
 
