@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.95 2018/09/16 02:44:06 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.96 2019/01/21 07:16:28 dlg Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -785,6 +785,11 @@ socktrans(struct kinfo_file *kf)
 	case AF_ROUTE:
 		/* print protocol number and socket address */
 		printf("* route %s", stype);
+		printf(" %d ", kf->so_protocol);
+		hide((void *)(uintptr_t)kf->f_data);
+		break;
+	case AF_KEY:
+		printf("* pfkey %s", stype);
 		printf(" %d ", kf->so_protocol);
 		hide((void *)(uintptr_t)kf->f_data);
 		break;
