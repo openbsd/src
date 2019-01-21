@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.88 2018/12/30 13:53:07 denis Exp $ */
+/*	$OpenBSD: mrt.c,v 1.89 2019/01/21 02:07:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -510,6 +510,10 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, u_int32_t snum)
 		struct bgpd_addr	*nh;
 		struct ibuf		*tbuf;
 
+		/* skip pending withdraw in Adj-RIB-Out */
+		if (prefix_aspath(p) == NULL)
+			continue;
+
 		nexthop = prefix_nexthop(p);
 		if (nexthop == NULL) {
 			bzero(&addr, sizeof(struct bgpd_addr));
@@ -672,6 +676,9 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 	 * be dumped p should be set to p = pt->active.
 	 */
 	LIST_FOREACH(p, &re->prefix_h, rib_l) {
+		/* skip pending withdraw in Adj-RIB-Out */
+		if (prefix_aspath(p) == NULL)
+			continue;
 		if (mrtbuf->type == MRT_TABLE_DUMP)
 			mrt_dump_entry(mrtbuf, p, mrtbuf->seqnum++,
 			    prefix_peer(p));
