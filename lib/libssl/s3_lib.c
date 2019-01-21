@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.177 2019/01/18 12:09:52 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.178 2019/01/21 01:20:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1565,6 +1565,11 @@ ssl3_free(SSL *s)
 
 	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 
+	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
+	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
+	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
+	freezero(S3I(s)->hs_tls13.x25519_peer_public, X25519_KEY_LENGTH);
+
 	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
 	tls1_transcript_free(s);
@@ -1595,6 +1600,11 @@ ssl3_clear(SSL *s)
 
 	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 	S3I(s)->tmp.x25519 = NULL;
+
+	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
+	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
+	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
+	freezero(S3I(s)->hs_tls13.x25519_peer_public, X25519_KEY_LENGTH);
 
 	rp = S3I(s)->rbuf.buf;
 	wp = S3I(s)->wbuf.buf;
@@ -1627,11 +1637,6 @@ ssl3_clear(SSL *s)
 
 	s->internal->packet_length = 0;
 	s->version = TLS1_VERSION;
-
-	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
-	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
-	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
-	freezero(S3I(s)->hs_tls13.x25519_peer_public, X25519_KEY_LENGTH);
 }
 
 static long
