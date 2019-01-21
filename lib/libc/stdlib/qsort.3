@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.20 2017/05/20 13:09:01 millert Exp $
+.\"	$OpenBSD: qsort.3,v 1.21 2019/01/21 20:34:14 otto Exp $
 .\"
-.Dd $Mdocdate: May 20 2017 $
+.Dd $Mdocdate: January 21 2019 $
 .Dt QSORT 3
 .Os
 .Sh NAME
@@ -85,7 +85,7 @@ a comparison function pointed to by
 which requires two arguments pointing to the objects being
 compared.
 .Pp
-The comparison function must return an integer less than, equal to, or
+The comparison function must return an int less than, equal to, or
 greater than zero if the first argument is considered to be respectively
 less than, equal to, or greater than the second.
 .Pp
@@ -168,6 +168,43 @@ or
 .Fn mergesort
 were unable to allocate memory.
 .El
+.Sh EXAMPLES
+.Bd -literal
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char *array[] = { "XX", "YYY", "Z" };
+#define N (sizeof(array) / sizeof(array[0]))
+
+int
+cmp(const void *a, const void *b)
+{
+	/* a and b point to an element of the array  */
+	size_t lena = strlen(*(const char **)a);
+	size_t lenb = strlen(*(const char **)b);
+	/*
+	 * Do not subtract the lengths, an int cannot represent the range of
+	 * values the difference can take.
+	 */
+	return lena < lenb ? -1 : lena > lenb;
+}
+
+int
+main()
+{
+	int i;
+
+	qsort(array, N, sizeof(array[0]), cmp);
+	for (i =  0; i < N; i++)
+		printf("%s\n", array[i]);
+}
+
+
+.Ed
+.Pp
+It almost always an error to use subtraction to compute the return value
+of the comparison function.
 .Sh SEE ALSO
 .Xr sort 1 ,
 .Xr radixsort 3
