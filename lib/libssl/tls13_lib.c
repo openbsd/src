@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.2 2019/01/21 10:24:25 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.3 2019/01/21 13:45:57 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -59,6 +59,39 @@ tls13_cipher_hash(const SSL_CIPHER *cipher)
 	}
 
 	return NULL;
+}
+
+struct tls13_ctx *
+tls13_ctx_new(int mode)
+{
+	struct tls13_ctx *ctx = NULL;
+
+	if ((ctx = calloc(sizeof(struct tls13_ctx), 1)) == NULL)
+		goto err;
+
+	ctx->mode = mode;
+
+	if ((ctx->rl = tls13_record_layer_new(tls13_legacy_wire_read_cb,
+	    tls13_legacy_wire_write_cb, NULL, NULL, ctx)) == NULL)
+		goto err;
+
+	return ctx;
+
+ err:
+	tls13_ctx_free(ctx);
+
+	return NULL;
+}
+
+void
+tls13_ctx_free(struct tls13_ctx *ctx)
+{
+	if (ctx == NULL)
+		return;
+
+	tls13_record_layer_free(ctx->rl);
+
+	freezero(ctx, sizeof(struct tls13_ctx));
 }
 
 static ssize_t
@@ -131,7 +164,7 @@ tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg)
 	return tls13_legacy_wire_write(ctx->ssl, buf, n);
 }
 
-static int
+int
 tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 {
 	if (ret > INT_MAX) {
@@ -139,7 +172,7 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 		return -1;
 	}
 
-	/* A successful read or write. */
+	/* A successful read, write or other operation. */
 	if (ret > 0)
 		return ret;
 

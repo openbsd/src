@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.14 2019/01/21 13:13:46 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.15 2019/01/21 13:45:57 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -25,6 +25,9 @@
 #include "bytestring.h"
 
 __BEGIN_HIDDEN_DECLS
+
+#define TLS13_HS_CLIENT		1
+#define TLS13_HS_SERVER		2
 
 #define TLS13_IO_SUCCESS	 1
 #define TLS13_IO_EOF		 0
@@ -152,9 +155,13 @@ struct tls13_ctx {
 	struct tls13_handshake_msg *hs_msg;
 };
 
+struct tls13_ctx *tls13_ctx_new(int mode);
+void tls13_ctx_free(struct tls13_ctx *ctx);
+
 /*
  * Legacy interfaces.
  */
+int tls13_legacy_return_code(SSL *ssl, ssize_t ret);
 ssize_t tls13_legacy_wire_read_cb(void *buf, size_t n, void *arg);
 ssize_t tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg);
 int tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len,

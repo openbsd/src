@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.17 2019/01/21 13:13:46 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.18 2019/01/21 13:45:57 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -31,11 +31,7 @@
 struct tls13_handshake_action {
 	uint8_t			record_type;
 	uint8_t			handshake_type;
-
 	uint8_t			sender;
-#define TLS13_HS_CLIENT		1
-#define TLS13_HS_SERVER		2
-
 	uint8_t			handshake_complete;
 
 	int (*send)(struct tls13_ctx *ctx);
@@ -44,7 +40,6 @@ struct tls13_handshake_action {
 
 enum tls13_message_type tls13_handshake_active_state(struct tls13_ctx *ctx);
 
-int tls13_connect(struct tls13_ctx *ctx);
 int tls13_accept(struct tls13_ctx *ctx);
 
 struct tls13_handshake_action *
@@ -313,14 +308,6 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 }
 
 int
-tls13_connect(struct tls13_ctx *ctx)
-{
-	ctx->mode = TLS13_HS_CLIENT;
-
-	return tls13_handshake_perform(ctx);
-}
-
-int
 tls13_accept(struct tls13_ctx *ctx)
 {
 	ctx->mode = TLS13_HS_SERVER;
@@ -391,13 +378,13 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 		return TLS13_IO_FAILURE;
 	}
 
-	return action->recv(ctx);
-}
+	/* XXX provide CBS and check all consumed. */
+	ret = action->recv(ctx);
 
-int
-tls13_client_hello_send(struct tls13_ctx *ctx)
-{
-	return 0;
+	tls13_handshake_msg_free(ctx->hs_msg);
+	ctx->hs_msg = NULL;
+
+	return ret;
 }
 
 int
