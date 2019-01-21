@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.13 2019/01/20 23:44:58 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.14 2019/01/21 00:23:39 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1620,6 +1620,8 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ixl_remove_macvlan(sc, sc->sc_ac.ac_enaddr, 0,
 	    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
 	ixl_add_macvlan(sc, sc->sc_ac.ac_enaddr, 0,
+	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
+	ixl_add_macvlan(sc, etherbroadcastaddr, 0,
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
 
 	ixl_intr_enable(sc);
