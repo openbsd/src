@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.225 2019/01/21 01:40:35 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.226 2019/01/21 05:44:40 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5921,7 +5921,7 @@ svm_handle_msr(struct vcpu *vcpu)
 int
 vmm_handle_cpuid(struct vcpu *vcpu)
 {
-	uint64_t insn_length;
+	uint64_t insn_length, cr4;
 	uint64_t *rax, *rbx, *rcx, *rdx, cpuid_limit;
 	struct vmcb *vmcb;
 	uint32_t eax, ebx, ecx, edx;
@@ -5935,6 +5935,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			return (EINVAL);
 		}
 
+		if (vmread(VMCS_GUEST_IA32_CR4, &cr4)) {
+			DPRINTF("%s: can't obtain cr4\n", __func__);
+			return (EINVAL);
+		}
+
 		rax = &vcpu->vc_gueststate.vg_rax;
 		msr_store =
 		    (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
@@ -5945,6 +5950,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		insn_length = 2;
 		vmcb = (struct vmcb *)vcpu->vc_control_va;
 		rax = &vmcb->v_rax;
+		cr4 = vmcb->v_cr4;
 	}
 
 	rbx = &vcpu->vc_gueststate.vg_rbx;
@@ -6006,6 +6012,13 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rbx = cpu_ebxfeature & 0x0000FFFF;
 		*rbx |= (vcpu->vc_id & 0xFF) << 24;
 		*rcx = (cpu_ecxfeature | CPUIDECX_HV) & VMM_CPUIDECX_MASK;
+
+		/* Guest CR4.OSXSAVE determines presence of CPUIDECX_OSXSAVE */
+		if (cr4 & CR4_OSXSAVE)
+			*rcx |= CPUIDECX_OSXSAVE;
+		else
+			*rcx &= ~CPUIDECX_OSXSAVE;
+
 		*rdx = curcpu()->ci_feature_flags & VMM_CPUIDEDX_MASK;
 		break;
 	case 0x02:	/* Cache and TLB information */
