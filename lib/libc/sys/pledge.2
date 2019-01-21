@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.54 2018/11/08 05:58:21 otto Exp $
+.\" $OpenBSD: pledge.2,v 1.55 2019/01/21 20:10:12 landry Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 8 2018 $
+.Dd $Mdocdate: January 21 2019 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -116,6 +116,7 @@ based upon the requests
 .Va route ,
 .Va tape ,
 .Va tty ,
+.Va video ,
 and
 .Va vmm .
 .It Xo
@@ -544,6 +545,30 @@ for more information):
 .Dv AUDIO_SETPAR ,
 .Dv AUDIO_START ,
 .Dv AUDIO_STOP
+.It Va video
+Allows a subset of
+.Xr ioctl 2
+operations on
+.Xr video 4
+devices:
+.Pp
+.Dv VIDIOC_DQBUF ,
+.Dv VIDIOC_ENUM_FMT ,
+.Dv VIDIOC_ENUM_FRAMEINTERVALS ,
+.Dv VIDIOC_ENUM_FRAMESIZES ,
+.Dv VIDIOC_G_CTRL ,
+.Dv VIDIOC_G_PARM ,
+.Dv VIDIOC_QBUF ,
+.Dv VIDIOC_QUERYBUF ,
+.Dv VIDIOC_QUERYCAP ,
+.Dv VIDIOC_QUERYCTRL ,
+.Dv VIDIOC_S_CTRL ,
+.Dv VIDIOC_S_FMT ,
+.Dv VIDIOC_S_PARM ,
+.Dv VIDIOC_STREAMOFF ,
+.Dv VIDIOC_STREAMON ,
+.Dv VIDIOC_TRY_FMT ,
+.Dv VIDIOC_REQBUFS
 .It Va bpf
 Allow
 .Dv BIOCGSTATS
