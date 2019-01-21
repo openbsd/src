@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.42 2015/02/28 05:47:36 mlarkin Exp $
+.\"	$OpenBSD: an.4,v 1.43 2019/01/21 02:50:00 phessler Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/an.4,v 1.5 2000/03/02 14:53:45 sheldonh Exp $
 .\"
-.Dd $Mdocdate: February 28 2015 $
+.Dd $Mdocdate: January 21 2019 $
 .Dt AN 4
 .Os
 .Sh NAME
@@ -129,8 +129,7 @@ using WEP key
 .Dq mywepkey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid
-nwkey mywepkey
+nwid mynwid nwkey mywepkey
 dhcp
 .Ed
 .Sh DIAGNOSTICS
