@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.53 2018/04/25 19:37:09 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.54 2019/01/21 21:37:15 tedu Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ time_t tval;
 int jflag;
 int slidetime;
 
-static void setthetime(char *);
+static void setthetime(char *, const char *);
 static void badformat(void);
 static void __dead usage(void);
 
@@ -63,16 +63,20 @@ main(int argc, char *argv[])
 	struct tm *tp;
 	int ch, rflag;
 	char *format, buf[1024], *outzone = NULL;
+	const char *pformat = NULL;
 
 	tz.tz_dsttime = tz.tz_minuteswest = 0;
 	rflag = 0;
-	while ((ch = getopt(argc, argv, "ad:jr:ut:z:")) != -1)
+	while ((ch = getopt(argc, argv, "ad:f:jr:ut:z:")) != -1)
 		switch(ch) {
+		case 'a':
+			slidetime = 1;
+			break;
 		case 'd':		/* daylight saving time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
 			break;
-		case 'a':
-			slidetime = 1;
+		case 'f':		/* parse with strptime */
+			pformat = optarg;
 			break;
 		case 'j':		/* don't set */
 			jflag = 1;
@@ -122,7 +126,7 @@ main(int argc, char *argv[])
 	}
 
 	if (*argv) {
-		setthetime(*argv);
+		setthetime(*argv, pformat);
 		argv++;
 		argc--;
 	}
@@ -151,9 +155,9 @@ main(int argc, char *argv[])
 
 #define	ATOI2(ar)	((ar) += 2, ((ar)[-2] - '0') * 10 + ((ar)[-1] - '0'))
 void
-setthetime(char *p)
+setthetime(char *p, const char *pformat)
 {
-	struct tm *lt;
+	struct tm *lt, tm;
 	struct timeval tv;
 	char *dot, *t;
 	time_t now;
@@ -162,65 +166,74 @@ setthetime(char *p)
 	if (pledge("stdio settime rpath wpath", NULL) == -1)
 		err(1, "pledge");
 
-	for (t = p, dot = NULL; *t; ++t) {
-		if (isdigit((unsigned char)*t))
-			continue;
-		if (*t == '.' && dot == NULL) {
-			dot = t;
-			continue;
-		}
-		badformat();
-	}
-
 	lt = localtime(&tval);
 
 	lt->tm_isdst = -1;			/* correct for DST */
 
-	if (dot != NULL) {			/* .SS */
-		*dot++ = '\0';
-		if (strlen(dot) != 2)
+	if (pformat) {
+		tm = *lt;
+		if (strptime(p, pformat, &tm) == NULL) {
+			fprintf(stderr, "trouble %s %s\n", p, pformat);
 			badformat();
-		lt->tm_sec = ATOI2(dot);
-		if (lt->tm_sec > 61)
-			badformat();
-	} else
-		lt->tm_sec = 0;
-
-	switch (strlen(p)) {
-	case 12:				/* cc */
-		lt->tm_year = (ATOI2(p) * 100) - 1900;
-		yearset = 1;
-		/* FALLTHROUGH */
-	case 10:				/* yy */
-		if (!yearset) {
-			/* mask out current year, leaving only century */
-			lt->tm_year = ((lt->tm_year / 100) * 100);
 		}
-		lt->tm_year += ATOI2(p);
-		/* FALLTHROUGH */
-	case 8:					/* mm */
-		lt->tm_mon = ATOI2(p);
-		if ((lt->tm_mon > 12) || !lt->tm_mon)
+		lt = &tm;
+	} else {
+		for (t = p, dot = NULL; *t; ++t) {
+			if (isdigit((unsigned char)*t))
+				continue;
+			if (*t == '.' && dot == NULL) {
+				dot = t;
+				continue;
+			}
 			badformat();
-		--lt->tm_mon;			/* time struct is 0 - 11 */
-		/* FALLTHROUGH */
-	case 6:					/* dd */
-		lt->tm_mday = ATOI2(p);
-		if ((lt->tm_mday > 31) || !lt->tm_mday)
+		}
+
+		if (dot != NULL) {			/* .SS */
+			*dot++ = '\0';
+			if (strlen(dot) != 2)
+				badformat();
+			lt->tm_sec = ATOI2(dot);
+			if (lt->tm_sec > 61)
+				badformat();
+		} else
+			lt->tm_sec = 0;
+
+		switch (strlen(p)) {
+		case 12:				/* cc */
+			lt->tm_year = (ATOI2(p) * 100) - 1900;
+			yearset = 1;
+			/* FALLTHROUGH */
+		case 10:				/* yy */
+			if (!yearset) {
+				/* mask out current year, leaving only century */
+				lt->tm_year = ((lt->tm_year / 100) * 100);
+			}
+			lt->tm_year += ATOI2(p);
+			/* FALLTHROUGH */
+		case 8:					/* mm */
+			lt->tm_mon = ATOI2(p);
+			if ((lt->tm_mon > 12) || !lt->tm_mon)
+				badformat();
+			--lt->tm_mon;			/* time struct is 0 - 11 */
+			/* FALLTHROUGH */
+		case 6:					/* dd */
+			lt->tm_mday = ATOI2(p);
+			if ((lt->tm_mday > 31) || !lt->tm_mday)
+				badformat();
+			/* FALLTHROUGH */
+		case 4:					/* HH */
+			lt->tm_hour = ATOI2(p);
+			if (lt->tm_hour > 23)
+				badformat();
+			/* FALLTHROUGH */
+		case 2:					/* MM */
+			lt->tm_min = ATOI2(p);
+			if (lt->tm_min > 59)
+				badformat();
+			break;
+		default:
 			badformat();
-		/* FALLTHROUGH */
-	case 4:					/* HH */
-		lt->tm_hour = ATOI2(p);
-		if (lt->tm_hour > 23)
-			badformat();
-		/* FALLTHROUGH */
-	case 2:					/* MM */
-		lt->tm_min = ATOI2(p);
-		if (lt->tm_min > 59)
-			badformat();
-		break;
-	default:
-		badformat();
+		}
 	}
 
 	/* convert broken-down time to UTC clock time */
@@ -267,9 +280,9 @@ static void __dead
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-aju] [-d dst] [-r seconds] [-t minutes_west] [-z output_zone]\n",
-	     __progname);
-	(void)fprintf(stderr,
-	    "%-*s[+format] [[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n", (int)strlen(__progname) + 8, "");
+	    "usage: %s [-aju] [-d dst] [-f pformat] [-r seconds] "
+	    "[-t minutes_west]\n"
+	    "\t[-z output_zone] [+format] [[[[[[cc]yy]mm]dd]HH]MM[.SS]]\n",
+	    __progname);
 	exit(1);
 }
