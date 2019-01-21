@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.1 2019/01/21 09:10:58 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.2 2019/01/21 10:24:25 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -71,6 +71,8 @@ tls13_legacy_wire_read(SSL *ssl, uint8_t *buf, size_t len)
 		return TLS13_IO_FAILURE;
 	}
 
+	ssl->internal->rwstate = SSL_READING;
+
 	if ((n = BIO_read(ssl->rbio, buf, len)) <= 0) {
 		if (BIO_should_read(ssl->rbio))
 			return TLS13_IO_WANT_POLLIN;
@@ -79,6 +81,9 @@ tls13_legacy_wire_read(SSL *ssl, uint8_t *buf, size_t len)
 
 		return TLS13_IO_FAILURE;
 	}
+
+	if (n == len)
+		ssl->internal->rwstate = SSL_NOTHING;
 
 	return n;
 }
@@ -101,6 +106,8 @@ tls13_legacy_wire_write(SSL *ssl, const uint8_t *buf, size_t len)
 		return TLS13_IO_FAILURE;
 	}
 
+	ssl->internal->rwstate = SSL_WRITING;
+
 	if ((n = BIO_write(ssl->wbio, buf, len)) <= 0) {
 		if (BIO_should_read(ssl->wbio))
 			return TLS13_IO_WANT_POLLIN;
@@ -109,6 +116,9 @@ tls13_legacy_wire_write(SSL *ssl, const uint8_t *buf, size_t len)
 
 		return TLS13_IO_FAILURE;
 	}
+
+	if (n == len)
+		ssl->internal->rwstate = SSL_NOTHING;
 
 	return n;
 }
@@ -124,8 +134,6 @@ tls13_legacy_wire_write_cb(const void *buf, size_t n, void *arg)
 static int
 tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 {
-	ssl->internal->rwstate = SSL_NOTHING;
-
 	if (ret > INT_MAX) {
 		SSLerror(ssl, ERR_R_INTERNAL_ERROR);
 		return -1;
@@ -134,6 +142,8 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 	/* A successful read or write. */
 	if (ret > 0)
 		return ret;
+
+	ssl->internal->rwstate = SSL_NOTHING;
 
 	switch (ret) {
 	case TLS13_IO_EOF:
