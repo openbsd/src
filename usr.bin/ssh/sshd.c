@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.530 2019/01/21 10:28:02 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.531 2019/01/21 10:29:56 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2032,7 +2032,7 @@ do_ssh2_kex(struct ssh *ssh)
 	kex->kex[KEX_DH_GRP18_SHA512] = kex_kem_server;
 	kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 	kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
-	kex->kex[KEX_ECDH_SHA2] = kexecdh_server;
+	kex->kex[KEX_ECDH_SHA2] = kex_kem_server;
 #endif
 	kex->kex[KEX_C25519_SHA256] = kex_kem_server;
 	kex->kex[KEX_KEM_SNTRUP4591761X25519_SHA512] = kex_kem_server;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.64 2019/01/21 10:28:01 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.65 2019/01/21 10:29:56 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -49,9 +49,7 @@ SRCS_KEX+=	dh.c
 SRCS_KEX+=	kexdh.c
 SRCS_KEX+=	kexecdh.c
 SRCS_KEX+=	kexgex.c
-SRCS_KEXC+=	kexecdhc.c
 SRCS_KEXC+=	kexgexc.c
-SRCS_KEXS+=	kexecdhs.c
 SRCS_KEXS+=	kexgexs.c
 .endif
 SRCS_KEX+=	kexc25519.c
