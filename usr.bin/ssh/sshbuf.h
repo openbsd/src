@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf.h,v 1.12 2019/01/21 09:52:25 djm Exp $	*/
+/*	$OpenBSD: sshbuf.h,v 1.13 2019/01/21 09:54:11 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -204,7 +204,7 @@ int	sshbuf_peek_string_direct(const struct sshbuf *buf, const u_char **valp,
  * Functions to extract or store SSH wire encoded bignums and elliptic
  * curve points.
  */
-int	sshbuf_get_bignum2(struct sshbuf *buf, BIGNUM *v);
+int	sshbuf_get_bignum2(struct sshbuf *buf, BIGNUM **valp);
 int	sshbuf_get_bignum2_bytes_direct(struct sshbuf *buf,
 	    const u_char **valp, size_t *lenp);
 int	sshbuf_put_bignum2(struct sshbuf *buf, const BIGNUM *v);
