@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.619 2019/01/20 02:42:24 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.620 2019/01/21 02:42:46 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2273,7 +2273,7 @@ get_ifname(struct interface_info *ifi, int ioctlfd, char *arg)
 
 		free(ifgr.ifgr_groups);
 	} else if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
-		fatalx("nterface name too long");
+		fatalx("interface name too long");
 }
 
 struct client_lease *
