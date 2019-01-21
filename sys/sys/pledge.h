@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.38 2018/08/11 16:16:07 beck Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.39 2019/01/21 20:09:37 landry Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -62,6 +62,7 @@
 #define PLEDGE_ERROR	0x0000000400000000ULL	/* ENOSYS instead of kill */
 #define PLEDGE_WROUTE	0x0000000800000000ULL	/* interface address ioctls */
 #define PLEDGE_UNVEIL	0x0000001000000000ULL	/* allow unveil() */
+#define PLEDGE_VIDEO	0x0000002000000000ULL	/* video ioctls */
 
 /*
  * Bits outside PLEDGE_USERSET are used by the kernel itself
@@ -111,6 +112,7 @@ static struct {
 	{ PLEDGE_ERROR,		"error" },
 	{ PLEDGE_WROUTE,	"wroute" },
 	{ PLEDGE_UNVEIL,	"unveil" },
+	{ PLEDGE_VIDEO,		"video" },
 	{ 0, NULL },
 };
 #endif

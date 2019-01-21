@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.248 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.249 2019/01/21 20:09:37 landry Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -43,6 +43,7 @@
 #include <sys/dkio.h>
 #include <sys/mtio.h>
 #include <sys/audioio.h>
+#include <sys/videoio.h>
 #include <net/bpf.h>
 #include <net/route.h>
 #include <net/if.h>
@@ -396,6 +397,7 @@ static const struct {
 	{ "tty",		PLEDGE_TTY },
 	{ "unix",		PLEDGE_UNIX },
 	{ "unveil",		PLEDGE_UNVEIL },
+	{ "video",		PLEDGE_VIDEO },
 	{ "vminfo",		PLEDGE_VMINFO },
 	{ "vmm",		PLEDGE_VMM },
 	{ "wpath",		PLEDGE_WPATH },
@@ -1149,6 +1151,34 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			break;
 		}
 	}
+
+	if ((p->p_p->ps_pledge & PLEDGE_VIDEO)) {
+		switch (com) {
+		case VIDIOC_QUERYCAP:
+		case VIDIOC_TRY_FMT:
+		case VIDIOC_ENUM_FMT:
+		case VIDIOC_S_FMT:
+		case VIDIOC_QUERYCTRL:
+		case VIDIOC_G_CTRL:
+		case VIDIOC_S_CTRL:
+		case VIDIOC_G_PARM:
+		case VIDIOC_S_PARM:
+		case VIDIOC_REQBUFS:
+		case VIDIOC_QBUF:
+		case VIDIOC_DQBUF:
+		case VIDIOC_QUERYBUF:
+		case VIDIOC_STREAMON:
+		case VIDIOC_STREAMOFF:
+		case VIDIOC_ENUM_FRAMESIZES:
+		case VIDIOC_ENUM_FRAMEINTERVALS:
+			if (fp->f_type == DTYPE_VNODE &&
+			    vp->v_type == VCHR &&
+			    cdevsw[major(vp->v_rdev)].d_open == videoopen)
+				return (0);
+			break;
+		}
+	}
+
 
 #if NPF > 0
 	if ((p->p_p->ps_pledge & PLEDGE_PF)) {
