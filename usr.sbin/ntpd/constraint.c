@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.40 2019/01/21 08:38:22 jsing Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.41 2019/01/21 11:05:41 jsing Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -985,7 +985,8 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 	 * TLS handshake, based on the time specified by the server's HTTP Date:
 	 * header.
 	 */
-	httptime = timegm(&httpsdate->tls_tm);
+	if ((httptime = timegm(&httpsdate->tls_tm)) == -1)
+		goto fail;
 	if (httptime <= tls_peer_cert_notbefore(httpsdate->tls_ctx) ||
 	    httptime >= tls_peer_cert_notafter(httpsdate->tls_ctx)) {
 		log_warnx("tls certificate invalid: %s (%s):",
