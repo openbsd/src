@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.122 2018/08/20 16:00:22 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.123 2019/01/21 23:41:26 cheloha Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
 #ifdef KTRACE
@@ -69,8 +70,8 @@ int selscan(struct proc *, fd_set *, fd_set *, int, int, register_t *);
 void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
 int pollout(struct pollfd *, struct pollfd *, u_int);
 int dopselect(struct proc *, int, fd_set *, fd_set *, fd_set *,
-    const struct timespec *, const sigset_t *, register_t *);
-int doppoll(struct proc *, struct pollfd *, u_int, const struct timespec *,
+    struct timespec *, const sigset_t *, register_t *);
+int doppoll(struct proc *, struct pollfd *, u_int, struct timespec *,
     const sigset_t *, register_t *);
 
 int
@@ -548,8 +549,8 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		struct timeval tv;
 		if ((error = copyin(SCARG(uap, tv), &tv, sizeof tv)) != 0)
 			return (error);
-		if ((error = itimerfix(&tv)) != 0)
-			return (error);
+		if (tv.tv_sec < 0 || !timerisvalid(&tv))
+			return (EINVAL);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimeval(p, &tv);
@@ -581,8 +582,8 @@ sys_pselect(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, ts) != NULL) {
 		if ((error = copyin(SCARG(uap, ts), &ts, sizeof ts)) != 0)
 			return (error);
-		if ((error = timespecfix(&ts)) != 0)
-			return (error);
+		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
+			return (EINVAL);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
@@ -601,11 +602,11 @@ sys_pselect(struct proc *p, void *v, register_t *retval)
 
 int
 dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
-    const struct timespec *tsp, const sigset_t *sigmask, register_t *retval)
+    struct timespec *timeout, const sigset_t *sigmask, register_t *retval)
 {
 	fd_mask bits[6];
 	fd_set *pibits[3], *pobits[3];
-	struct timespec ats, rts, tts;
+	struct timespec elapsed, start, stop;
 	int s, ncoll, error = 0, timo;
 	u_int ni;
 
@@ -651,15 +652,6 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	}
 #endif
 
-	if (tsp) {
-		getnanouptime(&rts);
-		timespecadd(tsp, &rts, &ats);
-	} else {
-		ats.tv_sec = 0;
-		ats.tv_nsec = 0;
-	}
-	timo = 0;
-
 	if (sigmask)
 		dosigsuspend(p, *sigmask &~ sigcantmask);
 
@@ -669,24 +661,30 @@ retry:
 	error = selscan(p, pibits[0], pobits[0], nd, ni, retval);
 	if (error || *retval)
 		goto done;
-	if (tsp) {
-		getnanouptime(&rts);
-		if (timespeccmp(&rts, &ats, >=))
-			goto done;
-		timespecsub(&ats, &rts, &tts);
-		timo = tts.tv_sec > 24 * 60 * 60 ?
-			24 * 60 * 60 * hz : tstohz(&tts);
-	}
-	s = splhigh();
-	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+	while (timeout == NULL || timespecisset(timeout)) {
+		timo = (timeout == NULL) ? 0 : tstohz(timeout);
+		if (timeout != NULL)
+			getnanouptime(&start);
+		s = splhigh();
+		if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+			splx(s);
+			goto retry;
+		}
+		atomic_clearbits_int(&p->p_flag, P_SELECT);
+		error = tsleep(&selwait, PSOCK | PCATCH, "select", timo);
 		splx(s);
-		goto retry;
+		if (timeout != NULL) {
+			getnanouptime(&stop);
+			timespecsub(&stop, &start, &elapsed);
+			timespecsub(timeout, &elapsed, timeout);
+			if (timeout->tv_sec < 0)
+				timespecclear(timeout);
+		}
+		if (error == 0)
+			goto retry;
+		if (error != EWOULDBLOCK)
+			break;
 	}
-	atomic_clearbits_int(&p->p_flag, P_SELECT);
-	error = tsleep(&selwait, PSOCK | PCATCH, "select", timo);
-	splx(s);
-	if (error == 0)
-		goto retry;
 done:
 	atomic_clearbits_int(&p->p_flag, P_SELECT);
 	/* select is not restarted after signals... */
@@ -908,8 +906,8 @@ sys_ppoll(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, ts) != NULL) {
 		if ((error = copyin(SCARG(uap, ts), &ts, sizeof ts)) != 0)
 			return (error);
-		if ((error = timespecfix(&ts)) != 0)
-			return (error);
+		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
+			return (EINVAL);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
@@ -929,11 +927,11 @@ sys_ppoll(struct proc *p, void *v, register_t *retval)
 
 int
 doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
-    const struct timespec *tsp, const sigset_t *sigmask, register_t *retval)
+    struct timespec *timeout, const sigset_t *sigmask, register_t *retval)
 {
 	size_t sz;
 	struct pollfd pfds[4], *pl = pfds;
-	struct timespec ats, rts, tts;
+	struct timespec elapsed, start, stop;
 	int timo, ncoll, i, s, error;
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
@@ -958,15 +956,6 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 		pl[i].revents = 0;
 	}
 
-	if (tsp != NULL) {
-		getnanouptime(&rts);
-		timespecadd(tsp, &rts, &ats);
-	} else {
-		ats.tv_sec = 0;
-		ats.tv_nsec = 0;
-	}
-	timo = 0;
-
 	if (sigmask)
 		dosigsuspend(p, *sigmask &~ sigcantmask);
 
@@ -976,24 +965,30 @@ retry:
 	pollscan(p, pl, nfds, retval);
 	if (*retval)
 		goto done;
-	if (tsp != NULL) {
-		getnanouptime(&rts);
-		if (timespeccmp(&rts, &ats, >=))
-			goto done;
-		timespecsub(&ats, &rts, &tts);
-		timo = tts.tv_sec > 24 * 60 * 60 ?
-			24 * 60 * 60 * hz : tstohz(&tts);
-	}
-	s = splhigh();
-	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+	while (timeout == NULL || timespecisset(timeout)) {
+		timo = (timeout == NULL) ? 0 : tstohz(timeout);
+		if (timeout != NULL)
+			getnanouptime(&start);
+		s = splhigh();
+		if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+			splx(s);
+			goto retry;
+		}
+		atomic_clearbits_int(&p->p_flag, P_SELECT);
+		error = tsleep(&selwait, PSOCK | PCATCH, "poll", timo);
 		splx(s);
-		goto retry;
+		if (timeout != NULL) {
+			getnanouptime(&stop);
+			timespecsub(&stop, &start, &elapsed);
+			timespecsub(timeout, &elapsed, timeout);
+			if (timeout->tv_sec < 0)
+				timespecclear(timeout);
+		}
+		if (error == 0)
+			goto retry;
+		if (error != EWOULDBLOCK)
+			break;
 	}
-	atomic_clearbits_int(&p->p_flag, P_SELECT);
-	error = tsleep(&selwait, PSOCK | PCATCH, "poll", timo);
-	splx(s);
-	if (error == 0)
-		goto retry;
 
 done:
 	atomic_clearbits_int(&p->p_flag, P_SELECT);
