@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.15 2019/01/21 06:58:44 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.16 2019/01/21 10:44:08 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -286,12 +286,10 @@ tls13_handshake_advance_state_machine(struct tls13_ctx *ctx)
 }
 
 int
-tls13_connect(struct tls13_ctx *ctx)
+tls13_handshake_perform(struct tls13_ctx *ctx)
 {
 	struct tls13_handshake_action *action;
 	int ret;
-
-	ctx->mode = TLS13_HS_CLIENT;
 
 	for (;;) {
 		if ((action = tls13_handshake_active_action(ctx)) == NULL)
@@ -300,7 +298,7 @@ tls13_connect(struct tls13_ctx *ctx)
 		if (action->handshake_complete)
 			return TLS13_IO_SUCCESS;
 
-		if (action->sender == TLS13_HS_CLIENT) {
+		if (action->sender == ctx->mode) {
 			if ((ret = tls13_handshake_send_action(ctx, action)) <= 0)
 				return ret;
 		} else {
@@ -314,33 +312,19 @@ tls13_connect(struct tls13_ctx *ctx)
 }
 
 int
+tls13_connect(struct tls13_ctx *ctx)
+{
+	ctx->mode = TLS13_HS_CLIENT;
+
+	return tls13_handshake_perform(ctx);
+}
+
+int
 tls13_accept(struct tls13_ctx *ctx)
 {
-	struct tls13_handshake_action *action;
-	int ret;
-
 	ctx->mode = TLS13_HS_SERVER;
 
-	for (;;) {
-		if ((action = tls13_handshake_active_action(ctx)) == NULL)
-			return TLS13_IO_FAILURE;
-
-		if (action->handshake_complete)
-			return TLS13_IO_SUCCESS;
-
-		if (action->sender == TLS13_HS_SERVER) {
-			if ((ret = tls13_handshake_send_action(ctx, action)) <= 0)
-				return ret;
-		} else {
-			if ((ret = tls13_handshake_recv_action(ctx, action)) <= 0)
-				return ret;
-		}
-
-		if (!tls13_handshake_advance_state_machine(ctx))
-			return TLS13_IO_FAILURE;
-	}
-
-	return 1;
+	return tls13_handshake_perform(ctx);
 }
 
 int
