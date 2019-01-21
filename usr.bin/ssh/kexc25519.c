@@ -1,4 +1,4 @@
-/* $OpenBSD: kexc25519.c,v 1.16 2019/01/21 10:38:54 djm Exp $ */
+/* $OpenBSD: kexc25519.c,v 1.17 2019/01/21 10:40:11 djm Exp $ */
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -101,7 +101,7 @@ kex_c25519_keypair(struct kex *kex)
 #ifdef DEBUG_KEXECDH
 	dump_digest("client public key c25519:", cp, CURVE25519_SIZE);
 #endif
-	kex->kem_client_pub = buf;
+	kex->client_pub = buf;
 	buf = NULL;
  out:
 	sshbuf_free(buf);

@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.h,v 1.105 2019/01/21 10:38:54 djm Exp $ */
+/* $OpenBSD: kex.h,v 1.106 2019/01/21 10:40:11 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -154,7 +154,7 @@ struct kex {
 	u_char c25519_client_key[CURVE25519_SIZE]; /* 25519 + KEM */
 	u_char c25519_client_pubkey[CURVE25519_SIZE]; /* 25519 */
 	u_char sntrup4591761_client_key[crypto_kem_sntrup4591761_SECRETKEYBYTES]; /* KEM */
-	struct sshbuf *kem_client_pub;	/* KEM */
+	struct sshbuf *client_pub;
 };
 
 int	 kex_names_valid(const char *);
