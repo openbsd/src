@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.90 2018/07/13 09:03:44 krw Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.91 2019/01/21 08:16:47 kn Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ static int32_t thiszone;	/* time difference with gmt */
 static int rtsock = -1;
 static int repeat = 0;
 
-char ntop_buf[INET6_ADDRSTRLEN];	/* inet_ntop() */
 char host_buf[NI_MAXHOST];		/* getnameinfo() */
 char ifix_buf[IFNAMSIZ];		/* if_indextoname() */
 
