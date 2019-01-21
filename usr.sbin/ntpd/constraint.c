@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.39 2019/01/20 16:40:42 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.40 2019/01/21 08:38:22 jsing Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -874,6 +874,13 @@ httpsdate_init(const char *addr, const char *port, const char *hostname,
 	if (tls_config_set_ca_mem(httpsdate->tls_config, ca, ca_len) == -1)
 		goto fail;
 
+	/*
+	 * Due to the fact that we're trying to determine a constraint for time
+	 * we do our own certificate validity checking, since the automatic
+	 * version is based on our wallclock, which may well be inaccurate...
+	 */
+	tls_config_insecure_noverifytime(httpsdate->tls_config);
+
 	return (httpsdate);
 
  fail:
@@ -904,6 +911,7 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 {
 	size_t	 outlen = 0, maxlength = CONSTRAINT_MAXHEADERLENGTH, len;
 	char	*line, *p, *buf;
+	time_t	 httptime;
 	ssize_t	 ret;
 
 	if ((httpsdate->tls_ctx = tls_client()) == NULL)
@@ -970,6 +978,19 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 		break;
  next:
 		free(line);
+	}
+
+	/*
+	 * Now manually check the validity of the certificate presented in the
+	 * TLS handshake, based on the time specified by the server's HTTP Date:
+	 * header.
+	 */
+	httptime = timegm(&httpsdate->tls_tm);
+	if (httptime <= tls_peer_cert_notbefore(httpsdate->tls_ctx) ||
+	    httptime >= tls_peer_cert_notafter(httpsdate->tls_ctx)) {
+		log_warnx("tls certificate invalid: %s (%s):",
+		    httpsdate->tls_addr, httpsdate->tls_hostname);
+		goto fail;
 	}
 
 	return (0);
