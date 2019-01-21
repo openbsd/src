@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.21 2019/01/21 20:34:14 otto Exp $
+.\"	$OpenBSD: qsort.3,v 1.22 2019/01/21 20:43:27 tedu Exp $
 .\"
 .Dd $Mdocdate: January 21 2019 $
 .Dt QSORT 3
@@ -180,12 +180,16 @@ char *array[] = { "XX", "YYY", "Z" };
 int
 cmp(const void *a, const void *b)
 {
-	/* a and b point to an element of the array  */
+	/*
+	 * a and b point to elements of the array.
+	 * Cast and dereference to obtain the actual elements,
+	 * which are also pointers in this case.
+	 */
 	size_t lena = strlen(*(const char **)a);
 	size_t lenb = strlen(*(const char **)b);
 	/*
-	 * Do not subtract the lengths, an int cannot represent the range of
-	 * values the difference can take.
+	 * Do not subtract the lengths. The difference between values cannot
+	 * be represented by an int.
 	 */
 	return lena < lenb ? -1 : lena > lenb;
 }
@@ -193,7 +197,7 @@ cmp(const void *a, const void *b)
 int
 main()
 {
-	int i;
+	size_t i;
 
 	qsort(array, N, sizeof(array[0]), cmp);
 	for (i =  0; i < N; i++)
