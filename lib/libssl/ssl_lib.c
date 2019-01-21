@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.197 2019/01/21 00:31:29 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.198 2019/01/21 10:32:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1407,23 +1407,20 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 {
 	SSL_CIPHER *cipher;
 	int num_ciphers = 0;
+	uint16_t min_vers, max_vers;
 	int i;
 
 	if (ciphers == NULL)
+		return 0;
+
+	if (!ssl_supported_version_range(s, &min_vers, &max_vers))
 		return 0;
 
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
 			return 0;
 
-		/* Skip TLS v1.3 only ciphersuites if lower than v1.3 */
-		if ((cipher->algorithm_ssl & SSL_TLSV1_3) &&
-		    (TLS1_get_client_version(s) < TLS1_3_VERSION))
-			continue;
-
-		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
-		if ((cipher->algorithm_ssl & SSL_TLSV1_2) &&
-		    (TLS1_get_client_version(s) < TLS1_2_VERSION))
+		if (!ssl_cipher_is_permitted(cipher, min_vers, max_vers))
 			continue;
 
 		if (!CBB_add_u16(cbb, ssl3_cipher_get_value(cipher)))
