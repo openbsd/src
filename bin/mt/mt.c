@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.39 2018/07/09 19:38:29 deraadt Exp $	*/
+/*	$OpenBSD: mt.c,v 1.40 2019/01/22 21:20:13 krw Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -281,6 +281,8 @@ status(struct mtget *bp)
 	(void)putchar('\n');
 	(void)printf("blocksize: %d (%d)\n", bp->mt_blksiz, bp->mt_mblksiz);
 	(void)printf("density: %d (%d)\n", bp->mt_density, bp->mt_mdensity);
+	(void)printf("current file number: %d\n", bp->mt_fileno);
+	(void)printf("current block number: %d\n", bp->mt_blkno);
 }
 
 /*
