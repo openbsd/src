@@ -667,6 +667,7 @@ CRYPTO_get_mem_ex_functions
 CRYPTO_get_mem_functions
 CRYPTO_get_new_dynlockid
 CRYPTO_get_new_lockid
+CRYPTO_hchacha_20
 CRYPTO_is_mem_check_on
 CRYPTO_lock
 CRYPTO_malloc
@@ -708,6 +709,7 @@ CRYPTO_set_mem_ex_functions
 CRYPTO_set_mem_functions
 CRYPTO_strdup
 CRYPTO_thread_id
+CRYPTO_xchacha_20
 CRYPTO_xts128_encrypt
 Camellia_cbc_encrypt
 Camellia_cfb128_encrypt
@@ -1493,6 +1495,7 @@ EVP_add_digest
 EVP_aead_aes_128_gcm
 EVP_aead_aes_256_gcm
 EVP_aead_chacha20_poly1305
+EVP_aead_xchacha20_poly1305
 EVP_aes_128_cbc
 EVP_aes_128_cbc_hmac_sha1
 EVP_aes_128_ccm

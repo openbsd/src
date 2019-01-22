@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.11 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.12 2019/01/22 00:59:21 dlg Exp $	*/
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -52,8 +52,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <unistd.h>
+#include <ctype.h>
 
 #include <openssl/evp.h>
+#include <openssl/err.h>
 
 /* This program tests an AEAD against a series of test vectors from a file. The
  * test vector file consists of key-value lines where the key and value are
@@ -134,6 +137,12 @@ aead_from_name(const EVP_AEAD **aead, const char *name)
 		*aead = EVP_aead_chacha20_poly1305();
 #else
 		fprintf(stderr, "No chacha20-poly1305 support.\n");
+#endif
+	} else if (strcmp(name, "xchacha20-poly1305") == 0) {
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+		*aead = EVP_aead_xchacha20_poly1305();
+#else
+		fprintf(stderr, "No xchacha20-poly1305 support.\n");
 #endif
 	} else {
 		fprintf(stderr, "Unknown AEAD: %s\n", name);

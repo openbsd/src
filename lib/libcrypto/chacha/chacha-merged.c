@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha-merged.c,v 1.8 2017/08/13 16:55:31 jsing Exp $ */
+/* $OpenBSD: chacha-merged.c,v 1.9 2019/01/22 00:59:21 dlg Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein
@@ -276,4 +276,50 @@ chacha_encrypt_bytes(chacha_ctx *x, const u8 *m, u8 *c, u32 bytes)
 		c += 64;
 		m += 64;
 	}
+}
+
+void
+CRYPTO_hchacha_20(unsigned char subkey[32], const unsigned char key[32],
+    const unsigned char nonce[16])
+{
+	uint32_t x[16];
+	int i;
+
+	x[0] = U8TO32_LITTLE(sigma + 0);
+	x[1] = U8TO32_LITTLE(sigma + 4);
+	x[2] = U8TO32_LITTLE(sigma + 8);
+	x[3] = U8TO32_LITTLE(sigma + 12);
+	x[4] = U8TO32_LITTLE(key + 0);
+	x[5] = U8TO32_LITTLE(key + 4);
+	x[6] = U8TO32_LITTLE(key + 8);
+	x[7] = U8TO32_LITTLE(key + 12);
+	x[8] = U8TO32_LITTLE(key + 16);
+	x[9] = U8TO32_LITTLE(key + 20);
+	x[10] = U8TO32_LITTLE(key + 24);
+	x[11] = U8TO32_LITTLE(key + 28);
+	x[12] = U8TO32_LITTLE(nonce + 0);
+	x[13] = U8TO32_LITTLE(nonce + 4);
+	x[14] = U8TO32_LITTLE(nonce + 8);
+	x[15] = U8TO32_LITTLE(nonce + 12);
+
+	for (i = 20; i > 0; i -= 2) {
+		QUARTERROUND(x[0], x[4], x[8], x[12])
+		QUARTERROUND(x[1], x[5], x[9], x[13])
+		QUARTERROUND(x[2], x[6], x[10], x[14])
+		QUARTERROUND(x[3], x[7], x[11], x[15])
+		QUARTERROUND(x[0], x[5], x[10], x[15])
+		QUARTERROUND(x[1], x[6], x[11], x[12])
+		QUARTERROUND(x[2], x[7], x[8], x[13])
+		QUARTERROUND(x[3], x[4], x[9], x[14])
+	}
+
+	U32TO8_LITTLE(subkey + 0, x[0]);
+	U32TO8_LITTLE(subkey + 4, x[1]);
+	U32TO8_LITTLE(subkey + 8, x[2]);
+	U32TO8_LITTLE(subkey + 12, x[3]);
+
+	U32TO8_LITTLE(subkey + 16, x[12]);
+	U32TO8_LITTLE(subkey + 20, x[13]);
+	U32TO8_LITTLE(subkey + 24, x[14]);
+	U32TO8_LITTLE(subkey + 28, x[15]);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha.c,v 1.7 2015/12/09 14:07:55 bcook Exp $ */
+/* $OpenBSD: chacha.c,v 1.8 2019/01/22 00:59:21 dlg Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -74,4 +74,14 @@ CRYPTO_chacha_20(unsigned char *out, const unsigned char *in, size_t len,
 	}
 
 	chacha_encrypt_bytes(&ctx, in, out, (uint32_t)len);
+}
+
+void
+CRYPTO_xchacha_20(unsigned char *out, const unsigned char *in, size_t len,
+    const unsigned char key[32], const unsigned char iv[24])
+{
+	uint8_t subkey[32];
+
+	CRYPTO_hchacha_20(subkey, key, iv);
+	CRYPTO_chacha_20(out, in, len, subkey, iv + 16, 0);
 }
