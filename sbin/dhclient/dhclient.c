@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.621 2019/01/21 11:40:20 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.622 2019/01/22 03:48:24 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2246,34 +2246,26 @@ void
 get_ifname(struct interface_info *ifi, int ioctlfd, char *arg)
 {
 	struct ifgroupreq	 ifgr;
-	struct ifg_req		*ifg;
-	unsigned int		 len;
+	size_t			 len;
 
 	if (strcmp(arg, "egress") == 0) {
 		memset(&ifgr, 0, sizeof(ifgr));
 		strlcpy(ifgr.ifgr_name, "egress", sizeof(ifgr.ifgr_name));
 		if (ioctl(ioctlfd, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
 			fatal("SIOCGIFGMEMB");
-		len = ifgr.ifgr_len;
-		if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
+		if (ifgr.ifgr_len > sizeof(struct ifg_req))
+			fatalx("too many interfaces in group egress");
+		if ((ifgr.ifgr_groups = calloc(1, ifgr.ifgr_len)) == NULL)
 			fatalx("ifgr_groups");
 		if (ioctl(ioctlfd, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
 			fatal("SIOCGIFGMEMB");
-
-		arg = NULL;
-		for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(*ifg);
-		    ifg++) {
-			len -= sizeof(*ifg);
-			if (arg != NULL)
-				fatalx("too many interfaces in group egress");
-			arg = ifg->ifgrq_member;
-		}
-
-		if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
-			fatalx("interface name too long");
-
+		len = strlcpy(ifi->name, ifgr.ifgr_groups->ifgrq_member,
+		    IFNAMSIZ);
 		free(ifgr.ifgr_groups);
-	} else if (strlcpy(ifi->name, arg, IFNAMSIZ) >= IFNAMSIZ)
+	} else
+		len = strlcpy(ifi->name, arg, IFNAMSIZ);
+
+	if (len >= IFNAMSIZ)
 		fatalx("interface name too long");
 }
 
