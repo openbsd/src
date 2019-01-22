@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.23 2019/01/22 06:44:46 otto Exp $
+.\"	$OpenBSD: qsort.3,v 1.24 2019/01/22 06:49:17 jmc Exp $
 .\"
 .Dd $Mdocdate: January 22 2019 $
 .Dt QSORT 3
@@ -146,28 +146,6 @@ which is faster than
 Memory availability and pre-existing order in the data can make this untrue.
 .Sh RETURN VALUES
 .Rv -std heapsort mergesort
-.Sh ERRORS
-The
-.Fn heapsort
-and
-.Fn mergesort
-functions succeed unless:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The
-.Fa size
-argument is zero, or the
-.Fa size
-argument to
-.Fn mergesort
-is less than
-.Dq "sizeof(void *) / 2" .
-.It Bq Er ENOMEM
-.Fn heapsort
-or
-.Fn mergesort
-were unable to allocate memory.
-.El
 .Sh EXAMPLES
 .Bd -literal
 #include <stdio.h>
@@ -207,8 +185,30 @@ main()
 
 .Ed
 .Pp
-It almost always an error to use subtraction to compute the return value
+It is almost always an error to use subtraction to compute the return value
 of the comparison function.
+.Sh ERRORS
+The
+.Fn heapsort
+and
+.Fn mergesort
+functions succeed unless:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa size
+argument is zero, or the
+.Fa size
+argument to
+.Fn mergesort
+is less than
+.Dq "sizeof(void *) / 2" .
+.It Bq Er ENOMEM
+.Fn heapsort
+or
+.Fn mergesort
+were unable to allocate memory.
+.El
 .Sh SEE ALSO
 .Xr sort 1 ,
 .Xr radixsort 3
