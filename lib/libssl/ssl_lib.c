@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.199 2019/01/21 14:12:13 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.200 2019/01/22 01:12:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1253,6 +1253,14 @@ SSL_get_ciphers(const SSL *s)
 		}
 	}
 	return (NULL);
+}
+
+STACK_OF(SSL_CIPHER) *
+SSL_get_client_ciphers(const SSL *s)
+{
+	if (s == NULL || s->session == NULL || !s->server)
+		return NULL;
+	return s->session->ciphers;
 }
 
 /*

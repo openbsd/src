@@ -189,6 +189,7 @@ SSL_get_certificate
 SSL_get_cipher_list
 SSL_get_ciphers
 SSL_get_client_CA_list
+SSL_get_client_ciphers
 SSL_get_client_random
 SSL_get_current_cipher
 SSL_get_current_compression
