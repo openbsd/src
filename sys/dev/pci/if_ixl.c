@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.15 2019/01/22 01:57:03 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.16 2019/01/22 02:03:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -811,7 +811,7 @@ struct ixl_rx_wb_desc_32 {
 #define IXL_TX_QUEUE_ALIGN		128
 #define IXL_RX_QUEUE_ALIGN		128
 
-#define IXL_HARDMTU			9706 /* - ETHER_HEADER_LEN? */
+#define IXL_HARDMTU			9712 /* 9726 - ETHER_HDR_LEN */
 
 #define IXL_PCIREG			PCI_MAPREG_START
 
@@ -2575,7 +2575,7 @@ ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	rxq.crcstrip = 1;
 	rxq.l2sel = 0;
 	rxq.showiv = 0;
-	rxq.rxmax = htole16(MCLBYTES); /* XXX */
+	rxq.rxmax = htole16(IXL_HARDMTU);
 	rxq.tphrdesc_ena = 0;
 	rxq.tphwdesc_ena = 0;
 	rxq.tphdata_ena = 0;
@@ -2797,7 +2797,7 @@ ixl_rxrinfo(struct ixl_softc *sc, struct if_rxrinfo *ifri)
 
 	for (i = 0; i < ixl_nqueues(sc); i++) {
 		ring = ifp->if_iqs[i]->ifiq_softc;
-		ifr[i].ifr_size = MCLBYTES;	/* XXX */
+		ifr[i].ifr_size = MCLBYTES;
 		ifr[i].ifr_info = ring->rxr_acct;
 	}
 
