@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.23 2019/01/21 21:35:58 tedu Exp $ */
+/*	$OpenBSD: strptime.c,v 1.24 2019/01/22 11:09:03 cheloha Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ literal:
 
 		case 'S':	/* The seconds. */
 			_LEGAL_ALT(_ALT_O);
-			if (!(_conv_num(&bp, &tm->tm_sec, 0, 61)))
+			if (!(_conv_num(&bp, &tm->tm_sec, 0, 60)))
 				return (NULL);
 			break;
 		case 's':	/* Seconds since epoch */
