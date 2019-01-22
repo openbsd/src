@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.14 2019/01/21 00:23:39 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.15 2019/01/22 01:57:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1706,7 +1706,8 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ixl_softc *sc = (struct ixl_softc *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int error = 0;
+	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
+	int aqerror, error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1732,6 +1733,43 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGIFRXR:
 		error = ixl_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
+		break;
+
+	case SIOCADDMULTI:
+		if (ether_addmulti(ifr, &sc->sc_ac) == ENETRESET) {
+			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+			if (error != 0)
+				return (error);
+
+			aqerror = ixl_add_macvlan(sc, addrlo, 0,
+			    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
+			if (aqerror == IXL_AQ_RC_ENOSPC) {
+				ether_delmulti(ifr, &sc->sc_ac);
+				error = ENOSPC;
+			}
+
+			if (sc->sc_ac.ac_multirangecnt > 0) {
+				SET(ifp->if_flags, IFF_ALLMULTI);
+				error = ENETRESET;
+			}
+		}
+		break;
+
+	case SIOCDELMULTI:
+		if (ether_delmulti(ifr, &sc->sc_ac) == ENETRESET) {
+			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+			if (error != 0)
+				return (error);
+
+			ixl_remove_macvlan(sc, addrlo, 0,
+			    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
+
+			if (ISSET(ifp->if_flags, IFF_ALLMULTI) &&
+			    sc->sc_ac.ac_multirangecnt == 0) {
+				CLR(ifp->if_flags, IFF_ALLMULTI);
+				error = ENETRESET;
+			}
+		}
 		break;
 
 	default:
@@ -1896,11 +1934,6 @@ ixl_iff(struct ixl_softc *sc)
 	struct ixl_aq_desc *iaq;
 	struct ixl_aq_vsi_promisc_param *param;
 
-#if 0
-	if (!ISSET(ifp->if_flags, IFF_ALLMULTI))
-		return (0);
-#endif
-
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return (0);
 
@@ -1913,8 +1946,11 @@ ixl_iff(struct ixl_softc *sc)
 	param->flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_BCAST |
 	    IXL_AQ_VSI_PROMISC_FLAG_VLAN);
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
+		SET(ifp->if_flags, IFF_ALLMULTI);
 		param->flags |= htole16(IXL_AQ_VSI_PROMISC_FLAG_UCAST |
 		    IXL_AQ_VSI_PROMISC_FLAG_MCAST);
+	} else if (ISSET(ifp->if_flags, IFF_ALLMULTI)) {
+		param->flags |= htole16(IXL_AQ_VSI_PROMISC_FLAG_MCAST);
 	}
 	param->valid_flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_UCAST |
 	    IXL_AQ_VSI_PROMISC_FLAG_MCAST | IXL_AQ_VSI_PROMISC_FLAG_BCAST |
