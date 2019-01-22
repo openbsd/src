@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.82 2018/12/06 18:59:31 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.83 2019/01/22 23:23:18 jsg Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -43,6 +43,7 @@ typedef __uint32_t	Elf32_Off;	/* Unsigned file offset */
 typedef __int32_t	Elf32_Sword;	/* Signed large integer */
 typedef __uint32_t	Elf32_Word;	/* Unsigned large integer */
 typedef __uint16_t	Elf32_Half;	/* Unsigned medium integer */
+typedef __uint64_t	Elf32_Lword;
 
 typedef __uint64_t	Elf64_Addr;
 typedef __uint64_t	Elf64_Off;
@@ -58,6 +59,7 @@ typedef __uint32_t	Elf64_Word;
 
 typedef __int64_t	Elf64_Sxword;
 typedef __uint64_t	Elf64_Xword;
+typedef __uint64_t	Elf64_Lword;
 
 typedef __uint32_t	Elf64_Half;
 typedef __uint16_t	Elf64_Quarter;
@@ -200,6 +202,7 @@ typedef struct {
 
 /* Non-standard */
 #define EM_ALPHA_EXP	0x9026		/* DEC ALPHA */
+#define EM__LAST__	(EM_ALPHA_EXP + 1)
 
 #define EM_NUM		22		/* number of machine types */
 
@@ -263,8 +266,19 @@ typedef struct {
 #define SHT_SHLIB		10	/* reserved - purpose unknown */
 #define SHT_DYNSYM		11	/* dynamic symbol table section */
 #define SHT_NUM			12	/* number of section types */
+#define SHT_INIT_ARRAY		14	/* pointers to init functions */
+#define SHT_FINI_ARRAY		15	/* pointers to termination functions */
+#define SHT_PREINIT_ARRAY	16	/* ptrs to funcs called before init */
+#define SHT_GROUP		17	/* defines a section group */
 #define SHT_SYMTAB_SHNDX	18	/* Section indexes (see SHN_XINDEX). */
 #define SHT_LOOS	0x60000000	/* reserved range for OS specific */
+#define SHT_SUNW_dof	0x6ffffff4	/* used by dtrace */
+#define SHT_GNU_LIBLIST	0x6ffffff7	/* libraries to be prelinked */
+#define SHT_SUNW_move	0x6ffffffa	/* inf for partially init'ed symbols */
+#define SHT_SUNW_syminfo	0x6ffffffc	/* ad symbol information */ 
+#define SHT_SUNW_verdef		0x6ffffffd	/* symbol versioning inf */
+#define SHT_SUNW_verneed	0x6ffffffe	/* symbol versioning req */
+#define SHT_SUNW_versym		0x6fffffff	/* symbol versioning table */
 #define SHT_HIOS	0x6fffffff	/*  section header types */
 #define SHT_LOPROC	0x70000000	/* reserved range for processor */
 #define SHT_HIPROC	0x7fffffff	/*  specific section header types */
