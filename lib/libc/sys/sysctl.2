@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.19 2019/01/06 20:09:38 schwarze Exp $
+.\"	$OpenBSD: sysctl.2,v 1.20 2019/01/22 00:04:26 ajacoutot Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 6 2019 $
+.Dd $Mdocdate: January 22 2019 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1592,7 +1592,7 @@ This value applies to normal transport protocols, not to ICMP.
 .It Li ipcomp.enable Pq Va net.inet.ipcomp.enable
 Enable the IPComp protocol.
 See
-.Xr ipsecctl 8
+.Xr ipcomp 4
 for more information.
 .It Li ipip.allow Pq Va net.inet.ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.
