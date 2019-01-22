@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.200 2019/01/22 01:12:18 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.201 2019/01/22 01:15:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1261,6 +1261,40 @@ SSL_get_client_ciphers(const SSL *s)
 	if (s == NULL || s->session == NULL || !s->server)
 		return NULL;
 	return s->session->ciphers;
+}
+
+STACK_OF(SSL_CIPHER) *
+SSL_get1_supported_ciphers(SSL *s)
+{
+	STACK_OF(SSL_CIPHER) *supported_ciphers = NULL, *ciphers;
+	const SSL_CIPHER *cipher;
+	uint16_t min_vers, max_vers;
+	int i;
+
+	if (s == NULL)
+		return NULL;
+	if (!ssl_supported_version_range(s, &min_vers, &max_vers))
+		return NULL;
+	if ((ciphers = SSL_get_ciphers(s)) == NULL)
+		return NULL;
+	if ((supported_ciphers = sk_SSL_CIPHER_new_null()) == NULL)
+		return NULL;
+
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
+			goto err;
+		if (!ssl_cipher_is_permitted(cipher, min_vers, max_vers))
+			continue;
+		if (!sk_SSL_CIPHER_push(supported_ciphers, cipher))
+			goto err;
+	}
+
+	if (sk_SSL_CIPHER_num(supported_ciphers) > 0)
+		return supported_ciphers;
+
+ err:
+	sk_SSL_CIPHER_free(supported_ciphers);
+	return NULL;
 }
 
 /*
