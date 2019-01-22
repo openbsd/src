@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.227 2018/11/12 16:39:12 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.228 2019/01/22 09:25:29 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	s = socket(PF_ROUTE, SOCK_RAW, af);
+	s = socket(AF_ROUTE, SOCK_RAW, af);
 	if (s == -1)
 		err(1, "socket");
 

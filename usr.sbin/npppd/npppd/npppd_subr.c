@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.18 2016/04/05 21:24:02 krw Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.19 2019/01/22 09:25:29 krw Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -225,7 +225,7 @@ in_route0(int type, struct in_addr *dest, struct in_addr *mask,
 
 	rtm->rtm_msglen = cp - buf;
 
-	if ((sock = priv_socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC)) < 0) {
+	if ((sock = priv_socket(AF_ROUTE, SOCK_RAW, AF_UNSPEC)) < 0) {
 		log_printf(LOG_ERR, "socket() failed in %s() on %s : %m",
 		    __func__, strtype);
 		goto fail;

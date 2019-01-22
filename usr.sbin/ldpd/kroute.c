@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.67 2018/01/03 19:39:07 denis Exp $ */
+/*	$OpenBSD: kroute.c,v 1.68 2019/01/22 09:25:29 krw Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -171,7 +171,7 @@ kr_init(int fs, unsigned int rdomain)
 	    ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_NEWADDR) |
 	    ROUTE_FILTER(RTM_DELADDR) | ROUTE_FILTER(RTM_IFANNOUNCE);
 
-	if (setsockopt(kr_state.fd, PF_ROUTE, ROUTE_MSGFILTER,
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)
 		log_warn("%s: setsockopt(ROUTE_MSGFILTER)", __func__);
 

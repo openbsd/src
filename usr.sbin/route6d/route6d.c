@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.97 2018/07/11 20:38:57 claudio Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.98 2019/01/22 09:25:29 krw Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -587,7 +587,7 @@ init(void)
 	pfd[0].events = POLLIN;
 
 	if (nflag == 0) {
-		if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
+		if ((rtsock = socket(AF_ROUTE, SOCK_RAW, 0)) < 0) {
 			fatal("route socket");
 			/*NOTREACHED*/
 		}

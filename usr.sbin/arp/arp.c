@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.81 2018/04/26 12:42:51 guenther Exp $ */
+/*	$OpenBSD: arp.c,v 1.82 2019/01/22 09:25:29 krw Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -244,10 +244,10 @@ getsocket(void)
 
 	if (rtsock >= 0)
 		return;
-	rtsock = socket(PF_ROUTE, SOCK_RAW, 0);
+	rtsock = socket(AF_ROUTE, SOCK_RAW, 0);
 	if (rtsock < 0)
 		err(1, "routing socket");
-	if (setsockopt(rtsock, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
 		err(1, "ROUTE_TABLEFILTER");
 
 	if (pledge("stdio dns", NULL) == -1)

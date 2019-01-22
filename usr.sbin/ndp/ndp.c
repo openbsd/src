@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.91 2019/01/21 08:16:47 kn Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.92 2019/01/22 09:25:29 krw Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -288,10 +288,10 @@ getsocket(void)
 
 	if (rtsock >= 0)
 		return;
-	rtsock = socket(PF_ROUTE, SOCK_RAW, 0);
+	rtsock = socket(AF_ROUTE, SOCK_RAW, 0);
 	if (rtsock < 0)
 		err(1, "routing socket");
-	if (setsockopt(rtsock, PF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
+	if (setsockopt(rtsock, AF_ROUTE, ROUTE_TABLEFILTER, &rdomain, len) < 0)
 		err(1, "ROUTE_TABLEFILTER");
 
 	if (pledge("stdio dns", NULL) == -1)

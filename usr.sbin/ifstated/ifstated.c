@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.62 2018/10/31 07:39:13 mestre Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.63 2019/01/22 09:25:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -148,16 +148,16 @@ main(int argc, char *argv[])
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(opts & IFSD_OPT_VERBOSE);
 
-	if ((rt_fd = socket(PF_ROUTE, SOCK_RAW, 0)) < 0)
+	if ((rt_fd = socket(AF_ROUTE, SOCK_RAW, 0)) < 0)
 		fatal("no routing socket");
 
 	rtfilter = ROUTE_FILTER(RTM_IFINFO) | ROUTE_FILTER(RTM_IFANNOUNCE);
-	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_MSGFILTER,
+	if (setsockopt(rt_fd, AF_ROUTE, ROUTE_MSGFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt msgfilter", __func__);
 
 	rtfilter = RTABLE_ANY;
-	if (setsockopt(rt_fd, PF_ROUTE, ROUTE_TABLEFILTER,
+	if (setsockopt(rt_fd, AF_ROUTE, ROUTE_TABLEFILTER,
 	    &rtfilter, sizeof(rtfilter)) == -1)	/* not fatal */
 		log_warn("%s: setsockopt tablefilter", __func__);
 
