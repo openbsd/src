@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.249 2019/01/21 20:09:37 landry Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.250 2019/01/22 00:59:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -70,6 +70,7 @@
 #include "audio.h"
 #include "bpfilter.h"
 #include "pf.h"
+#include "video.h"
 #include "pty.h"
 
 #if defined(__amd64__)
@@ -1152,6 +1153,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 		}
 	}
 
+#if NVIDEO > 0
 	if ((p->p_p->ps_pledge & PLEDGE_VIDEO)) {
 		switch (com) {
 		case VIDIOC_QUERYCAP:
@@ -1178,7 +1180,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 			break;
 		}
 	}
-
+#endif
 
 #if NPF > 0
 	if ((p->p_p->ps_pledge & PLEDGE_PF)) {
