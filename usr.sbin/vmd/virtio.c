@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.76 2019/01/10 18:59:56 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.77 2019/01/22 10:12:36 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1818,56 +1818,6 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	viornd.irq = pci_get_dev_irq(id);
 	viornd.vm_id = vcp->vcp_id;
 
-	if (vcp->vcp_ndisks > 0) {
-		nr_vioblk = vcp->vcp_ndisks;
-		vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
-		if (vioblk == NULL) {
-			log_warn("%s: calloc failure allocating vioblks",
-			    __progname);
-			return;
-		}
-
-		/* One virtio block device for each disk defined in vcp */
-		for (i = 0; i < vcp->vcp_ndisks; i++) {
-			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-			    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
-			    PCI_CLASS_MASS_STORAGE,
-			    PCI_SUBCLASS_MASS_STORAGE_SCSI,
-			    PCI_VENDOR_OPENBSD,
-			    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
-				log_warnx("%s: can't add PCI virtio block "
-				    "device", __progname);
-				return;
-			}
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
-			    &vioblk[i])) {
-				log_warnx("%s: can't add bar for virtio block "
-				    "device", __progname);
-				return;
-			}
-			vioblk[i].vq[0].qs = VIOBLK_QUEUE_SIZE;
-			vioblk[i].vq[0].vq_availoffset =
-			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE;
-			vioblk[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
-			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE
-			    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));
-			vioblk[i].vq[0].last_avail = 0;
-			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
-			vioblk[i].max_xfer = 1048576;
-			vioblk[i].pci_id = id;
-			vioblk[i].vm_id = vcp->vcp_id;
-			vioblk[i].irq = pci_get_dev_irq(id);
-			if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-			    child_disks[i], vmc->vmc_diskbases[i],
-			    vmc->vmc_disktypes[i]) == -1) {
-				log_warnx("%s: unable to determine disk format",
-				    __func__);
-				return;
-			}
-			vioblk[i].sz /= 512;
-		}
-	}
-
 	if (vcp->vcp_nnics > 0) {
 		vionet = calloc(vcp->vcp_nnics, sizeof(struct vionet_dev));
 		if (vionet == NULL) {
@@ -1952,6 +1902,56 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    vionet[i].lockedmac ? ", locked" : "",
 			    vionet[i].local ? ", local" : "",
 			    vionet[i].pxeboot ? ", pxeboot" : "");
+		}
+	}
+
+	if (vcp->vcp_ndisks > 0) {
+		nr_vioblk = vcp->vcp_ndisks;
+		vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
+		if (vioblk == NULL) {
+			log_warn("%s: calloc failure allocating vioblks",
+			    __progname);
+			return;
+		}
+
+		/* One virtio block device for each disk defined in vcp */
+		for (i = 0; i < vcp->vcp_ndisks; i++) {
+			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
+			    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
+			    PCI_CLASS_MASS_STORAGE,
+			    PCI_SUBCLASS_MASS_STORAGE_SCSI,
+			    PCI_VENDOR_OPENBSD,
+			    PCI_PRODUCT_VIRTIO_BLOCK, 1, NULL)) {
+				log_warnx("%s: can't add PCI virtio block "
+				    "device", __progname);
+				return;
+			}
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
+			    &vioblk[i])) {
+				log_warnx("%s: can't add bar for virtio block "
+				    "device", __progname);
+				return;
+			}
+			vioblk[i].vq[0].qs = VIOBLK_QUEUE_SIZE;
+			vioblk[i].vq[0].vq_availoffset =
+			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE;
+			vioblk[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
+			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE
+			    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));
+			vioblk[i].vq[0].last_avail = 0;
+			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
+			vioblk[i].max_xfer = 1048576;
+			vioblk[i].pci_id = id;
+			vioblk[i].vm_id = vcp->vcp_id;
+			vioblk[i].irq = pci_get_dev_irq(id);
+			if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
+			    child_disks[i], vmc->vmc_diskbases[i],
+			    vmc->vmc_disktypes[i]) == -1) {
+				log_warnx("%s: unable to determine disk format",
+				    __func__);
+				return;
+			}
+			vioblk[i].sz /= 512;
 		}
 	}
 
