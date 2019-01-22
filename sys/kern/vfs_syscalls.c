@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.311 2019/01/21 20:46:52 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.312 2019/01/22 20:39:51 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -922,9 +922,10 @@ sys_unveil(struct proc *p, void *v, register_t *retval)
 	    (VOP_ACCESS(nd.ni_vp, VREAD, p->p_ucred, p) == 0 ||
 	    VOP_ACCESS(nd.ni_vp, VWRITE, p->p_ucred, p) == 0 ||
 	    VOP_ACCESS(nd.ni_vp, VEXEC, p->p_ucred, p) == 0)) ||
-	    VOP_ACCESS(nd.ni_dvp, VREAD, p->p_ucred, p) == 0 ||
+	    (nd.ni_dvp &&
+	    (VOP_ACCESS(nd.ni_dvp, VREAD, p->p_ucred, p) == 0 ||
 	    VOP_ACCESS(nd.ni_dvp, VWRITE, p->p_ucred, p) == 0 ||
-	    VOP_ACCESS(nd.ni_dvp, VEXEC, p->p_ucred, p) == 0);
+	    VOP_ACCESS(nd.ni_dvp, VEXEC, p->p_ucred, p) == 0)));
 
 	/* release lock from namei, but keep ref */
 	if (nd.ni_vp)
