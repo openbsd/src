@@ -989,6 +989,7 @@ EC_KEY_get_method
 EC_KEY_insert_key_method_data
 EC_KEY_new
 EC_KEY_new_by_curve_name
+EC_KEY_new_method
 EC_KEY_precompute_mult
 EC_KEY_print
 EC_KEY_print_fp
@@ -1057,6 +1058,7 @@ ENGINE_finish
 ENGINE_free
 ENGINE_get_DH
 ENGINE_get_DSA
+ENGINE_get_EC
 ENGINE_get_ECDH
 ENGINE_get_ECDSA
 ENGINE_get_RAND
@@ -1069,6 +1071,7 @@ ENGINE_get_cmd_defns
 ENGINE_get_ctrl_function
 ENGINE_get_default_DH
 ENGINE_get_default_DSA
+ENGINE_get_default_EC
 ENGINE_get_default_ECDH
 ENGINE_get_default_ECDSA
 ENGINE_get_default_RAND
@@ -1111,6 +1114,7 @@ ENGINE_new
 ENGINE_pkey_asn1_find_str
 ENGINE_register_DH
 ENGINE_register_DSA
+ENGINE_register_EC
 ENGINE_register_ECDH
 ENGINE_register_ECDSA
 ENGINE_register_RAND
@@ -1118,6 +1122,7 @@ ENGINE_register_RSA
 ENGINE_register_STORE
 ENGINE_register_all_DH
 ENGINE_register_all_DSA
+ENGINE_register_all_EC
 ENGINE_register_all_ECDH
 ENGINE_register_all_ECDSA
 ENGINE_register_all_RAND
@@ -1136,6 +1141,7 @@ ENGINE_register_pkey_meths
 ENGINE_remove
 ENGINE_set_DH
 ENGINE_set_DSA
+ENGINE_set_EC
 ENGINE_set_ECDH
 ENGINE_set_ECDSA
 ENGINE_set_RAND
@@ -1147,6 +1153,7 @@ ENGINE_set_ctrl_function
 ENGINE_set_default
 ENGINE_set_default_DH
 ENGINE_set_default_DSA
+ENGINE_set_default_EC
 ENGINE_set_default_ECDH
 ENGINE_set_default_ECDSA
 ENGINE_set_default_RAND
@@ -1172,6 +1179,7 @@ ENGINE_set_pkey_meths
 ENGINE_set_table_flags
 ENGINE_unregister_DH
 ENGINE_unregister_DSA
+ENGINE_unregister_EC
 ENGINE_unregister_ECDH
 ENGINE_unregister_ECDSA
 ENGINE_unregister_RAND
