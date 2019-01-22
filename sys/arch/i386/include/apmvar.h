@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.20 2015/02/06 08:16:49 dcoppa Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.21 2019/01/22 01:48:55 phessler Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -254,9 +254,9 @@
  *
  * This software may be used, modified, copied, and distributed, in
  * both source and binary form provided that the above copyright and
- * these terms are retained. Under no circumstances is the author 
- * responsible for the proper functioning of this software, nor does 
- * the author assume any responsibility for damages incurred with its 
+ * these terms are retained. Under no circumstances is the author
+ * responsible for the proper functioning of this software, nor does
+ * the author assume any responsibility for damages incurred with its
  * use.
  *
  * Sep., 1994	Implemented on FreeBSD 1.1.5.1R (Toshiba AVS001WD)
