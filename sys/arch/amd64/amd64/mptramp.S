@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.17 2018/06/05 06:39:10 guenther Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.18 2019/01/23 23:52:32 deraadt Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -87,9 +87,6 @@
 #ifdef __clang__
 #define addr32
 #endif
-
-#define _RELOC(x)	((x) - KERNBASE)
-#define RELOC(x)	_RELOC(_C_LABEL(x))
 
 #define _TRMP_LABEL(a)	a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 #define _TRMP_OFFSET(a)	a = . - _C_LABEL(cpu_spinup_trampoline)
