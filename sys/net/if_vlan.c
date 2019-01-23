@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.180 2019/01/09 01:17:09 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.181 2019/01/23 23:17:25 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -226,24 +226,6 @@ vlan_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-static inline int
-vlan_mplstunnel(int ifidx)
-{
-#if NMPW > 0
-	struct ifnet *ifp;
-	int rv = 0;
-
-	ifp = if_get(ifidx);
-	if (ifp != NULL) {
-		rv = ifp->if_type == IFT_MPLSTUNNEL;
-		if_put(ifp);
-	}
-	return (rv);
-#else
-	return (0);
-#endif
-}
-
 void
 vlan_transmit(struct ifvlan *ifv, struct ifnet *ifp0, struct mbuf *m)
 {
@@ -264,17 +246,10 @@ vlan_transmit(struct ifvlan *ifv, struct ifnet *ifp0, struct mbuf *m)
 		prio = !prio;
 
 	/*
-	 * If this packet came from a pseudowire it means it already
-	 * has all tags it needs, so just output it.
-	 */
-	if (vlan_mplstunnel(m->m_pkthdr.ph_ifidx)) {
-		/* NOTHING */
-
-	/*
 	 * If the underlying interface cannot do VLAN tag insertion
 	 * itself, create an encapsulation header.
 	 */
-	} else if ((ifp0->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
+	if ((ifp0->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
 	    (ifv->ifv_type == ETHERTYPE_VLAN)) {
 		m->m_pkthdr.ether_vtag = ifv->ifv_tag +
 		    (prio << EVL_PRIO_BITS);
