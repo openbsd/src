@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.14 2019/01/23 18:39:28 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.15 2019/01/23 23:47:13 beck Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -32,7 +32,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.pkey_idx = SSL_PKEY_RSA_SIGN,
 	},
 	{
-		.value = SIGALG_ECDSA_SECP512R1_SHA512,
+		.value = SIGALG_ECDSA_SECP521R1_SHA512,
 		.md = EVP_sha512,
 		.key_type = EVP_PKEY_EC,
 		.pkey_idx = SSL_PKEY_ECC,
@@ -167,7 +167,7 @@ const struct ssl_sigalg sigalgs[] = {
 uint16_t tls13_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
-	SIGALG_ECDSA_SECP512R1_SHA512,
+	SIGALG_ECDSA_SECP521R1_SHA512,
 	SIGALG_RSA_PSS_RSAE_SHA384,
 	SIGALG_RSA_PKCS1_SHA384,
 	SIGALG_ECDSA_SECP384R1_SHA384,
@@ -181,7 +181,7 @@ size_t tls13_sigalgs_len = (sizeof(tls13_sigalgs) / sizeof(tls13_sigalgs[0]));
 uint16_t tls12_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
-	SIGALG_ECDSA_SECP512R1_SHA512,
+	SIGALG_ECDSA_SECP521R1_SHA512,
 	SIGALG_GOSTR12_512_STREEBOG_512,
 	SIGALG_RSA_PSS_RSAE_SHA384,
 	SIGALG_RSA_PKCS1_SHA384,
