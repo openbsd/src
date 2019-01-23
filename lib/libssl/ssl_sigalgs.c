@@ -1,6 +1,6 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.12 2019/01/23 16:46:04 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.13 2019/01/23 18:24:40 beck Exp $ */
 /*
- * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -163,30 +163,13 @@ const struct ssl_sigalg sigalgs[] = {
 	},
 };
 
-/* Sigalgs for tls 1.3, in preference order, */
-uint16_t tls13_sigalgs[] = {
-	SIGALG_RSA_PSS_RSAE_SHA512,
-	SIGALG_RSA_PKCS1_SHA512,
-	SIGALG_ECDSA_SECP512R1_SHA512,
-	SIGALG_RSA_PSS_RSAE_SHA384,
-	SIGALG_RSA_PKCS1_SHA384,
-	SIGALG_ECDSA_SECP384R1_SHA384,
-	SIGALG_RSA_PSS_RSAE_SHA256,
-	SIGALG_RSA_PKCS1_SHA256,
-	SIGALG_ECDSA_SECP256R1_SHA256,
-};
-size_t tls13_sigalgs_len = (sizeof(tls13_sigalgs) / sizeof(tls13_sigalgs[0]));
-
 /* Sigalgs for tls 1.2, in preference order, */
 uint16_t tls12_sigalgs[] = {
-	SIGALG_RSA_PSS_RSAE_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
 	SIGALG_ECDSA_SECP512R1_SHA512,
 	SIGALG_GOSTR12_512_STREEBOG_512,
-	SIGALG_RSA_PSS_RSAE_SHA384,
 	SIGALG_RSA_PKCS1_SHA384,
 	SIGALG_ECDSA_SECP384R1_SHA384,
-	SIGALG_RSA_PSS_RSAE_SHA256,
 	SIGALG_RSA_PKCS1_SHA256,
 	SIGALG_ECDSA_SECP256R1_SHA256,
 	SIGALG_GOSTR12_256_STREEBOG_256,
