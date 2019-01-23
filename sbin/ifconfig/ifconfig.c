@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.390 2019/01/19 21:06:02 phessler Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.391 2019/01/23 22:17:58 krw Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1745,8 +1745,6 @@ setifnwid(const char *val, int d)
 void
 process_join_commands(void)
 {
-	int len;
-
 	if (!(actions & A_JOIN))
 		return;
 
