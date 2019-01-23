@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.24 2018/02/19 08:59:52 mpi Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.25 2019/01/23 23:08:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -45,15 +45,16 @@
 #endif
 
 struct mpw_softc {
-	struct		ifnet sc_if;
+	struct arpcom		sc_ac;
+#define sc_if			sc_ac.ac_if
 
-	struct		ifaddr sc_ifa;
-	struct		sockaddr_mpls sc_smpls; /* Local label */
+	struct ifaddr		sc_ifa;
+	struct sockaddr_mpls	sc_smpls; /* Local label */
 
-	uint32_t	sc_flags;
-	uint32_t	sc_type;
-	struct		shim_hdr sc_rshim;
-	struct		sockaddr_storage sc_nexthop;
+	uint32_t		sc_flags;
+	uint32_t		sc_type;
+	struct shim_hdr		sc_rshim;
+	struct sockaddr_storage	sc_nexthop;
 };
 
 void	mpwattach(int);
@@ -63,7 +64,6 @@ int	mpw_ioctl(struct ifnet *, u_long, caddr_t);
 int	mpw_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
 void	mpw_start(struct ifnet *);
-int	mpw_input(struct ifnet *, struct mbuf *, void *);
 #if NVLAN > 0
 struct	mbuf *mpw_vlan_handle(struct mbuf *, struct mpw_softc *);
 #endif /* NVLAN */
@@ -85,31 +85,24 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	ifp = &sc->sc_if;
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "mpw%d", unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
+	    ifc->ifc_name, unit);
 	ifp->if_softc = sc;
-	ifp->if_mtu = ETHERMTU;
-	ifp->if_flags = IFF_POINTOPOINT;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_ioctl = mpw_ioctl;
 	ifp->if_output = mpw_output;
 	ifp->if_start = mpw_start;
-	ifp->if_type = IFT_MPLSTUNNEL;
-	ifp->if_hdrlen = ETHER_HDR_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ether_fakeaddr(ifp);
 
 	if_attach(ifp);
-	if_alloc_sadl(ifp);
+	ether_ifattach(ifp);
 
 	sc->sc_ifa.ifa_ifp = ifp;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
 	sc->sc_smpls.smpls_family = AF_MPLS;
-
-	if_ih_insert(ifp, mpw_input, NULL);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
-#endif /* NBFILTER */
 
 	return (0);
 }
@@ -126,20 +119,12 @@ mpw_clone_destroy(struct ifnet *ifp)
 		    smplstosa(&sc->sc_smpls));
 	}
 
-	if_ih_remove(ifp, mpw_input, NULL);
-
+	ether_ifdetach(ifp);
 	if_detach(ifp);
+
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
-}
-
-int
-mpw_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
-{
-	/* Don't have local broadcast. */
-	m_freem(m);
-	return (1);
 }
 
 int
@@ -166,6 +151,10 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_flags |= IFF_RUNNING;
 		else
 			ifp->if_flags &= ~IFF_RUNNING;
+		break;
+
+	case SIOCGPWE3:
+		ifr->ifr_pwe3 = IF_PWE3_ETHERNET;
 		break;
 
 	case SIOCSETMPWCFG:
@@ -213,7 +202,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				    smplstosa(&sc->sc_smpls));
 
 			sc->sc_smpls.smpls_label = imr.imr_lshim.shim_label;
-			error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS,
+			error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 			    smplstosa(&sc->sc_smpls));
 			if (error != 0) {
 				sc->sc_smpls.smpls_label = 0;
@@ -249,27 +238,30 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = copyout(&imr, ifr->ifr_data, sizeof(imr));
 		break;
 
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		break;
+
 	default:
-		error = ENOTTY;
+		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 		break;
 	}
 
 	return (error);
 }
 
-int
-mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
+static void
+mpw_input(struct mpw_softc *sc, struct mbuf *m)
 {
-	struct mpw_softc *sc = ifp->if_softc;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	struct ether_header *eh, ehc;
+	struct ifnet *ifp = &sc->sc_if;
 	struct shim_hdr *shim;
 
-	if (sc->sc_type == IMR_TYPE_NONE) {
-		m_freem(m);
-		return (EHOSTUNREACH);
-	}
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		goto drop;
+
+	if (sc->sc_type == IMR_TYPE_NONE)
+		goto drop;
 
 	if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
 		shim = mtod(m, struct shim_hdr *);
@@ -282,78 +274,37 @@ mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		 */
 		if (shim->shim_label & CW_ZERO_MASK) {
 			ifp->if_ierrors++;
-			m_freem(m);
-			return (EINVAL);
+			goto drop;
 		}
 
 		/* We don't support fragmentation just yet. */
 		if (shim->shim_label & CW_FRAG_MASK) {
 			ifp->if_ierrors++;
-			m_freem(m);
-			return (EINVAL);
+			goto drop;
 		}
-	}
-
-	if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED) {
-		m_copydata(m, 0, sizeof(ehc), (caddr_t) &ehc);
-		m_adj(m, ETHER_HDR_LEN);
-
-		/* Ethernet tagged expects at least 2 VLANs */
-		if (ntohs(ehc.ether_type) != ETHERTYPE_QINQ) {
-			ifp->if_ierrors++;
-			m_freem(m);
-			return (EINVAL);
-		}
-
-		/* Remove dummy VLAN and update ethertype */
-		if (EVL_VLANOFTAG(*mtod(m, uint16_t *)) == 0) {
-			m_adj(m, EVL_ENCAPLEN);
-			ehc.ether_type = htons(ETHERTYPE_VLAN);
-		}
-
-		M_PREPEND(m, sizeof(*eh), M_NOWAIT);
-		if (m == NULL)
-			return (ENOMEM);
-
-		eh = mtod(m, struct ether_header *);
-		memcpy(eh, &ehc, sizeof(*eh));
 	}
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
-
-	return (0);
+	return;
+drop:
+	m_freem(m);
 }
 
-#if NVLAN > 0
-extern void vlan_start(struct ifqueue *);
-
-/*
- * This routine handles VLAN tag reinsertion in packets flowing through
- * the pseudowire. Also it does the necessary modifications to the VLANs
- * to respect the RFC.
- */
-struct mbuf *
-mpw_vlan_handle(struct mbuf *m, struct mpw_softc *sc)
+int
+mpw_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
 {
-	struct ifnet *ifp;
-	struct ifvlan *ifv;
+	struct mpw_softc *sc = ifp->if_softc;
 
-	uint16_t type = ETHERTYPE_QINQ;
-	uint16_t tag = 0;
-
-	ifp = if_get(m->m_pkthdr.ph_ifidx);
-	if (ifp != NULL && ifp->if_qstart == vlan_start &&
-	    ISSET(ifp->if_flags, IFF_RUNNING)) {
-		ifv = ifp->if_softc;
-		type = ifv->ifv_type;
-		tag = ifv->ifv_tag;
+	if (dst->sa_family == AF_LINK &&
+	    rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
+		mpw_input(sc, m);
+		return (0);
 	}
-	if_put(ifp);
 
-	return (vlan_inject(m, type, tag));
+	return (ether_output(ifp, m, dst, rt));
 }
-#endif /* NVLAN */
 
 void
 mpw_start(struct ifnet *ifp)
@@ -396,20 +347,6 @@ mpw_start(struct ifnet *ifp)
 		if (sc->sc_if.if_bpf)
 			bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER */
-
-		if (sc->sc_type == IMR_TYPE_ETHERNET_TAGGED) {
- #if NVLAN > 0
-			m = mpw_vlan_handle(m, sc);
-			if (m == NULL) {
-				ifp->if_oerrors++;
-				continue;
-			}
- #else
-			/* Ethernet tagged doesn't work without VLANs'*/
-			m_freem(m);
-			continue;
- #endif /* NVLAN */
-		}
 
 		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
 			M_PREPEND(m, sizeof(*shim), M_NOWAIT);
