@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.78 2018/11/29 00:11:23 dlg Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.79 2019/01/23 08:23:18 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -143,6 +143,7 @@
 #define	SIOCSSPPPPARAMS	 _IOW('i', 147, struct ifreq)	/* set pppoe params */
 #define	SIOCGSPPPPARAMS	_IOWR('i', 148, struct ifreq)	/* get pppoe params */
 
+#define SIOCGPWE3	 _IOWR('i', 152, struct ifreq)	/* get MPLS PWE3 cap */
 #define SIOCSETLABEL	 _IOW('i', 153, struct ifreq)	/* set MPLS label */
 #define SIOCGETLABEL	 _IOW('i', 154, struct ifreq)	/* get MPLS label */
 

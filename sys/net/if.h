@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.198 2018/11/12 23:34:48 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.199 2019/01/23 08:23:18 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -420,12 +420,16 @@ struct	ifreq {
 #define ifr_index	ifr_ifru.ifru_index	/* interface index */
 #define ifr_llprio	ifr_ifru.ifru_metric	/* link layer priority */
 #define ifr_hdrprio	ifr_ifru.ifru_metric	/* header prio field config */
+#define ifr_pwe3	ifr_ifru.ifru_metric	/* PWE3 type */
 };
 
 #define IF_HDRPRIO_MIN		IFQ_MINPRIO
 #define IF_HDRPRIO_MAX		IFQ_MAXPRIO
 #define IF_HDRPRIO_PACKET	-1	/* use mbuf prio */
 #define IF_HDRPRIO_PAYLOAD	-2	/* copy payload prio */
+
+#define IF_PWE3_ETHERNET	1	/* ethernet or ethernet tagged */
+#define IF_PWE3_IP		2	/* IP layer 2 */
 
 struct ifaliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
