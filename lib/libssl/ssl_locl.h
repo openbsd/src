@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.228 2019/01/21 10:28:52 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.229 2019/01/23 16:46:04 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -429,6 +429,9 @@ typedef struct ssl_handshake_st {
 	/* key_block is the record-layer key block for TLS 1.2 and earlier. */
 	int key_block_len;
 	unsigned char *key_block;
+
+	/* Extensions seen in this handshake. */
+	uint32_t extensions_seen;
 } SSL_HANDSHAKE;
 
 typedef struct ssl_handshake_tls13_st {
@@ -445,6 +448,9 @@ typedef struct ssl_handshake_tls13_st {
 	uint8_t *x25519_peer_public;
 
 	struct tls13_secrets *secrets;
+
+	uint8_t *cookie;
+	size_t cookie_len;
 } SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {
@@ -1313,7 +1319,7 @@ int tls1_process_ticket(SSL *s, const unsigned char *session_id,
     int session_id_len, CBS *ext_block, SSL_SESSION **ret);
 
 long ssl_get_algorithm2(SSL *s);
-int tls1_process_sigalgs(SSL *s, CBS *cbs);
+int tls1_process_sigalgs(SSL *s, CBS *cbs, uint16_t *, size_t);
 
 int tls1_check_ec_server_key(SSL *s);
 
