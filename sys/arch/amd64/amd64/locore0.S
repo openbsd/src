@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.11 2019/01/11 06:25:06 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.12 2019/01/23 23:51:58 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -252,9 +252,9 @@ bi_size_ok:
 
 	movl	$0x0a,%eax
 	cpuid
-	movl	%eax,RELOC(_C_LABEL(cpu_perf_eax))
-	movl	%ebx,RELOC(_C_LABEL(cpu_perf_ebx))
-	movl	%edx,RELOC(_C_LABEL(cpu_perf_edx))
+	movl	%eax,RELOC(cpu_perf_eax)
+	movl	%ebx,RELOC(cpu_perf_ebx)
+	movl	%edx,RELOC(cpu_perf_edx)
 
 	movl	$0x80000001, %eax
 	cpuid
@@ -276,7 +276,7 @@ cont:
 
 	movl	$0x80000007,%eax
 	cpuid
-	movl	%edx,RELOC(_C_LABEL(cpu_apmi_edx))
+	movl	%edx,RELOC(cpu_apmi_edx)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
