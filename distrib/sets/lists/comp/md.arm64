@@ -3,6 +3,7 @@
 ./usr/include/arm64
 ./usr/include/arm64/_float.h
 ./usr/include/arm64/_types.h
+./usr/include/arm64/acpiapm.h
 ./usr/include/arm64/apmvar.h
 ./usr/include/arm64/armreg.h
 ./usr/include/arm64/asm.h

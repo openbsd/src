@@ -450,10 +450,14 @@
 ./usr/libdata/perl5/aarch64-openbsd/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/aarch64-openbsd
 ./usr/mdec/BOOTAA64.EFI
+./usr/sbin/ZZZ
 ./usr/sbin/acpidump
+./usr/sbin/apm
+./usr/sbin/apmd
 ./usr/sbin/eeprom
 ./usr/sbin/gpioctl
 ./usr/sbin/hotplugd
 ./usr/sbin/mkuboot
 ./usr/sbin/pcidump
 ./usr/sbin/wsconscfg
+./usr/sbin/zzz

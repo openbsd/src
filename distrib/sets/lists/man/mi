@@ -1176,6 +1176,7 @@
 ./usr/share/man/man4/arm64/acpipci.4
 ./usr/share/man/man4/arm64/agtimer.4
 ./usr/share/man/man4/arm64/ampintc.4
+./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
 ./usr/share/man/man4/armv7/agtimer.4
@@ -2169,6 +2170,8 @@
 ./usr/share/man/man8/amd64/wsmoused.8
 ./usr/share/man/man8/amq.8
 ./usr/share/man/man8/arm64/MAKEDEV.8
+./usr/share/man/man8/arm64/apm.8
+./usr/share/man/man8/arm64/apmd.8
 ./usr/share/man/man8/arm64/eeprom.8
 ./usr/share/man/man8/armv7/MAKEDEV.8
 ./usr/share/man/man8/armv7/eeprom.8
