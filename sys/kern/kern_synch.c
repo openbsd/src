@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.146 2018/05/31 02:16:22 guenther Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.147 2019/01/23 21:53:42 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -612,7 +612,7 @@ sys___thrsleep(struct proc *p, void *v, register_t *retval)
 			*retval = error;
 			return 0;
 		}
-		if (ts.tv_nsec < 0 || ts.tv_nsec >= 1000000000) {
+		if (!timespecisvalid(&ts)) {
 			*retval = EINVAL;
 			return 0;
 		}
