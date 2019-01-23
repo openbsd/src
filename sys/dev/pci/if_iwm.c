@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.233 2018/09/22 13:55:55 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.234 2019/01/23 10:08:48 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5948,7 +5948,7 @@ iwm_setrates(struct iwm_node *in)
 	struct iwm_softc *sc = IC2IFP(ic)->if_softc;
 	struct iwm_lq_cmd *lq = &in->in_lq;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
-	int i, ridx, ridx_min, ridx_max, j, sgi_ok, mimo, tab = 0;
+	int i, ridx, ridx_min, ridx_max, j, sgi_ok = 0, mimo, tab = 0;
 	struct iwm_host_cmd cmd = {
 		.id = IWM_LQ_CMD,
 		.len = { sizeof(in->in_lq), },
@@ -5960,8 +5960,11 @@ iwm_setrates(struct iwm_node *in)
 	if (ic->ic_flags & IEEE80211_F_USEPROT)
 		lq->flags |= IWM_LQ_FLAG_USE_RTS_MSK;
 
-	sgi_ok = ((ni->ni_flags & IEEE80211_NODE_HT) &&
-	    (ni->ni_htcaps & IEEE80211_HTCAP_SGI20));
+	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    ieee80211_node_supports_ht_sgi20(ni)) {
+		ni->ni_flags |= IEEE80211_NODE_HT_SGI20;
+		sgi_ok = 1;
+	}
 
 	/*
 	 * Fill the LQ rate selection table with legacy and/or HT rates

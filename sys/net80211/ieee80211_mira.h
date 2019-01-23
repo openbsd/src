@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.h,v 1.3 2017/01/12 18:06:57 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.h,v 1.4 2019/01/23 10:08:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -25,9 +25,6 @@
  * Ioannis Pefkianakis, Yun Hu, Starsky H.Y. Wong, Hao Yang, Songwu Lu
  * http://www.cs.ucla.edu/wing/publication/papers/Pefkianakis.MOBICOM10.pdf
  */
-
-/* The number of data rates MiRA can choose from. */
-#define IEEE80211_MIRA_NUM_RATES 32 /* XXX limited to MCS 0-31 */
 
 /* 
  * Goodput statistics struct. Measures the effective data rate of an MCS
@@ -88,7 +85,7 @@ struct ieee80211_mira_node {
 	int best_mcs;
 
 	/* Goodput statistics for each MCS. */
-	struct ieee80211_mira_goodput_stats g[IEEE80211_MIRA_NUM_RATES];
+	struct ieee80211_mira_goodput_stats g[IEEE80211_HT_RATESET_NUM_MCS];
 };
 
 /* Initialize rate control state. */

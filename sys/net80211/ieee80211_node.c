@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.160 2019/01/18 20:28:40 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.161 2019/01/23 10:08:49 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2146,7 +2146,8 @@ ieee80211_clear_htcaps(struct ieee80211_node *ni)
 	ni->ni_txbfcaps = 0;
 	ni->ni_aselcaps = 0;
 
-	ni->ni_flags &= ~IEEE80211_NODE_HT;
+	ni->ni_flags &= ~(IEEE80211_NODE_HT | IEEE80211_NODE_HT_SGI20 |
+	    IEEE80211_NODE_HT_SGI40);
 
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.70 2018/09/11 18:16:26 krw Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.71 2019/01/23 10:08:49 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -702,6 +702,32 @@ const struct ieee80211_rateset ieee80211_std_rateset_11b =
 
 const struct ieee80211_rateset ieee80211_std_rateset_11g =
 	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 } };
+
+const struct ieee80211_ht_rateset ieee80211_std_ratesets_11n[] = {
+	/* MCS 0-7, 20MHz channel, no SGI */
+	{ 8, { 13, 26, 39, 52, 78, 104, 117, 130 }, 0x000000ff, 0, 7, 0},
+
+	/* MCS 0-7, 20MHz channel, SGI */
+	{ 8, { 14, 29, 43, 58, 87, 116, 130, 144 }, 0x000000ff, 0, 7, 1 },
+
+	/* MCS 8-15, 20MHz channel, no SGI */
+	{ 8, { 26, 52, 78, 104, 156, 208, 234, 260 }, 0x0000ff00, 8, 15, 0 },
+
+	/* MCS 8-15, 20MHz channel, SGI */
+	{ 8, { 29, 58, 87, 116, 173, 231, 261, 289 }, 0x0000ff00, 8, 15, 1 },
+
+	/* MCS 16-23, 20MHz channel, no SGI */
+	{ 8, { 39, 78, 117, 156, 234, 312, 351, 390 }, 0x00ff0000, 16, 23, 0 },
+
+	/* MCS 16-23, 20MHz channel, SGI */
+	{ 8, { 43, 87, 130, 173, 260, 347, 390, 433 }, 0x00ff0000, 16, 23, 1 },
+
+	/* MCS 24-31, 20MHz channel, no SGI */
+	{ 8, { 52, 104, 156, 208, 312, 416, 468, 520 }, 0xff000000, 24, 31, 0 },
+
+	/* MCS 24-31, 20MHz channel, SGI */
+	{ 8, { 58, 116, 173, 231, 347, 462, 520, 578 }, 0xff000000, 24, 31, 1 },
+};
 
 /*
  * Mark the basic rates for the 11g rate table based on the

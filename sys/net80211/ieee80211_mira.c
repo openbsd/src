@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.12 2018/07/11 21:18:23 nayden Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.13 2019/01/23 10:08:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -34,12 +34,12 @@
 /* Allow for aggressive down probing when channel quality changes. */
 #define MIRA_AGGRESSIVE_DOWNWARDS_PROBING
 
-const struct ieee80211_mira_rateset *	ieee80211_mira_get_rateset(int);
+const struct ieee80211_ht_rateset *	ieee80211_mira_get_rateset(int, int);
 void	ieee80211_mira_probe_timeout_up(void *);
 void	ieee80211_mira_probe_timeout_down(void *);
-uint64_t ieee80211_mira_get_txrate(int);
+uint64_t ieee80211_mira_get_txrate(int, int);
 uint16_t ieee80211_mira_legacy_txtime(uint32_t, int, struct ieee80211com *);
-uint32_t ieee80211_mira_ht_txtime(uint32_t, int, int);
+uint32_t ieee80211_mira_ht_txtime(uint32_t, int, int, int);
 int	ieee80211_mira_best_basic_rate(struct ieee80211_node *);
 int	ieee80211_mira_ack_rate(struct ieee80211_node *);
 uint64_t ieee80211_mira_toverhead(struct ieee80211_mira_node *,
@@ -52,12 +52,12 @@ int	ieee80211_mira_next_lower_intra_rate(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 int	ieee80211_mira_next_intra_rate(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
-const struct ieee80211_mira_rateset * ieee80211_mira_next_rateset(
-		    struct ieee80211_mira_node *, int);
+const struct ieee80211_ht_rateset * ieee80211_mira_next_rateset(
+		    struct ieee80211_mira_node *, struct ieee80211_node *);
 int	ieee80211_mira_best_mcs_in_rateset(struct ieee80211_mira_node *,
-	    const struct ieee80211_mira_rateset *);
+	    const struct ieee80211_ht_rateset *);
 void	ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *,
-	    struct ieee80211_node *, const struct ieee80211_mira_rateset *);
+	    struct ieee80211_node *, const struct ieee80211_ht_rateset *);
 int	ieee80211_mira_next_mcs(struct ieee80211_mira_node *,
 	    struct ieee80211_node *);
 int	ieee80211_mira_prev_mcs(struct ieee80211_mira_node *,
@@ -84,7 +84,7 @@ void	ieee80211_mira_probe_next_rate(struct ieee80211_mira_node *,
 int	ieee80211_mira_valid_tx_mcs(struct ieee80211com *, int);
 uint32_t ieee80211_mira_valid_rates(struct ieee80211com *,
 	    struct ieee80211_node *);
-uint32_t ieee80211_mira_mcs_below(struct ieee80211_mira_node *, int);
+uint32_t ieee80211_mira_mcs_below(struct ieee80211_mira_node *, int, int);
 
 /* We use fixed point arithmetic with 64 bit integers. */
 #define MIRA_FP_SHIFT	21
@@ -150,56 +150,16 @@ mira_print_driver_stats(struct ieee80211_mira_node *mn,
 }
 #endif /* MIRA_DEBUG */
 
-/*
- * Rate tables.
- */
-
-/* Index into ieee80211_mira_ratesets[] array. */
-#define IEEE80211_MIRA_RATESET_SISO	0
-#define IEEE80211_MIRA_RATESET_MIMO2	1
-#define IEEE80211_MIRA_RATESET_MIMO3	2
-#define IEEE80211_MIRA_RATESET_MIMO4	3
-
-#define IEEE80211_MIRA_RATESET_MAX 8 /* Maximum number of rates in a rateset. */
-struct ieee80211_mira_rateset {
-	uint32_t nrates;
-	uint32_t rates[IEEE80211_MIRA_RATESET_MAX];
-	uint32_t mcs_mask;
-	int min_mcs;
-	int max_mcs;
-} ieee80211_mira_ratesets[] = {
-/* XXX We only support MCS 0-31, for now. */
-#ifdef notyet
-	/* Legacy rates on a 2GHz channel. */
-	{ 12, { 2, 4, 11, 22, 12, 18, 24, 36, 48, 72, 96, 108 }, 0x0, -1, -1 },
-
-	/* Legacy rates on a 5GHz channel. */
-	{ 8, { 12, 18, 24, 36, 48, 72, 96, 108 }, 0x0, -1, -1 },
-#endif
-	/* MCS 0-7, 20MHz channel, no SGI */
-	{ 8, { 13, 26, 39, 52, 78, 104, 117, 130 }, 0x000000ff, 0, 7 },
-
-	/* MCS 8-15, 20MHz channel, no SGI */
-	{ 8, { 26, 52, 78, 104, 156, 208, 234, 260 }, 0x0000ff00, 8, 15 },
-
-	/* MCS 16-23, 20MHz channel, no SGI */
-	{ 8, { 39, 78, 117, 156, 234, 312, 351, 390  }, 0x00ff0000, 16, 23 },
-
-	/* MCS 24-31, 20MHz channel, no SGI */
-	{ 8, { 52, 104, 156, 208, 312, 416, 468, 520 }, 0xff000000, 24, 31 },
-};
-
-/* XXX We only support HT rates, for now. With legacy added, these differ. */
-#define IEEE80211_MIRA_NUM_MCS	IEEE80211_MIRA_NUM_RATES
-
-const struct ieee80211_mira_rateset *
-ieee80211_mira_get_rateset(int mcs)
+const struct ieee80211_ht_rateset *
+ieee80211_mira_get_rateset(int mcs, int sgi)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	int i;
 
-	for (i = 0; i < nitems(ieee80211_mira_ratesets); i++) {
-		rs = &ieee80211_mira_ratesets[i];
+	for (i = 0; i < IEEE80211_HT_NUM_RATESETS; i++) {
+		rs = &ieee80211_std_ratesets_11n[i];
+		if (sgi != rs->sgi)
+			continue;
 		if (mcs >= rs->min_mcs && mcs <= rs->max_mcs)
 			return rs;
 	}
@@ -244,12 +204,12 @@ ieee80211_mira_probe_timeout_down(void *arg)
  */
 
 uint64_t
-ieee80211_mira_get_txrate(int mcs)
+ieee80211_mira_get_txrate(int mcs, int sgi)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	uint64_t txrate;
 
-	rs = ieee80211_mira_get_rateset(mcs);
+	rs = ieee80211_mira_get_rateset(mcs, sgi);
 	txrate = rs->rates[mcs - rs->min_mcs];
 	txrate <<= MIRA_FP_SHIFT; /* convert to fixed-point */
 	txrate *= 500; /* convert to kbit/s */
@@ -281,9 +241,9 @@ ieee80211_mira_legacy_txtime(uint32_t len, int rate, struct ieee80211com *ic)
 }
 
 uint32_t
-ieee80211_mira_ht_txtime(uint32_t len, int mcs, int is2ghz)
+ieee80211_mira_ht_txtime(uint32_t len, int mcs, int is2ghz, int sgi)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	/* XXX These constants should be macros in ieee80211.h instead. */
 	const uint32_t t_lstf = 8; /* usec legacy short training field */
 	const uint32_t t_lltf = 8; /* usec legacy long training field */
@@ -292,6 +252,7 @@ ieee80211_mira_ht_txtime(uint32_t len, int mcs, int is2ghz)
 	const uint32_t t_ltstf = 4; /* usec HT long training field */
 	const uint32_t t_htsig = 8; /* usec HT signal field */
 	const uint32_t t_sym = 4; /* usec symbol interval */
+	const uint32_t t_syms = 3; /* usec symbol interval; XXX actually 3.6 */
 	uint32_t n_sym, n_dbps;
 	uint32_t t_plcp;
 	uint32_t t_data;
@@ -304,10 +265,13 @@ ieee80211_mira_ht_txtime(uint32_t len, int mcs, int is2ghz)
 	 * XXX Assumes a 20MHz channel, HT-mixed frame format, no STBC.
 	 */
 	t_plcp = t_lstf + t_lltf + t_lsig + t_htstf + 4 * t_ltstf + t_htsig;
-	rs = ieee80211_mira_get_rateset(mcs);
+	rs = ieee80211_mira_get_rateset(mcs, sgi);
 	n_dbps = rs->rates[mcs - rs->min_mcs] * 2;
 	n_sym = ((8 * len + 16 + 6) / n_dbps); /* "Equation (20-32)" */
-	t_data = t_sym * n_sym;
+	if (sgi)
+		t_data = (t_syms * n_sym) / t_sym;
+	else
+		t_data = t_sym * n_sym;
 
 	txtime = t_plcp + t_data;
 	if (is2ghz)
@@ -370,9 +334,10 @@ ieee80211_mira_toverhead(struct ieee80211_mira_node *mn,
 	uint64_t toverhead;
 	int rate, rts;
 	enum ieee80211_htprot htprot;
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 
 	overhead = ieee80211_mira_ht_txtime(0, ni->ni_txmcs,
-	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan));
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan), sgi);
 
 	htprot = (ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK);
 	if (htprot == IEEE80211_HTPROT_NONMEMBER ||
@@ -404,9 +369,9 @@ ieee80211_mira_toverhead(struct ieee80211_mira_node *mn,
 	if (mira_debug > 3) {
 		uint32_t txtime;
 		txtime = ieee80211_mira_ht_txtime(mn->ampdu_size, ni->ni_txmcs,
-		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan));
+		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan), sgi);
 		txtime += overhead - ieee80211_mira_ht_txtime(0, ni->ni_txmcs,
-		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan));
+		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan), sgi);
 		DPRINTFN(4, ("txtime: %u usec\n", txtime));
 		DPRINTFN(4, ("overhead: %u usec\n", overhead));
 		DPRINTFN(4, ("toverhead: %s\n", mira_fp_sprintf(toverhead)));
@@ -425,7 +390,8 @@ ieee80211_mira_update_stats(struct ieee80211_mira_node *mn,
 	uint64_t sfer, delta, toverhead;
 	uint64_t agglen = mn->agglen;
 	uint64_t ampdu_size = mn->ampdu_size * 8; /* convert to bits */
-	uint64_t rate = ieee80211_mira_get_txrate(ni->ni_txmcs);
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
+	uint64_t rate = ieee80211_mira_get_txrate(ni->ni_txmcs, sgi);
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
 
 	g->nprobes += mn->agglen;
@@ -544,10 +510,11 @@ int
 ieee80211_mira_next_lower_intra_rate(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	int i, next;
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 
-	rs = ieee80211_mira_get_rateset(ni->ni_txmcs);
+	rs = ieee80211_mira_get_rateset(ni->ni_txmcs, sgi);
 	if (ni->ni_txmcs == rs->min_mcs)
 		return rs->min_mcs;
 
@@ -568,10 +535,11 @@ int
 ieee80211_mira_next_intra_rate(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	int i, next;
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 
-	rs = ieee80211_mira_get_rateset(ni->ni_txmcs);
+	rs = ieee80211_mira_get_rateset(ni->ni_txmcs, sgi);
 	if (ni->ni_txmcs == rs->max_mcs)
 		return rs->max_mcs;
 
@@ -588,35 +556,44 @@ ieee80211_mira_next_intra_rate(struct ieee80211_mira_node *mn,
 	return next;
 }
 
-const struct ieee80211_mira_rateset *
-ieee80211_mira_next_rateset(struct ieee80211_mira_node *mn, int mcs)
+const struct ieee80211_ht_rateset *
+ieee80211_mira_next_rateset(struct ieee80211_mira_node *mn,
+    struct ieee80211_node *ni)
 {
-	const struct ieee80211_mira_rateset *rs, *rsnext;
+	const struct ieee80211_ht_rateset *rs, *rsnext;
 	int next;
+	int mcs = ni->ni_txmcs;
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 
-	rs = ieee80211_mira_get_rateset(mcs);
+	rs = ieee80211_mira_get_rateset(mcs, sgi);
 	if (mn->probing & IEEE80211_MIRA_PROBING_UP) {
 		if (rs->max_mcs == 7)	/* MCS 0-7 */
-			next = IEEE80211_MIRA_RATESET_MIMO2;
+			next = sgi ? IEEE80211_HT_RATESET_MIMO2_SGI :
+			    IEEE80211_HT_RATESET_MIMO2;
 		else if (rs->max_mcs == 15)	/* MCS 8-15 */
-			next = IEEE80211_MIRA_RATESET_MIMO3;
+			next = sgi ? IEEE80211_HT_RATESET_MIMO3_SGI :
+			    IEEE80211_HT_RATESET_MIMO3;
 		else if (rs->max_mcs == 23)	/* MCS 16-23 */
-			next = IEEE80211_MIRA_RATESET_MIMO4;
+			next = sgi ? IEEE80211_HT_RATESET_MIMO4_SGI :
+			    IEEE80211_HT_RATESET_MIMO4;
 		else				/* MCS 24-31 */
 			return NULL;
 	} else if (mn->probing & IEEE80211_MIRA_PROBING_DOWN) {
 		if (rs->min_mcs == 24)	/* MCS 24-31 */
-			next = IEEE80211_MIRA_RATESET_MIMO3;
+			next = sgi ? IEEE80211_HT_RATESET_MIMO3_SGI :
+			    IEEE80211_HT_RATESET_MIMO3;
 		else if (rs->min_mcs == 16)	/* MCS 16-23 */
-			next = IEEE80211_MIRA_RATESET_MIMO2;
+			next = sgi ? IEEE80211_HT_RATESET_MIMO2_SGI :
+			    IEEE80211_HT_RATESET_MIMO2;
 		else if (rs->min_mcs == 8)	/* MCS 8-15 */
-			next = IEEE80211_MIRA_RATESET_SISO;
+			next = sgi ? IEEE80211_HT_RATESET_SISO_SGI :
+			    IEEE80211_HT_RATESET_SISO;
 		else				/* MCS 0-7 */
 			return NULL;
 	} else
 		panic("%s: invalid probing mode %d", __func__, mn->probing);
 
-	rsnext = &ieee80211_mira_ratesets[next];
+	rsnext = &ieee80211_std_ratesets_11n[next];
 	if ((rsnext->mcs_mask & mn->valid_rates) == 0)
 		return NULL;
 
@@ -625,7 +602,7 @@ ieee80211_mira_next_rateset(struct ieee80211_mira_node *mn, int mcs)
 
 int
 ieee80211_mira_best_mcs_in_rateset(struct ieee80211_mira_node *mn,
-    const struct ieee80211_mira_rateset *rs)
+    const struct ieee80211_ht_rateset *rs)
 {
 	uint64_t gmax = 0;
 	int i, best_mcs = rs->min_mcs;
@@ -646,14 +623,15 @@ ieee80211_mira_best_mcs_in_rateset(struct ieee80211_mira_node *mn,
     
 void
 ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *mn,
-    struct ieee80211_node *ni, const struct ieee80211_mira_rateset *rsnext)
+    struct ieee80211_node *ni, const struct ieee80211_ht_rateset *rsnext)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	struct ieee80211_mira_goodput_stats *g;
 	int best_mcs, i;
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 
 	/* Find most recently measured best MCS from the current rateset. */
-	rs = ieee80211_mira_get_rateset(ni->ni_txmcs);
+	rs = ieee80211_mira_get_rateset(ni->ni_txmcs, sgi);
 	best_mcs = ieee80211_mira_best_mcs_in_rateset(mn, rs);
 
 	/* Switch to the next rateset. */
@@ -689,7 +667,7 @@ ieee80211_mira_probe_next_rateset(struct ieee80211_mira_node *mn,
 	} else if (mn->probing & IEEE80211_MIRA_PROBING_DOWN) {
 #ifdef MIRA_AGGRESSIVE_DOWNWARDS_PROBING
 		mn->candidate_rates |= ieee80211_mira_mcs_below(mn,
-		    ni->ni_txmcs);
+		    ni->ni_txmcs, sgi);
 #else
 		mn->candidate_rates |=
 		    (1 << ieee80211_mira_next_lower_intra_rate(mn, ni));
@@ -754,10 +732,11 @@ int
 ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
 	int next_mcs, best_mcs, probed_rates;
 	uint64_t next_rate;
+	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 
 	if (!ieee80211_mira_probe_valid(mn, ni))
 		return 0;
@@ -765,7 +744,7 @@ ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
 	probed_rates = (mn->probed_rates | (1 << ni->ni_txmcs));
 
 	/* Check if the min/max MCS in this rateset has been probed. */
-	rs = ieee80211_mira_get_rateset(ni->ni_txmcs);
+	rs = ieee80211_mira_get_rateset(ni->ni_txmcs, sgi);
 	if (mn->probing & IEEE80211_MIRA_PROBING_DOWN) {
 		if (ni->ni_txmcs == rs->min_mcs ||
 		    probed_rates & (1 << rs->min_mcs)) {
@@ -789,7 +768,7 @@ ieee80211_mira_intra_mode_ra_finished(struct ieee80211_mira_node *mn,
 		ieee80211_mira_trigger_next_rateset(mn, ni);
 		return 1;
 	}
-	next_rate = ieee80211_mira_get_txrate(next_mcs);
+	next_rate = ieee80211_mira_get_txrate(next_mcs, sgi);
 	if (g->measured >= next_rate + IEEE80211_MIRA_RATE_THRESHOLD) {
 		ieee80211_mira_trigger_next_rateset(mn, ni);
 		return 1;
@@ -823,9 +802,9 @@ void
 ieee80211_mira_trigger_next_rateset(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
 {
-	const struct ieee80211_mira_rateset *rsnext;
+	const struct ieee80211_ht_rateset *rsnext;
 
-	rsnext = ieee80211_mira_next_rateset(mn, ni->ni_txmcs);
+	rsnext = ieee80211_mira_next_rateset(mn, ni);
 	if (rsnext) {
 		ieee80211_mira_probe_next_rateset(mn, ni, rsnext);
 		mn->probing |= IEEE80211_MIRA_PROBING_INTER;
@@ -860,7 +839,7 @@ ieee80211_mira_best_rate(struct ieee80211_mira_node *mn,
 #ifdef MIRA_DEBUG
 	if (mn->best_mcs != best) {
 		DPRINTF(("MCS %d is best; MCS{Mbps|probe interval}:", best));
-		for (i = 0; i < IEEE80211_MIRA_NUM_MCS; i++) {
+		for (i = 0; i < IEEE80211_HT_RATESET_NUM_MCS; i++) {
 			struct ieee80211_mira_goodput_stats *g = &mn->g[i];
 			if ((mn->valid_rates & (1 << i)) == 0)
 				continue;
@@ -1013,8 +992,7 @@ ieee80211_mira_valid_rates(struct ieee80211com *ic, struct ieee80211_node *ni)
 	uint32_t valid_mcs = 0;
 	int i;
 
-	for (i = 0;
-	    i < MIN(IEEE80211_MIRA_NUM_MCS, IEEE80211_HT_NUM_MCS); i++) {
+	for (i = 0; i < IEEE80211_HT_RATESET_NUM_MCS; i++) {
 		if (!isset(ni->ni_rxmcs, i))
 			continue;
 		if (!ieee80211_mira_valid_tx_mcs(ic, i))
@@ -1026,13 +1004,13 @@ ieee80211_mira_valid_rates(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 uint32_t
-ieee80211_mira_mcs_below(struct ieee80211_mira_node *mn, int mcs)
+ieee80211_mira_mcs_below(struct ieee80211_mira_node *mn, int mcs, int sgi)
 {
-	const struct ieee80211_mira_rateset *rs;
+	const struct ieee80211_ht_rateset *rs;
 	uint32_t mcs_mask;
 	int i;
 
-	rs = ieee80211_mira_get_rateset(mcs);
+	rs = ieee80211_mira_get_rateset(mcs, sgi);
 	mcs_mask = (1 << rs->min_mcs);
 	for (i = rs->min_mcs + 1; i < mcs; i++) {
 		if ((mn->valid_rates & (1 << i)) == 0)
@@ -1048,7 +1026,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
     struct ieee80211_node *ni)
 {
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
-	int s;
+	int s, sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 
 	s = splnet();
 
@@ -1112,7 +1090,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 #ifdef MIRA_AGGRESSIVE_DOWNWARDS_PROBING
 		/* Allow for probing all the way down within this rateset. */
 		mn->candidate_rates = ieee80211_mira_mcs_below(mn,
-		    ni->ni_txmcs);
+		    ni->ni_txmcs, sgi);
 #else
 		/* Probe the lower candidate rate to see if it's any better. */
 		mn->candidate_rates =
