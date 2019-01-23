@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.3 2019/01/23 23:29:56 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.4 2019/01/23 23:38:44 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -86,58 +86,58 @@ struct child {
 
 static struct child stateinfo[][TLS13_NUM_MESSAGE_TYPES] = {
 	[CLIENT_HELLO] = {
-		{ SERVER_HELLO, NEGOTIATED, 0, 0 },
+		{SERVER_HELLO, NEGOTIATED, 0, 0},
 	},
 	[SERVER_HELLO] = {
-		{ SERVER_ENCRYPTED_EXTENSIONS, DEFAULT, 0, 0 },
-		{ CLIENT_HELLO_RETRY, WITH_HRR, 0, 0 },
+		{SERVER_ENCRYPTED_EXTENSIONS, DEFAULT, 0, 0},
+		{CLIENT_HELLO_RETRY, WITH_HRR, 0, 0},
 	},
 	[CLIENT_HELLO_RETRY] = {
-		{ SERVER_ENCRYPTED_EXTENSIONS, DEFAULT, 0, 0},
+		{SERVER_ENCRYPTED_EXTENSIONS, DEFAULT, 0, 0},
 	},
 	[SERVER_ENCRYPTED_EXTENSIONS] = {
-		{ SERVER_CERTIFICATE_REQUEST, DEFAULT, 0, 0},
-		{ SERVER_CERTIFICATE, WITHOUT_CR, 0, 0},
-		{ SERVER_FINISHED, WITH_PSK, 0, 0},
+		{SERVER_CERTIFICATE_REQUEST, DEFAULT, 0, 0},
+		{SERVER_CERTIFICATE, WITHOUT_CR, 0, 0},
+		{SERVER_FINISHED, WITH_PSK, 0, 0},
 	},
 	[SERVER_CERTIFICATE_REQUEST] = {
-		{ SERVER_CERTIFICATE, DEFAULT, 0, 0},
+		{SERVER_CERTIFICATE, DEFAULT, 0, 0},
 	},
 	[SERVER_CERTIFICATE] = {
-		{ SERVER_CERTIFICATE_VERIFY, DEFAULT, 0, 0},
+		{SERVER_CERTIFICATE_VERIFY, DEFAULT, 0, 0},
 	},
 	[SERVER_CERTIFICATE_VERIFY] = {
-		{ SERVER_FINISHED, DEFAULT, 0, 0},
+		{SERVER_FINISHED, DEFAULT, 0, 0},
 	},
 	[SERVER_FINISHED] = {
-		{ CLIENT_FINISHED, DEFAULT, WITHOUT_CR | WITH_PSK, 0 },
-		{ CLIENT_CERTIFICATE, DEFAULT, 0, WITHOUT_CR | WITH_PSK },
-		/* { CLIENT_END_OF_EARLY_DATA, WITH_0RTT, 0, 0}, */
+		{CLIENT_FINISHED, DEFAULT, WITHOUT_CR | WITH_PSK, 0},
+		{CLIENT_CERTIFICATE, DEFAULT, 0, WITHOUT_CR | WITH_PSK},
+		/* {CLIENT_END_OF_EARLY_DATA, WITH_0RTT, 0, 0}, */
 	},
 	[CLIENT_CERTIFICATE] = {
-		{ CLIENT_FINISHED, DEFAULT, 0, 0},
-		{ CLIENT_CERTIFICATE_VERIFY, WITH_CCV, 0, 0},
+		{CLIENT_FINISHED, DEFAULT, 0, 0},
+		{CLIENT_CERTIFICATE_VERIFY, WITH_CCV, 0, 0},
 	},
 	[CLIENT_CERTIFICATE_VERIFY] = {
-		{ CLIENT_FINISHED, DEFAULT, 0, 0},
+		{CLIENT_FINISHED, DEFAULT, 0, 0},
 	},
 	[CLIENT_FINISHED] = {
-		{ APPLICATION_DATA, DEFAULT, 0, 0},
+		{APPLICATION_DATA, DEFAULT, 0, 0},
 	},
 	[APPLICATION_DATA] = {
-		{ 0, DEFAULT, 0, 0},
+		{0, DEFAULT, 0, 0},
 	},
 };
 
-size_t count_handshakes(void);
-const char *flag2str(uint8_t flag);
-void print_flags(uint8_t flags);
-const char *mt2str(enum tls13_message_type mt);
 void build_table(enum tls13_message_type
     table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES], struct child current,
     struct child end, struct child path[], uint8_t flags, unsigned int depth);
+size_t count_handshakes(void);
+const char *flag2str(uint8_t flag);
+const char *mt2str(enum tls13_message_type mt);
 void print_entry(enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES],
     uint8_t flags);
+void print_flags(uint8_t flags);
 __dead void usage(void);
 int verify_table(enum tls13_message_type
     table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES], int print);
@@ -397,7 +397,7 @@ main(int argc, char *argv[])
 	struct child	end = {
 		APPLICATION_DATA, DEFAULT, 0, 0,
 	};
-	struct child	path[TLS13_NUM_MESSAGE_TYPES] = {{ 0 }};
+	struct child	path[TLS13_NUM_MESSAGE_TYPES] = {{0}};
 	uint8_t		flags = 0;
 	unsigned int	depth = 0;
 	int		ch, print = 0;
