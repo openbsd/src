@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.33 2019/01/23 18:24:40 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.34 2019/01/23 18:39:28 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -536,8 +536,27 @@ tlsext_sigalgs_client_build(SSL *s, CBB *cbb)
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
 
-	if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs, tls12_sigalgs_len))
+	switch (TLS1_get_client_version(s)) {
+	case TLS1_2_VERSION:
+		if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs, tls12_sigalgs_len))
+			return 0;
+		break;
+	case TLS1_3_VERSION:
+		if  (S3I(s)->hs_tls13.min_version < TLS1_3_VERSION) {
+			if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs,
+			    tls12_sigalgs_len))
+			    return 0;
+		}
+		else {
+			if (!ssl_sigalgs_build(&sigalgs, tls13_sigalgs,
+			    tls13_sigalgs_len))
+			    return 0;
+		}
+		break;
+	default:
+		/* Should not happen */
 		return 0;
+	}
 
 	if (!CBB_flush(cbb))
 		return 0;
@@ -553,7 +572,18 @@ tlsext_sigalgs_server_parse(SSL *s, CBS *cbs, int *alert)
 	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
 		return 0;
 
-	return tls1_process_sigalgs(s, &sigalgs);
+	switch (s->version) {
+	case TLS1_3_VERSION:
+		return tls1_process_sigalgs(s, &sigalgs, tls13_sigalgs,
+		    tls13_sigalgs_len);
+	case TLS1_2_VERSION:
+		return tls1_process_sigalgs(s, &sigalgs, tls12_sigalgs,
+		    tls12_sigalgs_len);
+	default:
+		break;
+	}
+
+	return 0;
 }
 
 int

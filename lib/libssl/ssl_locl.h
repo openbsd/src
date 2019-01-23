@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.230 2019/01/23 18:24:40 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.231 2019/01/23 18:39:28 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1313,7 +1313,7 @@ int tls1_process_ticket(SSL *s, const unsigned char *session_id,
     int session_id_len, CBS *ext_block, SSL_SESSION **ret);
 
 long ssl_get_algorithm2(SSL *s);
-int tls1_process_sigalgs(SSL *s, CBS *cbs);
+int tls1_process_sigalgs(SSL *s, CBS *cbs, uint16_t *, size_t);
 
 int tls1_check_ec_server_key(SSL *s);
 

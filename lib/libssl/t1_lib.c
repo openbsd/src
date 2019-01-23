@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.152 2019/01/23 18:24:40 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.153 2019/01/23 18:39:28 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1002,11 +1002,12 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 
 /* Set preferred digest for each key type */
 int
-tls1_process_sigalgs(SSL *s, CBS *cbs)
+tls1_process_sigalgs(SSL *s, CBS *cbs, uint16_t *sigalgs, size_t sigalgs_len)
 {
 	CERT *c = s->cert;
 
 	/* Extension ignored for inappropriate versions */
+	/* XXX get rid of this? */
 	if (!SSL_USE_SIGALGS(s))
 		return 1;
 
@@ -1023,9 +1024,8 @@ tls1_process_sigalgs(SSL *s, CBS *cbs)
 		if (!CBS_get_u16(cbs, &sig_alg))
 			return 0;
 
-		if ((sigalg = ssl_sigalg(sig_alg, tls12_sigalgs,
-		    tls12_sigalgs_len)) != NULL &&
-		    c->pkeys[sigalg->pkey_idx].sigalg == NULL) {
+		if ((sigalg = ssl_sigalg(sig_alg, sigalgs, sigalgs_len)) !=
+		    NULL && c->pkeys[sigalg->pkey_idx].sigalg == NULL) {
 			c->pkeys[sigalg->pkey_idx].sigalg = sigalg;
 			if (sigalg->pkey_idx == SSL_PKEY_RSA_SIGN)
 				c->pkeys[SSL_PKEY_RSA_ENC].sigalg = sigalg;
