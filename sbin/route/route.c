@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.228 2019/01/22 09:25:29 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.229 2019/01/23 23:13:48 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1170,7 +1170,8 @@ char routeflags[] =
 "\030CONNECTED\031BFD";
 char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6STATICARP\7RUNNING\010NOARP\011PPROMISC"
-"\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
+"\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST"
+"\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII";
 char addrnames[] =
 "\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011SRC\012SRCMASK\013LABEL\014BFD\015DNS\016STATIC\017SEARCH";
 
@@ -1224,7 +1225,8 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		    get_linkstate(ifm->ifm_data.ifi_type,
 		        ifm->ifm_data.ifi_link_state),
 		    ifm->ifm_data.ifi_mtu);
-		bprintf(stdout, ifm->ifm_flags, ifnetflags);
+		bprintf(stdout, ifm->ifm_flags | (ifm->ifm_xflags << 16),
+		    ifnetflags);
 		pmsg_addrs((char *)ifm + ifm->ifm_hdrlen, ifm->ifm_addrs);
 		break;
 	case RTM_80211INFO:
