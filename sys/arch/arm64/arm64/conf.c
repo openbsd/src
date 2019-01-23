@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2017/01/23 12:34:06 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 2019/01/23 09:57:36 phessler Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,7 @@ bdev_decl(wd);
 #include "uk.h"
 #include "vnd.h"
 #include "rd.h"
+#include "apm.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -239,7 +240,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 80: gpr? XXX */
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
-	cdev_notdef(),			/* 83 */
+	cdev_acpiapm_init(NAPM,acpiapm),	/* 83: apm */
 	cdev_notdef(),			/* 84 */
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */

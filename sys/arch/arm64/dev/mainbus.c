@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.10 2018/08/08 20:57:53 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.11 2019/01/23 09:57:36 phessler Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -38,6 +38,7 @@ void mainbus_attach_cpus(struct device *, cfmatch_t);
 int mainbus_match_primary(struct device *, void *, void *);
 int mainbus_match_secondary(struct device *, void *, void *);
 void mainbus_attach_efi(struct device *);
+void mainbus_attach_apm(struct device *);
 void mainbus_attach_framebuffer(struct device *);
 
 struct mainbus_softc {
@@ -129,6 +130,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		OF_getpropintarray(OF_peer(0), "ranges", sc->sc_ranges,
 		    sc->sc_rangeslen);
 	}
+
+	mainbus_attach_apm(self);
 
 	/* Scan the whole tree. */
 	sc->sc_early = 1;
@@ -307,6 +310,18 @@ mainbus_attach_efi(struct device *self)
 	fa.fa_iot = sc->sc_iot;
 	fa.fa_dmat = sc->sc_dmat;
 	config_found(self, &fa, NULL);
+}
+
+void
+mainbus_attach_apm(struct device *self)
+{
+	struct fdt_attach_args fa;
+
+	memset(&fa, 0, sizeof(fa));
+	fa.fa_name = "apm";
+
+	config_found(self, &fa, NULL);
+
 }
 
 void

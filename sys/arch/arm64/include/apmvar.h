@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.2 2019/01/23 09:57:36 phessler Exp $	*/
 
 /*
  *  Copyright (c) 2001 Alexander Guy
@@ -67,6 +67,7 @@
 #define		APM_USER_SUSPEND_REQ	0x000A
 #define		APM_SYS_STANDBY_RESUME	0x000B
 #define		APM_CAPABILITY_CHANGE	0x000C	/* apm v1.2 */
+#define		APM_USER_HIBERNATE_REQ	0x000D
 #define		APM_EVENT_MASK		0xffff
 
 #define	APM_EVENT_COMPOSE(t,i)	((((i) & 0x7fff) << 16)|((t) & APM_EVENT_MASK))
@@ -117,5 +118,10 @@ struct apm_ctl {
 #define	APM_IOC_STANDBY_REQ	_IO('A', 7)	/* request standby */
 #define	APM_IOC_SUSPEND_REQ	_IO('A', 8)	/* request suspend */
 #define	APM_IOC_HIBERNATE	_IO('A', 9)	/* put system into hibernate */
+
+#ifdef _KERNEL
+void apm_setinfohook(int (*)(struct apm_power_info *));
+int apm_record_event(u_int, const char *, const char *);
+#endif
 
 #endif /* _MACHINE_APMVAR_H_ */
