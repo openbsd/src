@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.9 2019/01/20 10:02:38 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.10 2019/01/23 19:40:20 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -210,7 +210,7 @@ dump(const unsigned long *cover, int mode)
 		stride = 4;
 
 	for (i = 0; i < cover[0]; i++)
-		printf("%p\n", (void *)cover[i * stride + 1]);
+		printf("%p\n", (void *)cover[i * stride + stride]);
 }
 
 static int
