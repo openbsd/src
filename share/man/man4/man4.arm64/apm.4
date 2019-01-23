@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.1 2019/01/23 09:59:54 phessler Exp $
+.\"	$OpenBSD: apm.4,v 1.2 2019/01/23 22:33:43 jsg Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -185,17 +185,6 @@ Power change event messages are suppressed.
 Power change event messages are suppressed unless the estimated
 battery life percentage changes.
 .El
-.Pp
-However, in no case will power status messages be displayed until the
-battery life goes below the percentage in the
-.Xr sysctl 8
-state variable
-.Dv machdep.apmwarn .
-Setting
-.Dv machdep.apmwarn
-to zero disables all warnings regardless of the
-.Dv APM_IOC_PRN_CTL
-setting.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/apmctlXXX"
@@ -213,6 +202,4 @@ An attempt to open the file when in use will fail, returning
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr intro 4 ,
-.Xr sysctl.conf 5 ,
-.Xr halt 8 ,
-.Xr sysctl 8
+.Xr halt 8
