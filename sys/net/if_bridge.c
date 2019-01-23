@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.317 2019/01/23 15:26:18 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.318 2019/01/23 15:27:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1061,15 +1061,15 @@ bridgeintr_frame(struct bridge_softc *sc, struct ifnet *src_if, struct mbuf *m)
  * Return 1 if `ena' belongs to `bif', 0 otherwise.
  */
 int
-bridge_ourether(struct bridge_iflist *bif, uint8_t *ena)
+bridge_ourether(struct ifnet *ifp, uint8_t *ena)
 {
-	struct arpcom *ac = (struct arpcom *)bif->ifp;
+	struct arpcom *ac = (struct arpcom *)ifp;
 
 	if (memcmp(ac->ac_enaddr, ena, ETHER_ADDR_LEN) == 0)
 		return (1);
 
 #if NCARP > 0
-	if (carp_ourether(bif->ifp, ena))
+	if (carp_ourether(ifp, ena))
 		return (1);
 #endif
 
@@ -1189,7 +1189,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	SLIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		if (bif->ifp->if_type != IFT_ETHER)
 			continue;
-		if (bridge_ourether(bif, eh->ether_dhost)) {
+		if (bridge_ourether(bif->ifp, eh->ether_dhost)) {
 			if (bif0->bif_flags & IFBIF_LEARNING)
 				bridge_rtupdate(sc,
 				    (struct ether_addr *)&eh->ether_shost,
@@ -1207,7 +1207,7 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 			bridge_ifinput(bif->ifp, m);
 			return;
 		}
-		if (bridge_ourether(bif, eh->ether_shost)) {
+		if (bridge_ourether(bif->ifp, eh->ether_shost)) {
 			m_freem(m);
 			return;
 		}
