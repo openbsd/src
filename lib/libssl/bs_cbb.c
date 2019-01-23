@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.19 2018/08/16 18:39:37 jsing Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.20 2019/01/23 22:20:40 beck Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -14,7 +14,6 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -214,7 +213,8 @@ CBB_flush(CBB *cbb)
 		uint8_t initial_length_byte;
 
 		/* We already wrote 1 byte for the length. */
-		assert (cbb->pending_len_len == 1);
+		if (cbb->pending_len_len != 1)
+			return 0;
 
 		/* Check for long form */
 		if (len > 0xfffffffe)
