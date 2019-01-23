@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2019/01/19 01:07:00 tb Exp $
+# $OpenBSD: Makefile,v 1.32 2019/01/23 00:50:39 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -468,5 +468,4 @@ beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o root -g ${SHAREGRP} \
 	    -m ${SHAREMODE} ${.OBJDIR}/${PC_FILES} ${DESTDIR}/usr/lib/pkgconfig/
 
-.include <bsd.prog.mk>
 .include <bsd.subdir.mk>
