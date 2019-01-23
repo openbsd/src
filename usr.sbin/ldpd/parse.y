@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.68 2019/01/23 02:02:04 dlg Exp $ */
+/*	$OpenBSD: parse.y,v 1.69 2019/01/23 03:35:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -80,6 +80,7 @@ typedef struct {
 	union {
 		int64_t		 number;
 		char		*string;
+		struct in_addr	 routerid;
 		struct ldp_auth	*auth;
 	} v;
 	int lineno;
@@ -156,6 +157,7 @@ static struct config_defaults	*defs;
 %token	<v.number>	NUMBER
 %type	<v.number>	yesno ldp_af l2vpn_type pw_type
 %type	<v.string>	string
+%type	<v.routerid>	routerid
 %type	<v.auth>	auth tcpmd5 optnbrprefix
 
 %%
@@ -200,6 +202,23 @@ string		: string STRING	{
 		| STRING
 		;
 
+routerid	: STRING {
+			if (!inet_aton($1, &$$)) {
+				yyerror("%s: error parsing router id", $1);
+				free($1);
+				YYERROR;
+			}
+			if (bad_addr_v4($$)) {
+				yyerror("%s: invalid router id", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+
+			break;
+		}
+		;
+
 yesno		: YES	{ $$ = 1; }
 		| NO	{ $$ = 0; }
 		;
@@ -235,17 +254,8 @@ varset		: STRING '=' string {
 		}
 		;
 
-conf_main	: ROUTERID STRING {
-			if (!inet_aton($2, &conf->rtr_id)) {
-				yyerror("error parsing router-id");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			if (bad_addr_v4(conf->rtr_id)) {
-				yyerror("invalid router-id");
-				YYERROR;
-			}
+conf_main	: ROUTERID routerid {
+			conf->rtr_id = $2;
 		}
 		| FIBUPDATE yesno {
 			if ($2 == 0)
@@ -565,21 +575,8 @@ pwopts		: PWID NUMBER {
 
 			pw->pwid = $2;
 		}
-		| NEIGHBORID STRING {
-			struct in_addr	 addr;
-
-			if (!inet_aton($2, &addr)) {
-				yyerror("error parsing neighbor-id");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			if (bad_addr_v4(addr)) {
-				yyerror("invalid neighbor-id");
-				YYERROR;
-			}
-
-			pw->lsr_id = addr;
+		| NEIGHBORID routerid {
+			pw->lsr_id = $2;
 		}
 		| NEIGHBORADDR STRING {
 			int		 family;
@@ -841,21 +838,8 @@ tneighboropts_l	: tneighboropts_l tnbr_defaults nl
 		| tnbr_defaults optnl
 		;
 
-neighbor	: NEIGHBOR STRING	{
-			struct in_addr	 addr;
-
-			if (inet_aton($2, &addr) == 0) {
-				yyerror("error parsing neighbor-id");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			if (bad_addr_v4(addr)) {
-				yyerror("invalid neighbor-id");
-				YYERROR;
-			}
-
-			nbrp = conf_get_nbrp(addr);
+neighbor	: NEIGHBOR routerid	{
+			nbrp = conf_get_nbrp($2);
 			if (nbrp == NULL)
 				YYERROR;
 		} neighbor_block {
