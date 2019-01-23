@@ -1,4 +1,4 @@
-/*	$OpenBSD: valid_handshakes_terminate.c,v 1.1 2019/01/20 06:47:38 tb Exp $	*/
+/*	$OpenBSD: valid_handshakes_terminate.c,v 1.2 2019/01/23 23:29:56 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -27,7 +27,7 @@ main(int argc, char *argv[])
 	int	terminates;
 	int	fail = 0;
 
-	for (i = 1; i < NUM_HANDSHAKES; i++) {
+	for (i = 1; i < handshake_count; i++) {
 		enum tls13_message_type mt = handshakes[i][0];
 
 		if (mt == INVALID)

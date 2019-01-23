@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.21 2019/01/23 11:11:52 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.22 2019/01/23 23:29:56 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -246,14 +246,14 @@ enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 	},
 };
 
-#define NUM_HANDSHAKES (sizeof(handshakes) / sizeof(handshakes[0]))
+const size_t handshake_count = sizeof(handshakes) / sizeof(handshakes[0]);
 
 enum tls13_message_type
 tls13_handshake_active_state(struct tls13_ctx *ctx)
 {
 	struct tls13_handshake_stage hs = ctx->handshake_stage;
 
-	if (hs.hs_type >= NUM_HANDSHAKES)
+	if (hs.hs_type >= handshake_count)
 		return INVALID;
 	if (hs.message_number >= TLS13_NUM_MESSAGE_TYPES)
 		return INVALID;

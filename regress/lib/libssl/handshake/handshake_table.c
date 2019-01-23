@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.2 2019/01/23 08:42:05 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.3 2019/01/23 23:29:56 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -75,8 +75,6 @@
  *
  */
 
-extern enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES];
-
 struct child {
 	enum tls13_message_type	mt;
 	uint8_t			flag;
@@ -131,6 +129,7 @@ static struct child stateinfo[][TLS13_NUM_MESSAGE_TYPES] = {
 	},
 };
 
+size_t count_handshakes(void);
 const char *flag2str(uint8_t flag);
 void print_flags(uint8_t flags);
 const char *mt2str(enum tls13_message_type mt);
@@ -152,8 +151,8 @@ flag2str(uint8_t flag)
 		errx(1, "more than one bit is set");
 
 	switch (flag) {
-	case DEFAULT:
-		ret = "";
+	case INITIAL:
+		ret = "INITIAL";
 		break;
 	case NEGOTIATED:
 		ret = "NEGOTIATED";
@@ -250,6 +249,11 @@ print_flags(uint8_t flags)
 {
 	int first = 1, i;
 
+	if (flags == 0) {
+		printf("%s", flag2str(flags));
+		return;
+	}
+
 	for (i = 0; i < 8; i++) {
 		uint8_t set = flags & (1U << i);
 
@@ -276,6 +280,22 @@ print_entry(enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES],
 		printf("\t\t%s,\n", mt2str(path[i]));
 	}
 	printf("\t},\n");
+}
+
+extern enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES];
+extern size_t handshake_count;
+
+size_t
+count_handshakes(void)
+{
+	size_t	ret = 0, i;
+
+	for (i = 0; i < handshake_count; i++) {
+		if (handshakes[i][0] != INVALID)
+			ret++;
+	}
+
+	return ret;
 }
 
 void
@@ -322,12 +342,14 @@ verify_table(enum tls13_message_type table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES],
     int print)
 {
 	int	success = 1, i;
+	size_t	num_valid, num_found = 0;
 	uint8_t	flags = 0;
 
 	do {
-		flags++;
 		if (table[flags][0] == 0)
 			continue;
+
+		num_found++;
 
 		for (i = 0; i < TLS13_NUM_MESSAGE_TYPES; i++) {
 			if (table[flags][i] != handshakes[flags][i]) {
@@ -340,7 +362,14 @@ verify_table(enum tls13_message_type table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES],
 
 		if (print)
 			print_entry(table[flags], flags);
-	} while(flags != UINT8_MAX);
+	} while(++flags != 0);
+
+	num_valid = count_handshakes();
+	if (num_valid != num_found) {
+		printf("incorrect number of handshakes: want %zu, got %zu.\n",
+		    num_valid, num_found);
+		success = 0;
+	}
 
 	return success;
 }
@@ -356,7 +385,12 @@ int
 main(int argc, char *argv[])
 {
 	static enum tls13_message_type
-	    hs_table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES];
+	    hs_table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES] = {
+		[INITIAL] = {
+			CLIENT_HELLO,
+			SERVER_HELLO,
+		},
+	};
 	struct child	start = {
 		CLIENT_HELLO, NEGOTIATED, 0, 0,
 	};
