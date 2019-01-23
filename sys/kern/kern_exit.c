@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.172 2019/01/06 12:59:45 visa Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.173 2019/01/23 22:39:47 tedu Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ exit1(struct proc *p, int rv, int flags)
  * proclist.  We use the p_hash member to linkup to deadproc.
  */
 struct mutex deadproc_mutex =
-    MUTEX_INITIALIZER_FLAGS(IPL_NONE, NULL, MTX_NOWITNESS);
+    MUTEX_INITIALIZER_FLAGS(IPL_NONE, "deadproc", MTX_NOWITNESS);
 struct proclist deadproc = LIST_HEAD_INITIALIZER(deadproc);
 
 /*

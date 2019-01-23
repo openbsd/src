@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.15 2018/06/08 15:38:15 guenther Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.16 2019/01/23 22:39:47 tedu Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -105,14 +105,14 @@ void __mtx_init(struct mutex *, int);
 
 #define MTX_LO_INITIALIZER(name, flags) \
 	{ .lo_type = &(const struct lock_type){ .lt_name = __MTX_NAME }, \
-	  .lo_name = (name) != NULL ? (name) : __MTX_NAME, \
+	  .lo_name = (name), \
 	  .lo_flags = MTX_LO_FLAGS(flags) }
 
 #define MTX_NOWITNESS	0x01
 #define MTX_DUPOK	0x02
 
 #define MUTEX_INITIALIZER(ipl) \
-	MUTEX_INITIALIZER_FLAGS(ipl, NULL, 0)
+	MUTEX_INITIALIZER_FLAGS(ipl, __MTX_NAME, 0)
 
 /*
  * Some architectures need to do magic for the ipl, so they need a macro.
