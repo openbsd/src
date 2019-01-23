@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.316 2019/01/17 16:07:42 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.317 2019/01/23 15:26:18 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -777,6 +777,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 
+	bridge_span(sc, m);
+
 	/*
 	 * If the packet is a broadcast or we don't know a better way to
 	 * get there, send to all interfaces.
@@ -787,8 +789,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		struct bridge_iflist *bif, *bif0;
 		struct mbuf *mc;
 		int used = 0;
-
-		bridge_span(sc, m);
 
 		SLIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 			dst_if = bif->ifp;
@@ -850,7 +850,6 @@ sendunicast:
 	    ((brtag = bridge_tunneltag(m)) != NULL))
 		bridge_copytag(&dst_p->brt_tunnel, brtag);
 
-	bridge_span(sc, m);
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
 		return (ENETDOWN);
