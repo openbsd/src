@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2019/01/23 04:50:24 tb Exp $
+#	$OpenBSD: Makefile,v 1.3 2019/01/23 08:31:25 tb Exp $
 
 PROGS += handshake_table
 PROGS += valid_handshakes_terminate
@@ -13,7 +13,7 @@ WARNINGS =	Yes
 CFLAGS +=	-DLIBRESSL_INTERNAL -Wundef -Werror -I$(BSDSRCDIR)/lib/libssl
 
 print:	handshake_table
-	./handshake_table -C
+	@./handshake_table -C
 
 .for p in ${PROGS}
 run-$p: $p
