@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.57 2017/12/10 09:17:24 jmc Exp $	*/
+/*	$OpenBSD: grep.c,v 1.58 2019/01/23 23:00:54 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -63,9 +63,7 @@ int	 Fflag;		/* -F: interpret pattern as list of fixed strings */
 int	 Hflag;		/* -H: always print filename header */
 int	 Lflag;		/* -L: only show names of files with no matches */
 int	 Rflag;		/* -R: recursively search directory trees */
-#ifndef NOZ
 int	 Zflag;		/* -Z: decompress input before processing */
-#endif
 int	 bflag;		/* -b: show block numbers for each match */
 int	 cflag;		/* -c: only show a count of matching lines */
 int	 hflag;		/* -h: don't print filename headers */

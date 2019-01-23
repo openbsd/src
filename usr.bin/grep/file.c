@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.13 2015/03/16 13:27:59 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.14 2019/01/23 23:00:54 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -26,7 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
 #include <err.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <zlib.h>
@@ -90,14 +93,22 @@ gzfgetln(gzFile *f, size_t *len)
 #endif
 
 file_t *
-grep_fdopen(int fd, char *mode)
+grep_fdopen(int fd)
 {
 	file_t *f;
+	struct stat sb;
 
 	if (fd == STDIN_FILENO)
 		snprintf(fname, sizeof fname, "(standard input)");
-	else
+	else if (fname[0] == '\0')
 		snprintf(fname, sizeof fname, "(fd %d)", fd);
+
+	if (fstat(fd, &sb) == -1)
+		return NULL;
+	if (S_ISDIR(sb.st_mode)) {
+		errno = EISDIR;
+		return NULL;
+	}
 
 	f = grep_malloc(sizeof *f);
 
@@ -105,53 +116,41 @@ grep_fdopen(int fd, char *mode)
 	if (Zflag) {
 		f->type = FILE_GZIP;
 		f->noseek = lseek(fd, 0L, SEEK_SET) == -1;
-		if ((f->gzf = gzdopen(fd, mode)) != NULL)
-			return f;
-	} else
-#endif
-	{
-		f->type = FILE_STDIO;
-		f->noseek = isatty(fd);
-		if ((f->f = fdopen(fd, mode)) != NULL)
+		if ((f->gzf = gzdopen(fd, "r")) != NULL)
 			return f;
 	}
+#endif
+	f->noseek = isatty(fd);
+#ifndef SMALL
+	/* try mmap first; if it fails, try stdio */
+	if (!f->noseek && (f->mmf = mmopen(fd, &sb)) != NULL) {
+		f->type = FILE_MMAP;
+		return f;
+	}
+#endif
+	f->type = FILE_STDIO;
+	if ((f->f = fdopen(fd, "r")) != NULL)
+		return f;
 
 	free(f);
 	return NULL;
 }
 
 file_t *
-grep_open(char *path, char *mode)
+grep_open(char *path)
 {
 	file_t *f;
+	int fd;
 
 	snprintf(fname, sizeof fname, "%s", path);
 
-	f = grep_malloc(sizeof *f);
-	f->noseek = 0;
+	if ((fd = open(fname, O_RDONLY)) == -1)
+		return NULL;
 
-#ifndef NOZ
-	if (Zflag) {
-		f->type = FILE_GZIP;
-		if ((f->gzf = gzopen(fname, mode)) != NULL)
-			return f;
-	} else
-#endif
-	{
-#ifndef SMALL
-		/* try mmap first; if it fails, try stdio */
-		if ((f->mmf = mmopen(fname, mode)) != NULL) {
-			f->type = FILE_MMAP;
-			return f;
-		}
-#endif
-		f->type = FILE_STDIO;
-		if ((f->f = fopen(path, mode)) != NULL)
-			return f;
-	}
-
-	free(f);
-	return NULL;
+	f = grep_fdopen(fd);
+	if (f == NULL)
+		close(fd);
+	return f;
 }
 
 int

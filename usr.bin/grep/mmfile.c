@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.17 2015/02/06 23:21:59 millert Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.18 2019/01/23 23:00:54 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -41,35 +41,23 @@
 #define MAX_MAP_LEN 1048576
 
 mmf_t *
-mmopen(char *fn, char *mode)
+mmopen(int fd, struct stat *st)
 {
 	mmf_t *mmf;
-	struct stat st;
-
-	if (*mode != 'r')
-		return NULL;
 
 	mmf = grep_malloc(sizeof *mmf);
-	if ((mmf->fd = open(fn, O_RDONLY)) == -1)
-		goto ouch1;
-	if (fstat(mmf->fd, &st) == -1)
-		goto ouch2;
-	if (st.st_size > SIZE_MAX) /* too big to mmap */
-		goto ouch2;
-	if (!S_ISREG(st.st_mode)) /* only mmap regular files */
-		goto ouch2;
-	mmf->len = (size_t)st.st_size;
+	if (st->st_size > SIZE_MAX) /* too big to mmap */
+		goto ouch;
+	mmf->len = (size_t)st->st_size;
 	mmf->base = mmap(NULL, mmf->len, PROT_READ, MAP_PRIVATE, mmf->fd, (off_t)0);
 	if (mmf->base == MAP_FAILED)
-		goto ouch2;
+		goto ouch;
 	mmf->ptr = mmf->base;
 	mmf->end = mmf->base + mmf->len;
 	madvise(mmf->base, mmf->len, MADV_SEQUENTIAL);
 	return mmf;
 
-ouch2:
-	close(mmf->fd);
-ouch1:
+ouch:
 	free(mmf);
 	return NULL;
 }
