@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.62 2017/03/03 23:36:06 renato Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.63 2019/01/23 02:02:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -60,6 +60,7 @@ static void		 merge_nbrps(struct ldpd_conf *, struct ldpd_conf *);
 static void		 merge_l2vpns(struct ldpd_conf *, struct ldpd_conf *);
 static void		 merge_l2vpn(struct ldpd_conf *, struct l2vpn *,
 			    struct l2vpn *);
+static void		 merge_auths(struct ldpd_conf *, struct ldpd_conf *);
 
 struct ldpd_global	 global;
 struct ldpd_conf	*ldpd_conf;
@@ -681,10 +682,17 @@ main_imsg_send_config(struct ldpd_conf *xconf)
 	struct l2vpn		*l2vpn;
 	struct l2vpn_if		*lif;
 	struct l2vpn_pw		*pw;
+	struct ldp_auth		*auth;
 
 	if (main_imsg_compose_both(IMSG_RECONF_CONF, xconf,
 	    sizeof(*xconf)) == -1)
 		return (-1);
+
+	LIST_FOREACH(auth, &xconf->auth_list, entry) {
+		if (main_imsg_compose_both(IMSG_RECONF_CONF_AUTH,
+		    auth, sizeof(*auth)) == -1)
+			return (-1);
+	}
 
 	LIST_FOREACH(iface, &xconf->iface_list, entry) {
 		if (main_imsg_compose_both(IMSG_RECONF_IFACE, iface,
@@ -747,6 +755,7 @@ void
 merge_config(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 {
 	merge_global(conf, xconf);
+	merge_auths(conf, xconf);
 	merge_af(AF_INET, &conf->ipv4, &xconf->ipv4);
 	merge_af(AF_INET6, &conf->ipv6, &xconf->ipv6);
 	merge_ifaces(conf, xconf);
@@ -971,7 +980,7 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 				nbr = nbr_find_ldpid(xn->lsr_id.s_addr);
 				if (nbr) {
 					session_shutdown(nbr, S_SHUTDOWN, 0, 0);
-					if (pfkey_establish(nbr, xn) == -1)
+					if (pfkey_establish(conf, nbr) == -1)
 						fatalx("pfkey setup failed");
 					if (nbr_session_active_role(nbr))
 						nbr_establish_connection(nbr);
@@ -984,9 +993,7 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		if (nbrp->flags != xn->flags ||
 		    nbrp->keepalive != xn->keepalive ||
 		    nbrp->gtsm_enabled != xn->gtsm_enabled ||
-		    nbrp->gtsm_hops != xn->gtsm_hops ||
-		    nbrp->auth.method != xn->auth.method ||
-		    strcmp(nbrp->auth.md5key, xn->auth.md5key) != 0)
+		    nbrp->gtsm_hops != xn->gtsm_hops)
 			nbrp_changed = 1;
 		else
 			nbrp_changed = 0;
@@ -994,10 +1001,6 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 		nbrp->keepalive = xn->keepalive;
 		nbrp->gtsm_enabled = xn->gtsm_enabled;
 		nbrp->gtsm_hops = xn->gtsm_hops;
-		nbrp->auth.method = xn->auth.method;
-		strlcpy(nbrp->auth.md5key, xn->auth.md5key,
-		    sizeof(nbrp->auth.md5key));
-		nbrp->auth.md5key_len = xn->auth.md5key_len;
 		nbrp->flags = xn->flags;
 
 		if (ldpd_process == PROC_LDP_ENGINE) {
@@ -1005,7 +1008,7 @@ merge_nbrps(struct ldpd_conf *conf, struct ldpd_conf *xconf)
 			if (nbr && nbrp_changed) {
 				session_shutdown(nbr, S_SHUTDOWN, 0, 0);
 				pfkey_remove(nbr);
-				if (pfkey_establish(nbr, nbrp) == -1)
+				if (pfkey_establish(conf, nbr) == -1)
 					fatalx("pfkey setup failed");
 				if (nbr_session_active_role(nbr))
 					nbr_establish_connection(nbr);
@@ -1205,6 +1208,62 @@ merge_l2vpn(struct ldpd_conf *xconf, struct l2vpn *l2vpn, struct l2vpn *xl)
 	l2vpn->br_ifindex = xl->br_ifindex;
 }
 
+static struct ldp_auth *
+auth_find(struct ldpd_conf *conf, const struct ldp_auth *needle)
+{
+	struct ldp_auth *auth;
+
+	LIST_FOREACH(auth, &conf->auth_list, entry) {
+		in_addr_t mask;
+		if (needle->md5key_len != auth->md5key_len)
+			continue;
+		if (needle->idlen != auth->idlen)
+			continue;
+
+		if (memcmp(needle->md5key, auth->md5key,
+		    needle->md5key_len) != 0)
+			continue;
+
+		mask = prefixlen2mask(auth->idlen);
+		if ((needle->id.s_addr & mask) != (auth->id.s_addr & mask))
+			continue;
+
+		return (auth);
+	}
+
+	return (NULL);
+}
+
+static void
+merge_auths(struct ldpd_conf *conf, struct ldpd_conf *xconf)
+{
+	struct ldp_auth		*auth, *nauth, *xauth;
+
+	/* find deleted auths */
+	LIST_FOREACH_SAFE(auth, &conf->auth_list, entry, nauth) {
+		xauth = auth_find(xconf, auth);
+		if (xauth == NULL)
+			continue;
+
+		LIST_REMOVE(auth, entry);
+
+		free(auth);
+	}
+
+	/* find new auths */
+	LIST_FOREACH_SAFE(xauth, &xconf->auth_list, entry, nauth) {
+		LIST_REMOVE(xauth, entry);
+
+		auth = auth_find(conf, xauth);
+		if (auth == NULL) {
+			LIST_INSERT_HEAD(&conf->auth_list, xauth, entry);
+			continue;
+		}
+
+		free(xauth);
+	}
+}
+
 struct ldpd_conf *
 config_new_empty(void)
 {
@@ -1218,6 +1277,7 @@ config_new_empty(void)
 	LIST_INIT(&xconf->tnbr_list);
 	LIST_INIT(&xconf->nbrp_list);
 	LIST_INIT(&xconf->l2vpn_list);
+	LIST_INIT(&xconf->auth_list);
 
 	return (xconf);
 }

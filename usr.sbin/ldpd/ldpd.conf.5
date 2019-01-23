@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.36 2018/08/06 17:25:11 mestre Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.37 2019/01/23 02:02:04 dlg Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 6 2018 $
+.Dd $Mdocdate: January 23 2019 $
 .Dt LDPD.CONF 5
 .Os
 .Sh NAME
@@ -72,14 +72,6 @@ and may contain any of those characters.
 Macro names may not be reserved words (for example,
 .Ic neighbor ) .
 Macros are not expanded inside quotes.
-.Pp
-For example:
-.Bd -literal -offset indent
-peer1="10.0.1.5"
-neighbor $peer1 {
-	password "openbsd"
-}
-.Ed
 .Sh GLOBAL CONFIGURATION
 Several settings can be configured globally or within a more restricted scope,
 like per address-family or per interface.
@@ -117,6 +109,27 @@ Table 0 is the default table.
 .It Ic router-id Ar address
 Set the router ID; in combination with labelspace it forms the LSR-ID.
 If not specified, the numerically lowest IP address of the router will be used.
+.Pp
+.It Xo
+.Ic tcp md5sig password Ar secret
+.Op Ar lsr-id Ns Op / Ns Ar prefix
+.Xc
+.It Xo
+.Ic tcp md5sig key Ar secret
+.Op Ar lsr-id Ns Op / Ns Ar prefix
+.Xc
+.It Xo
+.Ic no tcp md5sig
+.Op Ar lsr-id Ns Op / Ns Ar prefix
+.Xc
+Enable or disable TCP MD5 signatures per RFC 5036.
+The shared secret can either be given as a password or hexadecimal key.
+An optional prefix may be specified to scope the key configuration to a
+set of neighbors with the specified LSR-IDs.
+.Bd -literal -offset indent
+tcp md5sig password mekmitasdigoat 192.168.0.0/24
+no tcp md5sig 192.168.0.25
+.Ed
 .Pp
 .It Xo
 .Ic transport-preference
@@ -278,8 +291,12 @@ When GTSM is enabled for this neighbor, incoming packets are required to have
 a TTL/hop limit of 256 minus this value, ensuring they have not passed
 through more than the expected number of hops.
 The default value is 1; valid range is 1\-255.
-.It Ic password Ar secret
-Enable TCP MD5 signatures per RFC 5036.
+.It Ic tcp md5sig password Ar secret
+Enable TCP MD5 signatures per RFC 5036 with the specified password.
+.It Ic tcp md5sig key Ar secret
+Enable TCP MD5 signatures per RFC 5036 with the specified hexadecimal key.
+.It Ic no tcp md5sig
+Disable the use of TCP MD5 signatures.
 .El
 .Sh LAYER 2 VPNS
 .Xr ldpd 8

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2018/11/01 00:18:44 sashan Exp $ */
+/*	$OpenBSD: parse.y,v 1.68 2019/01/23 02:02:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -24,6 +24,8 @@
 
 %{
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <err.h>
@@ -33,6 +35,8 @@
 #include <limits.h>
 #include <stdio.h>
 #include <syslog.h>
+#include <errno.h>
+#include <netdb.h>
 
 #include "ldpd.h"
 #include "ldpe.h"
@@ -76,6 +80,7 @@ typedef struct {
 	union {
 		int64_t		 number;
 		char		*string;
+		struct ldp_auth	*auth;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -107,6 +112,7 @@ static void		 clear_config(struct ldpd_conf *xconf);
 static uint32_t		 get_rtr_id(void);
 static int		 get_address(const char *, union ldpd_addr *);
 static int		 get_af_address(const char *, int *, union ldpd_addr *);
+static int		 str2key(char *, const char *, int);
 
 static struct file		*file, *topfile;
 static struct files		 files = TAILQ_HEAD_INITIALIZER(files);
@@ -135,9 +141,10 @@ static struct config_defaults	*defs;
 %token	INTERFACE TNEIGHBOR ROUTERID FIBUPDATE RDOMAIN EXPNULL
 %token	LHELLOHOLDTIME LHELLOINTERVAL
 %token	THELLOHOLDTIME THELLOINTERVAL
-%token	THELLOACCEPT AF IPV4 IPV6 GTSMENABLE GTSMHOPS
+%token	THELLOACCEPT AF IPV4 IPV6 INET INET6 GTSMENABLE GTSMHOPS
 %token	KEEPALIVE TRANSADDRESS TRANSPREFERENCE DSCISCOINTEROP
-%token	NEIGHBOR PASSWORD
+%token	NEIGHBOR
+%token	TCP MD5SIG PASSWORD KEY
 %token	L2VPN TYPE VPLS PWTYPE MTU BRIDGE
 %token	ETHERNET ETHERNETTAGGED STATUSTLV CONTROLWORD
 %token	PSEUDOWIRE NEIGHBORID NEIGHBORADDR PWID
@@ -149,6 +156,7 @@ static struct config_defaults	*defs;
 %token	<v.number>	NUMBER
 %type	<v.number>	yesno ldp_af l2vpn_type pw_type
 %type	<v.string>	string
+%type	<v.auth>	auth tcpmd5 optnbrprefix
 
 %%
 
@@ -272,6 +280,9 @@ conf_main	: ROUTERID STRING {
 				conf->flags |= F_LDPD_DS_CISCO_INTEROP;
 			else
 				conf->flags &= ~F_LDPD_DS_CISCO_INTEROP;
+		}
+		| auth {
+			LIST_INSERT_HEAD(&conf->auth_list, $1, entry);
 		}
 		| af_defaults
 		| iface_defaults
@@ -404,6 +415,103 @@ tnbr_defaults	: THELLOHOLDTIME NUMBER {
 		}
 		;
 
+tcpmd5		: TCP MD5SIG PASSWORD STRING {
+			size_t len;
+
+			$$ = calloc(1, sizeof(*$$));
+			if ($$ == NULL) {
+				free($4);
+				yyerror("unable to allocate md5 key");
+				YYERROR;
+			}
+
+			len = strlen($4);
+			if (len > sizeof($$->md5key)) {
+				free($$);
+				free($4);
+				yyerror("tcp md5sig password too long: "
+				    "max %zu", sizeof($$->md5key));
+				YYERROR;
+			}
+
+			memcpy($$->md5key, $4, len);
+			$$->md5key_len = len;
+
+			free($4);
+		}
+		| TCP MD5SIG KEY STRING {
+			int len;
+
+			$$ = calloc(1, sizeof(*$$));
+			if ($$ == NULL) {
+				free($4);
+				yyerror("unable to allocate md5 key");
+				YYERROR;
+			}
+
+			len = str2key($$->md5key, $4, sizeof($$->md5key));
+			if (len == -1) {
+				free($$);
+				free($4);
+				yyerror("invalid hex string");
+				YYERROR;
+			}
+			if ((size_t)len > sizeof($$->md5key_len)) {
+				free($$);
+				free($4);
+				yyerror("tcp md5sig key too long: %d "
+				    "max %zu", len, sizeof($$->md5key));
+				YYERROR;
+			}
+
+			$$->md5key_len = len;
+
+			free($4);
+		}
+		| NO TCP MD5SIG {
+			$$ = calloc(1, sizeof(*$$));
+			if ($$ == NULL) {
+				yyerror("unable to allocate no md5 key");
+				YYERROR;
+			}
+			$$->md5key_len = 0;
+		}
+		;
+
+optnbrprefix	: STRING {
+			$$ = calloc(1, sizeof(*$$));
+			if ($$ == NULL) {
+				yyerror("unable to allocate auth");
+				free($1);
+				YYERROR;
+			}
+
+			$$->idlen = inet_net_pton(AF_INET, $1,
+			    &$$->id, sizeof($$->id));
+			if ($$->idlen == -1) {
+				yyerror("%s: %s", $1, strerror(errno));
+				free($1);
+				YYERROR;
+			}
+		}
+		| /* empty */ {
+			$$ = NULL;
+		}
+		;
+
+auth		: tcpmd5 optnbrprefix {
+			$$ = $1;
+			if ($2 != NULL) {
+				$$->id = $2->id;
+				$$->idlen = $2->idlen;
+				free($2);
+			} else {
+				$$->id.s_addr = 0;
+				$$->idlen = 0;
+			}
+		}
+		;
+
 nbr_opts	: KEEPALIVE NUMBER {
 			if ($2 < MIN_KEEPALIVE || $2 > MAX_KEEPALIVE) {
 				yyerror("keepalive out of range (%d-%d)",
@@ -413,18 +521,11 @@ nbr_opts	: KEEPALIVE NUMBER {
 			nbrp->keepalive = $2;
 			nbrp->flags |= F_NBRP_KEEPALIVE;
 		}
-		| PASSWORD STRING {
-			if (strlcpy(nbrp->auth.md5key, $2,
-			    sizeof(nbrp->auth.md5key)) >=
-			    sizeof(nbrp->auth.md5key)) {
-				yyerror("tcp md5sig password too long: max %zu",
-				    sizeof(nbrp->auth.md5key) - 1);
-				free($2);
-				YYERROR;
-			}
-			nbrp->auth.md5key_len = strlen($2);
-			nbrp->auth.method = AUTH_MD5SIG;
-			free($2);
+		| tcpmd5 {
+			/* this is syntactic sugar... */
+			$1->id = nbrp->lsr_id;
+			$1->idlen = 32;
+			LIST_INSERT_HEAD(&conf->auth_list, $1, entry);
 		}
 		| GTSMENABLE yesno {
 			nbrp->flags |= F_NBRP_GTSM;
@@ -835,13 +936,17 @@ lookup(char *s)
 		{"gtsm-enable",			GTSMENABLE},
 		{"gtsm-hops",			GTSMHOPS},
 		{"include",			INCLUDE},
+		{"inet",			INET},
+		{"inet6",			INET6},
 		{"interface",			INTERFACE},
 		{"ipv4",			IPV4},
 		{"ipv6",			IPV6},
 		{"keepalive",			KEEPALIVE},
+		{"key",				KEY},
 		{"l2vpn",			L2VPN},
 		{"link-hello-holdtime",		LHELLOHOLDTIME},
 		{"link-hello-interval",		LHELLOINTERVAL},
+		{"md5sig",			MD5SIG},
 		{"mtu",				MTU},
 		{"neighbor",			NEIGHBOR},
 		{"neighbor-addr",		NEIGHBORADDR},
@@ -858,6 +963,7 @@ lookup(char *s)
 		{"targeted-hello-holdtime",	THELLOHOLDTIME},
 		{"targeted-hello-interval",	THELLOINTERVAL},
 		{"targeted-neighbor",		TNEIGHBOR},
+		{"tcp",				TCP},
 		{"transport-address",		TRANSADDRESS},
 		{"transport-preference",	TRANSPREFERENCE},
 		{"type",			TYPE},
@@ -1601,4 +1707,48 @@ get_af_address(const char *s, int *family, union ldpd_addr *addr)
 	}
 
 	return (-1);
+}
+
+static int
+hexchar(int ch)
+{
+	if (ch >= '0' && ch <= '9')
+		return (ch - '0');
+	if (ch >= 'a' && ch <= 'f')
+		return (ch - 'a');
+	if (ch >= 'A' && ch <= 'F')
+		return (ch - 'A');
+
+	return (-1);
+}
+
+static int
+str2key(char *dst, const char *src, int dstlen)
+{
+	int		i = 0;
+	int		digit;
+
+	while (*src != '\0') {
+		digit = hexchar(*src);
+		if (digit == -1)
+			return (-1);
+
+		if (i < dstlen)
+			*dst = digit << 4;
+
+		src++;
+		if (*src == '\0')
+			return (-1);
+		digit = hexchar(*src);
+		if (digit == -1)
+			return (-1);
+
+		if (i < dstlen)
+			*dst |= digit;
+
+		src++;
+		i++;
+	}
+
+	return (i);
 }
