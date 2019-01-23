@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.89 2019/01/23 02:02:04 dlg Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.90 2019/01/23 08:43:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -569,6 +569,7 @@ struct kif	*kif_findname(char *);
 void		 kif_clear(void);
 int		 kmpw_set(struct kpw *);
 int		 kmpw_unset(struct kpw *);
+int		 kmpw_find(const char *);
 
 /* util.c */
 uint8_t		 mask2prefixlen(in_addr_t);

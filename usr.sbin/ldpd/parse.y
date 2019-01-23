@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.69 2019/01/23 03:35:14 dlg Exp $ */
+/*	$OpenBSD: parse.y,v 1.70 2019/01/23 08:43:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2013, 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -615,7 +615,8 @@ pseudowire	: PSEUDOWIRE STRING {
 			}
 			free($2);
 
-			if (kif->if_type != IFT_MPLSTUNNEL) {
+			if (kif->if_type != IFT_MPLSTUNNEL &&
+			    kmpw_find(kif->ifname) == -1) {
 				yyerror("unsupported interface type on "
 				    "interface %s", kif->ifname);
 				YYERROR;
