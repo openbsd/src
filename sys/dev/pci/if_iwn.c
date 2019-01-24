@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.205 2019/01/13 22:57:37 kn Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.206 2019/01/24 09:48:01 kn Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -278,7 +278,7 @@ int		iwn_hw_prepare(struct iwn_softc *);
 int		iwn_hw_init(struct iwn_softc *);
 void		iwn_hw_stop(struct iwn_softc *);
 int		iwn_init(struct ifnet *);
-void		iwn_stop(struct ifnet *, int);
+void		iwn_stop(struct ifnet *);
 
 #ifdef IWN_DEBUG
 #define DPRINTF(x)	do { if (iwn_debug > 0) printf x; } while (0)
@@ -754,7 +754,7 @@ iwn_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_SUSPEND:
 		if (ifp->if_flags & IFF_RUNNING)
-			iwn_stop(ifp, 0);
+			iwn_stop(ifp);
 		break;
 	case DVACT_WAKEUP:
 		iwn_wakeup(sc);
@@ -1749,7 +1749,7 @@ iwn_media_change(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
-		iwn_stop(ifp, 0);
+		iwn_stop(ifp);
 		error = iwn_init(ifp);
 	}
 	return error;
@@ -2613,7 +2613,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 
 			if (letoh32(*status) & 1) {
 				/* Radio transmitter is off, power down. */
-				iwn_stop(ifp, 1);
+				iwn_stop(ifp);
 				return;	/* No further processing. */
 			}
 			break;
@@ -2824,7 +2824,7 @@ iwn_intr(void *arg)
 #ifdef IWN_DEBUG
 		iwn_fatal_intr(sc);
 #endif
-		iwn_stop(ifp, 1);
+		iwn_stop(ifp);
 		task_add(systq, &sc->init_task);
 		return 1;
 	}
@@ -3319,7 +3319,7 @@ iwn_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", sc->sc_dev.dv_xname);
-			iwn_stop(ifp, 1);
+			iwn_stop(ifp);
 			ifp->if_oerrors++;
 			return;
 		}
@@ -3351,7 +3351,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = iwn_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				iwn_stop(ifp, 1);
+				iwn_stop(ifp);
 		}
 		break;
 
@@ -3379,7 +3379,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = 0;
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING)) {
-			iwn_stop(ifp, 0);
+			iwn_stop(ifp);
 			error = iwn_init(ifp);
 		}
 	}
@@ -6621,12 +6621,12 @@ iwn_init(struct ifnet *ifp)
 
 	return 0;
 
-fail:	iwn_stop(ifp, 1);
+fail:	iwn_stop(ifp);
 	return error;
 }
 
 void
-iwn_stop(struct ifnet *ifp, int disable)
+iwn_stop(struct ifnet *ifp)
 {
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
