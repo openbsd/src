@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.2 2019/01/24 15:33:44 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.3 2019/01/24 17:39:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -328,6 +328,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				    __func__);
 			event_set(&udp6ev.ev, udp6sock, EV_READ | EV_PERSIST,
 			    udp_receive, &udp6ev);
+			event_add(&udp6ev.ev, NULL);
 			break;
 		case IMSG_UDP4SOCK:
 			if ((udp4sock = imsg.fd) == -1)
@@ -336,6 +337,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				    __func__);
 			event_set(&udp4ev.ev, udp4sock, EV_READ | EV_PERSIST,
 			    udp_receive, &udp4ev);
+			event_add(&udp4ev.ev, NULL);
 			break;
 		case IMSG_ROUTESOCK:
 			if ((fd = imsg.fd) == -1)
@@ -440,6 +442,23 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			send_answer(pq, imsg.data, imsg.hdr.len -
 			    IMSG_HEADER_SIZE);
 			break;
+		case IMSG_RESOLVER_DOWN:
+			log_debug("%s: IMSG_RESOLVER_DOWN", __func__);
+			if (udp4sock != -1) {
+				event_del(&udp4ev.ev);
+				close(udp4sock);
+				udp4sock = -1;
+			}
+			if (udp6sock != -1) {
+				event_del(&udp6ev.ev);
+				close(udp6sock);
+				udp6sock = -1;
+			}
+			break;
+		case IMSG_RESOLVER_UP:
+			log_debug("%s: IMSG_RESOLVER_UP", __func__);
+			frontend_imsg_compose_main(IMSG_OPEN_PORTS, 0, NULL, 0);
+			break;
 		case IMSG_CTL_RESOLVER_INFO:
 		case IMSG_CTL_RESOLVER_WHY_BOGUS:
 		case IMSG_CTL_RESOLVER_HISTOGRAM:
@@ -465,16 +484,6 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 void
 frontend_startup(void)
 {
-	if (!event_initialized(&udp4ev.ev) || !event_initialized(&udp6ev.ev))
-		fatalx("%s: did not receive a UDP4 or UDP6 socket fd from the "
-		    "main process", __func__);
-
-	if (event_initialized(&udp4ev.ev))
-		event_add(&udp4ev.ev, NULL);
-
-	if (event_initialized(&udp6ev.ev))
-		event_add(&udp6ev.ev, NULL);
-
 	if (!event_initialized(&ev_route))
 		fatalx("%s: did not receive a route socket from the main "
 		    "process", __func__);

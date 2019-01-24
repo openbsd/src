@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.1 2019/01/23 13:11:00 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.2 2019/01/24 17:39:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -68,7 +68,7 @@ static int	main_imsg_send_config(struct unwind_conf *);
 int	main_reload(void);
 int	main_sendboth(enum imsg_type, void *, uint16_t);
 void	open_dhcp_lease(int);
-void	open_ta(void);
+void	open_ports(void);
 
 struct unwind_conf	*main_conf;
 struct imsgev		*iev_frontend;
@@ -122,13 +122,11 @@ int
 main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sighup;
-	struct addrinfo		 hints, *res0;
 	int			 ch;
 	int			 debug = 0, resolver_flag = 0, frontend_flag = 0;
 	char			*saved_argv0;
 	int			 pipe_main2frontend[2];
 	int			 pipe_main2resolver[2];
-	int			 udp4sock = -1, udp6sock = -1, error;
 	int			 frontend_routesock, rtfilter;
 	int			 control_fd;
 	char			*csock;
@@ -269,41 +267,6 @@ main(int argc, char *argv[])
 	if (main_imsg_send_ipc_sockets(&iev_frontend->ibuf, &iev_resolver->ibuf))
 		fatal("could not establish imsg links");
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE;
-
-	error = getaddrinfo("127.0.0.1", "domain", &hints, &res0);
-	if (!error && res0) {
-		if ((udp4sock = socket(res0->ai_family, res0->ai_socktype,
-		    res0->ai_protocol)) != -1) {
-			if (bind(udp4sock, res0->ai_addr, res0->ai_addrlen)
-			    == -1) {
-				close(udp4sock);
-				udp4sock = -1;
-			}
-		}
-	}
-	freeaddrinfo(res0);
-
-	hints.ai_family = AF_INET6;
-	error = getaddrinfo("::1", "domain", &hints, &res0);
-	if (!error && res0) {
-		if ((udp6sock = socket(res0->ai_family, res0->ai_socktype,
-		    res0->ai_protocol)) != -1) {
-			if (bind(udp6sock, res0->ai_addr, res0->ai_addrlen)
-			    == -1) {
-				close(udp6sock);
-				udp6sock = -1;
-			}
-		}
-	}
-	freeaddrinfo(res0);
-
-	if (udp4sock == -1 && udp6sock == -1)
-		fatal("could not bind to 127.0.0.1 or ::1 on port 53");
-
 	if ((control_fd = control_init(csock)) == -1)
 		fatalx("control socket setup failed");
 
@@ -317,13 +280,11 @@ main(int argc, char *argv[])
 	    &rtfilter, sizeof(rtfilter)) < 0)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
-	main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
-	main_imsg_compose_frontend_fd(IMSG_UDP6SOCK, 0, udp6sock);
 	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
 	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
 	main_imsg_send_config(main_conf);
 
-	if (pledge("stdio rpath sendfd", NULL) == -1)
+	if (pledge("stdio inet rpath sendfd", NULL) == -1)
 		fatal("pledge");
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
@@ -461,6 +422,9 @@ main_dispatch_frontend(int fd, short event, void *bula)
 		case IMSG_OPEN_DHCP_LEASE:
 			memcpy(&rtm_index, imsg.data, sizeof(rtm_index));
 			open_dhcp_lease(rtm_index);
+			break;
+		case IMSG_OPEN_PORTS:
+			open_ports();
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -724,4 +688,50 @@ open_dhcp_lease(int if_idx)
 
 
 	main_imsg_compose_frontend_fd(IMSG_LEASEFD, 0, fd);
+}
+
+void
+open_ports(void)
+{
+	struct addrinfo		 hints, *res0;
+	int			 udp4sock = -1, udp6sock = -1, error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE;
+
+
+	error = getaddrinfo("127.0.0.1", "domain", &hints, &res0);
+	if (!error && res0) {
+		if ((udp4sock = socket(res0->ai_family, res0->ai_socktype,
+		    res0->ai_protocol)) != -1) {
+			if (bind(udp4sock, res0->ai_addr, res0->ai_addrlen)
+			    == -1) {
+				close(udp4sock);
+				udp4sock = -1;
+			}
+		}
+	}
+	freeaddrinfo(res0);
+
+	hints.ai_family = AF_INET6;
+	error = getaddrinfo("::1", "domain", &hints, &res0);
+	if (!error && res0) {
+		if ((udp6sock = socket(res0->ai_family, res0->ai_socktype,
+		    res0->ai_protocol)) != -1) {
+			if (bind(udp6sock, res0->ai_addr, res0->ai_addrlen)
+			    == -1) {
+				close(udp6sock);
+				udp6sock = -1;
+			}
+		}
+	}
+	freeaddrinfo(res0);
+
+	if (udp4sock == -1 && udp6sock == -1)
+		fatal("could not bind to 127.0.0.1 or ::1 on port 53");
+
+	main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
+	main_imsg_compose_frontend_fd(IMSG_UDP6SOCK, 0, udp6sock);
 }

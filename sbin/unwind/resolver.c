@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.3 2019/01/24 15:33:44 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.4 2019/01/24 17:39:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -135,6 +135,8 @@ struct event_base	*ev_base;
 
 /* for openssl */
 pthread_mutex_t		*locks;
+
+enum unwind_resolver_state	 global_state = DEAD;
 
 void
 resolver_sig_handler(int sig, short event, void *arg)
@@ -770,6 +772,7 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
     int sec, char *why_bogus, int was_ratelimited)
 {
 	struct check_resolver_data	*data;
+	struct unwind_resolver		*best;
 	char				*str;
 
 	data = (struct check_resolver_data *)arg;
@@ -817,6 +820,18 @@ out:
 	resolver_unref(data->check_res);
 
 	free(data);
+
+	best = best_resolver();
+
+	if (best->state != global_state) {
+		if (best->state < RESOLVING && global_state > UNKNOWN)
+			resolver_imsg_compose_frontend(IMSG_RESOLVER_DOWN, 0,
+			    NULL, 0);
+		else if (best->state > UNKNOWN && global_state < RESOLVING)
+			resolver_imsg_compose_frontend(IMSG_RESOLVER_UP, 0,
+			    NULL, 0);
+		global_state = best->state;
+	}
 }
 
 /* for openssl */
