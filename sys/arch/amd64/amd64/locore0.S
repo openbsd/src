@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.14 2019/01/24 00:16:15 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.15 2019/01/24 00:21:45 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	addl	$(KERNBASE & 0xffffffff),%eax
 	movl	$RELOC(esym),%ebp
 	movl	%eax,(%ebp)
-	movl	$(KERNBASE >> 16),4(%ebp)
+	movl	$(KERNBASE >> 32),4(%ebp)
 1:
 	movl	24(%esp), %eax
 	movl	%eax, RELOC(biosbasemem)
