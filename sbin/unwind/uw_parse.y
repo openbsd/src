@@ -1,4 +1,4 @@
-/*	$OpenBSD: uw_parse.y,v 1.1 2019/01/23 13:11:00 florian Exp $	*/
+/*	$OpenBSD: uw_parse.y,v 1.2 2019/01/24 15:59:32 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -190,11 +190,11 @@ nl		: '\n' optnl		/* one or more newlines */
 unwind_forwarder	: FORWARDER forwarder_block
 			;
 
-forwarder_block		: '{' optnl forwarderopts_l optnl '}'
+forwarder_block		: '{' optnl forwarderopts_l '}'
 			| forwarderoptsl
 			;
 
-forwarderopts_l		: forwarderopts_l forwarderoptsl optnl
+forwarderopts_l		: forwarderopts_l forwarderoptsl nl
 			| forwarderoptsl optnl
 
 forwarderoptsl		: STRING {
