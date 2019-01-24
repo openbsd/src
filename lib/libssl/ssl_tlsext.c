@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.34 2019/01/23 18:39:28 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.35 2019/01/24 01:50:41 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1675,10 +1675,11 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 	struct tls_extension_funcs *ext;
 	struct tls_extension *tlsext;
 	CBS extensions, extension_data;
-	uint32_t extensions_seen = 0;
 	uint16_t type;
 	size_t idx;
 	uint16_t version;
+
+	S3I(s)->hs.extensions_seen = 0;
 
 	if (is_server)
 		version = s->version;
@@ -1718,9 +1719,9 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 		}
 
 		/* Check for duplicate known extensions. */
-		if ((extensions_seen & (1 << idx)) != 0)
+		if ((S3I(s)->hs.extensions_seen & (1 << idx)) != 0)
 			return 0;
-		extensions_seen |= (1 << idx);
+		S3I(s)->hs.extensions_seen |= (1 << idx);
 
 		ext = tlsext_funcs(tlsext, is_server);
 		if (!ext->parse(s, &extension_data, alert))

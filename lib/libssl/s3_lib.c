@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.180 2019/01/23 18:24:40 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.181 2019/01/24 01:50:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1605,6 +1605,8 @@ ssl3_clear(SSL *s)
 	freezero(S3I(s)->hs_tls13.x25519_private, X25519_KEY_LENGTH);
 	freezero(S3I(s)->hs_tls13.x25519_public, X25519_KEY_LENGTH);
 	freezero(S3I(s)->hs_tls13.x25519_peer_public, X25519_KEY_LENGTH);
+
+	S3I(s)->hs.extensions_seen = 0;
 
 	rp = S3I(s)->rbuf.buf;
 	wp = S3I(s)->wbuf.buf;
