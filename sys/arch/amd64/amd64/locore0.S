@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.13 2019/01/24 00:00:50 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.14 2019/01/24 00:16:15 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -156,10 +156,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	16(%esp), %eax
 	testl	%eax,%eax
 	jz	1f
-	addl	$KERNBASE_LO,%eax
+	addl	$(KERNBASE & 0xffffffff),%eax
 	movl	$RELOC(esym),%ebp
 	movl	%eax,(%ebp)
-	movl	$KERNBASE_HI,4(%ebp)
+	movl	$(KERNBASE >> 16),4(%ebp)
 1:
 	movl	24(%esp), %eax
 	movl	%eax, RELOC(biosbasemem)
@@ -348,7 +348,7 @@ cont:
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f
-	subl	$KERNBASE_LO,%eax	/* XXX */
+	subl	$(KERNBASE & 0xffffffff),%eax	/* XXX */
 	/* Page tables must be after symbols and after kernel image. */
 	cmpl	%eax,%edi
 	jg	1f
@@ -382,7 +382,7 @@ cont:
 	/*
 	 * Skip the first MB.
 	 */
-	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
+	movl	$(KERNTEXTOFF - KERNBASE),%eax
 	movl	%eax,%ecx
 	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # pdes */
 	addl	%ecx,%ebx
