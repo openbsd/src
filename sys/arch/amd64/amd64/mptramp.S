@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.18 2019/01/23 23:52:32 deraadt Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.19 2019/01/24 00:00:00 deraadt Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -102,8 +102,6 @@
 	.global _C_LABEL(mp_pdirpa)
 	.global _C_LABEL(mp_tramp_data_start)
 	.global _C_LABEL(mp_tramp_data_end)
-
-	.global	gdt64
 
 	.text
 	.align 4, 0xcc
