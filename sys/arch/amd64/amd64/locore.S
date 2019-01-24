@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.112 2019/01/20 00:53:08 mlarkin Exp $	*/
+/*	$OpenBSD: locore.S,v 1.113 2019/01/24 00:00:50 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -214,27 +214,6 @@ _C_LABEL(pg_g_kern):	.quad	0	# 0x100 if global pages should be used
 					# in kernel mappings, 0 otherwise (for
 					# insecure CPUs)
 _C_LABEL(cpu_meltdown):	.long	0	# 1 if this CPU has Meltdown
-
-#define	_RELOC(x)	((x) - KERNBASE)
-#define	RELOC(x)	_RELOC(_C_LABEL(x))
-
-	.globl	gdt64
-
-gdt64:
-	.word	gdt64_end-gdt64_start-1
-	.quad	_RELOC(gdt64_start)
-.align 64, 0xcc
-
-gdt64_start:
-	.quad 0x0000000000000000	/* always empty */
-	.quad 0x00af9a000000ffff	/* kernel CS */
-	.quad 0x00cf92000000ffff	/* kernel DS */
-gdt64_end:
-
-/*
- * Some hackage to deal with 64bit symbols in 32 bit mode.
- * This may not be needed if things are cleaned up a little.
- */
 
 /*****************************************************************************/
 

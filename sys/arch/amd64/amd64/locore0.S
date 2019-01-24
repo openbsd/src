@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.12 2019/01/23 23:51:58 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.13 2019/01/24 00:00:50 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -692,6 +692,17 @@ _C_LABEL(codepatch_end):
 	.previous
 
 	.data
+	.globl	gdt64
+gdt64:
+	.word	gdt64_end-gdt64_start-1
+	.quad	_RELOC(gdt64_start)
+	.align 64, 0xcc
+
+gdt64_start:
+	.quad 0x0000000000000000	/* always empty */
+	.quad 0x00af9a000000ffff	/* kernel CS */
+	.quad 0x00cf92000000ffff	/* kernel DS */
+gdt64_end:
 
 farjmp64:
 	.long	longmode-KERNBASE
