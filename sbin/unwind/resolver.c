@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.1 2019/01/23 13:11:00 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.2 2019/01/24 15:32:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -511,8 +511,7 @@ resolve_done(void *arg, int rcode, void *answer_packet, int answer_len,
 		goto servfail;
 	}
 
-	if (rcode == SERVFAIL && h.qdcount == 0 && h.id == 0) {
-		/* heuristic, authority is unreachable */
+	if (rcode == SERVFAIL) {
 		if (res->stop != 1)
 			check_resolver(res);
 		goto servfail;
@@ -779,8 +778,7 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
 		goto out;
 	}
 
-	if (rcode == SERVFAIL && h.qdcount == 0 && h.id == 0) {
-		/* heuristic, authority is unreachable */
+	if (rcode == SERVFAIL) {
 		data->res->state = DEAD;
 		goto out;
 	}
