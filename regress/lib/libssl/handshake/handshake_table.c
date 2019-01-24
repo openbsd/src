@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.4 2019/01/23 23:38:44 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.5 2019/01/24 03:48:09 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -86,7 +86,7 @@ struct child {
 
 static struct child stateinfo[][TLS13_NUM_MESSAGE_TYPES] = {
 	[CLIENT_HELLO] = {
-		{SERVER_HELLO, NEGOTIATED, 0, 0},
+		{SERVER_HELLO, DEFAULT, 0, 0},
 	},
 	[SERVER_HELLO] = {
 		{SERVER_ENCRYPTED_EXTENSIONS, DEFAULT, 0, 0},
@@ -392,13 +392,13 @@ main(int argc, char *argv[])
 		},
 	};
 	struct child	start = {
-		CLIENT_HELLO, NEGOTIATED, 0, 0,
+		CLIENT_HELLO, DEFAULT, 0, 0,
 	};
 	struct child	end = {
 		APPLICATION_DATA, DEFAULT, 0, 0,
 	};
 	struct child	path[TLS13_NUM_MESSAGE_TYPES] = {{0}};
-	uint8_t		flags = 0;
+	uint8_t		flags = NEGOTIATED;
 	unsigned int	depth = 0;
 	int		ch, print = 0;
 
