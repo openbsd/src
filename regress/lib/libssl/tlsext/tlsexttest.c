@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.26 2019/01/24 00:07:58 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.27 2019/01/24 02:56:41 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2929,9 +2929,13 @@ test_tlsext_serverhello_build(void)
 	return (failure);
 }
 
-static unsigned char tlsext_versions_client[] = {
+const unsigned char tlsext_versions_client[] = {
 	0x08, 0x03, 0x04, 0x03, 0x03, 0x03,
 	0x02, 0x03, 0x01,
+};
+
+const unsigned char tlsext_versions_server[] = {
+	0x03, 0x04,
 };
 
 static int
@@ -3001,12 +3005,12 @@ test_tlsext_versions_client(void)
 
 	if (dlen != sizeof(tlsext_versions_client)) {
 		FAIL("got versions with length %zu, "
-		    "want length %zu\n", dlen, (size_t) sizeof(tlsext_versions_client));
+		    "want length %zu\n", dlen, sizeof(tlsext_versions_client));
 		failure = 1;
 		goto done;
 	}
 
-	CBS_init(&cbs, tlsext_versions_client, sizeof(tlsext_versions_client));
+	CBS_init(&cbs, data, dlen);
 	if (!tlsext_versions_server_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse client versions\n");
 		failure = 1;
@@ -3026,12 +3030,95 @@ test_tlsext_versions_client(void)
 	return (failure);
 }
 
-static unsigned char tlsext_keyshare_client[] = {
+
+static int
+test_tlsext_versions_server(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure = 0;
+	size_t dlen;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	ssl->version = TLS1_2_VERSION;
+
+	if (tlsext_versions_server_needs(ssl)) {
+		FAIL("server should not need versions\n");
+		failure = 1;
+		goto done;
+	}
+
+	ssl->version = TLS1_3_VERSION;
+
+	if (!tlsext_versions_server_needs(ssl)) {
+		FAIL("server should need versions\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (!tlsext_versions_server_build(ssl, &cbb)) {
+		FAIL("server should have built versions\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen)) {
+		FAIL("failed to finish CBB");
+		failure = 1;
+		goto done;
+	}
+
+	if (dlen != sizeof(tlsext_versions_server)) {
+		FAIL("got versions with length %zu, "
+		    "want length %zu\n", dlen, sizeof(tlsext_versions_server));
+		failure = 1;
+		goto done;
+	}
+
+	CBS_init(&cbs, data, dlen);
+	if (!tlsext_versions_client_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse client versions\n");
+		failure = 1;
+		goto done;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		failure = 1;
+		goto done;
+	}
+ done:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+const unsigned char tlsext_keyshare_client[] = {
 	0x00, 0x24, 0x00, 0x1d, 0x00, 0x20, 0xba, 0x83,
 	0x2e, 0x4a, 0x18, 0xbe, 0x96, 0xd2, 0x71, 0x70,
 	0x18, 0x04, 0xf9, 0x9d, 0x76, 0x98, 0xef, 0xe8,
 	0x4f, 0x8b, 0x85, 0x41, 0xa4, 0xd9, 0x61, 0x57,
 	0xad, 0x5b, 0xa4, 0xe9, 0x8b, 0x6b,
+};
+
+const unsigned char tlsext_keyshare_server[] = {
+	0x00, 0x1d, 0x00, 0x20, 0xe5, 0xe8, 0x5a, 0xb9,
+	0x7e, 0x12, 0x62, 0xe3, 0xd8, 0x7f, 0x6e, 0x3c,
+	0xec, 0xa6, 0x8b, 0x99, 0x45, 0x77, 0x8e, 0x11,
+	0xb3, 0xb9, 0x12, 0xb6, 0xbe, 0x35, 0xca, 0x51,
+	0x76, 0x1e, 0xe8, 0x22
 };
 
 static int
@@ -3095,17 +3182,22 @@ test_tlsext_keyshare_client(void)
 		goto done;
 	}
 
-	CBS_init(&cbs, tlsext_keyshare_client, sizeof(tlsext_keyshare_client));
+	(ssl)->version = TLS1_3_VERSION;
+	CBS_init(&cbs, data, dlen);
+
 	if (!tlsext_keyshare_server_parse(ssl, &cbs, &alert)) {
 		FAIL("failed to parse client keyshare\n");
 		failure = 1;
 		goto done;
 	}
+
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining");
 		failure = 1;
 		goto done;
 	}
+
+
  done:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
@@ -3114,6 +3206,338 @@ test_tlsext_keyshare_client(void)
 
 	return (failure);
 }
+
+static int
+test_tlsext_keyshare_server(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure = 0;
+	size_t dlen, idx;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+	uint8_t bogokey[] = {
+		0xe5, 0xe8, 0x5a, 0xb9,	0x7e, 0x12, 0x62, 0xe3,
+		0xd8, 0x7f, 0x6e, 0x3c,	0xec, 0xa6, 0x8b, 0x99,
+		0x45, 0x77, 0x8e, 0x11,	0xb3, 0xb9, 0x12, 0xb6,
+		0xbe, 0x35, 0xca, 0x51,	0x76, 0x1e, 0xe8, 0x22
+	};
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	(ssl)->version = 0;
+	if (tlsext_keyshare_server_needs(ssl)) {
+		FAIL("server should not need keyshare\n");
+		failure = 1;
+		goto done;
+	}
+
+	(ssl)->version = TLS1_2_VERSION;
+	if (tlsext_keyshare_server_needs(ssl)) {
+		FAIL("server should not need keyshare\n");
+		failure = 1;
+		goto done;
+	}
+
+	ssl->version = TLS1_3_VERSION;
+	if (tlsext_keyshare_server_needs(ssl)) {
+		FAIL("client should not need keyshare\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (tls_extension_find(TLSEXT_TYPE_key_share, &idx) == NULL)
+		FAIL("Can't find keyshare extension");
+	S3I(ssl)->hs.extensions_seen |= (1 << idx);
+
+	if (!tlsext_keyshare_server_needs(ssl)) {
+		FAIL("server should need keyshare");
+		failure = 1;
+		goto done;
+	}
+
+	if (tlsext_keyshare_server_build(ssl, &cbb)) {
+		FAIL("server should not have built a keyshare response");
+		failure = 1;
+		goto done;
+	}
+
+	S3I(ssl)->hs_tls13.x25519_peer_public = bogokey;
+	if (!tlsext_keyshare_server_build(ssl, &cbb)) {
+		FAIL("server should be able to build a keyshare response");
+		failure = 1;
+		goto done;
+	}
+	S3I(ssl)->hs_tls13.x25519_peer_public = NULL;
+
+	if (!CBB_finish(&cbb, &data, &dlen)) {
+		FAIL("failed to finish CBB");
+		failure = 1;
+		goto done;
+	}
+
+	if (dlen != sizeof(tlsext_keyshare_server)) {
+		FAIL("got server keyshare with length %zu, "
+		    "want length %zu\n", dlen, sizeof(tlsext_keyshare_server));
+		failure = 1;
+		goto done;
+	}
+
+	CBS_init(&cbs, data, dlen);
+
+	if (!tlsext_keyshare_client_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse server keyshare\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		failure = 1;
+		goto done;
+	}
+
+done:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+/* One day I hope to be the only Muppet in this codebase */
+const uint8_t cookie[] = "\n"
+    "                .---. .---.                           \n"
+    "               :     : o   :    me want cookie!       \n"
+    "           _..-:   o :     :-.._    /                 \n"
+    "       .-''  '  `---' `---' '   ``-.                  \n"
+    "     .'   '   '  '  .    '  . '  '  `.                \n"
+    "    :   '.---.,,.,...,.,.,.,..---.  ' ;               \n"
+    "    `. ' `.                     .' ' .'               \n"
+    "     `.  '`.                   .' ' .'                \n"
+    "      `.    `-._           _.-' '  .'  .----.         \n"
+    "        `. '    ''--...--''  . ' .'  .'  o   `.       \n"
+    "        .'`-._'    ' .     ' _.-'`. :       o  :      \n"
+    "  jgs .'      ```--.....--'''    ' `:_ o       :      \n"
+    "    .'    '     '         '     '   ; `.;';';';'      \n"
+    "   ;         '       '       '     . ; .' ; ; ;       \n"
+    "  ;     '         '       '   '    .'      .-'        \n"
+    "  '  '     '   '      '           '    _.-'           \n";
+
+static int
+test_tlsext_cookie_client(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure = 0;
+	size_t dlen;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	S3I(ssl)->hs_tls13.max_version = 0;
+	if (tlsext_cookie_client_needs(ssl)) {
+		FAIL("client should not need cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	S3I(ssl)->hs_tls13.max_version = TLS1_2_VERSION;
+	if (tlsext_cookie_client_needs(ssl)) {
+		FAIL("client should not need cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+
+	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
+	if (tlsext_cookie_client_needs(ssl)) {
+		FAIL("client should not need cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	/* Normally would be set by receiving a server cookie in an HRR */
+	S3I(ssl)->hs_tls13.cookie = strdup(cookie);
+	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
+
+	if (!tlsext_cookie_client_needs(ssl)) {
+		FAIL("client should need cookie");
+		failure = 1;
+		goto done;
+	}
+
+	if (!tlsext_cookie_client_build(ssl, &cbb)) {
+		FAIL("client should have built a cookie response");
+		failure = 1;
+		goto done;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen)) {
+		FAIL("failed to finish CBB");
+		failure = 1;
+		goto done;
+	}
+
+	if (dlen != strlen(cookie) + sizeof(uint16_t)) {
+		FAIL("got cookie with length %zu, "
+		    "want length %zu\n", dlen, strlen(cookie) +
+		    sizeof(uint16_t));
+		failure = 1;
+		goto done;
+	}
+
+	CBS_init(&cbs, data, dlen);
+
+	/* Checks cookie against what's in the hs_tls13 */
+	if (!tlsext_cookie_server_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse client cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		failure = 1;
+		goto done;
+	}
+
+ done:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+static int
+test_tlsext_cookie_server(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure = 0;
+	size_t dlen;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	S3I(ssl)->hs_tls13.max_version = 0;
+	if (tlsext_cookie_server_needs(ssl)) {
+		FAIL("server should not need cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	S3I(ssl)->hs_tls13.max_version = TLS1_2_VERSION;
+	if (tlsext_cookie_server_needs(ssl)) {
+		FAIL("server should not need cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+
+	S3I(ssl)->hs_tls13.max_version = TLS1_3_VERSION;
+	if (tlsext_cookie_server_needs(ssl)) {
+		FAIL("server should not need cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	/* Normally would be set by server before sending HRR */
+	S3I(ssl)->hs_tls13.cookie = strdup(cookie);
+	S3I(ssl)->hs_tls13.cookie_len = strlen(cookie);
+
+	if (!tlsext_cookie_server_needs(ssl)) {
+		FAIL("server should need cookie");
+		failure = 1;
+		goto done;
+	}
+
+	if (!tlsext_cookie_server_build(ssl, &cbb)) {
+		FAIL("server have built a cookie response");
+		failure = 1;
+		goto done;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen)) {
+		FAIL("failed to finish CBB");
+		failure = 1;
+		goto done;
+	}
+
+	if (dlen != strlen(cookie) + sizeof(uint16_t)) {
+		FAIL("got cookie with length %zu, "
+		    "want length %zu\n", dlen, strlen(cookie) +
+		    sizeof(uint16_t));
+		failure = 1;
+		goto done;
+	}
+
+	CBS_init(&cbs, data, dlen);
+
+	if (tlsext_cookie_client_parse(ssl, &cbs, &alert)) {
+		FAIL("client should not have parsed server cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	freezero(S3I(ssl)->hs_tls13.cookie, S3I(ssl)->hs_tls13.cookie_len);
+	S3I(ssl)->hs_tls13.cookie = NULL;
+	S3I(ssl)->hs_tls13.cookie_len = 0;
+
+	if (!tlsext_cookie_client_parse(ssl, &cbs, &alert)) {
+		FAIL("failed to parse server cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (memcmp(cookie, S3I(ssl)->hs_tls13.cookie,
+		S3I(ssl)->hs_tls13.cookie_len) != 0) {
+		FAIL("parsed server cookie does not match sent cookie\n");
+		failure = 1;
+		goto done;
+	}
+
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining");
+		failure = 1;
+		goto done;
+	}
+
+done:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
 
 int
 main(int argc, char **argv)
@@ -3148,8 +3572,13 @@ main(int argc, char **argv)
 	failed |= test_tlsext_sessionticket_server();
 
 	failed |= test_tlsext_versions_client();
+	failed |= test_tlsext_versions_server();
 
 	failed |= test_tlsext_keyshare_client();
+	failed |= test_tlsext_keyshare_server();
+
+	failed |= test_tlsext_cookie_client();
+	failed |= test_tlsext_cookie_server();
 
 #ifndef OPENSSL_NO_SRTP
 	failed |= test_tlsext_srtp_client();

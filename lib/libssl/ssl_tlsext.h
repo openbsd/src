@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.19 2019/01/23 18:24:40 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.20 2019/01/24 02:56:41 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -101,6 +101,13 @@ int tlsext_keyshare_server_needs(SSL *s);
 int tlsext_keyshare_server_build(SSL *s, CBB *cbb);
 int tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert);
 
+int tlsext_cookie_client_needs(SSL *s);
+int tlsext_cookie_client_build(SSL *s, CBB *cbb);
+int tlsext_cookie_client_parse(SSL *s, CBS *cbs, int *alert);
+int tlsext_cookie_server_needs(SSL *s);
+int tlsext_cookie_server_build(SSL *s, CBB *cbb);
+int tlsext_cookie_server_parse(SSL *s, CBS *cbs, int *alert);
+
 #ifndef OPENSSL_NO_SRTP
 int tlsext_srtp_client_needs(SSL *s);
 int tlsext_srtp_client_build(SSL *s, CBB *cbb);
@@ -116,6 +123,7 @@ int tlsext_client_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type);
 int tlsext_server_build(SSL *s, CBB *cbb, uint16_t msg_type);
 int tlsext_server_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type);
 
+struct tls_extension *tls_extension_find(uint16_t, size_t *);
 __END_HIDDEN_DECLS
 
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.232 2019/01/24 01:50:41 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.233 2019/01/24 02:56:41 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -448,6 +448,9 @@ typedef struct ssl_handshake_tls13_st {
 	uint8_t *x25519_peer_public;
 
 	struct tls13_secrets *secrets;
+
+	uint8_t *cookie;
+	size_t cookie_len;
 } SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {
