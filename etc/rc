@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.530 2019/01/12 17:05:00 kettenis Exp $
+#	$OpenBSD: rc,v 1.531 2019/01/24 05:14:02 ajacoutot Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -382,7 +382,6 @@ ln -fh /bsd /bsd.booted
 rm -f /fastboot
 
 # Set flags on ttys.
-echo 'setting tty flags'
 ttyflags -a
 
 # Set keyboard encoding.
