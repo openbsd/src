@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfp.c,v 1.2 2018/03/16 21:46:04 kettenis Exp $	*/
+/*	$OpenBSD: vfp.c,v 1.3 2019/01/24 13:19:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -28,14 +28,18 @@
 static inline void
 set_vfp_fpexc(uint32_t val)
 {
-	__asm __volatile("vmsr fpexc, %0" :: "r" (val));
+	__asm __volatile(
+	    ".fpu vfpv3\n"
+	    "vmsr fpexc, %0" :: "r" (val));
 }
 
 static inline uint32_t
 get_vfp_fpexc(void)
 {
 	uint32_t val;
-	__asm __volatile("vmrs %0, fpexc" : "=r" (val));
+	__asm __volatile(
+	    ".fpu vfpv3\n"
+	    "vmrs %0, fpexc" : "=r" (val));
 	return val;
 }
 
@@ -64,6 +68,7 @@ vfp_store(struct fpreg *vfpsave)
 
 	if (get_vfp_fpexc() & VFPEXC_EN) {
 		__asm __volatile(
+		    ".fpu vfpv3\n"
 		    "vstmia	%1!, {d0-d15}\n"	/* d0-d15 */
 		    "vstmia	%1!, {d16-d31}\n"	/* d16-d31 */
 		    "vmrs	%0, fpscr\n"
@@ -146,6 +151,7 @@ vfp_load(struct proc *p)
 	set_vfp_fpexc(VFPEXC_EN);
 
 	__asm __volatile(
+	    ".fpu vfpv3\n"
 	    "vldmia	%1!, {d0-d15}\n"		/* d0-d15 */
 	    "vldmia	%1!, {d16-d31}\n"		/* d16-d31 */
 	    "ldr	%0, [%1]\n"			/* set old vfpscr */
