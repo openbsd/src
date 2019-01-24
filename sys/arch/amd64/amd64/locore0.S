@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.15 2019/01/24 00:21:45 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.16 2019/01/24 00:57:14 mlarkin Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ cont:
 	andl	$~PGOFSET,%edx
 
 	/*
-	 * Skip the first MB.
+	 * Skip the first 16 MB.
 	 */
 	movl	$(KERNTEXTOFF - KERNBASE),%eax
 	movl	%eax,%ecx
