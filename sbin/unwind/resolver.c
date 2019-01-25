@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.4 2019/01/24 17:39:43 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.5 2019/01/25 08:06:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -672,7 +672,7 @@ create_resolver(enum unwind_resolver_type type)
 		    != 0) {
 			ub_ctx_delete(res->ctx);
 			free(res);
-			log_warnx("error setting aggressive-nsec: yes: %s",
+			log_warnx("error setting use-syslog: yes: %s",
 			    ub_strerror(err));
 			return (NULL);
 		}
