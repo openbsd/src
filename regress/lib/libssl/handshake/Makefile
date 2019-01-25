@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2019/01/24 16:32:29 tb Exp $
+#	$OpenBSD: Makefile,v 1.5 2019/01/25 01:03:21 tb Exp $
 
 PROGS += handshake_table
 PROGS += valid_handshakes_terminate
@@ -21,7 +21,7 @@ handshake.gv: handshake_table
 
 CLEANFILES += handshake.gv
 
-.for _FMT in png svg ps
+.for _FMT in png ps svg
 handshake.${_FMT}: handshake.gv
 	@if [ ! -x /usr/local/bin/dot ]; then			\
 		echo "pkg_add graphviz to generate png";	\
