@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.7 2019/01/25 10:16:13 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.8 2019/01/25 11:08:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1044,6 +1044,9 @@ void
 send_detailed_resolver_info(struct unwind_resolver *res, pid_t pid)
 {
 	char	 buf[1024];
+
+	if (res == NULL)
+		return;
 
 	if (res->state == RESOLVING) {
 		(void)strlcpy(buf, res->why_bogus, sizeof(buf));
