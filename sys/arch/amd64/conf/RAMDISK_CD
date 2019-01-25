@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.176 2019/01/19 04:10:30 phessler Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.177 2019/01/25 23:16:52 jsg Exp $
 
 machine		amd64
 maxusers	4
@@ -70,6 +70,7 @@ ppb*		at pci?			# PCI-PCI bridges
 pci*		at ppb?
 pci*		at pchb?
 #pcib*		at pci?			# PCI-ISA bridge
+ccp*		at pci?			# AMD Cryptographic Co-processor
 
 dwiic*		at acpi?
 dwiic*		at pci?
