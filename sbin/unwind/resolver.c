@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.8 2019/01/25 11:08:03 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.9 2019/01/25 17:20:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -338,9 +338,11 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			if ((err = ub_resolve_event(res->ctx,
 			    query_imsg->qname, query_imsg->t, query_imsg->c,
 			    (void *)query_imsg, resolve_done,
-			    &query_imsg->async_id)) != 0)
+			    &query_imsg->async_id)) != 0) {
 				log_warn("%s: ub_resolve_async: err: %d, %s",
 				    __func__, err, ub_strerror(err));
+				resolver_unref(res);
+			}
 			break;
 		case IMSG_FORWARDER:
 			/* make sure this is a string */
