@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.5 2019/01/25 08:06:41 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.6 2019/01/25 10:15:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -797,7 +797,8 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
 
 	if (sec == 2)
 		data->res->state = VALIDATING;
-	else if (rcode == 0) {
+	else if (rcode == LDNS_RCODE_NOERROR &&
+	    LDNS_RCODE_WIRE((uint8_t*)answer_packet) == LDNS_RCODE_NOERROR) {
 		log_debug("%s: why bogus: %s", __func__, why_bogus);
 		data->res->state = RESOLVING;
 		/* best effort */
