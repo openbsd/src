@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.6 2019/01/24 16:32:29 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.7 2019/01/25 01:21:44 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -137,10 +137,10 @@ void build_table(enum tls13_message_type
 size_t count_handshakes(void);
 const char *flag2str(uint8_t flag);
 int generate_graphics(void);
+void fprint_entry(FILE *stream,
+    enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES], uint8_t flags);
+void fprint_flags(FILE *stream, uint8_t flags);
 const char *mt2str(enum tls13_message_type mt);
-void print_entry(enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES],
-    uint8_t flags);
-void print_flags(uint8_t flags);
 __dead void usage(void);
 int verify_table(enum tls13_message_type
     table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES], int print);
@@ -248,12 +248,12 @@ mt2str(enum tls13_message_type mt)
 }
 
 void
-print_flags(uint8_t flags)
+fprint_flags(FILE *stream, uint8_t flags)
 {
 	int first = 1, i;
 
 	if (flags == 0) {
-		printf("%s", flag2str(flags));
+		fprintf(stream, "%s", flag2str(flags));
 		return;
 	}
 
@@ -261,28 +261,29 @@ print_flags(uint8_t flags)
 		uint8_t set = flags & (1U << i);
 
 		if (set) {
-			printf("%s%s", first ? "" : " | ", flag2str(set));
+			fprintf(stream, "%s%s", first ? "" : " | ",
+			    flag2str(set));
 			first = 0;
 		}
 	}
 }
 
 void
-print_entry(enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES],
+fprint_entry(FILE *stream, enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES],
     uint8_t flags)
 {
 	int i;
 
-	printf("\t[");
-	print_flags(flags);
-	printf("] = {\n");
+	fprintf(stream, "\t[");
+	fprint_flags(stream, flags);
+	fprintf(stream, "] = {\n");
 
 	for (i = 0; i < TLS13_NUM_MESSAGE_TYPES; i++) {
 		if (path[i] == 0)
 			break;
-		printf("\t\t%s,\n", mt2str(path[i]));
+		fprintf(stream, "\t\t%s,\n", mt2str(path[i]));
 	}
-	printf("\t},\n");
+	fprintf(stream, "\t},\n");
 }
 
 int
@@ -312,12 +313,12 @@ generate_graphics(void)
 				    (forced || illegal) ? ", " : "");
 			if (forced) {
 				printf("label=\"if ");
-				print_flags(stateinfo[start][end].forced);
+				fprint_flags(stdout, forced);
 				printf("\"%s", illegal ? ", " : "");
 			}
 			if (illegal) {
 				printf("label=\"not if ");
-				print_flags(stateinfo[start][end].illegal);
+				fprint_flags(stdout, illegal);
 				printf("\"");
 			}
 			if (flag || forced || illegal)
@@ -401,15 +402,16 @@ verify_table(enum tls13_message_type table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES],
 
 		for (i = 0; i < TLS13_NUM_MESSAGE_TYPES; i++) {
 			if (table[flags][i] != handshakes[flags][i]) {
-				printf("incorrect entry %d of handshake ", i);
-				print_flags(flags);
-				printf("\n");
+				fprintf(stderr,
+				    "incorrect entry %d of handshake ", i);
+				fprint_flags(stderr, flags);
+				fprintf(stderr, "\n");
 				success = 0;
 			}
 		}
 
 		if (print)
-			print_entry(table[flags], flags);
+			fprint_entry(stdout, table[flags], flags);
 	} while(++flags != 0);
 
 	num_valid = count_handshakes();
