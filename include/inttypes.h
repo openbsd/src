@@ -1,7 +1,7 @@
-/*	$OpenBSD: inttypes.h,v 1.12 2018/11/22 21:20:38 guenther Exp $	*/
+/*	$OpenBSD: inttypes.h,v 1.13 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 1997, 2005 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997, 2005 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

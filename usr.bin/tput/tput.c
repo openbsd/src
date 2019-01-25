@@ -1,7 +1,7 @@
-/*	$OpenBSD: tput.c,v 1.23 2017/08/21 21:41:13 deraadt Exp $	*/
+/*	$OpenBSD: tput.c,v 1.24 2019/01/25 00:19:27 millert Exp $	*/
 
 /*
- * Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

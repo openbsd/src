@@ -5,11 +5,11 @@
  *          Philip R. Karn <karn@chicago.qualcomm.com>
  *          John S. Walden <jsw@thumper.bellcore.com>
  *          Scott Chasin <chasin@crimelab.com>
- *          Todd C. Miller <Todd.Miller@courtesan.com>
+ *          Todd C. Miller <millert@openbsd.org>
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.34 2015/10/06 15:07:45 tim Exp $
+ * $OpenBSD: skeysubr.c,v 1.35 2019/01/25 00:19:26 millert Exp $
  */
 
 #include <stdio.h>

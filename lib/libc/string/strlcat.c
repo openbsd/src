@@ -1,7 +1,7 @@
-/*	$OpenBSD: strlcat.c,v 1.18 2016/10/16 17:37:39 dtucker Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.19 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1998, 2015 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -1,7 +1,7 @@
-/*	$OpenBSD: editor.c,v 1.352 2018/11/25 17:01:20 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.353 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

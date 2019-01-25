@@ -1,8 +1,8 @@
-/*	$OpenBSD: readpassphrase.c,v 1.26 2016/10/18 12:47:18 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.27 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002, 2007, 2010
- *	Todd C. Miller <Todd.Miller@courtesan.com>
+ *	Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

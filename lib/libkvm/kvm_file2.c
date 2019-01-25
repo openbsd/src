@@ -1,7 +1,7 @@
-/*	$OpenBSD: kvm_file2.c,v 1.54 2018/09/07 07:24:05 yasuoka Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.55 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 2009 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

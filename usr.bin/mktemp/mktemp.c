@@ -1,8 +1,8 @@
-/*	$OpenBSD: mktemp.c,v 1.22 2015/10/09 01:37:08 deraadt Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.23 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001-2003, 2013
- *	Todd C. Miller <Todd.Miller@courtesan.com>
+ *	Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

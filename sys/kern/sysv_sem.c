@@ -1,8 +1,8 @@
-/*	$OpenBSD: sysv_sem.c,v 1.54 2018/12/12 14:15:00 mpi Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.55 2019/01/25 00:19:26 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
- * Copyright (c) 2002,2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2002,2003 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

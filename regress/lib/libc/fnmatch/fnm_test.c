@@ -1,7 +1,7 @@
-/*	$OpenBSD: fnm_test.c,v 1.2 2011/09/17 15:12:38 stsp Exp $	*/
+/*	$OpenBSD: fnm_test.c,v 1.3 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Public domain, 2008, Todd C. Miller <Todd.Miller@courtesan.com>
+ * Public domain, 2008, Todd C. Miller <millert@openbsd.org>
  */
 
 #include <err.h>

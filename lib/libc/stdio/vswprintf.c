@@ -1,8 +1,8 @@
-/*	$OpenBSD: vswprintf.c,v 1.6 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: vswprintf.c,v 1.7 2019/01/25 00:19:25 millert Exp $	*/
 /*	$NetBSD: vswprintf.c,v 1.1 2005/05/14 23:51:02 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
-/*	$OpenBSD: isfdtype.c,v 1.4 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: isfdtype.c,v 1.5 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2002 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

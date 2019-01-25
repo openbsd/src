@@ -1,7 +1,7 @@
-/*	$OpenBSD: memrchr.c,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: memrchr.c,v 1.4 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 2007 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2007 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

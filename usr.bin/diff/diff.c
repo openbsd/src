@@ -1,7 +1,7 @@
-/*	$OpenBSD: diff.c,v 1.65 2015/12/29 19:04:46 gsoares Exp $	*/
+/*	$OpenBSD: diff.c,v 1.66 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

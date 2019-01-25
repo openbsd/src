@@ -1,7 +1,7 @@
-/*	$OpenBSD: failedlogin.c,v 1.17 2015/01/16 06:40:09 deraadt Exp $	*/
+/*	$OpenBSD: failedlogin.c,v 1.18 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

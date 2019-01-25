@@ -1,7 +1,7 @@
-/*	$OpenBSD: ftw.h,v 1.1 2003/07/21 21:13:18 millert Exp $	*/
+/*	$OpenBSD: ftw.h,v 1.2 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

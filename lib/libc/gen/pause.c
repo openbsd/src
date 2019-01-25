@@ -1,7 +1,7 @@
-/*	$OpenBSD: pause.c,v 1.6 2005/08/08 08:05:34 espie Exp $	*/
+/*	$OpenBSD: pause.c,v 1.7 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Written by Todd C. Miller <Todd.Miller@courtesan.com>
+ * Written by Todd C. Miller <millert@openbsd.org>
  * Public domain.
  */
 

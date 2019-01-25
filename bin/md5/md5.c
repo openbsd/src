@@ -1,8 +1,8 @@
-/*	$OpenBSD: md5.c,v 1.93 2018/09/07 14:54:49 cheloha Exp $	*/
+/*	$OpenBSD: md5.c,v 1.94 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
- *	Todd C. Miller <Todd.Miller@courtesan.com>
+ *	Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

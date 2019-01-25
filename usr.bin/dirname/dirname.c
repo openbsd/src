@@ -1,7 +1,7 @@
-/*	$OpenBSD: dirname.c,v 1.16 2016/10/28 07:22:59 schwarze Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.17 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

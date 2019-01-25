@@ -1,7 +1,7 @@
-/*	$OpenBSD: more.c,v 1.39 2018/04/26 12:42:50 guenther Exp $	*/
+/*	$OpenBSD: more.c,v 1.40 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

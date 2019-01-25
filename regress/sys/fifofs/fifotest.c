@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2014-2015 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2004, 2014-2015 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

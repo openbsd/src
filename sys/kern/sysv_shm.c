@@ -1,8 +1,8 @@
-/*	$OpenBSD: sysv_shm.c,v 1.70 2018/12/12 14:15:35 mpi Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.71 2019/01/25 00:19:26 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
- * Copyright (c) 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2002 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

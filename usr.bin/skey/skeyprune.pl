@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# Copyright (c) 1996, 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
+# Copyright (c) 1996, 2001, 2002 Todd C. Miller <millert@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,7 @@
 # Prune commented out, bogus, and crufty entries from /etc/skey
 # usage: skeyprune [days]
 #
-# $OpenBSD: skeyprune.pl,v 1.7 2015/10/06 15:06:29 tim Exp $
+# $OpenBSD: skeyprune.pl,v 1.8 2019/01/25 00:19:26 millert Exp $
 #
 
 use POSIX qw(S_ISREG);

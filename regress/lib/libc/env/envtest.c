@@ -1,7 +1,7 @@
-/*	$OpenBSD: envtest.c,v 1.1 2010/08/23 22:34:37 millert Exp $ */
+/*	$OpenBSD: envtest.c,v 1.2 2019/01/25 00:19:26 millert Exp $ */
 
 /*
- * Copyright (c) 2010 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2010 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

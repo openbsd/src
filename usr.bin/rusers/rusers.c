@@ -1,7 +1,7 @@
-/*	$OpenBSD: rusers.c,v 1.40 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.41 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2001, 2003 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

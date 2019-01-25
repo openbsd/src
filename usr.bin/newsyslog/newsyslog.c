@@ -1,7 +1,7 @@
-/*	$OpenBSD: newsyslog.c,v 1.109 2018/09/16 02:44:06 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.110 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

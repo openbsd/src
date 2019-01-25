@@ -1,7 +1,7 @@
-/*	$OpenBSD: wcslcpy.c,v 1.7 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: wcslcpy.c,v 1.8 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 1998, 2015 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1998, 2015 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

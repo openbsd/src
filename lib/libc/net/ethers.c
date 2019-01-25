@@ -1,7 +1,7 @@
-/*	$OpenBSD: ethers.c,v 1.26 2018/11/09 17:49:32 brynet Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.27 2019/01/25 00:19:25 millert Exp $	*/
 
 /*
- * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
 /* 
  * ethers(3) a la Sun.
  * Originally Written by Roland McGrath <roland@frob.com> 10/14/93.
- * Substantially modified by Todd C. Miller <Todd.Miller@courtesan.com>
+ * Substantially modified by Todd C. Miller <millert@openbsd.org>
  */
 
 #include <sys/types.h>

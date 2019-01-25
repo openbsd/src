@@ -1,7 +1,7 @@
-/*	$OpenBSD: gcvt_test.c,v 1.4 2010/09/18 20:29:15 millert Exp $	*/
+/*	$OpenBSD: gcvt_test.c,v 1.5 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Public domain, 2010, Todd C. Miller <Todd.Miller@courtesan.com>
+ * Public domain, 2010, Todd C. Miller <millert@openbsd.org>
  */
 
 #include <stdio.h>

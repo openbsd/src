@@ -1,7 +1,7 @@
-/*	$OpenBSD: globtest.c,v 1.3 2011/01/07 19:45:44 millert Exp $	*/
+/*	$OpenBSD: globtest.c,v 1.4 2019/01/25 00:19:26 millert Exp $	*/
 
 /*
- * Public domain, 2008, Todd C. Miller <Todd.Miller@courtesan.com>
+ * Public domain, 2008, Todd C. Miller <millert@openbsd.org>
  */
 
 #include <err.h>
