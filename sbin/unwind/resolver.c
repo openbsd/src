@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.6 2019/01/25 10:15:12 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.7 2019/01/25 10:16:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1045,7 +1045,7 @@ send_detailed_resolver_info(struct unwind_resolver *res, pid_t pid)
 {
 	char	 buf[1024];
 
-	if (res->type == RESOLVING) {
+	if (res->state == RESOLVING) {
 		(void)strlcpy(buf, res->why_bogus, sizeof(buf));
 		resolver_imsg_compose_frontend(IMSG_CTL_RESOLVER_WHY_BOGUS,
 		    pid, buf, sizeof(buf));
