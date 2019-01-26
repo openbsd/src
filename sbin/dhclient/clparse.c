@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.181 2019/01/26 22:55:10 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.182 2019/01/26 23:26:20 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -302,7 +302,7 @@ parse_conf_decl(FILE *cfile, char *name)
 			if (count == 0) {
 				for (i = 0; i < DHO_COUNT; i++)
 					if (p[i] == ACTION_IGNORE)
-						p[i] = ACTION_NONE;
+						p[i] = ACTION_USELEASE;
 			} else {
 				for (i = 0; i < count; i++)
 					p[list[i]] = ACTION_IGNORE;
@@ -333,7 +333,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		if (parse_ip_addr(cfile, &config->next_server) == 1)
 			parse_semi(cfile);
 		break;
-	case TOK_NOACTION:
+	case TOK_USELEASE:
 		memset(list, 0, sizeof(list));
 		count = 0;
 		if (parse_option_list(cfile, &count, list) == 1) {
@@ -343,14 +343,14 @@ parse_conf_decl(FILE *cfile, char *name)
 					free(config->defaults[i].data);
 					config->defaults[i].data = NULL;
 					config->defaults[i].len = 0;
-					p[i] = ACTION_NONE;
+					p[i] = ACTION_USELEASE;
 				}
 			} else {
 				for (i = 0; i < count; i++) {
 					free(config->defaults[list[i]].data);
 					config->defaults[list[i]].data = NULL;
 					config->defaults[list[i]].len = 0;
-					p[list[i]] = ACTION_NONE;
+					p[list[i]] = ACTION_USELEASE;
 				}
 			}
 			parse_semi(cfile);

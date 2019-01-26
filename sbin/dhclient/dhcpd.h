@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.271 2019/01/19 21:07:13 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.272 2019/01/26 23:26:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ enum dhcp_state {
 };
 
 enum actions {
-	ACTION_NONE,
+	ACTION_USELEASE,
 	ACTION_DEFAULT,
 	ACTION_SUPERSEDE,
 	ACTION_PREPEND,
