@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.180 2019/01/18 02:16:31 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.181 2019/01/26 22:55:10 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -332,6 +332,29 @@ parse_conf_decl(FILE *cfile, char *name)
 	case TOK_NEXT_SERVER:
 		if (parse_ip_addr(cfile, &config->next_server) == 1)
 			parse_semi(cfile);
+		break;
+	case TOK_NOACTION:
+		memset(list, 0, sizeof(list));
+		count = 0;
+		if (parse_option_list(cfile, &count, list) == 1) {
+			enum actions *p = config->default_actions;
+			if (count == 0) {
+				for (i = 0; i < DHO_COUNT; i++) {
+					free(config->defaults[i].data);
+					config->defaults[i].data = NULL;
+					config->defaults[i].len = 0;
+					p[i] = ACTION_NONE;
+				}
+			} else {
+				for (i = 0; i < count; i++) {
+					free(config->defaults[list[i]].data);
+					config->defaults[list[i]].data = NULL;
+					config->defaults[list[i]].len = 0;
+					p[list[i]] = ACTION_NONE;
+				}
+			}
+			parse_semi(cfile);
+		}
 		break;
 	case TOK_PREPEND:
 		if (parse_option(cfile, &i, config->defaults) == 1) {

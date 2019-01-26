@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.44 2018/05/12 12:50:17 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.45 2019/01/26 22:55:10 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: May 12 2018 $
+.Dd $Mdocdate: January 26 2019 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -205,6 +205,27 @@ for the given
 regardless of the value in the lease.
 Each
 .Ic supersede
+for
+.Ar option
+overrides any previous
+.Ic append ,
+.Ic default ,
+.Ic ignore ,
+.Ic prepend
+or
+.Ic supersede
+for
+.Ar option .
+.It Ic uselease Op Ar option , ... ;
+Use the unmodified values provided in the lease for
+any specified
+.Ar option .
+.Ic uselease
+statements are cumulative.
+If no
+.Ar option
+is specified all lease option values will be used unmodified.
+.Ic uselease
 for
 .Ar option
 overrides any previous
