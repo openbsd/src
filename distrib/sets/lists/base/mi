@@ -201,6 +201,7 @@
 ./etc/rc.d/tftpd
 ./etc/rc.d/tftpproxy
 ./etc/rc.d/unbound
+./etc/rc.d/unwind
 ./etc/rc.d/vmd
 ./etc/rc.d/watchdogd
 ./etc/rc.d/wsmoused
@@ -304,6 +305,7 @@
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
+./sbin/unwind
 ./sbin/vnconfig
 ./tmp
 ./usr
@@ -2516,6 +2518,7 @@
 ./usr/sbin/unbound-control
 ./usr/sbin/unbound-control-setup
 ./usr/sbin/unbound-host
+./usr/sbin/unwindctl
 ./usr/sbin/usbdevs
 ./usr/sbin/user
 ./usr/sbin/useradd

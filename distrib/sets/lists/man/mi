@@ -2109,6 +2109,7 @@
 ./usr/share/man/man5/ttys.5
 ./usr/share/man/man5/tzfile.5
 ./usr/share/man/man5/unbound.conf.5
+./usr/share/man/man5/unwind.conf.5
 ./usr/share/man/man5/usermgmt.conf.5
 ./usr/share/man/man5/utmp.5
 ./usr/share/man/man5/uuencode.5
@@ -2476,6 +2477,8 @@
 ./usr/share/man/man8/unbound-checkconf.8
 ./usr/share/man/man8/unbound-control.8
 ./usr/share/man/man8/unbound.8
+./usr/share/man/man8/unwind.8
+./usr/share/man/man8/unwindctl.8
 ./usr/share/man/man8/usbdevs.8
 ./usr/share/man/man8/vipw.8
 ./usr/share/man/man8/vmctl.8
