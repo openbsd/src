@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.44 2018/11/24 04:11:47 jsing Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.45 2019/01/26 11:30:32 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -118,6 +118,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
@@ -343,10 +345,11 @@ OPENSSL_cpuid_setup(void)
 static void
 OPENSSL_showfatal(const char *fmta, ...)
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	va_list ap;
 
 	va_start(ap, fmta);
-	vfprintf(stderr, fmta, ap);
+	vsyslog_r(LOG_INFO|LOG_LOCAL2, &sdata, fmta, ap);
 	va_end(ap);
 }
 
@@ -354,9 +357,9 @@ void
 OpenSSLDie(const char *file, int line, const char *assertion)
 {
 	OPENSSL_showfatal(
-	    "%s(%d): OpenSSL internal error, assertion failed: %s\n",
-	    file, line, assertion);
-	abort();
+	    "uid %u cmd %s %s(%d): OpenSSL internal error, assertion failed: %s\n",
+	    getuid(), getprogname(), file, line, assertion);
+	_exit(1);
 }
 
 int
