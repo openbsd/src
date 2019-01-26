@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.23 2019/01/26 11:47:41 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.24 2019/01/26 16:18:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1750,7 +1750,7 @@ witness_get(void)
 	index = w->w_index;
 	KASSERT(index > 0 && index == w_max_used_index + 1 &&
 	    index < witness_count);
-	bzero(w, sizeof(*w));
+	memset(w, 0, sizeof(*w));
 	w->w_index = index;
 	if (index > w_max_used_index)
 		w_max_used_index = index;
@@ -1796,7 +1796,7 @@ witness_lock_list_get(void)
 	}
 	w_lock_list_free = lle->ll_next;
 	mtx_leave(&w_mtx);
-	bzero(lle, sizeof(*lle));
+	memset(lle, 0, sizeof(*lle));
 	return (lle);
 }
 
