@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.106 2017/06/03 10:00:29 florian Exp $
+#	$OpenBSD: Makefile,v 1.107 2019/01/26 10:59:30 florian Exp $
 
 SUBDIR=	atactl badsect bioctl clri dhclient \
 	disklabel dmesg dump dumpfs fdisk fsck fsck_ext2fs fsck_ffs  \
@@ -10,6 +10,6 @@ SUBDIR=	atactl badsect bioctl clri dhclient \
 	nfsd nologin pdisk pfctl pflogd ping quotacheck \
 	reboot restore route savecore scan_ffs \
 	scsi slaacd shutdown swapctl sysctl ttyflags tunefs \
-	umount wsconsctl
+	umount unwind wsconsctl
 
 .include <bsd.subdir.mk>
