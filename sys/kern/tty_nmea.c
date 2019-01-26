@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.47 2018/09/01 06:09:26 landry Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.48 2019/01/26 22:51:13 landry Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -38,6 +38,7 @@ void	nmeaattach(int);
 
 #define NMEAMAX		82
 #define MAXFLDS		32
+#define KNOTTOMS	(51444 / 100)
 #ifdef NMEA_DEBUG
 #define TRUSTTIME	30
 #else
@@ -52,6 +53,8 @@ struct nmea {
 	struct ksensor		signal;		/* signal status */
 	struct ksensor		latitude;
 	struct ksensor		longitude;
+	struct ksensor		altitude;
+	struct ksensor		speed;
 	struct ksensordev	timedev;
 	struct timespec		ts;		/* current timestamp */
 	struct timespec		lts;		/* timestamp of last '$' seen */
@@ -70,6 +73,7 @@ struct nmea {
 /* NMEA decoding */
 void	nmea_scan(struct nmea *, struct tty *);
 void	nmea_gprmc(struct nmea *, struct tty *, char *fld[], int fldcnt);
+void	nmea_decode_gga(struct nmea *, struct tty *, char *fld[], int fldcnt);
 
 /* date and time conversion */
 int	nmea_date_to_nano(char *s, int64_t *nano);
@@ -77,6 +81,7 @@ int	nmea_time_to_nano(char *s, int64_t *nano);
 
 /* longitude and latitude conversion */
 int	nmea_degrees(int64_t *dst, char *src, int neg);
+int	nmea_atoi(int64_t *dst, char *src);
 
 /* degrade the timedelta sensor */
 void	nmea_timeout(void *);
@@ -125,6 +130,20 @@ nmeaopen(dev_t dev, struct tty *tp, struct proc *p)
 	np->longitude.value = 0;
 	strlcpy(np->longitude.desc, "Longitude", sizeof(np->longitude.desc));
 	sensor_attach(&np->timedev, &np->longitude);
+
+	np->altitude.type = SENSOR_DISTANCE;
+	np->altitude.status = SENSOR_S_UNKNOWN;
+	np->altitude.flags = SENSOR_FINVALID;
+	np->altitude.value = 0;
+	strlcpy(np->altitude.desc, "Altitude", sizeof(np->altitude.desc));
+	sensor_attach(&np->timedev, &np->altitude);
+
+	np->speed.type = SENSOR_VELOCITY;
+	np->speed.status = SENSOR_S_UNKNOWN;
+	np->speed.flags = SENSOR_FINVALID;
+	np->speed.value = 0;
+	strlcpy(np->speed.desc, "Ground speed", sizeof(np->speed.desc));
+	sensor_attach(&np->timedev, &np->speed);
 
 	np->sync = 1;
 	tp->t_sc = (caddr_t)np;
@@ -261,7 +280,7 @@ nmea_scan(struct nmea *np, struct tty *tp)
 	}
 
 	/*
-	 * we only look at the RMC message, which can come from different 'talkers',
+	 * we only look at the messages coming from well-known sources or 'talkers',
 	 * distinguished by the two-chars prefix, the most common being:
 	 * GPS (GP)
 	 * Glonass (GL)
@@ -269,11 +288,16 @@ nmea_scan(struct nmea *np, struct tty *tp)
 	 * Galileo (GA)
 	 * 'Any kind/a mix of GNSS systems' (GN)
 	 */
-	if (strcmp(fld[0], "BDRMC") &&
-	    strcmp(fld[0], "GARMC") &&
-	    strcmp(fld[0], "GLRMC") &&
-	    strcmp(fld[0], "GNRMC") &&
-	    strcmp(fld[0], "GPRMC"))
+	if (strncmp(fld[0], "BD", 2) &&
+	    strncmp(fld[0], "GA", 2) &&
+	    strncmp(fld[0], "GL", 2) &&
+	    strncmp(fld[0], "GN", 2) &&
+	    strncmp(fld[0], "GP", 2))
+		return;
+		
+	/* we look for the RMC & GGA messages */
+	if (strncmp(fld[0] + 2, "RMC", 3) &&
+	    strncmp(fld[0] + 2, "GGA", 3))
 		return;
 
 	/* if we have a checksum, verify it */
@@ -299,7 +323,10 @@ nmea_scan(struct nmea *np, struct tty *tp)
 			return;
 		}
 	}
-	nmea_gprmc(np, tp, fld, fldcnt);
+	if (strncmp(fld[0] + 2, "RMC", 3) == 0)
+		nmea_gprmc(np, tp, fld, fldcnt);
+	if (strncmp(fld[0] + 2, "GGA", 3) == 0)
+		nmea_decode_gga(np, tp, fld, fldcnt);
 }
 
 /* Decode the recommended minimum specific GPS/TRANSIT data. */
@@ -385,9 +412,11 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 		np->signal.status = SENSOR_S_OK;
 		np->latitude.status = SENSOR_S_OK;
 		np->longitude.status = SENSOR_S_OK;
+		np->speed.status = SENSOR_S_OK;
 		np->time.flags &= ~SENSOR_FINVALID;
 		np->latitude.flags &= ~SENSOR_FINVALID;
 		np->longitude.flags &= ~SENSOR_FINVALID;
+		np->speed.flags &= ~SENSOR_FINVALID;
 		break;
 	case 'V':	/*
 			 * The GPS indicates a warning status, do not add to
@@ -399,12 +428,18 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 		np->signal.status = SENSOR_S_CRIT;
 		np->latitude.status = SENSOR_S_WARN;
 		np->longitude.status = SENSOR_S_WARN;
+		np->speed.status = SENSOR_S_WARN;
 		break;
 	}
 	if (nmea_degrees(&np->latitude.value, fld[3], *fld[4] == 'S' ? 1 : 0))
 		np->latitude.status = SENSOR_S_WARN;
 	if (nmea_degrees(&np->longitude.value,fld[5], *fld[6] == 'W' ? 1 : 0))
 		np->longitude.status = SENSOR_S_WARN;
+
+	if (nmea_atoi(&np->speed.value, fld[7]))
+		np->speed.status = SENSOR_S_WARN;
+	/* convert from knot to um/s */
+	np->speed.value *= KNOTTOMS;
 
 	if (jumped)
 		np->time.status = SENSOR_S_WARN;
@@ -416,6 +451,64 @@ nmea_gprmc(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
 	 */
 	if (np->no_pps)
 		np->time.status = SENSOR_S_CRIT;
+}
+
+/* Decode the GPS fix data for altitude.
+ * - field 9 is the altitude in meters
+ * $GNGGA,085901.00,1234.5678,N,00987.12345,E,1,12,0.84,1040.9,M,47.4,M,,*4B
+ */
+void
+nmea_decode_gga(struct nmea *np, struct tty *tp, char *fld[], int fldcnt)
+{
+	if (fldcnt != 15) {
+		DPRINTF(("GGA: field count mismatch, %d\n", fldcnt));
+		return;
+	}
+#ifdef NMEA_DEBUG
+	if (nmeadebug > 0) {
+		linesw[TTYDISC].l_rint('[', tp);
+		linesw[TTYDISC].l_rint('C', tp);
+		linesw[TTYDISC].l_rint(']', tp);
+	}
+#endif
+
+	np->altitude.status = SENSOR_S_OK;
+	if (nmea_atoi(&np->altitude.value, fld[9]))
+		np->altitude.status = SENSOR_S_WARN;
+
+	/* convert to uMeter */
+	np->altitude.value *= 1000;
+	np->altitude.flags &= ~SENSOR_FINVALID;
+}
+
+/*
+ * Convert nmea integer/decimal values in the form of XXXX.Y to an integer value
+ * if it's a meter/altitude value, will be returned as mm
+ */
+int
+nmea_atoi(int64_t *dst, char *src)
+{
+	char *p;
+	int i = 3; /* take 3 digits */
+	*dst = 0;
+
+	for (p = src; *p && *p != '.' && *p >= '0' && *p <= '9' ; )
+		*dst = *dst * 10 + (*p++ - '0');
+
+	/* *p should be '.' at that point */
+	if (*p != '.')
+		return -1;	/* no decimal point, or bogus value ? */
+	p++;
+
+	/* read digits after decimal point, stop at first non-digit */
+	for (; *p && i > 0 && *p >= '0' && *p <= '9' ; i--)
+		*dst = *dst * 10 + (*p++ - '0');
+
+	for (; i > 0 ; i--)
+		*dst *= 10;
+
+	DPRINTFN(2,("%s -> %lld\n", src, *dst));
+	return 0;
 }
 
 /*
@@ -557,6 +650,8 @@ nmea_timeout(void *xnp)
 		np->time.status = SENSOR_S_WARN;
 		np->latitude.status = SENSOR_S_WARN;
 		np->longitude.status = SENSOR_S_WARN;
+		np->altitude.status = SENSOR_S_WARN;
+		np->speed.status = SENSOR_S_WARN;
 		/*
 		 * further degrade in TRUSTTIME seconds if no new valid NMEA
 		 * sentences are received.
@@ -566,5 +661,7 @@ nmea_timeout(void *xnp)
 		np->time.status = SENSOR_S_CRIT;
 		np->latitude.status = SENSOR_S_CRIT;
 		np->longitude.status = SENSOR_S_CRIT;
+		np->altitude.status = SENSOR_S_CRIT;
+		np->speed.status = SENSOR_S_CRIT;
 	}
 }
