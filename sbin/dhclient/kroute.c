@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.157 2019/01/10 14:49:07 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.158 2019/01/26 23:14:36 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -670,7 +670,7 @@ default_route_index(int rdomain, int routefd)
 			log_debug("%s: writev(RTM_GET) - no default route",
 			    log_procname);
 		else
-			log_warn("%s: writev(RTM_GET)", log_procname); 
+			log_warn("%s: writev(RTM_GET)", log_procname);
 		return 0;
 	}
 
