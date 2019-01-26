@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.87 2018/05/13 14:48:19 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.88 2019/01/26 11:57:21 mglocker Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -961,6 +961,12 @@ synaptics_set_mode(struct pms_softc *sc, int mode)
 	if (pms_spec_cmd(sc, mode) ||
 	    pms_set_rate(sc, SYNAPTICS_CMD_SET_MODE))
 		return (-1);
+
+	/*
+	 * Make sure that the set mode command has finished.
+	 * Otherwise enabling the device before that will make it fail.
+	 */
+	delay(10000);
 
 	syn->mode = mode;
 
