@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nmea.4,v 1.26 2018/09/02 08:14:25 landry Exp $
+.\"	$OpenBSD: nmea.4,v 1.27 2019/01/26 22:53:25 landry Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2018 $
+.Dd $Mdocdate: January 26 2019 $
 .Dt NMEA 4
 .Os
 .Sh NAME
@@ -37,16 +37,19 @@ The byte stream is unaltered by the line discipline which
 maintains timedelta and position sensors using the NMEA data.
 The sensors will appear as nmea* in the list.
 The timedelta (nanoseconds difference between the received time
-information and the local time), and position (calculated
-latitude and longitude in degrees) can be accessed through the
+information and the local time), position (calculated latitude
+and longitude in degrees), altitude and speed can be accessed
+through the
 .Xr sysctl 8
 interface.
 .Pp
 The
 .Nm
-line discipline decodes NMEA 0183
-Recommended Minimum Specific GPS/TRANSIT Data sentences.
-The time and date information and position are extracted.
+line discipline decodes the following NMEA 0183 sentences:
+.Bl -tag -width "RMCXX"
+.It RMC
+Recommended Minimum Specific GPS/TRANSIT Data.
+The time and date information, position and speed are extracted.
 The warning indication is used to provide the sensor status (see below).
 If the attached device sends the RMC message in the 13-field format,
 the operation mode of the GPS device is reported in the sensor description.
@@ -54,8 +57,12 @@ The sensor timestamp is copied from the tty timestamp if a device with PPS
 is being used and tty timestamping has been turned on.
 Otherwise the sensor timestamp is taken when the initial `$' character of
 a message block is received from the NMEA device.
+.It GGA
+current fix data.
+The altitude in meters is extracted.
+.El
 .Pp
-RMC messages source are recognised by the first two characters of the
+Messages source are recognised by the first two characters of the NMEA
 sentence according to the following prefixes:
 .Pp
 .Bl -tag -width "XXXXX" -offset indent -compact
