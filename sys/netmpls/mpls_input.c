@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.68 2018/01/12 06:57:56 jca Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.69 2019/01/26 06:58:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -90,7 +90,7 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 
 	/* check and decrement TTL */
 	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
-	if (--ttl == 0) {
+	if (ttl <= 1) {
 		/* TTL exceeded */
 		m = mpls_do_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, 0);
 		if (m == NULL)
@@ -98,7 +98,8 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 
 		shim = mtod(m, struct shim_hdr *);
 		ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
-	}
+	} else
+		ttl--;
 	hasbos = MPLS_BOS_ISSET(shim->shim_label);
 
 	bzero(&sa_mpls, sizeof(sa_mpls));
