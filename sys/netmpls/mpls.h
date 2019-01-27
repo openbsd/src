@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.40 2019/01/27 04:20:59 dlg Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.41 2019/01/27 05:13:04 dlg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -155,7 +155,6 @@ struct ifmpwreq {
 
 extern	struct domain mplsdomain;
 
-
 extern int		mpls_defttl;
 extern int		mpls_mapttl_ip;
 extern int		mpls_mapttl_ip6;
@@ -165,6 +164,11 @@ extern int		mpls_inkloop;
 struct mbuf	*mpls_shim_pop(struct mbuf *);
 struct mbuf	*mpls_shim_swap(struct mbuf *, struct rt_mpls *);
 struct mbuf	*mpls_shim_push(struct mbuf *, struct rt_mpls *);
+
+struct mbuf	*mpls_ip_adjttl(struct mbuf *, u_int8_t);
+#ifdef INET6
+struct mbuf	*mpls_ip6_adjttl(struct mbuf *, u_int8_t);
+#endif
 
 int		 mpls_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);

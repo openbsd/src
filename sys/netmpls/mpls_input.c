@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.72 2019/01/27 04:20:59 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.73 2019/01/27 05:13:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -43,11 +43,6 @@
 #ifdef MPLS_DEBUG
 #define MPLS_LABEL_GET(l)	((ntohl((l) & MPLS_LABEL_MASK)) >> MPLS_LABEL_OFFSET)
 #define MPLS_TTL_GET(l)		(ntohl((l) & MPLS_TTL_MASK))
-#endif
-
-struct mbuf	*mpls_ip_adjttl(struct mbuf *, u_int8_t);
-#ifdef INET6
-struct mbuf	*mpls_ip6_adjttl(struct mbuf *, u_int8_t);
 #endif
 
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
@@ -128,15 +123,21 @@ mpls_input(struct ifnet *ifp, struct mbuf *m)
 			switch (ntohl(smpls->smpls_label)) {
 			case MPLS_LABEL_IPV4NULL:
 do_v4:
-				if ((m = mpls_ip_adjttl(m, ttl)) == NULL)
-					return;
+				if (mpls_mapttl_ip) {
+					m = mpls_ip_adjttl(m, ttl);
+					if (m == NULL)
+						return;
+				}
 				ipv4_input(ifp, m);
 				return;
 #ifdef INET6
 			case MPLS_LABEL_IPV6NULL:
 do_v6:
-				if ((m = mpls_ip6_adjttl(m, ttl)) == NULL)
-					return;
+				if (mpls_mapttl_ip6) {
+					m = mpls_ip6_adjttl(m, ttl);
+					if (m == NULL)
+						return;
+				}
 				ipv6_input(ifp, m);
 				return;
 #endif	/* INET6 */
@@ -302,52 +303,41 @@ struct mbuf *
 mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 {
 	struct ip *ip;
-	int hlen;
+	uint16_t old, new, x;
 
-	if (mpls_mapttl_ip) {
-		if (m->m_len < sizeof(struct ip) &&
-		    (m = m_pullup(m, sizeof(struct ip))) == NULL)
-			return NULL;
-		ip = mtod(m, struct ip *);
-		hlen = ip->ip_hl << 2;
-		if (m->m_len < hlen) {
-			if ((m = m_pullup(m, hlen)) == NULL)
-				return NULL;
-			ip = mtod(m, struct ip *);
-		}
-		/* make sure we have a valid header */
-		if (in_cksum(m, hlen) != 0) {
-			m_freem(m);
-			return NULL;
-		}
-
-		/* set IP ttl from MPLS ttl */
-		ip->ip_ttl = ttl;
-
-		/* recalculate checksum */
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, hlen);
+	if (m->m_len < sizeof(*ip)) {
+		m = m_pullup(m, sizeof(*ip));
+		if (m == NULL)
+			return (NULL);
 	}
-	return m;
+	ip = mtod(m, struct ip *);
+
+	old = htons(ip->ip_ttl << 8);
+	new = htons(ttl << 8);
+	x = ip->ip_sum + old - new;
+
+	ip->ip_ttl = ttl;
+	ip->ip_sum = (x) + (x >> 16);
+
+	return (m);
 }
 
 #ifdef INET6
 struct mbuf *
 mpls_ip6_adjttl(struct mbuf *m, u_int8_t ttl)
 {
-	struct ip6_hdr *ip6hdr;
+	struct ip6_hdr *ip6;
 
-	if (mpls_mapttl_ip6) {
-		if (m->m_len < sizeof(struct ip6_hdr) &&
-		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
-			return NULL;
-
-		ip6hdr = mtod(m, struct ip6_hdr *);
-
-		/* set IPv6 ttl from MPLS ttl */
-		ip6hdr->ip6_hlim = ttl;
+	if (m->m_len < sizeof(*ip6)) {
+		m = m_pullup(m, sizeof(*ip6));
+		if (m == NULL)
+			return (NULL);
 	}
-	return m;
+	ip6 = mtod(m, struct ip6_hdr *);
+
+	ip6->ip6_hlim = ttl;
+
+	return (m);
 }
 #endif	/* INET6 */
 

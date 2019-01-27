@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.69 2019/01/27 04:54:06 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.70 2019/01/27 05:13:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -408,22 +408,9 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 	switch (*mtod(n, uint8_t *) >> 4) {
 	case 4:
 		if (mpls_mapttl_ip) {
-			struct ip *ip;
-			uint16_t old, new, x;
-
-			if (m->m_len < sizeof(*ip)) {
-				m = m_pullup(m, sizeof(*ip));
-				if (m == NULL)
-					return;
-			}
-			ip = mtod(m, struct ip *);
-
-			old = htons(ip->ip_ttl << 8);
-			new = htons(ttl << 8);
-			x = ip->ip_sum + old - new;
-
-			ip->ip_ttl = ttl;
-			ip->ip_sum = (x) + (x >> 16);
+			m = mpls_ip_adjttl(m, ttl);
+			if (m == NULL)
+				return;
 		}
 		input = ipv4_input;
 		m->m_pkthdr.ph_family = AF_INET;
@@ -431,15 +418,9 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET6
 	case 6:
 		if (mpls_mapttl_ip6) {
-			struct ip6_hdr *ip6;
-
-			if (m->m_len < sizeof(*ip6)) {
-				m = m_pullup(m, sizeof(*ip6));
-				if (m == NULL)
-					return;
-			}
-			ip6 = mtod(m, struct ip6_hdr *);
-			ip6->ip6_hlim = ttl;
+			m = mpls_ip6_adjttl(m, ttl);
+			if (m == NULL)
+				return;
 		}
 		input = ipv6_input;
 		m->m_pkthdr.ph_family = AF_INET6;
