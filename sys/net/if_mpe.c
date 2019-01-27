@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.65 2019/01/27 02:29:46 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.66 2019/01/27 02:35:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -78,16 +78,16 @@ mpeattach(int nmpe)
 int
 mpe_clone_create(struct if_clone *ifc, int unit)
 {
+	struct mpe_softc	*sc;
 	struct ifnet		*ifp;
-	struct mpe_softc	*mpeif;
 
-	mpeif = malloc(sizeof(*mpeif), M_DEVBUF, M_WAITOK|M_ZERO);
-	mpeif->sc_unit = unit;
-	ifp = &mpeif->sc_if;
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc->sc_unit = unit;
+	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "mpe%d", unit);
 	ifp->if_flags = IFF_POINTOPOINT;
 	ifp->if_xflags = IFXF_CLONED;
-	ifp->if_softc = mpeif;
+	ifp->if_softc = sc;
 	ifp->if_mtu = MPE_MTU;
 	ifp->if_ioctl = mpe_ioctl;
 	ifp->if_output = mpe_output;
@@ -101,12 +101,12 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 
-	mpeif->sc_ifa.ifa_ifp = ifp;
-	mpeif->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
-	mpeif->sc_smpls.smpls_len = sizeof(mpeif->sc_smpls);
-	mpeif->sc_smpls.smpls_family = AF_MPLS;
+	sc->sc_ifa.ifa_ifp = ifp;
+	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
+	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
+	sc->sc_smpls.smpls_family = AF_MPLS;
 
-	LIST_INSERT_HEAD(&mpeif_list, mpeif, sc_list);
+	LIST_INSERT_HEAD(&mpeif_list, sc, sc_list);
 
 	return (0);
 }
@@ -114,17 +114,17 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 int
 mpe_clone_destroy(struct ifnet *ifp)
 {
-	struct mpe_softc	*mpeif = ifp->if_softc;
+	struct mpe_softc	*sc = ifp->if_softc;
 
-	LIST_REMOVE(mpeif, sc_list);
+	LIST_REMOVE(sc, sc_list);
 
-	if (mpeif->sc_smpls.smpls_label) {
-		rt_ifa_del(&mpeif->sc_ifa, RTF_MPLS,
-		    smplstosa(&mpeif->sc_smpls));
+	if (sc->sc_smpls.smpls_label) {
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
+		    smplstosa(&sc->sc_smpls));
 	}
 
 	if_detach(ifp);
-	free(mpeif, M_DEVBUF, sizeof *mpeif);
+	free(sc, M_DEVBUF, sizeof *sc);
 	return (0);
 }
 
