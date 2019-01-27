@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.8 2019/01/27 01:13:20 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.9 2019/01/27 03:59:23 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -112,7 +112,6 @@ static struct child stateinfo[][TLS13_NUM_MESSAGE_TYPES] = {
 	[SERVER_FINISHED] = {
 		{CLIENT_FINISHED, DEFAULT, WITHOUT_CR | WITH_PSK, 0},
 		{CLIENT_CERTIFICATE, DEFAULT, 0, WITHOUT_CR | WITH_PSK},
-		/* {CLIENT_END_OF_EARLY_DATA, WITH_0RTT, 0, 0}, */
 	},
 	[CLIENT_CERTIFICATE] = {
 		{CLIENT_FINISHED, DEFAULT, 0, 0},
