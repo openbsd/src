@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.68 2019/01/27 04:20:59 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.69 2019/01/27 04:54:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -387,48 +387,66 @@ void
 mpe_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct shim_hdr	*shim;
-	struct ip	*ip;
-	int		 hlen;
+	struct mbuf 	*n;
 	uint8_t		 ttl;
+	void (*input)(struct ifnet *, struct mbuf *);
 
 	shim = mtod(m, struct shim_hdr *);
-	if (!MPLS_BOS_ISSET(shim->shim_label)) {
-		m_freem(m);
-		return;
-	}
+	if (!MPLS_BOS_ISSET(shim->shim_label))
+		goto drop;
+
 	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
 	m_adj(m, sizeof(*shim));
 
-	if (m->m_len < sizeof(*ip)) {
-		m = m_pullup(m, sizeof(*ip));
-		if (m == NULL)
-			return;
-	}
-	ip = mtod(m, struct ip *);
-	if (ip->ip_v != IPVERSION) {
-		m_freem(m);
-		return;
+	n = m;
+	while (n->m_len == 0) {
+		n = n->m_next;
+		if (n == NULL)
+			goto drop;
 	}
 
-	if (mpls_mapttl_ip) {
-		hlen = ip->ip_hl << 2;
-		if (m->m_len < hlen) {
-			if ((m = m_pullup(m, hlen)) == NULL)
-				return;
+	switch (*mtod(n, uint8_t *) >> 4) {
+	case 4:
+		if (mpls_mapttl_ip) {
+			struct ip *ip;
+			uint16_t old, new, x;
+
+			if (m->m_len < sizeof(*ip)) {
+				m = m_pullup(m, sizeof(*ip));
+				if (m == NULL)
+					return;
+			}
 			ip = mtod(m, struct ip *);
+
+			old = htons(ip->ip_ttl << 8);
+			new = htons(ttl << 8);
+			x = ip->ip_sum + old - new;
+
+			ip->ip_ttl = ttl;
+			ip->ip_sum = (x) + (x >> 16);
 		}
+		input = ipv4_input;
+		m->m_pkthdr.ph_family = AF_INET;
+		break;
+#ifdef INET6
+	case 6:
+		if (mpls_mapttl_ip6) {
+			struct ip6_hdr *ip6;
 
-		if (in_cksum(m, hlen) != 0) {
-			m_freem(m);
-			return;
+			if (m->m_len < sizeof(*ip6)) {
+				m = m_pullup(m, sizeof(*ip6));
+				if (m == NULL)
+					return;
+			}
+			ip6 = mtod(m, struct ip6_hdr *);
+			ip6->ip6_hlim = ttl;
 		}
-
-		/* set IP ttl from MPLS ttl */
-		ip->ip_ttl = ttl;
-
-		/* recalculate checksum */
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(m, hlen);
+		input = ipv6_input;
+		m->m_pkthdr.ph_family = AF_INET6;
+		break;
+#endif /* INET6 */
+	default:
+		goto drop;
 	}
 
 	/* new receive if and move into correct rtable */
@@ -436,9 +454,14 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, AF_INET, m, BPF_DIRECTION_IN);
+	if (ifp->if_bpf) {
+		bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family,
+		    m, BPF_DIRECTION_IN);
+	}
 #endif
 
-	ipv4_input(ifp, m);
+	(*input)(ifp, m);
+	return;
+drop:
+	m_freem(m);
 }
