@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.26 2019/01/27 01:42:31 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.27 2019/01/27 02:24:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -265,9 +265,20 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 	if (sc->sc_type == IMR_TYPE_NONE)
 		goto drop;
 
+	shim = mtod(m, struct shim_hdr *);
+	if (!MPLS_BOS_ISSET(shim->shim_label)) {
+		/* don't have RFC 6391: Flow-Aware Transport of Pseudowires */
+		goto drop;
+	}
+	m_adj(m, sizeof(*shim));
+
 	if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
+		if (m->m_len < sizeof(*shim)) {
+			m = m_pullup(m, sizeof(*shim));
+			if (m == NULL)
+				return;
+		}
 		shim = mtod(m, struct shim_hdr *);
-		m_adj(m, MPLS_HDRLEN);
 
 		/*
 		 * The first 4 bits identifies that this packet is a
@@ -284,6 +295,8 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 			ifp->if_ierrors++;
 			goto drop;
 		}
+
+		m_adj(m, MPLS_HDRLEN);
 	}
 
 	if (m->m_len < sizeof(struct ether_header)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.70 2019/01/27 01:39:05 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.71 2019/01/27 02:24:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -51,6 +51,7 @@ struct mbuf	*mpls_ip6_adjttl(struct mbuf *, u_int8_t);
 #endif
 
 struct mbuf	*mpls_do_error(struct mbuf *, int, int, int);
+void		 mpls_input_local(struct rtentry *, struct mbuf *);
 
 void
 mpls_input(struct ifnet *ifp, struct mbuf *m)
@@ -185,6 +186,11 @@ do_v6:
 
 	switch (rt_mpls->mpls_operation) {
 	case MPLS_OP_POP:
+		if (ISSET(rt->rt_flags, RTF_LOCAL)) {
+			mpls_input_local(rt, m);
+			goto done;
+		}
+
 		m = mpls_shim_pop(m);
 		if (m == NULL)
 			goto done;
@@ -277,6 +283,26 @@ do_v6:
 done:
 	if_put(ifp);
 	rtfree(rt);
+}
+
+void
+mpls_input_local(struct rtentry *rt, struct mbuf *m)
+{
+	struct ifnet *ifp;
+
+	ifp = if_get(rt->rt_ifidx);
+	if (ifp == NULL) {
+		m_freem(m);
+		return;
+	}
+
+	/* shortcut sending out the packet */
+	if (!ISSET(ifp->if_xflags, IFXF_MPLS))
+		(*ifp->if_output)(ifp, m, rt->rt_gateway, rt);
+	else
+		(*ifp->if_ll_output)(ifp, m, rt->rt_gateway, rt);
+
+	if_put(ifp);
 }
 
 struct mbuf *
