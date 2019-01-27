@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.9 2019/01/25 17:20:45 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.10 2019/01/27 07:46:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -23,16 +23,12 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
-#include <sys/uio.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <event.h>
-#include <netdb.h>
 #include <imsg.h>
+#include <limits.h>
 #include <pwd.h>
 #include <pthread.h>
 #include <signal.h>
@@ -42,13 +38,11 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <assert.h>
 #include "libunbound/config.h"
 #include "libunbound/libunbound/unbound.h"
-#include "libunbound/unbound-event.h"
+#include "libunbound/libunbound/unbound-event.h"
 #include "libunbound/sldns/rrdef.h"
 #include "libunbound/sldns/pkthdr.h"
-#include "libunbound/sldns/sbuffer.h"
 #include "libunbound/sldns/wire2str.h"
 
 #include <openssl/crypto.h>
