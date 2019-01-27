@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.67 2019/01/27 02:41:56 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.68 2019/01/27 04:20:59 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -73,6 +73,7 @@ int	mpe_ioctl(struct ifnet *, u_long, caddr_t);
 void	mpe_start(struct ifnet *);
 int	mpe_clone_create(struct if_clone *, int);
 int	mpe_clone_destroy(struct ifnet *);
+void	mpe_input(struct ifnet *, struct mbuf *);
 
 LIST_HEAD(, mpe_softc)	mpeif_list;
 struct if_clone	mpe_cloner =
@@ -221,6 +222,12 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	in_addr_t	addr;
 	u_int8_t	op = 0;
 
+	if (dst->sa_family == AF_LINK &&
+	    rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
+		mpe_input(ifp, m);
+		return (0);
+	}
+
 #ifdef DIAGNOSTIC
 	if (ifp->if_rdomain != rtable_l2(m->m_pkthdr.ph_rtableid)) {
 		printf("%s: trying to send packet on wrong domain. "
@@ -350,7 +357,7 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		/* add new MPLS route */
 		ifm->sc_smpls.smpls_label = shim.shim_label;
-		error = rt_ifa_add(&ifm->sc_ifa, RTF_MPLS,
+		error = rt_ifa_add(&ifm->sc_ifa, RTF_MPLS|RTF_LOCAL,
 		    smplstosa(&ifm->sc_smpls));
 		if (error) {
 			ifm->sc_smpls.smpls_label = 0;
@@ -377,19 +384,33 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 void
-mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
-    u_int8_t ttl)
+mpe_input(struct ifnet *ifp, struct mbuf *m)
 {
+	struct shim_hdr	*shim;
 	struct ip	*ip;
 	int		 hlen;
+	uint8_t		 ttl;
 
-	/* label -> AF lookup */
+	shim = mtod(m, struct shim_hdr *);
+	if (!MPLS_BOS_ISSET(shim->shim_label)) {
+		m_freem(m);
+		return;
+	}
+	ttl = ntohl(shim->shim_label & MPLS_TTL_MASK);
+	m_adj(m, sizeof(*shim));
+
+	if (m->m_len < sizeof(*ip)) {
+		m = m_pullup(m, sizeof(*ip));
+		if (m == NULL)
+			return;
+	}
+	ip = mtod(m, struct ip *);
+	if (ip->ip_v != IPVERSION) {
+		m_freem(m);
+		return;
+	}
 
 	if (mpls_mapttl_ip) {
-		if (m->m_len < sizeof (struct ip) &&
-		    (m = m_pullup(m, sizeof(struct ip))) == NULL)
-			return;
-		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 		if (m->m_len < hlen) {
 			if ((m = m_pullup(m, hlen)) == NULL)
@@ -421,36 +442,3 @@ mpe_input(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
 
 	ipv4_input(ifp, m);
 }
-
-#ifdef INET6
-void
-mpe_input6(struct mbuf *m, struct ifnet *ifp, struct sockaddr_mpls *smpls,
-    u_int8_t ttl)
-{
-	struct ip6_hdr *ip6hdr;
-
-	/* label -> AF lookup */
-
-	if (mpls_mapttl_ip6) {
-		if (m->m_len < sizeof (struct ip6_hdr) &&
-		    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
-			return;
-
-		ip6hdr = mtod(m, struct ip6_hdr *);
-
-		/* set IPv6 ttl from MPLS ttl */
-		ip6hdr->ip6_hlim = ttl;
-	}
-
-	/* new receive if and move into correct rtable */
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, AF_INET6, m, BPF_DIRECTION_IN);
-#endif
-
-	ipv6_input(ifp, m);
-}
-#endif	/* INET6 */
