@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.70 2019/01/27 05:13:04 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.71 2019/01/27 05:31:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -299,8 +299,6 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	ifr = (struct ifreq *)data;
 	switch (cmd) {
 	case SIOCSIFADDR:
-		if (!ISSET(ifp->if_flags, IFF_UP))
-			if_up(ifp);
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP)
@@ -343,12 +341,6 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (error)
 			break;
-		/*
-		 * force interface up for now,
-		 * linkstate of MPLS route is not tracked
-		 */
-		if (!ISSET(ifp->if_flags, IFF_UP))
-			if_up(ifp);
 		ifm = ifp->if_softc;
 		if (ifm->sc_smpls.smpls_label) {
 			/* remove old MPLS route */
