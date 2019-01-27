@@ -1,4 +1,4 @@
-/*	$OpenBSD: uw_parse.y,v 1.2 2019/01/24 15:59:32 florian Exp $	*/
+/*	$OpenBSD: uw_parse.y,v 1.3 2019/01/27 12:40:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -107,7 +107,7 @@ typedef struct {
 %}
 
 %token	STRICT YES NO INCLUDE ERROR
-%token	FORWARDER
+%token	FORWARDER DOT PORT
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -211,6 +211,66 @@ forwarderoptsl		: STRING {
 				    &conf->unwind_forwarder_list,
 				    unwind_forwarder, entry);
 			}
+			| STRING PORT NUMBER {
+				int ret;
+
+				if ($3 <= 0 || $3 > (int)USHRT_MAX) {
+					yyerror("invalid port: %lld", $3);
+					YYERROR;
+				}
+
+				if ((unwind_forwarder = calloc(1,
+				    sizeof(*unwind_forwarder))) == NULL)
+					err(1, NULL);
+
+				ret = snprintf(unwind_forwarder->name,
+				    sizeof(unwind_forwarder->name), "%s@%d", $1,
+				    (int)$3);
+				if (ret == -1 || (size_t)ret >=
+				    sizeof(unwind_forwarder->name))
+					err(1, "%s too long", $1);
+
+				SIMPLEQ_INSERT_TAIL(
+				    &conf->unwind_forwarder_list,
+				    unwind_forwarder, entry);
+			}
+			| STRING DOT {
+				if ((unwind_forwarder = calloc(1,
+				    sizeof(*unwind_forwarder))) == NULL)
+					err(1, NULL);
+
+				if(strlcpy(unwind_forwarder->name, $1,
+				    sizeof(unwind_forwarder->name)) >=
+				    sizeof(unwind_forwarder->name))
+					err(1, "%s too long", $1);
+
+				SIMPLEQ_INSERT_TAIL(
+				    &conf->unwind_dot_forwarder_list,
+				    unwind_forwarder, entry);
+			}
+			| STRING PORT NUMBER DOT {
+				int ret;
+
+				if ($3 <= 0 || $3 > (int)USHRT_MAX) {
+					yyerror("invalid port: %lld", $3);
+					YYERROR;
+				}
+
+				if ((unwind_forwarder = calloc(1,
+				    sizeof(*unwind_forwarder))) == NULL)
+					err(1, NULL);
+
+				ret = snprintf(unwind_forwarder->name,
+				    sizeof(unwind_forwarder->name), "%s@%d", $1,
+				    (int)$3);
+				if (ret == -1 || (size_t)ret >=
+				    sizeof(unwind_forwarder->name))
+					err(1, "%s too long", $1);
+
+				SIMPLEQ_INSERT_TAIL(
+				    &conf->unwind_dot_forwarder_list,
+				    unwind_forwarder, entry);
+			}
 			;
 %%
 
@@ -246,10 +306,14 @@ lookup(char *s)
 {
 	/* This has to be sorted always. */
 	static const struct keywords keywords[] = {
+		{"dot",			DOT},
+		{"DoT",			DOT},
 		{"forwarder",		FORWARDER},
 		{"include",		INCLUDE},
 		{"no",			NO},
+		{"port",		PORT},
 		{"strict",		STRICT},
+		{"tls",			DOT},
 		{"yes",			YES},
 	};
 	const struct keywords	*p;
@@ -713,9 +777,14 @@ symget(const char *nam)
 void
 clear_config(struct unwind_conf *xconf)
 {
-	while((unwind_forwarder = SIMPLEQ_FIRST(&xconf->unwind_forwarder_list)) !=
-	    NULL) {
+	while((unwind_forwarder =
+	    SIMPLEQ_FIRST(&xconf->unwind_forwarder_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&xconf->unwind_forwarder_list, entry);
+		free(unwind_forwarder);
+	}
+	while((unwind_forwarder =
+	    SIMPLEQ_FIRST(&xconf->unwind_dot_forwarder_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&xconf->unwind_dot_forwarder_list, entry);
 		free(unwind_forwarder);
 	}
 

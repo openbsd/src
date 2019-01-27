@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.2 2019/01/24 17:39:43 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.3 2019/01/27 12:40:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -56,6 +56,7 @@ enum imsg_type {
 	IMSG_CTL_STATUS,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_FORWARDER,
+	IMSG_RECONF_DOT_FORWARDER,
 	IMSG_RECONF_END,
 	IMSG_UDP4SOCK,
 	IMSG_UDP6SOCK,
@@ -87,6 +88,7 @@ struct unwind_forwarder {
 
 struct unwind_conf {
 	SIMPLEQ_HEAD(unwind_forwarder_head, unwind_forwarder)	 unwind_forwarder_list;
+	struct unwind_forwarder_head				 unwind_dot_forwarder_list;
 	int							 unwind_options;
 };
 

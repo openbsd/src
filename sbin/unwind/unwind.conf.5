@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.1 2019/01/23 13:11:00 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.2 2019/01/27 12:40:54 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2019 $
+.Dd $Mdocdate: January 27 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -52,8 +52,13 @@ Macro names may not be reserved words.
 Macros are not expanded inside quotes.
 .Sh GLOBAL CONFIGURATION
 .Bl -tag -width Ds
-.It Ic forwarder Brq forwarder list
+.It Ic forwarder Brq Ar address Oo Ic port Ar number Oc Oo Ic DoT Oc ...
 list of addresses of DNS name servers to forward queries to.
+If
+.Ic DoT
+is specified use DNS over TLS when sending queries to the server at
+.Ar address .
+
 .El
 .Sh FILES
 .Bl -tag -width "/etc/unwind.conf" -compact

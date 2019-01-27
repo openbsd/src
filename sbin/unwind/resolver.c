@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.10 2019/01/27 07:46:49 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.11 2019/01/27 12:40:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -85,6 +85,7 @@ void			 parse_dhcp_forwarders(char *);
 void			 new_recursor(void);
 void			 new_forwarders(void);
 void			 new_static_forwarders(void);
+void			 new_static_dot_forwarders(void);
 struct unwind_resolver	*create_resolver(enum unwind_resolver_type);
 void			 free_resolver(struct unwind_resolver *);
 void			 set_forwarders(struct unwind_resolver *,
@@ -123,6 +124,7 @@ struct imsgev		*iev_frontend;
 struct imsgev		*iev_main;
 struct unwind_forwarder_head  dhcp_forwarder_list;
 struct unwind_resolver	*recursor, *forwarder, *static_forwarder;
+struct unwind_resolver	*static_dot_forwarder;
 struct timeval		 resolver_check_pause = { 30, 0};
 
 struct event_base	*ev_base;
@@ -376,6 +378,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 	struct imsgbuf			*ibuf;
 	ssize_t				 n;
 	int				 shut = 0, forwarders_changed;
+	int				 dot_forwarders_changed;
 
 	ibuf = &iev->ibuf;
 
@@ -433,6 +436,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct unwind_conf));
 			SIMPLEQ_INIT(&nconf->unwind_forwarder_list);
+			SIMPLEQ_INIT(&nconf->unwind_dot_forwarder_list);
 			break;
 		case IMSG_RECONF_FORWARDER:
 			if ((unwind_forwarder = malloc(sizeof(struct
@@ -443,15 +447,31 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			SIMPLEQ_INSERT_TAIL(&nconf->unwind_forwarder_list,
 			    unwind_forwarder, entry);
 			break;
+		case IMSG_RECONF_DOT_FORWARDER:
+			if ((unwind_forwarder = malloc(sizeof(struct
+			    unwind_forwarder))) == NULL)
+				fatal(NULL);
+			memcpy(unwind_forwarder, imsg.data, sizeof(struct
+			    unwind_forwarder));
+			SIMPLEQ_INSERT_TAIL(&nconf->unwind_dot_forwarder_list,
+			    unwind_forwarder, entry);
+			break;
 		case IMSG_RECONF_END:
 			forwarders_changed = check_forwarders_changed(
 			    &resolver_conf->unwind_forwarder_list,
 			    &nconf->unwind_forwarder_list);
+			dot_forwarders_changed = check_forwarders_changed(
+			    &resolver_conf->unwind_dot_forwarder_list,
+			    &nconf->unwind_dot_forwarder_list);
 			merge_config(resolver_conf, nconf);
 			nconf = NULL;
 			if (forwarders_changed) {
 				log_debug("static forwarders changed");
 				new_static_forwarders();
+			}
+			if (dot_forwarders_changed) {
+				log_debug("static DoT forwarders changed");
+				new_static_dot_forwarders();
 			}
 			break;
 		default:
@@ -620,6 +640,25 @@ new_static_forwarders(void)
 	check_resolver(static_forwarder);
 }
 
+void
+new_static_dot_forwarders(void)
+{
+	free_resolver(static_dot_forwarder);
+
+	if (SIMPLEQ_EMPTY(&resolver_conf->unwind_dot_forwarder_list)) {
+		static_dot_forwarder = NULL;
+		return;
+	}
+
+	log_debug("%s: create_resolver", __func__);
+	static_dot_forwarder = create_resolver(STATIC_DOT_FORWARDER);
+	set_forwarders(static_dot_forwarder,
+	    &resolver_conf->unwind_dot_forwarder_list);
+	ub_ctx_set_tls(static_dot_forwarder->ctx, 1);
+
+	check_resolver(static_dot_forwarder);
+}
+
 struct unwind_resolver *
 create_resolver(enum unwind_resolver_type type)
 {
@@ -741,6 +780,11 @@ check_resolver(struct unwind_resolver *res)
 	case STATIC_FORWARDER:
 		set_forwarders(check_res,
 		    &resolver_conf->unwind_forwarder_list);
+		break;
+	case STATIC_DOT_FORWARDER:
+		set_forwarders(check_res,
+		    &resolver_conf->unwind_dot_forwarder_list);
+		ub_ctx_set_tls(check_res->ctx, 1);
 		break;
 	case RESOLVER_NONE:
 		fatalx("type NONE");
@@ -945,12 +989,20 @@ best_resolver(void)
 		    unwind_resolver_type_str[static_forwarder->type],
 		    unwind_resolver_state_str[static_forwarder->state]);
 
+	if (static_dot_forwarder != NULL)
+		log_debug("%s: %s state: %s", __func__,
+		    unwind_resolver_type_str[static_dot_forwarder->type],
+		    unwind_resolver_state_str[static_dot_forwarder->state]);
+
 	if (forwarder != NULL)
 		log_debug("%s: %s state: %s", __func__,
 		    unwind_resolver_type_str[forwarder->type],
 		    unwind_resolver_state_str[forwarder->state]);
 
 	res = recursor;
+
+	if (resolver_cmp(res, static_dot_forwarder) < 0)
+		res = static_dot_forwarder;
 
 	if (resolver_cmp(res, static_forwarder) < 0)
 		res = static_forwarder;
@@ -1004,6 +1056,8 @@ show_status(enum unwind_resolver_type type, pid_t pid)
 		send_resolver_info(forwarder, forwarder == best, pid);
 		send_resolver_info(static_forwarder, static_forwarder == best,
 		    pid);
+		send_resolver_info(static_dot_forwarder, static_dot_forwarder
+		    == best, pid);
 		break;
 	case RECURSOR:
 		send_resolver_info(recursor, recursor == best, pid);
@@ -1017,6 +1071,11 @@ show_status(enum unwind_resolver_type type, pid_t pid)
 		send_resolver_info(static_forwarder, static_forwarder == best,
 		    pid);
 		send_detailed_resolver_info(static_forwarder, pid);
+		break;
+	case STATIC_DOT_FORWARDER:
+		send_resolver_info(static_dot_forwarder, static_dot_forwarder
+		    == best, pid);
+		send_detailed_resolver_info(static_dot_forwarder, pid);
 		break;
 	}
 	resolver_imsg_compose_frontend(IMSG_CTL_END, pid, NULL, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.h,v 1.1 2019/01/23 13:11:00 florian Exp $	*/
+/*	$OpenBSD: resolver.h,v 1.2 2019/01/27 12:40:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -35,13 +35,15 @@ enum unwind_resolver_type {
 	RECURSOR,
 	FORWARDER,
 	STATIC_FORWARDER,
+	STATIC_DOT_FORWARDER,
 	RESOLVER_NONE = -1
 };
 
 static const char * const	unwind_resolver_type_str[] = {
 	"recursor",
 	"dhcp forwarder",
-	"static forwarder"
+	"static forwarder",
+	"DoT forwarder"
 };
 
 static const int64_t		histogram_limits[] = {

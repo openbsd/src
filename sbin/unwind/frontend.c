@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.4 2019/01/27 07:46:49 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.5 2019/01/27 12:40:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -298,6 +298,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct unwind_conf));
 			SIMPLEQ_INIT(&nconf->unwind_forwarder_list);
+			SIMPLEQ_INIT(&nconf->unwind_dot_forwarder_list);
 			break;
 		case IMSG_RECONF_FORWARDER:
 			if ((unwind_forwarder = malloc(sizeof(struct
@@ -306,6 +307,15 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			memcpy(unwind_forwarder, imsg.data, sizeof(struct
 			    unwind_forwarder));
 			SIMPLEQ_INSERT_TAIL(&nconf->unwind_forwarder_list,
+			    unwind_forwarder, entry);
+			break;
+		case IMSG_RECONF_DOT_FORWARDER:
+			if ((unwind_forwarder = malloc(sizeof(struct
+			    unwind_forwarder))) == NULL)
+				fatal(NULL);
+			memcpy(unwind_forwarder, imsg.data, sizeof(struct
+			    unwind_forwarder));
+			SIMPLEQ_INSERT_TAIL(&nconf->unwind_dot_forwarder_list,
 			    unwind_forwarder, entry);
 			break;
 		case IMSG_RECONF_END:

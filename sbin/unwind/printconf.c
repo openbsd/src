@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.2 2019/01/27 07:46:49 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.3 2019/01/27 12:40:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -22,15 +22,33 @@
 #include <event.h>
 #include <imsg.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "unwind.h"
 
 const char*	yesno(int);
+void		print_forwarder(char *);
 
 const char*
 yesno(int flag)
 {
 	return flag ? "yes" : "no";
+}
+
+void
+print_forwarder(char *name)
+{
+	char	*pos;
+
+	pos = strchr(name, '@');
+
+	if (pos != NULL) {
+		*pos = '\0';
+		printf("%s port %s", name, pos + 1);
+		*pos = '@';
+	} else
+		printf("%s", name);
+
 }
 
 void
@@ -40,11 +58,21 @@ print_config(struct unwind_conf *conf)
 
 	printf("strict %s\n", yesno(conf->unwind_options));
 
-	if (!SIMPLEQ_EMPTY(&conf->unwind_forwarder_list)) {
+	if (!SIMPLEQ_EMPTY(&conf->unwind_forwarder_list) ||
+	    !SIMPLEQ_EMPTY(&conf->unwind_dot_forwarder_list)) {
 		printf("forwarder {\n");
 		SIMPLEQ_FOREACH(unwind_forwarder, &conf->unwind_forwarder_list,
-		    entry)
-			printf("\t%s\n", unwind_forwarder->name);
+		    entry) {
+			printf("\t");
+			print_forwarder(unwind_forwarder->name);
+			printf("\n");
+		}
+		SIMPLEQ_FOREACH(unwind_forwarder,
+		    &conf->unwind_dot_forwarder_list, entry) {
+			printf("\t");
+			print_forwarder(unwind_forwarder->name);
+			printf(" DoT\n");
+		}
 		printf("}\n");
 	}
 }
