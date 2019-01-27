@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.64 2018/01/09 15:24:24 bluhm Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.65 2019/01/27 02:29:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -52,10 +52,10 @@
 #endif
 
 void	mpeattach(int);
-int	mpeoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+int	mpe_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		       struct rtentry *);
-int	mpeioctl(struct ifnet *, u_long, caddr_t);
-void	mpestart(struct ifnet *);
+int	mpe_ioctl(struct ifnet *, u_long, caddr_t);
+void	mpe_start(struct ifnet *);
 int	mpe_clone_create(struct if_clone *, int);
 int	mpe_clone_destroy(struct ifnet *);
 
@@ -89,9 +89,9 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_softc = mpeif;
 	ifp->if_mtu = MPE_MTU;
-	ifp->if_ioctl = mpeioctl;
-	ifp->if_output = mpeoutput;
-	ifp->if_start = mpestart;
+	ifp->if_ioctl = mpe_ioctl;
+	ifp->if_output = mpe_output;
+	ifp->if_start = mpe_start;
 	ifp->if_type = IFT_MPLS;
 	ifp->if_hdrlen = MPE_HDRLEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
@@ -133,7 +133,7 @@ struct sockaddr_storage	 mpedst;
  * Start output on the mpe interface.
  */
 void
-mpestart(struct ifnet *ifp0)
+mpe_start(struct ifnet *ifp0)
 {
 	struct mbuf		*m;
 	struct sockaddr		*sa = sstosa(&mpedst);
@@ -197,7 +197,7 @@ mpestart(struct ifnet *ifp0)
 }
 
 int
-mpeoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt)
 {
 	struct shim_hdr	shim;
@@ -267,7 +267,7 @@ out:
 }
 
 int
-mpeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mpe_softc	*ifm;
 	struct ifreq		*ifr;
