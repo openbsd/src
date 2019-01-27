@@ -331,6 +331,10 @@ static ManagedStatic<sys::Mutex> TermColorMutex;
 #endif
 
 static bool terminalHasColors(int fd) {
+#if defined(__OpenBSD__)
+  return false;
+#endif
+
 #ifdef HAVE_TERMINFO
   // First, acquire a global lock because these C routines are thread hostile.
   MutexGuard G(*TermColorMutex);

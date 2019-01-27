@@ -191,7 +191,10 @@ bool FixupGadgetsPass::fixupInstruction(MachineFunction &MF,
   unsigned tmpReg;
 
   // Swap the two registers to start
-  BuildMI(MBB, MI, DL, TII->get(XCHG), DREG).addReg(DREG).addReg(SREG);
+  BuildMI(MBB, MI, DL, TII->get(XCHG))
+    .addReg(DREG, RegState::Define)
+    .addReg(SREG, RegState::Define)
+    .addReg(DREG).addReg(SREG);
 
   switch (type) {
   case OneGPRegC3:
@@ -232,7 +235,10 @@ bool FixupGadgetsPass::fixupInstruction(MachineFunction &MF,
   }
 
   // And swap them back to finish
-  BuildMI(MBB, MI, DL, TII->get(XCHG), DREG).addReg(DREG).addReg(SREG);
+  BuildMI(MBB, MI, DL, TII->get(XCHG))
+    .addReg(DREG, RegState::Define)
+    .addReg(SREG, RegState::Define)
+    .addReg(DREG).addReg(SREG);
   // Erase original instruction
   MI.eraseFromParent();
 

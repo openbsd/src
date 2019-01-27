@@ -17,16 +17,22 @@
 
 using namespace lldb_private;
 
-bool HostInfoOpenBSD::GetOSVersion(uint32_t &major, uint32_t &minor,
-                                   uint32_t &update) {
+llvm::VersionTuple HostInfoOpenBSD::GetOSVersion() {
   struct utsname un;
 
-  ::memset(&un, 0, sizeof(utsname));
-  if (uname(&un) < 0)
-    return false;
+  ::memset(&un, 0, sizeof(un));
+  if (::uname(&un) < 0)
+    return llvm::VersionTuple();
 
-  int status = sscanf(un.release, "%u.%u", &major, &minor);
-  return status == 2;
+  uint32_t major, minor;
+  int status = ::sscanf(un.release, "%" PRIu32 ".%" PRIu32, &major, &minor);
+  switch (status) {
+  case 1:
+    return llvm::VersionTuple(major);
+  case 2:
+    return llvm::VersionTuple(major, minor);
+  }
+  return llvm::VersionTuple();
 }
 
 bool HostInfoOpenBSD::GetOSBuildString(std::string &s) {

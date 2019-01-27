@@ -69,6 +69,9 @@ static bool DecodeAArch64Mcpu(const Driver &D, StringRef Mcpu, StringRef &CPU,
   std::pair<StringRef, StringRef> Split = Mcpu.split("+");
   CPU = Split.first;
 
+  if (CPU == "native")
+    CPU = llvm::sys::getHostCPUName();
+
   if (CPU == "generic") {
     Features.push_back("+neon");
   } else {
@@ -201,6 +204,9 @@ void aarch64::getAArch64TargetFeatures(const Driver &D,
 
   if (Args.hasArg(options::OPT_ffixed_x18))
     Features.push_back("+reserve-x18");
+
+  if (Args.hasArg(options::OPT_ffixed_x20))
+    Features.push_back("+reserve-x20");
 
   if (Args.hasArg(options::OPT_mno_neg_immediates))
     Features.push_back("+no-neg-immediates");

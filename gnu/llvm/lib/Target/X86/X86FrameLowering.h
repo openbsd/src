@@ -130,7 +130,7 @@ public:
   /// Emit a series of instructions to increment / decrement the stack
   /// pointer by a constant value.
   void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
-                    int64_t NumBytes, bool InEpilogue) const;
+                    const DebugLoc &DL, int64_t NumBytes, bool InEpilogue) const;
 
   /// Check that LEA can be used on SP in an epilogue sequence for \p MF.
   bool canUseLEAForSPInEpilogue(const MachineFunction &MF) const;
@@ -172,6 +172,10 @@ public:
   restoreWin32EHStackPointers(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI,
                               const DebugLoc &DL, bool RestoreSP = false) const;
+
+  int getInitialCFAOffset(const MachineFunction &MF) const override;
+
+  unsigned getInitialCFARegister(const MachineFunction &MF) const override;
 
 private:
   uint64_t calculateMaxStackAlign(const MachineFunction &MF) const;
