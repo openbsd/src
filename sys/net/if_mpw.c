@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.27 2019/01/27 02:24:49 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.28 2019/01/27 02:40:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -93,6 +93,7 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_ioctl = mpw_ioctl;
 	ifp->if_output = mpw_output;
 	ifp->if_start = mpw_start;
+	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ether_fakeaddr(ifp);
 
@@ -138,14 +139,6 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifmpwreq imr;
 
 	switch (cmd) {
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < MPE_MTU_MIN ||
-		    ifr->ifr_mtu > MPE_MTU_MAX)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP))
 			ifp->if_flags |= IFF_RUNNING;
