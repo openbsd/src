@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.69 2019/01/26 06:58:08 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.70 2019/01/27 01:39:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -205,10 +205,6 @@ do_v6:
 			goto done;
 		}
 #endif
-		if (ifp->if_type == IFT_MPLSTUNNEL) {
-			ifp->if_output(ifp, m, rt_key(rt), rt);
-			goto done;
-		}
 
 		KASSERT(rt->rt_gateway);
 
@@ -223,6 +219,8 @@ do_v6:
 				goto done;
 			break;
 #endif
+		case AF_LINK:
+			break;
 		default:
 			m_freem(m);
 			goto done;
