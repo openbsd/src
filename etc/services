@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.95 2018/07/03 23:52:27 dlg Exp $
+# $OpenBSD: services,v 1.96 2019/01/27 20:35:06 danj Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -179,6 +179,8 @@ silc		706/tcp				# Secure Live Internet Conferencing
 silc		706/udp
 kerberos-adm	749/tcp				# Kerberos 5 kadmin
 kerberos-adm	749/udp				# Kerberos 5 kadmin
+domain-s	853/tcp				# DNS query-response protocol run over TLS/DTLS
+domain-s	853/udp				# DNS query-response protocol run over TLS/DTLS
 rsync		873/tcp				# rsync server
 cddb		888/tcp		cddbp		# Audio CD Database
 imaps		993/tcp				# imap4 protocol over TLS/SSL
