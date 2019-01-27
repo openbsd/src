@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2019/01/27 22:42:14 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/tools/driver
+.PATH:	${.CURDIR}/../../../llvm/tools/lldb/docs
 
 LLVM_LIBDEPS=	${BACKEND_ASMPARSER} \
 		${BACKEND_ASMPRINTER} \
