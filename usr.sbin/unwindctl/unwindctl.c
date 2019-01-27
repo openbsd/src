@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.1 2019/01/23 13:12:19 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.2 2019/01/27 12:41:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -142,6 +142,11 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
 		    sizeof(type));
 		break;
+	case STATUS_DOT:
+		type = STATIC_DOT_FORWARDER;
+		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
+		    sizeof(type));
+		break;
 	case STATUS:
 		type = RESOLVER_NONE;
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
@@ -172,6 +177,7 @@ main(int argc, char *argv[])
 			case STATUS_RECURSOR:
 			case STATUS_DHCP:
 			case STATUS_STATIC:
+			case STATUS_DOT:
 				done = show_status_msg(&imsg);
 				break;
 			default:
