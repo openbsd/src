@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.7 2019/01/25 01:21:44 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.8 2019/01/27 01:13:20 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -129,21 +129,28 @@ static struct child stateinfo[][TLS13_NUM_MESSAGE_TYPES] = {
 	},
 };
 
-const size_t stateinfo_count = sizeof(stateinfo) / sizeof(stateinfo[0]);
+const size_t	 stateinfo_count = sizeof(stateinfo) / sizeof(stateinfo[0]);
 
-void build_table(enum tls13_message_type
-    table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES], struct child current,
-    struct child end, struct child path[], uint8_t flags, unsigned int depth);
-size_t count_handshakes(void);
-const char *flag2str(uint8_t flag);
-int generate_graphics(void);
-void fprint_entry(FILE *stream,
-    enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES], uint8_t flags);
-void fprint_flags(FILE *stream, uint8_t flags);
-const char *mt2str(enum tls13_message_type mt);
-__dead void usage(void);
-int verify_table(enum tls13_message_type
-    table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES], int print);
+void		 build_table(enum tls13_message_type
+		     table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES],
+		     struct child current, struct child end,
+		     struct child path[], uint8_t flags, unsigned int depth);
+size_t		 count_handshakes(void);
+void		 edge(enum tls13_message_type start,
+		     enum tls13_message_type end, uint8_t flag);
+const char	*flag2str(uint8_t flag);
+void		 flag_label(uint8_t flag);
+void		 forced_edges(enum tls13_message_type start,
+		     enum tls13_message_type end, uint8_t forced);
+int		 generate_graphics(void);
+void		 fprint_entry(FILE *stream,
+		     enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES],
+		     uint8_t flags);
+void		 fprint_flags(FILE *stream, uint8_t flags);
+const char	*mt2str(enum tls13_message_type mt);
+__dead void	 usage(void);
+int		 verify_table(enum tls13_message_type
+		     table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES], int print);
 
 const char *
 flag2str(uint8_t flag)
@@ -269,8 +276,8 @@ fprint_flags(FILE *stream, uint8_t flags)
 }
 
 void
-fprint_entry(FILE *stream, enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES],
-    uint8_t flags)
+fprint_entry(FILE *stream,
+    enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES], uint8_t flags)
 {
 	int i;
 
@@ -286,44 +293,60 @@ fprint_entry(FILE *stream, enum tls13_message_type path[TLS13_NUM_MESSAGE_TYPES]
 	fprintf(stream, "\t},\n");
 }
 
+void
+edge(enum tls13_message_type start, enum tls13_message_type end,
+    uint8_t flag)
+{
+	printf("\t%s -> %s", mt2str(start), mt2str(end));
+	flag_label(flag);
+	printf(";\n");
+}
+
+void
+flag_label(uint8_t flag)
+{
+	if (flag)
+		printf(" [label=\"%s\"]", flag2str(flag));
+}
+
+void
+forced_edges(enum tls13_message_type start, enum tls13_message_type end,
+    uint8_t forced)
+{
+	uint8_t	forced_flag, i;
+
+	if (forced == 0)
+		return;
+
+	for (i = 0; i < 8; i++) {
+		forced_flag = forced & (1U << i);
+		if (forced_flag)
+			edge(start, end, forced_flag);
+	}
+}
+
 int
 generate_graphics(void)
 {
-	unsigned int	start, end;
-	uint8_t		flag;
-	uint8_t		forced, illegal;
+	enum tls13_message_type	start, end;
+	unsigned int		child;
+	uint8_t			flag;
+	uint8_t			forced;
 
 	printf("digraph G {\n");
-	printf("\t%s [shape=box]\n", mt2str(CLIENT_HELLO));
-	printf("\t%s [shape=box]\n", mt2str(APPLICATION_DATA));
+	printf("\t%s [shape=box];\n", mt2str(CLIENT_HELLO));
+	printf("\t%s [shape=box];\n", mt2str(APPLICATION_DATA));
 
-	for (start = 1; start < stateinfo_count - 1; start++) {
-		for (end = 0; stateinfo[start][end].mt != 0; end++) {
-			flag = stateinfo[start][end].flag;
-			forced = stateinfo[start][end].forced;
-			illegal = stateinfo[start][end].illegal;
+	for (start = CLIENT_HELLO; start < APPLICATION_DATA; start++) {
+		for (child = 0; stateinfo[start][child].mt != 0; child++) {
+			end = stateinfo[start][child].mt;
+			flag = stateinfo[start][child].flag;
+			forced = stateinfo[start][child].forced;
 
-			printf("\t%s -> %s", mt2str(start),
-			    mt2str(stateinfo[start][end].mt));
-
-			if (flag || forced || illegal)
-				printf(" [");
-			if (flag)
-				printf("label=\"%s\"%s", flag2str(flag),
-				    (forced || illegal) ? ", " : "");
-			if (forced) {
-				printf("label=\"if ");
-				fprint_flags(stdout, forced);
-				printf("\"%s", illegal ? ", " : "");
-			}
-			if (illegal) {
-				printf("label=\"not if ");
-				fprint_flags(stdout, illegal);
-				printf("\"");
-			}
-			if (flag || forced || illegal)
-				printf("]");
-			printf(";\n");
+			if (forced == 0)
+				edge(start, end, flag);
+			else
+				forced_edges(start, end, forced);
 		}
 	}
 
@@ -331,8 +354,8 @@ generate_graphics(void)
 	return 0;
 }
 
-extern enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES];
-extern size_t handshake_count;
+extern enum tls13_message_type	handshakes[][TLS13_NUM_MESSAGE_TYPES];
+extern size_t			handshake_count;
 
 size_t
 count_handshakes(void)
