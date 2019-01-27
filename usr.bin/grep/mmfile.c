@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.18 2019/01/23 23:00:54 tedu Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.19 2019/01/27 14:43:09 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -49,6 +49,7 @@ mmopen(int fd, struct stat *st)
 	if (st->st_size > SIZE_MAX) /* too big to mmap */
 		goto ouch;
 	mmf->len = (size_t)st->st_size;
+	mmf->fd = fd;
 	mmf->base = mmap(NULL, mmf->len, PROT_READ, MAP_PRIVATE, mmf->fd, (off_t)0);
 	if (mmf->base == MAP_FAILED)
 		goto ouch;
