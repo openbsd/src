@@ -25,6 +25,7 @@ add_clang_library(clangDriver
   ToolChains/Arch/ARM.cpp
   ToolChains/Arch/Mips.cpp
   ToolChains/Arch/PPC.cpp
+  ToolChains/Arch/RISCV.cpp
   ToolChains/Arch/Sparc.cpp
   ToolChains/Arch/SystemZ.cpp
   ToolChains/Arch/X86.cpp
@@ -44,6 +45,7 @@ add_clang_library(clangDriver
   ToolChains/Fuchsia.cpp
   ToolChains/Gnu.cpp
   ToolChains/Haiku.cpp
+  ToolChains/HIP.cpp
   ToolChains/Hexagon.cpp
   ToolChains/Linux.cpp
   ToolChains/MipsLinux.cpp
@@ -55,6 +57,7 @@ add_clang_library(clangDriver
   ToolChains/NetBSD.cpp
   ToolChains/OpenBSD.cpp
   ToolChains/PS4CPU.cpp
+  ToolChains/RISCV.cpp
   ToolChains/Solaris.cpp
   ToolChains/TCE.cpp
   ToolChains/WebAssembly.cpp

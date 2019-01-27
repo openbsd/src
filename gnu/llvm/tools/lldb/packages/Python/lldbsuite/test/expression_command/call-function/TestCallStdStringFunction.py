@@ -30,7 +30,8 @@ class ExprCommandCallFunctionTestCase(TestBase):
     def test_with(self):
         """Test calling std::String member function."""
         self.build()
-        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+        self.runCmd("file " + self.getBuildArtifact("a.out"),
+                    CURRENT_EXECUTABLE_SET)
 
         # Some versions of GCC encode two locations for the 'return' statement
         # in main.cpp
@@ -45,7 +46,7 @@ class ExprCommandCallFunctionTestCase(TestBase):
         # Calling this function now succeeds, but we follow the typedef return type through to
         # const char *, and thus don't invoke the Summary formatter.
 
-        # clang's libstdc++ on ios arm64 inlines std::string::c_str() always; 
+        # clang's libstdc++ on ios arm64 inlines std::string::c_str() always;
         # skip this part of the test.
         triple = self.dbg.GetSelectedPlatform().GetTriple()
         do_cstr_test = True

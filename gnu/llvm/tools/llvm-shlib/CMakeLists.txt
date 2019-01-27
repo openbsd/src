@@ -39,6 +39,8 @@ add_llvm_library(LLVM SHARED DISABLE_LLVM_LINK_LLVM_DYLIB SONAME ${SOURCES})
 list(REMOVE_DUPLICATES LIB_NAMES)
 if(("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR (MINGW) OR (HAIKU)
    OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "FreeBSD")
+   OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "OpenBSD")
+   OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Fuchsia")
    OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "DragonFly")
    OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS")) # FIXME: It should be "GNU ld for elf"
   configure_file(
@@ -56,10 +58,6 @@ elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
 endif()
 
 target_link_libraries(LLVM PRIVATE ${LIB_NAMES})
-
-if (LLVM_DYLIB_SYMBOL_VERSIONING)
-  set_property(TARGET LLVM APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--default-symver")
-endif()
 
 if (APPLE)
   set_property(TARGET LLVM APPEND_STRING PROPERTY

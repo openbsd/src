@@ -38,8 +38,8 @@ protected:
   std::string format(llvm::StringRef Code,
                      const FormatStyle &Style = getLLVMStyle(),
                      StatusCheck CheckComplete = SC_ExpectComplete) {
-    DEBUG(llvm::errs() << "---\n");
-    DEBUG(llvm::errs() << Code << "\n\n");
+    LLVM_DEBUG(llvm::errs() << "---\n");
+    LLVM_DEBUG(llvm::errs() << Code << "\n\n");
     std::vector<tooling::Range> Ranges(1, tooling::Range(0, Code.size()));
     FormattingAttemptStatus Status;
     tooling::Replacements Replaces =
@@ -52,7 +52,7 @@ protected:
     ReplacementCount = Replaces.size();
     auto Result = applyAllReplacements(Code, Replaces);
     EXPECT_TRUE(static_cast<bool>(Result));
-    DEBUG(llvm::errs() << "\n" << *Result << "\n\n");
+    LLVM_DEBUG(llvm::errs() << "\n" << *Result << "\n\n");
     return *Result;
   }
 
@@ -70,6 +70,7 @@ protected:
 
   void verifyFormat(llvm::StringRef Code,
                     const FormatStyle &Style = getLLVMStyle()) {
+    EXPECT_EQ(Code.str(), format(Code, Style)) << "Expected code is not stable";
     EXPECT_EQ(Code.str(), format(test::messUp(Code), Style));
   }
 
@@ -3087,6 +3088,121 @@ TEST_F(FormatTestComments, BreaksBeforeTrailingUnbreakableSequence) {
   verifyFormat("int a =\n"
                "    foo(/* trail */);",
                getLLVMStyleWithColumns(23));
+}
+
+TEST_F(FormatTestComments, ReflowBackslashCrash) {
+// clang-format off
+  EXPECT_EQ(
+"// How to run:\n"
+"// bbbbb run \\\n"
+"// rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr\n"
+"// \\ <log_file> -- --output_directory=\"<output_directory>\"",
+  format(
+"// How to run:\n"
+"// bbbbb run \\\n"
+"// rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr \\\n"
+"// <log_file> -- --output_directory=\"<output_directory>\""));
+// clang-format on
+}
+
+TEST_F(FormatTestComments, IndentsLongJavadocAnnotatedLines) {
+  FormatStyle Style = getGoogleStyle(FormatStyle::LK_Java);
+  Style.ColumnLimit = 60;
+  FormatStyle Style20 = getGoogleStyle(FormatStyle::LK_Java);
+  Style20.ColumnLimit = 20;
+  EXPECT_EQ(
+      "/**\n"
+      " * @param x long long long long long long long long long\n"
+      " *     long\n"
+      " */\n",
+      format("/**\n"
+             " * @param x long long long long long long long long long long\n"
+             " */\n",
+             Style));
+  EXPECT_EQ("/**\n"
+            " * @param x long long long long long long long long long\n"
+            " *     long long long long long long long long long long\n"
+            " */\n",
+            format("/**\n"
+                   " * @param x long long long long long long long long long "
+                   "long long long long long long long long long long\n"
+                   " */\n",
+                   Style));
+  EXPECT_EQ("/**\n"
+            " * @param x long long long long long long long long long\n"
+            " *     long long long long long long long long long long\n"
+            " *     long\n"
+            " */\n",
+            format("/**\n"
+                   " * @param x long long long long long long long long long "
+                   "long long long long long long long long long long long\n"
+                   " */\n",
+                   Style));
+  EXPECT_EQ(
+      "/**\n"
+      " * Sentence that\n"
+      " * should be broken.\n"
+      " * @param short\n"
+      " * keep indentation\n"
+      " */\n", format(
+          "/**\n"
+          " * Sentence that should be broken.\n"
+          " * @param short\n"
+          " * keep indentation\n"
+          " */\n", Style20));
+
+  EXPECT_EQ("/**\n"
+            " * @param l1 long1\n"
+            " *     to break\n"
+            " * @param l2 long2\n"
+            " *     to break\n"
+            " */\n",
+            format("/**\n"
+                   " * @param l1 long1 to break\n"
+                   " * @param l2 long2 to break\n"
+                   " */\n",
+                   Style20));
+
+  EXPECT_EQ("/**\n"
+            " * @param xx to\n"
+            " *     break\n"
+            " * no reflow\n"
+            " */\n",
+            format("/**\n"
+                   " * @param xx to break\n"
+                   " * no reflow\n"
+                   " */\n",
+                   Style20));
+
+  EXPECT_EQ("/**\n"
+            " * @param xx to\n"
+            " *     break yes\n"
+            " *     reflow\n"
+            " */\n",
+            format("/**\n"
+                   " * @param xx to break\n"
+                   " *     yes reflow\n"
+                   " */\n",
+                   Style20));
+
+  FormatStyle JSStyle20 = getGoogleStyle(FormatStyle::LK_JavaScript);
+  JSStyle20.ColumnLimit = 20;
+  EXPECT_EQ("/**\n"
+            " * @param l1 long1\n"
+            " *     to break\n"
+            " */\n",
+            format("/**\n"
+                   " * @param l1 long1 to break\n"
+                   " */\n",
+                   JSStyle20));
+  EXPECT_EQ("/**\n"
+            " * @param {l1 long1\n"
+            " *     to break}\n"
+            " */\n",
+            format("/**\n"
+                   " * @param {l1 long1 to break}\n"
+                   " */\n",
+                   JSStyle20));
 }
 
 } // end namespace

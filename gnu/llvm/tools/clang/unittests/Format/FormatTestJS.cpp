@@ -21,8 +21,8 @@ class FormatTestJS : public ::testing::Test {
 protected:
   static std::string format(llvm::StringRef Code, unsigned Offset,
                             unsigned Length, const FormatStyle &Style) {
-    DEBUG(llvm::errs() << "---\n");
-    DEBUG(llvm::errs() << Code << "\n\n");
+    LLVM_DEBUG(llvm::errs() << "---\n");
+    LLVM_DEBUG(llvm::errs() << Code << "\n\n");
     std::vector<tooling::Range> Ranges(1, tooling::Range(Offset, Length));
     FormattingAttemptStatus Status;
     tooling::Replacements Replaces =
@@ -30,7 +30,7 @@ protected:
     EXPECT_TRUE(Status.FormatComplete);
     auto Result = applyAllReplacements(Code, Replaces);
     EXPECT_TRUE(static_cast<bool>(Result));
-    DEBUG(llvm::errs() << "\n" << *Result << "\n\n");
+    LLVM_DEBUG(llvm::errs() << "\n" << *Result << "\n\n");
     return *Result;
   }
 
@@ -49,6 +49,8 @@ protected:
   static void verifyFormat(
       llvm::StringRef Code,
       const FormatStyle &Style = getGoogleStyle(FormatStyle::LK_JavaScript)) {
+    EXPECT_EQ(Code.str(), format(Code, Style))
+        << "Expected code is not stable";
     std::string Result = format(test::messUp(Code), Style);
     EXPECT_EQ(Code.str(), Result) << "Formatted:\n" << Result;
   }
@@ -57,6 +59,8 @@ protected:
       llvm::StringRef Expected,
       llvm::StringRef Code,
       const FormatStyle &Style = getGoogleStyle(FormatStyle::LK_JavaScript)) {
+    EXPECT_EQ(Expected.str(), format(Expected, Style))
+        << "Expected code is not stable";
     std::string Result = format(Code, Style);
     EXPECT_EQ(Expected.str(), Result) << "Formatted:\n" << Result;
   }
@@ -187,19 +191,28 @@ TEST_F(FormatTestJS, JSDocComments) {
 
   // Break a single line long jsdoc comment pragma.
   EXPECT_EQ("/**\n"
-            " * @returns {string} jsdoc line 12\n"
+            " * @returns\n"
+            " *     {string}\n"
+            " *     jsdoc line 12\n"
             " */",
             format("/** @returns {string} jsdoc line 12 */",
                    getGoogleJSStyleWithColumns(20)));
 
   EXPECT_EQ("/**\n"
-            " * @returns {string} jsdoc line 12\n"
+            " * @returns\n"
+            " *     {string}\n"
+            " *     jsdoc line 12\n"
             " */",
             format("/** @returns {string} jsdoc line 12  */",
                    getGoogleJSStyleWithColumns(20)));
 
+  // FIXME: this overcounts the */ as a continuation of the 12 when breaking.
+  // Related to the FIXME in BreakableBlockComment::getRangeLength.
   EXPECT_EQ("/**\n"
-            " * @returns {string} jsdoc line 12\n"
+            " * @returns\n"
+            " *     {string}\n"
+            " *     jsdoc line\n"
+            " *     12\n"
             " */",
             format("/** @returns {string} jsdoc line 12*/",
                    getGoogleJSStyleWithColumns(20)));
@@ -208,7 +221,8 @@ TEST_F(FormatTestJS, JSDocComments) {
   EXPECT_EQ("/**\n"
             " * line 1\n"
             " * line 2\n"
-            " * @returns {string} jsdoc line 12\n"
+            " * @returns {string}\n"
+            " *     jsdoc line 12\n"
             " */",
             format("/** line 1\n"
                    " * line 2\n"
@@ -294,6 +308,7 @@ TEST_F(FormatTestJS, ReservedWords) {
   verifyFormat("x.for = 1;");
   verifyFormat("x.of();");
   verifyFormat("of(null);");
+  verifyFormat("return of(null);");
   verifyFormat("import {of} from 'x';");
   verifyFormat("x.in();");
   verifyFormat("x.let();");
@@ -1157,6 +1172,17 @@ TEST_F(FormatTestJS, WrapRespectsAutomaticSemicolonInsertion) {
                "foo() {}",
                getGoogleJSStyleWithColumns(10));
   verifyFormat("await theReckoning;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("some['a']['b']", getGoogleJSStyleWithColumns(10));
+  verifyFormat("x = (a['a']\n"
+               "      ['b']);",
+               getGoogleJSStyleWithColumns(10));
+  verifyFormat("function f() {\n"
+               "  return foo.bar(\n"
+               "      (param): param is {\n"
+               "        a: SomeType\n"
+               "      }&ABC => 1)\n"
+               "}",
+               getGoogleJSStyleWithColumns(25));
 }
 
 TEST_F(FormatTestJS, AutomaticSemicolonInsertionHeuristic) {
@@ -1522,6 +1548,15 @@ TEST_F(FormatTestJS, ClassDeclarations) {
                "})\n"
                "class SessionListComponent implements OnDestroy, OnInit {\n"
                "}");
+}
+
+TEST_F(FormatTestJS, StrictPropInitWrap) {
+  const FormatStyle &Style = getGoogleJSStyleWithColumns(22);
+  verifyFormat("class X {\n"
+               "  strictPropInitField!:\n"
+               "      string;\n"
+               "}",
+               Style);
 }
 
 TEST_F(FormatTestJS, InterfaceDeclarations) {
@@ -2003,21 +2038,24 @@ TEST_F(FormatTestJS, WrapAfterParen) {
 
 TEST_F(FormatTestJS, JSDocAnnotations) {
   verifyFormat("/**\n"
-               " * @export {this.is.a.long.path.to.a.Type}\n"
+               " * @exports\n"
+               " *     {this.is.a.long.path.to.a.Type}\n"
                " */",
                "/**\n"
-               " * @export {this.is.a.long.path.to.a.Type}\n"
+               " * @exports {this.is.a.long.path.to.a.Type}\n"
                " */",
                getGoogleJSStyleWithColumns(20));
   verifyFormat("/**\n"
-               " * @mods {this.is.a.long.path.to.a.Type}\n"
+               " * @mods\n"
+               " *     {this.is.a.long.path.to.a.Type}\n"
                " */",
                "/**\n"
                " * @mods {this.is.a.long.path.to.a.Type}\n"
                " */",
                getGoogleJSStyleWithColumns(20));
   verifyFormat("/**\n"
-               " * @param {this.is.a.long.path.to.a.Type}\n"
+               " * @param\n"
+               " *     {this.is.a.long.path.to.a.Type}\n"
                " */",
                "/**\n"
                " * @param {this.is.a.long.path.to.a.Type}\n"
@@ -2033,34 +2071,36 @@ TEST_F(FormatTestJS, JSDocAnnotations) {
   verifyFormat(
       "/**\n"
       " * @param This is a\n"
-      " * long comment but\n"
-      " * no type\n"
+      " *     long comment\n"
+      " *     but no type\n"
       " */",
       "/**\n"
       " * @param This is a long comment but no type\n"
       " */",
       getGoogleJSStyleWithColumns(20));
-  // Don't break @param line, but reindent it and reflow unrelated lines.
-  verifyFormat("{\n"
-               "  /**\n"
-               "   * long long long\n"
-               "   * long\n"
-               "   * @param {this.is.a.long.path.to.a.Type} a\n"
-               "   * long long long\n"
-               "   * long long\n"
-               "   */\n"
-               "  function f(a) {}\n"
-               "}",
-               "{\n"
-               "/**\n"
-               " * long long long long\n"
-               " * @param {this.is.a.long.path.to.a.Type} a\n"
-               " * long long long long\n"
-               " * long\n"
-               " */\n"
-               "  function f(a) {}\n"
-               "}",
-               getGoogleJSStyleWithColumns(20));
+  // Break and reindent @param line and reflow unrelated lines.
+  EXPECT_EQ("{\n"
+            "  /**\n"
+            "   * long long long\n"
+            "   * long\n"
+            "   * @param\n"
+            "   *     {this.is.a.long.path.to.a.Type}\n"
+            "   *     a\n"
+            "   * long long long\n"
+            "   * long long\n"
+            "   */\n"
+            "  function f(a) {}\n"
+            "}",
+            format("{\n"
+                   "/**\n"
+                   " * long long long long\n"
+                   " * @param {this.is.a.long.path.to.a.Type} a\n"
+                   " * long long long long\n"
+                   " * long\n"
+                   " */\n"
+                   "  function f(a) {}\n"
+                   "}",
+                   getGoogleJSStyleWithColumns(20)));
 }
 
 TEST_F(FormatTestJS, RequoteStringsSingle) {
@@ -2129,6 +2169,7 @@ TEST_F(FormatTestJS, NonNullAssertionOperator) {
   verifyFormat("let x = foo!.bar();\n");
   verifyFormat("let x = foo ? bar! : baz;\n");
   verifyFormat("let x = !foo;\n");
+  verifyFormat("if (!+a) {\n}");
   verifyFormat("let x = foo[0]!;\n");
   verifyFormat("let x = (foo)!;\n");
   verifyFormat("let x = x(foo!);\n");

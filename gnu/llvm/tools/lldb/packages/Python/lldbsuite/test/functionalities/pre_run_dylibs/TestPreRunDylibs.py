@@ -20,7 +20,7 @@ class TestPreRunLibraries(TestBase):
         """Test that we find directly linked dylib pre-run."""
 
         self.build()
-        target = self.dbg.CreateTarget("a.out")
+        target = self.dbg.CreateTarget(self.getBuildArtifact("a.out"))
         self.assertTrue(target, VALID_TARGET)
 
         # I don't know what the name of a shared library
@@ -35,4 +35,4 @@ class TestPreRunLibraries(TestBase):
 
         self.assertTrue(found_it, "Couldn't find unlikely_to_occur_name in loaded libraries.")
 
-            
+

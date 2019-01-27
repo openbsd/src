@@ -18,19 +18,17 @@ class TestCppScopes(TestBase):
     @expectedFailureAll(oslist=["windows"])
     def test_c(self):
         self.do_test(True)
-    
+
     def do_test(self, test_c):
         self.build()
 
         # Get main source file
-        src_file = "main.cpp"
+        src_file = os.path.join(self.getSourceDir(), "main.cpp")
         src_file_spec = lldb.SBFileSpec(src_file)
         self.assertTrue(src_file_spec.IsValid(), "Main source file")
 
         # Get the path of the executable
-        cwd = os.getcwd()
-        exe_file = "a.out"
-        exe_path = os.path.join(cwd, exe_file)
+        exe_path = self.getBuildArtifact("a.out")
 
         # Load the executable
         target = self.dbg.CreateTarget(exe_path)

@@ -1,252 +1,326 @@
 ========================
-LLVM 6.0.0 Release Notes
+LLVM 7.0.0 Release Notes
 ========================
 
 .. contents::
     :local:
 
+
 Introduction
 ============
 
 This document contains the release notes for the LLVM Compiler Infrastructure,
-release 6.0.0.  Here we describe the status of LLVM, including major improvements
+release 7.0.0.  Here we describe the status of LLVM, including major improvements
 from the previous release, improvements in various subprojects of LLVM, and
 some of the current users of the code.  All LLVM releases may be downloaded
-from the `LLVM releases web site <http://llvm.org/releases/>`_.
+from the `LLVM releases web site <https://llvm.org/releases/>`_.
 
 For more information about LLVM, including information about the latest
-release, please check out the `main LLVM web site <http://llvm.org/>`_.  If you
+release, please check out the `main LLVM web site <https://llvm.org/>`_.  If you
 have questions or comments, the `LLVM Developer's Mailing List
-<http://lists.llvm.org/mailman/listinfo/llvm-dev>`_ is a good place to send
+<https://lists.llvm.org/mailman/listinfo/llvm-dev>`_ is a good place to send
 them.
 
 Non-comprehensive list of changes in this release
 =================================================
 
-* Support for `retpolines <https://support.google.com/faqs/answer/7625886>`_
-  was added to help mitigate "branch target injection" (variant #2) of the
-  "Spectre" speculative side channels described by `Project Zero
-  <https://googleprojectzero.blogspot.com/2018/01/reading-privileged-memory-with-side.html>`_
-  and the `Spectre paper <https://spectreattack.com/spectre.pdf>`_.
+* The Windows installer no longer includes a Visual Studio integration.
+  Instead, a new
+  `LLVM Compiler Toolchain Visual Studio extension <https://marketplace.visualstudio.com/items?itemName=LLVMExtensions.llvm-toolchain>`_
+  is available on the Visual Studio Marketplace. The new integration
+  supports Visual Studio 2017.
 
-* The ``Redirects`` argument of ``llvm::sys::ExecuteAndWait`` and
-  ``llvm::sys::ExecuteNoWait`` was changed to an ``ArrayRef`` of optional
-  ``StringRef``'s to make it safer and more convenient to use.
+* Libraries have been renamed from 7.0 to 7. This change also impacts
+  downstream libraries like lldb.
 
-* The backend name was added to the Target Registry to allow run-time
-  information to be fed back into TableGen. Out-of-tree targets will need to add
-  the name used in the `def X : Target` definition to the call to
-  `RegisterTarget`.
+* The LoopInstSimplify pass (``-loop-instsimplify``) has been removed.
 
-* The ``Debugify`` pass was added to ``opt`` to facilitate testing of debug
-  info preservation. This pass attaches synthetic ``DILocations`` and
-  ``DIVariables`` to the instructions in a ``Module``. The ``CheckDebugify``
-  pass determines how much of the metadata is lost.
+* Symbols starting with ``?`` are no longer mangled by LLVM when using the
+  Windows ``x`` or ``w`` IR mangling schemes.
 
-* Significantly improved quality of CodeView debug info for Windows.
+* A new tool named :doc:`llvm-exegesis <CommandGuide/llvm-exegesis>` has been
+  added. :program:`llvm-exegesis` automatically measures instruction scheduling
+  properties (latency/uops) and provides a principled way to edit scheduling
+  models.
 
-* Preliminary support for Sanitizers and sibling features on X86(_64) NetBSD
-  (ASan, UBsan, TSan, MSan, SafeStack, libFuzzer).
+* A new tool named :doc:`llvm-mca <CommandGuide/llvm-mca>` has been added.
+  :program:`llvm-mca` is a  static performance analysis tool that uses
+  information available in LLVM to statically predict the performance of
+  machine code for a specific CPU.
+
+* Optimization of floating-point casts is improved. This may cause surprising
+  results for code that is relying on the undefined behavior of overflowing
+  casts. The optimization can be disabled by specifying a function attribute:
+  ``"strict-float-cast-overflow"="false"``. This attribute may be created by the
+  clang option ``-fno-strict-float-cast-overflow``.
+  Code sanitizers can be used to detect affected patterns. The clang option for
+  detecting this problem alone is ``-fsanitize=float-cast-overflow``:
+
+.. code-block:: c
+
+    int main() {
+      float x = 4294967296.0f;
+      x = (float)((int)x);
+      printf("junk in the ftrunc: %f\n", x);
+      return 0;
+    }
+
+.. code-block:: bash
+
+    clang -O1 ftrunc.c -fsanitize=float-cast-overflow ; ./a.out
+    ftrunc.c:5:15: runtime error: 4.29497e+09 is outside the range of representable values of type 'int'
+    junk in the ftrunc: 0.000000
+
+* ``LLVM_ON_WIN32`` is no longer set by ``llvm/Config/config.h`` and
+  ``llvm/Config/llvm-config.h``.  If you used this macro, use the compiler-set
+  ``_WIN32`` instead which is set exactly when ``LLVM_ON_WIN32`` used to be set.
+
+* The ``DEBUG`` macro has been renamed to ``LLVM_DEBUG``, the interface remains
+  the same.  If you used this macro you need to migrate to the new one.
+  You should also clang-format your code to make it easier to integrate future
+  changes locally.  This can be done with the following bash commands:
+
+.. code-block:: bash
+
+    git grep -l 'DEBUG' | xargs perl -pi -e 's/\bDEBUG\s?\(/LLVM_DEBUG(/g'
+    git diff -U0 master | ../clang/tools/clang-format/clang-format-diff.py -i -p1 -style LLVM
+
+* Early support for UBsan, X-Ray instrumentation and libFuzzer (x86 and x86_64)
+  for OpenBSD. Support for MSan (x86_64), X-Ray instrumentation and libFuzzer
+  (x86 and x86_64) for FreeBSD.
+
+* ``SmallVector<T, 0>`` shrank from ``sizeof(void*) * 4 + sizeof(T)`` to
+  ``sizeof(void*) + sizeof(unsigned) * 2``, smaller than ``std::vector<T>`` on
+  64-bit platforms.  The maximum capacity is now restricted to ``UINT32_MAX``.
+  Since SmallVector doesn't have the exception-safety pessimizations some
+  implementations saddle ``std::vector`` with and is better at using ``realloc``,
+  it's now a better choice even on the heap (although when ``TinyPtrVector`` works,
+  that's even smaller).
+
+* Preliminary/experimental support for DWARF v5 debugging information,
+  including the new ``.debug_names`` accelerator table. DWARF emitted at ``-O0``
+  should be fully DWARF v5 compliant. Type units and split DWARF are known
+  not to be compliant, and higher optimization levels will still emit some
+  information in v4 format.
+
+* Added support for the ``.rva`` assembler directive for COFF targets.
+
+* The :program:`llvm-rc` tool (Windows Resource Compiler) has been improved
+  a bit. There are still known missing features, but it is generally usable
+  in many cases. (The tool still doesn't preprocess input files automatically,
+  but it can now handle leftover C declarations in preprocessor output, if
+  given output from a preprocessor run externally.)
+
+* CodeView debug info can now be emitted for MinGW configurations, if requested.
+
+* The :program:`opt` tool now supports the ``-load-pass-plugin`` option for
+  loading pass plugins for the new PassManager.
+
+* Support for profiling JITed code with perf.
 
 
 Changes to the LLVM IR
 ----------------------
 
-* The fast-math-flags (FMF) have been updated. Previously, the 'fast' flag
-  indicated that floating-point reassociation was allowed and all other flags
-  were set too. The 'fast' flag still exists, but there is a new flag called
-  'reassoc' to indicate specifically that reassociation is allowed. A new bit
-  called 'afn' was also added to selectively allow approximations for common
-  mathlib functions like square-root. The new flags provide more flexibility
-  to enable/disable specific floating-point optimizations. Making the
-  optimizer respond appropriately to these flags is an ongoing effort.
+* The signatures for the builtins ``@llvm.memcpy``, ``@llvm.memmove``, and
+  ``@llvm.memset`` have changed. Alignment is no longer an argument, and are
+  instead conveyed as parameter attributes.
 
+* ``invariant.group.barrier`` has been renamed to ``launder.invariant.group``.
+
+* ``invariant.group`` metadata can now refer only to empty metadata nodes.
 
 Changes to the AArch64 Target
 -----------------------------
 
-* Enabled the new GlobalISel instruction selection framework by default at ``-O0``.
+* The ``.inst`` assembler directive is now usable on both COFF and Mach-O
+  targets, in addition to ELF.
 
+* Support for most remaining COFF relocations has been added.
+
+* Support for TLS on Windows has been added.
+
+* Assembler and disassembler support for the ARM Scalable Vector Extension has
+  been added.
 
 Changes to the ARM Target
 -------------------------
 
-* Support for enabling SjLj exception handling on platforms where it
-  isn't the default.
-
+* The ``.inst`` assembler directive is now usable on both COFF and Mach-O
+  targets, in addition to ELF. For Thumb, it can now also automatically
+  deduce the instruction size, without having to specify it with
+  e.g. ``.inst.w`` as before.
 
 Changes to the Hexagon Target
 -----------------------------
 
-* The Hexagon backend now supports V65 ISA.
+* Hexagon now supports auto-vectorization for HVX. It is disabled by default
+  and can be turned on with ``-fvectorize``. For auto-vectorization to take
+  effect, code generation for HVX needs to be enabled with ``-mhvx``.
+  The complete set of options should include ``-fvectorize``, ``-mhvx``,
+  and ``-mhvx-length={64b|128b}``.
 
-* The ``-mhvx`` option now takes an optional value that specifies the ISA
-  version of the HVX coprocessor.  The available values are v60, v62 and v65.
-  By default, the value is set to be the same as the CPU version.
-
-* The compiler option ``-mhvx-double`` is deprecated and will be removed in
-  the next release of the compiler. Programmers should use the ``-mhvx-length``
-  option to specify the desired vector length: ``-mhvx-length=64b`` for
-  64-byte vectors and ``-mhvx-length=128b`` for 128-byte vectors. While the
-  current default vector length is 64 bytes, users should always specify the
-  length explicitly, since the default value may change in the future.
-
-* The target feature ``hvx-double`` is deprecated and will be removed in the
-  next release. LLVM IR generators should use target features ``hvx-length64b``
-  and ``hvx-length128b`` to indicate the vector length. The length should
-  always be specified when HVX code generation is enabled.
-
+* The support for Hexagon ISA V4 is deprecated and will be removed in the
+  next release.
 
 Changes to the MIPS Target
 --------------------------
 
-Fixed numerous bugs:
+During this release the MIPS target has:
 
-* fpowi on MIPS64 giving incorrect results when used with a negative integer.
-* Usage of the asm 'c' constraint with the wrong datatype causing an
-  assert/crash.
-* Fixed a conversion bug when using the DSP ASE.
-* Fixed an inconsistency where objects were not marked as using the microMIPS as
-  when the micromips function attribute or the ".set micromips" directive was
-  used.
-* Reordered the MIPSR6 specific hazard scheduler pass to after the delay slot
-  filler, fixing a class of rare edge case bugs where the delay slot filler
-  would violate ISA restrictions.
-* Fixed a crash when using a type of unknown size with gp relative addressing.
-* Corrected the j macro for microMIPS.
-* Corrected the encoding of movep for microMIPS32r6.
-* Fixed an issue with the usage of insert instructions having an invalid set of
-  operands.
-* Fixed an issue where TLS symbols were not marked as such.
-* Enabled the usage of register scavenging with MSA, due to its shorter offsets
-  for loads and stores.
-* Corrected the ELF headers when using the DSP ASE.
+* Added support for Virtualization, Global INValidate ASE,
+  and CRC ASE instructions.
 
-New features:
+* Introduced definitions of ``[d]rem``, ``[d]remu``,
+  and microMIPSR6 ``ll/sc`` instructions.
 
-* The long branch pass now generates some R6 specific instructions when
-  targeting MIPSR6.
-* The delay slot filler now performs more branch conversions if delay slots
-  cannot be filled.
-* The MIPS MT ASE is now fully supported.
-* Added support for the ``lapc`` pseudo instruction.
-* Improved the selection of multiple instructions (``dext``, ``nmadd``,
-  ``nmsub``).
-* Further improved microMIPS codesize reduction.
+* Shrink-wrapping is now supported and enabled by default (except for ``-O0``).
 
-Deprecation notices:
+* Extended size reduction pass by the LWP and SWP instructions.
 
-* microMIPS64R6 support was been deprecated since 5.0, and has now been
-  completely removed.
+* Gained initial support of GlobalISel instruction selection framework.
 
+* Updated the P5600 scheduler model not to use instruction itineraries.
+
+* Added disassembly support for comparison and fused (negative) multiply
+  ``add/sub`` instructions.
+
+* Improved the selection of multiple instructions.
+
+* Load/store ``lb``, ``sb``, ``ld``, ``sd``, ``lld``, ... instructions
+  now support 32/64-bit offsets.
+
+* Added support for ``y``, ``M``, and ``L`` inline assembler operand codes.
+
+* Extended list of relocations supported by the ``.reloc`` directive
+
+* Fixed using a wrong register class for creating an emergency
+  spill slot for mips3 / n64 ABI.
+
+* MIPS relocation types were generated for microMIPS code.
+
+* Corrected definitions of multiple instructions (``lwp``, ``swp``, ``ctc2``,
+  ``cfc2``, ``sync``, ``synci``, ``cvt.d.w``, ...).
+
+* Fixed atomic operations at ``-O0`` level.
+
+* Fixed local dynamic TLS with Sym64
+
+Changes to the PowerPC Target
+-----------------------------
+
+During this release the PowerPC target has:
+
+* Replaced the list scheduler for post register allocation with the machine scheduler.
+
+* Added support for ``coldcc`` calling convention.
+
+* Added support for ``symbol@high`` and ``symbol@higha`` symbol modifiers.
+
+* Added support for quad-precision floating point type (``__float128``) under the llvm option ``-enable-ppc-quad-precision``.
+
+* Added dump function to ``LatencyPriorityQueue``.
+
+* Completed the Power9 scheduler model.
+
+* Optimized TLS code generation.
+
+* Improved MachineLICM for hoisting constant stores.
+
+* Improved code generation to reduce register use by using more register + immediate instructions.
+
+* Improved code generation to better exploit rotate-and-mask instructions.
+
+* Fixed the bug in dynamic loader for JIT which crashed NNVM.
+
+* Numerous bug fixes and code cleanups.
 
 Changes to the SystemZ Target
 -----------------------------
 
 During this release the SystemZ target has:
 
-* Added support for 128-bit atomic operations.
+* Added support for vector registers in inline asm statements.
 
-* Added support for the "o" constraint for inline asm statements.
+* Added support for stackmaps, patchpoints, and the anyregcc
+  calling convention.
+
+* Changed the default function alignment to 16 bytes.
+
+* Improved codegen for condition code handling.
+
+* Improved instruction scheduling and microarchitecture tuning for z13/z14.
+
+* Fixed support for generating GCOV coverage data.
+
+* Fixed some codegen bugs.
 
 Changes to the X86 Target
 -------------------------
 
-During this release the X86 target has:
+* The calling convention for the ``f80`` data type on MinGW targets has been
+  fixed. Normally, the calling convention for this type is handled within clang,
+  but if an intrinsic is used, which LLVM expands into a libcall, the
+  proper calling convention needs to be supported in LLVM as well. (Note,
+  on Windows, this data type is only used for long doubles in MinGW
+  environments - in MSVC environments, long doubles are the same size as
+  normal doubles.)
 
-* Added support for enabling SjLj exception handling on platforms where it
-  isn't the default.
+Changes to the OCaml bindings
+-----------------------------
 
-* Added intrinsics for Intel Extensions: VAES, GFNI, VPCLMULQDQ, AVX512VBMI2, AVX512BITALG, AVX512VNNI.
-
-* Added support for Intel Icelake CPU.
-
-* Fixed some X87 codegen bugs.
-
-* Added instruction scheduling information for Intel Sandy Bridge, Ivy Bridge, Haswell, Broadwell, and Skylake CPUs.
-
-* Improved scheduler model for AMD Jaguar CPUs.
-
-* Improved llvm-mc's disassembler for some EVEX encoded instructions.
-
-* Add support for i8 and i16 vector signed/unsigned min/max horizontal reductions.
-
-* Improved codegen for memory comparisons
-
-* Improved codegen for i32 vector multiplies
-
-* Improved codegen for scalar integer absolute values
-
-* Improved codegen for vector integer rotations (XOP and AVX512)
-
-* Improved codegen of data being transferred between GPRs and K-registers.
-
-* Improved codegen for vector truncations.
-
-* Improved folding of address computations into gather/scatter instructions.
-
-* Gained initial support recognizing variable shuffles from vector element extracts and inserts.
-
-* Improved documentation for SSE/AVX intrinsics in intrin.h header files.
-
-* Gained support for emitting `retpolines
-  <https://support.google.com/faqs/answer/7625886>`_, including automatic
-  insertion of the necessary thunks or using external thunks.
+* Removed ``add_bb_vectorize``.
 
 
-External Open Source Projects Using LLVM 6
+Changes to the C API
+--------------------
+
+* Removed ``LLVMAddBBVectorizePass``. The implementation was removed and the C
+  interface was made a deprecated no-op in LLVM 5. Use
+  ``LLVMAddSLPVectorizePass`` instead to get the supported SLP vectorizer.
+
+* Expanded the OrcJIT APIs so they can register event listeners like debuggers
+  and profilers.
+
+Changes to the DAG infrastructure
+---------------------------------
+* ``ADDC``/``ADDE``/``SUBC``/``SUBE`` are now deprecated and will default to expand. Backends
+  that wish to continue to use these opcodes should explicitely request to do so
+  using ``setOperationAction`` in their ``TargetLowering``. New backends
+  should use ``UADDO``/``ADDCARRY``/``USUBO``/``SUBCARRY`` instead of the deprecated opcodes.
+
+* The ``SETCCE`` opcode has now been removed in favor of ``SETCCCARRY``.
+
+* TableGen now supports multi-alternative pattern fragments via the ``PatFrags``
+  class.  ``PatFrag`` is now derived from ``PatFrags``, which may require minor
+  changes to backends that directly access ``PatFrag`` members.
+
+
+External Open Source Projects Using LLVM 7
 ==========================================
-
-LDC - the LLVM-based D compiler
--------------------------------
-
-`D <http://dlang.org>`_ is a language with C-like syntax and static typing. It
-pragmatically combines efficiency, control, and modeling power, with safety and
-programmer productivity. D supports powerful concepts like Compile-Time Function
-Execution (CTFE) and Template Meta-Programming, provides an innovative approach
-to concurrency and offers many classical paradigms.
-
-`LDC <http://wiki.dlang.org/LDC>`_ uses the frontend from the reference compiler
-combined with LLVM as backend to produce efficient native code. LDC targets
-x86/x86_64 systems like Linux, OS X, FreeBSD and Windows and also Linux on ARM
-and PowerPC (32/64 bit). Ports to other architectures like AArch64 and MIPS64
-are underway.
-
-JFS - JIT Fuzzing Solver
-------------------------
-
-`JFS <https://github.com/delcypher/jfs>`_ is an experimental constraint solver
-designed to investigate using coverage guided fuzzing as an incomplete strategy
-for solving boolean, BitVector, and floating-point constraints.
-It is built on top of LLVM, Clang, LibFuzzer, and Z3.
-
-The solver works by generating a C++ program where the reachability of an
-`abort()` statement is equivalent to finding a satisfying assignment to the
-constraints. This program is then compiled by Clang with `SanitizerCoverage
-<https://releases.llvm.org/6.0.0/tools/clang/docs/SanitizerCoverage.html>`_
-instrumentation and then fuzzed using :doc:`LibFuzzer <LibFuzzer>`.
 
 Zig Programming Language
 ------------------------
 
-`Zig <http://ziglang.org>`_  is an open-source programming language designed
-for robustness, optimality, and clarity. It is intended to replace C. It
-provides high level features such as Generics,
-Compile Time Function Execution, and Partial Evaluation, yet exposes low level
-LLVM IR features such as Aliases. Zig uses Clang to provide automatic
+`Zig <https://ziglang.org>`_  is an open-source programming language designed
+for robustness, optimality, and clarity. Zig is an alternative to C, providing
+high level features such as generics, compile time function execution, partial
+evaluation, and LLVM-based coroutines, while exposing low level LLVM IR
+features such as aliases and intrinsics. Zig uses Clang to provide automatic
 import of .h symbols - even inline functions and macros. Zig uses LLD combined
 with lazily building compiler-rt to provide out-of-the-box cross-compiling for
 all supported targets.
+
 
 Additional Information
 ======================
 
 A wide variety of additional information is available on the `LLVM web page
-<http://llvm.org/>`_, in particular in the `documentation
-<http://llvm.org/docs/>`_ section.  The web page also contains versions of the
+<https://llvm.org/>`_, in particular in the `documentation
+<https://llvm.org/docs/>`_ section.  The web page also contains versions of the
 API documentation which is up-to-date with the Subversion version of the source
 code.  You can access versions of these documents specific to this release by
 going into the ``llvm/docs/`` directory in the LLVM tree.
 
 If you have any questions or comments about LLVM, please feel free to contact
-us via the `mailing lists <http://llvm.org/docs/#maillist>`_.
+us via the `mailing lists <https://llvm.org/docs/#mailing-lists>`_.
