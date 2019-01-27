@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.36 2018/12/17 19:14:59 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.37 2019/01/27 11:59:30 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -411,6 +411,8 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 #define d ((struct wsmux_device *)data)
 		DPRINTF(("%s: add type=%d, no=%d\n", sc->sc_base.me_dv.dv_xname,
 			 d->type, d->idx));
+		if (d->idx < 0)
+			return (EINVAL);
 		switch (d->type) {
 #if NWSMOUSE > 0
 		case WSMUX_MOUSE:
