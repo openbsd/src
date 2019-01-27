@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2019/01/27 16:59:41 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SUBDIR+=libLLVMSupport
 SUBDIR+=libLLVMTableGen
 SUBDIR+=llvm-tblgen
 SUBDIR+=include/llvm/IR
+SUBDIR+=include/llvm/Transforms/InstCombine
 
 # these need Intrinsics.gen
 SUBDIR+=libLLVMCore
@@ -75,6 +76,7 @@ SUBDIR+=libclangAnalysis
 SUBDIR+=libclangEdit
 SUBDIR+=libclangRewrite
 SUBDIR+=libclangDriver
+SUBDIR+=libclangDriverArch
 SUBDIR+=libclangSerialization
 SUBDIR+=libclangFrontend
 SUBDIR+=libclangRewriteFrontend

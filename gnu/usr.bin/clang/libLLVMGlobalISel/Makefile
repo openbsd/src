@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2019/01/27 16:59:41 patrick Exp $
 
 LIB=	LLVMGlobalISel
 NOPIC=
@@ -10,6 +10,8 @@ SRCS=	CallLowering.cpp \
 	IRTranslator.cpp \
 	InstructionSelect.cpp \
 	InstructionSelector.cpp \
+	LegalityPredicates.cpp \
+	LegalizeMutations.cpp \
 	Legalizer.cpp \
 	LegalizerHelper.cpp \
 	LegalizerInfo.cpp \

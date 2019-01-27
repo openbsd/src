@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	lldbPluginDynamicLoader
 NOPIC=
@@ -8,6 +8,7 @@ NOPROFILE=
 SRCS=	AuxVector.cpp \
 	DYLDRendezvous.cpp \
 	DynamicLoaderDarwin.cpp \
+	DynamicLoaderDarwinKernel.cpp \
 	DynamicLoaderHexagonDYLD.cpp \
 	DynamicLoaderMacOS.cpp \
 	DynamicLoaderMacOSXDYLD.cpp \
@@ -16,6 +17,7 @@ SRCS=	AuxVector.cpp \
 	DynamicLoaderWindowsDYLD.cpp \
 	HexagonDYLDRendezvous.cpp \
 
+.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/DynamicLoader/Darwin-Kernel
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/DynamicLoader/Hexagon-DYLD
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/DynamicLoader/MacOSX-DYLD
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/DynamicLoader/POSIX-DYLD

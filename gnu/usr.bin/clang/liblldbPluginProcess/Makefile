@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
@@ -11,7 +11,6 @@ SRCS=	DynamicRegisterInfo.cpp \
 	GDBRemoteCommunication.cpp \
 	GDBRemoteCommunicationClient.cpp \
 	GDBRemoteCommunicationServer.cpp \
-	GDBRemoteCommunicationServerCommon.cpp \
 	GDBRemoteCommunicationServerLLGS.cpp \
 	GDBRemoteCommunicationServerPlatform.cpp \
 	GDBRemoteRegisterContext.cpp \
@@ -28,6 +27,7 @@ SRCS=	DynamicRegisterInfo.cpp \
 	ProcessElfCore.cpp \
 	ProcessGDBRemote.cpp \
 	ProcessGDBRemoteLog.cpp \
+	ProcessMachCore.cpp \
 	ProcessMinidump.cpp \
 	RegisterContextDarwin_arm.cpp \
 	RegisterContextDarwin_arm64.cpp \
@@ -77,6 +77,7 @@ SRCS=	DynamicRegisterInfo.cpp \
 	StopInfoMachException.cpp \
 	ThreadElfCore.cpp \
 	ThreadGDBRemote.cpp \
+	ThreadMachCore.cpp \
 	ThreadMemory.cpp \
 	ThreadMinidump.cpp \
 	UnwindLLDB.cpp \
@@ -85,6 +86,7 @@ SRCS=	DynamicRegisterInfo.cpp \
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/Utility
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/elf-core
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/gdb-remote
+.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/mach-core
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/minidump
 
 install:

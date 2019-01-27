@@ -1,12 +1,11 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	lldbInterpreter
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
-SRCS=	Args.cpp \
-	CommandAlias.cpp \
+SRCS=	CommandAlias.cpp \
 	CommandHistory.cpp \
 	CommandInterpreter.cpp \
 	CommandObject.cpp \
@@ -14,6 +13,7 @@ SRCS=	Args.cpp \
 	CommandObjectScript.cpp \
 	CommandOptionValidators.cpp \
 	CommandReturnObject.cpp \
+	OptionArgParser.cpp \
 	OptionGroupArchitecture.cpp \
 	OptionGroupBoolean.cpp \
 	OptionGroupFile.cpp \

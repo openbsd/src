@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -30,11 +30,12 @@ SRCS=	APFloat.cpp \
 	ConvertUTF.cpp \
 	ConvertUTFWrapper.cpp \
 	CrashRecoveryContext.cpp \
+	DAGDeltaAlgorithm.cpp \
+	DJB.cpp \
 	DataExtractor.cpp \
 	Debug.cpp \
 	DebugCounter.cpp \
 	DeltaAlgorithm.cpp \
-	DAGDeltaAlgorithm.cpp \
 	Error.cpp \
 	ErrorHandling.cpp \
 	FileUtilities.cpp \
@@ -45,8 +46,10 @@ SRCS=	APFloat.cpp \
 	GlobPattern.cpp \
 	GraphWriter.cpp \
 	Hashing.cpp \
+	InitLLVM.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
+	JSON.cpp \
 	JamCRC.cpp \
 	KnownBits.cpp \
 	LEB128.cpp \
@@ -110,8 +113,11 @@ SRCS=	APFloat.cpp \
 	TargetRegistry.cpp \
 	ThreadLocal.cpp \
 	Threading.cpp \
+	UnicodeCaseFold.cpp \
 	Valgrind.cpp \
+	VersionTuple.cpp \
 	Watchdog.cpp \
+	WithColor.cpp \
 	xxhash.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Support

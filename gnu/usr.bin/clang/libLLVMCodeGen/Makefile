@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2018/08/12 16:59:31 mortimer Exp $
+# $OpenBSD: Makefile,v 1.9 2019/01/27 16:59:41 patrick Exp $
 
 LIB=	LLVMCodeGen
 NOPIC=
@@ -15,6 +15,8 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
 	BranchRelaxation.cpp \
+	BreakFalseDeps.cpp \
+	CFIInstrInserter.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
 	CodeGen.cpp \
@@ -26,20 +28,12 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	DwarfEHPrepare.cpp \
 	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
-	ExecutionDepsFix.cpp \
+	ExecutionDomainFix.cpp \
 	ExpandISelPseudos.cpp \
 	ExpandMemCmp.cpp \
 	ExpandPostRAPseudos.cpp \
 	ExpandReductions.cpp \
 	FEntryInserter.cpp \
-	IndirectBrExpandPass.cpp \
-	LazyMachineBlockFrequencyInfo.cpp \
-	LiveDebugValues.cpp \
-	LiveIntervals.cpp \
-	LiveStacks.cpp \
-	LiveRangeShrink.cpp \
-	LiveRegUnits.cpp \
-	LowLevelType.cpp \
 	FaultMaps.cpp \
 	FuncletLayout.cpp \
 	GCMetadata.cpp \
@@ -49,22 +43,30 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	GlobalMerge.cpp \
 	IfConversion.cpp \
 	ImplicitNullChecks.cpp \
+	IndirectBrExpandPass.cpp \
 	InlineSpiller.cpp \
 	InterferenceCache.cpp \
 	InterleavedAccessPass.cpp \
 	IntrinsicLowering.cpp \
 	LLVMTargetMachine.cpp \
 	LatencyPriorityQueue.cpp \
+	LazyMachineBlockFrequencyInfo.cpp \
 	LexicalScopes.cpp \
+	LiveDebugValues.cpp \
 	LiveDebugVariables.cpp \
 	LiveInterval.cpp \
 	LiveIntervalUnion.cpp \
+	LiveIntervals.cpp \
+	LivePhysRegs.cpp \
 	LiveRangeCalc.cpp \
 	LiveRangeEdit.cpp \
+	LiveRangeShrink.cpp \
 	LiveRegMatrix.cpp \
-	LivePhysRegs.cpp \
+	LiveRegUnits.cpp \
+	LiveStacks.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
+	LoopTraversal.cpp \
 	LowLevelType.cpp \
 	LowerEmuTLS.cpp \
 	MachineBasicBlock.cpp \
@@ -115,6 +117,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	ProcessImplicitDefs.cpp \
 	PrologEpilogInserter.cpp \
 	PseudoSourceValue.cpp \
+	ReachingDefAnalysis.cpp \
 	RegAllocBase.cpp \
 	RegAllocBasic.cpp \
 	RegAllocFast.cpp \
@@ -163,7 +166,9 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	TargetSubtargetInfo.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
+	ValueTypes.cpp \
 	VirtRegMap.cpp \
+	WasmEHPrepare.cpp \
 	WinEHPrepare.cpp \
 	XRayInstrumentation.cpp
 

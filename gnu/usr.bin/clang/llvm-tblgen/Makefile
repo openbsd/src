@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2019/01/27 16:59:42 patrick Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -8,6 +8,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	AsmWriterEmitter.cpp \
 	AsmWriterInst.cpp \
 	Attributes.cpp \
+	CTagsEmitter.cpp \
 	CallingConvEmitter.cpp \
 	CodeEmitterGen.cpp \
 	CodeGenDAGPatterns.cpp \
@@ -32,7 +33,9 @@ SRCS=	AsmMatcherEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
 	OptParserEmitter.cpp \
+	PredicateExpander.cpp \
 	PseudoLoweringEmitter.cpp \
+	RISCVCompressInstEmitter.cpp \
 	RegisterBankEmitter.cpp \
 	RegisterInfoEmitter.cpp \
 	SDNodeProperties.cpp \
@@ -41,12 +44,12 @@ SRCS=	AsmMatcherEmitter.cpp \
 	SubtargetFeatureInfo.cpp \
 	TableGen.cpp \
 	Types.cpp \
+	WebAssemblyDisassemblerEmitter.cpp \
 	X86DisassemblerTables.cpp \
 	X86EVEX2VEXTablesEmitter.cpp \
 	X86FoldTablesEmitter.cpp \
 	X86ModRMFilters.cpp \
-	X86RecognizableInstr.cpp \
-	CTagsEmitter.cpp
+	X86RecognizableInstr.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/utils/TableGen
 

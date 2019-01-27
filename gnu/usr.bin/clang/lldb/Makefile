@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2018/10/05 03:47:59 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2019/01/27 16:59:42 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -67,6 +67,7 @@ LLVM_LIBDEPS=	${BACKEND_ASMPARSER} \
 		clangBasicTargets \
 		clangCodeGen \
 		clangDriver \
+		clangDriverArch \
 		clangEdit \
 		clangFrontend \
 		clangLex \

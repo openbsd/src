@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	lldELF
 NOPROFILE=
@@ -12,11 +12,13 @@ SRCS=	AArch64.cpp \
 	AMDGPU.cpp \
 	ARM.cpp \
 	AVR.cpp \
+	CallGraphSort.cpp \
 	Driver.cpp \
 	DriverUtils.cpp \
 	EhFrame.cpp \
 	Filesystem.cpp \
 	GdbIndex.cpp \
+	Hexagon.cpp \
 	ICF.cpp \
 	InputFiles.cpp \
 	InputSection.cpp \
@@ -33,7 +35,6 @@ SRCS=	AArch64.cpp \
 	SPARCV9.cpp \
 	ScriptLexer.cpp \
 	ScriptParser.cpp \
-	Strings.cpp \
 	SymbolTable.cpp \
 	Symbols.cpp \
 	SyntheticSections.cpp \

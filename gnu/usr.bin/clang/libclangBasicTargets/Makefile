@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	clangBasicTargets
 NOPIC=
@@ -24,6 +24,7 @@ SRCS=	AArch64.cpp \
 	OSTargets.cpp \
 	PNaCl.cpp \
 	PPC.cpp \
+	RISCV.cpp \
 	SPIR.cpp \
 	Sparc.cpp \
 	SystemZ.cpp \

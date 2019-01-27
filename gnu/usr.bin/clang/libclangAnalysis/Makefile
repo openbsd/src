@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2019/01/27 16:59:42 patrick Exp $
 
 LIB=	clangAnalysis
 NOPIC=
@@ -14,6 +14,7 @@ SRCS=	AnalysisDeclContext.cpp \
 	CFGStmtMap.cpp \
 	CallGraph.cpp \
 	CocoaConventions.cpp \
+	ConstructionContext.cpp \
 	Consumed.cpp \
 	CodeInjector.cpp \
 	Dominators.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2019/01/27 16:59:41 patrick Exp $
 
 LIB=	LLVMMipsCodeGen
 NOPIC=
@@ -17,21 +17,25 @@ SRCS=	MicroMipsSizeReduction.cpp \
 	Mips16RegisterInfo.cpp \
 	MipsAnalyzeImmediate.cpp \
 	MipsAsmPrinter.cpp \
+	MipsBranchExpansion.cpp \
 	MipsCCState.cpp \
+	MipsCallLowering.cpp \
 	MipsConstantIslandPass.cpp \
 	MipsDelaySlotFiller.cpp \
+	MipsExpandPseudo.cpp \
 	MipsFastISel.cpp \
-	MipsHazardSchedule.cpp \
-	MipsInstrInfo.cpp \
+	MipsFrameLowering.cpp \
 	MipsISelDAGToDAG.cpp \
 	MipsISelLowering.cpp \
-	MipsFrameLowering.cpp \
-	MipsLongBranch.cpp \
+	MipsInstrInfo.cpp \
+	MipsInstructionSelector.cpp \
+	MipsLegalizerInfo.cpp \
 	MipsMCInstLower.cpp \
 	MipsMachineFunction.cpp \
 	MipsModuleISelDAGToDAG.cpp \
 	MipsOptimizePICCall.cpp \
 	MipsOs16.cpp \
+	MipsRegisterBankInfo.cpp \
 	MipsRegisterInfo.cpp \
 	MipsSEFrameLowering.cpp \
 	MipsSEInstrInfo.cpp \

@@ -12,7 +12,13 @@
 
 #define LLDB_CONFIG_TERMIOS_SUPPORTED
 
-/* #define LLDB_DISABLE_POSIX */
+#define LLDB_EDITLINE_USE_WCHAR 0
+
+#define LLDB_HAVE_EL_RFUNC_T 0
+
+/* #undef LLDB_DISABLE_POSIX */
+
+#define LLDB_LIBDIR_SUFFIX ""
 
 #define HAVE_SYS_EVENT_H 1
 
@@ -24,6 +30,6 @@
 
 #define HAVE_NR_PROCESS_VM_READV 0
 
-/* #define HAVE_LIBCOMPRESSION */
+/* #undef HAVE_LIBCOMPRESSION */
 
 #endif // #ifndef LLDB_HOST_CONFIG_H

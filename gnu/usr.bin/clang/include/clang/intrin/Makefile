@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.17 2018/04/07 08:19:19 landry Exp $
+# $OpenBSD: Makefile,v 1.18 2019/01/27 16:59:41 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			6.0.0
+LLVM_V=			7.0.1
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -21,6 +21,7 @@ HEADERS=	stdalign.h \
 
 .if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "arm"
 GEN+=		arm_neon.h
+GEN+=		arm_fp16.h
 HEADERS+=	arm_acle.h ${GEN}
 .elif ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 HEADERS+=	adxintrin.h \
@@ -53,6 +54,7 @@ HEADERS+=	adxintrin.h \
 		bmiintrin.h \
 		cetintrin.h \
 		cpuid.h \
+		cldemoteintrin.h \
 		clflushoptintrin.h \
 		clwbintrin.h \
 		clzerointrin.h \
@@ -64,25 +66,32 @@ HEADERS+=	adxintrin.h \
 		gfniintrin.h \
 		ia32intrin.h \
 		immintrin.h \
+		invpcidintrin.h \
 		lwpintrin.h \
 		lzcntintrin.h \
 		mm3dnow.h \
-		mmintrin.h \
 		mm_malloc.h \
+		mmintrin.h \
+		movdirintrin.h \
 		mwaitxintrin.h \
 		nmmintrin.h \
+		pconfigintrin.h \
 		pkuintrin.h \
 		pmmintrin.h \
 		popcntintrin.h \
 		prfchwintrin.h \
+		ptwriteintrin.h \
 		rdseedintrin.h \
 		rtmintrin.h \
+		sgxintrin.h \
 		shaintrin.h \
 		smmintrin.h \
 		tbmintrin.h \
 		tmmintrin.h \
 		vaesintrin.h \
 		vpclmulqdqintrin.h \
+		waitpkgintrin.h \
+		wbnoinvdintrin.h \
 		wmmintrin.h \
 		__wmmintrin_aes.h \
 		__wmmintrin_pclmul.h \
@@ -114,6 +123,11 @@ install includes: ${HEADERS}
 	    ${.ALLSRC} ${DESTDIR}${CLANG_INTR_INCDIR}
 
 arm_neon.h: ${CLANG_INC}/clang/Basic/arm_neon.td
-	${TBLGEN} -gen-arm-neon -o ${.TARGET} ${.ALLSRC}
+	${TBLGEN} -gen-arm-neon -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
+
+arm_fp16.h: ${CLANG_INC}/clang/Basic/arm_fp16.td
+	${TBLGEN} -gen-arm-fp16 -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>
