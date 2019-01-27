@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.66 2019/01/27 02:35:27 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.67 2019/01/27 02:41:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -45,11 +45,26 @@
 
 #include <netmpls/mpls.h>
 
+
+
 #ifdef MPLS_DEBUG
 #define DPRINTF(x)    do { if (mpedebug) printf x ; } while (0)
 #else
 #define DPRINTF(x)
 #endif
+
+struct mpe_softc {
+	struct ifnet		sc_if;		/* the interface */
+	struct ifaddr		sc_ifa;
+	int			sc_unit;
+	struct sockaddr_mpls	sc_smpls;
+	LIST_ENTRY(mpe_softc)	sc_list;
+};
+
+#define MPE_HDRLEN	sizeof(struct shim_hdr)
+#define MPE_MTU		1500
+#define MPE_MTU_MIN	256
+#define MPE_MTU_MAX	8192
 
 void	mpeattach(int);
 int	mpe_output(struct ifnet *, struct mbuf *, struct sockaddr *,

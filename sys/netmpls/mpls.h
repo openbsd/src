@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.38 2018/01/09 06:24:15 dlg Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.39 2019/01/27 02:41:56 dlg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -155,18 +155,6 @@ struct ifmpwreq {
 
 extern	struct domain mplsdomain;
 
-struct mpe_softc {
-	struct ifnet		sc_if;		/* the interface */
-	struct ifaddr		sc_ifa;
-	int			sc_unit;
-	struct sockaddr_mpls	sc_smpls;
-	LIST_ENTRY(mpe_softc)	sc_list;
-};
-
-#define MPE_HDRLEN	sizeof(struct shim_hdr)
-#define MPE_MTU		1500
-#define MPE_MTU_MIN	256
-#define MPE_MTU_MAX	8192
 
 void	mpe_input(struct mbuf *, struct ifnet *, struct sockaddr_mpls *,
 	    u_int8_t);
