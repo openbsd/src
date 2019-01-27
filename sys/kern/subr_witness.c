@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.25 2019/01/27 10:34:45 anton Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.26 2019/01/27 10:41:41 anton Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1621,7 +1621,7 @@ adopt(struct witness *parent, struct witness *child)
 #ifdef DDB
 				db_stack_dump();
 #endif
-				printf("Witness disabled.\n");
+				printf("witness disabled\n");
 				witness_watch = -1;
 			}
 			if ((w_rmatrix[j][i] & WITNESS_ANCESTOR_MASK) &&
@@ -1632,7 +1632,7 @@ adopt(struct witness *parent, struct witness *child)
 #ifdef DDB
 				db_stack_dump();
 #endif
-				printf("Witness disabled.\n");
+				printf("witness disabled\n");
 				witness_watch = -1;
 			}
 		}
@@ -1698,7 +1698,7 @@ _isitmyx(struct witness *w1, struct witness *w2, int rmask, const char *fname)
 #ifdef DDB
 		db_stack_dump();
 #endif
-		printf("Witness disabled.\n");
+		printf("witness disabled\n");
 		witness_watch = -1;
 	}
 	return (r1 & rmask);
