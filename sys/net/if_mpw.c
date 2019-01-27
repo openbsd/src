@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.25 2019/01/23 23:08:38 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.26 2019/01/27 01:42:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -256,6 +256,8 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ifnet *ifp = &sc->sc_if;
 	struct shim_hdr *shim;
+	struct mbuf *n;
+	int off;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		goto drop;
@@ -283,6 +285,26 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 			goto drop;
 		}
 	}
+
+	if (m->m_len < sizeof(struct ether_header)) {
+		m = m_pullup(m, sizeof(struct ether_header));
+		if (m == NULL)
+			return;
+	}
+
+	n = m_getptr(m, sizeof(struct ether_header), &off);
+	if (n == NULL) {
+		ifp->if_ierrors++;
+		goto drop;
+	}
+	if (!ALIGNED_POINTER(mtod(n, caddr_t) + off, uint32_t)) {
+		n = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
+		/* Dispose of the original mbuf chain */
+		m_freem(m);
+		if (n == NULL)
+			return;
+		m = n;
+        }
 
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
@@ -312,7 +334,7 @@ mpw_start(struct ifnet *ifp)
 	struct mpw_softc *sc = ifp->if_softc;
 	struct rtentry *rt;
 	struct ifnet *p;
-	struct mbuf *m;
+	struct mbuf *m, *m0;
 	struct shim_hdr *shim;
 	struct sockaddr_storage ss;
 
@@ -348,26 +370,37 @@ mpw_start(struct ifnet *ifp)
 			bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER */
 
+		m0 = m_get(M_DONTWAIT, m->m_type);
+		if (m0 == NULL) {
+			m_freem(m);
+			continue;
+		}
+
+		M_MOVE_PKTHDR(m0, m);
+		m0->m_next = m;
+		m_align(m0, 0);
+		m0->m_len = 0;
+
 		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
-			M_PREPEND(m, sizeof(*shim), M_NOWAIT);
-			if (m == NULL)
+			m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
+			if (m0 == NULL)
 				continue;
 
-			shim = mtod(m, struct shim_hdr *);
+			shim = mtod(m0, struct shim_hdr *);
 			memset(shim, 0, sizeof(*shim));
 		}
 
-		M_PREPEND(m, sizeof(*shim), M_NOWAIT);
-		if (m == NULL)
+		m = m_prepend(m0, sizeof(*shim), M_NOWAIT);
+		if (m0 == NULL)
 			continue;
 
-		shim = mtod(m, struct shim_hdr *);
+		shim = mtod(m0, struct shim_hdr *);
 		shim->shim_label = htonl(mpls_defttl) & MPLS_TTL_MASK;
 		shim->shim_label |= sc->sc_rshim.shim_label;
 
-		m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+		m0->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
-		mpls_output(p, m, sstosa(&ss), rt);
+		mpls_output(p, m0, sstosa(&ss), rt);
 	}
 
 	if_put(p);
