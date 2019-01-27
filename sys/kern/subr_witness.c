@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.24 2019/01/26 16:18:52 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.25 2019/01/27 10:34:45 anton Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -566,7 +566,7 @@ witness_init(struct lock_object *lock, const struct lock_type *type)
 		pending_locks[pending_cnt++].wh_type = type;
 		if (pending_cnt > WITNESS_PENDLIST)
 			panic("%s: pending locks list is too small, "
-			    "increase WITNESS_PENDLIST\n",
+			    "increase WITNESS_PENDLIST",
 			    __func__);
 	} else
 		lock->lo_witness = enroll(type, lock->lo_name, class);
@@ -1387,7 +1387,7 @@ witness_thread_exit(struct proc *p)
 				witness_list_lock(&lle->ll_children[i],
 				    printf);
 			}
-		panic("Thread %p cannot exit while holding sleeplocks\n", p);
+		panic("thread %p cannot exit while holding sleeplocks", p);
 	}
 	KASSERT(lle->ll_next == NULL);
 	witness_lock_list_free(lle);
@@ -1985,14 +1985,14 @@ witness_assert(const struct lock_object *lock, int flags, const char *file,
 		instance = find_instance(
 		    witness_cpu[cpu_number()].wc_spinlocks, lock);
 	else {
-		panic("Lock (%s) %s is not sleep or spin!",
+		panic("lock (%s) %s is not sleep or spin!",
 		    class->lc_name, lock->lo_name);
 		return;
 	}
 	switch (flags) {
 	case LA_UNLOCKED:
 		if (instance != NULL)
-			panic("Lock (%s) %s locked @ %s:%d.",
+			panic("lock (%s) %s locked @ %s:%d",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
 		break;
@@ -2006,7 +2006,7 @@ witness_assert(const struct lock_object *lock, int flags, const char *file,
 	case LA_XLOCKED | LA_RECURSED:
 	case LA_XLOCKED | LA_NOTRECURSED:
 		if (instance == NULL) {
-			panic("Lock (%s) %s not locked @ %s:%d.",
+			panic("lock (%s) %s not locked @ %s:%d",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
 			break;
@@ -2014,28 +2014,28 @@ witness_assert(const struct lock_object *lock, int flags, const char *file,
 		if ((flags & LA_XLOCKED) != 0 &&
 		    (instance->li_flags & LI_EXCLUSIVE) == 0)
 			panic(
-			    "Lock (%s) %s not exclusively locked @ %s:%d.",
+			    "lock (%s) %s not exclusively locked @ %s:%d",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
 		if ((flags & LA_SLOCKED) != 0 &&
 		    (instance->li_flags & LI_EXCLUSIVE) != 0)
 			panic(
-			    "Lock (%s) %s exclusively locked @ %s:%d.",
+			    "lock (%s) %s exclusively locked @ %s:%d",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
 		if ((flags & LA_RECURSED) != 0 &&
 		    (instance->li_flags & LI_RECURSEMASK) == 0)
-			panic("Lock (%s) %s not recursed @ %s:%d.",
+			panic("lock (%s) %s not recursed @ %s:%d",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
 		if ((flags & LA_NOTRECURSED) != 0 &&
 		    (instance->li_flags & LI_RECURSEMASK) != 0)
-			panic("Lock (%s) %s recursed @ %s:%d.",
+			panic("lock (%s) %s recursed @ %s:%d",
 			    class->lc_name, lock->lo_name,
 			    fixup_filename(file), line);
 		break;
 	default:
-		panic("Invalid lock assertion at %s:%d.",
+		panic("invalid lock assertion at %s:%d",
 		    fixup_filename(file), line);
 
 	}
