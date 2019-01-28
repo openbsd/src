@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.4 2018/08/06 10:52:30 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.5 2019/01/28 10:29:35 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -182,6 +182,7 @@ imxuart_attach(struct device *parent, struct device *self, void *aux)
 				break;
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
+		SET(sc->sc_hwflags, COM_HW_CONSOLE);
 		printf(": console");
 	}
 
@@ -224,7 +225,17 @@ imxuart_intr(void *arg)
 	p = sc->sc_ibufp;
 
 	while(ISSET(bus_space_read_2(iot, ioh, IMXUART_USR2), IMXUART_SR2_RDR)) {
-		c = bus_space_read_1(iot, ioh, IMXUART_URXD);
+		c = bus_space_read_2(iot, ioh, IMXUART_URXD);
+		if (ISSET(c, IMXUART_RX_BRK)) {
+#ifdef DDB
+			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+				if (db_console)
+					db_enter();
+				continue;
+			}
+#endif
+			c &= ~0xff;
+		}
 		if (p >= sc->sc_ibufend) {
 			sc->sc_floods++;
 			if (sc->sc_errors++ == 0)
