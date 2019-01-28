@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.20 2019/01/24 02:56:41 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.21 2019/01/28 15:44:33 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -124,6 +124,7 @@ int tlsext_server_build(SSL *s, CBB *cbb, uint16_t msg_type);
 int tlsext_server_parse(SSL *s, CBS *cbs, int *alert, uint16_t msg_type);
 
 struct tls_extension *tls_extension_find(uint16_t, size_t *);
+int tlsext_extension_seen(SSL *s, uint16_t);
 __END_HIDDEN_DECLS
 
 #endif

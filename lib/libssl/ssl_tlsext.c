@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.36 2019/01/24 02:56:41 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.37 2019/01/28 15:44:33 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1333,14 +1333,10 @@ tlsext_keyshare_server_parse(SSL *s, CBS *cbs, int *alert)
 int
 tlsext_keyshare_server_needs(SSL *s)
 {
-	size_t idx;
-
 	if (SSL_IS_DTLS(s) || s->version < TLS1_3_VERSION)
 		return 0;
-	if (tls_extension_find(TLSEXT_TYPE_key_share, &idx) == NULL)
-		return 0;
-	/* XXX move seen check to a function */
-	return ((S3I(s)->hs.extensions_seen & (1 << idx)) != 0);
+
+	return tlsext_extension_seen(s, TLSEXT_TYPE_key_share);
 }
 
 int
@@ -1879,6 +1875,16 @@ tls_extension_find(uint16_t type, size_t *tls_extensions_idx)
 	return NULL;
 }
 
+int
+tlsext_extension_seen(SSL *s, uint16_t type)
+{
+	size_t idx;
+
+	if (tls_extension_find(type, &idx) == NULL)
+		return 0;
+	return ((S3I(s)->hs.extensions_seen & (1 << idx)) != 0);
+}
+
 static struct tls_extension_funcs *
 tlsext_funcs(struct tls_extension *tlsext, int is_server)
 {
@@ -1988,7 +1994,6 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 		}
 
 		/* Check for duplicate known extensions. */
-		/* XXX move seen check to a function */
 		if ((S3I(s)->hs.extensions_seen & (1 << idx)) != 0)
 			return 0;
 		S3I(s)->hs.extensions_seen |= (1 << idx);
