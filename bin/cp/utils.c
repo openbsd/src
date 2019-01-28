@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.46 2018/09/07 13:46:33 martijn Exp $	*/
+/*	$OpenBSD: utils.c,v 1.47 2019/01/28 18:58:42 jca Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -326,9 +326,9 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-fipv] [-R [-H | -L | -P]] source target\n", __progname);
+	    "usage: %s [-afipv] [-R [-H | -L | -P]] source target\n", __progname);
 	(void)fprintf(stderr,
-	    "       %s [-fipv] [-R [-H | -L | -P]] source ... directory\n",
+	    "       %s [-afipv] [-R [-H | -L | -P]] source ... directory\n",
 	    __progname);
 	exit(1);
 }
