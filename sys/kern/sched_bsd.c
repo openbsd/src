@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.48 2019/01/06 12:59:45 visa Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.49 2019/01/28 11:48:13 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -217,6 +217,13 @@ schedcpu(void *arg)
 	KASSERT(phz);
 
 	LIST_FOREACH(p, &allproc, p_list) {
+		/*
+		 * Idle threads are never placed on the runqueue,
+		 * therefore computing their priority is pointless.
+		 */
+		if (p->p_cpu != NULL &&
+		    p->p_cpu->ci_schedstate.spc_idleproc == p)
+			continue;
 		/*
 		 * Increment sleep time (if sleeping). We ignore overflow.
 		 */
@@ -528,7 +535,12 @@ resetpriority(struct proc *p)
 void
 schedclock(struct proc *p)
 {
+	struct cpu_info *ci = curcpu();
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int s;
+
+	if (p == spc->spc_idleproc)
+		return;
 
 	SCHED_LOCK(s);
 	p->p_estcpu = ESTCPULIM(p->p_estcpu + 1);
