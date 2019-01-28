@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.97 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.98 2019/01/28 17:49:50 martijn Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -87,10 +87,14 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
+struct fstat_filter {
+	int what;
+	int arg;
+};
+
 struct fileargs fileargs = SLIST_HEAD_INITIALIZER(fileargs);
 
 int	fsflg;	/* show files on same filesystem as file(s) argument */
-int	pflg;	/* show files open by a particular pid */
 int	uflg;	/* show files open by a particular (effective) user */
 int	checkfile; /* true if restricting to particular files or filesystems */
 int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
@@ -101,6 +105,9 @@ int	cflg; 	/* fuser only */
 
 int	fuser;	/* 1 if we are fuser, 0 if we are fstat */
 int	signo;	/* signal to send (fuser only) */
+
+int	nfilter = 0;	/* How many uid/pid filters are in place */
+struct fstat_filter *filter = NULL; /* An array of uid/pid filters */
 
 kvm_t *kd;
 uid_t uid;
@@ -137,7 +144,7 @@ main(int argc, char *argv[])
 {
 	struct passwd *passwd;
 	struct kinfo_file *kf, *kflast;
-	int arg, ch, what;
+	int ch;
 	char *memf, *nlistf, *optstr;
 	char buf[_POSIX2_LINE_MAX];
 	const char *errstr;
@@ -145,8 +152,6 @@ main(int argc, char *argv[])
 
 	hideroot = getuid();
 
-	arg = -1;
-	what = KERN_FILE_BYPID;
 	nlistf = memf = NULL;
 	oflg = 0;
 
@@ -196,15 +201,18 @@ main(int argc, char *argv[])
 			oflg = 1;
 			break;
 		case 'p':
-			if (pflg++)
-				usage();
-			arg = strtonum(optarg, 0, INT_MAX, &errstr);
+			if ((filter = recallocarray(filter, nfilter, nfilter + 1,
+			    sizeof(*filter))) == NULL)
+				err(1, NULL);
+			filter[nfilter].arg = strtonum(optarg, 0, INT_MAX,
+			    &errstr);
 			if (errstr != NULL) {
 				warnx("-p requires a process id, %s: %s",
 					errstr, optarg);
 				usage();
 			}
-			what = KERN_FILE_BYPID;
+			filter[nfilter].what = KERN_FILE_BYPID;
+			nfilter++;
 			break;
 		case 's':
 			sflg = 1;
@@ -217,8 +225,7 @@ main(int argc, char *argv[])
 			}
 			break;
 		case 'u':
-			if (uflg++)
-				usage();
+			uflg = 1;
 			if (!fuser) {
 				uid_t uid;
 
@@ -230,8 +237,12 @@ main(int argc, char *argv[])
 						    optarg);
 					}
 				}
-				arg = uid;
-				what = KERN_FILE_BYUID;
+				if ((filter = recallocarray(filter, nfilter,
+				    nfilter + 1, sizeof(*filter))) == NULL)
+					err(1, NULL);
+				filter[nfilter].arg = uid;
+				filter[nfilter].what = KERN_FILE_BYUID;
+				nfilter++;
 			}
 			break;
 		case 'v':
@@ -275,8 +286,15 @@ main(int argc, char *argv[])
 		checkfile = 1;
 	}
 
-	if ((kf = kvm_getfiles(kd, what, arg, sizeof(*kf), &cnt)) == NULL)
-		errx(1, "%s", kvm_geterr(kd));
+	if (nfilter == 1) {
+		if ((kf = kvm_getfiles(kd, filter[0].what, filter[0].arg,
+		    sizeof(*kf), &cnt)) == NULL)
+			errx(1, "%s", kvm_geterr(kd));
+	} else {
+		if ((kf = kvm_getfiles(kd, KERN_FILE_BYPID, -1, sizeof(*kf),
+		    &cnt)) == NULL)
+			errx(1, "%s", kvm_geterr(kd));
+	}
 
 	if (fuser) {
 		/*
@@ -367,11 +385,23 @@ pid_t	Pid;
 void
 fstat_dofile(struct kinfo_file *kf)
 {
+	int i;
 
 	Uname = user_from_uid(kf->p_uid, 0);
 	procuid = &kf->p_uid;
 	Pid = kf->p_pid;
 	Comm = kf->p_comm;
+
+	for (i = 0; i < nfilter; i++) {
+		if (filter[i].what == KERN_FILE_BYPID) {
+			if (filter[i].arg == Pid)
+				break;
+		} else if (filter[i].arg == *procuid) {
+			break;
+		}
+	}
+	if (i == nfilter && nfilter != 0)
+		return;
 
 	switch (kf->f_type) {
 	case DTYPE_VNODE:
