@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.72 2019/01/28 02:43:34 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.73 2019/01/28 06:48:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -189,7 +189,7 @@ mpe_start(struct ifnet *ifp)
 		}
 #endif
 		mpls_output(ifp0, m, &smpls, rt);
-		if_put(ifp);
+		if_put(ifp0);
 		rtfree(rt);
 	}
 }
@@ -202,10 +202,15 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct shim_hdr	shim;
 	int		error;
 	uint8_t		ttl = mpls_defttl;
+	size_t		ttloff;
 	socklen_t	slen;
 
-	if (dst->sa_family == AF_LINK &&
-	    rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
+	if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_MPLS)) {
+		m_freem(m);
+		return (ENETUNREACH);
+	}
+
+	if (dst->sa_family == AF_LINK && ISSET(rt->rt_flags, RTF_LOCAL)) {
 		mpe_input(ifp, m);
 		return (0);
 	}
@@ -218,48 +223,32 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 #endif
 
-	if (!rt || !(rt->rt_flags & RTF_MPLS)) {
-		m_freem(m);
-		error = ENETUNREACH;
-		goto out;
-	}
 	rtmpls = (struct rt_mpls *)rt->rt_llinfo;
 	if (rtmpls->mpls_operation != MPLS_OP_PUSH) {
 		m_freem(m);
-		error = ENETUNREACH;
-		goto out;
+		return (ENETUNREACH);
 	}
-
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	/* XXX assumes MPLS is always in rdomain 0 */
-	m->m_pkthdr.ph_rtableid = 0;
 
 	error = 0;
 	switch (dst->sa_family) {
 	case AF_INET:
-		if (mpls_mapttl_ip) {
-			struct ip	*ip;
-			ip = mtod(m, struct ip *);
-			ttl = ip->ip_ttl;
-		}
-
+		ttloff = offsetof(struct ip, ip_ttl);
 		slen = sizeof(struct sockaddr_in);
 		break;
 #ifdef INET6
 	case AF_INET6:
-		if (mpls_mapttl_ip) {
-			struct ip6_hdr	*ip6;
-			ip6 = mtod(m, struct ip6_hdr *);
-			ttl = ip6->ip6_hlim;
-		}
-
+		ttloff = offsetof(struct ip6_hdr, ip6_hlim);
 		slen = sizeof(struct sockaddr_in6);
 		break;
 #endif
 	default:
 		m_freem(m);
-		error = EPFNOSUPPORT;
-		goto out;
+		return (EPFNOSUPPORT);
+	}
+
+	if (mpls_mapttl_ip) {
+		/* assumes the ip header is already contig */
+		ttl = *(mtod(m, uint8_t *) + ttloff);
 	}
 
 	shim.shim_label = rtmpls->mpls_label | MPLS_BOS_MASK | htonl(ttl);
@@ -278,6 +267,11 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 	memcpy(mtod(m, struct sockaddr *), rt->rt_gateway, slen);
 	mtod(m, struct sockaddr *)->sa_len = slen; /* to be sure */
+
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	/* XXX assumes MPLS is always in rdomain 0 */
+	m->m_pkthdr.ph_rtableid = 0;
+	m->m_pkthdr.ph_family = dst->sa_family;
 
 	error = if_enqueue(ifp, m);
 out:
