@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.71 2019/01/27 05:31:10 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.72 2019/01/28 02:43:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -149,35 +149,16 @@ struct sockaddr_storage	 mpedst;
  * Start output on the mpe interface.
  */
 void
-mpe_start(struct ifnet *ifp0)
+mpe_start(struct ifnet *ifp)
 {
 	struct mbuf		*m;
-	struct sockaddr		*sa = sstosa(&mpedst);
-	sa_family_t		 af;
+	struct sockaddr		*sa;
+	struct sockaddr		smpls = { .sa_family = AF_MPLS };
 	struct rtentry		*rt;
-	struct ifnet		*ifp;
+	struct ifnet		*ifp0;
 
-	for (;;) {
-		IFQ_DEQUEUE(&ifp0->if_snd, m);
-		if (m == NULL)
-			return;
-
-		af = *mtod(m, sa_family_t *);
-		m_adj(m, sizeof(af));
-		switch (af) {
-		case AF_INET:
-			bzero(sa, sizeof(struct sockaddr_in));
-			satosin(sa)->sin_family = af;
-			satosin(sa)->sin_len = sizeof(struct sockaddr_in);
-			bcopy(mtod(m, caddr_t), &satosin(sa)->sin_addr,
-			    sizeof(in_addr_t));
-			m_adj(m, sizeof(in_addr_t));
-			break;
-		default:
-			m_freem(m);
-			continue;
-		}
-
+	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
+		sa = mtod(m, struct sockaddr *);
 		rt = rtalloc(sa, RT_RESOLVE, 0);
 		if (!rtisvalid(rt)) {
 			m_freem(m);
@@ -185,28 +166,29 @@ mpe_start(struct ifnet *ifp0)
 			continue;
 		}
 
-		ifp = if_get(rt->rt_ifidx);
-		if (ifp == NULL) {
+		ifp0 = if_get(rt->rt_ifidx);
+		if (ifp0 == NULL) {
 			m_freem(m);
 			rtfree(rt);
 			continue;
 		}
+
+		m_adj(m, sa->sa_len);
+
 #if NBPFILTER > 0
-		if (ifp0->if_bpf) {
+		if (ifp->if_bpf) {
 			/* remove MPLS label before passing packet to bpf */
 			m->m_data += sizeof(struct shim_hdr);
 			m->m_len -= sizeof(struct shim_hdr);
 			m->m_pkthdr.len -= sizeof(struct shim_hdr);
-			bpf_mtap_af(ifp0->if_bpf, af, m, BPF_DIRECTION_OUT);
+			bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family,
+			    m, BPF_DIRECTION_OUT);
 			m->m_data -= sizeof(struct shim_hdr);
 			m->m_len += sizeof(struct shim_hdr);
 			m->m_pkthdr.len += sizeof(struct shim_hdr);
 		}
 #endif
-		/* XXX lie, but mpls_output looks only at sa_family */
-		sa->sa_family = AF_MPLS;
-
-		mpls_output(ifp, m, sa, rt);
+		mpls_output(ifp0, m, &smpls, rt);
 		if_put(ifp);
 		rtfree(rt);
 	}
@@ -216,11 +198,11 @@ int
 mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt)
 {
+	struct rt_mpls	*rtmpls;
 	struct shim_hdr	shim;
 	int		error;
-	int		off;
-	in_addr_t	addr;
-	u_int8_t	op = 0;
+	uint8_t		ttl = mpls_defttl;
+	socklen_t	slen;
 
 	if (dst->sa_family == AF_LINK &&
 	    rt != NULL && ISSET(rt->rt_flags, RTF_LOCAL)) {
@@ -235,6 +217,19 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		    ifp->if_rdomain, rtable_l2(m->m_pkthdr.ph_rtableid));
 	}
 #endif
+
+	if (!rt || !(rt->rt_flags & RTF_MPLS)) {
+		m_freem(m);
+		error = ENETUNREACH;
+		goto out;
+	}
+	rtmpls = (struct rt_mpls *)rt->rt_llinfo;
+	if (rtmpls->mpls_operation != MPLS_OP_PUSH) {
+		m_freem(m);
+		error = ENETUNREACH;
+		goto out;
+	}
+
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	/* XXX assumes MPLS is always in rdomain 0 */
 	m->m_pkthdr.ph_rtableid = 0;
@@ -242,44 +237,47 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	error = 0;
 	switch (dst->sa_family) {
 	case AF_INET:
-		if (!rt || !(rt->rt_flags & RTF_MPLS)) {
-			m_freem(m);
-			error = ENETUNREACH;
-			goto out;
-		}
-		shim.shim_label =
-		    ((struct rt_mpls *)rt->rt_llinfo)->mpls_label;
-		shim.shim_label |= MPLS_BOS_MASK;
-		op =  ((struct rt_mpls *)rt->rt_llinfo)->mpls_operation;
-		if (op != MPLS_OP_PUSH) {
-			m_freem(m);
-			error = ENETUNREACH;
-			goto out;
-		}
 		if (mpls_mapttl_ip) {
 			struct ip	*ip;
 			ip = mtod(m, struct ip *);
-			shim.shim_label |= htonl(ip->ip_ttl) & MPLS_TTL_MASK;
-		} else
-			shim.shim_label |= htonl(mpls_defttl) & MPLS_TTL_MASK;
-		off = sizeof(sa_family_t) + sizeof(in_addr_t);
-		M_PREPEND(m, sizeof(shim) + off, M_DONTWAIT);
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto out;
+			ttl = ip->ip_ttl;
 		}
-		*mtod(m, sa_family_t *) = AF_INET;
-		addr = satosin(rt->rt_gateway)->sin_addr.s_addr;
-		m_copyback(m, sizeof(sa_family_t), sizeof(in_addr_t),
-		    &addr, M_NOWAIT);
+
+		slen = sizeof(struct sockaddr_in);
 		break;
+#ifdef INET6
+	case AF_INET6:
+		if (mpls_mapttl_ip) {
+			struct ip6_hdr	*ip6;
+			ip6 = mtod(m, struct ip6_hdr *);
+			ttl = ip6->ip6_hlim;
+		}
+
+		slen = sizeof(struct sockaddr_in6);
+		break;
+#endif
 	default:
 		m_freem(m);
 		error = EPFNOSUPPORT;
 		goto out;
 	}
 
-	m_copyback(m, off, sizeof(shim), (caddr_t)&shim, M_NOWAIT);
+	shim.shim_label = rtmpls->mpls_label | MPLS_BOS_MASK | htonl(ttl);
+
+	m = m_prepend(m, sizeof(shim), M_NOWAIT);
+	if (m == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+	*mtod(m, struct shim_hdr *) = shim;
+
+	m = m_prepend(m, slen, M_WAITOK);
+	if (m == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+	memcpy(mtod(m, struct sockaddr *), rt->rt_gateway, slen);
+	mtod(m, struct sockaddr *)->sa_len = slen; /* to be sure */
 
 	error = if_enqueue(ifp, m);
 out:
