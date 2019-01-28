@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.73 2019/01/28 06:48:22 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.74 2019/01/28 06:50:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -144,7 +144,6 @@ mpe_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-struct sockaddr_storage	 mpedst;
 /*
  * Start output on the mpe interface.
  */
