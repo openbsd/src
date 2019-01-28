@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.97 2018/10/17 12:25:38 bluhm Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.98 2019/01/28 11:49:04 mpi Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -400,8 +400,7 @@ statclock(struct clockframe *frame)
 		 * ~~16 Hz is best
 		 */
 		if (schedhz == 0) {
-			if ((++curcpu()->ci_schedstate.spc_schedticks & 3) ==
-			    0)
+			if ((++spc->spc_schedticks & 3) == 0)
 				schedclock(p);
 		}
 	}
