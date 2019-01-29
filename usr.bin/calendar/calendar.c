@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.35 2015/12/07 18:46:35 espie Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.36 2019/01/29 20:08:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -60,7 +60,6 @@ int bodun_always = 0;
 
 int f_dayAfter = 0; /* days after current date */
 int f_dayBefore = 0; /* days before current date */
-int f_SetdayAfter = 0; /* calendar invoked with -A */
 
 struct specialev spev[NUMEV];
 
@@ -101,7 +100,6 @@ main(int argc, char *argv[])
 			f_dayAfter = strtonum(optarg, 0, INT_MAX, &errstr);
 			if (errstr)
 				errx(1, "-A %s: %s", optarg, errstr);
-			f_SetdayAfter = 1;
 			break;
 
 		case 'B': /* days before current date */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.h,v 1.15 2015/12/07 18:46:35 espie Exp $	*/
+/*	$OpenBSD: calendar.h,v 1.16 2019/01/29 20:08:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -103,7 +103,6 @@ void	 setnnames(void);
 
 extern int f_dayAfter;	/* days after current date */
 extern int f_dayBefore;	/* days before current date */
-extern int f_SetdayAfter; /* calendar invoked with -A */
 
 /* Special events; see also setnnames() in day.c */
 /* '=' is not a valid character in a special event name */
