@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.16 2019/01/22 02:03:03 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.17 2019/01/29 01:39:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1400,7 +1400,6 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_base_queue = (ixl_rd(sc, I40E_PFLAN_QALLOC) &
 	    I40E_PFLAN_QALLOC_FIRSTQ_MASK) >>
 	    I40E_PFLAN_QALLOC_FIRSTQ_SHIFT;
-	printf(" %u", sc->sc_base_queue);
 
 	ixl_clear_hw(sc);
 
