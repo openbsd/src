@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_mutex.c,v 1.3 2017/08/15 07:06:29 guenther Exp $ */
+/*	$OpenBSD: rthread_mutex.c,v 1.4 2019/01/29 17:41:14 mpi Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
