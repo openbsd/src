@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.41 2018/07/30 09:59:03 benno Exp $ */
+/*	$Id: main.c,v 1.42 2019/01/29 16:38:29 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -155,11 +155,6 @@ main(int argc, char *argv[])
 	}
 
 	acctkey = authority->account;
-
-	if (acctkey == NULL) {
-		/* XXX replace with existance check in parse.y */
-		err(EXIT_FAILURE, "no account key in config?");
-	}
 
 	if ((chngdir = domain->challengedir) == NULL)
 		if ((chngdir = strdup(WWW_DIR)) == NULL)
