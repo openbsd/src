@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.17 2019/01/29 01:39:30 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.18 2019/01/29 01:41:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1897,10 +1897,6 @@ ixl_up(struct ixl_softc *sc)
 	ixl_wr(sc, I40E_PFINT_ITR0(1), 0x7a);
 	ixl_wr(sc, I40E_PFINT_ITR0(2), 0);
 
-	printf("%s: info %08x data %08x\n", DEVNAME(sc),
-	    ixl_rd(sc, I40E_PFHMC_ERRORINFO),
-	    ixl_rd(sc, I40E_PFHMC_ERRORDATA));
-
 	return (ENETRESET);
 
 free:
@@ -2032,10 +2028,6 @@ ixl_down(struct ixl_softc *sc)
 	}
 
 	if (error) {
-	printf("%s: info %08x data %08x\n", DEVNAME(sc),
-	    ixl_rd(sc, I40E_PFHMC_ERRORINFO),
-	    ixl_rd(sc, I40E_PFHMC_ERRORDATA));
-
 		printf("%s: failed to shut down rings\n", DEVNAME(sc));
 		return (error);
 	}
