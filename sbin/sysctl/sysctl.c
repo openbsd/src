@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.239 2018/12/10 13:35:54 landry Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.240 2019/01/29 14:07:15 visa Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 #endif
 struct ctlname ddbname[] = CTL_DDB_NAMES;
 struct ctlname audioname[] = CTL_KERN_AUDIO_NAMES;
+struct ctlname witnessname[] = CTL_KERN_WITNESS_NAMES;
 char names[BUFSIZ];
 int lastused;
 
@@ -214,6 +215,7 @@ void print_sensor(struct sensor *);
 int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
 int sysctl_audio(char *, char **, int *, int, int *);
+int sysctl_witness(char *, char **, int *, int, int *);
 void vfsinit(void);
 
 char *equ = "=";
@@ -499,6 +501,11 @@ parse(char *string, int flags)
 			break;
 		case KERN_AUDIO:
 			len = sysctl_audio(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_WITNESS:
+			len = sysctl_witness(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 			break;
@@ -1717,6 +1724,7 @@ struct list shmlist = { shmname, KERN_SHMINFO_MAXID };
 struct list watchdoglist = { watchdogname, KERN_WATCHDOG_MAXID };
 struct list tclist = { tcname, KERN_TIMECOUNTER_MAXID };
 struct list audiolist = { audioname, KERN_AUDIO_MAXID };
+struct list witnesslist = { witnessname, KERN_WITNESS_MAXID };
 
 /*
  * handle vfs namei cache statistics
@@ -2716,6 +2724,25 @@ sysctl_audio(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	*typep = audiolist.list[indx].ctl_type;
+	return (3);
+}
+
+/*
+ * Handle witness support
+ */
+int
+sysctl_witness(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &witnesslist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &witnesslist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = witnesslist.list[indx].ctl_type;
 	return (3);
 }
 

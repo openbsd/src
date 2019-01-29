@@ -1,4 +1,4 @@
-/*	$OpenBSD: witness.h,v 1.3 2018/06/08 15:38:15 guenther Exp $	*/
+/*	$OpenBSD: witness.h,v 1.4 2019/01/29 14:07:15 visa Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -89,6 +89,7 @@ void	witness_norelease(struct lock_object *);
 void	witness_releaseok(struct lock_object *);
 const char *witness_file(struct lock_object *);
 void	witness_thread_exit(struct proc *);
+int	witness_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	witness_sysctl_watch(void *, size_t *, void *, size_t);
 
 #ifdef	WITNESS

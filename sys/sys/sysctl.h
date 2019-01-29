@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.181 2018/11/19 16:12:06 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.182 2019/01/29 14:07:15 visa Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ struct ctlname {
 #define	KERN_TTYCOUNT		57	/* int: number of tty devices */
 #define KERN_NUMVNODES		58	/* int: number of vnodes in use */
 #define	KERN_MBSTAT		59	/* struct: mbuf statistics */
-/* was KERN_USERASYMCRYPTO	60	*/
+#define	KERN_WITNESS		60	/* node: witness */
 #define	KERN_SEMINFO		61	/* struct: SysV struct seminfo */
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
 #define KERN_INTRCNT		63	/* node: interrupt counters */
@@ -249,7 +249,7 @@ struct ctlname {
 	{ "ttycount", CTLTYPE_INT }, \
 	{ "numvnodes", CTLTYPE_INT }, \
 	{ "mbstat", CTLTYPE_STRUCT }, \
-	{ "gap", 0 }, \
+	{ "witness", CTLTYPE_NODE }, \
 	{ "seminfo", CTLTYPE_STRUCT }, \
 	{ "shminfo", CTLTYPE_STRUCT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \
@@ -314,6 +314,17 @@ struct ctlname {
 #define CTL_KERN_AUDIO_NAMES { \
 	{ 0, 0 }, \
 	{ "record", CTLTYPE_INT }, \
+}
+
+/*
+ * KERN_WITNESS
+ */
+#define	KERN_WITNESS_WATCH	1	/* int: operating mode */
+#define	KERN_WITNESS_MAXID	2
+
+#define	CTL_KERN_WITNESS_NAMES { \
+	{ 0, 0 }, \
+	{ "watch", CTLTYPE_INT }, \
 }
 
 /*

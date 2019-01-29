@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.26 2019/01/27 10:41:41 anton Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.27 2019/01/29 14:07:15 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -2548,6 +2548,27 @@ witness_debugger(int dump)
 	default:
 		panic("witness: locking error");
 	}
+}
+
+int
+witness_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	int error;
+
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case KERN_WITNESS_WATCH:
+		error = witness_sysctl_watch(oldp, oldlenp, newp, newlen);
+		break;
+	default:
+		error = EOPNOTSUPP;
+		break;
+	}
+
+	return (error);
 }
 
 int

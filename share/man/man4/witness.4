@@ -1,4 +1,4 @@
-.\" $OpenBSD: witness.4,v 1.4 2018/05/16 14:58:48 visa Exp $
+.\" $OpenBSD: witness.4,v 1.5 2019/01/29 14:07:15 visa Exp $
 .\"
 .\" Copyright (c) 2001 John H. Baldwin <jhb@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/witness.4 301719 2016-06-09 06:55:00Z trasz $
 .\"
-.Dd $Mdocdate: May 16 2018 $
+.Dd $Mdocdate: January 29 2019 $
 .Dt WITNESS 4
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ If any of these checks fail, then the kernel will panic.
 The behaviour of
 .Nm
 is controlled by the
-.Va kern.witnesswatch
+.Va kern.witness.watch
 .Xr sysctl 8
 variable.
 Valid values for it are:
