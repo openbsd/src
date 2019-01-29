@@ -1,4 +1,4 @@
-/*	$OpenBSD: chartype.c,v 1.15 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: chartype.c,v 1.16 2019/01/29 09:47:00 yasuoka Exp $	*/
 /*	$NetBSD: chartype.c,v 1.6 2011/07/28 00:48:21 christos Exp $	*/
 
 /*-
@@ -145,7 +145,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 	if (!conv->wsize)
 		return NULL;
 
-	wargv = reallocarray(NULL, argc, sizeof(*wargv));
+	wargv = reallocarray(NULL, argc + 1, sizeof(*wargv));
 
 	for (i = 0, p = conv->wbuff; i < argc; ++i) {
 		if (!argv[i]) {   /* don't pass null pointers to mbstowcs */
@@ -164,6 +164,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 		bufspace -= wlen;
 		p += wlen;
 	}
+	wargv[i] = NULL;
 
 	return wargv;
 }
