@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.29 2018/06/08 13:53:01 pirofti Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.30 2019/01/29 17:43:23 mpi Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2018 Paul Irofti <pirofti@openbsd.org>
@@ -39,8 +39,6 @@
 #include "cancel.h"		/* in libc/include */
 #include "synch.h"
 
-#define SHARED_IDENT ((void *)-1)
-
 /* SHA256_DIGEST_STRING_LENGTH includes nul */
 /* "/tmp/" + sha256 + ".sem" */
 #define SEM_PATH_SIZE (5 + SHA256_DIGEST_STRING_LENGTH + 4)
@@ -61,31 +59,30 @@ int
 _sem_wait(sem_t sem, int can_eintr, const struct timespec *abstime,
     int *delayed_cancel)
 {
-	int r = 0;
-	int v, ov;
+	unsigned int val;
+	int error = 0;
 
 	atomic_inc_int(&sem->waitcount);
 	for (;;) {
-		while ((v = sem->value) > 0) {
-			ov = atomic_cas_uint(&sem->value, v, v - 1);
-			if (ov == v) {
+		while ((val = sem->value) > 0) {
+			if (atomic_cas_uint(&sem->value, val, val - 1) == val) {
 				membar_enter_after_atomic();
 				atomic_dec_int(&sem->waitcount);
-				return 0;
+				return (0);
 			}
 		}
-		if (r)
+		if (error)
 			break;
 
-		r = _twait(&sem->value, 0, CLOCK_REALTIME, abstime);
+		error = _twait(&sem->value, 0, CLOCK_REALTIME, abstime);
 		/* ignore interruptions other than cancelation */
-		if ((r == ECANCELED && *delayed_cancel == 0) ||
-		    (r == EINTR && !can_eintr) || r == EAGAIN)
-			r = 0;
+		if ((error == ECANCELED && *delayed_cancel == 0) ||
+		    (error == EINTR && !can_eintr) || error == EAGAIN)
+			error = 0;
 	}
 	atomic_dec_int(&sem->waitcount);
 
-	return r;
+	return (error);
 }
 
 /* always increment count */
@@ -223,7 +220,7 @@ sem_wait(sem_t *semp)
 	struct tib *tib = TIB_GET();
 	pthread_t self;
 	sem_t sem;
-	int r;
+	int error;
 	PREP_CANCEL_POINT(tib);
 
 	if (!_threads_ready)
@@ -236,11 +233,11 @@ sem_wait(sem_t *semp)
 	}
 
 	ENTER_DELAYED_CANCEL_POINT(tib, self);
-	r = _sem_wait(sem, 1, NULL, &self->delayed_cancel);
-	LEAVE_CANCEL_POINT_INNER(tib, r);
+	error = _sem_wait(sem, 1, NULL, &self->delayed_cancel);
+	LEAVE_CANCEL_POINT_INNER(tib, error);
 
-	if (r) {
-		errno = r;
+	if (error) {
+		errno = error;
 		_rthread_debug(1, "%s: v=%d errno=%d\n", __func__,
 		    sem->value, errno);
 		return (-1);
@@ -255,7 +252,7 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 	struct tib *tib = TIB_GET();
 	pthread_t self;
 	sem_t sem;
-	int r;
+	int error;
 	PREP_CANCEL_POINT(tib);
 
 	if (!semp || !(sem = *semp) || abstime == NULL ||
@@ -269,11 +266,11 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 	self = tib->tib_thread;
 
 	ENTER_DELAYED_CANCEL_POINT(tib, self);
-	r = _sem_wait(sem, 1, abstime, &self->delayed_cancel);
-	LEAVE_CANCEL_POINT_INNER(tib, r);
+	error = _sem_wait(sem, 1, abstime, &self->delayed_cancel);
+	LEAVE_CANCEL_POINT_INNER(tib, error);
 
-	if (r) {
-		errno = r == EWOULDBLOCK ? ETIMEDOUT : r;
+	if (error) {
+		errno = (error == EWOULDBLOCK) ? ETIMEDOUT : error;
 		_rthread_debug(1, "%s: v=%d errno=%d\n", __func__,
 		    sem->value, errno);
 		return (-1);
@@ -286,16 +283,15 @@ int
 sem_trywait(sem_t *semp)
 {
 	sem_t sem;
-	int v, ov;
+	unsigned int val;
 
 	if (!semp || !(sem = *semp)) {
 		errno = EINVAL;
 		return (-1);
 	}
 
-	while ((v = sem->value) > 0) {
-		ov = atomic_cas_uint(&sem->value, v, v - 1);
-		if (ov == v) {
+	while ((val = sem->value) > 0) {
+		if (atomic_cas_uint(&sem->value, val, val - 1) == val) {
 			membar_enter_after_atomic();
 			return (0);
 		}
