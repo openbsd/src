@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.3 2019/01/27 12:40:54 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.4 2019/01/29 15:37:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -64,7 +64,6 @@ enum imsg_type {
 	IMSG_CONTROLFD,
 	IMSG_STARTUP,
 	IMSG_STARTUP_DONE,
-	IMSG_SHUTDOWN,
 	IMSG_SOCKET_IPC,
 	IMSG_QUERY,
 	IMSG_ANSWER_HEADER,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.5 2019/01/27 12:40:54 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.6 2019/01/29 15:37:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -369,9 +369,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				    __func__);
 			parse_dhcp_lease(fd);
 			break;
-		case IMSG_SHUTDOWN:
-			frontend_imsg_compose_resolver(IMSG_SHUTDOWN, 0, NULL, 0);
-			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -418,11 +415,8 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_SHUTDOWN:
-			frontend_imsg_compose_main(IMSG_SHUTDOWN, 0, NULL, 0);
-			break;
 		case IMSG_ANSWER_HEADER:
-			/* XX size */
+			/* XXX size */
 			query_imsg = (struct query_imsg *)imsg.data;
 			if ((pq = find_pending_query(query_imsg->id)) ==
 			    NULL) {

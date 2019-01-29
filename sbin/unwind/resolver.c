@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.11 2019/01/27 12:40:54 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.12 2019/01/29 15:37:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -303,10 +303,6 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			log_setverbose(verbose);
 			if (update_resolvers)
 				restart_resolvers();
-			break;
-		case IMSG_SHUTDOWN:
-			resolver_imsg_compose_frontend(IMSG_SHUTDOWN, 0, NULL,
-			    0);
 			break;
 		case IMSG_QUERY:
 			query_imsg = malloc(sizeof(*query_imsg)); /* XXX */
