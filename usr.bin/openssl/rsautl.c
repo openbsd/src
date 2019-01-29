@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.13 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: rsautl.c,v 1.14 2019/01/29 10:17:56 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -318,7 +318,6 @@ usage()
 	BIO_printf(bio_err, "-keyform arg    private key format - default PEM\n");
 	BIO_printf(bio_err, "-pubin          input is an RSA public\n");
 	BIO_printf(bio_err, "-certin         input is a certificate carrying an RSA public key\n");
-	BIO_printf(bio_err, "-ssl            use SSL v2 padding\n");
 	BIO_printf(bio_err, "-raw            use no padding\n");
 	BIO_printf(bio_err, "-pkcs           use PKCS#1 v1.5 padding (default)\n");
 	BIO_printf(bio_err, "-oaep           use PKCS#1 OAEP\n");
