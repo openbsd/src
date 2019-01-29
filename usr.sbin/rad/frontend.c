@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.19 2018/11/28 06:41:31 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.20 2019/01/29 15:43:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -458,9 +458,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			TAILQ_INIT(&ctl_conns);
 			control_listen();
 			break;
-		case IMSG_SHUTDOWN:
-			frontend_imsg_compose_engine(IMSG_SHUTDOWN, 0, NULL, 0);
-			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -527,9 +524,6 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 				TAILQ_REMOVE(&ra_interfaces, ra_iface, entry);
 				free_ra_iface(ra_iface);
 			}
-			break;
-		case IMSG_SHUTDOWN:
-			frontend_imsg_compose_main(IMSG_SHUTDOWN, 0, NULL, 0);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,

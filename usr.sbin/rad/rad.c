@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.17 2019/01/22 09:25:29 krw Exp $	*/
+/*	$OpenBSD: rad.c,v 1.18 2019/01/29 15:43:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -82,8 +82,6 @@ uint32_t cmd_opts;
 void
 main_sig_handler(int sig, short event, void *arg)
 {
-	struct rad_conf	empty_conf;
-
 	/*
 	 * Normal signal handler rules don't apply because libevent
 	 * decouples for us.
@@ -92,9 +90,7 @@ main_sig_handler(int sig, short event, void *arg)
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
-		memset(&empty_conf, 0, sizeof(empty_conf));
-		(void)main_imsg_send_config(&empty_conf);
-		(void)main_imsg_compose_frontend(IMSG_SHUTDOWN, 0, NULL, 0);
+		main_shutdown();
 		break;
 	case SIGHUP:
 		if (main_reload() == -1)
@@ -434,9 +430,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			/* Already checked by frontend. */
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
-			break;
-		case IMSG_SHUTDOWN:
-			shut = 1;
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
