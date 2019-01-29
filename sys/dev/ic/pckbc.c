@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.50 2017/03/11 11:55:03 mpi Exp $ */
+/* $OpenBSD: pckbc.c,v 1.51 2019/01/29 18:25:26 mglocker Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -160,6 +160,9 @@ pckbc_poll_data1(bus_space_tag_t iot, bus_space_handle_t ioh_d,
 			} else {
 				if (slot == PCKBC_AUX_SLOT) {
 					DPRINTF("lost kbd 0x%x\n", c);
+					continue;
+				} else if (stat & KBS_AUXDATA) {
+					DPRINTF("discard aux data 0x%x\n", c);
 					continue;
 				}
 			}
