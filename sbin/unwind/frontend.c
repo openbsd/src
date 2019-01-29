@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.6 2019/01/29 15:37:29 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.7 2019/01/29 19:13:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -269,12 +269,12 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			 * process.
 			 */
 			if (iev_resolver) {
-				log_warnx("%s: received unexpected imsg fd "
+				fatalx("%s: received unexpected imsg fd "
 				    "to frontend", __func__);
 				break;
 			}
 			if ((fd = imsg.fd) == -1) {
-				log_warnx("%s: expected to receive imsg fd to "
+				fatalx("%s: expected to receive imsg fd to "
 				   "frontend but didn't receive any",
 				   __func__);
 				break;
@@ -293,6 +293,10 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_resolver->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct unwind_conf))
+				fatalx("%s: IMSG_RECONF_CONF wrong length: %d",
+				    __func__, imsg.hdr.len);
 			if ((nconf = malloc(sizeof(struct unwind_conf))) ==
 			    NULL)
 				fatal(NULL);
@@ -301,6 +305,10 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			SIMPLEQ_INIT(&nconf->unwind_dot_forwarder_list);
 			break;
 		case IMSG_RECONF_FORWARDER:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct unwind_forwarder))
+				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
+				    " %d", __func__, imsg.hdr.len);
 			if ((unwind_forwarder = malloc(sizeof(struct
 			    unwind_forwarder))) == NULL)
 				fatal(NULL);
@@ -310,6 +318,10 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    unwind_forwarder, entry);
 			break;
 		case IMSG_RECONF_DOT_FORWARDER:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct unwind_forwarder))
+				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
+				    "length: %d", __func__, imsg.hdr.len);
 			if ((unwind_forwarder = malloc(sizeof(struct
 			    unwind_forwarder))) == NULL)
 				fatal(NULL);
@@ -323,6 +335,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			nconf = NULL;
 			break;
 		case IMSG_UDP6SOCK:
+			if (udp6sock != -1)
+				fatalx("%s: received unexpected udp6sock",
+				    __func__);
 			if ((udp6sock = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "UDP6 fd but didn't receive any",
@@ -332,6 +347,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&udp6ev.ev, NULL);
 			break;
 		case IMSG_UDP4SOCK:
+			if (udp4sock != -1)
+				fatalx("%s: received unexpected udp4sock",
+				    __func__);
 			if ((udp4sock = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "UDP4 fd but didn't receive any",
@@ -341,6 +359,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&udp4ev.ev, NULL);
 			break;
 		case IMSG_ROUTESOCK:
+			if (routesock != -1)
+				fatalx("%s: received unexpected routesock",
+				    __func__);
 			if ((fd = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "routesocket fd but didn't receive any",
@@ -353,6 +374,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			frontend_startup();
 			break;
 		case IMSG_CONTROLFD:
+			if (control_state.fd != -1)
+				fatalx("%s: received unexpected controlsock",
+				    __func__);
 			if ((fd = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "control fd but didn't receive any",
@@ -416,7 +440,10 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_ANSWER_HEADER:
-			/* XXX size */
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(*query_imsg))
+				fatalx("%s: IMSG_ANSWER_HEADER wrong length: "
+				    "%d", __func__, imsg.hdr.len);
 			query_imsg = (struct query_imsg *)imsg.data;
 			if ((pq = find_pending_query(query_imsg->id)) ==
 			    NULL) {

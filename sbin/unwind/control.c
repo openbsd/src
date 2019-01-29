@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.2 2019/01/27 07:46:49 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.3 2019/01/29 19:13:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,6 +33,7 @@
 #include "unwind.h"
 #include "control.h"
 #include "frontend.h"
+#include "resolver.h"
 
 #define	CONTROL_BACKLOG	5
 
@@ -251,6 +252,9 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_STATUS:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(enum
+			    unwind_resolver_type))
+				break;
 			frontend_imsg_compose_resolver(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;

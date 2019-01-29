@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.6 2019/01/29 15:37:29 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.7 2019/01/29 19:13:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -402,11 +402,18 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				log_warnx("configuration reloaded");
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* Already checked by frontend. */
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(verbose))
+				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
+				    "%d", __func__, imsg.hdr.len);
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
 		case IMSG_OPEN_DHCP_LEASE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(rtm_index))
+				fatalx("%s: IMSG_OPEN_DHCP_LEASE wrong length: "
+				    "%d", __func__, imsg.hdr.len);
 			memcpy(&rtm_index, imsg.data, sizeof(rtm_index));
 			open_dhcp_lease(rtm_index);
 			break;

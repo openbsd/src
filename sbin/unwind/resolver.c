@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.12 2019/01/29 15:37:29 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.13 2019/01/29 19:13:01 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -296,7 +296,10 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_LOG_VERBOSE:
-			/* Already checked by frontend. */
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(verbose))
+				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
+				    "%d", __func__, imsg.hdr.len);
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			update_resolvers = (log_getverbose() & OPT_VERBOSE2)
 			    != (verbose & OPT_VERBOSE2);
@@ -305,6 +308,10 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				restart_resolvers();
 			break;
 		case IMSG_QUERY:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(*query_imsg))
+				fatalx("%s: IMSG_QUERY wrong length: %d",
+				    __func__, imsg.hdr.len);
 			query_imsg = malloc(sizeof(*query_imsg)); /* XXX */
 			memcpy(query_imsg, imsg.data, sizeof(*query_imsg));
 
@@ -338,13 +345,14 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			break;
 		case IMSG_FORWARDER:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE -1]
+			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
 			    = '\0';
 			parse_dhcp_forwarders(imsg.data);
 			break;
 		case IMSG_CTL_STATUS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(type))
-				break;
+				fatalx("%s: IMSG_CTL_STATUS wrong length: %d",
+				    __func__, imsg.hdr.len);
 			memcpy(&type, imsg.data, sizeof(type));
 			show_status(type, imsg.hdr.pid);
 			break;
@@ -403,16 +411,13 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			 * Setup pipe and event handler to the frontend
 			 * process.
 			 */
-			if (iev_frontend) {
-				log_warnx("%s: received unexpected imsg fd "
+			if (iev_frontend)
+				fatalx("%s: received unexpected imsg fd "
 				    "to resolver", __func__);
-				break;
-			}
-			if ((fd = imsg.fd) == -1) {
-				log_warnx("%s: expected to receive imsg fd to "
+
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg fd to "
 				   "resolver but didn't receive any", __func__);
-				break;
-			}
 
 			iev_frontend = malloc(sizeof(struct imsgev));
 			if (iev_frontend == NULL)
@@ -428,6 +433,10 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_frontend->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct unwind_conf))
+				fatalx("%s: IMSG_RECONF_CONF wrong length: %d",
+				    __func__, imsg.hdr.len);
 			if ((nconf = malloc(sizeof(struct unwind_conf))) == NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct unwind_conf));
@@ -435,6 +444,10 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			SIMPLEQ_INIT(&nconf->unwind_dot_forwarder_list);
 			break;
 		case IMSG_RECONF_FORWARDER:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct unwind_forwarder))
+				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
+				    " %d", __func__, imsg.hdr.len);
 			if ((unwind_forwarder = malloc(sizeof(struct
 			    unwind_forwarder))) == NULL)
 				fatal(NULL);
@@ -444,6 +457,10 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			    unwind_forwarder, entry);
 			break;
 		case IMSG_RECONF_DOT_FORWARDER:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct unwind_forwarder))
+				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
+				    "length: %d", __func__, imsg.hdr.len);
 			if ((unwind_forwarder = malloc(sizeof(struct
 			    unwind_forwarder))) == NULL)
 				fatal(NULL);
