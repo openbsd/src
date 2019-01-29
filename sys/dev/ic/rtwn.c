@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.43 2018/12/07 01:53:20 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.44 2019/01/29 09:35:16 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1132,6 +1132,14 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			/* Enable Rx of data frames. */
 			rtwn_write_2(sc, R92C_RXFLTMAP2, 0xffff);
 
+			/* Enable Rx of control frames. */
+			rtwn_write_2(sc, R92C_RXFLTMAP1, 0xffff);
+
+			rtwn_write_4(sc, R92C_RCR,
+			    rtwn_read_4(sc, R92C_RCR) |
+			    R92C_RCR_AAP | R92C_RCR_ADF | R92C_RCR_ACF |
+			    R92C_RCR_AMF);
+
 			/* Turn link LED on. */
 			rtwn_set_led(sc, RTWN_LED_LINK, 1);
 			break;
@@ -1905,7 +1913,6 @@ void
 rtwn_rxfilter_init(struct rtwn_softc *sc)
 {
 	/* Initialize Rx filter. */
-	/* TODO: use better filter for monitor mode. */
 	rtwn_write_4(sc, R92C_RCR,
 	    R92C_RCR_AAP | R92C_RCR_APM | R92C_RCR_AM | R92C_RCR_AB |
 	    R92C_RCR_APP_ICV | R92C_RCR_AMF | R92C_RCR_HTC_LOC_CTRL |
