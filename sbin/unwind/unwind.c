@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.7 2019/01/29 19:13:01 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.8 2019/01/29 20:03:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -171,14 +171,8 @@ main(int argc, char *argv[])
 	else if (frontend_flag)
 		frontend(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
 
-	if (access(conffile, R_OK) == -1 && errno == ENOENT) {
-		main_conf = config_new_empty();
-	} else {
-		/* parse config file */
-		if ((main_conf = parse_config(conffile)) == NULL) {
-			exit(1);
-		}
-	}
+	if ((main_conf = parse_config(conffile)) == NULL)
+		exit(1);
 
 	if (cmd_opts & OPT_NOACTION) {
 		if (cmd_opts & OPT_VERBOSE)

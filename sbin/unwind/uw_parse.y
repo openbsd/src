@@ -1,4 +1,4 @@
-/*	$OpenBSD: uw_parse.y,v 1.4 2019/01/29 18:55:34 otto Exp $	*/
+/*	$OpenBSD: uw_parse.y,v 1.5 2019/01/29 20:03:49 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -622,7 +622,6 @@ pushfile(const char *name, int secret)
 		return (NULL);
 	}
 	if ((nfile->stream = fopen(nfile->name, "r")) == NULL) {
-		log_warn("%s", nfile->name);
 		free(nfile->name);
 		free(nfile);
 		return (NULL);
@@ -673,6 +672,9 @@ parse_config(char *filename)
 
 	file = pushfile(filename, 0);
 	if (file == NULL) {
+		if (errno == ENOENT)	/* no config file is fine */
+			return (conf);
+		log_warn("%s", filename);
 		free(conf);
 		return (NULL);
 	}
