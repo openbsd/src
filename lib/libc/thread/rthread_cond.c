@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_cond.c,v 1.4 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread_cond.c,v 1.5 2019/01/29 17:40:26 mpi Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -16,7 +16,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <assert.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
@@ -52,7 +51,6 @@ pthread_cond_destroy(pthread_cond_t *condp)
 {
 	pthread_cond_t cond;
 
-	assert(condp != NULL);
 	cond = *condp;
 
 	if (cond != NULL) {
