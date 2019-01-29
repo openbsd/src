@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.112 2018/09/06 15:07:34 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.113 2019/01/29 10:58:31 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -209,6 +209,8 @@ struct pfctl_watermarks {
 	u_int32_t	hi;
 	u_int32_t	lo;
 };
+
+void		 copy_satopfaddr(struct pf_addr *, struct sockaddr *);
 
 int	pfctl_rules(int, char *, int, int, char *, struct pfr_buffer *);
 int	pfctl_optimize_ruleset(struct pfctl *, struct pf_ruleset *);

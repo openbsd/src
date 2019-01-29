@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.368 2019/01/29 08:56:22 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.369 2019/01/29 10:58:31 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -437,15 +437,7 @@ pfctl_kill_src_nodes(int dev, int opts)
 		psnk.psnk_af = resp[0]->ai_family;
 		sources++;
 
-		if (psnk.psnk_af == AF_INET)
-			psnk.psnk_src.addr.v.a.addr.v4 =
-			    ((struct sockaddr_in *)resp[0]->ai_addr)->sin_addr;
-		else if (psnk.psnk_af == AF_INET6)
-			psnk.psnk_src.addr.v.a.addr.v6 =
-			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
-			    sin6_addr;
-		else
-			errx(1, "Unknown address family %d", psnk.psnk_af);
+		copy_satopfaddr(&psnk.psnk_src.addr.v.a.addr, resp[0]->ai_addr);
 
 		if (src_node_killers > 1) {
 			dests = 0;
@@ -469,17 +461,8 @@ pfctl_kill_src_nodes(int dev, int opts)
 
 				dests++;
 
-				if (psnk.psnk_af == AF_INET)
-					psnk.psnk_dst.addr.v.a.addr.v4 =
-					    ((struct sockaddr_in *)resp[1]->
-					    ai_addr)->sin_addr;
-				else if (psnk.psnk_af == AF_INET6)
-					psnk.psnk_dst.addr.v.a.addr.v6 =
-					    ((struct sockaddr_in6 *)resp[1]->
-					    ai_addr)->sin6_addr;
-				else
-					errx(1, "Unknown address family %d",
-					    psnk.psnk_af);
+				copy_satopfaddr(&psnk.psnk_src.addr.v.a.addr,
+				    resp[1]->ai_addr);
 
 				if (ioctl(dev, DIOCKILLSRCNODES, &psnk))
 					err(1, "DIOCKILLSRCNODES");
@@ -535,15 +518,7 @@ pfctl_net_kill_states(int dev, const char *iface, int opts, int rdomain)
 		psk.psk_af = resp[0]->ai_family;
 		sources++;
 
-		if (psk.psk_af == AF_INET)
-			psk.psk_src.addr.v.a.addr.v4 =
-			    ((struct sockaddr_in *)resp[0]->ai_addr)->sin_addr;
-		else if (psk.psk_af == AF_INET6)
-			psk.psk_src.addr.v.a.addr.v6 =
-			    ((struct sockaddr_in6 *)resp[0]->ai_addr)->
-			    sin6_addr;
-		else
-			errx(1, "Unknown address family %d", psk.psk_af);
+		copy_satopfaddr(&psk.psk_src.addr.v.a.addr, resp[0]->ai_addr);
 
 		if (state_killers > 1) {
 			dests = 0;
@@ -567,17 +542,8 @@ pfctl_net_kill_states(int dev, const char *iface, int opts, int rdomain)
 
 				dests++;
 
-				if (psk.psk_af == AF_INET)
-					psk.psk_dst.addr.v.a.addr.v4 =
-					    ((struct sockaddr_in *)resp[1]->
-					    ai_addr)->sin_addr;
-				else if (psk.psk_af == AF_INET6)
-					psk.psk_dst.addr.v.a.addr.v6 =
-					    ((struct sockaddr_in6 *)resp[1]->
-					    ai_addr)->sin6_addr;
-				else
-					errx(1, "Unknown address family %d",
-					    psk.psk_af);
+				copy_satopfaddr(&psk.psk_src.addr.v.a.addr,
+				    resp[1]->ai_addr);
 
 				if (ioctl(dev, DIOCKILLSTATES, &psk))
 					err(1, "DIOCKILLSTATES");
@@ -722,8 +688,6 @@ pfctl_parse_host(char *str, struct pf_rule_addr *addr)
 {
 	char *s = NULL, *sbs, *sbe;
 	struct addrinfo hints, *ai;
-	struct sockaddr_in *sin4;
-	struct sockaddr_in6 *sin6;
 
 	s = strdup(str);
 	if (!s)
@@ -745,19 +709,11 @@ pfctl_parse_host(char *str, struct pf_rule_addr *addr)
 	if (getaddrinfo(s, sbs, &hints, &ai) != 0)
 		goto error;
 
-	switch (ai->ai_family) {
-	case AF_INET:
-		sin4 = (struct sockaddr_in *)ai->ai_addr;
-		addr->addr.v.a.addr.v4 = sin4->sin_addr;
-		addr->port[0] = sin4->sin_port;
-		break;
+	copy_satopfaddr(&addr->addr.v.a.addr, ai->ai_addr);
+	addr->port[0] = ai->ai_family == AF_INET6 ?
+	    ((struct sockaddr_in6 *)ai->ai_addr)->sin6_port :
+	    ((struct sockaddr_in *)ai->ai_addr)->sin_port;
 
-	case AF_INET6:
-		sin6 = (struct sockaddr_in6 *)ai->ai_addr;
-		addr->addr.v.a.addr.v6 = sin6->sin6_addr;
-		addr->port[0] = sin6->sin6_port;
-		break;
-	}
 	freeaddrinfo(ai);
 	free(s);
 

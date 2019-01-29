@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.338 2018/09/16 19:36:33 bluhm Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.339 2019/01/29 10:58:31 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,7 +62,6 @@
 #include "pfctl_parser.h"
 #include "pfctl.h"
 
-void		 copy_satopfaddr(struct pf_addr *, struct sockaddr *);
 void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *, int);
 void		 print_ugid (u_int8_t, unsigned, unsigned, const char *, unsigned);
