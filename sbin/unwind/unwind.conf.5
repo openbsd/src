@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.2 2019/01/27 12:40:54 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.3 2019/01/29 19:30:41 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2019 $
+.Dd $Mdocdate: January 29 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -48,8 +48,19 @@ keyword.
 Macros can be defined that will later be expanded in context.
 Macro names must start with a letter, digit, or underscore,
 and may contain any of those characters.
-Macro names may not be reserved words.
+Macro names may not be reserved words (for example,
+.Ic forwarder ,
+.Ic port ,
+or
+.Ic Dot ) .
 Macros are not expanded inside quotes.
+.Pp
+For example:
+.Bd -literal -offset indent
+fwd1=192.0.2.53
+fwd2=192.0.2.153
+forwarder { $fwd1 $fwd2 }
+.Ed
 .Sh GLOBAL CONFIGURATION
 .Bl -tag -width Ds
 .It Ic forwarder Brq Ar address Oo Ic port Ar number Oc Oo Ic DoT Oc ...
