@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.3 2019/01/27 12:40:54 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.4 2019/01/29 19:32:36 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -56,7 +56,9 @@ print_config(struct unwind_conf *conf)
 {
 	struct unwind_forwarder	*unwind_forwarder;
 
+#if notyet
 	printf("strict %s\n", yesno(conf->unwind_options));
+#endif
 
 	if (!SIMPLEQ_EMPTY(&conf->unwind_forwarder_list) ||
 	    !SIMPLEQ_EMPTY(&conf->unwind_dot_forwarder_list)) {
