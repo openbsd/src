@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls.h,v 1.41 2019/01/27 05:13:04 dlg Exp $	*/
+/*	$OpenBSD: mpls.h,v 1.42 2019/01/30 01:01:01 dlg Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -152,6 +152,9 @@ struct ifmpwreq {
 #endif
 
 #ifdef _KERNEL
+
+#define MPLS_LABEL2SHIM(_l)	(htonl((_l) << MPLS_LABEL_OFFSET))
+#define MPLS_SHIM2LABEL(_s)	(ntohl((_s)) >> MPLS_LABEL_OFFSET)
 
 extern	struct domain mplsdomain;
 
