@@ -1,4 +1,4 @@
-/*	$OpenBSD: uw_parse.y,v 1.7 2019/01/30 12:17:02 benno Exp $	*/
+/*	$OpenBSD: uw_parse.y,v 1.8 2019/01/30 12:18:48 benno Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -24,6 +24,7 @@
 
 %{
 #include <sys/queue.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -31,6 +32,7 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -78,12 +80,13 @@ struct sym {
 
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
-void	 clear_config(struct unwind_conf *xconf);
 
 static struct unwind_conf	*conf;
 static int			 errors;
-
 static struct unwind_forwarder	*unwind_forwarder;
+
+void			 clear_config(struct unwind_conf *xconf);
+struct sockaddr_storage	*host_ip(const char *);
 
 typedef struct {
 	union {
@@ -187,6 +190,14 @@ forwarderopts_l		: forwarderopts_l forwarderoptsl optnl
 			| forwarderoptsl optnl
 
 forwarderoptsl		: STRING {
+				struct sockaddr_storage *ss;
+				if ((ss = host_ip($1)) == NULL) {
+					yyerror("%s is not an ip-address", $1);
+					free($1);
+					YYERROR;
+				}
+				free(ss);
+
 				if ((unwind_forwarder = calloc(1,
 				    sizeof(*unwind_forwarder))) == NULL)
 					err(1, NULL);
@@ -206,6 +217,14 @@ forwarderoptsl		: STRING {
 			}
 			| STRING PORT NUMBER {
 				int ret;
+				struct sockaddr_storage *ss;
+				if ((ss = host_ip($1)) == NULL) {
+					yyerror("%s is not an ip-address", $1);
+					free($1);
+					YYERROR;
+				}
+				free(ss);
+
 				if ($3 <= 0 || $3 > (int)USHRT_MAX) {
 					yyerror("invalid port: %lld", $3);
 					free($1);
@@ -232,6 +251,14 @@ forwarderoptsl		: STRING {
 				    unwind_forwarder, entry);
 			}
 			| STRING DOT {
+				struct sockaddr_storage *ss;
+				if ((ss = host_ip($1)) == NULL) {
+					yyerror("%s is not an ip-address", $1);
+					free($1);
+					YYERROR;
+				}
+				free(ss);
+
 				if ((unwind_forwarder = calloc(1,
 				    sizeof(*unwind_forwarder))) == NULL)
 					err(1, NULL);
@@ -251,6 +278,14 @@ forwarderoptsl		: STRING {
 			}
 			| STRING PORT NUMBER DOT {
 				int ret;
+				struct sockaddr_storage *ss;
+				if ((ss = host_ip($1)) == NULL) {
+					yyerror("%s is not an ip-address", $1);
+					free($1);
+					YYERROR;
+				}
+				free(ss);
+
 				if ($3 <= 0 || $3 > (int)USHRT_MAX) {
 					yyerror("invalid port: %lld", $3);
 					free($1);
@@ -796,4 +831,27 @@ clear_config(struct unwind_conf *xconf)
 	}
 
 	free(xconf);
+}
+
+struct sockaddr_storage *
+host_ip(const char *s)
+{
+	struct addrinfo	 hints, *res;
+	struct sockaddr_storage	*ss = NULL;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(s, "0", &hints, &res) == 0) {
+		if (res->ai_family == AF_INET ||
+		    res->ai_family == AF_INET6) {
+			if ((ss = calloc(1, sizeof(*ss))) == NULL)
+				fatal(NULL);
+			memcpy(ss, res->ai_addr, res->ai_addrlen);
+		}
+		freeaddrinfo(res);
+	}
+
+	return (ss);
 }
