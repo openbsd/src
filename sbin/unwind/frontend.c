@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.7 2019/01/29 19:13:01 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.8 2019/01/30 12:54:34 benno Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -853,12 +853,12 @@ rtmget_default(void)
 void
 parse_dhcp_lease(int fd)
 {
-	FILE	*f;
-	char	*line = NULL, *cur_ns = NULL, *ns = NULL;
-	size_t	 linesize = 0;
-	ssize_t	 linelen;
-	time_t	 epoch, lease_time, now;
-	char **tok, *toks[4], *p;
+	FILE	 *f;
+	char	 *line = NULL, *cur_ns = NULL, *ns = NULL;
+	size_t	  linesize = 0;
+	ssize_t	  linelen;
+	time_t	  epoch = 0, lease_time = 0, now;
+	char	**tok, *toks[4], *p;
 
 	if((f = fdopen(fd, "r")) == NULL) {
 		log_warn("cannot read dhcp lease");
@@ -900,8 +900,6 @@ parse_dhcp_lease(int fd)
 			if (epoch + lease_time > now ) {
 				free(ns);
 				ns = cur_ns;
-				//log_debug("ns: %s, lease_time: %lld, epoch: "
-				//    "%lld\n", cur_ns, lease_time, epoch);
 			} else /* expired lease */
 				free(cur_ns);
 		}
