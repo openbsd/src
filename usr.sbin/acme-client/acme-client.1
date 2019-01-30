@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.27 2019/01/08 18:36:17 florian Exp $
+.\"	$OpenBSD: acme-client.1,v 1.28 2019/01/30 21:15:14 jmc Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2019 $
+.Dd $Mdocdate: January 30 2019 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ Before a certificate can be requested, an account key needs to be
 created using the
 .Fl A
 argument.
-The first time a certificate is requested, the RSA key needs to be created with
+The first time a certificate is requested, a domain key needs to be created with
 .Fl D .
 .Pp
 Challenges are used to verify that the submitter has access to the
