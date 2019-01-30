@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.38 2019/01/28 15:52:17 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.39 2019/01/30 16:37:32 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -540,32 +540,21 @@ tlsext_sigalgs_client_needs(SSL *s)
 int
 tlsext_sigalgs_client_build(SSL *s, CBB *cbb)
 {
+	uint16_t *tls_sigalgs = tls12_sigalgs;
+	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
+
+	if (TLS1_get_client_version(s) >= TLS1_3_VERSION &&
+	    S3I(s)->hs_tls13.min_version >= TLS1_3_VERSION) {
+		tls_sigalgs = tls13_sigalgs;
+		tls_sigalgs_len = tls13_sigalgs_len;
+	}
 
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
 
-	switch (TLS1_get_client_version(s)) {
-	case TLS1_2_VERSION:
-		if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs, tls12_sigalgs_len))
-			return 0;
-		break;
-	case TLS1_3_VERSION:
-		if  (S3I(s)->hs_tls13.min_version < TLS1_3_VERSION) {
-			if (!ssl_sigalgs_build(&sigalgs, tls12_sigalgs,
-			    tls12_sigalgs_len))
-			    return 0;
-		}
-		else {
-			if (!ssl_sigalgs_build(&sigalgs, tls13_sigalgs,
-			    tls13_sigalgs_len))
-			    return 0;
-		}
-		break;
-	default:
-		/* Should not happen */
+	if (!ssl_sigalgs_build(&sigalgs, tls_sigalgs, tls_sigalgs_len))
 		return 0;
-	}
 
 	if (!CBB_flush(cbb))
 		return 0;
@@ -576,23 +565,20 @@ tlsext_sigalgs_client_build(SSL *s, CBB *cbb)
 int
 tlsext_sigalgs_server_parse(SSL *s, CBS *cbs, int *alert)
 {
+	uint16_t *tls_sigalgs = tls12_sigalgs;
+	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBS sigalgs;
+
+	if (s->version >= TLS1_3_VERSION) {
+		tls_sigalgs = tls13_sigalgs;
+		tls_sigalgs_len = tls13_sigalgs_len;
+	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
 		return 0;
 
-	switch (s->version) {
-	case TLS1_3_VERSION:
-		return tls1_process_sigalgs(s, &sigalgs, tls13_sigalgs,
-		    tls13_sigalgs_len);
-	case TLS1_2_VERSION:
-		return tls1_process_sigalgs(s, &sigalgs, tls12_sigalgs,
-		    tls12_sigalgs_len);
-	default:
-		break;
-	}
-
-	return 0;
+	return tls1_process_sigalgs(s, &sigalgs, tls_sigalgs,
+	    tls_sigalgs_len);
 }
 
 int
