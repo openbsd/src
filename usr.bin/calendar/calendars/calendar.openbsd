@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.40 2018/04/24 19:14:04 mlarkin Exp $
+ * $OpenBSD: calendar.openbsd,v 1.41 2019/01/30 07:24:53 bentley Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -16,7 +16,7 @@ Jan 20	Bind 9 goes into the tree, 2003
 Jan 26	Anoncvs service inaugurated, 1996
 Jan 26	n2k9: Network hackathon, Basel, Switzerland, 19 developers, 2009
 Jan 27	OpenBSD/amd64 port is added, from NetBSD, 2004
-Jan 29	``second anoncvs server is 100 miles from the first'', 1996
+Jan 29	"second anoncvs server is 100 miles from the first", 1996
 Jan 31	OpenBSD/cats port is added, from NetBSD, 2004
 Feb 03	Describe the ports mechanism [in OpenBSD], 1997
 Feb 13	Unpatented fast block cipher for new password hashing, 1997
@@ -43,7 +43,7 @@ May 05	n2k8: Network hackathon, Ito, Japan, 18 developers, 2008
 May 08	c2k3 General hackathon, Calgary, Alberta, 51 developers, 2003
 May 09	First commit to OpenBSD stable branch, OPENBSD_2_7, 2000
 May 09	OpenBSD/aviion port is added, 2006
-May 19	OpenBSD 2.3 released, including ``ports'' system, 1998
+May 19	OpenBSD 2.3 released, including "ports" system, 1998
 May 21	c2k5: General hackathon, Calgary, Alberta, 60 developers, 2005
 May 21	c2k6: General hackathon, Calgary, Alberta, 47 developers, 2006
 May 24	OpenBSD gets a trunk(4), 2005

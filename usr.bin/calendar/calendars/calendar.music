@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.34 2016/03/27 18:15:51 tim Exp $
+ * $OpenBSD: calendar.music,v 1.35 2019/01/30 07:24:53 bentley Exp $
  */
 
 #ifndef _calendar_music_
@@ -470,7 +470,7 @@
 11/23	Thomas Tallis dies, 1585
 11/24	Scott Joplin born near Linden, Texas, 1867
 11/25	"The Last Waltz" concert is played by The Band at Winterland, 1976
-11/25	Johann Strauss, Jr., writes `On the Beautiful Blue Danube', 1867
+11/25	Johann Strauss, Jr., writes 'On the Beautiful Blue Danube', 1867
 11/25	Virgil Thomson is born in Missouri, 1896
 11/26	Cream performs their farewell concert at Royal Albert Hall, 1968
 11/26	Paul Hindemith is born in Hanau, Germany, 1895

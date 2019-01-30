@@ -1,7 +1,7 @@
 /*
  * Judaic
  *
- * $OpenBSD: calendar.judaic,v 1.5 2005/09/06 23:42:59 mickey Exp $
+ * $OpenBSD: calendar.judaic,v 1.6 2019/01/30 07:24:53 bentley Exp $
  */
 
 #ifndef _calendar_judaic_
@@ -26,7 +26,7 @@ Pesach	Pesach (First Day of Passover; sabbatical)
 Pesach+1	Pesach (sabbatical)
 Pesach+6	Pesach (sabbatical)
 Pesach+7	Pesach (Last Day of Passover; 8th day of Pesach; sabbatical)
-Pesach+34	Lag Ba`omer (Commemoration of the Great Rebellion)
+Pesach+34	Lag Ba'omer (Commemoration of the Great Rebellion)
 05/22*	Yom Yerushalayim (Reunification of Jerusalem)
 Pesach+50	Shavuot (Festival of Weeks; sabbatical)
 Pesach+51	Shavuot (Festival of Weeks; sabbatical)
