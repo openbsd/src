@@ -814,6 +814,8 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasPTWRITE = true;
     } else if (Feature == "+invpcid") {
       HasINVPCID = true;
+    } else if (Feature == "+save-args") {
+      HasSaveArgs = true;
     }
 
     X86SSEEnum Level = llvm::StringSwitch<X86SSEEnum>(Feature)
@@ -1386,6 +1388,7 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("movdiri", HasMOVDIRI)
       .Case("movdir64b", HasMOVDIR64B)
       .Case("mpx", HasMPX)
+      .Case("save-args", HasSaveArgs)
       .Case("mwaitx", HasMWAITX)
       .Case("pclmul", HasPCLMUL)
       .Case("pconfig", HasPCONFIG)

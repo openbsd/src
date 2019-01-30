@@ -2814,6 +2814,8 @@ def mretpoline : Flag<["-"], "mretpoline">, Group<m_x86_Features_Group>;
 def mno_retpoline : Flag<["-"], "mno-retpoline">, Group<m_x86_Features_Group>;
 def mretpoline_external_thunk : Flag<["-"], "mretpoline-external-thunk">, Group<m_x86_Features_Group>;
 def mno_retpoline_external_thunk : Flag<["-"], "mno-retpoline-external-thunk">, Group<m_x86_Features_Group>;
+def msave_args : Flag<["-"], "msave-args">, Group<m_x86_Features_Group>;
+def mno_save_args : Flag<["-"], "mno-save-args">, Group<m_x86_Features_Group>;
 
 // These are legacy user-facing driver-level option spellings. They are always
 // aliases for options that are spelled using the more common Unix / GNU flag

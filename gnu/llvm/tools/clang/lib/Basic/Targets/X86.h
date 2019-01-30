@@ -107,6 +107,7 @@ class LLVM_LIBRARY_VISIBILITY X86TargetInfo : public TargetInfo {
   bool HasMOVDIR64B = false;
   bool HasPTWRITE = false;
   bool HasINVPCID = false;
+  bool HasSaveArgs = false;
 
 protected:
   /// Enumeration of all of the X86 CPUs supported by Clang.

@@ -37,6 +37,8 @@ public:
   const X86RegisterInfo *TRI;
   const X86ReturnProtectorLowering RPL;
 
+  bool SaveArgs;
+
   unsigned SlotSize;
 
   /// Is64Bit implies that x86_64 instructions are available.
