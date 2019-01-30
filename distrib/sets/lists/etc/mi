@@ -44,8 +44,6 @@
 ./etc/ssl/x509v3.cnf
 ./etc/syslog.conf
 ./etc/ttys
-./etc/unwind
-./etc/unwind/trustanchor
 ./root/.Xdefaults
 ./root/.cshrc
 ./root/.cvsrc
