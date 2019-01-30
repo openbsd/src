@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.138 2018/10/31 16:32:12 gilles Exp $	*/
+/*	$OpenBSD: util.c,v 1.139 2019/01/30 14:21:01 gilles Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -585,6 +585,53 @@ secure_file(int fd, char *path, char *userdir, uid_t uid, int mayread)
 		if (stat(buf, &st) < 0 ||
 		    (st.st_uid != 0 && st.st_uid != uid) ||
 		    (st.st_mode & 022) != 0)
+			return 0;
+
+		/* We can stop checking after reaching homedir level. */
+		if (strcmp(homedir, buf) == 0)
+			break;
+
+		/*
+		 * dirname should always complete with a "/" path,
+		 * but we can be paranoid and check for "." too
+		 */
+		if ((strcmp("/", buf) == 0) || (strcmp(".", buf) == 0))
+			break;
+	}
+
+	return 1;
+}
+
+int
+secure_forward(int fd, char *path, char *userdir, uid_t uid)
+{
+	char		 buf[PATH_MAX];
+	char		 homedir[PATH_MAX];
+	struct stat	 st;
+	char		*cp;
+
+	if (realpath(path, buf) == NULL)
+		return 0;
+
+	if (realpath(userdir, homedir) == NULL)
+		homedir[0] = '\0';
+
+	/* Check the open file to avoid races. */
+	if (fstat(fd, &st) < 0 ||
+	    !S_ISREG(st.st_mode) ||
+	    st.st_uid != uid ||
+	    (st.st_mode & S_IWOTH) != 0)
+		return 0;
+	
+	/* For each component of the canonical path, walking upwards. */
+	for (;;) {
+		if ((cp = dirname(buf)) == NULL)
+			return 0;
+		(void)strlcpy(buf, cp, sizeof(buf));
+
+		if (stat(buf, &st) < 0 ||
+		    (st.st_uid != 0 && st.st_uid != uid) ||
+		    (st.st_mode & S_IWOTH) != 0)
 			return 0;
 
 		/* We can stop checking after reaching homedir level. */
