@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.16 2018/02/07 21:44:09 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.17 2019/01/30 09:20:56 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -368,6 +368,137 @@ struct bwfm_bss_info {
 	uint16_t pad4;
 	uint32_t ie_length;
 	uint16_t snr;
+};
+
+#define BWFM_MAXRATES_IN_SET		BWFM_MCSSET_LEN
+#define BWFM_ANT_MAX			4
+#define BWFM_VHT_CAP_MCS_MAP_NSS_MAX	8
+#define BWFM_HE_CAP_MCS_MAP_NSS_MAX	BWFM_VHT_CAP_MCS_MAP_NSS_MAX
+
+struct bwfm_sta_rateset_v5 {
+	uint32_t count;
+	/* rates in 500kbps units w/hi bit set if basic */
+	uint8_t rates[BWFM_MAXRATES_IN_SET];
+	uint8_t mcs[BWFM_MCSSET_LEN];
+	uint16_t vht_mcs[BWFM_VHT_CAP_MCS_MAP_NSS_MAX];
+};
+
+struct bwfm_sta_rateset_v7 {
+	uint16_t version;
+	uint16_t len;
+	uint32_t count;
+	/* rates in 500kbps units w/hi bit set if basic */
+	uint8_t rates[BWFM_MAXRATES_IN_SET];
+	uint8_t mcs[BWFM_MCSSET_LEN];
+	uint16_t vht_mcs[BWFM_VHT_CAP_MCS_MAP_NSS_MAX];
+	uint16_t he_mcs[BWFM_HE_CAP_MCS_MAP_NSS_MAX];
+};
+
+struct bwfm_sta_info {
+	uint16_t ver;
+	uint16_t len;
+	uint16_t cap;		/* sta's advertised capabilities */
+
+	uint32_t flags;
+#define BWFM_STA_BRCM		0x00000001 /* Running a Broadcom driver */
+#define BWFM_STA_WME		0x00000002 /* WMM association */
+#define BWFM_STA_NONERP		0x00000004 /* No ERP */
+#define BWFM_STA_AUTHE		0x00000008 /* Authenticated */
+#define BWFM_STA_ASSOC		0x00000010 /* Associated */
+#define BWFM_STA_AUTHO		0x00000020 /* Authorized */
+#define BWFM_STA_WDS		0x00000040 /* Wireless Distribution System */
+#define BWFM_STA_WDS_LINKUP	0x00000080 /* WDS traffic/probes flowing */
+#define BWFM_STA_PS		0x00000100 /* STA in power save mode, says AP */
+#define BWFM_STA_APSD_BE	0x00000200 /* APSD for AC_BE default enabled */
+#define BWFM_STA_APSD_BK	0x00000400 /* APSD for AC_BK default enabled */
+#define BWFM_STA_APSD_VI	0x00000800 /* APSD for AC_VI default enabled */
+#define BWFM_STA_APSD_VO	0x00001000 /* APSD for AC_VO default enabled */
+#define BWFM_STA_N_CAP		0x00002000 /* STA 802.11n capable */
+#define BWFM_STA_SCBSTATS	0x00004000 /* Per STA debug stats */
+#define BWFM_STA_AMPDU_CAP	0x00008000 /* STA AMPDU capable */
+#define BWFM_STA_AMSDU_CAP	0x00010000 /* STA AMSDU capable */
+#define BWFM_STA_MIMO_PS	0x00020000 /* mimo ps mode is enabled */
+#define BWFM_STA_MIMO_RTS	0x00040000 /* send rts in mimo ps mode */
+#define BWFM_STA_RIFS_CAP	0x00080000 /* rifs enabled */
+#define BWFM_STA_VHT_CAP	0x00100000 /* STA VHT(11ac) capable */
+#define BWFM_STA_WPS		0x00200000 /* WPS state */
+#define BWFM_STA_DWDS_CAP	0x01000000 /* DWDS CAP */
+#define BWFM_STA_DWDS		0x02000000 /* DWDS active */
+
+	uint32_t idle;		/* time since data pkt rx'd from sta */
+	uint8_t ea[ETHER_ADDR_LEN];
+	uint32_t count;			/* # rates in this set */
+	uint8_t rates[BWFM_MAXRATES_IN_SET];	/* rates in 500kbps units */
+						/* w/hi bit set if basic */
+	uint32_t in;		/* seconds elapsed since associated */
+	uint32_t listen_interval_inms; /* Min Listen interval in ms for STA */
+
+	/* Fields valid for ver >= 3 */
+	uint32_t tx_pkts;	/* # of packets transmitted */
+	uint32_t tx_failures;	/* # of packets failed */
+	uint32_t rx_ucast_pkts;	/* # of unicast packets received */
+	uint32_t rx_mcast_pkts;	/* # of multicast packets received */
+	uint32_t tx_rate;	/* Rate of last successful tx frame, in bps */
+	uint32_t rx_rate;	/* Rate of last successful rx frame, in bps */
+	uint32_t rx_decrypt_succeeds;	/* # of packet decrypted successfully */
+	uint32_t rx_decrypt_failures;	/* # of packet decrypted failed */
+
+	/* Fields valid for ver >= 4 */
+	uint32_t tx_tot_pkts;    /* # of tx pkts (ucast + mcast) */
+	uint32_t rx_tot_pkts;    /* # of data packets recvd (uni + mcast) */
+	uint32_t tx_mcast_pkts;  /* # of mcast pkts txed */
+	uint64_t tx_tot_bytes;   /* data bytes txed (ucast + mcast) */
+	uint64_t rx_tot_bytes;   /* data bytes recvd (ucast + mcast) */
+	uint64_t tx_ucast_bytes; /* data bytes txed (ucast) */
+	uint64_t tx_mcast_bytes; /* # data bytes txed (mcast) */
+	uint64_t rx_ucast_bytes; /* data bytes recvd (ucast) */
+	uint64_t rx_mcast_bytes; /* data bytes recvd (mcast) */
+	int8_t rssi[BWFM_ANT_MAX];   /* per antenna rssi */
+	int8_t nf[BWFM_ANT_MAX];     /* per antenna noise floor */
+	uint16_t aid;                    /* association ID */
+	uint16_t ht_capabilities;        /* advertised ht caps */
+	uint16_t vht_flags;              /* converted vht flags */
+	uint32_t tx_pkts_retry_cnt;      /* # of frames where a retry was
+					 * exhausted.
+					 */
+	uint32_t tx_pkts_retry_exhausted; /* # of user frames where a retry
+					 * was exhausted
+					 */
+	int8_t rx_lastpkt_rssi[BWFM_ANT_MAX]; /* Per antenna RSSI of last
+					    * received data frame.
+					    */
+	/* TX WLAN retry/failure statistics:
+	 * Separated for host requested frames and locally generated frames.
+	 * Include unicast frame only where the retries/failures can be counted.
+	 */
+	uint32_t tx_pkts_total;          /* # user frames sent successfully */
+	uint32_t tx_pkts_retries;        /* # user frames retries */
+	uint32_t tx_pkts_fw_total;       /* # FW generated sent successfully */
+	uint32_t tx_pkts_fw_retries;     /* # retries for FW generated frames */
+	uint32_t tx_pkts_fw_retry_exhausted;	/* # FW generated where a retry
+						* was exhausted
+						*/
+	uint32_t rx_pkts_retried;        /* # rx with retry bit set */
+	uint32_t tx_rate_fallback;       /* lowest fallback TX rate */
+
+	union {
+		struct {
+			struct bwfm_sta_rateset_v5 rateset_adv;
+		} v5;
+
+		struct {
+			uint32_t rx_dur_total; /* user RX duration (estimate) */
+			uint16_t chanspec;
+			uint16_t pad_1;
+			struct bwfm_sta_rateset_v7 rateset_adv;
+			uint16_t wpauth;	/* authentication type */
+			uint8_t algo;		/* crypto alogorithm */
+			uint8_t pad_2;
+			uint32_t tx_rspec;/* Rate of last successful tx frame */
+			uint32_t rx_rspec;/* Rate of last successful rx frame */
+			uint32_t wnm_cap;
+		} v7;
+	};
 };
 
 struct bwfm_ssid {

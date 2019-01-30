@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.54 2018/07/25 20:37:11 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.55 2019/01/30 09:20:56 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -59,6 +59,8 @@ void	 bwfm_start(struct ifnet *);
 void	 bwfm_init(struct ifnet *);
 void	 bwfm_stop(struct ifnet *);
 void	 bwfm_watchdog(struct ifnet *);
+void	 bwfm_update_node(void *, struct ieee80211_node *);
+void	 bwfm_update_nodes(struct bwfm_softc *);
 int	 bwfm_ioctl(struct ifnet *, u_long, caddr_t);
 int	 bwfm_media_change(struct ifnet *);
 
@@ -549,9 +551,137 @@ bwfm_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
+/*
+ * Tx-rate to MCS conversion might lie since some rates map to multiple MCS.
+ * But this is the best we can do given that firmware only reports kbit/s.
+ */
+
+int
+bwfm_rate2vhtmcs(uint32_t txrate)
+{
+	/* TODO */
+	return -1;
+}
+
+int
+bwfm_rate2htmcs(uint32_t txrate)
+{
+	const struct ieee80211_ht_rateset *rs;
+	int i, j;
+	
+	for (i = 0; i < IEEE80211_HT_NUM_RATESETS; i++) {
+		rs = &ieee80211_std_ratesets_11n[i];
+		for (j = 0; j < rs->nrates; j++) {
+			if (rs->rates[j] == txrate / 500)
+				return rs->min_mcs + j;
+		}
+	}
+
+	return -1;
+}
+
+void
+bwfm_update_node(void *arg, struct ieee80211_node *ni)
+{
+	struct bwfm_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct bwfm_sta_info sta;
+	uint32_t flags;
+	int8_t rssi;
+	uint32_t txrate;
+	int mcs, i;
+
+	memset(&sta, 0, sizeof(sta));
+	memcpy((uint8_t *)&sta, ni->ni_macaddr, sizeof(ni->ni_macaddr));
+
+	if (bwfm_fwvar_var_get_data(sc, "sta_info", &sta, sizeof(sta)))
+		return;
+
+	if (!IEEE80211_ADDR_EQ(ni->ni_macaddr, sta.ea))
+		return;
+
+	if (le16toh(sta.ver) < 4)
+		return;
+
+	flags = le32toh(sta.flags);
+	if ((flags & BWFM_STA_SCBSTATS) == 0)
+		return;
+
+	rssi = 0;
+	for (i = 0; i < BWFM_ANT_MAX; i++) {
+		if (sta.rssi[i] >= 0)
+			continue;
+		if (rssi == 0 || sta.rssi[i] > rssi)
+			rssi = sta.rssi[i];
+	}
+	if (rssi)
+		ni->ni_rssi = rssi;
+
+	txrate = le32toh(sta.tx_rate); /* in kbit/s */
+	if (txrate == 0xffffffff) /* Seen this happening during association. */
+		return;
+
+	if ((le32toh(sta.flags) & BWFM_STA_VHT_CAP) &&
+	    (mcs = bwfm_rate2vhtmcs(txrate)) >= 0) {
+		/* TODO: Can't store VHT MCS in ni yet... */
+	} else if ((le32toh(sta.flags) & BWFM_STA_N_CAP) &&
+	    (mcs = bwfm_rate2htmcs(txrate)) >= 0) {
+		/* Tell net80211 that firmware has negotiated 11n. */
+		ni->ni_flags |= IEEE80211_NODE_HT;
+		if (ic->ic_curmode < IEEE80211_MODE_11N)
+			ieee80211_setmode(ic, IEEE80211_MODE_11N);
+		ni->ni_txmcs = mcs;
+	} else {
+		/*
+		 * In 11n mode a fallback to legacy rates is transparent
+		 * to net80211. Just pretend we were using MCS 0.
+		 */
+		if (ni->ni_flags & IEEE80211_NODE_HT) {
+			ni->ni_txmcs = 0;
+		} else {
+			/* We're in 11a/g mode. Map to a legacy rate. */
+			for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
+				uint8_t rate = ni->ni_rates.rs_rates[i];
+				rate &= IEEE80211_RATE_VAL;
+				if (rate == txrate / 500) {
+					ni->ni_txrate = i;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void
+bwfm_update_nodes(struct bwfm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni;
+
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		bwfm_update_node(sc, ic->ic_bss);
+		/* Update cached copy in the nodes tree as well. */
+		ni = ieee80211_find_node(ic, ic->ic_bss->ni_macaddr);
+		if (ni) {
+			ni->ni_rssi = ic->ic_bss->ni_rssi;
+		}
+		break;
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_M_HOSTAP:
+		ieee80211_iterate_nodes(ic, bwfm_update_node, sc);
+		break;
+#endif
+	default:
+		break;
+	}
+}
+
 int
 bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
+	struct bwfm_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	int s, error = 0;
 
 	s = splnet();
@@ -568,6 +698,12 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				bwfm_stop(ifp);
 		}
 		break;
+	case SIOCGIFMEDIA:
+	case SIOCG80211NODE:
+	case SIOCG80211ALLNODES:
+		if (ic->ic_state == IEEE80211_S_RUN)
+			bwfm_update_nodes(sc);
+		/* fall through */
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
 	}
