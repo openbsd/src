@@ -273,9 +273,10 @@ lmtp_engine(FILE *conn, struct session *session)
 		case PHASE_QUIT:
 			exit(0);
 		}
-		if (ferror(stdin))
-			err(1, "getline");
 	} while (1);
+
+	if (ferror(conn))
+		err(1, "getline");
 }
 
 static void
