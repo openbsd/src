@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.618 2019/01/30 14:21:01 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.619 2019/01/30 21:31:48 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1664,7 +1664,6 @@ int valid_localpart(const char *);
 int valid_domainpart(const char *);
 int valid_smtp_response(const char *);
 int secure_file(int, char *, char *, uid_t, int);
-int secure_forward(int, char *, char *, uid_t);
 int  lowercase(char *, const char *, size_t);
 void xlowercase(char *, const char *, size_t);
 int  uppercase(char *, const char *, size_t);
