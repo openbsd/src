@@ -1,4 +1,4 @@
-/*	$OpenBSD: uw_parse.y,v 1.6 2019/01/29 21:34:37 benno Exp $	*/
+/*	$OpenBSD: uw_parse.y,v 1.7 2019/01/30 12:17:02 benno Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -23,32 +23,22 @@
  */
 
 %{
-#include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-
-#include <netinet/in.h>
-#include <net/if.h>
-
-#include <arpa/inet.h>
+#include <sys/types.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <event.h>
-#include <ifaddrs.h>
-#include <imsg.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <syslog.h>
 #include <unistd.h>
 
 #include "uw_log.h"
 #include "unwind.h"
-#include "frontend.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -88,10 +78,9 @@ struct sym {
 
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
-
 void	 clear_config(struct unwind_conf *xconf);
 
-static struct unwind_conf		*conf;
+static struct unwind_conf	*conf;
 static int			 errors;
 
 static struct unwind_forwarder	*unwind_forwarder;
@@ -217,7 +206,6 @@ forwarderoptsl		: STRING {
 			}
 			| STRING PORT NUMBER {
 				int ret;
-
 				if ($3 <= 0 || $3 > (int)USHRT_MAX) {
 					yyerror("invalid port: %lld", $3);
 					free($1);
@@ -263,7 +251,6 @@ forwarderoptsl		: STRING {
 			}
 			| STRING PORT NUMBER DOT {
 				int ret;
-
 				if ($3 <= 0 || $3 > (int)USHRT_MAX) {
 					yyerror("invalid port: %lld", $3);
 					free($1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.4 2019/01/29 15:37:29 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.5 2019/01/30 12:17:02 benno Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -17,6 +17,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+
+#include <event.h>
+#include <imsg.h>
+#include <stdint.h>
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
