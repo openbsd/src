@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.30 2019/01/29 03:12:12 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.31 2019/01/30 01:09:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -185,9 +185,9 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		/* Setup labels and create inbound route */
 		imr.imr_lshim.shim_label =
-		    htonl(imr.imr_lshim.shim_label << MPLS_LABEL_OFFSET);
+		    MPLS_LABEL2SHIM(imr.imr_lshim.shim_label);
 		imr.imr_rshim.shim_label =
-		    htonl(imr.imr_rshim.shim_label << MPLS_LABEL_OFFSET);
+		    MPLS_LABEL2SHIM(imr.imr_rshim.shim_label);
 
 		if (sc->sc_smpls.smpls_label != imr.imr_lshim.shim_label) {
 			if (sc->sc_smpls.smpls_label)
@@ -220,11 +220,9 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		imr.imr_flags = sc->sc_flags;
 		imr.imr_type = sc->sc_type;
 		imr.imr_lshim.shim_label =
-		    ((ntohl(sc->sc_smpls.smpls_label & MPLS_LABEL_MASK)) >>
-			MPLS_LABEL_OFFSET);
+		    MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
 		imr.imr_rshim.shim_label =
-		    ((ntohl(sc->sc_rshim.shim_label & MPLS_LABEL_MASK)) >>
-			MPLS_LABEL_OFFSET);
+		    MPLS_SHIM2LABEL(sc->sc_rshim.shim_label);
 		memcpy(&imr.imr_nexthop, &sc->sc_nexthop,
 		    sizeof(imr.imr_nexthop));
 

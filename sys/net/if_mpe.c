@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.75 2019/01/30 00:28:26 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.76 2019/01/30 01:09:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -304,9 +304,7 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGETLABEL:
 		ifm = ifp->if_softc;
-		shim.shim_label =
-		    ((ntohl(ifm->sc_smpls.smpls_label & MPLS_LABEL_MASK)) >>
-		    MPLS_LABEL_OFFSET);
+		shim.shim_label = MPLS_SHIM2LABEL(ifm->sc_smpls.smpls_label);
 		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
 		break;
 	case SIOCSETLABEL:
@@ -318,7 +316,7 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		shim.shim_label = htonl(shim.shim_label << MPLS_LABEL_OFFSET);
+		shim.shim_label = MPLS_LABEL2SHIM(shim.shim_label);
 		if (ifm->sc_smpls.smpls_label == shim.shim_label)
 			break;
 		LIST_FOREACH(ifm, &mpeif_list, sc_list) {
