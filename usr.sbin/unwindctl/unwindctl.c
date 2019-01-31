@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.2 2019/01/27 12:41:39 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.3 2019/01/31 13:36:42 solene Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -107,6 +107,19 @@ main(int argc, char *argv[])
 		err(1, NULL);
 	imsg_init(ibuf, ctl_sock);
 	done = 0;
+
+	/* Check for root-only actions */
+	switch (res->action) {
+	case LOG_DEBUG:
+	case LOG_VERBOSE:
+	case LOG_BRIEF:
+	case RELOAD:
+		if (geteuid() != 0)
+			errx(1, "need root privileges");
+		break;
+	default:
+		break;
+	}
 
 	/* Process user request. */
 	switch (res->action) {

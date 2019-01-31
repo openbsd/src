@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.3 2019/01/29 19:13:01 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.4 2019/01/31 13:36:42 solene Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,7 @@ control_init(char *path)
 	}
 	umask(old_umask);
 
-	if (chmod(path, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
+	if (chmod(path, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) == -1) {
 		log_warn("%s: chmod", __func__);
 		close(fd);
 		(void)unlink(path);
@@ -204,6 +204,8 @@ control_dispatch_imsg(int fd, short event, void *bula)
 	struct imsg	 imsg;
 	ssize_t		 n;
 	int		 verbose;
+	uid_t		 euid;
+	gid_t		 egid;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
 		log_warnx("%s: fd %d: not found", __func__, fd);
@@ -224,6 +226,11 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		}
 	}
 
+	if (getpeereid(fd, &euid, &egid) == -1) {
+		control_close(fd);
+		return;
+	}
+
 	for (;;) {
 		if ((n = imsg_get(&c->iev.ibuf, &imsg)) == -1) {
 			control_close(fd);
@@ -231,6 +238,20 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		}
 		if (n == 0)
 			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_CTL_LOG_VERBOSE:
+		case IMSG_CTL_RELOAD:
+			if (euid != 0) {
+				log_debug("%s: need to be root", __func__);
+				imsg_free(&imsg);
+				control_close(fd);
+				return;
+			}
+			break;
+		default:
+			break;
+		}
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_RELOAD:
