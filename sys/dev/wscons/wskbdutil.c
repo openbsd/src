@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.17 2018/01/22 12:20:54 fcambus Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.18 2019/01/31 18:01:14 millert Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -181,11 +181,10 @@ static struct compose_tab_s {
 
 static int compose_tab_inorder = 0;
 
-inline int compose_tab_cmp(struct compose_tab_s *, struct compose_tab_s *);
 keysym_t ksym_upcase(keysym_t);
 void fillmapentry(const keysym_t *, int, struct wscons_keymap *);
 
-inline int
+static inline int
 compose_tab_cmp(struct compose_tab_s *i, struct compose_tab_s *j)
 {
 	if (i->elem[0] == j->elem[0])

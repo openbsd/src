@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.106 2017/11/20 10:35:24 mpi Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.107 2019/01/31 18:01:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2224,6 +2224,34 @@ pipex_l2tp_userland_output(struct mbuf *m0, struct pipex_session *session)
  * MPPE
  ***********************************************************************/
 #define	PIPEX_COHERENCY_CNT_MASK		0x0fff
+
+static inline int
+pipex_mppe_setkey(struct pipex_mppe *mppe)
+{
+	rc4_keysetup(&mppe->rc4ctx, mppe->session_key, mppe->keylen);
+
+	return (0);
+}
+
+static inline int
+pipex_mppe_setoldkey(struct pipex_mppe *mppe, uint16_t coher_cnt)
+{
+	KASSERT(mppe->old_session_keys != NULL);
+
+	rc4_keysetup(&mppe->rc4ctx,
+	    mppe->old_session_keys[coher_cnt & PIPEX_MPPE_OLDKEYMASK],
+	    mppe->keylen);
+
+	return (0);
+}
+
+static inline void
+pipex_mppe_crypt(struct pipex_mppe *mppe, int len, u_char *indata,
+    u_char *outdata)
+{
+	rc4_crypt(&mppe->rc4ctx, indata, outdata, len);
+}
+
 Static void
 pipex_mppe_init(struct pipex_mppe *mppe, int stateless, int keylenbits,
     u_char *master_key, int has_oldkey)
@@ -2925,33 +2953,6 @@ pipex_sockaddr_compar_addr(struct sockaddr *a, struct sockaddr *b)
 	panic("pipex_sockaddr_compar_addr: unknown address family");
 
 	return (-1);
-}
-
-Static inline int
-pipex_mppe_setkey(struct pipex_mppe *mppe)
-{
-	rc4_keysetup(&mppe->rc4ctx, mppe->session_key, mppe->keylen);
-
-	return (0);
-}
-
-Static inline int
-pipex_mppe_setoldkey(struct pipex_mppe *mppe, uint16_t coher_cnt)
-{
-	KASSERT(mppe->old_session_keys != NULL);
-
-	rc4_keysetup(&mppe->rc4ctx,
-	    mppe->old_session_keys[coher_cnt & PIPEX_MPPE_OLDKEYMASK],
-	    mppe->keylen);
-
-	return (0);
-}
-
-Static inline void
-pipex_mppe_crypt(struct pipex_mppe *mppe, int len, u_char *indata,
-    u_char *outdata)
-{
-	rc4_crypt(&mppe->rc4ctx, indata, outdata, len);
 }
 
 int
