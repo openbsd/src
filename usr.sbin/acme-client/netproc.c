@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.19 2018/11/29 14:25:07 tedu Exp $ */
+/*	$Id: netproc.c,v 1.20 2019/01/31 15:55:48 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -454,7 +454,7 @@ dochngresp(struct conn *c, const struct chng *chng, const char *th)
 static int
 dochngcheck(struct conn *c, struct chng *chng)
 {
-	int		 cc;
+	enum chngstatus	 cc;
 	long		 lc;
 	struct jsmnn	*j;
 
@@ -477,7 +477,7 @@ dochngcheck(struct conn *c, struct chng *chng)
 		json_free(j);
 		return 0;
 	} else if (cc > 0)
-		chng->status = 1;
+		chng->status = CHNG_VALID;
 
 	json_free(j);
 	return 1;
@@ -760,7 +760,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	 */
 
 	for (i = 0; i < altsz; i++) {
-		if (chngs[i].status == 1)
+		if (chngs[i].status == CHNG_VALID)
 			continue;
 
 		if (chngs[i].retry++ >= RETRY_MAX) {

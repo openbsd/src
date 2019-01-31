@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.10 2017/11/27 01:58:52 florian Exp $ */
+/*	$Id: json.c,v 1.11 2019/01/31 15:55:48 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -332,23 +332,23 @@ json_free_challenge(struct chng *p)
  * Parse the response from the ACME server when we're waiting to see
  * whether the challenge has been ok.
  */
-int
+enum chngstatus
 json_parse_response(struct jsmnn *n)
 {
 	char		*resp;
-	int		 rc;
+	enum chngstatus	 rc;
 
 	if (n == NULL)
-		return -1;
+		return CHNG_INVALID;
 	if ((resp = json_getstr(n, "status")) == NULL)
-		return -1;
+		return CHNG_INVALID;
 
 	if (strcmp(resp, "valid") == 0)
-		rc = 1;
+		rc = CHNG_VALID;
 	else if (strcmp(resp, "pending") == 0)
-		rc = 0;
+		rc = CHNG_PENDING;
 	else
-		rc = -1;
+		rc = CHNG_INVALID;
 
 	free(resp);
 	return rc;
