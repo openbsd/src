@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.182 2019/01/29 14:07:15 visa Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.183 2019/01/31 05:33:51 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ struct ctlname {
 	{ "hostname", CTLTYPE_STRING }, \
 	{ "hostid", CTLTYPE_INT }, \
 	{ "clockrate", CTLTYPE_STRUCT }, \
-	{ "dnsjackport", CTLTYPE_INT }, \
+	{ "gap", 0 }, \
 	{ "gap", 0 }, \
 	{ "gap", 0 }, \
 	{ "profiling", CTLTYPE_NODE }, \
