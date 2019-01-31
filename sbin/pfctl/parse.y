@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.689 2019/01/11 01:56:54 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.690 2019/01/31 18:08:36 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1990,7 +1990,7 @@ filter_opt	: USER uids {
 			}
 			filter_opts.divert.type = PF_DIVERT_REPLY;
 		}
-		| DIVERTPACKET PORT number {
+		| DIVERTPACKET PORT portplain {
 			if (filter_opts.divert.type != PF_DIVERT_NONE) {
 				yyerror("more than one divert option");
 				YYERROR;
@@ -2003,11 +2003,11 @@ filter_opt	: USER uids {
 			if (pf->reassemble & PF_REASS_ENABLED)
 				filter_opts.marker |= FOM_SCRUB_TCP;
 
-			if ($3 < 1 || $3 > 65535) {
-				yyerror("invalid divert port");
+			filter_opts.divert.port = $3.a;
+			if (!filter_opts.divert.port) {
+				yyerror("invalid divert port: %u", ntohs($3.a));
 				YYERROR;
 			}
-			filter_opts.divert.port = htons($3);
 		}
 		| SCRUB '(' scrub_opts ')' {
 			filter_opts.nodf = $3.nodf;
@@ -5755,6 +5755,7 @@ parseport(char *port, struct range *r, int extensions)
 			r->t = PF_OP_RRG;
 		return (0);
 	}
+	yyerror("port is invalid: %s", port);
 	return (-1);
 }
 
