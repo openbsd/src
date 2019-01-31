@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.102 2018/12/30 00:48:47 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.103 2019/01/31 23:00:18 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017, 2018 Ingo Schwarze <schwarze@usta.de>
@@ -1172,7 +1172,7 @@ parse_path_info(struct req *req, const char *path)
 	}
 
 	/* Optional section. */
-	if (strncmp(path, "man", 3) == 0) {
+	if (strncmp(path, "man", 3) == 0 || strncmp(path, "cat", 3) == 0) {
 		path += 3;
 		end = strchr(path, '/');
 		free(req->q.sec);
