@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.76 2019/01/30 01:09:36 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.77 2019/01/31 02:00:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -280,6 +280,7 @@ out:
 int
 mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
+	struct mpe_softc	*sc = ifp->if_softc;
 	struct mpe_softc	*ifm;
 	struct ifreq		*ifr;
 	struct shim_hdr		 shim;
@@ -303,12 +304,10 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCGETLABEL:
-		ifm = ifp->if_softc;
-		shim.shim_label = MPLS_SHIM2LABEL(ifm->sc_smpls.smpls_label);
+		shim.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
 		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
 		break;
 	case SIOCSETLABEL:
-		ifm = ifp->if_softc;
 		if ((error = copyin(ifr->ifr_data, &shim, sizeof(shim))))
 			break;
 		if (shim.shim_label > MPLS_LABEL_MAX ||
@@ -317,7 +316,7 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		shim.shim_label = MPLS_LABEL2SHIM(shim.shim_label);
-		if (ifm->sc_smpls.smpls_label == shim.shim_label)
+		if (sc->sc_smpls.smpls_label == shim.shim_label)
 			break;
 		LIST_FOREACH(ifm, &mpeif_list, sc_list) {
 			if (ifm != ifp->if_softc &&
@@ -328,29 +327,27 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (error)
 			break;
-		ifm = ifp->if_softc;
-		if (ifm->sc_smpls.smpls_label) {
+		if (sc->sc_smpls.smpls_label) {
 			/* remove old MPLS route */
-			rt_ifa_del(&ifm->sc_ifa, RTF_MPLS,
-			    smplstosa(&ifm->sc_smpls));
+			rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
+			    smplstosa(&sc->sc_smpls));
 		}
 		/* add new MPLS route */
-		ifm->sc_smpls.smpls_label = shim.shim_label;
-		error = rt_ifa_add(&ifm->sc_ifa, RTF_MPLS|RTF_LOCAL,
-		    smplstosa(&ifm->sc_smpls));
+		sc->sc_smpls.smpls_label = shim.shim_label;
+		error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+		    smplstosa(&sc->sc_smpls));
 		if (error) {
-			ifm->sc_smpls.smpls_label = 0;
+			sc->sc_smpls.smpls_label = 0;
 			break;
 		}
 		break;
 	case SIOCSIFRDOMAIN:
 		/* must readd the MPLS "route" for our label */
 		/* XXX does not make sense, the MPLS route is on rtable 0 */
-		ifm = ifp->if_softc;
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
-			if (ifm->sc_smpls.smpls_label) {
-				rt_ifa_add(&ifm->sc_ifa, RTF_MPLS,
-				    smplstosa(&ifm->sc_smpls));
+			if (sc->sc_smpls.smpls_label) {
+				rt_ifa_add(&sc->sc_ifa, RTF_MPLS,
+				    smplstosa(&sc->sc_smpls));
 			}
 		}
 		/* return with ENOTTY so that the parent handler finishes */
