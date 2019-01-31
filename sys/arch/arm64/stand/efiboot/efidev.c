@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.3 2019/01/09 13:18:50 yasuoka Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.4 2019/01/31 14:35:06 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -48,16 +48,29 @@ extern int debug;
 #define EFI_BLKSPERSEC(_ed)	((_ed)->blkio->Media->BlockSize / DEV_BSIZE)
 #define EFI_SECTOBLK(_ed, _n)	((_n) * EFI_BLKSPERSEC(_ed))
 
-extern EFI_BLOCK_IO *disk;
-struct diskinfo diskinfo;
-
 static EFI_STATUS
 		 efid_io(int, efi_diskinfo_t, u_int, int, void *);
 static int	 efid_diskio(int, struct diskinfo *, u_int, int, void *);
+const char *	 efi_getdisklabel(efi_diskinfo_t, struct disklabel *);
 static int	 efi_getdisklabel_cd9660(efi_diskinfo_t, struct disklabel *);
 static u_int	 findopenbsd(efi_diskinfo_t, const char **);
 static u_int	 findopenbsd_gpt(efi_diskinfo_t, const char **);
 static int	 gpt_chk_mbr(struct dos_partition *, u_int64_t);
+
+void
+efid_init(struct diskinfo *dip, void *handle)
+{
+	EFI_BLOCK_IO		*blkio = handle;
+
+	memset(dip, 0, sizeof(struct diskinfo));
+	dip->ed.blkio = blkio;
+	dip->ed.mediaid = blkio->Media->MediaId;
+	dip->diskio = efid_diskio;
+	dip->strategy = efistrategy;
+
+	if (efi_getdisklabel(&dip->ed, &dip->disklabel) == NULL)
+		dip->flags |= DISKINFO_FLAG_GOODLABEL;
+}
 
 static EFI_STATUS
 efid_io(int rw, efi_diskinfo_t ed, u_int off, int nsect, void *buf)
@@ -471,32 +484,33 @@ efi_getdisklabel_cd9660(efi_diskinfo_t ed, struct disklabel *label)
 int
 efiopen(struct open_file *f, ...)
 {
-	struct diskinfo *dip = &diskinfo;
+	struct diskinfo *dip = NULL;
 	va_list ap;
 	u_int unit, part;
-	const char *err;
-
-	if (disk == NULL)
-		return (ENXIO);
+	int i = 0;
 
 	va_start(ap, f);
 	unit = va_arg(ap, u_int);
 	part = va_arg(ap, u_int);
 	va_end(ap);
 
-	if (unit != 0 || part >= MAXPARTITIONS)
+	if (part >= MAXPARTITIONS)
 		return (ENXIO);
 
-	diskinfo.ed.blkio = disk;
-	diskinfo.ed.mediaid = disk->Media->MediaId;
-	diskinfo.sc_part = part;
-
-	err = efi_getdisklabel(&dip->ed, &dip->disklabel);
-	if (err) {
-		printf("%s\n", err);
-		return EINVAL;
+	TAILQ_FOREACH(dip, &disklist, list) {
+		if (i == unit)
+			break;
+		i++;
 	}
 
+	if (dip == NULL)
+		return (ENXIO);
+
+	if ((dip->flags & DISKINFO_FLAG_GOODLABEL) == 0)
+		return (ENXIO);
+
+	dip->part = part;
+	bootdev_dip = dip;
 	f->f_devdata = dip;
 
 	return 0;
@@ -512,7 +526,7 @@ efistrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
 
 	nsect = (size + DEV_BSIZE - 1) / DEV_BSIZE;
 	blk += DL_SECTOBLK(&dip->disklabel,
-	    dip->disklabel.d_partitions[dip->sc_part].p_offset);
+	    dip->disklabel.d_partitions[dip->part].p_offset);
 
 	if (blk < 0)
 		error = EINVAL;
