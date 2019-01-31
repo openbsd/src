@@ -2625,6 +2625,7 @@ get_section_type_name (unsigned int sh_type)
     case 0x7ffffffd:		return "AUXILIARY";
     case 0x7fffffff:		return "FILTER";
     case SHT_GNU_LIBLIST:	return "GNU_LIBLIST";
+    case SHT_LLVM_LINKER_OPTIONS: return "LLVM_LINKER_OPTIONS";
     case SHT_LLVM_ADDRSIG:	return "LLVM_ADDRSIG";
 
     default:
