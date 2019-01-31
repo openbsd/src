@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.14 2019/01/23 23:00:54 tedu Exp $	*/
+/*	$OpenBSD: file.c,v 1.15 2019/01/31 01:30:46 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -37,10 +37,8 @@
 #include "grep.h"
 
 static char	 fname[PATH_MAX];
-#ifndef NOZ
 static char	*lnbuf;
-static size_t	 lnbuflen;
-#endif
+static size_t	 lnbufsize;
 
 #define FILE_STDIO	0
 #define FILE_MMAP	1
@@ -76,9 +74,9 @@ gzfgetln(gzFile *f, size_t *len)
 			else
 				errx(2, "%s: %s", fname, gzerrstr);
 		}
-		if (n >= lnbuflen) {
-			lnbuflen *= 2;
-			lnbuf = grep_realloc(lnbuf, ++lnbuflen);
+		if (n >= lnbufsize) {
+			lnbufsize *= 2;
+			lnbuf = grep_realloc(lnbuf, ++lnbufsize);
 		}
 		if (c == '\n')
 			break;
@@ -181,7 +179,13 @@ grep_fgetln(file_t *f, size_t *l)
 {
 	switch (f->type) {
 	case FILE_STDIO:
-		return fgetln(f->f, l);
+		if ((*l = getline(&lnbuf, &lnbufsize, f->f)) == -1) {
+			if (ferror(f->f))
+				err(2, "%s: getline", fname);
+			else
+				return NULL;
+		}
+		return lnbuf;
 #ifndef SMALL
 	case FILE_MMAP:
 		return mmfgetln(f->mmf, l);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.58 2019/01/23 23:00:54 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.59 2019/01/31 01:30:46 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -222,15 +222,19 @@ read_patterns(const char *fn)
 {
 	FILE *f;
 	char *line;
-	size_t len;
+	ssize_t len;
+	size_t linesize;
 
 	if ((f = fopen(fn, "r")) == NULL)
 		err(2, "%s", fn);
-	while ((line = fgetln(f, &len)) != NULL)
+	line = NULL;
+	linesize = 0;
+	while ((len = getline(&line, &linesize, f)) != -1)
 		add_pattern(line, *line == '\n' ? 0 : len);
 	if (ferror(f))
 		err(2, "%s", fn);
 	fclose(f);
+	free(line);
 }
 
 int
