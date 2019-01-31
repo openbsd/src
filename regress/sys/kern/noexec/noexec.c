@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.18 2018/05/23 19:22:54 bluhm Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.19 2019/01/31 19:14:12 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -204,6 +204,7 @@ main(int argc, char *argv[])
 			switch (ch) {
 			case 'T':
 				p = &testfly;
+				pflags &=~ MAP_FIXED;
 				(void) strlcat(label, "text", sizeof(label));
 				continue;
 			case 'D':
@@ -243,18 +244,19 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'm':
 			if (p) {
-				if ((ptr = mmap(p, size + 2 * page_size,
-				    PROT_READ|PROT_WRITE,
-				    pflags, -1, 0)) == MAP_FAILED)
-					err(1, "mmap");
 				(void) strlcat(label, "-mmap", sizeof(label));
 			} else {
-				if ((ptr = mmap(p, size + 2 * page_size,
-				    PROT_READ|PROT_WRITE,
-				    MAP_ANON, -1, 0)) == MAP_FAILED)
-					err(1, "mmap");
+				pflags = MAP_ANON;
 				func = &noexec_mmap;
 				(void) strlcat(label, "mmap", sizeof(label));
+			}
+			ptr = mmap(p, size + 2 * page_size,
+			    PROT_READ|PROT_WRITE, pflags, -1, 0LL);
+			if (ptr == MAP_FAILED) {
+				err(1, "mmap: addr %p, len %zu, prot %d, "
+				    "flags %d, fd %d, offset %lld",
+				    p, size + 2 * page_size,
+				    PROT_READ|PROT_WRITE, pflags, -1, 0LL);
 			}
 			p = ptr;
 			break;
