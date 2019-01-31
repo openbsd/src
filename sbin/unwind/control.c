@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2019/01/31 13:36:42 solene Exp $	*/
+/*	$OpenBSD: control.c,v 1.5 2019/01/31 18:06:14 solene Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,7 +243,6 @@ control_dispatch_imsg(int fd, short event, void *bula)
 		case IMSG_CTL_LOG_VERBOSE:
 		case IMSG_CTL_RELOAD:
 			if (euid != 0) {
-				log_debug("%s: need to be root", __func__);
 				imsg_free(&imsg);
 				control_close(fd);
 				return;
