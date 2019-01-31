@@ -360,6 +360,7 @@
 #define SHT_GNU_verneed	SHT_SUNW_verneed
 #define SHT_GNU_versym	SHT_SUNW_versym
 
+#define SHT_LLVM_LINKER_OPTIONS 0x6fff4c01 /* Linker options */
 #define SHT_LLVM_ADDRSIG 0x6fff4c03	/* List of address-significant symbols */
 
 #define SHT_LOPROC	0x70000000	/* Processor-specific semantics, lo */

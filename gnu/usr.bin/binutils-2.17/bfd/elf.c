@@ -2177,6 +2177,7 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 	}
       break;
 
+    case SHT_LLVM_LINKER_OPTIONS:
     case SHT_LLVM_ADDRSIG:
       return TRUE;
 
