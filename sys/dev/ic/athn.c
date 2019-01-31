@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.99 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: athn.c,v 1.100 2019/01/31 11:38:52 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1268,9 +1268,20 @@ athn_calib_to(void *arg)
 #ifdef notyet
 	/* XXX ANI. */
 	athn_ani_monitor(sc);
-
-	ops->next_calib(sc);
 #endif
+
+	/* Do periodic (every 30 seconds) ADC/IQ calibration. */
+	if (sc->cur_calib_mask != 0) {
+		ops->next_calib(sc);
+		sc->iqcal_ticks = ticks;
+	} else if (sc->sup_calib_mask != 0 &&
+	    ticks >= sc->iqcal_ticks + 30 * hz) {
+		memset(&sc->calib, 0, sizeof(sc->calib));
+		sc->cur_calib_mask = sc->sup_calib_mask;
+		ops->do_calib(sc);
+		sc->iqcal_ticks = ticks;
+	}
+
 	if (ic->ic_fixed_rate == -1) {
 		if (ic->ic_opmode == IEEE80211_M_STA)
 			athn_iter_calib(sc, ic->ic_bss);
@@ -2552,7 +2563,7 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (sc->sup_calib_mask != 0) {
 			memset(&sc->calib, 0, sizeof(sc->calib));
 			sc->cur_calib_mask = sc->sup_calib_mask;
-			/* ops->do_calib(sc); */
+			sc->ops.do_calib(sc);
 		}
 		/* XXX Start ANI. */
 
