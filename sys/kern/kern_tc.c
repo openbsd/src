@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.36 2019/01/20 01:13:03 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.37 2019/01/31 05:00:18 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -382,6 +382,7 @@ void
 tc_setclock(const struct timespec *ts)
 {
 	struct bintime bt, bt2;
+	struct timespec earlier;
 	static int first = 1;
 #ifndef SMALL_KERNEL
 	long long adj_ticks;
@@ -402,6 +403,20 @@ tc_setclock(const struct timespec *ts)
 	mtx_enter(&timecounter_mtx);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &timehands->th_boottime);
+
+	/*
+	 * Don't rewind the offset.
+	 */
+	if (bt.sec < timehands->th_offset.sec ||
+	    (bt.sec == timehands->th_offset.sec &&
+	    bt.frac < timehands->th_offset.frac)) {
+		mtx_leave(&timecounter_mtx);
+		bintime2timespec(&bt, &earlier);
+		printf("%s: cannot rewind uptime to %lld.%09ld\n",
+		    __func__, (long long)earlier.tv_sec, earlier.tv_nsec);
+		return;
+	}
+
 	bt2 = timehands->th_offset;
 	timehands->th_offset = bt;
 
