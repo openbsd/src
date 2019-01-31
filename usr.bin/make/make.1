@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.127 2018/07/04 14:11:49 jmc Exp $
+.\"	$OpenBSD: make.1,v 1.128 2019/01/31 10:27:28 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 4 2018 $
+.Dd $Mdocdate: January 31 2019 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -464,7 +464,7 @@ from sources a.c and b.c, with header file a.h:
 	${CC} ${CFLAGS} -c $<
 
 prog: a.o b.o
-	${CC} ${CFLAGS} -o $@ a.o
+	${CC} ${CFLAGS} -o $@ a.o b.o
 
 a.o b.o: a.h
 
