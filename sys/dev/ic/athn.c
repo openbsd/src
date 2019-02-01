@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.100 2019/01/31 11:38:52 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.101 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -95,6 +95,10 @@ int		athn_set_key(struct ieee80211com *, struct ieee80211_node *,
 void		athn_delete_key(struct ieee80211com *, struct ieee80211_node *,
 		    struct ieee80211_key *);
 void		athn_iter_calib(void *, struct ieee80211_node *);
+int		athn_cap_noisefloor(struct athn_softc *, int);
+int		athn_nf_hist_mid(int *, int);
+void		athn_filter_noisefloor(struct athn_softc *);
+void		athn_start_noisefloor_calib(struct athn_softc *, int);
 void		athn_calib_to(void *);
 int		athn_init_calib(struct athn_softc *,
 		    struct ieee80211_channel *, struct ieee80211_channel *);
@@ -890,7 +894,6 @@ athn_set_chan(struct athn_softc *sc, struct ieee80211_channel *c,
 		ops->set_delta_slope(sc, c, extc);
 
 	ops->spur_mitigate(sc, c, extc);
-	/* XXX Load noisefloor values and start calibration. */
 
 	return (0);
 }
@@ -1236,6 +1239,94 @@ athn_iter_calib(void *arg, struct ieee80211_node *ni)
 		ieee80211_amrr_choose(&sc->amrr, ni, &an->amn);
 }
 
+int
+athn_cap_noisefloor(struct athn_softc *sc, int nf)
+{
+	int16_t min, max;
+
+	if (nf == 0 || nf == -1) /* invalid measurement */
+		return AR_DEFAULT_NOISE_FLOOR;
+
+	if (IEEE80211_IS_CHAN_2GHZ(sc->sc_ic.ic_bss->ni_chan)) {
+		min = sc->cca_min_2g;
+		max = sc->cca_max_2g;
+	} else {
+		min = sc->cca_min_5g;
+		max = sc->cca_max_5g;
+	}
+
+	if (nf < min)
+		return min;
+	if (nf > max)
+		return max;
+
+	return nf;
+}
+
+int
+athn_nf_hist_mid(int *nf_vals, int nvalid)
+{
+	int nf_sorted[ATHN_NF_CAL_HIST_MAX];
+	int i, j, nf;
+
+	if (nvalid <= 1)
+		return nf_vals[0];
+
+	for (i = 0; i < nvalid; i++)
+		nf_sorted[i] = nf_vals[i];
+
+	for (i = 0; i < nvalid; i++) {
+		for (j = 1; j < nvalid - i; j++) {
+			if (nf_sorted[j] > nf_sorted[j - 1]) {
+				nf = nf_sorted[j];
+				nf_sorted[j] = nf_sorted[j - 1];
+				nf_sorted[j - 1] = nf;
+			}
+		}
+	}
+
+	return nf_sorted[nvalid / 2];
+}
+
+void
+athn_filter_noisefloor(struct athn_softc *sc)
+{
+	int nf_vals[ATHN_NF_CAL_HIST_MAX];
+	int nf_ext_vals[ATHN_NF_CAL_HIST_MAX];
+	int i, cur, n;
+
+	for (i = 0; i < sc->ntxchains; i++) {
+		if (sc->nf_hist_cur > 0)
+			cur = sc->nf_hist_cur - 1;
+		else
+			cur = ATHN_NF_CAL_HIST_MAX - 1;
+		for (n = 0; n < sc->nf_hist_nvalid; n++) {
+			nf_vals[n] = sc->nf_hist[cur].nf[i];
+			nf_ext_vals[n] = sc->nf_hist[cur].nf_ext[i];
+			if (++cur >= ATHN_NF_CAL_HIST_MAX)
+				cur = 0;
+		}
+		sc->nf_priv[i] = athn_cap_noisefloor(sc,
+		    athn_nf_hist_mid(nf_vals, sc->nf_hist_nvalid));
+		sc->nf_ext_priv[i] = athn_cap_noisefloor(sc,
+		    athn_nf_hist_mid(nf_ext_vals, sc->nf_hist_nvalid));
+	}
+}
+
+void
+athn_start_noisefloor_calib(struct athn_softc *sc, int reset_history)
+{
+	extern int ticks;
+
+	if (reset_history)
+		sc->nf_hist_nvalid = 0;
+
+	sc->nf_calib_pending = 1;
+	sc->nf_calib_ticks = ticks;
+
+	sc->ops.noisefloor_calib(sc);
+}
+
 void
 athn_calib_to(void *arg)
 {
@@ -1257,6 +1348,17 @@ athn_calib_to(void *arg)
 		else
 			ar9285_pa_calib(sc);
 	}
+
+	/* Do periodic (every 4 minutes) NF calibration. */
+	if (sc->nf_calib_pending && ops->get_noisefloor(sc)) {
+		if (sc->nf_hist_nvalid < ATHN_NF_CAL_HIST_MAX)
+			sc->nf_hist_nvalid++;
+		athn_filter_noisefloor(sc);
+		ops->apply_noisefloor(sc);
+		sc->nf_calib_pending = 0;
+	}
+	if (ticks - (sc->nf_calib_ticks + 240 * hz) >= 0)
+		athn_start_noisefloor_calib(sc, 0);
 
 	/* Do periodic (every 30 seconds) temperature compensation. */
 	if ((sc->flags & ATHN_FLAG_OLPC) &&
@@ -1318,9 +1420,11 @@ athn_init_calib(struct athn_softc *sc, struct ieee80211_channel *c,
 			else
 				ar9285_pa_calib(sc);
 		}
-		/* Do noisefloor calibration. */
-		ops->noisefloor_calib(sc);
 	}
+
+	/* Do noisefloor calibration. */
+	ops->init_noisefloor_calib(sc);
+
 	if (AR_SREV_9160_10_OR_LATER(sc)) {
 		/* Support IQ calibration. */
 		sc->sup_calib_mask = ATHN_CAL_IQ;
@@ -2567,6 +2671,7 @@ athn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 		/* XXX Start ANI. */
 
+		athn_start_noisefloor_calib(sc, 1);
 		timeout_add_msec(&sc->calib_to, 500);
 		break;
 	}

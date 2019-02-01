@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.46 2017/11/28 04:35:39 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.47 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -98,10 +98,11 @@ void	ar5008_init_chains(struct athn_softc *);
 void	ar5008_set_rxchains(struct athn_softc *);
 void	ar5008_read_noisefloor(struct athn_softc *, int16_t *, int16_t *);
 void	ar5008_write_noisefloor(struct athn_softc *, int16_t *, int16_t *);
-void	ar5008_get_noisefloor(struct athn_softc *, struct ieee80211_channel *);
+int	ar5008_get_noisefloor(struct athn_softc *);
+void	ar5008_apply_noisefloor(struct athn_softc *);
 void	ar5008_bb_load_noisefloor(struct athn_softc *);
-void	ar5008_noisefloor_calib(struct athn_softc *);
 void	ar5008_do_noisefloor_calib(struct athn_softc *);
+void	ar5008_init_noisefloor_calib(struct athn_softc *);
 void	ar5008_do_calib(struct athn_softc *);
 void	ar5008_next_calib(struct athn_softc *);
 void	ar5008_calib_iq(struct athn_softc *);
@@ -176,6 +177,9 @@ ar5008_attach(struct athn_softc *sc)
 	ops->disable_phy = ar5008_disable_phy;
 	ops->set_rxchains = ar5008_set_rxchains;
 	ops->noisefloor_calib = ar5008_do_noisefloor_calib;
+	ops->init_noisefloor_calib = ar5008_init_noisefloor_calib;
+	ops->get_noisefloor = ar5008_get_noisefloor;
+	ops->apply_noisefloor = ar5008_apply_noisefloor;
 	ops->do_calib = ar5008_do_calib;
 	ops->next_calib = ar5008_next_calib;
 	ops->hw_init = ar5008_hw_init;
@@ -1876,15 +1880,15 @@ ar5008_write_noisefloor(struct athn_softc *sc, int16_t *nf, int16_t *nf_ext)
 	AR_WRITE_BARRIER(sc);
 }
 
-void
-ar5008_get_noisefloor(struct athn_softc *sc, struct ieee80211_channel *c)
+int
+ar5008_get_noisefloor(struct athn_softc *sc)
 {
 	int16_t nf[AR_MAX_CHAINS], nf_ext[AR_MAX_CHAINS];
 	int i;
 
 	if (AR_READ(sc, AR_PHY_AGC_CONTROL) & AR_PHY_AGC_CONTROL_NF) {
 		/* Noisefloor calibration not finished. */
-		return;
+		return 0;
 	}
 	/* Noisefloor calibration is finished. */
 	ar5008_read_noisefloor(sc, nf, nf_ext);
@@ -1896,6 +1900,7 @@ ar5008_get_noisefloor(struct athn_softc *sc, struct ieee80211_channel *c)
 	}
 	if (++sc->nf_hist_cur >= ATHN_NF_CAL_HIST_MAX)
 		sc->nf_hist_cur = 0;
+	return 1;
 }
 
 void
@@ -1926,14 +1931,41 @@ ar5008_bb_load_noisefloor(struct athn_softc *sc)
 		return;
 	}
 
-	/* Restore noisefloor values to initial (max) values. */
+	/*
+	 * Restore noisefloor values to initial (max) values. These will
+	 * be used as initial values during the next NF calibration.
+	 */
 	for (i = 0; i < AR_MAX_CHAINS; i++)
 		nf[i] = nf_ext[i] = AR_DEFAULT_NOISE_FLOOR;
 	ar5008_write_noisefloor(sc, nf, nf_ext);
 }
 
 void
-ar5008_noisefloor_calib(struct athn_softc *sc)
+ar5008_apply_noisefloor(struct athn_softc *sc)
+{
+	uint32_t agc_nfcal;
+
+	agc_nfcal = AR_READ(sc, AR_PHY_AGC_CONTROL) &
+	    (AR_PHY_AGC_CONTROL_NF | AR_PHY_AGC_CONTROL_ENABLE_NF |
+	    AR_PHY_AGC_CONTROL_NO_UPDATE_NF);
+
+	if (agc_nfcal & AR_PHY_AGC_CONTROL_NF) {
+		/* Pause running NF calibration while values are updated. */
+		AR_CLRBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NF);
+		AR_WRITE_BARRIER(sc);
+	}
+
+	ar5008_bb_load_noisefloor(sc);
+
+	if (agc_nfcal & AR_PHY_AGC_CONTROL_NF) {
+		/* Restart interrupted NF calibration. */
+		AR_SETBITS(sc, AR_PHY_AGC_CONTROL, agc_nfcal);
+		AR_WRITE_BARRIER(sc);
+	}
+}
+
+void
+ar5008_do_noisefloor_calib(struct athn_softc *sc)
 {
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_ENABLE_NF);
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NO_UPDATE_NF);
@@ -1942,7 +1974,7 @@ ar5008_noisefloor_calib(struct athn_softc *sc)
 }
 
 void
-ar5008_do_noisefloor_calib(struct athn_softc *sc)
+ar5008_init_noisefloor_calib(struct athn_softc *sc)
 {
 	AR_SETBITS(sc, AR_PHY_AGC_CONTROL, AR_PHY_AGC_CONTROL_NF);
 	AR_WRITE_BARRIER(sc);

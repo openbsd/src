@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.21 2017/11/28 04:35:39 stsp Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.22 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1449,7 +1449,7 @@
 #define AR_CTL_2GHT40	7
 #define AR_CTL_5GHT40	8
 
-#define AR_DEFAULT_NOISE_FLOOR (-95)
+#define AR_DEFAULT_NOISE_FLOOR (-100)
 
 /*
  * Macros to access registers.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287reg.h,v 1.4 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: ar9287reg.h,v 1.5 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,8 @@
 
 #define AR9287_MAX_CHAINS	2
 
-#define AR9287_PHY_CCA_MAX_GOOD_VALUE	(-118)
+#define AR9287_PHY_CCA_MIN_GOOD_VAL_2GHZ	(-127)
+#define AR9287_PHY_CCA_MAX_GOOD_VAL_2GHZ	(-97)
 
 /*
  * Analog registers.

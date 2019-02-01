@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9285reg.h,v 1.8 2016/01/05 18:41:15 stsp Exp $	*/
+/*	$OpenBSD: ar9285reg.h,v 1.9 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,7 +19,10 @@
 
 #define AR9285_MAX_CHAINS	1
 
-#define AR9285_PHY_CCA_MAX_GOOD_VALUE	(-118)
+#define AR9285_PHY_CCA_MIN_GOOD_VAL_2GHZ	(-127)
+#define AR9285_PHY_CCA_MAX_GOOD_VAL_2GHZ	(-108)
+#define AR9271_PHY_CCA_MIN_GOOD_VAL_2GHZ	(-127)
+#define AR9271_PHY_CCA_MAX_GOOD_VAL_2GHZ	(-116)
 
 #define AR9285_CL_CAL_REDO_THRESH	1
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9280.c,v 1.26 2017/01/12 16:32:28 stsp Exp $	*/
+/*	$OpenBSD: ar9280.c,v 1.27 2019/02/01 16:15:07 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -93,7 +93,6 @@ ar9280_attach(struct athn_softc *sc)
 {
 	sc->eep_base = AR5416_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar5416_eeprom);
-	sc->def_nf = AR9280_PHY_CCA_MAX_GOOD_VALUE;
 	sc->ngpiopins = (sc->flags & ATHN_FLAG_USB) ? 16 : 10;
 	sc->led_pin = 1;
 	sc->workaround = AR9280_WA_DEFAULT;
@@ -106,6 +105,10 @@ ar9280_attach(struct athn_softc *sc)
 	sc->ops.get_spur_chans = ar5416_get_spur_chans;
 	sc->ops.olpc_init = ar9280_olpc_init;
 	sc->ops.olpc_temp_compensation = ar9280_olpc_temp_compensation;
+	sc->cca_min_2g = AR9280_PHY_CCA_MIN_GOOD_VAL_2GHZ;
+	sc->cca_max_2g = AR9280_PHY_CCA_MAX_GOOD_VAL_2GHZ;
+	sc->cca_min_5g = AR9280_PHY_CCA_MIN_GOOD_VAL_5GHZ;
+	sc->cca_max_5g = AR9280_PHY_CCA_MAX_GOOD_VAL_5GHZ;
 	sc->ini = &ar9280_2_0_ini;
 	sc->serdes = &ar9280_2_0_serdes;
 
