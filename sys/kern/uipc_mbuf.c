@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.265 2019/01/09 16:37:27 visa Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.266 2019/02/01 10:43:43 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -908,84 +908,105 @@ m_adj(struct mbuf *mp, int req_len)
  * mbuf chain on success, frees it and returns null on failure.
  */
 struct mbuf *
-m_pullup(struct mbuf *n, int len)
+m_pullup(struct mbuf *m0, int len)
 {
 	struct mbuf *m;
 	unsigned int adj;
 	caddr_t head, tail;
 	unsigned int space;
 
-	/* if n is already contig then don't do any work */
-	if (len <= n->m_len)
-		return (n);
+	/* if len is already contig in m0, then don't do any work */
+	if (len <= m0->m_len)
+		return (m0);
 
-	adj = (unsigned long)n->m_data & ALIGNBYTES;
-	head = (caddr_t)ALIGN(mtod(n, caddr_t) - m_leadingspace(n)) + adj;
-	tail = mtod(n, caddr_t) + n->m_len + m_trailingspace(n);
+	/* look for some data */
+	m = m0->m_next;
+	if (m == NULL)
+		goto freem0;
 
-	if (head < tail && len <= tail - head) {
-		/* there's enough space in the first mbuf */
+	head = M_DATABUF(m0);
+	if (m0->m_len == 0) {
+		m0->m_data = head;
 
-		if (len > tail - mtod(n, caddr_t)) {
-			/* need to memmove to make space at the end */
-			memmove(head, mtod(n, caddr_t), n->m_len);
-			n->m_data = head;
+		while (m->m_len == 0) {
+			m = m_free(m);
+			if (m == NULL)
+				goto freem0;
 		}
 
-		len -= n->m_len;
-		m = n;
-		n = m->m_next;
+		adj = mtod(m, unsigned long) & ALIGNBYTES;
+	} else
+		adj = mtod(m0, unsigned long) & ALIGNBYTES;
+
+	tail = head + M_SIZE(m0);
+	head += adj;
+
+	if (len <= tail - head) {
+		/* there's enough space in the first mbuf */
+
+		if (len > tail - mtod(m0, caddr_t)) {
+			/* need to memmove to make space at the end */
+			memmove(head, mtod(m0, caddr_t), m0->m_len);
+			m0->m_data = head;
+		}
+
+		len -= m0->m_len;
 	} else {
-		/* the first mbuf is too small so prepend one with space */
+		/* the first mbuf is too small so make a new one */
 		space = adj + len;
 
 		if (space > MAXMCLBYTES)
 			goto bad;
 
-		MGET(m, M_DONTWAIT, n->m_type);
-		if (m == NULL)
+		m0->m_next = m;
+		m = m0;
+
+		MGET(m0, M_DONTWAIT, m->m_type);
+		if (m0 == NULL)
 			goto bad;
+
 		if (space > MHLEN) {
-			MCLGETI(m, M_DONTWAIT, NULL, space);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_free(m);
+			MCLGETI(m0, M_DONTWAIT, NULL, space);
+			if ((m0->m_flags & M_EXT) == 0)
 				goto bad;
-			}
 		}
 
-		if (n->m_flags & M_PKTHDR)
-			M_MOVE_PKTHDR(m, n);
+		if (m->m_flags & M_PKTHDR)
+			M_MOVE_PKTHDR(m0, m);
 
-		m->m_len = 0;
-		m->m_data += adj;
+		m0->m_len = 0;
+		m0->m_data += adj;
 	}
 
-	KASSERT(m_trailingspace(m) >= len);
+	KDASSERT(m_trailingspace(m0) >= len);
 
-	do {
-		if (n == NULL) {
-			(void)m_free(m);
-			goto bad;
-		}
-
-		space = min(len, n->m_len);
-		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t), space);
+	for (;;) {
+		space = min(len, m->m_len);
+		memcpy(mtod(m0, caddr_t) + m0->m_len, mtod(m, caddr_t), space);
 		len -= space;
-		m->m_len += space;
-		n->m_len -= space;
+		m0->m_len += space;
+		m->m_len -= space;
 
-		if (n->m_len > 0)
-			n->m_data += space;
+		if (m->m_len > 0)
+			m->m_data += space;
 		else
-			n = m_free(n);
-	} while (len > 0);
+			m = m_free(m);
 
-	m->m_next = n;
+		if (len == 0)
+			break;
 
-	return (m);
+		if (m == NULL)
+			goto bad;
+	}
+
+	m0->m_next = m; /* link the chain back up */
+
+	return (m0);
 
 bad:
-	m_freem(n);
+	m_freem(m);
+freem0:
+	m_free(m0);
 	return (NULL);
 }
 
