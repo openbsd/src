@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.89 2018/09/06 15:39:48 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.90 2019/02/01 13:24:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -296,7 +296,7 @@ xhci_init(struct xhci_softc *sc)
 	sc->sc_runt_off = XREAD4(sc, XHCI_RTSOFF);
 
 	sc->sc_version = XREAD2(sc, XHCI_HCIVERSION);
-	printf(", xHCI %u.%u\n", sc->sc_version >> 8, sc->sc_version & 0xff);
+	printf(", xHCI %x.%x\n", sc->sc_version >> 8, sc->sc_version & 0xff);
 
 #ifdef XHCI_DEBUG
 	printf("%s: CAPLENGTH=%#lx\n", DEVNAME(sc), sc->sc_oper_off);
