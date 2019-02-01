@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.20 2019/01/31 15:55:48 benno Exp $ */
+/*	$Id: netproc.c,v 1.21 2019/02/01 10:14:28 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -603,7 +603,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
     const char *const *alts,size_t altsz)
 {
 	int		 rc = 0;
-	size_t		 i;
+	size_t		 i, done = 0;
 	char		*cert = NULL, *thumb = NULL, *url = NULL;
 	struct conn	 c;
 	struct capaths	 paths;
@@ -759,21 +759,32 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	 * every five seconds.
 	 */
 
-	for (i = 0; i < altsz; i++) {
-		if (chngs[i].status == CHNG_VALID)
-			continue;
+	for (;;) {
+		for (i = 0; i < altsz; i++) {
+			doddbg("%s: done %lu, altsz %lu, i %lu, status %d",
+			    __func__, done, altsz, i, chngs[i].status);
 
-		if (chngs[i].retry++ >= RETRY_MAX) {
-			warnx("%s: too many tries", chngs[i].uri);
-			goto out;
+			if (chngs[i].status == CHNG_VALID)
+				continue;
+
+			if (chngs[i].retry++ >= RETRY_MAX) {
+				warnx("%s: too many tries", chngs[i].uri);
+				goto out;
+			}
+
+			/* Sleep before every attempt. */
+			sleep(RETRY_DELAY);
+			if (dochngcheck(&c, &chngs[i])) {
+				if (chngs[i].status == CHNG_VALID)
+					done++;
+				continue;
+			} else
+				goto out;
 		}
 
-		/* Sleep before every attempt. */
-		sleep(RETRY_DELAY);
-		if (!dochngcheck(&c, &chngs[i]))
-			goto out;
+		if (done == altsz)
+			break;
 	}
-
 	/*
 	 * Write our acknowledgement that the challenges are over.
 	 * The challenge process will remove all of the files.
