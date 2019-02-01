@@ -697,15 +697,12 @@ struct amd64_frame_cache
   int frameless_p;
 };
 
-/* Allocate and initialize a frame cache.  */
+/* Initialize the frame cache.  */
 
-static struct amd64_frame_cache *
-amd64_alloc_frame_cache (void)
+static void
+amd64_init_frame_cache (struct amd64_frame_cache *cache)
 {
-  struct amd64_frame_cache *cache;
   int i;
-
-  cache = FRAME_OBSTACK_ZALLOC (struct amd64_frame_cache);
 
   /* Base address.  */
   cache->base = 0;
@@ -720,6 +717,17 @@ amd64_alloc_frame_cache (void)
 
   /* Frameless until proven otherwise.  */
   cache->frameless_p = 1;
+}
+
+/* Allocate a frame cache.  */
+
+static struct amd64_frame_cache *
+amd64_alloc_frame_cache (void)
+{
+  struct amd64_frame_cache *cache;
+
+  cache = FRAME_OBSTACK_ZALLOC (struct amd64_frame_cache);
+  amd64_init_frame_cache(cache);
 
   return cache;
 }
@@ -730,8 +738,12 @@ amd64_alloc_frame_cache (void)
 
    We will handle only functions beginning with:
 
-      pushq %rbp        0x55
-      movq %rsp, %rbp   0x48 0x89 0xe5
+      movq $retguard(%rip), $reg  (0x4c or 0x48) 0x8b ?? ?? ?? ?? ??
+      xorq $off(%rsp), $reg       (0x4c or 0x48) 0x33 ?? 0x24
+      pushq %rbp                  0x55
+      movq %rsp, %rbp             0x48 0x89 0xe5
+
+   First 2 instructions for retguard are optional.
 
    Any function that doesn't start with this sequence will be assumed
    to have no prologue and thus no valid frame pointer in %rbp.  */
@@ -741,13 +753,30 @@ amd64_analyze_prologue (CORE_ADDR pc, CORE_ADDR current_pc,
 			struct amd64_frame_cache *cache)
 {
   static unsigned char proto[3] = { 0x48, 0x89, 0xe5 };
-  unsigned char buf[3];
+  unsigned char buf[10];
   unsigned char op;
 
   if (current_pc <= pc)
     return current_pc;
 
   op = read_memory_unsigned_integer (pc, 1);
+
+  /* Check for retguard */
+  if ((op == 0x4c || op == 0x48) && (current_pc > pc + 11))
+    {
+      read_memory (pc + 1, buf, 10);
+
+      /* Check for `movq (__retguard_ ## x)(%rip), %reg;'. */
+      if (buf[0] != 0x8b)
+	return pc;
+
+      /* Check for `xorq off(%rsp), %reg'. */
+      if ((buf[6] != 0x4c && buf[6] != 0x48)
+	  || buf[7] != 0x33 || buf[9] != 0x24)
+	return pc;
+      pc += 11;
+      op = read_memory_unsigned_integer (pc, 1);
+    }
 
   if (op == 0x55)		/* pushq %rbp */
     {
@@ -781,6 +810,7 @@ amd64_skip_prologue (CORE_ADDR start_pc)
   struct amd64_frame_cache cache;
   CORE_ADDR pc;
 
+  amd64_init_frame_cache (&cache);
   pc = amd64_analyze_prologue (start_pc, 0xffffffffffffffffLL, &cache);
   if (cache.frameless_p)
     return start_pc;
