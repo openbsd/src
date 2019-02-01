@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.127 2019/01/21 06:18:37 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.128 2019/02/01 21:48:48 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -882,8 +882,12 @@ pmap_randomize_level(pd_entry_t *pde, int level)
 	memset((void *)old_pd_va, 0, PAGE_SIZE);
 
 	pg = PHYS_TO_VM_PAGE(old_pd_pa);
-	if (pg)
-		uvm_pagefree(pg);
+	if (pg) {
+		pg->wire_count--;
+		pmap_kernel()->pm_stats.resident_count--;
+		if (pg->wire_count <= 1)
+			uvm_pagefree(pg);
+	}
 
 	for (i = 0; i < NPDPG; i++)
 		if (new_pd_va[i] & PG_FRAME)
