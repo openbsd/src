@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2018/12/17 19:29:55 anton Exp $
+# $OpenBSD: Makefile,v 1.7 2019/02/01 07:15:01 anton Exp $
 
 WARNINGS=	yes
 
@@ -16,11 +16,13 @@ TESTS_sigio+=	setown-ioctl
 TESTS_sigio+=	spgrp
 TESTS_sigio+=	sigio
 
+# SIGIO using event injection is limited to wsmux devices.
+IGNORE_sigio+=	wskbd0-sigio
+IGNORE_sigio+=	wsmouse0-sigio
+
 .for d in ${DEVICES}
 .  for t in ${TESTS_sigio}
-.    if "$t" == "sigio" && ("$d" == "wskbd0" || "$d" == "wsmouse0")
-# SIGIO using event injection is limited to wsmux devices.
-.    else
+.    if empty(IGNORE_sigio:M$d-$t)
 REGRESS_TARGETS+=	${PROG_sigio}-$d-$t
 ${PROG_sigio}-$d-$t: ${PROG_sigio}
 	@echo "\n======== ${@} ========"
