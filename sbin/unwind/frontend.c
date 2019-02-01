@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.8 2019/01/30 12:54:34 benno Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.9 2019/02/01 13:05:55 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -681,11 +681,11 @@ ip_port(struct sockaddr *sa)
 	}
 
 	if (sa->sa_family == AF_INET6)
-		snprintf(buf, sizeof(buf), "[%s]:%d", hbuf,
-		    ((struct sockaddr_in6 *)sa)->sin6_port);
+		snprintf(buf, sizeof(buf), "[%s]:%d", hbuf, ntohs(
+		    ((struct sockaddr_in6 *)sa)->sin6_port));
 	if (sa->sa_family == AF_INET)
-		snprintf(buf, sizeof(buf), "[%s]:%d", hbuf,
-		    ((struct sockaddr_in *)sa)->sin_port);
+		snprintf(buf, sizeof(buf), "[%s]:%d", hbuf, ntohs(
+		    ((struct sockaddr_in *)sa)->sin_port));
 
 	return buf;
 }
