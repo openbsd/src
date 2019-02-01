@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.194 2019/01/13 14:31:55 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.195 2019/02/01 13:29:48 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2041,12 +2041,16 @@ ret:
 				seen |= (1LL << i);
 
 		if ((seen & sadb_exts_allowed_out[smsg->sadb_msg_type])
-		    != seen)
+		    != seen) {
+		    	rval = EPERM;
 			goto realret;
+		}
 
 		if ((seen & sadb_exts_required_out[smsg->sadb_msg_type]) !=
-		    sadb_exts_required_out[smsg->sadb_msg_type])
+		    sadb_exts_required_out[smsg->sadb_msg_type]) {
+		    	rval = EPERM;
 			goto realret;
+		}
 	}
 
 	rval = pfkeyv2_sendmessage(headers, mode, so, 0, 0, rdomain);
