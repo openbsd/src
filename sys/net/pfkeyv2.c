@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.195 2019/02/01 13:29:48 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.196 2019/02/01 13:32:00 mpi Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -793,7 +793,8 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp)
 	void *p;
 
 	/* Find how much space we need */
-	i = sizeof(struct sadb_sa) + sizeof(struct sadb_lifetime);
+	i = sizeof(struct sadb_sa) + sizeof(struct sadb_lifetime) +
+	    sizeof(struct sadb_x_counter);
 
 	if (tdb->tdb_soft_allocations || tdb->tdb_soft_bytes ||
 	    tdb->tdb_soft_timeout || tdb->tdb_soft_first_use)
@@ -954,6 +955,9 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp)
 		export_tap(&p, tdb);
 	}
 #endif
+
+	headers[SADB_X_EXT_COUNTER] = p;
+	export_counter(&p, tdb);
 
 	rval = 0;
 
