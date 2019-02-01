@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.94 2018/11/20 19:33:44 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.95 2019/02/01 07:02:31 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -850,9 +850,10 @@ wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 	    (struct wskbd_softc *)wskbd_cd.cd_devs[minor(dev)];
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
-	if (evar == NULL)
+	if ((flags & (FREAD | FWRITE)) == FWRITE) {
 		/* not open for read */
 		return (0);
+	}
 
 	sc->sc_base.me_evp = NULL;
 	sc->sc_translating = 1;
