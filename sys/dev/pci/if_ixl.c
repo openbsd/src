@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.18 2019/01/29 01:41:29 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.19 2019/02/01 06:11:16 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1418,9 +1418,6 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ari >>= I40E_GLPCI_CAPSUP_ARI_EN_SHIFT;
 
 	func = ixl_rd(sc, I40E_PF_FUNC_RID);
-	func &= I40E_GLPCI_CAPSUP_ARI_EN_MASK;
-	func >>= I40E_GLPCI_CAPSUP_ARI_EN_SHIFT;
-
 	sc->sc_pf_id = func & (ari ? 0xff : 0x7);
 
 	/* initialise the adminq */
