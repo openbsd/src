@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.18 2018/11/19 19:19:24 anton Exp $ */
+/* $OpenBSD: wsevent.c,v 1.19 2019/02/01 17:23:08 anton Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -127,7 +127,7 @@ wsevent_fini(struct wseventvar *ev)
 #endif
 		return;
 	}
-	free(ev->q, M_DEVBUF, 0);
+	free(ev->q, M_DEVBUF, WSEVENT_QSIZE * sizeof(struct wscons_event));
 	ev->q = NULL;
 
 	sigio_free(&ev->sigio);
