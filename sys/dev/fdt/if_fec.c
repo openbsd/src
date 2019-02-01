@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.6 2018/08/06 10:52:30 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.7 2019/02/01 00:51:07 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -914,6 +914,7 @@ fec_intr(void *arg)
 	status = HREAD4(sc, ENET_EIR);
 
 	/* Acknowledge the interrupts we are about to handle. */
+	status &= (ENET_EIR_RXF | ENET_EIR_TXF);
 	HWRITE4(sc, ENET_EIR, status);
 
 	/*
@@ -1012,7 +1013,7 @@ fec_miibus_readreg(struct device *dev, int phy, int reg)
 	int r = 0;
 	struct fec_softc *sc = (struct fec_softc *)dev;
 
-	HSET4(sc, ENET_EIR, ENET_EIR_MII);
+	HWRITE4(sc, ENET_EIR, ENET_EIR_MII);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ENET_MMFR,
 	    ENET_MMFR_ST | ENET_MMFR_OP_RD | ENET_MMFR_TA |
@@ -1030,7 +1031,7 @@ fec_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct fec_softc *sc = (struct fec_softc *)dev;
 
-	HSET4(sc, ENET_EIR, ENET_EIR_MII);
+	HWRITE4(sc, ENET_EIR, ENET_EIR_MII);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ENET_MMFR,
 	    ENET_MMFR_ST | ENET_MMFR_OP_WR | ENET_MMFR_TA |
