@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.35 2019/01/29 20:08:56 millert Exp $	*/
+/*	$OpenBSD: day.c,v 1.36 2019/02/01 16:22:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -166,7 +166,7 @@ settime(time_t *now)
 		cumdays = daytab[0];
 	/* Friday displays Monday's events */
 	offset = tp->tm_wday == 5 ? 3 : 1;
-	if (f_dayAfter || f_dayBefore)
+	if (f_Setday)
 		offset = 0;	/* Except not when range is set explicitly */
 	header[5].iov_base = dayname;
 
