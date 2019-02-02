@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.42 2018/05/04 02:54:23 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.43 2019/02/02 14:32:58 visa Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -258,26 +258,20 @@ void
 db_save_stack_trace(struct db_stack_trace *st)
 {
 	struct callframe *frame, *lastframe;
-	db_addr_t callpc;
-	unsigned int i;
 
 	frame = __builtin_frame_address(0);
-
-	callpc = db_get_value((db_addr_t)&frame->f_retaddr, 8, FALSE);
-	frame = frame->f_frame;
-
-	lastframe = NULL;
 	st->st_count = 0;
-	for (i = 0; i < DB_STACK_TRACE_MAX && frame != NULL; i++) {
-		st->st_pc[st->st_count++] = callpc;
+	while (st->st_count < DB_STACK_TRACE_MAX) {
+		st->st_pc[st->st_count++] = frame->f_retaddr;
 
 		lastframe = frame;
-		callpc = frame->f_retaddr;
 		frame = frame->f_frame;
 
 		if (!INKERNEL(frame))
 			break;
 		if (frame <= lastframe)
+			break;
+		if (!INKERNEL(frame->f_retaddr))
 			break;
 	}
 }
