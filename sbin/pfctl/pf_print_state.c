@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.68 2018/09/07 10:29:22 kn Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.69 2019/02/02 15:43:18 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -241,6 +241,11 @@ print_state(struct pfsync_state *s, int opts)
 		    sk->rdomain, pn, opts);
 		printf(")");
 	}
+	if (s->direction == PF_IN && !PF_AZERO(&s->rt_addr, sk->af)) {
+		printf(" {");
+		print_addr_str(sk->af, &s->rt_addr);
+		printf("}");
+	}
 	if (s->direction == PF_OUT || (afto && s->direction == PF_IN))
 		printf(" -> ");
 	else
@@ -254,6 +259,11 @@ print_state(struct pfsync_state *s, int opts)
 		print_host(&sk->addr[idx], sk->port[idx], sk->af,
 		    sk->rdomain, pn, opts);
 		printf(")");
+	}
+	if (s->direction == PF_OUT && !PF_AZERO(&s->rt_addr, nk->af)) {
+		printf(" {");
+		print_addr_str(nk->af, &s->rt_addr);
+		printf("}");
 	}
 
 	printf("    ");
