@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.15 2019/02/03 14:20:07 jsing Exp $ */
+/* $OpenBSD: rsautl.c,v 1.16 2019/02/03 15:40:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -66,10 +66,10 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
-#define RSA_SIGN 	1
-#define RSA_VERIFY 	2
-#define RSA_ENCRYPT 	3
-#define RSA_DECRYPT 	4
+#define RSA_SIGN	1
+#define RSA_VERIFY	2
+#define RSA_ENCRYPT	3
+#define RSA_DECRYPT	4
 
 #define KEY_PRIVKEY	1
 #define KEY_PUBKEY	2
