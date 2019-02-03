@@ -2648,8 +2648,8 @@ public:
 
   uint64_t  getSP() const         { return _registers.__o[6] + 2047; }
   void      setSP(uint64_t value) { _registers.__o[6] = value - 2047; }
-  uint64_t  getIP() const         { return _registers.__o[7]; }
-  void      setIP(uint64_t value) { _registers.__o[7] = value; }
+  uint64_t  getIP() const         { return _registers.__o[7] + 8; }
+  void      setIP(uint64_t value) { _registers.__o[7] = value - 8; }
   uint64_t  getWCookie() const    { return _wcookie; }
 
 private:
@@ -2702,7 +2702,7 @@ inline uint64_t Registers_sparc64::getRegister(int regNum) const {
 
   switch (regNum) {
   case UNW_REG_IP:
-    return _registers.__o[7];
+    return _registers.__o[7] + 8;
   case UNW_REG_SP:
     return _registers.__o[6] + 2047;
   }
@@ -2729,7 +2729,7 @@ inline void Registers_sparc64::setRegister(int regNum, uint64_t value) {
 
   switch (regNum) {
   case UNW_REG_IP:
-    _registers.__o[7] = value;
+    _registers.__o[7] = value - 8;
     return;
   case UNW_REG_SP:
     _registers.__o[6] = value - 2047;

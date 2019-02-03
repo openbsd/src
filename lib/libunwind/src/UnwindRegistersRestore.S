@@ -669,7 +669,7 @@ DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind17Registers_sparc646jumptoEv)
   ldx  [%o0 + 0xe8], %i5
   ldx  [%o0 + 0xf0], %i6
   ldx  [%o0 + 0xf8], %i7
-  jmpl %o7, %g0
+  jmpl %o7 + 8, %g0
    ldx [%o0 + 0x40], %o0
 
 #elif defined(__mips__) && defined(_ABIO32)
