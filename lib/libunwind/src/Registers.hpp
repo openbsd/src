@@ -2648,8 +2648,8 @@ public:
 
   uint64_t  getSP() const         { return _registers.__o[6] + 2047; }
   void      setSP(uint64_t value) { _registers.__o[6] = value - 2047; }
-  uint64_t  getIP() const         { return _registers.__o[7] + 8; }
-  void      setIP(uint64_t value) { _registers.__o[7] = value - 8; }
+  uint64_t  getIP() const         { return _registers.__o[7]; }
+  void      setIP(uint64_t value) { _registers.__o[7] = value; }
   uint64_t  getWCookie() const    { return _wcookie; }
 
 private:
