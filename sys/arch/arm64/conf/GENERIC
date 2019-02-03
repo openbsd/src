@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.95 2019/01/23 09:58:08 phessler Exp $
+# $OpenBSD: GENERIC,v 1.96 2019/02/03 14:03:36 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -143,6 +143,7 @@ hitemp*		at fdt?
 
 # Marvell SoCs
 mvclock*	at fdt? early 1
+mvgicp*		at fdt? early 1
 mvicu*		at fdt? early 1
 mvpinctrl*	at fdt? early 1
 mvgpio*		at fdt?
