@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.109 2019/01/20 09:57:23 anton Exp $
+#	$OpenBSD: Makefile.amd64,v 1.110 2019/02/03 10:58:51 dlg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -34,7 +34,7 @@ SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
-.if ${IDENT:M-DDDB} && !${COMPILER_VERSION:Mclang}
+.if ${IDENT:M-DDDB}
 CMACHFLAGS+=	-msave-args
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
