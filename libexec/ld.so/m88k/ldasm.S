@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.28 2018/11/09 06:16:37 guenther Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.29 2019/02/03 02:20:36 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -157,13 +157,8 @@ ENTRY(_dl_bind_start)
 	 addu	%r31, %r31, REG_SIZE + PLT_FRAME_SIZE
 END(_dl_bind_start)
 
-ENTRY(_dl_cerror)
-	jmp.n	%r1
-	 subu	%r2, %r0, %r2
-END(_dl_cerror)
-
 ENTRY(_dl_cacheflush)
 	tb0	0, %r0, 451
-	br	_dl_cerror		| never hit
+	or	%r0, %r0, %r0				| never hit
 	jmp	%r1
 END(_dl_cacheflush)
