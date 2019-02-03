@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.73 2018/07/06 02:43:01 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.74 2019/02/03 01:45:57 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -284,18 +284,9 @@ kerntrap(struct trapframe *frame)
 		    type, frame->tf_err, frame->tf_rip);
 		/*NOTREACHED*/
 
-	case T_PROTFLT:
-	case T_SEGNPFLT:
-	case T_ALIGNFLT:
-	case T_TSSFLT:
-		goto we_re_toast;
-
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (pageflttrap(frame, 0))
 			return;
-		goto we_re_toast;
-
-	case T_TRCTRAP:
 		goto we_re_toast;
 
 #if NISA > 0
