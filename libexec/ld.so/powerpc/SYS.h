@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2017/08/27 21:59:52 deraadt Exp $ */
+/*	$OpenBSD: SYS.h,v 1.2 2019/02/03 03:44:06 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -35,7 +35,5 @@ ENTRY(_dl_##n)								\
 	sc								;\
 	cmpwi	0, 0							;\
 	beqlr+								;\
-	b	_dl_cerror
-_dl_cerror:
-	neg	3, 3
+	neg	3, 3							;\
 	blr
