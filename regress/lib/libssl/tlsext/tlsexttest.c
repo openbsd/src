@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.27 2019/01/24 02:56:41 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.28 2019/02/03 14:03:46 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3269,13 +3269,16 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	S3I(ssl)->hs_tls13.x25519_peer_public = bogokey;
+	if ((S3I(ssl)->hs_tls13.x25519_peer_public =
+	    malloc(sizeof(bogokey))) == NULL)
+		errx(1, "malloc failed");
+	memcpy(S3I(ssl)->hs_tls13.x25519_peer_public, bogokey, sizeof(bogokey));
+
 	if (!tlsext_keyshare_server_build(ssl, &cbb)) {
 		FAIL("server should be able to build a keyshare response");
 		failure = 1;
 		goto done;
 	}
-	S3I(ssl)->hs_tls13.x25519_peer_public = NULL;
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
 		FAIL("failed to finish CBB");
