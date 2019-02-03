@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.94 2018/10/31 08:50:25 kettenis Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.95 2019/02/03 05:33:48 visa Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1069,6 +1069,8 @@ Case2:
 			UVM_PAGE_OWN(uobjpage, NULL);
 			goto ReFault;
 		}
+		if (locked == FALSE)
+			goto ReFault;
 
 		/*
 		 * we have the data in uobjpage which is PG_BUSY
