@@ -259,31 +259,6 @@ struct elf_link_loaded_list
 };
 
 /* Structures used by the eh_frame optimization code.  */
-struct cie_header
-{
-  unsigned int length;
-  unsigned int id;
-};
-
-struct cie
-{
-  struct cie_header hdr;
-  unsigned char version;
-  char augmentation[20];
-  bfd_vma code_align;
-  bfd_signed_vma data_align;
-  bfd_vma ra_column;
-  bfd_vma augmentation_size;
-  struct elf_link_hash_entry *personality;
-  unsigned char per_encoding;
-  unsigned char lsda_encoding;
-  unsigned char fde_encoding;
-  unsigned char initial_insn_length;
-  unsigned char make_relative;
-  unsigned char make_lsda_relative;
-  unsigned char initial_instructions[50];
-};
-
 struct eh_cie_fde
 {
   /* For FDEs, this points to the CIE used.  */
@@ -302,12 +277,12 @@ struct eh_cie_fde
   unsigned int make_lsda_relative : 1;
   unsigned int need_lsda_relative : 1;
   unsigned int per_encoding_relative : 1;
+  unsigned int *set_loc;
 };
 
 struct eh_frame_sec_info
 {
   unsigned int count;
-  unsigned int alloced;
   struct eh_cie_fde entry[1];
 };
 
@@ -317,11 +292,11 @@ struct eh_frame_array_ent
   bfd_vma fde;
 };
 
+struct htab;
+
 struct eh_frame_hdr_info
 {
-  struct cie last_cie;
-  asection *last_cie_sec;
-  struct eh_cie_fde *last_cie_inf;
+  struct htab *cies;
   asection *hdr_sec;
   unsigned int fde_count, array_count;
   struct eh_frame_array_ent *array;
