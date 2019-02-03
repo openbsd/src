@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.183 2018/12/11 01:34:10 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.184 2019/02/03 23:04:49 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -73,6 +73,10 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#endif /* MPLS */
 
 #include <net/if_tun.h>
 
@@ -933,6 +937,11 @@ tun_dev_write(struct tun_softc *tp, struct uio *uio, int ioflag)
 #ifdef INET6
 	case AF_INET6:
 		ipv6_input(ifp, top);
+		break;
+#endif
+#ifdef MPLS
+	case AF_MPLS:
+		mpls_input(ifp, top);
 		break;
 #endif
 	default:
