@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.2 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: captiveportal.h,v 1.1 2019/02/03 12:02:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -17,13 +17,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
-void		 frontend(int, int);
-void		 frontend_dispatch_main(int, short, void *);
-void		 frontend_dispatch_resolver(int, short, void *);
-void		 frontend_dispatch_captiveportal(int, short, void *);
-int		 frontend_imsg_compose_main(int, pid_t, void *, uint16_t);
-int		 frontend_imsg_compose_resolver(int, pid_t, void *, uint16_t);
-int		 frontend_imsg_compose_captiveportal(int, pid_t, void *, uint16_t);
-char		*ip_port(struct sockaddr *);
+enum captive_portal_state {
+	PORTAL_UNCHECKED,
+	PORTAL_UNKNOWN,
+	BEHIND,
+	NOT_BEHIND
+};
+
+static const char * const	captive_portal_state_str[] = {
+	"unchecked",
+	"unknown",
+	"behind",
+	"not behind"
+};
+
+void	 captiveportal(int, int);
+void	 captiveportal_dispatch_main(int, short, void *);
+void	 captiveportal_dispatch_resolver(int, short, void *);
+void	 captiveportal_dispatch_frontend(int, short, void *);
+int	 captiveportal_imsg_compose_main(int, pid_t, void *, uint16_t);
+int	 captiveportal_imsg_compose_resolver(int, pid_t, void *, uint16_t);
+int	 captiveportal_imsg_compose_frontend(int, pid_t, void *, uint16_t);

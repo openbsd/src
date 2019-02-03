@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.3 2019/01/29 19:30:41 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.4 2019/02/03 12:02:30 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2019 $
+.Dd $Mdocdate: February 3 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -69,7 +69,56 @@ If
 .Ic DoT
 is specified use DNS over TLS when sending queries to the server at
 .Ar address .
-
+.El
+.Pp
+.Nm unwind
+can detect when it is running behind a
+.Dq Captive Portal
+by sending a HTTP request and checking the response against the
+configured expected response.
+The check will be triggered when
+.Xr dhclient 8
+reports new nameservers.
+If the response does not match,
+.Nm unwind
+will use the DHCP provided nameservers and periodically re-checks if the user
+passed the
+.Dq Captive Portal .
+.Bl -tag -width Ds
+.It Ic captive portal Brq ...
+.Dq CaptivePortal
+detection is configured inside the
+.Oc captive portal
+block.
+.Bl -tag -width "url URL" -compatc
+.It Ic url Ar URL
+URL to send HTTP queries to.
+This parameter is required.
+.It Ic expected response Ar response
+The body of the HTTP response is compare to
+.Ar response.
+The default is the empty string.
+.It Ic expteced status Ar status
+The expected HTTP status code.
+The default is 200.
+.It Ic auto Op Cm yes | Cm no
+When
+.Ic auto
+is set to
+.Cm yes
+.Nm unwind
+automatically triggers a
+.Dq Captive Portal
+check when the network is changed.
+When set to
+.Cm no
+a
+.Dq Captive Portal
+check can be triggered by
+.Xr unwindctl 8 .
+The default is
+.Cm yes
+.El
 .El
 .Sh FILES
 .Bl -tag -width "/etc/unwind.conf" -compact

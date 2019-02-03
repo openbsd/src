@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.5 2019/01/30 12:17:02 benno Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.6 2019/02/03 12:02:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -38,13 +38,15 @@
 enum {
 	PROC_MAIN,
 	PROC_RESOLVER,
-	PROC_FRONTEND
+	PROC_FRONTEND,
+	PROC_CAPTIVEPORTAL,
 } unwind_process;
 
 static const char * const log_procnames[] = {
 	"main",
 	"resolver",
 	"frontend",
+	"captive portal",
 };
 
 struct imsgev {
@@ -59,7 +61,11 @@ enum imsg_type {
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_STATUS,
+	IMSG_CTL_CAPTIVEPORTAL_INFO,
 	IMSG_RECONF_CONF,
+	IMSG_RECONF_CAPTIVE_PORTAL_HOST,
+	IMSG_RECONF_CAPTIVE_PORTAL_PATH,
+	IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE,
 	IMSG_RECONF_FORWARDER,
 	IMSG_RECONF_DOT_FORWARDER,
 	IMSG_RECONF_END,
@@ -69,7 +75,9 @@ enum imsg_type {
 	IMSG_CONTROLFD,
 	IMSG_STARTUP,
 	IMSG_STARTUP_DONE,
-	IMSG_SOCKET_IPC,
+	IMSG_SOCKET_IPC_FRONTEND,
+	IMSG_SOCKET_IPC_RESOLVER,
+	IMSG_SOCKET_IPC_CAPTIVEPORTAL,
 	IMSG_QUERY,
 	IMSG_ANSWER_HEADER,
 	IMSG_ANSWER,
@@ -82,7 +90,11 @@ enum imsg_type {
 	IMSG_CTL_RESOLVER_INFO,
 	IMSG_CTL_RESOLVER_WHY_BOGUS,
 	IMSG_CTL_RESOLVER_HISTOGRAM,
-	IMSG_CTL_END
+	IMSG_CTL_END,
+	IMSG_CTL_RECHECK_CAPTIVEPORTAL,
+	IMSG_OPEN_HTTP_PORT,
+	IMSG_HTTPSOCK,
+	IMSG_CAPTIVEPORTAL_STATE
 };
 
 struct unwind_forwarder {
@@ -92,8 +104,13 @@ struct unwind_forwarder {
 
 struct unwind_conf {
 	SIMPLEQ_HEAD(unwind_forwarder_head, unwind_forwarder)	 unwind_forwarder_list;
-	struct unwind_forwarder_head				 unwind_dot_forwarder_list;
-	int							 unwind_options;
+	struct unwind_forwarder_head	 unwind_dot_forwarder_list;
+	int				 unwind_options;
+	char				*captive_portal_host;
+	char				*captive_portal_path;
+	char				*captive_portal_expected_response;
+	int				 captive_portal_expected_status;
+	int				 captive_portal_auto;
 };
 
 struct query_imsg {
@@ -113,8 +130,9 @@ extern uint32_t	 cmd_opts;
 /* unwind.c */
 void	main_imsg_compose_frontend(int, pid_t, void *, uint16_t);
 void	main_imsg_compose_frontend_fd(int, pid_t, int);
-
 void	main_imsg_compose_resolver(int, pid_t, void *, uint16_t);
+void	main_imsg_compose_captiveportal(int, pid_t, void *, uint16_t);
+void	main_imsg_compose_captiveportal_fd(int, pid_t, int);
 void	merge_config(struct unwind_conf *, struct unwind_conf *);
 void	imsg_event_add(struct imsgev *);
 int	imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,

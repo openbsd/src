@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.4 2019/01/29 19:32:36 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.5 2019/02/03 12:02:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -75,6 +75,19 @@ print_config(struct unwind_conf *conf)
 			print_forwarder(unwind_forwarder->name);
 			printf(" DoT\n");
 		}
+		printf("}\n");
+	}
+
+	if (conf->captive_portal_host != NULL) {
+		printf("captive portal {\n");
+		printf("\turl \"http://%s%s\"\n",
+		    conf->captive_portal_host, conf->captive_portal_path);
+		printf("\texpected status %d\n",
+		    conf->captive_portal_expected_status);
+		if (conf->captive_portal_expected_response != NULL)
+			printf("\texpected response \"%s\"\n",
+			    conf->captive_portal_expected_response);
+		printf("\tauto %s\n", yesno(conf->captive_portal_auto));
 		printf("}\n");
 	}
 }

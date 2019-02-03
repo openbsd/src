@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.9 2019/02/01 15:52:35 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.10 2019/02/03 12:02:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -45,6 +45,7 @@
 #include "frontend.h"
 #include "resolver.h"
 #include "control.h"
+#include "captiveportal.h"
 
 __dead void	usage(void);
 __dead void	main_shutdown(void);
@@ -55,22 +56,26 @@ static pid_t	start_child(int, char *, int, int, int);
 
 void	main_dispatch_frontend(int, short, void *);
 void	main_dispatch_resolver(int, short, void *);
+void	main_dispatch_captiveportal(int, short, void *);
 
-static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
+static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *,
+		    struct imsgbuf *);
 static int	main_imsg_send_config(struct unwind_conf *);
 
 int	main_reload(void);
-int	main_sendboth(enum imsg_type, void *, uint16_t);
+int	main_sendall(enum imsg_type, void *, uint16_t);
 void	open_dhcp_lease(int);
 void	open_ports(void);
 
 struct unwind_conf	*main_conf;
 struct imsgev		*iev_frontend;
 struct imsgev		*iev_resolver;
+struct imsgev		*iev_captiveportal;
 char			*conffile;
 
 pid_t	 frontend_pid;
 pid_t	 resolver_pid;
+pid_t	 captiveportal_pid;
 
 uint32_t cmd_opts;
 
@@ -113,10 +118,12 @@ main(int argc, char *argv[])
 {
 	struct event		 ev_sigint, ev_sigterm, ev_sighup;
 	int			 ch;
-	int			 debug = 0, resolver_flag = 0, frontend_flag = 0;
+	int			 debug = 0, resolver_flag = 0;
+	int			 frontend_flag = 0, captiveportal_flag = 0;
 	char			*saved_argv0;
 	int			 pipe_main2frontend[2];
 	int			 pipe_main2resolver[2];
+	int			 pipe_main2captiveportal[2];
 	int			 frontend_routesock, rtfilter;
 	int			 control_fd;
 	char			*csock;
@@ -131,8 +138,11 @@ main(int argc, char *argv[])
 	if (saved_argv0 == NULL)
 		saved_argv0 = "unwind";
 
-	while ((ch = getopt(argc, argv, "dEFf:ns:v")) != -1) {
+	while ((ch = getopt(argc, argv, "CdEFf:ns:v")) != -1) {
 		switch (ch) {
+		case 'C':
+			captiveportal_flag = 1;
+			break;
 		case 'd':
 			debug = 1;
 			break;
@@ -163,13 +173,15 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
-	if (argc > 0 || (resolver_flag && frontend_flag))
+	if (argc > 0 || (resolver_flag && frontend_flag && captiveportal_flag))
 		usage();
 
 	if (resolver_flag)
 		resolver(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
 	else if (frontend_flag)
 		frontend(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
+	else if (captiveportal_flag)
+		captiveportal(debug, cmd_opts & (OPT_VERBOSE | OPT_VERBOSE2));
 
 	if ((main_conf = parse_config(conffile)) == NULL)
 		exit(1);
@@ -204,6 +216,9 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_UNSPEC, pipe_main2resolver) == -1)
 		fatal("main2resolver socketpair");
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_main2captiveportal) == -1)
+		fatal("main2captiveportal socketpair");
 
 	/* Start children. */
 	resolver_pid = start_child(PROC_RESOLVER, saved_argv0,
@@ -211,6 +226,9 @@ main(int argc, char *argv[])
 	    OPT_VERBOSE2));
 	frontend_pid = start_child(PROC_FRONTEND, saved_argv0,
 	    pipe_main2frontend[1], debug, cmd_opts & (OPT_VERBOSE |
+	    OPT_VERBOSE2));
+	captiveportal_pid = start_child(PROC_CAPTIVEPORTAL, saved_argv0,
+	    pipe_main2captiveportal[1], debug, cmd_opts & (OPT_VERBOSE |
 	    OPT_VERBOSE2));
 
 	unwind_process = PROC_MAIN;
@@ -230,14 +248,17 @@ main(int argc, char *argv[])
 	/* Setup pipes to children. */
 
 	if ((iev_frontend = malloc(sizeof(struct imsgev))) == NULL ||
+	    (iev_captiveportal = malloc(sizeof(struct imsgev))) == NULL ||
 	    (iev_resolver = malloc(sizeof(struct imsgev))) == NULL)
 		fatal(NULL);
 	imsg_init(&iev_frontend->ibuf, pipe_main2frontend[0]);
 	iev_frontend->handler = main_dispatch_frontend;
 	imsg_init(&iev_resolver->ibuf, pipe_main2resolver[0]);
 	iev_resolver->handler = main_dispatch_resolver;
+	imsg_init(&iev_captiveportal->ibuf, pipe_main2captiveportal[0]);
+	iev_captiveportal->handler = main_dispatch_captiveportal;
 
-	/* Setup event handlers for pipes to resolver & frontend. */
+	/* Setup event handlers for pipes. */
 	iev_frontend->events = EV_READ;
 	event_set(&iev_frontend->ev, iev_frontend->ibuf.fd,
 	    iev_frontend->events, iev_frontend->handler, iev_frontend);
@@ -248,7 +269,14 @@ main(int argc, char *argv[])
 	    iev_resolver->handler, iev_resolver);
 	event_add(&iev_resolver->ev, NULL);
 
-	if (main_imsg_send_ipc_sockets(&iev_frontend->ibuf, &iev_resolver->ibuf))
+	iev_captiveportal->events = EV_READ;
+	event_set(&iev_captiveportal->ev, iev_captiveportal->ibuf.fd,
+	    iev_captiveportal->events, iev_captiveportal->handler,
+	    iev_captiveportal);
+	event_add(&iev_captiveportal->ev, NULL);
+
+	if (main_imsg_send_ipc_sockets(&iev_frontend->ibuf,
+	    &iev_resolver->ibuf, &iev_captiveportal->ibuf))
 		fatal("could not establish imsg links");
 
 	if ((control_fd = control_init(csock)) == -1)
@@ -290,6 +318,8 @@ main_shutdown(void)
 	close(iev_frontend->ibuf.fd);
 	msgbuf_clear(&iev_resolver->ibuf.w);
 	close(iev_resolver->ibuf.fd);
+	msgbuf_clear(&iev_captiveportal->ibuf.w);
+	close(iev_captiveportal->ibuf.fd);
 
 	config_clear(main_conf);
 
@@ -307,6 +337,7 @@ main_shutdown(void)
 
 	free(iev_frontend);
 	free(iev_resolver);
+	free(iev_captiveportal);
 
 	log_info("terminating");
 	exit(0);
@@ -341,6 +372,9 @@ start_child(int p, char *argv0, int fd, int debug, int verbose)
 		break;
 	case PROC_FRONTEND:
 		argv[argc++] = "-F";
+		break;
+	case PROC_CAPTIVEPORTAL:
+		argv[argc++] = "-C";
 		break;
 	}
 	if (debug)
@@ -433,6 +467,77 @@ main_dispatch_frontend(int fd, short event, void *bula)
 void
 main_dispatch_resolver(int fd, short event, void *bula)
 {
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	struct sockaddr_in	 sin;
+	ssize_t			 n;
+	int			 shut = 0, httpsock;
+
+	ibuf = &iev->ibuf;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_read error");
+		if (n == 0)	/* Connection closed. */
+			shut = 1;
+	}
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+			fatal("msgbuf_write");
+		if (n == 0)	/* Connection closed. */
+			shut = 1;
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("imsg_get");
+		if (n == 0)	/* No more messages. */
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_OPEN_HTTP_PORT:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(sin))
+				fatalx("%s: IMSG_OPEN_HTTP_PORT wrong length: "
+				    "%d", __func__, imsg.hdr.len);
+			memcpy(&sin, imsg.data, sizeof(sin));
+
+			if ((httpsock = socket(AF_INET, SOCK_STREAM |
+			    SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
+				log_warn("%s: socket", __func__);
+				break;
+			}
+			if (connect(httpsock, (struct sockaddr *)&sin,
+			    sin.sin_len) == -1) {
+				if (errno != EINPROGRESS) {
+					log_warn("%s: connect", __func__);
+					close(httpsock);
+					break;
+				}
+			}
+			main_imsg_compose_captiveportal_fd(IMSG_HTTPSOCK, 0,
+			    httpsock);
+			break;
+		default:
+			log_debug("%s: error handling imsg %d", __func__,
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	if (!shut)
+		imsg_event_add(iev);
+	else {
+		/* This pipe is dead. Remove its event handler. */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
+	}
+}
+
+void
+main_dispatch_captiveportal(int fd, short event, void *bula)
+{
 	struct imsgev	*iev = bula;
 	struct imsgbuf  *ibuf;
 	struct imsg	 imsg;
@@ -492,13 +597,29 @@ main_imsg_compose_frontend_fd(int type, pid_t pid, int fd)
 		imsg_compose_event(iev_frontend, type, 0, pid, fd, NULL, 0);
 }
 
-
 void
 main_imsg_compose_resolver(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	if (iev_resolver)
 		imsg_compose_event(iev_resolver, type, 0, pid, -1, data,
 		    datalen);
+}
+
+void
+main_imsg_compose_captiveportal(int type, pid_t pid, void *data,
+    uint16_t datalen)
+{
+	if (iev_captiveportal)
+		imsg_compose_event(iev_captiveportal, type, 0, pid, -1, data,
+		    datalen);
+}
+
+void
+main_imsg_compose_captiveportal_fd(int type, pid_t pid, int fd)
+{
+	if (iev_frontend)
+		imsg_compose_event(iev_captiveportal, type, 0, pid, fd, NULL,
+		    0);
 }
 
 void
@@ -528,19 +649,43 @@ imsg_compose_event(struct imsgev *iev, uint16_t type, uint32_t peerid,
 
 static int
 main_imsg_send_ipc_sockets(struct imsgbuf *frontend_buf,
-    struct imsgbuf *resolver_buf)
+    struct imsgbuf *resolver_buf, struct imsgbuf *captiveportal_buf)
 {
 	int pipe_frontend2resolver[2];
+	int pipe_frontend2captiveportal[2];
+	int pipe_resolver2captiveportal[2];
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_UNSPEC, pipe_frontend2resolver) == -1)
 		return (-1);
 
-	if (imsg_compose(frontend_buf, IMSG_SOCKET_IPC, 0, 0,
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_frontend2captiveportal) == -1)
+		return (-1);
+
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	    PF_UNSPEC, pipe_resolver2captiveportal) == -1)
+		return (-1);
+
+	if (imsg_compose(frontend_buf, IMSG_SOCKET_IPC_RESOLVER, 0, 0,
 	    pipe_frontend2resolver[0], NULL, 0) == -1)
 		return (-1);
-	if (imsg_compose(resolver_buf, IMSG_SOCKET_IPC, 0, 0,
+	if (imsg_compose(resolver_buf, IMSG_SOCKET_IPC_FRONTEND, 0, 0,
 	    pipe_frontend2resolver[1], NULL, 0) == -1)
+		return (-1);
+
+	if (imsg_compose(frontend_buf, IMSG_SOCKET_IPC_CAPTIVEPORTAL, 0, 0,
+	    pipe_frontend2captiveportal[0], NULL, 0) == -1)
+		return (-1);
+	if (imsg_compose(captiveportal_buf, IMSG_SOCKET_IPC_FRONTEND, 0, 0,
+	    pipe_frontend2captiveportal[1], NULL, 0) == -1)
+		return (-1);
+
+	if (imsg_compose(resolver_buf, IMSG_SOCKET_IPC_CAPTIVEPORTAL, 0, 0,
+	    pipe_resolver2captiveportal[0], NULL, 0) == -1)
+		return (-1);
+	if (imsg_compose(captiveportal_buf, IMSG_SOCKET_IPC_RESOLVER, 0, 0,
+	    pipe_resolver2captiveportal[1], NULL, 0) == -1)
 		return (-1);
 
 	return (0);
@@ -568,39 +713,61 @@ main_imsg_send_config(struct unwind_conf *xconf)
 	struct unwind_forwarder	*unwind_forwarder;
 
 	/* Send fixed part of config to children. */
-	if (main_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
+	if (main_sendall(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
 		return (-1);
+	if (xconf->captive_portal_host != NULL) {
+		if (main_sendall(IMSG_RECONF_CAPTIVE_PORTAL_HOST,
+		    xconf->captive_portal_host,
+		    strlen(xconf->captive_portal_host) + 1) == -1)
+			return (-1);
+	}
+
+	if (xconf->captive_portal_path != NULL) {
+		if (main_sendall(IMSG_RECONF_CAPTIVE_PORTAL_PATH,
+		    xconf->captive_portal_path,
+		    strlen(xconf->captive_portal_path) + 1) == -1)
+			return (-1);
+	}
+
+	if (xconf->captive_portal_expected_response != NULL) {
+		if (main_sendall(IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE,
+		    xconf->captive_portal_expected_response,
+		    strlen(xconf->captive_portal_expected_response) + 1)
+		    == -1)
+			return (-1);
+	}
 
 	/* send static forwarders to children */
 	SIMPLEQ_FOREACH(unwind_forwarder, &xconf->unwind_forwarder_list, entry) {
-		if (main_sendboth(IMSG_RECONF_FORWARDER, unwind_forwarder,
+		if (main_sendall(IMSG_RECONF_FORWARDER, unwind_forwarder,
 		    sizeof(*unwind_forwarder)) == -1)
 			return (-1);
-
 	}
 
 	/* send static DoT forwarders to children */
 	SIMPLEQ_FOREACH(unwind_forwarder, &xconf->unwind_dot_forwarder_list,
 	    entry) {
-		if (main_sendboth(IMSG_RECONF_DOT_FORWARDER, unwind_forwarder,
+		if (main_sendall(IMSG_RECONF_DOT_FORWARDER, unwind_forwarder,
 		    sizeof(*unwind_forwarder)) == -1)
 			return (-1);
-
 	}
 
 	/* Tell children the revised config is now complete. */
-	if (main_sendboth(IMSG_RECONF_END, NULL, 0) == -1)
+	if (main_sendall(IMSG_RECONF_END, NULL, 0) == -1)
 		return (-1);
 
 	return (0);
 }
 
 int
-main_sendboth(enum imsg_type type, void *buf, uint16_t len)
+main_sendall(enum imsg_type type, void *buf, uint16_t len)
 {
 	if (imsg_compose_event(iev_frontend, type, 0, 0, -1, buf, len) == -1)
 		return (-1);
 	if (imsg_compose_event(iev_resolver, type, 0, 0, -1, buf, len) == -1)
+		return (-1);
+	if (imsg_compose_event(iev_captiveportal, type, 0, 0, -1, buf, len) ==
+	    -1)
 		return (-1);
 	return (0);
 }
@@ -623,6 +790,21 @@ merge_config(struct unwind_conf *conf, struct unwind_conf *xconf)
 	}
 
 	conf->unwind_options = xconf->unwind_options;
+
+	free(conf->captive_portal_host);
+	conf->captive_portal_host = xconf->captive_portal_host;
+
+	free(conf->captive_portal_path);
+	conf->captive_portal_path = xconf->captive_portal_path;
+
+	free(conf->captive_portal_expected_response);
+	conf->captive_portal_expected_response =
+	    xconf->captive_portal_expected_response;
+
+	conf->captive_portal_expected_status =
+	    xconf->captive_portal_expected_status;
+
+	conf->captive_portal_auto = xconf->captive_portal_auto;
 
 	/* Add new forwarders. */
 	while ((unwind_forwarder =
@@ -652,6 +834,11 @@ config_new_empty(void)
 
 	SIMPLEQ_INIT(&xconf->unwind_forwarder_list);
 	SIMPLEQ_INIT(&xconf->unwind_dot_forwarder_list);
+
+	if ((xconf->captive_portal_expected_response = strdup("")) == NULL)
+		fatal(NULL);
+	xconf->captive_portal_expected_status = 200;
+	xconf->captive_portal_auto = 1;
 
 	return (xconf);
 }

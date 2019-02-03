@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.2 2019/01/27 12:41:39 florian Exp $	*/
+/*	$OpenBSD: parser.h,v 1.3 2019/02/03 12:02:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -23,6 +23,7 @@ enum actions {
 	LOG_VERBOSE,
 	LOG_BRIEF,
 	RELOAD,
+	PORTAL,
 	STATUS,
 	STATUS_RECURSOR,
 	STATUS_DHCP,

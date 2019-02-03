@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.9 2019/02/01 13:05:55 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.10 2019/02/03 12:02:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -86,13 +86,13 @@ void			 handle_route_message(struct rt_msghdr *,
 void			 get_rtaddrs(int, struct sockaddr *,
 			     struct sockaddr **);
 void			 rtmget_default(void);
-char			*ip_port(struct sockaddr *);
 struct pending_query	*find_pending_query(uint64_t);
 void			 parse_dhcp_lease(int);
 
 struct unwind_conf	*frontend_conf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_resolver;
+struct imsgev		*iev_captiveportal;
 struct event		 ev_route;
 int			 udp4sock = -1, udp6sock = -1, routesock = -1;
 
@@ -206,6 +206,9 @@ frontend_shutdown(void)
 	msgbuf_write(&iev_resolver->ibuf.w);
 	msgbuf_clear(&iev_resolver->ibuf.w);
 	close(iev_resolver->ibuf.fd);
+	msgbuf_write(&iev_captiveportal->ibuf.w);
+	msgbuf_clear(&iev_captiveportal->ibuf.w);
+	close(iev_captiveportal->ibuf.fd);
 	msgbuf_write(&iev_main->ibuf.w);
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
@@ -213,6 +216,7 @@ frontend_shutdown(void)
 	config_clear(frontend_conf);
 
 	free(iev_resolver);
+	free(iev_captiveportal);
 	free(iev_main);
 
 	log_info("frontend exiting");
@@ -230,6 +234,13 @@ int
 frontend_imsg_compose_resolver(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	return (imsg_compose_event(iev_resolver, type, 0, pid, -1, data,
+	    datalen));
+}
+
+int
+frontend_imsg_compose_captiveportal(int type, pid_t pid, void *data, uint16_t datalen)
+{
+	return (imsg_compose_event(iev_captiveportal, type, 0, pid, -1, data,
 	    datalen));
 }
 
@@ -263,7 +274,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_SOCKET_IPC:
+		case IMSG_SOCKET_IPC_RESOLVER:
 			/*
 			 * Setup pipe and event handler to the resolver
 			 * process.
@@ -292,6 +303,35 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			iev_resolver->events, iev_resolver->handler, iev_resolver);
 			event_add(&iev_resolver->ev, NULL);
 			break;
+		case IMSG_SOCKET_IPC_CAPTIVEPORTAL:
+			/*
+			 * Setup pipe and event handler to the captiveportal
+			 * process.
+			 */
+			if (iev_captiveportal) {
+				fatalx("%s: received unexpected imsg fd "
+				    "to frontend", __func__);
+				break;
+			}
+			if ((fd = imsg.fd) == -1) {
+				fatalx("%s: expected to receive imsg fd to "
+				   "frontend but didn't receive any",
+				   __func__);
+				break;
+			}
+
+			iev_captiveportal = malloc(sizeof(struct imsgev));
+			if (iev_captiveportal == NULL)
+				fatal(NULL);
+
+			imsg_init(&iev_captiveportal->ibuf, fd);
+			iev_captiveportal->handler = frontend_dispatch_captiveportal;
+			iev_captiveportal->events = EV_READ;
+
+			event_set(&iev_captiveportal->ev, iev_captiveportal->ibuf.fd,
+			iev_captiveportal->events, iev_captiveportal->handler, iev_captiveportal);
+			event_add(&iev_captiveportal->ev, NULL);
+			break;
 		case IMSG_RECONF_CONF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct unwind_conf))
@@ -301,8 +341,35 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct unwind_conf));
+			nconf->captive_portal_host = NULL;
+			nconf->captive_portal_path = NULL;
+			nconf->captive_portal_expected_response = NULL;
 			SIMPLEQ_INIT(&nconf->unwind_forwarder_list);
 			SIMPLEQ_INIT(&nconf->unwind_dot_forwarder_list);
+			break;
+		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
+			/* make sure this is a string */
+			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
+			    = '\0';
+			if ((nconf->captive_portal_host = strdup(imsg.data)) ==
+			    NULL)
+				fatal("%s: strdup", __func__);
+			break;
+		case IMSG_RECONF_CAPTIVE_PORTAL_PATH:
+			/* make sure this is a string */
+			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
+			    = '\0';
+			if ((nconf->captive_portal_path = strdup(imsg.data)) ==
+			    NULL)
+				fatal("%s: strdup", __func__);
+			break;
+		case IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE:
+			/* make sure this is a string */
+			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
+			    = '\0';
+			if ((nconf->captive_portal_expected_response =
+			    strdup(imsg.data)) == NULL)
+				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_FORWARDER:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -482,11 +549,56 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			frontend_imsg_compose_main(IMSG_OPEN_PORTS, 0, NULL, 0);
 			break;
 		case IMSG_CTL_RESOLVER_INFO:
+		case IMSG_CTL_CAPTIVEPORTAL_INFO:
 		case IMSG_CTL_RESOLVER_WHY_BOGUS:
 		case IMSG_CTL_RESOLVER_HISTOGRAM:
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
 			break;
+		default:
+			log_debug("%s: error handling imsg %d", __func__,
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	if (!shut)
+		imsg_event_add(iev);
+	else {
+		/* This pipe is dead. Remove its event handler. */
+		event_del(&iev->ev);
+		event_loopexit(NULL);
+	}
+}
+
+void
+frontend_dispatch_captiveportal(int fd, short event, void *bula)
+{
+	struct imsgev			*iev = bula;
+	struct imsgbuf			*ibuf = &iev->ibuf;
+	struct imsg			 imsg;
+	int				 n, shut = 0;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("imsg_read error");
+		if (n == 0)	/* Connection closed. */
+			shut = 1;
+	}
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+			fatal("msgbuf_write");
+		if (n == 0)	/* Connection closed. */
+			shut = 1;
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsg_get error", __func__);
+		if (n == 0)	/* No more messages. */
+			break;
+
+		switch (imsg.hdr.type) {
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);

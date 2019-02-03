@@ -1,4 +1,4 @@
-/*	$OpenBSD: uw_parse.y,v 1.8 2019/01/30 12:18:48 benno Exp $	*/
+/*	$OpenBSD: uw_parse.y,v 1.9 2019/02/03 12:02:30 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -99,7 +99,8 @@ typedef struct {
 %}
 
 %token	STRICT YES NO INCLUDE ERROR
-%token	FORWARDER DOT PORT
+%token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
+%token	STATUS AUTO
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -114,6 +115,7 @@ grammar		: /* empty */
 		| grammar conf_main '\n'
 		| grammar varset '\n'
 		| grammar unwind_forwarder '\n'
+		| grammar captive_portal '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -176,8 +178,55 @@ optnl		: '\n' optnl		/* zero or more newlines */
 		| /*empty*/
 		;
 
-nl		: '\n' optnl		/* one or more newlines */
-		;
+captive_portal		: CAPTIVE PORTAL captive_portal_block
+			;
+captive_portal_block	: '{' optnl captive_portal_opts_l '}'
+			| captive_portal_optsl
+			;
+
+captive_portal_opts_l	: captive_portal_opts_l captive_portal_optsl optnl
+			| captive_portal_optsl optnl
+			;
+
+captive_portal_optsl	: URL STRING {
+				char *ep;
+				if (strncmp($2, "http://", 7) != 0) {
+					yyerror("only http:// urls are "
+					    "supported: %s", $2);
+					free($2);
+					YYERROR;
+				}
+				if ((ep = strchr($2 + 7, '/')) != NULL) {
+					conf->captive_portal_path =
+					    strdup(ep);
+					*ep = '\0';
+				} else
+					conf->captive_portal_path = strdup("/");
+				if (conf->captive_portal_path == NULL)
+					err(1, "strdup");
+				if ((conf->captive_portal_host =
+				    strdup($2 + 7)) == NULL)
+					err(1, "strdup");
+				free($2);
+			}
+			| EXPECTED RESPONSE STRING {
+				if ((conf->captive_portal_expected_response =
+				   strdup($3)) == NULL)
+					err(1, "strdup");
+				free($3);
+			}
+			| EXPECTED STATUS NUMBER {
+				if ($3 < 100 || $3 > 599) {
+					yyerror("%lld is an invalid http "
+					    "status", $3);
+					YYERROR;
+				}
+				conf->captive_portal_expected_status = $3;
+			}
+			| AUTO yesno {
+				conf->captive_portal_auto = $2;
+			}
+			;
 
 unwind_forwarder	: FORWARDER forwarder_block
 			;
@@ -188,6 +237,7 @@ forwarder_block		: '{' optnl forwarderopts_l '}'
 
 forwarderopts_l		: forwarderopts_l forwarderoptsl optnl
 			| forwarderoptsl optnl
+			;
 
 forwarderoptsl		: STRING {
 				struct sockaddr_storage *ss;
@@ -346,14 +396,21 @@ lookup(char *s)
 {
 	/* This has to be sorted always. */
 	static const struct keywords keywords[] = {
-		{"dot",			DOT},
 		{"DoT",			DOT},
+		{"auto",		AUTO},
+		{"captive",		CAPTIVE},
+		{"dot",			DOT},
+		{"expected",		EXPECTED},
 		{"forwarder",		FORWARDER},
 		{"include",		INCLUDE},
 		{"no",			NO},
 		{"port",		PORT},
+		{"portal",		PORTAL},
+		{"response",		RESPONSE},
+		{"status",		STATUS},
 		{"strict",		STRICT},
 		{"tls",			DOT},
+		{"url",			URL},
 		{"yes",			YES},
 	};
 	const struct keywords	*p;
