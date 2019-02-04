@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.196 2019/02/01 13:32:00 mpi Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.197 2019/02/04 21:40:52 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -373,7 +373,7 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 		break;
 	case PRU_SENSE:
 		/* stat: don't bother with a blocksize. */
-		return (0);
+		break;
 
 	/* minimal support, just implement a fake peer address */
 	case PRU_SOCKADDR:
@@ -386,8 +386,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 
 	case PRU_RCVOOB:
 	case PRU_RCVD:
-		return (EOPNOTSUPP);
-
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
@@ -404,8 +402,10 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 	}
 
  release:
-	m_freem(control);
-	m_freem(m);
+	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
+		m_freem(control);
+		m_freem(m);
+	}
 	return (error);
 }
 

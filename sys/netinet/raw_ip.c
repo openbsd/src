@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.118 2019/01/08 01:47:55 claudio Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.119 2019/02/04 21:40:52 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -544,7 +544,7 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		/*
 		 * stat: don't bother with a blocksize.
 		 */
-		return (0);
+		break;
 
 	/*
 	 * Not supported.
@@ -552,12 +552,10 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_LISTEN:
 	case PRU_ACCEPT:
 	case PRU_SENDOOB:
-		error = EOPNOTSUPP;
-		break;
-
 	case PRU_RCVD:
 	case PRU_RCVOOB:
-		return (EOPNOTSUPP);	/* do not free mbuf's */
+		error = EOPNOTSUPP;
+		break;
 
 	case PRU_SOCKADDR:
 		in_setsockaddr(inp, nam);
@@ -571,8 +569,10 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		panic("rip_usrreq");
 	}
 release:
-	m_freem(control);
-	m_freem(m);
+	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
+		m_freem(control);
+		m_freem(m);
+	}
 	return (error);
 }
 

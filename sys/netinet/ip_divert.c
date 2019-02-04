@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.60 2018/11/10 18:40:34 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.61 2019/02/04 21:40:52 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -278,7 +278,7 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_SENSE:
-		return (0);
+		break;
 
 	case PRU_LISTEN:
 	case PRU_CONNECT:
@@ -290,20 +290,20 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
 	case PRU_PROTOSEND:
-		error =  EOPNOTSUPP;
-		break;
-
 	case PRU_RCVD:
 	case PRU_RCVOOB:
-		return (EOPNOTSUPP);	/* do not free mbuf's */
+		error =  EOPNOTSUPP;
+		break;
 
 	default:
 		panic("divert_usrreq");
 	}
 
 release:
-	m_freem(control);
-	m_freem(m);
+	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
+		m_freem(control);
+		m_freem(m);
+	}
 	return (error);
 }
 

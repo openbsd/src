@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.281 2018/12/20 10:27:37 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.282 2019/02/04 21:40:52 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 	case PRU_SENSE:
 		/* stat: don't bother with a blocksize. */
-		return (0);
+		break;
 
 	/* minimal support, just implement a fake peer address */
 	case PRU_SOCKADDR:
@@ -248,8 +248,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		nam->m_len = route_src.sa_len;
 		break;
 
-	case PRU_RCVOOB:
-		return (EOPNOTSUPP);
 	case PRU_RCVD:
 		/*
 		 * If we are in a FLUSH state, check if the buffer is
@@ -259,8 +257,9 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		    ((sbspace(rop->rop_socket, &rop->rop_socket->so_rcv) ==
 		    rop->rop_socket->so_rcv.sb_hiwat)))
 			rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
-		return (0);
+		break;
 
+	case PRU_RCVOOB:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
@@ -277,8 +276,10 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
  release:
-	m_freem(control);
-	m_freem(m);
+	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
+		m_freem(control);
+		m_freem(m);
+	}
 	return (error);
 }
 
