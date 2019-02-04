@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.13 2012/12/05 23:19:57 deraadt Exp $	*/
+/*	$OpenBSD: glob.h,v 1.14 2019/02/04 16:45:40 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -39,12 +39,18 @@
 #define	_GLOB_H_
 
 #include <sys/stat.h>
+#include <machine/_types.h>
+
+#ifndef	_SIZE_T_DEFINED_
+#define	_SIZE_T_DEFINED_
+typedef	__size_t	size_t;
+#endif
 
 struct stat;
 typedef struct {
-	int gl_pathc;		/* Count of total paths so far. */
-	int gl_matchc;		/* Count of paths matching pattern. */
-	int gl_offs;		/* Reserved at beginning of gl_pathv. */
+	size_t gl_pathc;	/* Count of total paths so far. */
+	size_t gl_matchc;	/* Count of paths matching pattern. */
+	size_t gl_offs;		/* Reserved at beginning of gl_pathv. */
 	int gl_flags;		/* Copy of flags parameter to glob. */
 	char **gl_pathv;	/* List of paths matching pattern. */
 	struct stat **gl_statv;	/* Stat entries corresponding to gl_pathv */
