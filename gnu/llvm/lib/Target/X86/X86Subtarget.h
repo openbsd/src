@@ -401,7 +401,7 @@ protected:
   unsigned stackAlignment = 4;
 
   /// Whether function prologues should save register arguments on the stack.
-  unsigned SaveArgs;
+  bool SaveArgs = false;
 
   /// Max. memset / memcpy size that is turned into rep/movs, rep/stos ops.
   ///
@@ -481,7 +481,7 @@ public:
     return &getInstrInfo()->getRegisterInfo();
   }
 
-  unsigned getSaveArgs() const { return SaveArgs; }
+  bool getSaveArgs() const { return SaveArgs; }
 
   /// Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every
