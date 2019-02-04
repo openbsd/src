@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.16 2019/02/03 15:40:32 tb Exp $ */
+/* $OpenBSD: rsautl.c,v 1.17 2019/02/04 11:21:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -208,7 +208,7 @@ struct option rsautl_options[] = {
 	},
 	{
 		.name = "x931",
-		.desc = "Use X931 padding",
+		.desc = "Use ANSI X9.31 padding",
 		.type = OPTION_VALUE,
 		.value = RSA_X931_PADDING,
 		.opt.value = &rsautl_config.pad,
@@ -224,8 +224,8 @@ rsautl_usage()
 	    "usage: rsautl [-asn1parse] [-certin] [-decrypt] [-encrypt] "
 	    "[-hexdump]\n"
 	    "    [-in file] [-inkey file] [-keyform der | pem]\n"
-	    "    [-oaep | -pkcs | -raw] [-out file] [-pubin] [-sign]\n"
-	    "    [-verify]\n\n");
+	    "    [-oaep | -pkcs | -raw | -x931] [-out file] [-passin arg]\n"
+	    "    [-pubin] [-rev] [-sign] [-verify]\n\n");
 
 	options_usage(rsautl_options);
 }

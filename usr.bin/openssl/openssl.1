@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.99 2019/01/28 21:17:25 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.100 2019/02/04 11:21:05 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: January 28 2019 $
+.Dd $Mdocdate: February 4 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3418,9 +3418,11 @@ Print the public/private key components in plain text.
 .Op Fl in Ar file
 .Op Fl inkey Ar file
 .Op Fl keyform Cm der | pem
-.Op Fl oaep | pkcs | raw
+.Op Fl oaep | pkcs | raw | x931
 .Op Fl out Ar file
+.Op Fl passin Ar arg
 .Op Fl pubin
+.Op Fl rev
 .Op Fl sign
 .Op Fl verify
 .nr nS 0
@@ -3453,9 +3455,10 @@ The input key file; by default an RSA private key.
 The private key format.
 The default is
 .Cm pem .
-.It Fl oaep | pkcs | raw
+.It Fl oaep | pkcs | raw | x931
 The padding to use:
-PKCS#1 OAEP, PKCS#1 v1.5 (the default), or no padding, respectively.
+PKCS#1 OAEP, PKCS#1 v1.5 (the default), no padding, or ANSI X9.31,
+respectively.
 For signatures, only
 .Fl pkcs
 and
@@ -3464,8 +3467,12 @@ can be used.
 .It Fl out Ar file
 The output file to write to,
 or standard output if not specified.
+.It Fl passin Ar arg
+The key password source.
 .It Fl pubin
 The input file is an RSA public key.
+.It Fl rev
+Reverse the order of the input buffer.
 .It Fl sign
 Sign the input data and output the signed result.
 This requires an RSA private key.
