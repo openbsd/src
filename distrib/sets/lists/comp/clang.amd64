@@ -8,6 +8,7 @@
 ./usr/include/c++/v1/__config_site.in
 ./usr/include/c++/v1/__cxxabi_config.h
 ./usr/include/c++/v1/__debug
+./usr/include/c++/v1/__errc
 ./usr/include/c++/v1/__functional_03
 ./usr/include/c++/v1/__functional_base
 ./usr/include/c++/v1/__functional_base_03
@@ -16,6 +17,7 @@
 ./usr/include/c++/v1/__libunwind_config.h
 ./usr/include/c++/v1/__locale
 ./usr/include/c++/v1/__mutex_base
+./usr/include/c++/v1/__node_handle
 ./usr/include/c++/v1/__nullptr
 ./usr/include/c++/v1/__split_buffer
 ./usr/include/c++/v1/__sso_allocator
@@ -36,6 +38,7 @@
 ./usr/include/c++/v1/cerrno
 ./usr/include/c++/v1/cfenv
 ./usr/include/c++/v1/cfloat
+./usr/include/c++/v1/charconv
 ./usr/include/c++/v1/chrono
 ./usr/include/c++/v1/cinttypes
 ./usr/include/c++/v1/ciso646
@@ -43,6 +46,7 @@
 ./usr/include/c++/v1/clocale
 ./usr/include/c++/v1/cmath
 ./usr/include/c++/v1/codecvt
+./usr/include/c++/v1/compare
 ./usr/include/c++/v1/complex
 ./usr/include/c++/v1/complex.h
 ./usr/include/c++/v1/condition_variable
@@ -86,6 +90,7 @@
 ./usr/include/c++/v1/experimental/ratio
 ./usr/include/c++/v1/experimental/regex
 ./usr/include/c++/v1/experimental/set
+./usr/include/c++/v1/experimental/simd
 ./usr/include/c++/v1/experimental/string
 ./usr/include/c++/v1/experimental/string_view
 ./usr/include/c++/v1/experimental/system_error
@@ -99,6 +104,7 @@
 ./usr/include/c++/v1/ext/__hash
 ./usr/include/c++/v1/ext/hash_map
 ./usr/include/c++/v1/ext/hash_set
+./usr/include/c++/v1/filesystem
 ./usr/include/c++/v1/float.h
 ./usr/include/c++/v1/forward_list
 ./usr/include/c++/v1/fstream
@@ -137,6 +143,7 @@
 ./usr/include/c++/v1/set
 ./usr/include/c++/v1/setjmp.h
 ./usr/include/c++/v1/shared_mutex
+./usr/include/c++/v1/span
 ./usr/include/c++/v1/sstream
 ./usr/include/c++/v1/stack
 ./usr/include/c++/v1/stdbool.h
@@ -172,6 +179,7 @@
 ./usr/include/c++/v1/valarray
 ./usr/include/c++/v1/variant
 ./usr/include/c++/v1/vector
+./usr/include/c++/v1/version
 ./usr/include/c++/v1/wchar.h
 ./usr/include/c++/v1/wctype.h
 ./usr/lib/clang
@@ -227,8 +235,8 @@
 ./usr/lib/clang/7.0.1/include/mm3dnow.h
 ./usr/lib/clang/7.0.1/include/mm_malloc.h
 ./usr/lib/clang/7.0.1/include/mmintrin.h
-./usr/lib/clang/7.0.1/include/movdirintrin.h
 ./usr/lib/clang/7.0.1/include/module.modulemap
+./usr/lib/clang/7.0.1/include/movdirintrin.h
 ./usr/lib/clang/7.0.1/include/mwaitxintrin.h
 ./usr/lib/clang/7.0.1/include/nmmintrin.h
 ./usr/lib/clang/7.0.1/include/pconfigintrin.h
