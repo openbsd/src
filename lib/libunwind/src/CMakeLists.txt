@@ -91,9 +91,9 @@ string(REPLACE ";" " " LIBUNWIND_C_FLAGS "${LIBUNWIND_C_FLAGS}")
 string(REPLACE ";" " " LIBUNWIND_LINK_FLAGS "${LIBUNWIND_LINK_FLAGS}")
 
 set_property(SOURCE ${LIBUNWIND_CXX_SOURCES}
-             APPEND_STRING PROPERTY COMPILE_FLAGS " ${CMAKE_CXX_FLAGS} ${LIBUNWIND_CXX_FLAGS}")
+             APPEND_STRING PROPERTY COMPILE_FLAGS " ${LIBUNWIND_CXX_FLAGS}")
 set_property(SOURCE ${LIBUNWIND_C_SOURCES}
-             APPEND_STRING PROPERTY COMPILE_FLAGS " ${CMAKE_C_FLAGS} ${LIBUNWIND_C_FLAGS}")
+             APPEND_STRING PROPERTY COMPILE_FLAGS " ${LIBUNWIND_C_FLAGS}")
 
 # Add a object library that contains the compiled source files.
 add_library(unwind_objects OBJECT ${LIBUNWIND_SOURCES} ${LIBUNWIND_HEADERS})
@@ -103,11 +103,12 @@ set_target_properties(unwind_objects
                         COMPILE_FLAGS "${LIBUNWIND_COMPILE_FLAGS}"
                         POSITION_INDEPENDENT_CODE ON)
 
-set(LIBUNWIND_TARGETS)
-
 # Build the shared library.
 if (LIBUNWIND_ENABLE_SHARED)
   add_library(unwind_shared SHARED $<TARGET_OBJECTS:unwind_objects>)
+  if(COMMAND llvm_setup_rpath)
+    llvm_setup_rpath(unwind_shared)
+  endif()
   target_link_libraries(unwind_shared ${libraries})
   set_target_properties(unwind_shared
                         PROPERTIES
@@ -115,7 +116,10 @@ if (LIBUNWIND_ENABLE_SHARED)
                           OUTPUT_NAME   "unwind"
                           VERSION       "1.0"
                           SOVERSION     "1")
-  list(APPEND LIBUNWIND_TARGETS "unwind_shared")
+  list(APPEND LIBUNWIND_BUILD_TARGETS "unwind_shared")
+  if (LIBUNWIND_INSTALL_SHARED_LIBRARY)
+    list(APPEND LIBUNWIND_INSTALL_TARGETS "unwind_shared")
+  endif()
 endif()
 
 # Build the static library.
@@ -126,14 +130,17 @@ if (LIBUNWIND_ENABLE_STATIC)
                         PROPERTIES
                           LINK_FLAGS    "${LIBUNWIND_LINK_FLAGS}"
                           OUTPUT_NAME   "unwind")
-  list(APPEND LIBUNWIND_TARGETS "unwind_static")
+  list(APPEND LIBUNWIND_BUILD_TARGETS "unwind_static")
+  if (LIBUNWIND_INSTALL_STATIC_LIBRARY)
+    list(APPEND LIBUNWIND_INSTALL_TARGETS "unwind_static")
+  endif()
 endif()
 
 # Add a meta-target for both libraries.
-add_custom_target(unwind DEPENDS ${LIBUNWIND_TARGETS})
+add_custom_target(unwind DEPENDS ${LIBUNWIND_BUILD_TARGETS})
 
 if (LIBUNWIND_INSTALL_LIBRARY)
-  install(TARGETS ${LIBUNWIND_TARGETS}
+  install(TARGETS ${LIBUNWIND_INSTALL_TARGETS}
     LIBRARY DESTINATION ${LIBUNWIND_INSTALL_PREFIX}lib${LIBUNWIND_LIBDIR_SUFFIX} COMPONENT unwind
     ARCHIVE DESTINATION ${LIBUNWIND_INSTALL_PREFIX}lib${LIBUNWIND_LIBDIR_SUFFIX} COMPONENT unwind)
 endif()
