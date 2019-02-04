@@ -11,6 +11,10 @@ endif()
 if(POLICY CMP0022)
   cmake_policy(SET CMP0022 NEW) # Required when interacting with LLVM and Clang
 endif()
+if(POLICY CMP0068)
+  cmake_policy(SET CMP0068 NEW)
+  set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
+endif()
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
@@ -23,7 +27,7 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(libcxx CXX C)
 
   set(PACKAGE_NAME libcxx)
-  set(PACKAGE_VERSION 6.0.0)
+  set(PACKAGE_VERSION 7.0.0)
   set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
   set(PACKAGE_BUGREPORT "llvm-bugs@lists.llvm.org")
 
@@ -68,7 +72,7 @@ set(ENABLE_FILESYSTEM_DEFAULT ${LIBCXX_ENABLE_EXPERIMENTAL_LIBRARY})
 if (WIN32)
   set(ENABLE_FILESYSTEM_DEFAULT OFF)
 endif()
-option(LIBCXX_ENABLE_FILESYSTEM "Build filesystem as part of libc++experimental.a"
+option(LIBCXX_ENABLE_FILESYSTEM "Build filesystem as part of libc++fs.a"
     ${ENABLE_FILESYSTEM_DEFAULT})
 option(LIBCXX_INCLUDE_TESTS "Build the libc++ tests." ${LLVM_INCLUDE_TESTS})
 
@@ -93,14 +97,30 @@ set(LIBCXX_LIBDIR_SUFFIX "${LLVM_LIBDIR_SUFFIX}" CACHE STRING
     "Define suffix of library directory name (32/64)")
 option(LIBCXX_INSTALL_HEADERS "Install the libc++ headers." ON)
 option(LIBCXX_INSTALL_LIBRARY "Install the libc++ library." ON)
+cmake_dependent_option(LIBCXX_INSTALL_STATIC_LIBRARY
+  "Install the static libc++ library." ON
+  "LIBCXX_ENABLE_STATIC;LIBCXX_INSTALL_LIBRARY" OFF)
+cmake_dependent_option(LIBCXX_INSTALL_SHARED_LIBRARY
+  "Install the shared libc++ library." ON
+  "LIBCXX_ENABLE_SHARED;LIBCXX_INSTALL_LIBRARY" OFF)
 option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
 cmake_dependent_option(LIBCXX_INSTALL_EXPERIMENTAL_LIBRARY
         "Install libc++experimental.a" ON
         "LIBCXX_ENABLE_EXPERIMENTAL_LIBRARY;LIBCXX_INSTALL_LIBRARY" OFF)
-set(LIBCXX_ABI_VERSION 1 CACHE STRING "ABI version of libc++.")
+cmake_dependent_option(LIBCXX_INSTALL_FILESYSTEM_LIBRARY
+        "Install libc++fs.a" ON
+        "LIBCXX_ENABLE_FILESYSTEM;LIBCXX_INSTALL_LIBRARY" OFF)
+
+if (FUCHSIA)
+  set(DEFAULT_ABI_VERSION 2)
+else()
+  set(DEFAULT_ABI_VERSION 1)
+endif()
+set(LIBCXX_ABI_VERSION ${DEFAULT_ABI_VERSION} CACHE STRING "ABI version of libc++.")
 option(LIBCXX_ABI_UNSTABLE "Unstable ABI of libc++." OFF)
 option(LIBCXX_ABI_FORCE_ITANIUM "Ignore auto-detection and force use of the Itanium ABI.")
 option(LIBCXX_ABI_FORCE_MICROSOFT "Ignore auto-detection and force use of the Microsoft ABI.")
+option(LIBCXX_HIDE_FROM_ABI_PER_TU_BY_DEFAULT "Enable per TU ABI insulation by default. To be used by vendors." OFF)
 set(LIBCXX_ABI_DEFINES "" CACHE STRING "A semicolon separated list of ABI macros to define in the site config header.")
 option(LIBCXX_USE_COMPILER_RT "Use compiler-rt instead of libgcc" OFF)
 
@@ -123,6 +143,7 @@ if (LIBCXX_CXX_ABI STREQUAL "default")
           ${LLVM_MAIN_SRC_DIR}/runtimes/libcxxabi/include
           ${LLVM_MAIN_SRC_DIR}/../libcxxabi/include
     NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
   )
   if (LIBCXX_TARGETING_MSVC)
     # FIXME: Figure out how to configure the ABI library on Windows.
@@ -149,13 +170,21 @@ endif()
 # cannot be used with LIBCXX_ENABLE_ABI_LINKER_SCRIPT.
 option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 
+cmake_dependent_option(LIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY
+  "Statically link the ABI library to static library" ON
+  "LIBCXX_ENABLE_STATIC_ABI_LIBRARY;LIBCXX_ENABLE_STATIC" OFF)
+
+cmake_dependent_option(LIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY
+  "Statically link the ABI library to shared library" ON
+  "LIBCXX_ENABLE_STATIC_ABI_LIBRARY;LIBCXX_ENABLE_SHARED" OFF)
+
 # Generate and install a linker script inplace of libc++.so. The linker script
 # will link libc++ to the correct ABI library. This option is on by default
 # on UNIX platforms other than Apple unless 'LIBCXX_ENABLE_STATIC_ABI_LIBRARY'
 # is on. This option is also disabled when the ABI library is not specified
 # or is specified to be "none".
 set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE OFF)
-if (LLVM_HAVE_LINK_VERSION_SCRIPT AND NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY
+if (LLVM_HAVE_LINK_VERSION_SCRIPT AND NOT LIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY
       AND NOT LIBCXX_CXX_ABI_LIBNAME STREQUAL "none"
       AND NOT LIBCXX_CXX_ABI_LIBNAME STREQUAL "default"
       AND PYTHONINTERP_FOUND
@@ -205,6 +234,7 @@ option(LIBCXX_ENABLE_MONOTONIC_CLOCK
    This option may only be set to OFF when LIBCXX_ENABLE_THREADS=OFF." ON)
 option(LIBCXX_HAS_MUSL_LIBC "Build libc++ with support for the Musl C library" OFF)
 option(LIBCXX_HAS_PTHREAD_API "Ignore auto-detection and force use of pthread API" OFF)
+option(LIBCXX_HAS_WIN32_THREAD_API "Ignore auto-detection and force use of win32 thread API" OFF)
 option(LIBCXX_HAS_EXTERNAL_THREAD_API
   "Build libc++ with an externalized threading API.
    This option may only be set to ON when LIBCXX_ENABLE_THREADS=ON." OFF)
@@ -276,6 +306,10 @@ if(NOT LIBCXX_ENABLE_THREADS)
     message(FATAL_ERROR "LIBCXX_BUILD_EXTERNAL_THREAD_LIBRARY can only be set "
                         "to ON when LIBCXX_ENABLE_THREADS is also set to ON.")
   endif()
+  if (LIBCXX_HAS_WIN32_THREAD_API)
+    message(FATAL_ERROR "LIBCXX_HAS_WIN32_THREAD_API can only be set to ON"
+                        " when LIBCXX_ENABLE_THREADS is also set to ON.")
+  endif()
 
 endif()
 
@@ -288,6 +322,19 @@ if (LIBCXX_HAS_EXTERNAL_THREAD_API)
   if (LIBCXX_HAS_PTHREAD_API)
     message(FATAL_ERROR "The options LIBCXX_HAS_EXTERNAL_THREAD_API"
                         "and LIBCXX_HAS_PTHREAD_API cannot be both"
+                        "set to ON at the same time.")
+  endif()
+  if (LIBCXX_HAS_WIN32_THREAD_API)
+    message(FATAL_ERROR "The options LIBCXX_HAS_EXTERNAL_THREAD_API"
+                        "and LIBCXX_HAS_WIN32_THREAD_API cannot be both"
+                        "set to ON at the same time.")
+  endif()
+endif()
+
+if (LIBCXX_HAS_PTHREAD_API)
+  if (LIBCXX_HAS_WIN32_THREAD_API)
+    message(FATAL_ERROR "The options LIBCXX_HAS_PTHREAD_API"
+                        "and LIBCXX_HAS_WIN32_THREAD_API cannot be both"
                         "set to ON at the same time.")
   endif()
 endif()
@@ -332,7 +379,7 @@ if (LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
     endif()
 endif()
 
-if (LIBCXX_ENABLE_STATIC_ABI_LIBRARY AND LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
+if (LIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY AND LIBCXX_ENABLE_ABI_LINKER_SCRIPT)
     message(FATAL_ERROR "Conflicting options given.
         LIBCXX_ENABLE_STATIC_ABI_LIBRARY cannot be specified with
         LIBCXX_ENABLE_ABI_LINKER_SCRIPT")
@@ -355,19 +402,29 @@ set(LIBCXX_COMPILER    ${CMAKE_CXX_COMPILER})
 set(LIBCXX_SOURCE_DIR  ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBCXX_BINARY_DIR  ${CMAKE_CURRENT_BINARY_DIR})
 set(LIBCXX_BINARY_INCLUDE_DIR "${LIBCXX_BINARY_DIR}/include/c++build")
-if (LLVM_LIBRARY_OUTPUT_INTDIR)
+
+string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
+       ${PACKAGE_VERSION})
+
+if(LLVM_ENABLE_PER_TARGET_RUNTIME_DIR AND NOT APPLE)
+  set(DEFAULT_INSTALL_PREFIX lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/${LLVM_DEFAULT_TARGET_TRIPLE}/)
+  set(DEFAULT_INSTALL_HEADER_PREFIX lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/)
+  set(LIBCXX_LIBRARY_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}/${LLVM_DEFAULT_TARGET_TRIPLE}/lib${LIBCXX_LIBDIR_SUFFIX})
+  set(LIBCXX_HEADER_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION})
+elseif(LLVM_LIBRARY_OUTPUT_INTDIR)
   set(LIBCXX_LIBRARY_DIR ${LLVM_LIBRARY_OUTPUT_INTDIR})
+  set(LIBCXX_HEADER_DIR  ${LLVM_BINARY_DIR})
 else()
   set(LIBCXX_LIBRARY_DIR ${CMAKE_BINARY_DIR}/lib${LIBCXX_LIBDIR_SUFFIX})
 endif()
+
 file(MAKE_DIRECTORY "${LIBCXX_BINARY_INCLUDE_DIR}")
 
-set(LIBCXX_INSTALL_PREFIX "" CACHE STRING
+set(LIBCXX_INSTALL_PREFIX ${DEFAULT_INSTALL_PREFIX} CACHE STRING
     "Define libc++ destination prefix.")
 
-if (NOT LIBCXX_INSTALL_PREFIX MATCHES "^$|.*/")
-  message(FATAL_ERROR "LIBCXX_INSTALL_PREFIX has to end with \"/\".")
-endif()
+set(LIBCXX_INSTALL_HEADER_PREFIX ${DEFAULT_INSTALL_HEADER_PREFIX} CACHE STRING
+    "Define libc++ header destination prefix.")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIBCXX_LIBRARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIBCXX_LIBRARY_DIR})
@@ -600,12 +657,13 @@ if (LIBCXX_STANDALONE_BUILD)
 endif()
 
 # Configuration file flags =====================================================
-if (NOT LIBCXX_ABI_VERSION EQUAL "1")
+if (NOT LIBCXX_ABI_VERSION EQUAL DEFAULT_ABI_VERSION)
   config_define(${LIBCXX_ABI_VERSION} _LIBCPP_ABI_VERSION)
 endif()
 config_define_if(LIBCXX_ABI_UNSTABLE _LIBCPP_ABI_UNSTABLE)
 config_define_if(LIBCXX_ABI_FORCE_ITANIUM _LIBCPP_ABI_FORCE_ITANIUM)
 config_define_if(LIBCXX_ABI_FORCE_MICROSOFT _LIBCPP_ABI_FORCE_MICROSOFT)
+config_define_if(LIBCXX_HIDE_FROM_ABI_PER_TU_BY_DEFAULT _LIBCPP_HIDE_FROM_ABI_PER_TU_BY_DEFAULT)
 
 config_define_if_not(LIBCXX_ENABLE_GLOBAL_FILESYSTEM_NAMESPACE _LIBCPP_HAS_NO_GLOBAL_FILESYSTEM_NAMESPACE)
 config_define_if_not(LIBCXX_ENABLE_STDIN _LIBCPP_HAS_NO_STDIN)
@@ -616,6 +674,7 @@ config_define_if_not(LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTIONS _LIBCPP_HAS_NO_THRE
 
 config_define_if(LIBCXX_HAS_PTHREAD_API _LIBCPP_HAS_THREAD_API_PTHREAD)
 config_define_if(LIBCXX_HAS_EXTERNAL_THREAD_API _LIBCPP_HAS_THREAD_API_EXTERNAL)
+config_define_if(LIBCXX_HAS_WIN32_THREAD_API _LIBCPP_HAS_THREAD_API_WIN32)
 config_define_if(LIBCXX_BUILD_EXTERNAL_THREAD_LIBRARY _LIBCPP_HAS_THREAD_LIBRARY_EXTERNAL)
 config_define_if(LIBCXX_HAS_MUSL_LIBC _LIBCPP_HAS_MUSL_LIBC)
 config_define_if(LIBCXX_NO_VCRUNTIME _LIBCPP_NO_VCRUNTIME)

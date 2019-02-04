@@ -242,11 +242,15 @@ libc++experimental Specific Options
 
 .. option:: LIBCXX_ENABLE_FILESYSTEM:BOOL
 
-  **Default**: ``LIBCXX_ENABLE_EXPERIMENTAL_LIBRARY``
+  **Default**: ``ON``
 
-  Build filesystem as part of libc++experimental.a. This allows filesystem
-  to be disabled without turning off the entire experimental library.
+  Build filesystem as a standalone library libc++fs.a.
 
+.. option:: LIBCXX_INSTALL_FILESYSTEM_LIBRARY:BOOL
+
+  **Default**: ``LIBCXX_ENABLE_FILESYSTEM AND LIBCXX_INSTALL_LIBRARY``
+
+  Install libc++fs.a alongside libc++.
 
 .. _ABI Library Specific Options:
 
@@ -327,6 +331,15 @@ libc++ Feature Options
 
   Use the specified GCC toolchain and standard library when building the native
   stdlib benchmark tests.
+
+.. option:: LIBCXX_HIDE_FROM_ABI_PER_TU_BY_DEFAULT:BOOL
+
+  **Default**: ``OFF``
+
+  Pick the default for whether to constrain ABI-unstable symbols to
+  each individual translation unit. This setting controls whether
+  `_LIBCPP_HIDE_FROM_ABI_PER_TU_BY_DEFAULT` is defined by default --
+  see the documentation of that macro for details.
 
 
 libc++ ABI Feature Options
