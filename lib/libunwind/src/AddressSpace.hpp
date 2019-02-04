@@ -18,7 +18,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if !defined(_LIBUNWIND_IS_BAREMETAL) && !defined(_WIN32)
+#ifndef _LIBUNWIND_USE_DLADDR
+  #if !defined(_LIBUNWIND_IS_BAREMETAL) && !defined(_WIN32)
+    #define _LIBUNWIND_USE_DLADDR 1
+  #else
+    #define _LIBUNWIND_USE_DLADDR 0
+  #endif
+#endif
+
+#if _LIBUNWIND_USE_DLADDR
 #include <dlfcn.h>
 #endif
 
@@ -207,6 +215,7 @@ public:
     return val;
   }
   uintptr_t       getP(pint_t addr);
+  uint64_t        getRegister(pint_t addr);
   static uint64_t getULEB128(pint_t &addr, pint_t end);
   static int64_t  getSLEB128(pint_t &addr, pint_t end);
 
@@ -222,6 +231,14 @@ public:
 
 inline uintptr_t LocalAddressSpace::getP(pint_t addr) {
 #if __SIZEOF_POINTER__ == 8
+  return get64(addr);
+#else
+  return get32(addr);
+#endif
+}
+
+inline uint64_t LocalAddressSpace::getRegister(pint_t addr) {
+#if __SIZEOF_POINTER__ == 8 || defined(__mips64)
   return get64(addr);
 #else
   return get32(addr);
@@ -571,7 +588,7 @@ inline bool LocalAddressSpace::findOtherFDE(pint_t targetAddr, pint_t &fde) {
 inline bool LocalAddressSpace::findFunctionName(pint_t addr, char *buf,
                                                 size_t bufLen,
                                                 unw_word_t *offset) {
-#if !defined(_LIBUNWIND_IS_BAREMETAL) && !defined(_WIN32)
+#if _LIBUNWIND_USE_DLADDR
   Dl_info dyldInfo;
   if (dladdr((void *)addr, &dyldInfo)) {
     if (dyldInfo.dli_sname != NULL) {
@@ -604,6 +621,7 @@ public:
   uint32_t  get32(pint_t addr);
   uint64_t  get64(pint_t addr);
   pint_t    getP(pint_t addr);
+  uint64_t  getRegister(pint_t addr);
   uint64_t  getULEB128(pint_t &addr, pint_t end);
   int64_t   getSLEB128(pint_t &addr, pint_t end);
   pint_t    getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
@@ -640,7 +658,12 @@ typename P::uint_t RemoteAddressSpace<P>::getP(pint_t addr) {
 }
 
 template <typename P>
-uint64_t RemoteAddressSpace<P>::getULEB128(pint_t &addr, pint_t end) {
+typename P::uint_t OtherAddressSpace<P>::getRegister(pint_t addr) {
+  return P::getRegister(*(uint64_t *)localCopy(addr));
+}
+
+template <typename P>
+uint64_t OtherAddressSpace<P>::getULEB128(pint_t &addr, pint_t end) {
   uintptr_t size = (end - addr);
   LocalAddressSpace::pint_t laddr = (LocalAddressSpace::pint_t) localCopy(addr);
   LocalAddressSpace::pint_t sladdr = laddr;
