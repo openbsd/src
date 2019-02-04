@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2019/02/04 18:53:19 jasper Exp $
+#	$OpenBSD: Makefile,v 1.61 2019/02/04 20:18:27 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -92,6 +92,8 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		variables-3 \
 		variables-4 \
 		variables-5 \
+		variables-6 \
+		variables-7 \
 		filter-system-dirs-1 \
 		filter-system-dirs-2 \
 		filter-system-dirs-3 \
@@ -629,6 +631,18 @@ variables-5:
 	# Test --variable
 	@echo ' -lfoo-1' > ${WANT}
 	@${VPCONFIG} --libs variables
+	@diff -u ${WANT} ${GOT}
+
+variables-6:
+	# Test variable overriding from environment
+	@echo ' -lfoo-2' > ${WANT}
+	@PKG_CONFIG_VARIABLES_FOO_API_VERSION=2 ${VPCONFIG} --libs variables
+	@diff -u ${WANT} ${GOT}
+
+variables-7:
+	# Ensure variable overriding only uses uppercase keys
+	@echo ' -lfoo-1' > ${WANT}
+	@PKG_CONFIG_variables_foo_api_version=2 ${VPCONFIG} --libs variables
 	@diff -u ${WANT} ${GOT}
 
 filter-system-dirs-1:
