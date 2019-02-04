@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.55 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.56 2019/02/04 07:04:28 anton Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
 			return (0);
 
 		if (--suptr->un_cnt == 0) {
+			*supptr = NULL;
 			SLIST_REMOVE(&semu_list, suptr, sem_undo, un_next);
 			pool_put(&semu_pool, suptr);
 			semutot--;
