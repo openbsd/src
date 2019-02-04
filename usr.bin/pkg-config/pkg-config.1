@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.32 2019/02/04 18:51:29 jasper Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.33 2019/02/04 20:18:11 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -182,6 +182,8 @@ If set
 uses the specified value for
 .Em pc_top_builddir
 instead of $(top_builddir).
+.It Ev PKG_CONFIG_$PACKAGE_$VARIABLE
+Override the $VARIABLE in $PACKAGE with the given value.
 .El
 .Sh EXIT STATUS
 .Ex -std pkg-config

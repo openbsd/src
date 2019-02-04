@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.91 2019/02/04 18:51:29 jasper Exp $
+# $OpenBSD: pkg-config,v 1.92 2019/02/04 20:18:11 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -46,7 +46,7 @@ my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
-my $version = '0.29.0'; # pretend to be this version of pkgconfig
+my $version = '0.29.1'; # pretend to be this version of pkgconfig
 
 my %configs = ();
 setup_self();
@@ -289,6 +289,21 @@ sub handle_config
 
 	my $get_props = sub {
 		my $property = shift;
+		my $pkg;
+
+		# See if there's anyting in the environment that we need to take into account.
+		($pkg = $p) =~ s/(^.*\/)?(.*?)\.pc$/$2/g;
+		$pkg = uc($pkg);
+
+		if (grep {/PKG_CONFIG_${pkg}.*/} keys %ENV) {
+			# Now that we know we have something to look for, do the inefficient
+			# iteration.
+			while (my ($k, $v) = each %ENV) {
+				if ($k =~ /^PKG_CONFIG_${pkg}_(\w+)/) {
+					$variables->{lc($1)} = $v;
+				}
+			}
+		}
 
 		my $deps = $cfg->get_property($property, $variables);
 		if (defined $deps) {
