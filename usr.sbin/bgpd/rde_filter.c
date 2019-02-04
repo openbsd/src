@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.116 2018/12/19 15:26:42 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.117 2019/02/04 18:53:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -127,6 +127,15 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 			prepend = set->action.prepend;
 			np = aspath_prepend(state->aspath.aspath, prep_as,
 			    prepend, &nl);
+			aspath_put(state->aspath.aspath);
+			state->aspath.aspath = aspath_get(np, nl);
+			free(np);
+			break;
+		case ACTION_SET_AS_OVERRIDE:
+			if (from == NULL)
+				break;
+			 np = aspath_override(state->aspath.aspath,
+			     from->conf.remote_as, from->conf.local_as, &nl);
 			aspath_put(state->aspath.aspath);
 			state->aspath.aspath = aspath_get(np, nl);
 			free(np);
@@ -575,6 +584,10 @@ filterset_equal(struct filter_set_head *ah, struct filter_set_head *bh)
 			    a->action.prepend == b->action.prepend)
 				continue;
 			break;
+		case ACTION_SET_AS_OVERRIDE:
+			if (a->type == b->type)
+				continue;
+			break;
 		case ACTION_SET_LOCALPREF:
 		case ACTION_SET_MED:
 		case ACTION_SET_WEIGHT:
@@ -674,6 +687,8 @@ filterset_name(enum action_types type)
 		return ("prepend-self");
 	case ACTION_SET_PREPEND_PEER:
 		return ("prepend-peer");
+	case ACTION_SET_AS_OVERRIDE:
+		return ("as-override");
 	case ACTION_SET_NEXTHOP:
 	case ACTION_SET_NEXTHOP_REJECT:
 	case ACTION_SET_NEXTHOP_BLACKHOLE:

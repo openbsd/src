@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.368 2018/12/30 13:53:07 denis Exp $ */
+/*	$OpenBSD: parse.y,v 1.369 2019/02/04 18:53:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -201,7 +201,7 @@ typedef struct {
 %token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY
-%token	DEMOTE ENFORCE NEIGHBORAS REFLECTOR DEPEND DOWN
+%token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG ROUTECOLL TRANSPARENT
 %token	TCP MD5SIG PASSWORD KEY TTLSECURITY
@@ -1444,6 +1444,21 @@ peeropts	: REMOTEAS as4number	{
 			else
 				curpeer->conf.enforce_local_as = ENFORCE_AS_OFF;
 		}
+		| ASOVERRIDE yesno {
+			if ($2) {
+				struct filter_rule	*r;
+				struct filter_set	*s;
+
+				if ((s = calloc(1, sizeof(struct filter_set)))
+				    == NULL)
+					fatal(NULL);
+				s->type = ACTION_SET_AS_OVERRIDE;
+
+				r = get_rule(s->type);
+				if (merge_filterset(&r->set, s) == -1)
+					YYERROR;
+			}
+		}
 		| MAXPREFIX NUMBER restart {
 			if ($2 < 0 || $2 > UINT_MAX) {
 				yyerror("bad maximum number of prefixes");
@@ -2596,6 +2611,11 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			$$->type = ACTION_SET_PREPEND_PEER;
 			$$->action.prepend = $2;
 		}
+		| ASOVERRIDE			{
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_AS_OVERRIDE;
+		}
 		| PFTABLE STRING		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
@@ -2802,6 +2822,7 @@ lookup(char *s)
 		{ "announce",		ANNOUNCE},
 		{ "any",		ANY},
 		{ "as-4byte",		AS4BYTE },
+		{ "as-override",	ASOVERRIDE},
 		{ "as-set",		ASSET },
 		{ "blackhole",		BLACKHOLE},
 		{ "capabilities",	CAPABILITIES},

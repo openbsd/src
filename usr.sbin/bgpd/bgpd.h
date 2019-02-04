@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.363 2019/01/20 23:27:48 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.364 2019/02/04 18:53:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -966,6 +966,7 @@ enum action_types {
 	ACTION_SET_RELATIVE_WEIGHT,
 	ACTION_SET_PREPEND_SELF,
 	ACTION_SET_PREPEND_PEER,
+	ACTION_SET_AS_OVERRIDE,
 	ACTION_SET_NEXTHOP,
 	ACTION_SET_NEXTHOP_REJECT,
 	ACTION_SET_NEXTHOP_BLACKHOLE,

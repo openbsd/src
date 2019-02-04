@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.208 2019/01/21 02:07:56 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.209 2019/02/04 18:53:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -370,6 +370,8 @@ int		 aspath_loopfree(struct aspath *, u_int32_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
 int		 aspath_match(struct aspath *, struct filter_as *, u_int32_t);
 u_char		*aspath_prepend(struct aspath *, u_int32_t, int, u_int16_t *);
+u_char		*aspath_override(struct aspath *, u_int32_t, u_int32_t,
+		    u_int16_t *);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
 
 int	 community_match(struct rde_aspath *, struct filter_community *,

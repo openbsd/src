@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.115 2018/12/19 15:26:42 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.116 2019/02/04 18:53:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -982,6 +982,9 @@ aspath_match(struct aspath *aspath, struct filter_as *f, u_int32_t neighas)
 			if (as_compare(f, as, neighas))
 				return (1);
 		}
+
+		if (seg_size > len)
+			fatalx("%s: would overflow", __func__);
 	}
 	return (0);
 }
@@ -1063,6 +1066,46 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 	return (p);
 }
 
+/*
+ * Returns a new aspath where neighbor_as is replaced by local_as.
+ */
+u_char *
+aspath_override(struct aspath *asp, u_int32_t neighbor_as, u_int32_t local_as,
+     u_int16_t *len)
+{
+	u_char		*p, *seg, *nseg;
+	u_int32_t	 as;
+	u_int16_t	 l, seg_size;
+	u_int8_t	 i, seg_len, seg_type;
+
+	p = malloc(asp->len);
+	if (p == NULL)
+		fatal("aspath_override");
+
+	seg = asp->data;
+	nseg = p;
+	for (l = asp->len; l > 0; l -= seg_size, seg += seg_size) {
+		*nseg++ = seg_type = seg[0];
+		*nseg++ = seg_len = seg[1];
+		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+
+		for (i = 0; i < seg_len; i++) {
+			as = aspath_extract(seg, i);
+			if (as == neighbor_as)
+				as = local_as;
+			as = htonl(as);
+			memcpy(nseg, &as, sizeof(as));
+			nseg += sizeof(as);
+		}
+
+		if (seg_size > l)
+			fatalx("%s: would overflow", __func__);
+	}
+
+	*len = asp->len;
+	return (p);
+}
+
 int
 aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 {
@@ -1098,6 +1141,9 @@ aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 				count = 1;
 			lastas = as;
 		}
+
+		if (seg_size > len)
+			fatalx("%s: would overflow", __func__);
 	}
 	return (0);
 }
