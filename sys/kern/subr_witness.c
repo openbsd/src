@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.27 2019/01/29 14:07:15 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.28 2019/02/04 13:28:55 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -475,7 +475,7 @@ witness_initialize(void)
 {
 	struct lock_object *lock;
 	struct witness *w;
-	int i;
+	int i, s;
 
 	w_data = (void *)uvm_pageboot_alloc(sizeof(struct witness) *
 	    witness_count);
@@ -510,8 +510,10 @@ witness_initialize(void)
 		    (witness_count + 1));
 	}
 
+	s = splhigh();
 	for (i = 0; i < LOCK_CHILDCOUNT; i++)
 		witness_lock_list_free(&w_locklistdata[i]);
+	splx(s);
 	witness_init_hash_tables();
 	witness_spin_warn = 1;
 
@@ -1371,7 +1373,7 @@ void
 witness_thread_exit(struct proc *p)
 {
 	struct lock_list_entry *lle;
-	int i, n;
+	int i, n, s;
 
 	lle = p->p_sleeplocks;
 	if (lle == NULL || panicstr != NULL || db_active)
@@ -1390,7 +1392,9 @@ witness_thread_exit(struct proc *p)
 		panic("thread %p cannot exit while holding sleeplocks", p);
 	}
 	KASSERT(lle->ll_next == NULL);
+	s = splhigh();
 	witness_lock_list_free(lle);
+	splx(s);
 }
 
 /*
@@ -1770,21 +1774,19 @@ witness_lock_list_get(void)
 {
 	struct lock_list_entry *lle;
 	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
-	int s;
 
 	if (witness_watch < 0)
 		return (NULL);
 
-	s = splhigh();
+	splassert(IPL_HIGH);
+
 	if (wcpu->wc_lle_count > 0) {
 		lle = wcpu->wc_lle_cache;
 		wcpu->wc_lle_cache = lle->ll_next;
 		wcpu->wc_lle_count--;
-		splx(s);
 		memset(lle, 0, sizeof(*lle));
 		return (lle);
 	}
-	splx(s);
 
 	mtx_enter(&w_mtx);
 	lle = w_lock_list_free;
@@ -1804,17 +1806,15 @@ static void
 witness_lock_list_free(struct lock_list_entry *lle)
 {
 	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
-	int s;
 
-	s = splhigh();
+	splassert(IPL_HIGH);
+
 	if (wcpu->wc_lle_count < WITNESS_LLE_CACHE_MAX) {
 		lle->ll_next = wcpu->wc_lle_cache;
 		wcpu->wc_lle_cache = lle;
 		wcpu->wc_lle_count++;
-		splx(s);
 		return;
 	}
-	splx(s);
 
 	mtx_enter(&w_mtx);
 	lle->ll_next = w_lock_list_free;
