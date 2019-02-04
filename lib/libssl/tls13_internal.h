@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.15 2019/01/21 13:45:57 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.16 2019/02/04 16:18:15 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -21,6 +21,7 @@
 #define HEADER_TLS13_INTERNAL_H
 
 #include <openssl/evp.h>
+#include <openssl/ssl.h>
 
 #include "bytestring.h"
 
@@ -151,12 +152,18 @@ struct tls13_ctx {
 	uint8_t	mode;
 	struct tls13_handshake_stage handshake_stage;
 
+	const EVP_AEAD *aead;
+	const EVP_MD *hash;
+
 	struct tls13_record_layer *rl;
 	struct tls13_handshake_msg *hs_msg;
 };
 
 struct tls13_ctx *tls13_ctx_new(int mode);
 void tls13_ctx_free(struct tls13_ctx *ctx);
+
+const EVP_AEAD *tls13_cipher_aead(const SSL_CIPHER *cipher);
+const EVP_MD *tls13_cipher_hash(const SSL_CIPHER *cipher);
 
 /*
  * Legacy interfaces.

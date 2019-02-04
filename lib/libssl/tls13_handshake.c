@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.22 2019/01/23 23:29:56 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.23 2019/02/04 16:18:15 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -463,14 +463,6 @@ tls13_client_key_update_send(struct tls13_ctx *ctx)
 int
 tls13_client_key_update_recv(struct tls13_ctx *ctx)
 {
-	return 0;
-}
-
-int
-tls13_server_hello_recv(struct tls13_ctx *ctx)
-{
-	ctx->handshake_stage.hs_type |= NEGOTIATED;
-
 	return 0;
 }
 
