@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.27 2018/12/22 14:42:29 kettenis Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.28 2019/02/04 10:33:56 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1451,13 +1451,17 @@ bwfm_sdio_txctl(struct bwfm_softc *bwfm, void *arg)
 	struct bwfm_proto_bcdc_ctl *ctl = arg;
 	struct mbuf *m;
 
-	KASSERT(ctl->len <= MLEN);
+	KASSERT(ctl->len <= MCLBYTES);
 
 	MGET(m, M_DONTWAIT, MT_CONTROL);
-	if (m == NULL) {
-		free(ctl->buf, M_TEMP, ctl->len);
-		free(ctl, M_TEMP, sizeof(*ctl));
-		return 1;
+	if (m == NULL)
+		goto fail;
+	if (ctl->len > MLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_freem(m);
+			goto fail;
+		}
 	}
 	memcpy(mtod(m, char *), ctl->buf, ctl->len);
 	m->m_len = ctl->len;
@@ -1466,6 +1470,11 @@ bwfm_sdio_txctl(struct bwfm_softc *bwfm, void *arg)
 	ml_enqueue(&sc->sc_tx_queue, m);
 	task_add(systq, &sc->sc_task);
 	return 0;
+
+fail:
+	free(ctl->buf, M_TEMP, ctl->len);
+	free(ctl, M_TEMP, sizeof(*ctl));
+	return 1;
 }
 
 #ifdef BWFM_DEBUG
