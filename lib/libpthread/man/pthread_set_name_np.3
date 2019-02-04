@@ -1,6 +1,6 @@
-.\" $OpenBSD: pthread_set_name_np.3,v 1.6 2014/03/06 17:42:25 jmc Exp $
+.\" $OpenBSD: pthread_set_name_np.3,v 1.7 2019/02/04 17:18:08 tedu Exp $
 .\" David Leonard <d@openbsd.org>, 1999. Public domain.
-.Dd $Mdocdate: March 6 2014 $
+.Dd $Mdocdate: February 4 2019 $
 .Dt PTHREAD_SET_NAME_NP 3
 .Os
 .Sh NAME
@@ -11,6 +11,8 @@
 .In pthread_np.h
 .Ft void
 .Fn pthread_set_name_np "pthread_t thread" "const char *name"
+.Ft void
+.Fn pthread_get_name_np "pthread_t thread" "char *name" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn pthread_set_name_np
@@ -26,6 +28,11 @@ signal.
 The string pointed to by
 .Fa name
 is copied, and so need not be valid for the life of the thread.
+.Fn pthread_get_name_np
+function retrieves
+.Fa name
+associated with
+.Fa thread .
 .Sh SEE ALSO
 .Xr pthreads 3
 .Sh STANDARDS
