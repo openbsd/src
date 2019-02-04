@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2018/05/18 12:23:20 jasper Exp $
+#	$OpenBSD: Makefile,v 1.60 2019/02/04 18:53:19 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -82,6 +82,9 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		find-config-3 \
 		find-config-4 \
 		find-config-5 \
+		validate-1 \
+		validate-2 \
+		validate-3 \
 		variable-get-1 \
 		variable-set \
 		variables-1 \
@@ -567,6 +570,23 @@ find-config-4:
 find-config-5:
 	# Multiple existential tests combined (with space)
 	@${VPCONFIG} --exists vers1 vers2
+
+validate-1:
+	# Ensure it doesn't process dependencies
+	@${VPCONFIG} --validate missing-req
+
+validate-2:
+	# Test for empty files
+	@echo "Package file '${.CURDIR}/pcdir//corrupt3.pc' appears to be empty" > ${WANT}
+	@echo "Package 'corrupt3' has no Name: field" >> ${WANT}
+	@! ${VPCONFIG} --validate corrupt3
+	@diff -u ${WANT} ${GOT}
+
+validate-3:
+	# Test for missing fields
+	@echo "Package 'corrupt2' has no Name: field" > ${WANT}
+	@! ${VPCONFIG} --validate corrupt2
+	@diff -u ${WANT} ${GOT}
 
 variable-get-1:
 	# Test --variable
