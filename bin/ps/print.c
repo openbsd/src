@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.70 2018/06/12 01:58:05 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.71 2019/02/05 02:17:32 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -352,7 +352,7 @@ tdev(const struct kinfo_proc *kp, VARENT *ve)
 		(void)printf("%*s", v->width, "??");
 	else {
 		(void)snprintf(buff, sizeof(buff),
-		    "%d/%d", major(dev), minor(dev));
+		    "%u/%u", major(dev), minor(dev));
 		(void)printf("%*s", v->width, buff);
 	}
 }

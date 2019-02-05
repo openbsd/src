@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.120 2018/09/10 06:40:06 yasuoka Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.121 2019/02/05 02:17:32 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -566,7 +566,7 @@ ufs_print(struct vnode *vp)
 	if (S_ISCHR(ip->i_ffs1_mode) || S_ISBLK(ip->i_ffs1_mode))
 		if (usenumflag ||
 		    ((name = devname(ip->i_ffs1_rdev, type)) == NULL))
-			(void)printf("   %2d,%-2d",
+			(void)printf("   %2u,%-2u",
 			    major(ip->i_ffs1_rdev), minor(ip->i_ffs1_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -666,7 +666,7 @@ nfs_print(struct vnode *vp)
 	if (S_ISCHR(np->n_vattr.va_mode) || S_ISBLK(np->n_vattr.va_mode))
 		if (usenumflag ||
 		    ((name = devname(np->n_vattr.va_rdev, type)) == NULL))
-			(void)printf("   %2d,%-2d", major(np->n_vattr.va_rdev),
+			(void)printf("   %2u,%-2u", major(np->n_vattr.va_rdev),
 			    minor(np->n_vattr.va_rdev));
 		else
 			(void)printf(" %7s", name);
@@ -974,7 +974,7 @@ ttyprt(struct itty *tp)
 	int i, j;
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
-		(void)printf("%2d,%-3d   ", major(tp->t_dev), minor(tp->t_dev));
+		(void)printf("%2u,%-3u   ", major(tp->t_dev), minor(tp->t_dev));
 	else
 		(void)printf("%7s ", name);
 	(void)printf("%3d %4d ", tp->t_rawq_c_cc, tp->t_canq_c_cc);
@@ -1146,7 +1146,7 @@ swapmode(void)
 
 		if (!totalflag) {
 			if (usenumflag)
-				(void)printf("%2d,%-2d       %*d ",
+				(void)printf("%2u,%-2u       %*d ",
 				    major(swdev[i].se_dev),
 				    minor(swdev[i].se_dev),
 				    hlen, swdev[i].se_nblks / bdiv);

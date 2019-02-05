@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.37 2016/08/16 16:09:24 krw Exp $	*/
+/*	$OpenBSD: print.c,v 1.38 2019/02/05 02:17:32 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ printlong(DISPLAY *dp)
 		if (f_flags)
 			(void)printf("%-*s ", dp->s_flags, np->flags);
 		if (S_ISCHR(sp->st_mode) || S_ISBLK(sp->st_mode))
-			(void)printf("%3d, %3d ",
+			(void)printf("%3u, %3u ",
 			    major(sp->st_rdev), minor(sp->st_rdev));
 		else if (dp->bcfile)
 			(void)printf("%*s%*lld ",

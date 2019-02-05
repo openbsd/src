@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.98 2019/01/28 17:49:50 martijn Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.99 2019/02/05 02:17:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -467,7 +467,7 @@ vtrans(struct kinfo_file *kf)
 	}
 
 	if (nflg)
-		(void)printf(" %2ld,%-2ld", (long)major(kf->va_fsid),
+		(void)printf(" %2lu,%-2lu", (long)major(kf->va_fsid),
 		    (long)minor(kf->va_fsid));
 	else if (!(kf->v_flag & VCLONE))
 		(void)printf(" %-8s", kf->f_mntonname);
@@ -497,7 +497,7 @@ vtrans(struct kinfo_file *kf)
 
 		if (nflg || ((name = devname(kf->va_rdev,
 		    kf->v_type == VCHR ?  S_IFCHR : S_IFBLK)) == NULL))
-			printf("   %2d,%-3d", major(kf->va_rdev), minor(kf->va_rdev));
+			printf("   %2u,%-3u", major(kf->va_rdev), minor(kf->va_rdev));
 		else
 			printf("  %7s", name);
 		if (oflg)

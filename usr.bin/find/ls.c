@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.17 2015/03/15 00:41:28 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.18 2019/02/05 02:17:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,7 +66,7 @@ printlong(char *name, char *accpath, struct stat *sb)
 	    NAME_WIDTH, UT_NAMESIZE, group_from_gid(sb->st_gid, 0));
 
 	if (S_ISCHR(sb->st_mode) || S_ISBLK(sb->st_mode))
-		(void)printf("%3d, %3d ", major(sb->st_rdev),
+		(void)printf("%3u, %3u ", major(sb->st_rdev),
 		    minor(sb->st_rdev));
 	else
 		(void)printf("%8lld ", (long long)sb->st_size);

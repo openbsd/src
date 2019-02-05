@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdbutil.c,v 1.19 2018/09/16 02:43:11 millert Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.20 2019/02/05 02:17:32 deraadt Exp $	*/
 /*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
@@ -96,11 +96,11 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 		puts("regular file");
 		break;
 	case IFBLK:
-		printf("block special (%d,%d)",
+		printf("block special (%u,%u)",
 		    (int)major(DIP(dp, di_rdev)), (int)minor(DIP(dp, di_rdev)));
 		break;
 	case IFCHR:
-		printf("character special (%d,%d)",
+		printf("character special (%u,%u)",
 		    (int)major(DIP(dp, di_rdev)), (int)minor(DIP(dp, di_rdev)));
 		break;
 	case IFLNK:

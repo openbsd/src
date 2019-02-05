@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.64 2018/03/31 17:26:13 otto Exp $ */
+/*	$OpenBSD: procmap.c,v 1.65 2019/02/05 02:17:32 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -733,7 +733,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    vme->advice);
 		if (verbose) {
 			if (inode)
-				printf(" %d,%d %llu",
+				printf(" %u,%u %llu",
 				    major(dev), minor(dev),
 				    (unsigned long long)inode);
 			if (name[0])
@@ -769,7 +769,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    vme->protection, vme->max_protection,
 		    vme->inheritance, vme->wired_count, vme->advice);
 		if (inode && verbose)
-			printf("\t(dev=%d,%d ino=%llu [%s] [%p])\n",
+			printf("\t(dev=%u,%u ino=%llu [%s] [%p])\n",
 			    major(dev), minor(dev), (unsigned long long)inode,
 			    inode ? name : "", P(vp));
 		else if (name[0] == ' ' && verbose)
@@ -805,7 +805,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		}
 
 		sz = (size_t)((vme->end - vme->start) / 1024);
-		printf("%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02d:%02d %7llu - %s",
+		printf("%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s",
 		    (int)sizeof(void *) * 2, vme->start, (int)sizeof(void *) * 2,
 		    vme->end - (vme->start != vme->end ? 1 : 0), (unsigned long)sz,
 		    (int)sizeof(void *) * 2, (unsigned long)vme->offset,
@@ -892,7 +892,7 @@ findname(kvm_t *kd, struct kbit *vmspace,
 			if (name != NULL)
 				snprintf(buf, sizeof(buf), "/dev/%s", name);
 			else
-				snprintf(buf, sizeof(buf), "  [ device %d,%d ]",
+				snprintf(buf, sizeof(buf), "  [ device %u,%u ]",
 				    major(dev), minor(dev));
 			name = buf;
 		} else if (UVM_OBJ_IS_AOBJ(D(uvm_obj, uvm_object)))
