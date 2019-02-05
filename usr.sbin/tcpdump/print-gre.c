@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.21 2018/07/06 07:13:21 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.22 2019/02/05 10:57:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -67,6 +67,8 @@
 #define NVGRE_FLOWID_SHIFT	0
 
 #define GRE_WCCP	0x883e
+#define ERSPAN_II	0x88be
+#define ERSPAN_III	0x22eb
 
 struct wccp_redirect {
 	uint8_t		flags;
@@ -81,6 +83,8 @@ void gre_print_0(const u_char *, u_int);
 void gre_print_1(const u_char *, u_int);
 void gre_print_pptp(const u_char *, u_int, uint16_t);
 void gre_print_eoip(const u_char *, u_int, uint16_t);
+void gre_print_erspan2(const u_char *, u_int);
+void gre_print_erspan3(const u_char *, u_int);
 void gre_sre_print(u_int16_t, u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_ip_print(u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_asn_print(u_int8_t, u_int8_t, const u_char *, u_int);
@@ -260,6 +264,9 @@ gre_print_0(const u_char *p, u_int length)
 		break;
 	case ETHERTYPE_TRANSETHER:
 		ether_tryprint(p, length, 0);
+		break;
+	case ERSPAN_II:
+		gre_print_erspan2(p, length);
 		break;
 	default:
 		printf("unknown-proto-%04x", proto);
@@ -455,6 +462,102 @@ gre_print_eoip(const u_char *p, u_int length, uint16_t flags)
 
 trunc:
 	printf("[|eoip]");
+}
+
+#define ERSPAN2_VER_SHIFT	28
+#define ERSPAN2_VER_MASK	(0xfU << ERSPAN2_VER_SHIFT)
+#define ERSPAN2_VER		(0x1U << ERSPAN2_VER_SHIFT)
+#define ERSPAN2_VLAN_SHIFT	16
+#define ERSPAN2_VLAN_MASK	(0xfffU << ERSPAN2_VLAN_SHIFT)
+#define ERSPAN2_COS_SHIFT	13
+#define ERSPAN2_COS_MASK	(0x7U << ERSPAN2_COS_SHIFT)
+#define ERSPAN2_EN_SHIFT	11
+#define ERSPAN2_EN_MASK		(0x3U << ERSPAN2_EN_SHIFT)
+#define ERSPAN2_EN_NONE		(0x0U << ERSPAN2_EN_SHIFT)
+#define ERSPAN2_EN_ISL		(0x1U << ERSPAN2_EN_SHIFT)
+#define ERSPAN2_EN_DOT1Q	(0x2U << ERSPAN2_EN_SHIFT)
+#define ERSPAN2_EN_VLAN		(0x3U << ERSPAN2_EN_SHIFT)
+#define ERSPAN2_T_SHIFT		10
+#define ERSPAN2_T_MASK		(0x1U << ERSPAN2_T_SHIFT)
+#define ERSPAN2_SID_SHIFT	0
+#define ERSPAN2_SID_MASK	(0x3ffU << ERSPAN2_SID_SHIFT)
+
+#define ERSPAN2_INDEX_SHIFT	0
+#define ERSPAN2_INDEX_MASK	(0xfffffU << ERSPAN2_INDEX_SHIFT)
+
+void
+gre_print_erspan2(const u_char *bp, u_int len)
+{
+	uint32_t hdr, ver, vlan, cos, en, sid, index;
+	u_int l;
+
+	printf("erspan");
+
+	l = snapend - bp;
+	if (l < sizeof(hdr))
+		goto trunc;
+
+	hdr = EXTRACT_32BITS(bp);
+	bp += sizeof(hdr);
+	l -= sizeof(hdr);
+	len -= sizeof(hdr);
+
+	ver = hdr & ERSPAN2_VER_MASK;
+	if (ver != ERSPAN2_VER) {
+		ver >>= ERSPAN2_VER_SHIFT;
+		printf(" erspan-unknown-version-%x", ver);
+		return;
+	}
+
+	if (vflag)
+		printf(" II");
+
+	sid = (hdr & ERSPAN2_SID_MASK) >> ERSPAN2_SID_SHIFT;
+	printf(" session %u", sid);
+
+	en = hdr & ERSPAN2_EN_MASK;
+	vlan = (hdr & ERSPAN2_VLAN_MASK) >> ERSPAN2_VLAN_SHIFT;
+	switch (en) {
+	case ERSPAN2_EN_NONE:
+		break;
+	case ERSPAN2_EN_ISL:
+		printf(" isl %u", vlan);
+		break;
+	case ERSPAN2_EN_DOT1Q:
+		printf(" vlan %u", vlan);
+		break;
+	case ERSPAN2_EN_VLAN:
+		printf(" vlan payload");
+		break;
+	}
+
+	if (vflag) {
+		cos = (hdr & ERSPAN2_COS_MASK) >> ERSPAN2_COS_SHIFT;
+		printf(" cos %u", cos);
+
+		if (hdr & ERSPAN2_T_MASK)
+			printf(" truncated");
+	}
+
+	if (l < sizeof(hdr))
+		goto trunc;
+
+	hdr = EXTRACT_32BITS(bp);
+	bp += sizeof(hdr);
+	l -= sizeof(hdr);
+	len -= sizeof(hdr);
+
+	if (vflag) {
+		index = (hdr & ERSPAN2_INDEX_MASK) >> ERSPAN2_INDEX_SHIFT;
+		printf(" index %u", index);
+	}
+
+	printf(": ");
+	ether_tryprint(bp, len, 0);
+	return;
+
+trunc:
+	printf(" [|erspan]");
 }
 
 void
