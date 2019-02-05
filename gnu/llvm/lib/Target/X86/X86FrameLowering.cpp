@@ -1750,7 +1750,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     if (X86FI->getSaveArgSize()) {
       // LEAVE is effectively mov rbp,rsp; pop rbp
-      BuildMI(MBB, MBBI, DL, TII.get(X86::LEAVE64), MachineFramePtr)
+      BuildMI(MBB, MBBI, DL, TII.get(X86::LEAVE64))
         .setMIFlag(MachineInstr::FrameDestroy);
     } else {
       // Pop EBP.
