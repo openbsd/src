@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.33 2019/02/05 19:38:37 millert Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.34 2019/02/05 20:57:30 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -558,7 +558,7 @@ p_simp_re(struct parse *p,
 		/* FALLTHROUGH */
 	default:
 		if (p->error != 0)
-			return;
+			return(0);	/* Definitely not $... */
 		ordinary(p, (char)c);
 		break;
 	}
