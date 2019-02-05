@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.14 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.15 2019/02/05 19:32:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1342,9 +1342,11 @@ check_captive_portal(int timer_reset)
 	if ((err = ub_resolve_event(res->ctx,
 	    resolver_conf->captive_portal_host, LDNS_RR_TYPE_A,
 	    LDNS_RR_CLASS_IN, res, check_captive_portal_resolve_done,
-	    NULL)) != 0)
+	    NULL)) != 0) {
 		log_warn("%s: ub_resolve_async: err: %d, %s",
 		    __func__, err, ub_strerror(err));
+		resolver_unref(res);
+	}
 
 }
 
