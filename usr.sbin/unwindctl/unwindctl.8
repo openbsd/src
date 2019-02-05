@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwindctl.8,v 1.3 2019/02/04 07:36:30 jmc Exp $
+.\"	$OpenBSD: unwindctl.8,v 1.4 2019/02/05 20:41:12 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 4 2019 $
+.Dd $Mdocdate: February 5 2019 $
 .Dt UNWINDCTL 8
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ Enable very noisy debug logging.
 Reload the configuration file.
 .It Cm recheck portal
 Run the captive portal detection.
-.It Cm status Op Cm recursor dhcp static
+.It Cm status Op Cm recursor | dhcp | DoT | static
 Show a status summary.
 If one of
 .Cm recursor ,
@@ -63,7 +63,7 @@ If one of
 .Cm DoT ,
 or
 .Cm static
-is given more detailed information is given,
+is specified, more detailed information about that type of resolver is given
 including reasons why DNSSEC validation might be failing and a query time
 histogram.
 .El
