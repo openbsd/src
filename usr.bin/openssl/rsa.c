@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: rsa.c,v 1.11 2019/02/05 12:45:47 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,6 +58,7 @@
 
 #include <openssl/opensslconf.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -238,6 +239,9 @@ static void
 show_ciphers(const OBJ_NAME *name, void *arg)
 {
 	static int n;
+
+	if (!islower((unsigned char)*name->name))
+		return;
 
 	fprintf(stderr, " -%-24s%s", name->name, (++n % 3 ? "" : "\n"));
 }

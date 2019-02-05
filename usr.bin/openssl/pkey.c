@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.11 2019/02/05 11:26:21 inoguchi Exp $ */
+/* $OpenBSD: pkey.c,v 1.12 2019/02/05 12:45:47 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -56,6 +56,7 @@
  *
  */
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -184,6 +185,9 @@ static void
 show_ciphers(const OBJ_NAME *name, void *arg)
 {
 	static int n;
+
+	if (!islower((unsigned char)*name->name))
+		return;
 
 	fprintf(stderr, " -%-24s%s", name->name, (++n % 3 ? "" : "\n"));
 }
