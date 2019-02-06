@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.162 2018/12/23 22:03:17 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.163 2019/02/06 22:18:33 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 23 2018 $
+.Dd $Mdocdate: February 6 2019 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -516,7 +516,7 @@ in the alphabetical
 .Bl -column "Brq, Bro, Brc" description
 .It Ic \&Em Ta italic font or underline (emphasis) (>0 arguments)
 .It Ic \&Sy Ta boldface font (symbolic) (>0 arguments)
-.It Ic \&No Ta return to roman font (normal) (no arguments)
+.It Ic \&No Ta return to roman font (normal) (>0 arguments)
 .It Ic \&Bf , \&Ef Ta font block: Fl Ar type | Cm \&Em | \&Li | \&Sy
 .El
 .Ss Physical enclosures
@@ -2904,7 +2904,7 @@ then the macro accepts an arbitrary number of arguments.
 .It Ic \&Ms  Ta    Yes      Ta    Yes      Ta    >0
 .It Ic \&Mt  Ta    Yes      Ta    Yes      Ta    >0
 .It Ic \&Nm  Ta    Yes      Ta    Yes      Ta    n
-.It Ic \&No  Ta    Yes      Ta    Yes      Ta    0
+.It Ic \&No  Ta    Yes      Ta    Yes      Ta    >0
 .It Ic \&Ns  Ta    Yes      Ta    Yes      Ta    0
 .It Ic \&Nx  Ta    Yes      Ta    Yes      Ta    n
 .It Ic \&Os  Ta    \&No     Ta    \&No     Ta    n
