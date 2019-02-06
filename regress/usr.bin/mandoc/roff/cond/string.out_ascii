@@ -17,6 +17,10 @@ DDEESSCCRRIIPPTTIIOONN
 
        standard macro is defined
 
+       identifier and tab:      mystr is defined
+
+       escape sequence after identifier: -mystr is defined
 
 
-OpenBSD                          June 14, 2017                       STRING(1)
+
+OpenBSD                        February 6, 2019                      STRING(1)

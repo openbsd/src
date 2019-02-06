@@ -1,0 +1,41 @@
+.\" $OpenBSD: tab.in,v 1.1 2019/02/06 20:54:28 schwarze Exp $
+.Dd $Mdocdate: February 6 2019 $
+.Dt DE-TAB 1
+.Os
+.Sh NAME
+.Nm de-tab
+.Nd tab characters in macro definition lines
+.Sh DESCRIPTION
+.de test1	ignored
+testval \\$1;\\$2
+..
+no argument:
+.test1
+.br
+argument after_tab:
+.test1	after_tab
+.br
+argument after_tab_and_space:
+.test1	 after_tab_and_space
+.br
+argument after_two_tabs:
+.test1		after_two_tabs
+.br
+argument after_tab_tab_space:
+.test1		 after_tab_tab_space
+.Ss End marker
+.de test2 endm	ignored
+testval \\$1;\\$2
+.endm
+no argument:
+.test2
+.br
+argument after_tab:
+.test2	after_tab
+.Ss Removal
+.rm test1	test2
+macro test1 is gone:
+.test1
+.br
+macro test2 still exists:
+.test2

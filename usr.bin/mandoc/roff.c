@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.234 2019/02/06 17:39:57 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.235 2019/02/06 20:54:28 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -2535,7 +2535,7 @@ roff_evalcond(struct roff *r, int ln, char *v, int *pos)
 		        roff_getstrn(r, name, sz, &deftype);
 			istrue = !!deftype;
 		}
-		*pos = cp - v;
+		*pos = (name + sz) - v;
 		return istrue == wanttrue;
 	default:
 		break;
@@ -2681,8 +2681,15 @@ roff_ds(ROFF_ARGS)
 		return ROFF_IGN;
 
 	namesz = roff_getname(r, &string, ln, pos);
-	if (name[namesz] == '\\')
+	switch (name[namesz]) {
+	case '\\':
 		return ROFF_IGN;
+	case '\t':
+		string = buf->buf + pos + namesz;
+		break;
+	default:
+		break;
+	}
 
 	/* Read past the initial double-quote, if any. */
 	if (*string == '"')
@@ -3058,7 +3065,7 @@ roff_nr(ROFF_ARGS)
 		return ROFF_IGN;
 
 	keysz = roff_getname(r, &val, ln, pos);
-	if (key[keysz] == '\\')
+	if (key[keysz] == '\\' || key[keysz] == '\t')
 		return ROFF_IGN;
 
 	sign = *val;
@@ -3122,7 +3129,7 @@ roff_rm(ROFF_ARGS)
 		namesz = roff_getname(r, &cp, ln, (int)(cp - buf->buf));
 		roff_setstrn(&r->strtab, name, namesz, NULL, 0, 0);
 		roff_setstrn(&r->rentab, name, namesz, NULL, 0, 0);
-		if (name[namesz] == '\\')
+		if (name[namesz] == '\\' || name[namesz] == '\t')
 			break;
 	}
 	return ROFF_IGN;
@@ -3457,7 +3464,7 @@ roff_als(ROFF_ARGS)
 		return ROFF_IGN;
 
 	newsz = roff_getname(r, &oldn, ln, pos);
-	if (newn[newsz] == '\\' || *oldn == '\0')
+	if (newn[newsz] == '\\' || newn[newsz] == '\t' || *oldn == '\0')
 		return ROFF_IGN;
 
 	end = oldn;
@@ -3687,7 +3694,7 @@ roff_rn(ROFF_ARGS)
 		return ROFF_IGN;
 
 	oldsz = roff_getname(r, &newn, ln, pos);
-	if (oldn[oldsz] == '\\' || *newn == '\0')
+	if (oldn[oldsz] == '\\' || oldn[oldsz] == '\t' || *newn == '\0')
 		return ROFF_IGN;
 
 	end = newn;
@@ -3881,8 +3888,12 @@ roff_getname(struct roff *r, char **cpp, int ln, int pos)
 
 	for (cp = name; 1; cp++) {
 		namesz = cp - name;
-		if (*cp == '\0' || *cp == ' ')
+		if (*cp == '\0')
 			break;
+		if (*cp == ' ' || *cp == '\t') {
+			cp++;
+			break;
+		}
 		if (*cp != '\\')
 			continue;
 		if (cp[1] == '{' || cp[1] == '}')

@@ -1,5 +1,5 @@
-.\" $OpenBSD: string.in,v 1.3 2017/07/04 14:53:26 schwarze Exp $
-.TH STRING 1 "June 14, 2017"
+.\" $OpenBSD: string.in,v 1.4 2019/02/06 20:54:28 schwarze Exp $
+.TH STRING 1 "February 6, 2019"
 .SH NAME
 string \- conditional testing whether a string is defined
 .SH DESCRIPTION
@@ -32,3 +32,11 @@ mymacval
 standard macro is
 .ie d PP defined
 .el not defined \(em OOPS
+.PP
+identifier and tab:
+.ie d mystr	mystr is defined
+.el OOPS
+.PP
+escape sequence after identifier:
+.ie d mystr\(enmystr is defined
+.el OOPS
