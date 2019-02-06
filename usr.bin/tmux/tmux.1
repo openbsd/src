@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.615 2018/11/07 07:58:16 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.616 2019/02/06 07:36:06 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2018 $
+.Dd $Mdocdate: February 6 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1526,6 +1526,7 @@ first.
 This command works only if at least one client is attached.
 .It Xo
 .Ic display-panes
+.Op Fl b
 .Op Fl d Ar duration
 .Op Fl t Ar target-client
 .Op Ar template
@@ -1559,6 +1560,9 @@ substituted by the pane ID.
 The default
 .Ar template
 is "select-pane -t '%%'".
+With
+.Fl b ,
+other commands are not blocked from running until the indicator is closed.
 .It Xo Ic find-window
 .Op Fl CNTZ
 .Op Fl t Ar target-pane
