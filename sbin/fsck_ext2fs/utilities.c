@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.27 2016/03/16 15:41:10 krw Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.28 2019/02/06 16:21:27 millert Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -417,7 +417,7 @@ getpathname(char *namebuf, size_t buflen, ino_t curdir, ino_t ino)
 			break;
 		len = strlen(namebuf);
 		cp -= len;
-		memcpy(cp, namebuf, len);
+		memmove(cp, namebuf, len);
 		*(--cp) = '/';
 		if (cp < &namebuf[EXT2FS_MAXNAMLEN])
 			break;
@@ -426,7 +426,7 @@ getpathname(char *namebuf, size_t buflen, ino_t curdir, ino_t ino)
 	busy = 0;
 	if (ino != EXT2_ROOTINO)
 		*(--cp) = '?';
-	memcpy(namebuf, cp, (size_t)(&namebuf[buflen] - cp));
+	memmove(namebuf, cp, (size_t)(&namebuf[buflen] - cp));
 }
 
 /*ARGSUSED*/
