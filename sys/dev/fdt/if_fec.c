@@ -1,6 +1,6 @@
-/* $OpenBSD: if_fec.c,v 1.7 2019/02/01 00:51:07 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.8 2019/02/06 22:59:06 patrick Exp $ */
 /*
- * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
+ * Copyright (c) 2012-2013,2019 Patrick Wildt <patrick@blueri.se>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -108,6 +108,7 @@
 #define ENET_EIR_RXF		(1 << 25)
 #define ENET_EIR_TXF		(1 << 27)
 #define ENET_TFWR_STRFWD	(1 << 8)
+#define ENET_RACC_SHIFT16	(1 << 7)
 
 /* statistics counters */
 
@@ -143,10 +144,7 @@
 #define HCLR4(sc, reg, bits)						\
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
-/* what should we use? */
-#define ENET_MAX_TXD		32
-#define ENET_MAX_RXD		32
-
+#define ENET_MAX_BUF_SIZE	1522
 #define ENET_MAX_PKT_SIZE	1536
 
 #define ENET_ROUNDUP(size, unit) (((size) + (unit) - 1) & ~((unit) - 1))
@@ -154,6 +152,7 @@
 /* buffer descriptor status bits */
 #define ENET_RXD_EMPTY		(1 << 15)
 #define ENET_RXD_WRAP		(1 << 13)
+#define ENET_RXD_INTR		(1 << 12)
 #define ENET_RXD_LAST		(1 << 11)
 #define ENET_RXD_MISS		(1 << 8)
 #define ENET_RXD_BC		(1 << 7)
@@ -166,6 +165,7 @@
 
 #define ENET_TXD_READY		(1 << 15)
 #define ENET_TXD_WRAP		(1 << 13)
+#define ENET_TXD_INTR		(1 << 12)
 #define ENET_TXD_LAST		(1 << 11)
 #define ENET_TXD_TC		(1 << 10)
 #define ENET_TXD_ABC		(1 << 9)
@@ -178,35 +178,39 @@
 #define ENET_TXD_INT		(1 << 30)
 #endif
 
-/*
- * Bus dma allocation structure used by
- * fec_dma_malloc and fec_dma_free.
- */
-struct fec_dma_alloc {
-	bus_addr_t		dma_paddr;
-	caddr_t			dma_vaddr;
-	bus_dma_tag_t		dma_tag;
-	bus_dmamap_t		dma_map;
-	bus_dma_segment_t	dma_seg;
-	bus_size_t		dma_size;
-	int			dma_nseg;
+struct fec_buf {
+	bus_dmamap_t	 fb_map;
+	struct mbuf	*fb_m;
+	struct mbuf	*fb_m0;
 };
 
-struct fec_buf_desc {
-	uint16_t data_length;		/* payload's length in bytes */
-	uint16_t status;		/* BD's status (see datasheet) */
-	uint32_t data_pointer;		/* payload's buffer address */
+/* what should we use? */
+#define ENET_NTXDESC	256
+#define ENET_NTXSEGS	16
+#define ENET_NRXDESC	256
+
+struct fec_dmamem {
+	bus_dmamap_t		 fdm_map;
+	bus_dma_segment_t	 fdm_seg;
+	size_t			 fdm_size;
+	caddr_t			 fdm_kva;
+};
+#define ENET_DMA_MAP(_fdm)	((_fdm)->fdm_map)
+#define ENET_DMA_LEN(_fdm)	((_fdm)->fdm_size)
+#define ENET_DMA_DVA(_fdm)	((_fdm)->fdm_map->dm_segs[0].ds_addr)
+#define ENET_DMA_KVA(_fdm)	((void *)(_fdm)->fdm_kva)
+
+struct fec_desc {
+	uint16_t fd_len;		/* payload's length in bytes */
+	uint16_t fd_status;		/* BD's status (see datasheet) */
+	uint32_t fd_addr;		/* payload's buffer address */
 #ifdef ENET_ENHANCED_BD
-	uint32_t enhanced_status;	/* enhanced status with IEEE 1588 */
-	uint32_t reserved0;		/* reserved */
-	uint32_t update_done;		/* buffer descriptor update done */
-	uint32_t timestamp;		/* IEEE 1588 timestamp */
-	uint32_t reserved1[2];		/* reserved */
+	uint32_t fd_enhanced_status;	/* enhanced status with IEEE 1588 */
+	uint32_t fd_reserved0;		/* reserved */
+	uint32_t fd_update_done;	/* buffer descriptor update done */
+	uint32_t fd_timestamp;		/* IEEE 1588 timestamp */
+	uint32_t fd_reserved1[2];	/* reserved */
 #endif
-};
-
-struct fec_buffer {
-	uint8_t data[ENET_MAX_PKT_SIZE];
 };
 
 struct fec_softc {
@@ -217,17 +221,23 @@ struct fec_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	void			*sc_ih[3]; /* Interrupt handler */
-	bus_dma_tag_t		sc_dma_tag;
-	struct fec_dma_alloc	txdma;		/* bus_dma glue for tx desc */
-	struct fec_buf_desc	*tx_desc_base;
-	struct fec_dma_alloc	rxdma;		/* bus_dma glue for rx desc */
-	struct fec_buf_desc	*rx_desc_base;
-	struct fec_dma_alloc	tbdma;		/* bus_dma glue for packets */
-	struct fec_buffer	*tx_buffer_base;
-	struct fec_dma_alloc	rbdma;		/* bus_dma glue for packets */
-	struct fec_buffer	*rx_buffer_base;
-	int			cur_tx;
-	int			cur_rx;
+	bus_dma_tag_t		sc_dmat;
+
+	struct fec_dmamem	*sc_txring;
+	struct fec_buf		*sc_txbuf;
+	struct fec_desc		*sc_txdesc;
+	int			 sc_tx_prod;
+	int			 sc_tx_cnt;
+	int			 sc_tx_cons;
+	int			 sc_tx_bounce;
+
+	struct fec_dmamem	*sc_rxring;
+	struct fec_buf		*sc_rxbuf;
+	struct fec_desc		*sc_rxdesc;
+	int			 sc_rx_prod;
+	struct if_rxring	 sc_rx_ring;
+	int			 sc_rx_cons;
+
 	struct timeout		sc_tick;
 	uint32_t		sc_phy_speed;
 };
@@ -239,23 +249,25 @@ void fec_attach(struct device *, struct device *, void *);
 void fec_phy_init(struct fec_softc *, struct mii_softc *);
 int fec_ioctl(struct ifnet *, u_long, caddr_t);
 void fec_start(struct ifnet *);
-int fec_encap(struct fec_softc *, struct mbuf *);
+int fec_encap(struct fec_softc *, struct mbuf *, int *);
 void fec_init_txd(struct fec_softc *);
 void fec_init_rxd(struct fec_softc *);
 void fec_init(struct fec_softc *);
 void fec_stop(struct fec_softc *);
 void fec_iff(struct fec_softc *);
-struct mbuf * fec_newbuf(void);
 int fec_intr(void *);
-void fec_recv(struct fec_softc *);
+void fec_tx_proc(struct fec_softc *);
+void fec_rx_proc(struct fec_softc *);
 void fec_tick(void *);
 int fec_miibus_readreg(struct device *, int, int);
 void fec_miibus_writereg(struct device *, int, int, int);
 void fec_miibus_statchg(struct device *);
 int fec_ifmedia_upd(struct ifnet *);
 void fec_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-int fec_dma_malloc(struct fec_softc *, bus_size_t, struct fec_dma_alloc *);
-void fec_dma_free(struct fec_softc *, struct fec_dma_alloc *);
+struct fec_dmamem *fec_dmamem_alloc(struct fec_softc *, bus_size_t, bus_size_t);
+void fec_dmamem_free(struct fec_softc *, struct fec_dmamem *);
+struct mbuf *fec_alloc_mbuf(struct fec_softc *, bus_dmamap_t);
+void fec_fill_rx_ring(struct fec_softc *);
 
 struct cfattach fec_ca = {
 	sizeof (struct fec_softc), fec_match, fec_attach
@@ -280,12 +292,13 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fec_softc *sc = (struct fec_softc *) self;
 	struct fdt_attach_args *faa = aux;
+	struct fec_buf *txb, *rxb;
 	struct mii_data *mii;
 	struct mii_softc *child;
 	struct ifnet *ifp;
-	int tsize, rsize, tbsize, rbsize, s;
 	uint32_t phy_reset_gpio[3];
 	uint32_t phy_reset_duration;
+	int i, s;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -296,7 +309,7 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("fec_attach: bus_space_map failed!");
 
-	sc->sc_dma_tag = faa->fa_dmat;
+	sc->sc_dmat = faa->fa_dmat;
 
 	pinctrl_byname(faa->fa_node, "default");
 
@@ -352,48 +365,56 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih[2] = fdt_intr_establish_idx(faa->fa_node, 2, IPL_NET,
 	    fec_intr, sc, sc->sc_dev.dv_xname);
 
-	tsize = ENET_MAX_TXD * sizeof(struct fec_buf_desc);
-	tsize = ENET_ROUNDUP(tsize, PAGE_SIZE);
+	/* Tx bounce buffer to align to 16. */
+	if (OF_is_compatible(faa->fa_node, "fsl,imx6q-fec"))
+		sc->sc_tx_bounce = 1;
 
-	if (fec_dma_malloc(sc, tsize, &sc->txdma)) {
-		printf("%s: Unable to allocate tx_desc memory\n",
+	/* Allocate Tx descriptor ring. */
+	sc->sc_txring = fec_dmamem_alloc(sc,
+	    ENET_NTXDESC * sizeof(struct fec_desc), 64);
+	if (sc->sc_txring == NULL) {
+		printf("%s: could not allocate Tx descriptor ring\n",
 		    sc->sc_dev.dv_xname);
 		goto bad;
 	}
-	sc->tx_desc_base = (struct fec_buf_desc *)sc->txdma.dma_vaddr;
+	sc->sc_txdesc = ENET_DMA_KVA(sc->sc_txring);
 
-	rsize = ENET_MAX_RXD * sizeof(struct fec_buf_desc);
-	rsize = ENET_ROUNDUP(rsize, PAGE_SIZE);
-
-	if (fec_dma_malloc(sc, rsize, &sc->rxdma)) {
-		printf("%s: Unable to allocate rx_desc memory\n",
-		    sc->sc_dev.dv_xname);
-		goto txdma;
+	/* Allocate Tx descriptors. */
+	sc->sc_txbuf = malloc(sizeof(struct fec_buf) * ENET_NTXDESC,
+	    M_DEVBUF, M_WAITOK);
+	for (i = 0; i < ENET_NTXDESC; i++) {
+		txb = &sc->sc_txbuf[i];
+		bus_dmamap_create(sc->sc_dmat, MCLBYTES, ENET_NTXSEGS,
+		    MCLBYTES, 0, BUS_DMA_WAITOK, &txb->fb_map);
+		txb->fb_m = txb->fb_m0 = NULL;
 	}
-	sc->rx_desc_base = (struct fec_buf_desc *)sc->rxdma.dma_vaddr;
 
-	tbsize = ENET_MAX_TXD * ENET_MAX_PKT_SIZE;
-	tbsize = ENET_ROUNDUP(tbsize, PAGE_SIZE);
-
-	if (fec_dma_malloc(sc, tbsize, &sc->tbdma)) {
-		printf("%s: Unable to allocate tx_buffer memory\n",
+	/* Allocate Rx descriptor ring. */
+	sc->sc_rxring = fec_dmamem_alloc(sc,
+	    ENET_NRXDESC * sizeof(struct fec_desc), 64);
+	if (sc->sc_rxring == NULL) {
+		printf("%s: could not allocate Rx descriptor ring\n",
 		    sc->sc_dev.dv_xname);
-		goto rxdma;
+		for (i = 0; i < ENET_NTXDESC; i++) {
+			txb = &sc->sc_txbuf[i];
+			bus_dmamap_destroy(sc->sc_dmat, txb->fb_map);
+		}
+		free(sc->sc_txbuf, M_DEVBUF,
+		    sizeof(struct fec_buf) * ENET_NTXDESC);
+		fec_dmamem_free(sc, sc->sc_txring);
+		goto bad;
 	}
-	sc->tx_buffer_base = (struct fec_buffer *)sc->tbdma.dma_vaddr;
+	sc->sc_rxdesc = ENET_DMA_KVA(sc->sc_rxring);
 
-	rbsize = ENET_MAX_RXD * ENET_MAX_PKT_SIZE;
-	rbsize = ENET_ROUNDUP(rbsize, PAGE_SIZE);
-
-	if (fec_dma_malloc(sc, rbsize, &sc->rbdma)) {
-		printf("%s: Unable to allocate rx_buffer memory\n",
-		    sc->sc_dev.dv_xname);
-		goto tbdma;
+	/* Allocate Rx descriptors. */
+	sc->sc_rxbuf = malloc(sizeof(struct fec_buf) * ENET_NRXDESC,
+	    M_DEVBUF, M_WAITOK);
+	for (i = 0; i < ENET_NRXDESC; i++) {
+		rxb = &sc->sc_rxbuf[i];
+		bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_WAITOK, &rxb->fb_map);
+		rxb->fb_m = NULL;
 	}
-	sc->rx_buffer_base = (struct fec_buffer *)sc->rbdma.dma_vaddr;
-
-	sc->cur_tx = 0;
-	sc->cur_rx = 0;
 
 	s = splnet();
 
@@ -448,12 +469,6 @@ fec_attach(struct device *parent, struct device *self, void *aux)
 	fec_sc = sc;
 	return;
 
-tbdma:
-	fec_dma_free(sc, &sc->tbdma);
-rxdma:
-	fec_dma_free(sc, &sc->rxdma);
-txdma:
-	fec_dma_free(sc, &sc->txdma);
 bad:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 }
@@ -577,35 +592,26 @@ fec_phy_init(struct fec_softc *sc, struct mii_softc *child)
 void
 fec_init_rxd(struct fec_softc *sc)
 {
-	int i;
+	struct fec_desc *rxd;
 
-	memset(sc->rx_desc_base, 0, ENET_MAX_RXD * sizeof(struct fec_buf_desc));
+	sc->sc_rx_prod = sc->sc_rx_cons = 0;
 
-	for (i = 0; i < ENET_MAX_RXD; i++)
-	{
-		sc->rx_desc_base[i].status = ENET_RXD_EMPTY;
-		sc->rx_desc_base[i].data_pointer = sc->rbdma.dma_paddr + i * ENET_MAX_PKT_SIZE;
-#ifdef ENET_ENHANCED_BD
-		sc->rx_desc_base[i].enhanced_status = ENET_RXD_INT;
-#endif
-	}
-
-	sc->rx_desc_base[i - 1].status |= ENET_RXD_WRAP;
+	memset(sc->sc_rxdesc, 0, ENET_DMA_LEN(sc->sc_rxring));
+	rxd = &sc->sc_rxdesc[ENET_NRXDESC - 1];
+	rxd->fd_status = ENET_RXD_WRAP;
 }
 
 void
 fec_init_txd(struct fec_softc *sc)
 {
-	int i;
+	struct fec_desc *txd;
 
-	memset(sc->tx_desc_base, 0, ENET_MAX_TXD * sizeof(struct fec_buf_desc));
+	sc->sc_tx_prod = sc->sc_tx_cons = 0;
+	sc->sc_tx_cnt = 0;
 
-	for (i = 0; i < ENET_MAX_TXD; i++)
-	{
-		sc->tx_desc_base[i].data_pointer = sc->tbdma.dma_paddr + i * ENET_MAX_PKT_SIZE;
-	}
-
-	sc->tx_desc_base[i - 1].status |= ENET_TXD_WRAP;
+	memset(sc->sc_txdesc, 0, ENET_DMA_LEN(sc->sc_txring));
+	txd = &sc->sc_txdesc[ENET_NTXDESC - 1];
+	txd->fd_status = ENET_TXD_WRAP;
 }
 
 void
@@ -635,13 +641,22 @@ fec_init(struct fec_softc *sc)
 	/* set max receive buffer size, 3-0 bits always zero for alignment */
 	HWRITE4(sc, ENET_MRBR, ENET_MAX_PKT_SIZE);
 
-	/* set descriptor */
-	HWRITE4(sc, ENET_TDSR, sc->txdma.dma_paddr);
-	HWRITE4(sc, ENET_RDSR, sc->rxdma.dma_paddr);
-
 	/* init descriptor */
 	fec_init_txd(sc);
 	fec_init_rxd(sc);
+
+	/* fill RX ring */
+	if_rxr_init(&sc->sc_rx_ring, 2, ENET_NRXDESC);
+	fec_fill_rx_ring(sc);
+
+	bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_txring),
+	    0, ENET_DMA_LEN(sc->sc_txring), BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_rxring),
+	    0, ENET_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_PREWRITE);
+
+	/* set descriptor */
+	HWRITE4(sc, ENET_TDSR, ENET_DMA_DVA(sc->sc_txring));
+	HWRITE4(sc, ENET_RDSR, ENET_DMA_DVA(sc->sc_rxring));
 
 	/* set it to full-duplex */
 	HWRITE4(sc, ENET_TCR, ENET_TCR_FDEN);
@@ -656,6 +671,9 @@ fec_init(struct fec_softc *sc)
 	    ENET_RCR_FCE);
 
 	HWRITE4(sc, ENET_MSCR, (sc->sc_phy_speed << 1) | 0x100);
+
+	HWRITE4(sc, ENET_RACC, ENET_RACC_SHIFT16);
+	HWRITE4(sc, ENET_FTRL, ENET_MAX_BUF_SIZE);
 
 	/* RX FIFO treshold and pause */
 	HWRITE4(sc, ENET_RSEM, 0x84);
@@ -703,6 +721,8 @@ void
 fec_stop(struct fec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct fec_buf *txb, *rxb;
+	int i;
 
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
@@ -719,6 +739,28 @@ fec_stop(struct fec_softc *sc)
 		continue;
 
 	HWRITE4(sc, ENET_MSCR, (sc->sc_phy_speed << 1) | 0x100);
+
+	for (i = 0; i < ENET_NTXDESC; i++) {
+		txb = &sc->sc_txbuf[i];
+		if (txb->fb_m == NULL)
+			continue;
+		bus_dmamap_sync(sc->sc_dmat, txb->fb_map, 0,
+		    txb->fb_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, txb->fb_map);
+		m_freem(txb->fb_m);
+		m_freem(txb->fb_m0);
+		txb->fb_m = txb->fb_m0 = NULL;
+	}
+	for (i = 0; i < ENET_NRXDESC; i++) {
+		rxb = &sc->sc_rxbuf[i];
+		if (rxb->fb_m == NULL)
+			continue;
+		bus_dmamap_sync(sc->sc_dmat, rxb->fb_map, 0,
+		    rxb->fb_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, rxb->fb_map);
+		if_rxr_put(&sc->sc_rx_ring, 1);
+		rxb->fb_m = NULL;
+	}
 }
 
 void
@@ -808,96 +850,140 @@ void
 fec_start(struct ifnet *ifp)
 {
 	struct fec_softc *sc = ifp->if_softc;
-	struct mbuf *m_head = NULL;
+	struct mbuf *m = NULL;
+	int error, idx;
 
-	if (ifq_is_oactive(&ifp->if_snd) || !(ifp->if_flags & IFF_RUNNING))
+	if (!(ifp->if_flags & IFF_RUNNING))
+		return;
+	if (ifq_is_oactive(&ifp->if_snd))
+		return;
+	if (IFQ_IS_EMPTY(&ifp->if_snd))
 		return;
 
-	for (;;) {
-		m_head = ifq_deq_begin(&ifp->if_snd);
-		if (m_head == NULL)
+	idx = sc->sc_tx_prod;
+	while ((sc->sc_txdesc[idx].fd_status & ENET_TXD_READY) == 0) {
+		m = ifq_deq_begin(&ifp->if_snd);
+		if (m == NULL)
 			break;
 
-		if (fec_encap(sc, m_head)) {
-			ifq_deq_rollback(&ifp->if_snd, m_head);
+		error = fec_encap(sc, m, &idx);
+		if (error == ENOBUFS) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
+		if (error == EFBIG) {
+			ifq_deq_commit(&ifp->if_snd, m);
+			m_freem(m); /* give up: drop it */
+			ifp->if_oerrors++;
+			continue;
+		}
 
-		ifq_deq_commit(&ifp->if_snd, m_head);
+		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
+	}
 
-		m_freem(m_head);
+	if (sc->sc_tx_prod != idx) {
+		sc->sc_tx_prod = idx;
+
+		/* Set a timeout in case the chip goes out to lunch. */
+		ifp->if_timer = 5;
 	}
 }
 
 int
-fec_encap(struct fec_softc *sc, struct mbuf *m)
+fec_encap(struct fec_softc *sc, struct mbuf *m0, int *idx)
 {
-	if (sc->tx_desc_base[sc->cur_tx].status & ENET_TXD_READY) {
-		printf("fec: tx queue full!\n");
-		return EIO;
+	struct fec_desc *txd, *txd_start;
+	bus_dmamap_t map;
+	struct mbuf *m;
+	int cur, frag, i;
+	int ret;
+
+	m = m0;
+	cur = frag = *idx;
+	map = sc->sc_txbuf[cur].fb_map;
+
+	if (sc->sc_tx_bounce) {
+		m = m_dup_pkt(m0, 0, M_DONTWAIT);
+		if (m == NULL) {
+			ret = ENOBUFS;
+			goto fail;
+		}
 	}
 
-	if (m->m_pkthdr.len > ENET_MAX_PKT_SIZE) {
-		printf("fec: packet too big\n");
-		return EIO;
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
+		if (m_defrag(m, M_DONTWAIT)) {
+			ret = EFBIG;
+			goto fail;
+		}
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
+			ret = EFBIG;
+			goto fail;
+		}
 	}
 
-	/* copy in the actual packet */
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)sc->tx_buffer_base[sc->cur_tx].data);
+	if (map->dm_nsegs > (ENET_NTXDESC - sc->sc_tx_cnt - 2)) {
+		bus_dmamap_unload(sc->sc_dmat, map);
+		ret = ENOBUFS;
+		goto fail;
+	}
 
-	sc->tx_desc_base[sc->cur_tx].data_length = m->m_pkthdr.len;
+	/* Sync the DMA map. */
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREWRITE);
 
-	sc->tx_desc_base[sc->cur_tx].status &= ~ENET_TXD_STATUS_MASK;
-	sc->tx_desc_base[sc->cur_tx].status |= (ENET_TXD_READY | ENET_TXD_LAST | ENET_TXD_TC);
+	txd = txd_start = &sc->sc_txdesc[frag];
+	for (i = 0; i < map->dm_nsegs; i++) {
+		txd->fd_addr = map->dm_segs[i].ds_addr;
+		txd->fd_len = map->dm_segs[i].ds_len;
+		txd->fd_status &= ENET_TXD_WRAP;
+		if (i == (map->dm_nsegs - 1))
+			txd->fd_status |= ENET_TXD_LAST | ENET_TXD_TC;
+		if (i != 0)
+			txd->fd_status |= ENET_TXD_READY;
 
-#ifdef ENET_ENHANCED_BD
-	sc->tx_desc_base[sc->cur_tx].enhanced_status = ENET_TXD_INT;
-	sc->tx_desc_base[sc->cur_tx].update_done = 0;
-#endif
+		bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_txring),
+		    frag * sizeof(*txd), sizeof(*txd), BUS_DMASYNC_PREWRITE);
 
-	bus_dmamap_sync(sc->tbdma.dma_tag, sc->tbdma.dma_map,
-	    ENET_MAX_PKT_SIZE * sc->cur_tx, ENET_MAX_PKT_SIZE,
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		cur = frag;
+		if (frag == (ENET_NTXDESC - 1)) {
+			txd = &sc->sc_txdesc[0];
+			frag = 0;
+		} else {
+			txd++;
+			frag++;
+		}
+		KASSERT(frag != sc->sc_tx_cons);
+	}
 
-	bus_dmamap_sync(sc->txdma.dma_tag, sc->txdma.dma_map,
-	    sizeof(struct fec_buf_desc) * sc->cur_tx,
-	    sizeof(struct fec_buf_desc),
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	txd_start->fd_status |= ENET_TXD_READY;
+	bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_txring),
+	    *idx * sizeof(*txd), sizeof(*txd), BUS_DMASYNC_PREWRITE);
 
-
-	/* tx descriptors are ready */
 	HWRITE4(sc, ENET_TDAR, ENET_TDAR_TDAR);
 
-	if (sc->tx_desc_base[sc->cur_tx].status & ENET_TXD_WRAP)
-		sc->cur_tx = 0;
-	else
-		sc->cur_tx++;
+	KASSERT(sc->sc_txbuf[cur].fb_m == NULL);
+	KASSERT(sc->sc_txbuf[cur].fb_m0 == NULL);
+	sc->sc_txbuf[*idx].fb_map = sc->sc_txbuf[cur].fb_map;
+	sc->sc_txbuf[cur].fb_map = map;
+	sc->sc_txbuf[cur].fb_m = m;
+	if (m != m0)
+		sc->sc_txbuf[cur].fb_m0 = m0;
 
-	return 0;
-}
+	sc->sc_tx_cnt += map->dm_nsegs;
+	*idx = frag;
 
-struct mbuf *
-fec_newbuf(void)
-{
-	struct mbuf *m;
+	return (0);
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return (NULL);
-
-	MCLGET(m, M_DONTWAIT);
-	if (!(m->m_flags & M_EXT)) {
+fail:
+	if (m != m0)
 		m_freem(m);
-		return (NULL);
-	}
-
-	return (m);
+	return (ret);
 }
 
 /*
@@ -920,10 +1006,14 @@ fec_intr(void *arg)
 	/*
 	 * Handle incoming packets.
 	 */
-	if (ISSET(status, ENET_EIR_RXF)) {
-		if (ifp->if_flags & IFF_RUNNING)
-			fec_recv(sc);
-	}
+	if (ISSET(status, ENET_EIR_RXF))
+		fec_rx_proc(sc);
+
+	/*
+	 * Handle transmitted packets.
+	 */
+	if (ISSET(status, ENET_EIR_TXF))
+		fec_tx_proc(sc);
 
 	/* Try to transmit. */
 	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
@@ -933,56 +1023,112 @@ fec_intr(void *arg)
 }
 
 void
-fec_recv(struct fec_softc *sc)
+fec_tx_proc(struct fec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct fec_desc *txd;
+	struct fec_buf *txb;
+	int idx;
 
-	bus_dmamap_sync(sc->rbdma.dma_tag, sc->rbdma.dma_map,
-	    0, sc->rbdma.dma_size,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_txring), 0,
+	    ENET_DMA_LEN(sc->sc_txring),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
-	    0, sc->rxdma.dma_size,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	while (sc->sc_tx_cnt > 0) {
+		idx = sc->sc_tx_cons;
+		KASSERT(idx < ENET_NTXDESC);
 
-	while (!(sc->rx_desc_base[sc->cur_rx].status & ENET_RXD_EMPTY))
-	{
-		struct mbuf *m;
-		m = fec_newbuf();
+		txd = &sc->sc_txdesc[idx];
+		if (txd->fd_status & ENET_TXD_READY)
+			break;
 
-		if (m == NULL) {
-			ifp->if_ierrors++;
-			goto done;
+		txb = &sc->sc_txbuf[idx];
+		if (txb->fb_m) {
+			bus_dmamap_sync(sc->sc_dmat, txb->fb_map, 0,
+			    txb->fb_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, txb->fb_map);
+
+			m_freem(txb->fb_m);
+			m_freem(txb->fb_m0);
+			txb->fb_m = txb->fb_m0 = NULL;
 		}
 
-		m->m_pkthdr.len = m->m_len = sc->rx_desc_base[sc->cur_rx].data_length;
-		m_adj(m, ETHER_ALIGN);
+		ifq_clr_oactive(&ifp->if_snd);
 
-		memcpy(mtod(m, char *), sc->rx_buffer_base[sc->cur_rx].data,
-		    sc->rx_desc_base[sc->cur_rx].data_length);
+		sc->sc_tx_cnt--;
 
-		sc->rx_desc_base[sc->cur_rx].status |= ENET_RXD_EMPTY;
-		sc->rx_desc_base[sc->cur_rx].data_length = 0;
-
-		bus_dmamap_sync(sc->rbdma.dma_tag, sc->rbdma.dma_map,
-		    ENET_MAX_PKT_SIZE * sc->cur_rx, ENET_MAX_PKT_SIZE,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-		bus_dmamap_sync(sc->rxdma.dma_tag, sc->rxdma.dma_map,
-		    sizeof(struct fec_buf_desc) * sc->cur_rx,
-		    sizeof(struct fec_buf_desc),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-
-		if (sc->rx_desc_base[sc->cur_rx].status & ENET_RXD_WRAP)
-			sc->cur_rx = 0;
+		if (sc->sc_tx_cons == (ENET_NTXDESC - 1))
+			sc->sc_tx_cons = 0;
 		else
-			sc->cur_rx++;
+			sc->sc_tx_cons++;
 
-		ml_enqueue(&ml, m);
+		txd->fd_status &= ENET_TXD_WRAP;
 	}
 
-done:
+	if (sc->sc_tx_cnt == 0)
+		ifp->if_timer = 0;
+	else /* ERR006358 */
+		HWRITE4(sc, ENET_TDAR, ENET_TDAR_TDAR);
+}
+
+void
+fec_rx_proc(struct fec_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct fec_desc *rxd;
+	struct fec_buf *rxb;
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *m;
+	int idx, len;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_rxring), 0,
+	    ENET_DMA_LEN(sc->sc_rxring),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+	while (if_rxr_inuse(&sc->sc_rx_ring) > 0) {
+		idx = sc->sc_rx_cons;
+		KASSERT(idx < ENET_NRXDESC);
+
+		rxd = &sc->sc_rxdesc[idx];
+		if (rxd->fd_status & ENET_RXD_EMPTY)
+			break;
+
+		len = rxd->fd_len;
+		rxb = &sc->sc_rxbuf[idx];
+		KASSERT(rxb->fb_m);
+
+		bus_dmamap_sync(sc->sc_dmat, rxb->fb_map, 0,
+		    len, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, rxb->fb_map);
+
+		/* Strip off CRC. */
+		len -= ETHER_CRC_LEN;
+		KASSERT(len > 0);
+
+		m = rxb->fb_m;
+		rxb->fb_m = NULL;
+
+		m_adj(m, ETHER_ALIGN);
+		m->m_pkthdr.len = m->m_len = len;
+
+		ml_enqueue(&ml, m);
+
+		if_rxr_put(&sc->sc_rx_ring, 1);
+		if (sc->sc_rx_cons == (ENET_NRXDESC - 1))
+			sc->sc_rx_cons = 0;
+		else
+			sc->sc_rx_cons++;
+	}
+
+	fec_fill_rx_ring(sc);
+
+	bus_dmamap_sync(sc->sc_dmat, ENET_DMA_MAP(sc->sc_rxring), 0,
+	    ENET_DMA_LEN(sc->sc_rxring),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
 	/* rx descriptors are ready */
 	HWRITE4(sc, ENET_RDAR, ENET_RDAR_RDAR);
 
@@ -1098,79 +1244,100 @@ fec_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 /*
  * Manage DMA'able memory.
  */
-int
-fec_dma_malloc(struct fec_softc *sc, bus_size_t size,
-    struct fec_dma_alloc *dma)
+struct fec_dmamem *
+fec_dmamem_alloc(struct fec_softc *sc, bus_size_t size, bus_size_t align)
 {
-	int r;
+	struct fec_dmamem *fdm;
+	int nsegs;
 
-	dma->dma_tag = sc->sc_dma_tag;
-	r = bus_dmamem_alloc(dma->dma_tag, size, ENET_ALIGNMENT, 0, &dma->dma_seg,
-	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
-	if (r != 0) {
-		printf("%s: fec_dma_malloc: bus_dmammem_alloc failed; "
-			"size %lu, error %d\n", sc->sc_dev.dv_xname,
-			(unsigned long)size, r);
-		goto fail_0;
-	}
+	fdm = malloc(sizeof(*fdm), M_DEVBUF, M_WAITOK | M_ZERO);
+	fdm->fdm_size = size;
 
-	r = bus_dmamem_map(dma->dma_tag, &dma->dma_seg, dma->dma_nseg, size,
-	    &dma->dma_vaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (r != 0) {
-		printf("%s: fec_dma_malloc: bus_dmammem_map failed; "
-			"size %lu, error %d\n", sc->sc_dev.dv_xname,
-			(unsigned long)size, r);
-		goto fail_1;
-	}
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &fdm->fdm_map) != 0)
+		goto fdmfree;
 
-	r = bus_dmamap_create(dma->dma_tag, size, 1,
-	    size, 0, BUS_DMA_NOWAIT, &dma->dma_map);
-	if (r != 0) {
-		printf("%s: fec_dma_malloc: bus_dmamap_create failed; "
-			"error %u\n", sc->sc_dev.dv_xname, r);
-		goto fail_2;
-	}
+	if (bus_dmamem_alloc(sc->sc_dmat, size, align, 0, &fdm->fdm_seg, 1,
+	    &nsegs, BUS_DMA_WAITOK) != 0)
+		goto destroy;
 
-	r = bus_dmamap_load(dma->dma_tag, dma->dma_map,
-			    dma->dma_vaddr, size, NULL,
-			    BUS_DMA_NOWAIT);
-	if (r != 0) {
-		printf("%s: fec_dma_malloc: bus_dmamap_load failed; "
-			"error %u\n", sc->sc_dev.dv_xname, r);
-		goto fail_3;
-	}
+	if (bus_dmamem_map(sc->sc_dmat, &fdm->fdm_seg, nsegs, size,
+	    &fdm->fdm_kva, BUS_DMA_WAITOK | BUS_DMA_COHERENT) != 0)
+		goto free;
 
-	dma->dma_size = size;
-	dma->dma_paddr = dma->dma_map->dm_segs[0].ds_addr;
-	return (0);
+	if (bus_dmamap_load(sc->sc_dmat, fdm->fdm_map, fdm->fdm_kva, size,
+	    NULL, BUS_DMA_WAITOK) != 0)
+		goto unmap;
 
-fail_3:
-	bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
-fail_2:
-	bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, size);
-fail_1:
-	bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
-fail_0:
-	dma->dma_map = NULL;
-	dma->dma_tag = NULL;
+	return (fdm);
 
-	return (r);
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, fdm->fdm_kva, size);
+free:
+	bus_dmamem_free(sc->sc_dmat, &fdm->fdm_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, fdm->fdm_map);
+fdmfree:
+	free(fdm, M_DEVBUF, sizeof(*fdm));
+
+	return (NULL);
 }
 
 void
-fec_dma_free(struct fec_softc *sc, struct fec_dma_alloc *dma)
+fec_dmamem_free(struct fec_softc *sc, struct fec_dmamem *fdm)
 {
-	if (dma->dma_tag == NULL)
-		return;
+	bus_dmamem_unmap(sc->sc_dmat, fdm->fdm_kva, fdm->fdm_size);
+	bus_dmamem_free(sc->sc_dmat, &fdm->fdm_seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, fdm->fdm_map);
+	free(fdm, M_DEVBUF, sizeof(*fdm));
+}
 
-	if (dma->dma_map != NULL) {
-		bus_dmamap_sync(dma->dma_tag, dma->dma_map, 0,
-		    dma->dma_map->dm_mapsize,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(dma->dma_tag, dma->dma_map);
-		bus_dmamem_unmap(dma->dma_tag, dma->dma_vaddr, dma->dma_size);
-		bus_dmamem_free(dma->dma_tag, &dma->dma_seg, dma->dma_nseg);
-		bus_dmamap_destroy(dma->dma_tag, dma->dma_map);
+struct mbuf *
+fec_alloc_mbuf(struct fec_softc *sc, bus_dmamap_t map)
+{
+	struct mbuf *m = NULL;
+
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	if (!m)
+		return (NULL);
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT) != 0) {
+		printf("%s: could not load mbuf DMA map",
+		    sc->sc_dev.dv_xname);
+		m_freem(m);
+		return (NULL);
 	}
-	dma->dma_tag = NULL;
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0,
+	    m->m_pkthdr.len, BUS_DMASYNC_PREREAD);
+
+	return (m);
+}
+
+void
+fec_fill_rx_ring(struct fec_softc *sc)
+{
+	struct fec_desc *rxd;
+	struct fec_buf *rxb;
+	u_int slots;
+
+	for (slots = if_rxr_get(&sc->sc_rx_ring, ENET_NRXDESC);
+	    slots > 0; slots--) {
+		rxb = &sc->sc_rxbuf[sc->sc_rx_prod];
+		rxb->fb_m = fec_alloc_mbuf(sc, rxb->fb_map);
+		if (rxb->fb_m == NULL)
+			break;
+		rxd = &sc->sc_rxdesc[sc->sc_rx_prod];
+		rxd->fd_len = rxb->fb_map->dm_segs[0].ds_len - 1;
+		rxd->fd_addr = rxb->fb_map->dm_segs[0].ds_addr;
+		rxd->fd_status &= ENET_RXD_WRAP;
+		rxd->fd_status |= ENET_RXD_EMPTY;
+
+		if (sc->sc_rx_prod == (ENET_NRXDESC - 1))
+			sc->sc_rx_prod = 0;
+		else
+			sc->sc_rx_prod++;
+	}
+	if_rxr_put(&sc->sc_rx_ring, slots);
 }
