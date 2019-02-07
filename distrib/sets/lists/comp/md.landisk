@@ -109,6 +109,11 @@
 ./usr/libdata/ldscripts/shelf_obsd.x
 ./usr/libdata/ldscripts/shelf_obsd.xbn
 ./usr/libdata/ldscripts/shelf_obsd.xc
+./usr/libdata/ldscripts/shelf_obsd.xd
+./usr/libdata/ldscripts/shelf_obsd.xdc
+./usr/libdata/ldscripts/shelf_obsd.xdcz
+./usr/libdata/ldscripts/shelf_obsd.xdw
+./usr/libdata/ldscripts/shelf_obsd.xdz
 ./usr/libdata/ldscripts/shelf_obsd.xn
 ./usr/libdata/ldscripts/shelf_obsd.xr
 ./usr/libdata/ldscripts/shelf_obsd.xs
@@ -120,6 +125,11 @@
 ./usr/libdata/ldscripts/shlelf_obsd.x
 ./usr/libdata/ldscripts/shlelf_obsd.xbn
 ./usr/libdata/ldscripts/shlelf_obsd.xc
+./usr/libdata/ldscripts/shlelf_obsd.xd
+./usr/libdata/ldscripts/shlelf_obsd.xdc
+./usr/libdata/ldscripts/shlelf_obsd.xdcz
+./usr/libdata/ldscripts/shlelf_obsd.xdw
+./usr/libdata/ldscripts/shlelf_obsd.xdz
 ./usr/libdata/ldscripts/shlelf_obsd.xn
 ./usr/libdata/ldscripts/shlelf_obsd.xr
 ./usr/libdata/ldscripts/shlelf_obsd.xs
