@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.55 2019/01/30 09:20:56 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.56 2019/02/07 07:38:33 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2426,6 +2426,7 @@ bwfm_do_async(struct bwfm_softc *sc,
 	int s;
 
 	s = splsoftnet();
+	KASSERT(ring->queued < BWFM_HOST_CMD_RING_COUNT);
 	if (ring->queued >= BWFM_HOST_CMD_RING_COUNT) {
 		splx(s);
 		return;
