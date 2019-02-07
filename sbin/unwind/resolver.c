@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.15 2019/02/05 19:32:24 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.16 2019/02/07 17:20:35 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -56,12 +56,17 @@
 #include "unwind.h"
 #include "resolver.h"
 
-#define	CHROOT		"/etc/unwind"
-#define	DB_DIR		"/trustanchor/"
-#define	ROOT_KEY	DB_DIR"root.key"
-
 #define	UB_LOG_VERBOSE	4
 #define	UB_LOG_BRIEF	0
+
+/* don't cause churn when trust anchor comes from a cache */
+#define	ROOT_DNSKEY_TTL	172800
+
+#define	PORTAL_CHECK_SEC	15
+#define	PORTAL_CHECK_MAXSEC	600
+
+#define	TRUST_ANCHOR_RETRY_INTERVAL	 8640
+#define	TRUST_ANCHOR_QUERY_INTERVAL	43200
 
 struct unwind_resolver {
 	struct event			 check_ev;
@@ -125,6 +130,11 @@ void			 check_captive_portal_resolve_done(void *, int, void *,
 			     int, int, char *, int);
 int			 check_captive_portal_changed(struct unwind_conf *,
 			     struct unwind_conf *);
+void			 trust_anchor_resolve(void);
+void			 trust_anchor_timo(int, short, void *);
+void			 trust_anchor_resolve_done(void *, int, void *, int,
+			     int, char *, int);
+
 /* for openssl */
 void			 init_locks(void);
 unsigned long		 id_callback(void);
@@ -138,10 +148,14 @@ struct unwind_forwarder_head  dhcp_forwarder_list;
 struct unwind_resolver	*recursor, *forwarder, *static_forwarder;
 struct unwind_resolver	*static_dot_forwarder;
 struct timeval		 resolver_check_pause = { 30, 0};
-#define	PORTAL_CHECK_SEC	15
-#define	PORTAL_CHECK_MAXSEC	600
+
 struct timeval		 captive_portal_check_tv = {PORTAL_CHECK_SEC, 0};
 struct event		 captive_portal_check_ev;
+
+struct event		 trust_anchor_timer;
+
+static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
+
 struct event_base	*ev_base;
 
 /* for openssl */
@@ -181,7 +195,7 @@ resolver(int debug, int verbose)
 	if ((pw = getpwnam(UNWIND_USER)) == NULL)
 		fatal("getpwnam");
 
-	if (chroot(CHROOT) == -1)
+	if (chroot(pw->pw_dir) == -1)
 		fatal("chroot");
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
@@ -195,9 +209,7 @@ resolver(int debug, int verbose)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	unveil(DB_DIR, "rwc");
-
-	if (pledge("stdio inet dns rpath wpath cpath recvfd", NULL) == -1)
+	if (pledge("stdio inet dns recvfd", NULL) == -1)
 		fatal("pledge");
 
 	ev_base = event_init();
@@ -224,6 +236,7 @@ resolver(int debug, int verbose)
 	event_add(&iev_main->ev, NULL);
 
 	evtimer_set(&captive_portal_check_ev, check_captive_portal_timo, NULL);
+	evtimer_set(&trust_anchor_timer, trust_anchor_timo, NULL);
 
 	init_locks();
 	CRYPTO_set_id_callback(id_callback);
@@ -232,6 +245,8 @@ resolver(int debug, int verbose)
 	new_recursor();
 
 	SIMPLEQ_INIT(&dhcp_forwarder_list);
+	TAILQ_INIT(&trust_anchors);
+	TAILQ_INIT(&new_trust_anchors);
 
 	event_dispatch();
 
@@ -295,6 +310,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 	ssize_t				 n;
 	int				 shut = 0, verbose, err;
 	int				 update_resolvers;
+	char				*ta;
 
 	ibuf = &iev->ibuf;
 
@@ -381,6 +397,26 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_RECHECK_CAPTIVEPORTAL:
 			check_captive_portal(1);
+			break;
+		case IMSG_NEW_TA:
+			/* make sure this is a string */
+			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
+			    = '\0';
+			ta = imsg.data;
+			add_new_ta(&new_trust_anchors, ta);
+			break;
+		case IMSG_NEW_TAS_ABORT:
+			log_debug("%s: IMSG_NEW_TAS_ABORT", __func__);
+			free_tas(&new_trust_anchors);
+			break;
+		case IMSG_NEW_TAS_DONE:
+			log_debug("%s: IMSG_NEW_TAS_DONE", __func__);
+			if (merge_tas(&new_trust_anchors, &trust_anchors)) {
+				new_recursor();
+				new_forwarders();
+				new_static_forwarders();
+				new_static_dot_forwarders();
+			}
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -548,6 +584,10 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			iev_captiveportal->events, iev_captiveportal->handler,
 			    iev_captiveportal);
 			event_add(&iev_captiveportal->ev, NULL);
+			break;
+		case IMSG_STARTUP:
+			if (pledge("stdio inet dns", NULL) == -1)
+				fatal("pledge");
 			break;
 		case IMSG_RECONF_CONF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
@@ -770,6 +810,11 @@ void
 new_recursor(void)
 {
 	free_resolver(recursor);
+	recursor = NULL;
+
+	if (TAILQ_EMPTY(&trust_anchors))
+		return;
+
 	recursor = create_resolver(RECURSOR);
 	check_resolver(recursor);
 }
@@ -778,11 +823,13 @@ void
 new_forwarders(void)
 {
 	free_resolver(forwarder);
+	forwarder = NULL;
 
-	if (SIMPLEQ_EMPTY(&dhcp_forwarder_list)) {
-		forwarder = NULL;
+	if (SIMPLEQ_EMPTY(&dhcp_forwarder_list))
 		return;
-	}
+
+	if (TAILQ_EMPTY(&trust_anchors))
+		return;
 
 	log_debug("%s: create_resolver", __func__);
 	forwarder = create_resolver(FORWARDER);
@@ -795,11 +842,13 @@ void
 new_static_forwarders(void)
 {
 	free_resolver(static_forwarder);
+	static_forwarder = NULL;
 
-	if (SIMPLEQ_EMPTY(&resolver_conf->unwind_forwarder_list)) {
-		static_forwarder = NULL;
+	if (SIMPLEQ_EMPTY(&resolver_conf->unwind_forwarder_list))
 		return;
-	}
+
+	if (TAILQ_EMPTY(&trust_anchors))
+		return;
 
 	log_debug("%s: create_resolver", __func__);
 	static_forwarder = create_resolver(STATIC_FORWARDER);
@@ -812,11 +861,13 @@ void
 new_static_dot_forwarders(void)
 {
 	free_resolver(static_dot_forwarder);
+	static_dot_forwarder = NULL;
 
-	if (SIMPLEQ_EMPTY(&resolver_conf->unwind_dot_forwarder_list)) {
-		static_dot_forwarder = NULL;
+	if (SIMPLEQ_EMPTY(&resolver_conf->unwind_dot_forwarder_list))
 		return;
-	}
+
+	if (TAILQ_EMPTY(&trust_anchors))
+		return;
 
 	log_debug("%s: create_resolver", __func__);
 	static_dot_forwarder = create_resolver(STATIC_DOT_FORWARDER);
@@ -831,6 +882,7 @@ struct unwind_resolver *
 create_resolver(enum unwind_resolver_type type)
 {
 	struct unwind_resolver	*res;
+	struct trust_anchor	*ta;
 	int err;
 
 	if ((res = calloc(1, sizeof(*res))) == NULL) {
@@ -853,12 +905,14 @@ create_resolver(enum unwind_resolver_type type)
 	ub_ctx_debuglevel(res->ctx, log_getverbose() & OPT_VERBOSE2 ?
 	    UB_LOG_VERBOSE : UB_LOG_BRIEF);
 
-	if ((err = ub_ctx_add_ta_autr(res->ctx, ROOT_KEY)) != 0) {
-		ub_ctx_delete(res->ctx);
-		free(res);
-		log_warnx("error adding trust anchor: %s",
-		    ub_strerror(err));
-		return (NULL);
+	TAILQ_FOREACH(ta, &trust_anchors, entry) {
+		if ((err = ub_ctx_add_ta(res->ctx, ta->ta)) != 0) {
+			ub_ctx_delete(res->ctx);
+			free(res);
+			log_warnx("error adding trust anchor: %s",
+			    ub_strerror(err));
+			return (NULL);
+		}
 	}
 
 	if((err = ub_ctx_set_option(res->ctx, "aggressive-nsec:", "yes"))
@@ -981,6 +1035,7 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
 {
 	struct check_resolver_data	*data;
 	struct unwind_resolver		*best;
+	struct timeval			 tv = {0, 1};
 	char				*str;
 
 	data = (struct check_resolver_data *)arg;
@@ -1003,9 +1058,11 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
 		free(str);
 	}
 
-	if (sec == 2)
+	if (sec == 2) {
 		data->res->state = VALIDATING;
-	else if (rcode == LDNS_RCODE_NOERROR &&
+		if (!(evtimer_pending(&trust_anchor_timer, NULL)))
+			evtimer_add(&trust_anchor_timer, &tv);
+	 } else if (rcode == LDNS_RCODE_NOERROR &&
 	    LDNS_RCODE_WIRE((uint8_t*)answer_packet) == LDNS_RCODE_NOERROR) {
 		log_debug("%s: why bogus: %s", __func__, why_bogus);
 		data->res->state = RESOLVING;
@@ -1332,7 +1389,6 @@ check_captive_portal(int timer_reset)
 
 	evtimer_add(&captive_portal_check_ev, &captive_portal_check_tv);
 
-
 	captive_portal_state = PORTAL_UNKNOWN;
 
 	res = forwarder;
@@ -1387,8 +1443,8 @@ check_captive_portal_resolve_done(void *arg, int rcode, void *answer_packet,
 		sldns_buffer_write(buf, answer_packet, answer_len);
 		sldns_buffer_flip(buf);
 		libworker_enter_result(result, buf, region, sec);
-		result->answer_packet = NULL; //answer_packet;
-		result->answer_len = 0; //answer_len;
+		result->answer_packet = NULL;
+		result->answer_len = 0;
 		sldns_buffer_free(buf);
 		regional_destroy(region);
 
@@ -1453,4 +1509,133 @@ check_captive_portal_changed(struct unwind_conf *a, struct unwind_conf *b)
 
 	return (0);
 
+}
+
+void
+trust_anchor_resolve(void)
+{
+	struct unwind_resolver	*res;
+	struct timeval		 tv = {TRUST_ANCHOR_RETRY_INTERVAL, 0};
+	int			 err;
+
+	log_debug("%s", __func__);
+
+	res = best_resolver();
+
+	if (res == NULL) {
+		evtimer_add(&trust_anchor_timer, &tv);
+		return;
+	}
+
+	resolver_ref(res);
+
+	if ((err = ub_resolve_event(res->ctx, ".",  LDNS_RR_TYPE_DNSKEY,
+	    LDNS_RR_CLASS_IN, res, trust_anchor_resolve_done,
+	    NULL)) != 0) {
+		log_warn("%s: ub_resolve_async: err: %d, %s",
+		    __func__, err, ub_strerror(err));
+		resolver_unref(res);
+		evtimer_add(&trust_anchor_timer, &tv);
+	}
+}
+
+void
+trust_anchor_timo(int fd, short events, void *arg)
+{
+	trust_anchor_resolve();
+}
+
+void
+trust_anchor_resolve_done(void *arg, int rcode, void *answer_packet,
+    int answer_len, int sec, char *why_bogus, int was_ratelimited)
+{
+	struct unwind_resolver	*res;
+	struct ub_result	*result;
+	sldns_buffer		*buf;
+	struct regional		*region;
+	struct timeval		 tv = {TRUST_ANCHOR_RETRY_INTERVAL, 0};
+	int			 i, tas, n;
+	uint16_t		 dnskey_flags;
+	char			*str, rdata_buf[1024], *ta;
+
+	res = (struct unwind_resolver *)arg;
+
+	if ((result = calloc(1, sizeof(*result))) == NULL)
+		goto out;
+
+	log_debug("%s: rcode: %d", __func__, rcode);
+
+	if (!sec) {
+		log_debug("%s: sec: %d", __func__, sec);
+		goto out;
+	}
+
+	if ((str = sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
+		log_debug("%s", str);
+		free(str);
+	}
+
+	buf = sldns_buffer_new(answer_len);
+	region = regional_create();
+	result->rcode = LDNS_RCODE_SERVFAIL;
+	if(region && buf) {
+		sldns_buffer_clear(buf);
+		sldns_buffer_write(buf, answer_packet, answer_len);
+		sldns_buffer_flip(buf);
+		libworker_enter_result(result, buf, region, sec);
+		result->answer_packet = NULL;
+		result->answer_len = 0;
+		sldns_buffer_free(buf);
+		regional_destroy(region);
+
+		if (result->rcode != LDNS_RCODE_NOERROR) {
+			log_debug("%s: result->rcode: %d", __func__,
+			    result->rcode);
+			goto out;
+		}
+
+		i = 0;
+		tas = 0;
+		while(result->data[i] != NULL) {
+			if (result->len[i] < 2) {
+				if (tas > 0)
+					resolver_imsg_compose_frontend(
+					    IMSG_NEW_TAS_ABORT, 0, NULL, 0);
+				goto out;
+			}
+			n = sldns_wire2str_rdata_buf(result->data[i],
+			    result->len[i], rdata_buf, sizeof(rdata_buf),
+			    LDNS_RR_TYPE_DNSKEY);
+
+			if (n < 0 || (size_t)n >= sizeof(rdata_buf)) {
+				log_warnx("trust anchor buffer to small");
+				resolver_imsg_compose_frontend(
+				    IMSG_NEW_TAS_ABORT, 0, NULL, 0);
+				goto out;
+			}
+
+			memcpy(&dnskey_flags, result->data[i], 2);
+			dnskey_flags = ntohs(dnskey_flags);
+			if ((dnskey_flags & LDNS_KEY_SEP_KEY) &&
+			    !(dnskey_flags & LDNS_KEY_REVOKE_KEY)) {
+				asprintf(&ta, ".\t%d\tIN\tDNSKEY\t%s",
+				    ROOT_DNSKEY_TTL, rdata_buf);
+				log_debug("%s: ta: %s", __func__, ta);
+				resolver_imsg_compose_frontend(IMSG_NEW_TA, 0,
+				    ta, strlen(ta) + 1);
+				tas++;
+				free(ta);
+			}
+			i++;
+		}
+		if (tas > 0) {
+			resolver_imsg_compose_frontend(IMSG_NEW_TAS_DONE, 0,
+			    NULL, 0);
+			tv.tv_sec = TRUST_ANCHOR_QUERY_INTERVAL;
+		}
+	}
+out:
+	ub_resolve_free(result);
+	resolver_unref(res);
+	evtimer_add(&trust_anchor_timer, &tv);
 }

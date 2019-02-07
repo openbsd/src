@@ -1,4 +1,4 @@
-/*	$OpenBSD: captiveportal.c,v 1.1 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: captiveportal.c,v 1.2 2019/02/07 17:20:35 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -301,6 +301,10 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			event_set(&iev_frontend->ev, iev_frontend->ibuf.fd,
 			iev_frontend->events, iev_frontend->handler, iev_frontend);
 			event_add(&iev_frontend->ev, NULL);
+			break;
+		case IMSG_STARTUP:
+			if (pledge("stdio", NULL) == -1)
+				fatal("pledge");
 			break;
 		case IMSG_RECONF_CONF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +

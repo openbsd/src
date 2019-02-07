@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.6 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.7 2019/02/07 17:20:35 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -34,6 +34,8 @@
 #define OPT_VERBOSE	0x00000001
 #define OPT_VERBOSE2	0x00000002
 #define OPT_NOACTION	0x00000004
+
+#define	KSK2017	".	172800	IN	DNSKEY	257 3 8 AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3+/4RgWOq7HrxRixHlFlExOLAJr5emLvN7SWXgnLh4+B5xQlNVz8Og8kvArMtNROxVQuCaSnIDdD5LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF0jLHwVN8efS3rCj/EWgvIWgb9tarpVUDK/b58Da+sqqls3eNbuv7pr+eoZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLYA4/ilBmSVIzuDWfdRUfhHdY6+cn8HFRm+2hM8AnXGXws9555KrUB5qihylGa8subX2Nn6UwNR1AkUTV74bU="
 
 enum {
 	PROC_MAIN,
@@ -94,7 +96,16 @@ enum imsg_type {
 	IMSG_CTL_RECHECK_CAPTIVEPORTAL,
 	IMSG_OPEN_HTTP_PORT,
 	IMSG_HTTPSOCK,
-	IMSG_CAPTIVEPORTAL_STATE
+	IMSG_CAPTIVEPORTAL_STATE,
+	IMSG_OPEN_TA_RO,
+	IMSG_OPEN_TA_W,
+	IMSG_TAFD,
+	IMSG_TAFD_W,
+	IMSG_NEW_TA,
+	IMSG_NEW_TAS_ABORT,
+	IMSG_NEW_TAS_DONE,
+	IMSG_TA_W_DONE,
+	IMSG_TA_W_FAILED
 };
 
 struct unwind_forwarder {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.10 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.11 2019/02/07 17:20:35 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/syslog.h>
 #include <sys/wait.h>
 
@@ -47,6 +48,13 @@
 #include "control.h"
 #include "captiveportal.h"
 
+#define	LEASE_DB_DIR	"/var/db/"
+#define	_PATH_LEASE_DB	"/var/db/dhclient.leases."
+
+#define	TRUST_ANCHOR_DIR	"/etc/unwind/trustanchor/"
+#define	TRUST_ANCHOR_FILE	"/etc/unwind/trustanchor/root.key"
+#define	TRUST_ANCHOR_TEMPLATE	"/etc/unwind/trustanchor/root.key.XXXXXXXXXX"
+
 __dead void	usage(void);
 __dead void	main_shutdown(void);
 
@@ -65,6 +73,9 @@ static int	main_imsg_send_config(struct unwind_conf *);
 int	main_reload(void);
 int	main_sendall(enum imsg_type, void *, uint16_t);
 void	open_dhcp_lease(int);
+void	open_trust_anchor(void);
+void	open_trust_anchor_w(void);
+void	wrote_trust_anchor(int);
 void	open_ports(void);
 
 struct unwind_conf	*main_conf;
@@ -72,6 +83,9 @@ struct imsgev		*iev_frontend;
 struct imsgev		*iev_resolver;
 struct imsgev		*iev_captiveportal;
 char			*conffile;
+
+char			 trust_anchor_tmp_filename[sizeof(
+			     TRUST_ANCHOR_TEMPLATE)];
 
 pid_t	 frontend_pid;
 pid_t	 resolver_pid;
@@ -296,10 +310,18 @@ main(int argc, char *argv[])
 	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
 	main_imsg_send_config(main_conf);
 
-	if (pledge("stdio inet rpath sendfd", NULL) == -1)
+	if (unveil(TRUST_ANCHOR_DIR, "rwc") == -1 && errno != ENOENT)
+		err(1, "unveil");
+
+	if (unveil(LEASE_DB_DIR, "r") == -1 && errno != ENOENT)
+		err(1, "unveil");
+
+	if (pledge("stdio inet dns rpath wpath cpath sendfd", NULL) == -1)
 		fatal("pledge");
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
+	main_imsg_compose_resolver(IMSG_STARTUP, 0, NULL, 0);
+	main_imsg_compose_captiveportal(IMSG_STARTUP, 0, NULL, 0);
 
 	event_dispatch();
 
@@ -444,6 +466,18 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				    "%d", __func__, imsg.hdr.len);
 			memcpy(&rtm_index, imsg.data, sizeof(rtm_index));
 			open_dhcp_lease(rtm_index);
+			break;
+		case IMSG_OPEN_TA_RO:
+			open_trust_anchor();
+			break;
+		case IMSG_OPEN_TA_W:
+			open_trust_anchor_w();
+			break;
+		case IMSG_TA_W_DONE:
+			wrote_trust_anchor(0);
+			break;
+		case IMSG_TA_W_FAILED:
+			wrote_trust_anchor(1);
 			break;
 		case IMSG_OPEN_PORTS:
 			open_ports();
@@ -855,9 +889,6 @@ config_clear(struct unwind_conf *conf)
 	free(conf);
 }
 
-
-#define	_PATH_LEASE_DB	"/var/db/dhclient.leases."
-
 void
 open_dhcp_lease(int if_idx)
 {
@@ -897,7 +928,6 @@ open_ports(void)
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_PASSIVE;
 
-
 	error = getaddrinfo("127.0.0.1", "domain", &hints, &res0);
 	if (!error && res0) {
 		if ((udp4sock = socket(res0->ai_family, res0->ai_socktype,
@@ -909,7 +939,8 @@ open_ports(void)
 			}
 		}
 	}
-	freeaddrinfo(res0);
+	if (res0)
+		freeaddrinfo(res0);
 
 	hints.ai_family = AF_INET6;
 	error = getaddrinfo("::1", "domain", &hints, &res0);
@@ -923,7 +954,8 @@ open_ports(void)
 			}
 		}
 	}
-	freeaddrinfo(res0);
+	if (res0)
+		freeaddrinfo(res0);
 
 	if (udp4sock == -1 && udp6sock == -1)
 		fatal("could not bind to 127.0.0.1 or ::1 on port 53");
@@ -932,4 +964,58 @@ open_ports(void)
 		main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
 	if (udp6sock != -1)
 		main_imsg_compose_frontend_fd(IMSG_UDP6SOCK, 0, udp6sock);
+}
+
+void
+open_trust_anchor(void)
+{
+	int	 fd;
+
+	if ((fd = open(TRUST_ANCHOR_FILE, O_RDONLY)) == -1)
+		log_warn("%s: %s", __func__, TRUST_ANCHOR_FILE);
+
+	/* Send fd == -1, too. Receiver handles it correctly. */
+	main_imsg_compose_frontend_fd(IMSG_TAFD, 0, fd);
+}
+
+void
+open_trust_anchor_w(void)
+{
+	int fd;
+
+	if (*trust_anchor_tmp_filename != '\0') {
+		log_warnx("already writing trust anchor");
+		return;
+	}
+	strlcpy(trust_anchor_tmp_filename, TRUST_ANCHOR_TEMPLATE, sizeof(
+	    trust_anchor_tmp_filename));
+
+	if ((fd = mkstemp(trust_anchor_tmp_filename)) == -1) {
+		log_warn("%s", trust_anchor_tmp_filename);
+		*trust_anchor_tmp_filename = '\0';
+		return;
+	}
+	main_imsg_compose_frontend_fd(IMSG_TAFD_W, 0, fd);
+}
+
+void
+wrote_trust_anchor(int failure)
+{
+	if (*trust_anchor_tmp_filename == '\0') {
+		log_warnx("%s: not writing trust anchor", __func__);
+		return;
+	}
+
+	if (failure)
+		unlink(trust_anchor_tmp_filename);
+	else {
+		if (rename(trust_anchor_tmp_filename, TRUST_ANCHOR_FILE) ==
+		    -1) {
+			log_warn("%s", __func__);
+			unlink(trust_anchor_tmp_filename);
+		}
+	}
+
+	*trust_anchor_tmp_filename = '\0';
+
 }

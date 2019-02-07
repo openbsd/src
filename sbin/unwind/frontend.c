@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.10 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.11 2019/02/07 17:20:35 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -88,6 +88,9 @@ void			 get_rtaddrs(int, struct sockaddr *,
 void			 rtmget_default(void);
 struct pending_query	*find_pending_query(uint64_t);
 void			 parse_dhcp_lease(int);
+void			 parse_trust_anchor(struct trust_anchor_head *, int);
+void			 send_trust_anchors(struct trust_anchor_head *);
+void			 write_trust_anchors(struct trust_anchor_head *, int);
 
 struct unwind_conf	*frontend_conf;
 struct imsgev		*iev_main;
@@ -95,6 +98,9 @@ struct imsgev		*iev_resolver;
 struct imsgev		*iev_captiveportal;
 struct event		 ev_route;
 int			 udp4sock = -1, udp6sock = -1, routesock = -1;
+
+static struct trust_anchor_head	 built_in_trust_anchors;
+static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 
 void
 frontend_sig_handler(int sig, short event, void *bula)
@@ -193,6 +199,12 @@ frontend(int debug, int verbose)
 		fatal("%s", __func__);
 
 	TAILQ_INIT(&pending_queries);
+
+	TAILQ_INIT(&built_in_trust_anchors);
+	TAILQ_INIT(&trust_anchors);
+	TAILQ_INIT(&new_trust_anchors);
+
+	add_new_ta(&built_in_trust_anchors, KSK2017);
 
 	event_dispatch();
 
@@ -460,6 +472,21 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				    __func__);
 			parse_dhcp_lease(fd);
 			break;
+		case IMSG_TAFD:
+			if ((fd = imsg.fd) != -1)
+				parse_trust_anchor(&trust_anchors, fd);
+			if (!TAILQ_EMPTY(&trust_anchors))
+				send_trust_anchors(&trust_anchors);
+			else
+				send_trust_anchors(&built_in_trust_anchors);
+			break;
+		case IMSG_TAFD_W:
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg trust "
+				    "anchor fd but didn't receive any",
+				    __func__);
+			write_trust_anchors(&trust_anchors, fd);
+			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -484,7 +511,8 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 	struct imsgbuf			*ibuf = &iev->ibuf;
 	struct imsg			 imsg;
 	struct query_imsg		*query_imsg;
-	int				 n, shut = 0;
+	int				 n, shut = 0, chg;
+	char				*ta;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -555,6 +583,31 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);
 			break;
+		case IMSG_NEW_TA:
+			/* make sure this is a string */
+			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
+			    = '\0';
+			ta = imsg.data;
+			add_new_ta(&new_trust_anchors, ta);
+			break;
+		case IMSG_NEW_TAS_ABORT:
+			log_debug("%s: IMSG_NEW_TAS_ABORT", __func__);
+			free_tas(&new_trust_anchors);
+			break;
+		case IMSG_NEW_TAS_DONE:
+			chg = merge_tas(&new_trust_anchors, &trust_anchors);
+			log_debug("%s: IMSG_NEW_TAS_DONE: change: %d",
+			    __func__, chg);
+			if (chg) {
+				send_trust_anchors(&trust_anchors);
+			}
+			/*
+			 * always write trust anchors, the modify date on
+			 * the file is an indication when we made progress
+			 */
+			frontend_imsg_compose_main(IMSG_OPEN_TA_W, 0, NULL,
+			    0);
+			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
@@ -623,6 +676,8 @@ frontend_startup(void)
 		    "process", __func__);
 
 	event_add(&ev_route, NULL);
+
+	frontend_imsg_compose_main(IMSG_OPEN_TA_RO, 0, NULL, 0);
 
 	frontend_imsg_compose_main(IMSG_STARTUP_DONE, 0, NULL, 0);
 	rtmget_default();
@@ -1027,4 +1082,155 @@ parse_dhcp_lease(int fd)
 		frontend_imsg_compose_resolver(IMSG_FORWARDER, 0, ns,
 		    strlen(ns) + 1);
 	}
+}
+
+
+void
+add_new_ta(struct trust_anchor_head *tah, char *val)
+{
+
+	struct trust_anchor	*ta, *i;
+	int			 cmp;
+
+	if ((ta = malloc(sizeof(*ta))) == NULL)
+		fatal("%s", __func__);
+	if ((ta->ta = strdup(val)) == NULL)
+		fatal("%s", __func__);
+
+	/* keep the list sorted to prevent churn if the order changes in DNS */
+	TAILQ_FOREACH(i, tah, entry) {
+		cmp = strcmp(i->ta, ta->ta);
+		if ( cmp == 0) {
+			/* duplicate */
+			free(ta->ta);
+			free(ta);
+			return;
+		} else if (cmp > 0) {
+			TAILQ_INSERT_BEFORE(i, ta, entry);
+			return;
+		}
+	}
+	TAILQ_INSERT_TAIL(tah, ta, entry);
+}
+
+void
+free_tas(struct trust_anchor_head *tah)
+{
+	struct trust_anchor	*ta;
+
+	while ((ta = TAILQ_FIRST(tah))) {
+		TAILQ_REMOVE(tah, ta, entry);
+		free(ta->ta);
+		free(ta);
+	}
+}
+
+int
+merge_tas(struct trust_anchor_head *newh, struct trust_anchor_head *oldh)
+{
+	struct trust_anchor	*i, *j;
+	int			 chg = 0;
+
+	j = TAILQ_FIRST(oldh);
+
+	TAILQ_FOREACH(i, newh, entry) {
+		if (j == NULL || strcmp(i->ta, j->ta) != 0) {
+			chg = 1;
+			break;
+		}
+		j = TAILQ_NEXT(j, entry);	
+	}
+	if (j!= NULL)
+		chg = 1;
+
+	if (chg) {
+		free_tas(oldh);
+		while((i = TAILQ_FIRST(newh)) != NULL) {
+			TAILQ_REMOVE(newh, i, entry);
+			TAILQ_INSERT_TAIL(oldh, i, entry);
+		}
+	} else {
+		free_tas(newh);
+	}
+	return (chg);
+}
+
+void
+parse_trust_anchor(struct trust_anchor_head *tah, int fd)
+{
+	FILE	*f;
+	char	*line = NULL, *p;
+	size_t	 linesize = 0;
+	ssize_t	 linelen;
+
+	if((f = fdopen(fd, "r")) == NULL) {
+		log_warn("cannot read trust anchor file");
+		close(fd);
+		return;
+	}
+
+	while ((linelen = getline(&line, &linesize, f)) != -1) {
+		if (*line == ';')
+			continue;
+		p = strchr(line, ';');
+		if (p == NULL)
+			p = strchr(line, '\n');
+		if (p != NULL) {
+			do {
+				p--;
+			} while(p != line && *p == ' ');
+			*(p + 1) = '\0';
+		}
+		log_debug("%s: %s", __func__, line);
+		add_new_ta(tah, line);
+	}
+	free(line);
+	if (ferror(f))
+		log_warn("getline");
+	fclose(f);
+}
+
+void
+send_trust_anchors(struct trust_anchor_head *tah)
+{
+	struct trust_anchor	*ta;
+
+	TAILQ_FOREACH(ta, tah, entry)
+		frontend_imsg_compose_resolver(IMSG_NEW_TA, 0, ta->ta,
+		    strlen(ta->ta) + 1);
+	frontend_imsg_compose_resolver(IMSG_NEW_TAS_DONE, 0, NULL, 0);
+}
+
+void
+write_trust_anchors(struct trust_anchor_head *tah, int fd)
+{
+	FILE			*f;
+	struct trust_anchor	*ta;
+
+	if((f = fdopen(fd, "w+")) == NULL) {
+		log_warn("cannot open trust anchor file for writing");
+		goto err;
+	}
+
+	TAILQ_FOREACH(ta, tah, entry)
+		if (fprintf(f, "%s\n", ta->ta) < 0)
+			goto err;
+	if (ferror(f)) {
+		log_warn("%s", __func__);
+		goto err;
+	}
+	if (fclose(f) != 0) {
+		f = NULL;
+		log_warn("%s", __func__);
+		goto err;
+	}
+	frontend_imsg_compose_main(IMSG_TA_W_DONE, 0, NULL, 0);
+	return;
+err:
+	if (f == NULL)
+		close(fd);
+	else
+		fclose(f);
+
+	frontend_imsg_compose_main(IMSG_TA_W_FAILED, 0, NULL, 0);
 }
