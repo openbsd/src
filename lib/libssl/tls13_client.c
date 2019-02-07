@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.2 2019/02/04 16:18:15 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.3 2019/02/07 15:54:18 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -230,6 +230,8 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	return 1;
 
  err:
+	/* XXX - send alert. */
+
 	return 0;
 }
 
@@ -253,6 +255,7 @@ tls13_server_hello_recv(struct tls13_ctx *ctx)
 
 	if (S3I(s)->hs_tls13.server_version < TLS1_3_VERSION) {
 		/* XXX - switch back to legacy client. */
+		goto err;
 	}
 
 	if (ctx->handshake_stage.hs_type & WITH_HRR)
@@ -313,4 +316,27 @@ tls13_server_hello_recv(struct tls13_ctx *ctx)
  err:
 	freezero(shared_key, X25519_KEY_LENGTH);
 	return ret;
+}
+
+int
+tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx)
+{
+	int alert;
+	CBS cbs;
+
+	if (!tls13_handshake_msg_content(ctx->hs_msg, &cbs))
+		goto err;
+
+	if (!tlsext_client_parse(ctx->ssl, &cbs, &alert, SSL_TLSEXT_MSG_EE))
+		goto err;
+
+	if (CBS_len(&cbs) != 0)
+		goto err;
+
+	return 1;
+
+ err:
+	/* XXX - send alert. */
+
+	return 0;
 }
