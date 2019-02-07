@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.183 2019/01/31 05:33:51 tedu Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.184 2019/02/07 15:11:38 visa Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -320,11 +320,13 @@ struct ctlname {
  * KERN_WITNESS
  */
 #define	KERN_WITNESS_WATCH	1	/* int: operating mode */
-#define	KERN_WITNESS_MAXID	2
+#define	KERN_WITNESS_LOCKTRACE	2	/* int: stack trace saving mode */
+#define	KERN_WITNESS_MAXID	3
 
 #define	CTL_KERN_WITNESS_NAMES { \
 	{ 0, 0 }, \
 	{ "watch", CTLTYPE_INT }, \
+	{ "locktrace", CTLTYPE_INT }, \
 }
 
 /*

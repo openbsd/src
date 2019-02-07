@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.117 2018/11/12 15:09:17 visa Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.118 2019/02/07 15:11:38 visa Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -140,7 +140,7 @@
 #define	M_USB		101	/* USB general */
 #define	M_USBDEV	102	/* USB device driver */
 #define	M_USBHC		103	/* USB host controller */
-/* 104 - free */
+#define	M_WITNESS	104	/* witness data */
 #define M_MEMDESC	105	/* Memory range */
 /* 106-107 - free */
 #define M_CRYPTO_DATA	108	/* Crypto framework data buffers (keys etc.) */
@@ -278,7 +278,7 @@
 	"USB",		/* 101 M_USB */ \
 	"USB device",	/* 102 M_USBDEV */ \
 	"USB HC",	/* 103 M_USBHC */ \
-	NULL, \
+	"witness",	/* 104 M_WITNESS */ \
 	"memdesc",	/* 105 M_MEMDESC */ \
 	NULL,	/* 106 */ \
 	NULL, \

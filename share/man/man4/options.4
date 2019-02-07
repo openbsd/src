@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.261 2019/02/06 10:59:49 visa Exp $
+.\"	$OpenBSD: options.4,v 1.262 2019/02/07 15:11:38 visa Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: February 6 2019 $
+.Dd $Mdocdate: February 7 2019 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -141,6 +141,14 @@ See
 Maximum number of lock types that are tracked by
 .Xr witness 4 .
 It defaults to 1536.
+.It Cd option WITNESS_LOCKTRACE
+Enable
+.Xr witness 4
+lock stack trace saving at boot.
+The feature is disabled by default and has to be enabled by setting the
+.Va kern.witness.locktrace
+.Xr sysctl 8
+variable.
 .It Cd option WITNESS_WATCH
 Enable
 .Xr witness 4

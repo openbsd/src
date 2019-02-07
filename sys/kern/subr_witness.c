@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.28 2019/02/04 13:28:55 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.29 2019/02/07 15:11:38 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -189,6 +189,11 @@ struct lock_class {
 	u_int		lc_flags;
 };
 
+union lock_stack {
+	union lock_stack	*ls_next;
+	struct db_stack_trace	 ls_stack;
+};
+
 #define	LC_SLEEPLOCK	0x00000001	/* Sleep lock. */
 #define	LC_SPINLOCK	0x00000002	/* Spin lock. */
 #define	LC_SLEEPABLE	0x00000004	/* Sleeping allowed with this lock. */
@@ -203,6 +208,7 @@ struct lock_class {
  */
 struct lock_instance {
 	struct lock_object	*li_lock;
+	union lock_stack	*li_stack;
 	const char		*li_file;
 	int			li_line;
 	u_int			li_flags;
@@ -292,10 +298,13 @@ struct witness_pendhelp {
 struct witness_cpu {
 	struct lock_list_entry	*wc_spinlocks;
 	struct lock_list_entry	*wc_lle_cache;
+	union lock_stack	*wc_stk_cache;
 	unsigned int		 wc_lle_count;
+	unsigned int		 wc_stk_count;
 } __aligned(CACHELINESIZE);
 
 #define WITNESS_LLE_CACHE_MAX	8
+#define WITNESS_STK_CACHE_MAX	(WITNESS_LLE_CACHE_MAX * LOCK_NCHILDREN)
 
 struct witness_cpu witness_cpu[MAXCPUS];
 
@@ -340,6 +349,7 @@ static void	witness_ddb_display_list(int(*prnt)(const char *fmt, ...),
 static void	witness_ddb_level_descendants(struct witness *parent, int l);
 static void	witness_ddb_list(struct proc *td);
 #endif
+static int	witness_alloc_stacks(void);
 static void	witness_debugger(int dump);
 static void	witness_free(struct witness *m);
 static struct witness	*witness_get(void);
@@ -353,6 +363,8 @@ static int	witness_list_locks(struct lock_list_entry **,
 		    int (*)(const char *, ...));
 static void	witness_lock_list_free(struct lock_list_entry *lle);
 static struct lock_list_entry	*witness_lock_list_get(void);
+static void	witness_lock_stack_free(union lock_stack *stack);
+static union lock_stack		*witness_lock_stack_get(void);
 static int	witness_lock_order_add(struct witness *parent,
 		    struct witness *child);
 static int	witness_lock_order_check(struct witness *parent,
@@ -377,9 +389,16 @@ static int witness_watch = 3;
 static int witness_watch = 2;
 #endif
 
+#ifdef WITNESS_LOCKTRACE
+static int witness_locktrace = 1;
+#else
+static int witness_locktrace = 0;
+#endif
+
 int witness_count = WITNESS_COUNT;
 
 static struct mutex w_mtx;
+static struct rwlock w_ctlock = RWLOCK_INITIALIZER("w_ctlock");
 
 /* w_list */
 static struct witness_list w_free = SIMPLEQ_HEAD_INITIALIZER(w_free);
@@ -407,6 +426,9 @@ static struct witness_lock_order_data *w_lofree = NULL;
 static struct witness_lock_order_hash w_lohash;
 static int w_max_used_index = 0;
 static unsigned int w_generation = 0;
+
+static union lock_stack *w_lock_stack_free;
+static unsigned int w_lock_stack_num;
 
 static struct lock_class lock_class_kernel_lock = {
 	.lc_name = "kernel_lock",
@@ -474,6 +496,7 @@ void
 witness_initialize(void)
 {
 	struct lock_object *lock;
+	union lock_stack *stacks;
 	struct witness *w;
 	int i, s;
 
@@ -510,7 +533,15 @@ witness_initialize(void)
 		    (witness_count + 1));
 	}
 
+	if (witness_locktrace) {
+		w_lock_stack_num = LOCK_CHILDCOUNT * LOCK_NCHILDREN;
+		stacks = (void *)uvm_pageboot_alloc(sizeof(*stacks) *
+		    w_lock_stack_num);
+	}
+
 	s = splhigh();
+	for (i = 0; i < w_lock_stack_num; i++)
+		witness_lock_stack_free(&stacks[i]);
 	for (i = 0; i < LOCK_CHILDCOUNT; i++)
 		witness_lock_list_free(&w_locklistdata[i]);
 	splx(s);
@@ -1167,6 +1198,12 @@ witness_lock(struct lock_object *lock, int flags, const char *file, int line)
 		instance->li_flags = LI_EXCLUSIVE;
 	else
 		instance->li_flags = 0;
+	instance->li_stack = NULL;
+	if (witness_locktrace) {
+		instance->li_stack = witness_lock_stack_get();
+		if (instance->li_stack != NULL)
+			db_save_stack_trace(&instance->li_stack->ls_stack);
+	}
 out:
 	splx(s);
 }
@@ -1341,7 +1378,13 @@ found:
 		panic("lock marked norelease");
 	}
 
-	/* Otherwise, remove this item from the list. */
+	/* Release the stack buffer, if any. */
+	if (instance->li_stack != NULL) {
+		witness_lock_stack_free(instance->li_stack);
+		instance->li_stack = NULL;
+	}
+
+	/* Remove this item from the list. */
 	for (j = i; j < (*lock_list)->ll_count - 1; j++)
 		(*lock_list)->ll_children[j] =
 		    (*lock_list)->ll_children[j + 1];
@@ -1805,6 +1848,7 @@ witness_lock_list_get(void)
 static void
 witness_lock_list_free(struct lock_list_entry *lle)
 {
+	union lock_stack *stack;
 	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
 
 	splassert(IPL_HIGH);
@@ -1817,9 +1861,67 @@ witness_lock_list_free(struct lock_list_entry *lle)
 	}
 
 	mtx_enter(&w_mtx);
+	/* Put the entry on the shared free list. */
 	lle->ll_next = w_lock_list_free;
 	w_lock_list_free = lle;
+	/* Put any excess stacks on the shared free list. */
+	while (wcpu->wc_stk_count > WITNESS_STK_CACHE_MAX) {
+		stack = wcpu->wc_stk_cache;
+		wcpu->wc_stk_cache = stack->ls_next;
+		wcpu->wc_stk_count--;
+		stack->ls_next = w_lock_stack_free;
+		w_lock_stack_free = stack;
+	}
 	mtx_leave(&w_mtx);
+}
+
+static union lock_stack *
+witness_lock_stack_get(void)
+{
+	union lock_stack *stack = NULL;
+	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
+
+	splassert(IPL_HIGH);
+
+	if (wcpu->wc_stk_count > 0) {
+		stack = wcpu->wc_stk_cache;
+		wcpu->wc_stk_cache = stack->ls_next;
+		wcpu->wc_stk_count--;
+		return (stack);
+	}
+
+	mtx_enter(&w_mtx);
+	/* Reserve stacks for one lock list entry. */
+	while (w_lock_stack_free != NULL) {
+		stack = w_lock_stack_free;
+		w_lock_stack_free = stack->ls_next;
+		if (wcpu->wc_stk_count + 1 == LOCK_NCHILDREN)
+			break;
+		stack->ls_next = wcpu->wc_stk_cache;
+		wcpu->wc_stk_cache = stack;
+		wcpu->wc_stk_count++;
+	}
+	mtx_leave(&w_mtx);
+	return (stack);
+}
+
+/*
+ * Put the stack buffer on the CPU-local free list.
+ * A call to this function has to be followed by a call
+ * to witness_lock_list_free() which will move excess stack buffers
+ * to the shared free list.
+ * This split of work reduces contention of w_mtx.
+ */
+static void
+witness_lock_stack_free(union lock_stack *stack)
+{
+	struct witness_cpu *wcpu = &witness_cpu[cpu_number()];
+
+	splassert(IPL_HIGH);
+
+	stack->ls_next = wcpu->wc_stk_cache;
+	wcpu->wc_stk_cache = stack;
+	wcpu->wc_stk_count++;
 }
 
 static struct lock_instance *
@@ -1851,6 +1953,8 @@ witness_list_lock(struct lock_instance *instance,
 	prnt(" r = %d (%p) locked @ %s:%d\n",
 	    instance->li_flags & LI_RECURSEMASK, lock,
 	    fixup_filename(instance->li_file), instance->li_line);
+	if (instance->li_stack != NULL)
+		db_print_stack_trace(&instance->li_stack->ls_stack, prnt);
 }
 
 #ifdef DDB
@@ -2550,23 +2654,73 @@ witness_debugger(int dump)
 	}
 }
 
+static int
+witness_alloc_stacks(void)
+{
+	union lock_stack *stacks;
+	unsigned int i, nstacks = LOCK_CHILDCOUNT * LOCK_NCHILDREN;
+
+	rw_assert_wrlock(&w_ctlock);
+
+	if (w_lock_stack_num >= nstacks)
+		return (0);
+
+	nstacks -= w_lock_stack_num;
+	stacks = mallocarray(nstacks, sizeof(*stacks), M_WITNESS,
+	    M_WAITOK | M_CANFAIL | M_ZERO);
+	if (stacks == NULL)
+		return (ENOMEM);
+
+	mtx_enter(&w_mtx);
+	for (i = 0; i < nstacks; i++) {
+		stacks[i].ls_next = w_lock_stack_free;
+		w_lock_stack_free = &stacks[i];
+	}
+	mtx_leave(&w_mtx);
+	w_lock_stack_num += nstacks;
+
+	return (0);
+}
+
 int
 witness_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	int error;
+	int error, value;
 
 	if (namelen != 1)
 		return (ENOTDIR);
+
+	rw_enter_write(&w_ctlock);
 
 	switch (name[0]) {
 	case KERN_WITNESS_WATCH:
 		error = witness_sysctl_watch(oldp, oldlenp, newp, newlen);
 		break;
+	case KERN_WITNESS_LOCKTRACE:
+		value = witness_locktrace;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &value);
+		if (error == 0 && newp != NULL) {
+			switch (value) {
+			case 1:
+				error = witness_alloc_stacks();
+				/* FALLTHROUGH */
+			case 0:
+				if (error == 0)
+					witness_locktrace = value;
+				break;
+			default:
+				error = EINVAL;
+				break;
+			}
+		}
+		break;
 	default:
 		error = EOPNOTSUPP;
 		break;
 	}
+
+	rw_exit_write(&w_ctlock);
 
 	return (error);
 }
