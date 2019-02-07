@@ -2759,6 +2759,7 @@
 ./usr/share/man/man3/terminfo.3
 ./usr/share/man/man3/time.3
 ./usr/share/man/man3/time2posix.3
+./usr/share/man/man3/timeradd.3
 ./usr/share/man/man3/times.3
 ./usr/share/man/man3/timespec_get.3
 ./usr/share/man/man3/timingsafe_bcmp.3
