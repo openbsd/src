@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.28 2019/01/17 01:27:59 mlarkin Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.29 2019/02/07 07:39:56 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -2021,5 +2021,5 @@ bwfm_pci_msgbuf_rxioctl(struct bwfm_pci_softc *sc,
 		return;
 	}
 
-	m_free(m);
+	m_freem(m);
 }
