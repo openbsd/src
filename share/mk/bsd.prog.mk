@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.75 2017/07/21 11:00:24 schwarze Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.76 2019/02/07 07:01:04 jsg Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -32,6 +32,7 @@ LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
+LIBELF?=	${DESTDIR}/usr/lib/libelf.a
 LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
 LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 LIBFORM?=	${DESTDIR}/usr/lib/libform.a

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.77 2017/07/25 14:15:55 deraadt Exp $
+#	$OpenBSD: bsd.README,v 1.78 2019/02/07 07:01:04 jsg Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -338,6 +338,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBCRYPTO	/usr/lib/libcrypto.a
 			LIBCURSES	/usr/lib/libcurses.a
 			LIBEDIT		/usr/lib/libedit.a
+			LIBELF		/usr/lib/libelf.a
 			LIBEVENT	/usr/lib/libevent.a
 			LIBEXPAT	/usr/lib/libexpat.a
 			LIBFORM		/usr/lib/libform.a
