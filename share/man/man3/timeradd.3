@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeradd.3,v 1.1 2019/02/07 02:56:13 cheloha Exp $
+.\"	$OpenBSD: timeradd.3,v 1.2 2019/02/07 17:09:28 schwarze Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -49,7 +49,6 @@
 .Nd manipulate time structures
 .Sh SYNOPSIS
 .In sys/time.h
-.Pp
 .Ft void
 .Fn timerclear "struct timeval *a"
 .Ft int
@@ -76,9 +75,9 @@
 .Fn timespecadd "struct timespec *a" "struct timespec *b" "struct timespec *c"
 .Sh DESCRIPTION
 The
-.Nm timer
+.Fn timer*
 and
-.Nm timespec
+.Fn timespec*
 macros defined in
 .In sys/time.h
 simplify the use of
@@ -89,7 +88,7 @@ structures,
 respectively.
 .Pp
 The following macros are available:
-.Bl -tag -width timespecvalid
+.Bl -tag -width Ds
 .It Fn timerclear a , Fn timespecclear a
 Set the time value in
 .Fa a
@@ -108,7 +107,7 @@ Test if the nanosecond value in
 is greater than or equal to zero and less than one billion.
 .It Fn timercmp a b operator , Fn timespeccmp a b operator
 Test if the expression
-.D1 Fa a Fa operator Fa b
+.Fa a operator b
 is true,
 where
 .Fa operator
@@ -129,12 +128,16 @@ and store the result in
 .Fa c .
 .It Fn timeradd a b c , Fn timespecadd a b c
 Add
-.Fa a
-to
 .Fa b
+to
+.Fa a
 and store the result in
 .Fa c .
 .El
+.Sh RETURN VALUES
+The macros returning
+.Vt int
+return 1 if the tested condition holds or 0 otherwise.
 .Sh SEE ALSO
 .Xr adjtime 2 ,
 .Xr clock_gettime 2 ,
@@ -148,11 +151,7 @@ and store the result in
 .Xr ppoll 2 ,
 .Xr pselect 2
 .Sh STANDARDS
-The
-.Nm timer
-and
-.Nm timespec
-macros are non-standard,
+These macros are non-standard,
 though many systems offer them.
 Similar interfaces are often available in their absence.
 .Sh HISTORY
