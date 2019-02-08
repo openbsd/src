@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.101 2018/06/20 16:43:05 reyk Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.102 2019/02/08 11:46:07 florian Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2018 $
+.Dd $Mdocdate: February 8 2019 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -276,7 +276,12 @@ will neither display nor generate a directory index.
 .El
 .It Oo Ic no Oc Ic fastcgi Op Ic socket Ar socket
 Enable FastCGI instead of serving files.
-The
+.Nm httpd
+passes HTTP requests to a FastCGI handler listening on the socket
+.Ar socket .
+The socket can either be a UNIX domain socket or a TCP socket listening
+on localhost (127.0.0.1).
+If the FastCGI handler is listening on a UNIX domain socket,
 .Ar socket
 is a local path name within the
 .Xr chroot 2
@@ -284,6 +289,10 @@ root directory of
 .Xr httpd 8
 and defaults to
 .Pa /run/slowcgi.sock .
+Alternatively if
+the FastCGI handler is listening on a TCP socket,
+.Ar socket
+starts with a colon followed by the TCP port number.
 .Pp
 The FastCGI handler will be given the following variables:
 .Pp
