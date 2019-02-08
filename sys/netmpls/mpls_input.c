@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_input.c,v 1.74 2019/01/29 23:36:35 dlg Exp $	*/
+/*	$OpenBSD: mpls_input.c,v 1.75 2019/02/08 20:28:54 procter Exp $	*/
 
 /*
  * Copyright (c) 2008 Claudio Jeker <claudio@openbsd.org>
@@ -303,7 +303,8 @@ struct mbuf *
 mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 {
 	struct ip *ip;
-	uint16_t old, new, x;
+	uint16_t old, new;
+	uint32_t x;
 
 	if (m->m_len < sizeof(*ip)) {
 		m = m_pullup(m, sizeof(*ip));
@@ -317,6 +318,7 @@ mpls_ip_adjttl(struct mbuf *m, u_int8_t ttl)
 	x = ip->ip_sum + old - new;
 
 	ip->ip_ttl = ttl;
+	/* see pf_cksum_fixup() */
 	ip->ip_sum = (x) + (x >> 16);
 
 	return (m);
