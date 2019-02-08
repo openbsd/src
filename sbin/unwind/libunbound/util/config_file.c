@@ -76,6 +76,8 @@ uid_t cfg_uid = (uid_t)-1;
 gid_t cfg_gid = (gid_t)-1;
 /** for debug allow small timeout values for fast rollovers */
 int autr_permit_small_holddown = 0;
+/** size (in bytes) of stream wait buffers max */
+size_t stream_wait_max = 4 * 1024 * 1024;
 
 /** global config during parsing */
 struct config_parser_state* cfg_parser = 0;
@@ -119,6 +121,7 @@ config_create(void)
 	cfg->log_time_ascii = 0;
 	cfg->log_queries = 0;
 	cfg->log_replies = 0;
+	cfg->log_tag_queryreply = 0;
 	cfg->log_local_actions = 0;
 	cfg->log_servfail = 0;
 #ifndef USE_WINSOCK
@@ -139,6 +142,7 @@ config_create(void)
 	cfg->outgoing_num_tcp = 2; /* leaves 64-52=12 for: 4if,1stop,thread4 */
 	cfg->incoming_num_tcp = 2; 
 #endif
+	cfg->stream_wait_size = 4 * 1024 * 1024;
 	cfg->edns_buffer_size = 4096; /* 4k from rfc recommendation */
 	cfg->msg_buffer_size = 65552; /* 64 k + a small margin */
 	cfg->msg_cache_size = 4 * 1024 * 1024;
@@ -483,6 +487,9 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_STRLIST("additional-tls-port:", tls_additional_port)
 	else S_STRLIST("tls-additional-ports:", tls_additional_port)
 	else S_STRLIST("tls-additional-port:", tls_additional_port)
+	else S_STRLIST_APPEND("tls-session-ticket-keys:", tls_session_ticket_keys)
+	else S_STR("tls-ciphers:", tls_ciphers)
+	else S_STR("tls-ciphersuites:", tls_ciphersuites)
 	else S_YNO("interface-automatic:", if_automatic)
 	else S_YNO("use-systemd:", use_systemd)
 	else S_YNO("do-daemonize:", do_daemonize)
@@ -490,6 +497,7 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_NUMBER_NONZERO("outgoing-range:", outgoing_num_ports)
 	else S_SIZET_OR_ZERO("outgoing-num-tcp:", outgoing_num_tcp)
 	else S_SIZET_OR_ZERO("incoming-num-tcp:", incoming_num_tcp)
+	else S_MEMSIZE("stream-wait-size:", stream_wait_size)
 	else S_SIZET_NONZERO("edns-buffer-size:", edns_buffer_size)
 	else S_SIZET_NONZERO("msg-buffer-size:", msg_buffer_size)
 	else S_MEMSIZE("msg-cache-size:", msg_cache_size)
@@ -560,6 +568,7 @@ int config_set_option(struct config_file* cfg, const char* opt,
 	else S_YNO("val-log-squelch:", val_log_squelch)
 	else S_YNO("log-queries:", log_queries)
 	else S_YNO("log-replies:", log_replies)
+	else S_YNO("log-tag-queryreply:", log_tag_queryreply)
 	else S_YNO("log-local-actions:", log_local_actions)
 	else S_YNO("log-servfail:", log_servfail)
 	else S_YNO("val-permissive-mode:", val_permissive_mode)
@@ -875,6 +884,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_DEC(opt, "outgoing-range", outgoing_num_ports)
 	else O_DEC(opt, "outgoing-num-tcp", outgoing_num_tcp)
 	else O_DEC(opt, "incoming-num-tcp", incoming_num_tcp)
+	else O_MEM(opt, "stream-wait-size", stream_wait_size)
 	else O_DEC(opt, "edns-buffer-size", edns_buffer_size)
 	else O_DEC(opt, "msg-buffer-size", msg_buffer_size)
 	else O_MEM(opt, "msg-cache-size", msg_cache_size)
@@ -917,6 +927,9 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_STR(opt, "tls-cert-bundle", tls_cert_bundle)
 	else O_YNO(opt, "tls-win-cert", tls_win_cert)
 	else O_LST(opt, "tls-additional-port", tls_additional_port)
+	else O_LST(opt, "tls-session-ticket-keys", tls_session_ticket_keys.first)
+	else O_STR(opt, "tls-ciphers", tls_ciphers)
+	else O_STR(opt, "tls-ciphersuites", tls_ciphersuites)
 	else O_YNO(opt, "use-systemd", use_systemd)
 	else O_YNO(opt, "do-daemonize", do_daemonize)
 	else O_STR(opt, "chroot", chrootdir)
@@ -925,6 +938,7 @@ config_get_option(struct config_file* cfg, const char* opt,
 	else O_STR(opt, "logfile", logfile)
 	else O_YNO(opt, "log-queries", log_queries)
 	else O_YNO(opt, "log-replies", log_replies)
+	else O_YNO(opt, "log-tag-queryreply", log_tag_queryreply)
 	else O_YNO(opt, "log-local-actions", log_local_actions)
 	else O_YNO(opt, "log-servfail", log_servfail)
 	else O_STR(opt, "pidfile", pidfile)
@@ -1350,6 +1364,9 @@ config_delete(struct config_file* cfg)
 	free(cfg->ssl_service_pem);
 	free(cfg->tls_cert_bundle);
 	config_delstrlist(cfg->tls_additional_port);
+	config_delstrlist(cfg->tls_session_ticket_keys.first);
+	free(cfg->tls_ciphers);
+	free(cfg->tls_ciphersuites);
 	free(cfg->log_identity);
 	config_del_strarray(cfg->ifs, cfg->num_ifs);
 	config_del_strarray(cfg->out_ifs, cfg->num_out_ifs);
@@ -1903,9 +1920,11 @@ config_apply(struct config_file* config)
 	EDNS_ADVERTISED_SIZE = (uint16_t)config->edns_buffer_size;
 	MINIMAL_RESPONSES = config->minimal_responses;
 	RRSET_ROUNDROBIN = config->rrset_roundrobin;
+	LOG_TAG_QUERYREPLY = config->log_tag_queryreply;
 	UNKNOWN_SERVER_NICENESS = config->unknown_server_time_limit;
 	log_set_time_asc(config->log_time_ascii);
 	autr_permit_small_holddown = config->permit_small_holddown;
+	stream_wait_max = config->stream_wait_size;
 }
 
 void config_lookup_uid(struct config_file* cfg)

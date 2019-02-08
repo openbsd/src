@@ -781,6 +781,10 @@ struct ub_server_stats {
 	/** number of queries answered from edns-subnet specific data, and
 	 * the answer was from the edns-subnet cache. */
 	long long num_query_subnet_cache;
+	/** number of bytes in the stream wait buffers */
+	long long mem_stream_wait;
+	/** number of TLS connection resume */
+	long long qtls_resume;
 };
 
 /** 

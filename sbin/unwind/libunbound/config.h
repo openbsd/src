@@ -179,6 +179,9 @@
 /* Define to 1 if you have the <event.h> header file. */
 #define HAVE_EVENT_H 1
 
+/* Define to 1 if you have the `EVP_aes_256_cbc' function. */
+#define HAVE_EVP_AES_256_CBC 1
+
 /* Define to 1 if you have the `EVP_cleanup' function. */
 #define HAVE_EVP_CLEANUP 1
 
@@ -187,6 +190,9 @@
 
 /* Define to 1 if you have the `EVP_dss1' function. */
 #define HAVE_EVP_DSS1 1
+
+/* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
+#define HAVE_EVP_ENCRYPTINIT_EX 1
 
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
 #define HAVE_EVP_MD_CTX_NEW 1
@@ -259,6 +265,9 @@
 
 /* Define to 1 if you have the <hiredis/hiredis.h> header file. */
 /* #undef HAVE_HIREDIS_HIREDIS_H */
+
+/* Define to 1 if you have the `HMAC_Init_ex' function. */
+#define HAVE_HMAC_INIT_EX 1
 
 /* If you have HMAC_Update */
 #define HAVE_HMAC_UPDATE 1
@@ -452,8 +461,14 @@
 /* Define if you have the SSL libraries installed. */
 #define HAVE_SSL /**/
 
+/* Define to 1 if you have the `SSL_CTX_set_ciphersuites' function. */
+/* #undef HAVE_SSL_CTX_SET_CIPHERSUITES */
+
 /* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
 /* #undef HAVE_SSL_CTX_SET_SECURITY_LEVEL */
+
+/* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_cb' function. */
+/* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_CB */
 
 /* Define to 1 if you have the `SSL_get0_peername' function. */
 /* #undef HAVE_SSL_GET0_PEERNAME */
@@ -587,6 +602,9 @@
 /* Define to 1 if you have the <ws2tcpip.h> header file. */
 /* #undef HAVE_WS2TCPIP_H */
 
+/* Define to 1 if you have the `X509_VERIFY_PARAM_set1_host' function. */
+#define HAVE_X509_VERIFY_PARAM_SET1_HOST 1
+
 /* Define to 1 if you have the `_beginthreadex' function. */
 /* #undef HAVE__BEGINTHREADEX */
 
@@ -643,7 +661,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.8.3"
+#define PACKAGE_STRING "unbound 1.9.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -652,7 +670,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.8.3"
+#define PACKAGE_VERSION "1.9.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -674,7 +692,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,8,3,0
+#define RSRC_PACKAGE_VERSION 1,9,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"

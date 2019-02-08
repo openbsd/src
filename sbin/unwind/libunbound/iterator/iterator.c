@@ -2298,7 +2298,7 @@ processQueryTargets(struct module_qstate* qstate, struct iter_qstate* iq,
 		errinf(qstate, "auth zone lookup failed, fallback is off");
 		return error_response(qstate, id, LDNS_RCODE_SERVFAIL);
 	}
-	if(iq->dp && iq->dp->auth_dp) {
+	if(iq->dp->auth_dp) {
 		/* we wanted to fallback, but had no delegpt, only the
 		 * auth zone generated delegpt, create an actual one */
 		iq->auth_zone_avoid = 1;
@@ -3570,7 +3570,7 @@ process_response(struct module_qstate* qstate, struct iter_qstate* iq,
 	if(event == module_event_noreply || event == module_event_error) {
 		if(event == module_event_noreply && iq->sent_count >= 3 &&
 			qstate->env->cfg->use_caps_bits_for_id &&
-			!iq->caps_fallback) {
+			!iq->caps_fallback && !is_caps_whitelisted(ie, iq)) {
 			/* start fallback */
 			iq->caps_fallback = 1;
 			iq->caps_server = 0;
