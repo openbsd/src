@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.282 2019/02/04 21:40:52 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.283 2019/02/08 16:52:54 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1466,7 +1466,8 @@ again:
 		if (w->w_needed <= 0 && w->w_where) {
 			if (w->w_tmemsize < len) {
 				free(w->w_tmem, M_RTABLE, w->w_tmemsize);
-				w->w_tmem = malloc(len, M_RTABLE, M_NOWAIT);
+				w->w_tmem = malloc(len, M_RTABLE,
+				    M_NOWAIT | M_ZERO);
 				if (w->w_tmem)
 					w->w_tmemsize = len;
 			}
