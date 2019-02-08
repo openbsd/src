@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.11 2019/02/07 17:20:35 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.12 2019/02/08 08:21:05 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -321,7 +321,6 @@ main(int argc, char *argv[])
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
 	main_imsg_compose_resolver(IMSG_STARTUP, 0, NULL, 0);
-	main_imsg_compose_captiveportal(IMSG_STARTUP, 0, NULL, 0);
 
 	event_dispatch();
 
