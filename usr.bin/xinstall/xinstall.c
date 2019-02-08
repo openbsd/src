@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.67 2018/09/16 02:44:07 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.68 2019/02/08 12:53:44 schwarze Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 #define NOCHANGEBITS	(UF_IMMUTABLE | UF_APPEND | SF_IMMUTABLE | SF_APPEND)
 #define BACKUP_SUFFIX	".old"
 
-int dobackup, docompare, dodest, dodir, dopreserve, dostrip, safecopy;
+int dobackup, docompare, dodest, dodir, dopreserve, dostrip;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[PATH_MAX], tempfile[PATH_MAX];
 char *suffix = BACKUP_SUFFIX;
@@ -73,7 +73,6 @@ void	install(char *, char *, u_long, u_int);
 void	install_dir(char *, int);
 void	strip(char *);
 void	usage(void);
-int	create_newfile(char *, struct stat *);
 int	create_tempfile(char *, char *, size_t);
 int	file_write(int, char *, size_t, int *, int *, int);
 void	file_flush(int, int);
@@ -129,7 +128,7 @@ main(int argc, char *argv[])
 			docompare = dopreserve = 1;
 			break;
 		case 'S':
-			safecopy = 1;
+			/* For backwards compatibility. */
 			break;
 		case 's':
 			dostrip = 1;
@@ -148,16 +147,12 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	/* some options make no sense when creating directories */
-	if ((safecopy || docompare || dostrip) && dodir)
+	if ((docompare || dostrip) && dodir)
 		usage();
 
 	/* must have at least two arguments, except when creating directories */
 	if (argc < 2 && !dodir)
 		usage();
-
-	/* need to make a temp copy so we can compare stripped version */
-	if (docompare && dostrip)
-		safecopy = 1;
 
 	/* get group and owner id's */
 	if (group != NULL && gid_from_group(group, &gid) == -1) {
@@ -265,54 +260,30 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 			err(1, "%s", from_name);
 	}
 
-	if (safecopy) {
-		to_fd = create_tempfile(to_name, tempfile, sizeof(tempfile));
-		if (to_fd < 0)
-			err(1, "%s", tempfile);
-	} else if (docompare && !dostrip) {
-		if ((to_fd = open(to_name, O_RDONLY, 0)) < 0)
-			err(1, "%s", to_name);
-	} else {
-		if ((to_fd = create_newfile(to_name, &to_sb)) < 0)
-			err(1, "%s", to_name);
-	}
+	to_fd = create_tempfile(to_name, tempfile, sizeof(tempfile));
+	if (to_fd < 0)
+		err(1, "%s", tempfile);
 
-	if (!devnull) {
-		if (docompare && !safecopy) {
-			files_match = !(compare(from_fd, from_name,
-					from_sb.st_size, to_fd,
-					to_name, to_sb.st_size));
-
-			/* Truncate "to" file for copy unless we match */
-			if (!files_match) {
-				(void)close(to_fd);
-				if ((to_fd = create_newfile(to_name, &to_sb)) < 0)
-					err(1, "%s", to_name);
-			}
-		}
-		if (!files_match)
-			copy(from_fd, from_name, to_fd,
-			     safecopy ? tempfile : to_name, from_sb.st_size,
-			     ((off_t)from_sb.st_blocks * S_BLKSIZE < from_sb.st_size));
-	}
+	if (!devnull)
+		copy(from_fd, from_name, to_fd, tempfile, from_sb.st_size,
+		    ((off_t)from_sb.st_blocks * S_BLKSIZE < from_sb.st_size));
 
 	if (dostrip) {
-		strip(safecopy ? tempfile : to_name);
+		strip(tempfile);
 
 		/*
 		 * Re-open our fd on the target, in case we used a strip
 		 *  that does not work in-place -- like gnu binutils strip.
 		 */
 		close(to_fd);
-		if ((to_fd = open(safecopy ? tempfile : to_name, O_RDONLY,
-		     0)) < 0)
+		if ((to_fd = open(tempfile, O_RDONLY, 0)) < 0)
 			err(1, "stripping %s", to_name);
 	}
 
 	/*
 	 * Compare the (possibly stripped) temp file to the target.
 	 */
-	if (safecopy && docompare) {
+	if (docompare) {
 		int temp_fd = to_fd;
 		struct stat temp_sb;
 
@@ -362,15 +333,13 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 	if ((gid != (gid_t)-1 || uid != (uid_t)-1) &&
 	    fchown(to_fd, uid, gid)) {
 		serrno = errno;
-		(void)unlink(safecopy ? tempfile : to_name);
-		errx(1, "%s: chown/chgrp: %s",
-		    safecopy ? tempfile : to_name, strerror(serrno));
+		(void)unlink(tempfile);
+		errx(1, "%s: chown/chgrp: %s", tempfile, strerror(serrno));
 	}
 	if (fchmod(to_fd, mode)) {
 		serrno = errno;
-		(void)unlink(safecopy ? tempfile : to_name);
-		errx(1, "%s: chmod: %s", safecopy ? tempfile : to_name,
-		    strerror(serrno));
+		(void)unlink(tempfile);
+		errx(1, "%s: chmod: %s", tempfile, strerror(serrno));
 	}
 
 	/*
@@ -380,8 +349,7 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 	if (fchflags(to_fd,
 	    flags & SETFLAGS ? fset : from_sb.st_flags & ~UF_NODUMP)) {
 		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
-			warnx("%s: chflags: %s",
-			    safecopy ? tempfile :to_name, strerror(errno));
+			warnx("%s: chflags: %s", tempfile, strerror(errno));
 	}
 
 	if (flags & USEFSYNC)
@@ -391,10 +359,10 @@ install(char *from_name, char *to_name, u_long fset, u_int flags)
 		(void)close(from_fd);
 
 	/*
-	 * Move the new file into place if doing a safe copy
-	 * and the files are different (or just not compared).
+	 * Move the new file into place if the files are different
+	 * or were not compared.
 	 */
-	if (safecopy && !files_match) {
+	if (!files_match) {
 		/* Try to turn off the immutable bits. */
 		if (to_sb.st_flags & (NOCHANGEBITS))
 			(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
@@ -655,36 +623,6 @@ create_tempfile(char *path, char *temp, size_t tsize)
 	strlcat(p, "INS@XXXXXXXXXX", tsize);
 
 	return(mkstemp(temp));
-}
-
-/*
- * create_newfile --
- *	create a new file, overwriting an existing one if necessary
- */
-int
-create_newfile(char *path, struct stat *sbp)
-{
-	char backup[PATH_MAX];
-
-	/*
-	 * Unlink now... avoid ETXTBSY errors later.  Try and turn
-	 * off the append/immutable bits -- if we fail, go ahead,
-	 * it might work.
-	 */
-	if (sbp->st_flags & (NOCHANGEBITS))
-		(void)chflags(path, sbp->st_flags & ~(NOCHANGEBITS));
-
-	if (dobackup) {
-		(void)snprintf(backup, PATH_MAX, "%s%s", path, suffix);
-		/* It is ok for the target file not to exist. */
-		if (rename(path, backup) < 0 && errno != ENOENT)
-			err(1, "rename: %s to %s (errno %d)", path, backup, errno);
-	} else {
-		if (unlink(path) < 0 && errno != ENOENT)
-			err(1, "%s", path);
-	}
-
-	return(open(path, O_CREAT | O_RDWR | O_EXCL, S_IRUSR | S_IWUSR));
 }
 
 /*

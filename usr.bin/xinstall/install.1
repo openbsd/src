@@ -1,4 +1,4 @@
-.\"	$OpenBSD: install.1,v 1.30 2016/05/13 17:51:15 jmc Exp $
+.\"	$OpenBSD: install.1,v 1.31 2019/02/08 12:53:44 schwarze Exp $
 .\"	$NetBSD: install.1,v 1.4 1994/11/14 04:57:17 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 13 2016 $
+.Dd $Mdocdate: February 8 2019 $
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ Create directories.
 Missing parent directories are created as required.
 This option cannot be used with the
 .Fl B , b , C , c ,
-.Fl f , p , S ,
+.Fl f , p ,
 or
 .Fl s
 options.
@@ -141,15 +141,11 @@ except if the target file doesn't already exist or is different,
 then preserve the modification time of the file.
 .It Fl S
 Safe copy.
-Normally,
-.Nm
-unlinks an existing target before installing the new file.
-With the
-.Fl S
-flag a temporary file is used and then renamed to be
-the target.
-The reason this is safer is that if the copy or
-rename fails, the existing target is left untouched.
+This option has no effect and is supported only for compatibility.
+When installing a file, a temporary file is created and written first
+in the destination directory, then atomically renamed.
+This avoids both race conditions and the destruction of existing
+files in case of write failures.
 .It Fl s
 .Nm
 exec's the command
@@ -186,18 +182,8 @@ Default is
 .Sh FILES
 .Bl -tag -width INS@XXXXXXXXXX -compact
 .It Pa INS@XXXXXXXXXX
-If either
-.Fl S
-option is specified, or the
-.Fl C
-or
-.Fl p
-option is used in conjunction with the
-.Fl s
-option, temporary files named INS@XXXXXXXXXX,
-where XXXXXXXXXX is decided by
-.Xr mkstemp 3 ,
-are created in the target directory.
+Temporary files created in the target directory by
+.Xr mkstemp 3 .
 .El
 .Sh EXIT STATUS
 .Ex -std install
