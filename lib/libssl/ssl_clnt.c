@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.55 2019/01/23 18:39:28 beck Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.56 2019/02/09 15:26:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -979,7 +979,7 @@ ssl3_get_server_hello(SSL *s)
 	}
 	S3I(s)->hs.new_cipher = cipher;
 
-	if (!tls1_handshake_hash_init(s))
+	if (!tls1_transcript_hash_init(s))
 		goto err;
 
 	/*
@@ -2446,7 +2446,7 @@ ssl3_send_client_verify_rsa(SSL *s, CBB *cert_verify)
 	unsigned int signature_len = 0;
 	int ret = 0;
 
-	if (!tls1_handshake_hash_value(s, data, sizeof(data), NULL))
+	if (!tls1_transcript_hash_value(s, data, sizeof(data), NULL))
 		goto err;
 
 	pkey = s->cert->key->privatekey;
@@ -2481,7 +2481,7 @@ ssl3_send_client_verify_ec(SSL *s, CBB *cert_verify)
 	unsigned int signature_len = 0;
 	int ret = 0;
 
-	if (!tls1_handshake_hash_value(s, data, sizeof(data), NULL))
+	if (!tls1_transcript_hash_value(s, data, sizeof(data), NULL))
 		goto err;
 
 	pkey = s->cert->key->privatekey;

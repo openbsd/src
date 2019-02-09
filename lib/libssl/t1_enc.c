@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.116 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.117 2019/02/09 15:26:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -919,7 +919,7 @@ tls1_final_finish_mac(SSL *s, const char *str, int str_len, unsigned char *out)
 	if (str_len < 0)
 		return 0;
 
-	if (!tls1_handshake_hash_value(s, buf, sizeof(buf), &hash_len))
+	if (!tls1_transcript_hash_value(s, buf, sizeof(buf), &hash_len))
 		return 0;
 
 	if (!tls1_PRF(s, s->session->master_key, s->session->master_key_length,

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_hash.c,v 1.5 2018/11/21 15:13:29 jsing Exp $ */
+/* $OpenBSD: t1_hash.c,v 1.6 2019/02/09 15:26:15 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -20,13 +20,13 @@
 #include <openssl/ssl.h>
 
 int
-tls1_handshake_hash_init(SSL *s)
+tls1_transcript_hash_init(SSL *s)
 {
 	const unsigned char *data;
 	const EVP_MD *md;
 	size_t len;
 
-	tls1_handshake_hash_free(s);
+	tls1_transcript_hash_free(s);
 
 	if (!ssl_get_handshake_evp_md(s, &md)) {
 		SSLerrorx(ERR_R_INTERNAL_ERROR);
@@ -46,7 +46,7 @@ tls1_handshake_hash_init(SSL *s)
 		SSLerror(s, SSL_R_BAD_HANDSHAKE_LENGTH);
 		goto err;
 	}
-	if (!tls1_handshake_hash_update(s, data, len)) {
+	if (!tls1_transcript_hash_update(s, data, len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -54,13 +54,13 @@ tls1_handshake_hash_init(SSL *s)
 	return 1;
 
  err:
-	tls1_handshake_hash_free(s);
+	tls1_transcript_hash_free(s);
 
 	return 0;
 }
 
 int
-tls1_handshake_hash_update(SSL *s, const unsigned char *buf, size_t len)
+tls1_transcript_hash_update(SSL *s, const unsigned char *buf, size_t len)
 {
 	if (S3I(s)->handshake_hash == NULL)
 		return 1;
@@ -69,7 +69,7 @@ tls1_handshake_hash_update(SSL *s, const unsigned char *buf, size_t len)
 }
 
 int
-tls1_handshake_hash_value(SSL *s, const unsigned char *out, size_t len,
+tls1_transcript_hash_value(SSL *s, const unsigned char *out, size_t len,
     size_t *outlen)
 {
 	EVP_MD_CTX *mdctx = NULL;
@@ -103,7 +103,7 @@ tls1_handshake_hash_value(SSL *s, const unsigned char *out, size_t len,
 }
 
 void
-tls1_handshake_hash_free(SSL *s)
+tls1_transcript_hash_free(SSL *s)
 {
 	EVP_MD_CTX_free(S3I(s)->handshake_hash);
 	S3I(s)->handshake_hash = NULL;
@@ -191,7 +191,7 @@ tls1_transcript_freeze(SSL *s)
 int
 tls1_transcript_record(SSL *s, const unsigned char *buf, size_t len)
 {
-	if (!tls1_handshake_hash_update(s, buf, len))
+	if (!tls1_transcript_hash_update(s, buf, len))
 		return 0;
 
 	if (!tls1_transcript_append(s, buf, len))

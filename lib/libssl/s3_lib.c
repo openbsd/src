@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.183 2019/01/24 15:50:47 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.184 2019/02/09 15:26:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1574,7 +1574,7 @@ ssl3_free(SSL *s)
 	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
 	tls1_transcript_free(s);
-	tls1_handshake_hash_free(s);
+	tls1_transcript_hash_free(s);
 
 	free(S3I(s)->alpn_selected);
 
@@ -1622,7 +1622,7 @@ ssl3_clear(SSL *s)
 	wlen = S3I(s)->wbuf.len;
 
 	tls1_transcript_free(s);
-	tls1_handshake_hash_free(s);
+	tls1_transcript_hash_free(s);
 
 	free(S3I(s)->alpn_selected);
 	S3I(s)->alpn_selected = NULL;
