@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.12 2019/02/09 06:27:37 inoguchi Exp $ */
+/* $OpenBSD: dsa.c,v 1.13 2019/02/09 15:49:21 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -206,6 +206,8 @@ static struct option dsa_options[] = {
 static void
 dsa_usage(void)
 {
+	int n = 0;
+
 	fprintf(stderr,
 	    "usage: dsa [-in file] [-inform format] [-noout]\n"
 	    "    [-out file] [-outform format] [-passin src] [-passout src]\n"
@@ -215,7 +217,7 @@ dsa_usage(void)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Valid ciphername values:\n\n");
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, NULL);
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, &n);
 	fprintf(stderr, "\n");
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.12 2019/02/09 06:27:37 inoguchi Exp $ */
+/* $OpenBSD: rsa.c,v 1.13 2019/02/09 15:49:21 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -237,6 +237,8 @@ static struct option rsa_options[] = {
 static void
 rsa_usage()
 {
+	int n = 0;
+
 	fprintf(stderr,
 	    "usage: rsa [-ciphername] [-check] [-in file] "
 	    "[-inform fmt]\n"
@@ -247,7 +249,7 @@ rsa_usage()
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Valid ciphername values:\n\n");
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, NULL);
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, &n);
 	fprintf(stderr, "\n");
 }
 

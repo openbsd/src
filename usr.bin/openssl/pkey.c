@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.13 2019/02/09 06:27:37 inoguchi Exp $ */
+/* $OpenBSD: pkey.c,v 1.14 2019/02/09 15:49:21 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -183,6 +183,8 @@ static struct option pkey_options[] = {
 static void
 pkey_usage()
 {
+	int n = 0;
+
 	fprintf(stderr,
 	    "usage: pkey [-ciphername] [-in file] [-inform fmt] [-noout] "
 	    "[-out file]\n"
@@ -193,7 +195,7 @@ pkey_usage()
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Valid ciphername values:\n\n");
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, NULL);
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, &n);
 	fprintf(stderr, "\n");
 }
 

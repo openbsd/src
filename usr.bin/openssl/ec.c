@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.c,v 1.12 2019/02/09 06:27:37 inoguchi Exp $ */
+/* $OpenBSD: ec.c,v 1.13 2019/02/09 15:49:21 inoguchi Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -241,6 +241,8 @@ static struct option ec_options[] = {
 static void
 ec_usage(void)
 {
+	int n = 0;
+
 	fprintf(stderr,
 	    "usage: ec [-conv_form form] [-in file]\n"
 	    "    [-inform format] [-noout] [-out file] [-outform format]\n"
@@ -251,7 +253,7 @@ ec_usage(void)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Valid ciphername values:\n\n");
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, NULL);
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, &n);
 	fprintf(stderr, "\n");
 }
 

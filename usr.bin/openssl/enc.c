@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.17 2019/02/09 06:27:37 inoguchi Exp $ */
+/* $OpenBSD: enc.c,v 1.18 2019/02/09 15:49:21 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -306,6 +306,8 @@ static struct option enc_options[] = {
 static void
 enc_usage(void)
 {
+	int n = 0;
+
 	fprintf(stderr, "usage: enc -ciphername [-AadePp] [-base64] "
 	    "[-bufsize number] [-debug]\n"
 	    "    [-in file] [-iter iterations] [-iv IV] [-K key] "
@@ -316,7 +318,7 @@ enc_usage(void)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Valid ciphername values:\n\n");
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, NULL);
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, &n);
 	fprintf(stderr, "\n");
 }
 
