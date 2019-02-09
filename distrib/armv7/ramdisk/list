@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.37 2018/09/21 02:21:53 jsg Exp $
+#	$OpenBSD: list,v 1.38 2019/02/09 13:03:56 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -120,8 +120,8 @@ SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
 
 # u-boot and dtbs
-COPY	/usr/local/share/u-boot/am335x_boneblack/MLO	usr/mdec/am335x/MLO
-COPY	/usr/local/share/u-boot/am335x_boneblack/u-boot.img	usr/mdec/am335x/u-boot.img
+COPY	/usr/local/share/u-boot/am335x_evm/MLO	usr/mdec/am335x/MLO
+COPY	/usr/local/share/u-boot/am335x_evm/u-boot.img	usr/mdec/am335x/u-boot.img
 COPY	/usr/local/share/dtb/arm/am335x-bone.dtb	usr/mdec/am335x/am335x-bone.dtb
 COPY	/usr/local/share/dtb/arm/am335x-boneblack.dtb	usr/mdec/am335x/am335x-boneblack.dtb
 COPY	/usr/local/share/dtb/arm/am335x-pocketbeagle.dtb	usr/mdec/am335x/am335x-pocketbeagle.dtb
