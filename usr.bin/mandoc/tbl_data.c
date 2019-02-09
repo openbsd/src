@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_data.c,v 1.38 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: tbl_data.c,v 1.39 2019/02/09 16:00:06 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -246,14 +246,27 @@ tbl_data(struct tbl_node *tbl, int ln, const char *p, int pos)
 
 	assert(rp != NULL);
 
-	if ( ! strcmp(p, "_")) {
-		sp = newspan(tbl, ln, rp);
-		sp->pos = TBL_SPAN_HORIZ;
-		return;
-	} else if ( ! strcmp(p, "=")) {
-		sp = newspan(tbl, ln, rp);
-		sp->pos = TBL_SPAN_DHORIZ;
-		return;
+	if (p[1] == '\0') {
+		switch (p[0]) {
+		case '.':
+			/*
+			 * Empty request lines must be handled here
+			 * and cannot be discarded in roff_parseln()
+			 * because in the layout section, they
+			 * are significant and end the layout.
+			 */
+			return;
+		case '_':
+			sp = newspan(tbl, ln, rp);
+			sp->pos = TBL_SPAN_HORIZ;
+			return;
+		case '=':
+			sp = newspan(tbl, ln, rp);
+			sp->pos = TBL_SPAN_DHORIZ;
+			return;
+		default:
+			break;
+		}
 	}
 
 	/*
