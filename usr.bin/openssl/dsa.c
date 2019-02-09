@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.11 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: dsa.c,v 1.12 2019/02/09 06:27:37 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +58,6 @@
 
 #include <openssl/opensslconf.h>	/* for OPENSSL_NO_DSA */
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -205,17 +204,6 @@ static struct option dsa_options[] = {
 };
 
 static void
-show_ciphers(const OBJ_NAME *name, void *arg)
-{
-	static int n;
-
-	if (!islower((unsigned char)*name->name))
-		return;
-
-	fprintf(stderr, " -%-24s%s", name->name, (++n % 3 ? "" : "\n"));
-}
-
-static void
 dsa_usage(void)
 {
 	fprintf(stderr,
@@ -227,7 +215,7 @@ dsa_usage(void)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Valid ciphername values:\n\n");
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_ciphers, NULL);
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, NULL);
 	fprintf(stderr, "\n");
 }
 

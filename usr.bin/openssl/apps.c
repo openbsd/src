@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.49 2018/08/16 16:56:51 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.50 2019/02/09 06:27:37 inoguchi Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -2320,3 +2320,15 @@ options_parse(int argc, char **argv, struct option *opts, char **unnamed,
 	fprintf(stderr, "unknown option '%s'\n", arg);
 	return (1);
 }
+
+void
+show_cipher(const OBJ_NAME *name, void *arg)
+{
+	static int n;
+
+	if (!islower((unsigned char)*name->name))
+		return;
+
+	fprintf(stderr, " -%-24s%s", name->name, (++n % 3 ? "" : "\n"));
+}
+
