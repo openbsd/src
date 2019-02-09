@@ -1,7 +1,7 @@
-.\"	$OpenBSD: tbl.7,v 1.20 2019/02/08 22:33:03 bentley Exp $
+.\"	$OpenBSD: tbl.7,v 1.21 2019/02/09 16:45:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
-.\" Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2014,2015,2017,2018,2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 8 2019 $
+.Dd $Mdocdate: February 9 2019 $
 .Dt TBL 7
 .Os
 .Sh NAME
@@ -438,3 +438,17 @@ reference was written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv
 and
 .An Ingo Schwarze Aq Mt schwarze@openbsd.org .
+.Sh BUGS
+In
+.Fl T
+.Cm utf8
+output mode, heavy lines are drawn instead of double lines.
+This cannot be improved because the Unicode standard only provides
+an incomplete set of box drawing characters with double lines,
+whereas it provides a full set of box drawing characters
+with heavy lines.
+It is unlikely this can be improved in the future because the box
+drawing characters are already marked in Unicode as characters
+intended only for backward compatibility with legacy systems,
+and their use is not encouraged.
+So it seems unlikely that the missing ones might get added in the future.
