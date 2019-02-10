@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.17 2019/02/10 18:25:07 jca Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.18 2019/02/10 18:26:56 jca Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -46,6 +46,10 @@ create) that covers the whole disk, and finds all probable UFS/FFS partitions
 on the disk.
 It has various options to make it go faster, and to print out
 information to help in the reconstruction of the disklabel.
+.Pp
+.Nm
+works only on FFS file systems,
+not FFS2 file systems.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
