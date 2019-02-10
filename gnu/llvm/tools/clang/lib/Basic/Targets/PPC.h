@@ -328,9 +328,15 @@ public:
       break;
     }
 
-    if (getTriple().getOS() == llvm::Triple::FreeBSD) {
+    switch (getTriple().getOS()) {
+    case llvm::Triple::FreeBSD:
+    case llvm::Triple::NetBSD:
+    case llvm::Triple::OpenBSD:
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble();
+      break;
+    default:
+      break;
     }
 
     // PPC32 supports atomics up to 4 bytes.
