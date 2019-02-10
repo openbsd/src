@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.74 2017/08/13 20:26:33 guenther Exp $	*/
+/*	$OpenBSD: pool.h,v 1.75 2019/02/10 20:02:37 tedu Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ TAILQ_HEAD(pool_requests, pool_request);
 
 struct pool_allocator {
 	void		*(*pa_alloc)(struct pool *, int, int *);
-	void		 (*pa_free)(struct pool *, void *);
+	void		 (*pa_free)(struct pool *, int, void *);
 	size_t		   pa_pagesz;
 };
 

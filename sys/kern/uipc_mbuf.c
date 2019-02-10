@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.266 2019/02/01 10:43:43 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.267 2019/02/10 20:02:37 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ unsigned int mbuf_mem_limit; /* how much memory can be allocated */
 unsigned int mbuf_mem_alloc; /* how much memory has been allocated */
 
 void	*m_pool_alloc(struct pool *, int, int *);
-void	m_pool_free(struct pool *, void *);
+void	m_pool_free(struct pool *, int, void *);
 
 struct pool_allocator m_pool_allocator = {
 	m_pool_alloc,
@@ -1475,9 +1475,9 @@ m_pool_alloc(struct pool *pp, int flags, int *slowdown)
 }
 
 void
-m_pool_free(struct pool *pp, void *v)
+m_pool_free(struct pool *pp, int flags, void *v)
 {
-	(*pool_allocator_multi.pa_free)(pp, v);
+	(*pool_allocator_multi.pa_free)(pp, flags, v);
 
 	mtx_enter(&m_pool_mtx);
 	mbuf_mem_alloc -= pp->pr_pgsize;

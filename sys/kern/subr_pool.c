@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.223 2018/06/08 15:38:15 guenther Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.224 2019/02/10 20:02:37 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -155,6 +155,7 @@ struct pool_page_header {
 	caddr_t			ph_colored;	/* page's colored address */
 	unsigned long		ph_magic;
 	int			ph_tick;
+	int			ph_flags;
 };
 #define POOL_MAGICBIT (1 << 3) /* keep away from perturbed low bits */
 #define POOL_PHPOISON(ph) ISSET((ph)->ph_magic, POOL_MAGICBIT)
@@ -225,13 +226,13 @@ void	 pool_get_done(struct pool *, void *, void *);
 void	 pool_runqueue(struct pool *, int);
 
 void	*pool_allocator_alloc(struct pool *, int, int *);
-void	 pool_allocator_free(struct pool *, void *);
+void	 pool_allocator_free(struct pool *, int, void *);
 
 /*
  * The default pool allocator.
  */
 void	*pool_page_alloc(struct pool *, int, int *);
-void	pool_page_free(struct pool *, void *);
+void	pool_page_free(struct pool *, int, void *);
 
 /*
  * safe for interrupts; this is the default allocator
@@ -243,7 +244,7 @@ struct pool_allocator pool_allocator_single = {
 };
 
 void	*pool_multi_alloc(struct pool *, int, int *);
-void	pool_multi_free(struct pool *, void *);
+void	pool_multi_free(struct pool *, int, void *);
 
 struct pool_allocator pool_allocator_multi = {
 	pool_multi_alloc,
@@ -252,7 +253,7 @@ struct pool_allocator pool_allocator_multi = {
 };
 
 void	*pool_multi_alloc_ni(struct pool *, int, int *);
-void	pool_multi_free_ni(struct pool *, void *);
+void	pool_multi_free_ni(struct pool *, int, void *);
 
 struct pool_allocator pool_allocator_multi_ni = {
 	pool_multi_alloc_ni,
@@ -787,7 +788,6 @@ pool_do_get(struct pool *pp, int flags, int *slowdown)
 void
 pool_put(struct pool *pp, void *v)
 {
-	struct pool_page_header *ph, *freeph = NULL;
 
 #ifdef DIAGNOSTIC
 	if (v == NULL)
@@ -808,18 +808,7 @@ pool_put(struct pool *pp, void *v)
 	pp->pr_nout--;
 	pp->pr_nput++;
 
-	/* is it time to free a page? */
-	if (pp->pr_nidle > pp->pr_maxpages &&
-	    (ph = TAILQ_FIRST(&pp->pr_emptypages)) != NULL &&
-	    (ticks - ph->ph_tick) > (hz * pool_wait_free)) {
-		freeph = ph;
-		pool_p_remove(pp, freeph);
-	}
-
 	pl_leave(pp, &pp->pr_lock);
-
-	if (freeph != NULL)
-		pool_p_free(pp, freeph);
 
 	if (!TAILQ_EMPTY(&pp->pr_requests)) {
 		pl_enter(pp, &pp->pr_requests_lock);
@@ -933,10 +922,11 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 	else {
 		ph = pool_get(&phpool, flags);
 		if (ph == NULL) {
-			pool_allocator_free(pp, addr);
+			pool_allocator_free(pp, flags, addr);
 			return (NULL);
 		}
 	}
+	ph->ph_flags = flags;
 
 	XSIMPLEQ_INIT(&ph->ph_items);
 	ph->ph_page = addr;
@@ -1010,7 +1000,7 @@ pool_p_free(struct pool *pp, struct pool_page_header *ph)
 #endif
 	}
 
-	pool_allocator_free(pp, ph->ph_page);
+	pool_allocator_free(pp, ph->ph_flags, ph->ph_page);
 
 	if (!POOL_INPGHDR(pp))
 		pool_put(&phpool, ph);
@@ -1616,11 +1606,11 @@ pool_allocator_alloc(struct pool *pp, int flags, int *slowdown)
 }
 
 void
-pool_allocator_free(struct pool *pp, void *v)
+pool_allocator_free(struct pool *pp, int flags, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
 
-	(*pa->pa_free)(pp, v);
+	(*pa->pa_free)(pp, flags, v);
 }
 
 void *
@@ -1635,7 +1625,7 @@ pool_page_alloc(struct pool *pp, int flags, int *slowdown)
 }
 
 void
-pool_page_free(struct pool *pp, void *v)
+pool_page_free(struct pool *pp, int flags, void *v)
 {
 	km_free(v, pp->pr_pgsize, &kv_page, pp->pr_crange);
 }
@@ -1662,7 +1652,7 @@ pool_multi_alloc(struct pool *pp, int flags, int *slowdown)
 }
 
 void
-pool_multi_free(struct pool *pp, void *v)
+pool_multi_free(struct pool *pp, int flags, void *v)
 {
 	struct kmem_va_mode kv = kv_intrsafe;
 	int s;
@@ -1696,7 +1686,7 @@ pool_multi_alloc_ni(struct pool *pp, int flags, int *slowdown)
 }
 
 void
-pool_multi_free_ni(struct pool *pp, void *v)
+pool_multi_free_ni(struct pool *pp, int flags, void *v)
 {
 	struct kmem_va_mode kv = kv_any;
 
