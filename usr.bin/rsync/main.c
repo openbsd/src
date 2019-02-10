@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: main.c,v 1.3 2019/02/10 23:43:31 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -296,7 +296,8 @@ main(int argc, char *argv[])
 
 	/* Global pledge. */
 
-	if (-1 == pledge("dns inet unveil exec stdio rpath wpath cpath proc fattr", NULL))
+	if (-1 == pledge("stdio rpath wpath cpath inet fattr dns proc exec "
+	    "unveil", NULL))
 		err(EXIT_FAILURE, "pledge");
 
 	memset(&opts, 0, sizeof(struct opts));
@@ -353,7 +354,7 @@ main(int argc, char *argv[])
 	 */
 
 	if (opts.server) {
-		if (-1 == pledge("unveil rpath cpath wpath stdio fattr", NULL))
+		if (-1 == pledge("stdio rpath wpath cpath fattr unveil", NULL))
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_server(&opts, (size_t)argc, argv);
 		return c ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -380,7 +381,8 @@ main(int argc, char *argv[])
 
 	if (fargs->remote) {
 		assert(FARGS_RECEIVER == fargs->mode);
-		if (-1 == pledge("dns inet unveil stdio rpath wpath cpath fattr", NULL))
+		if (-1 == pledge("stdio rpath wpath cpath inet fattr dns "
+		    "unveil", NULL))
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_socket(&opts, fargs);
 		fargs_free(fargs);
@@ -389,7 +391,8 @@ main(int argc, char *argv[])
 
 	/* Drop the dns/inet possibility. */
 
-	if (-1 == pledge("unveil exec stdio rpath wpath cpath proc fattr", NULL))
+	if (-1 == pledge("stdio rpath wpath cpath fattr proc exec unveil",
+	    NULL))
 		err(EXIT_FAILURE, "pledge");
 
 	/* Create a bidirectional socket and start our child. */
@@ -407,13 +410,13 @@ main(int argc, char *argv[])
 
 	/* Drop the fork possibility. */
 
-	if (-1 == pledge("unveil exec stdio rpath wpath cpath fattr", NULL))
+	if (-1 == pledge("stdio rpath wpath cpath fattr exec unveil", NULL))
 		err(EXIT_FAILURE, "pledge");
 
 	if (0 == child) {
 		close(fds[0]);
 		fds[0] = -1;
-		if (-1 == pledge("exec stdio", NULL))
+		if (-1 == pledge("stdio exec", NULL))
 			err(EXIT_FAILURE, "pledge");
 		rsync_child(&opts, fds[1], fargs);
 		/* NOTREACHED */
@@ -421,7 +424,7 @@ main(int argc, char *argv[])
 
 	close(fds[1]);
 	fds[1] = -1;
-	if (-1 == pledge("unveil rpath cpath wpath stdio fattr", NULL))
+	if (-1 == pledge("stdio rpath wpath cpath fattr unveil", NULL))
 		err(EXIT_FAILURE, "pledge");
 	c = rsync_client(&opts, fds[0], fargs);
 	fargs_free(fargs);
