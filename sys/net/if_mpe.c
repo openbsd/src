@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.77 2019/01/31 02:00:27 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.78 2019/02/10 22:34:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -57,7 +57,6 @@ struct mpe_softc {
 	struct ifnet		sc_if;		/* the interface */
 	struct ifaddr		sc_ifa;
 	struct sockaddr_mpls	sc_smpls;
-	LIST_ENTRY(mpe_softc)	sc_list;
 };
 
 #define MPE_HDRLEN	sizeof(struct shim_hdr)
@@ -74,7 +73,6 @@ int	mpe_clone_create(struct if_clone *, int);
 int	mpe_clone_destroy(struct ifnet *);
 void	mpe_input(struct ifnet *, struct mbuf *);
 
-LIST_HEAD(, mpe_softc)	mpeif_list;
 struct if_clone	mpe_cloner =
     IF_CLONE_INITIALIZER("mpe", mpe_clone_create, mpe_clone_destroy);
 
@@ -86,7 +84,6 @@ extern int	mpls_mapttl_ip6;
 void
 mpeattach(int nmpe)
 {
-	LIST_INIT(&mpeif_list);
 	if_clone_attach(&mpe_cloner);
 }
 
@@ -120,8 +117,6 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
 	sc->sc_smpls.smpls_family = AF_MPLS;
 
-	LIST_INSERT_HEAD(&mpeif_list, sc, sc_list);
-
 	return (0);
 }
 
@@ -129,8 +124,6 @@ int
 mpe_clone_destroy(struct ifnet *ifp)
 {
 	struct mpe_softc	*sc = ifp->if_softc;
-
-	LIST_REMOVE(sc, sc_list);
 
 	if (sc->sc_smpls.smpls_label) {
 		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
@@ -281,7 +274,6 @@ int
 mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mpe_softc	*sc = ifp->if_softc;
-	struct mpe_softc	*ifm;
 	struct ifreq		*ifr;
 	struct shim_hdr		 shim;
 	int			 error = 0;
@@ -317,15 +309,6 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		shim.shim_label = MPLS_LABEL2SHIM(shim.shim_label);
 		if (sc->sc_smpls.smpls_label == shim.shim_label)
-			break;
-		LIST_FOREACH(ifm, &mpeif_list, sc_list) {
-			if (ifm != ifp->if_softc &&
-			    ifm->sc_smpls.smpls_label == shim.shim_label) {
-				error = EEXIST;
-				break;
-			}
-		}
-		if (error)
 			break;
 		if (sc->sc_smpls.smpls_label) {
 			/* remove old MPLS route */
