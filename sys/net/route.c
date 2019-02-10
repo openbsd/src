@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.379 2018/11/23 16:24:11 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.380 2019/02/10 22:32:26 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1042,7 +1042,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 
 	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
-	info.rti_flags = flags | RTF_MPATH;
+	info.rti_flags = flags;
 	info.rti_info[RTAX_DST] = dst;
 	if (flags & RTF_LLINFO)
 		info.rti_info[RTAX_GATEWAY] = sdltosa(ifp->if_sadl);
@@ -1177,7 +1177,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 	/* If there is no local entry, allocate one. */
 	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
 	if (rt == NULL || ISSET(rt->rt_flags, flags) != flags)
-		error = rt_ifa_add(ifa, flags, ifa->ifa_addr);
+		error = rt_ifa_add(ifa, flags | RTF_MPATH, ifa->ifa_addr);
 	rtfree(rt);
 
 	return (error);

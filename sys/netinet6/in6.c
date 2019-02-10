@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.228 2018/10/05 07:06:09 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.229 2019/02/10 22:32:26 dlg Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -376,7 +376,8 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 			break;	/* No need to install a connected route. */
 		}
 
-		error = rt_ifa_add(&ia6->ia_ifa, RTF_CLONING | RTF_CONNECTED,
+		error = rt_ifa_add(&ia6->ia_ifa,
+		    RTF_CLONING | RTF_CONNECTED | RTF_MPATH,
 		    ia6->ia_ifa.ifa_addr);
 		if (error) {
 			in6_purgeaddr(&ia6->ia_ifa);
@@ -982,7 +983,8 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	if ((ifp->if_flags & IFF_POINTOPOINT) && plen == 128 &&
 	    ia6->ia_dstaddr.sin6_family == AF_INET6) {
 		ifa = &ia6->ia_ifa;
-		error = rt_ifa_add(ifa, RTF_HOST, ifa->ifa_dstaddr);
+		error = rt_ifa_add(ifa, RTF_HOST | RTF_MPATH,
+		    ifa->ifa_dstaddr);
 		if (error != 0)
 			return (error);
 		ia6->ia_flags |= IFA_ROUTE;
