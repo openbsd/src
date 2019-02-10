@@ -1,0 +1,213 @@
+.\"	$OpenBSD: rsync.1,v 1.1 2019/02/10 23:18:28 benno Exp $
+.\"
+.\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 10 2019 $
+.Dt RSYNC 1
+.Os
+.Sh NAME
+.Nm rsync
+.Nd synchronise local and remote files
+.Sh SYNOPSIS
+.Nm rsync
+.Op Fl lnprtv
+.Op Fl -delete
+.Op Fl -rsync-path Ar prog
+.Ar source ...
+.Ar directory
+.Sh DESCRIPTION
+The
+.Nm
+utility synchronises files in the destination
+.Ar directory
+with one or more
+.Ar source
+files.
+Either the
+.Ar source
+or the destination
+.Ar directory
+may be remote,
+but not both.
+The arguments are as follows:
+.Bl -tag -width Ds
+.It Fl l
+Transfer symbolic links.
+The link is transferred as a standalone file: if the destination does
+not exist, it will be broken.
+.It Fl n
+Dry-run mode.
+Does not actually modify the destination.
+.It Fl p
+Set destination file or directory permissions to match the source when
+it is updated.
+.It Fl r
+If
+.Ar source
+designates a directory, synchronise the directory and the entire subtree
+connected at that point.
+If
+.Ar source
+ends with a slash, only the subtree is synchronised, not the root
+directory.
+If
+.Ar source
+is a file, this has no effect.
+.It Fl t
+Set destination file and directory modification time to match the source
+when it is updated or created.
+.It Fl v
+Increase verbosity.
+Specify once for files being transferred, twice for specific status,
+thrice for per-file transfer information, and four times for per-file
+breakdowns.
+.It Fl -delete
+Delete files in
+.Ar directory
+not found in
+.Ar source
+directories.
+Only applicable with
+.Fl r .
+.It Fl -rsync-path Ar prog
+Run
+.Ar prog
+on the remote host instead of the default
+.Ar rsync .
+.El
+.Pp
+A remote
+.Ar source
+or
+.Ar directory
+has syntax
+.Ar host:path
+for connecting via
+.Xr ssh 1 ,
+or
+.Ar rsync://host/path
+or
+.Ar host::path
+for connecting to a remote daemon.
+Subsequent to the first remote
+.Ar source ,
+the host may be dropped to become just
+.Ar :path
+or
+.Ar ::path .
+.Pp
+For connecting to a remote daemon with
+.Ar rsync://host
+or
+.Ar host::path ,
+the first path component is interpreted as a
+.Qq module :
+.Ar host::module/path .
+This only applies to the first
+.Ar source
+invocation; subsequent to that, the module should not be specified.
+.Pp
+By default, new destination files and directories are given the current
+time and the source file permissions.
+Updated files retain their existing permissions.
+It is an error if updated files have their file types change (e.g.,
+updating a directory with a file).
+.Pp
+At this time,
+.Ar source
+may only consist of regular files, directories
+.Pq only with Fl r ,
+or symbolic links
+.Pq only with Fl l .
+The destination
+.Ar directory
+must be a directory and is created if not found.
+.Pp
+.Nm
+is compatible with the GPL-licensed
+.Xr rsync 1
+protocol version 27.
+.\" The following requests should be uncommented and used where appropriate.
+.\" .Sh CONTEXT
+.\" For section 9 functions only.
+.\" .Sh RETURN VALUES
+.\" For sections 2, 3, and 9 function return values only.
+.\" .Sh ENVIRONMENT
+.\" For sections 1, 6, 7, and 8 only.
+.\" .Sh FILES
+.\" .Sh EXIT STATUS
+.\" For sections 1, 6, and 8 only.
+.Sh EXAMPLES
+All examples use
+.Fl t
+so that destination files inherit the source time.
+If not changed, subsequent invocations of
+.Nm
+will then consider the file up to date and not transfer block hashes.
+.Pp
+To update the out-of-date remote files
+.Pa host:dest/bar
+and
+.Pa host:dest/baz
+with the local
+.Pa ../src/bar
+and
+.Pa ../src/baz :
+.Pp
+.Dl % rsync -t ../src/bar ../src/baz host:dest
+.Pp
+To update the out-of-date local files
+.Pa bar
+and
+.Pa baz
+with the remote files
+.Pa host:src/bar
+and
+.Pa host:src/baz :
+.Pp
+.Dl % rsync -t host:src/bar :src/baz \&.
+.Pp
+To update the out-of-date local files
+.Pa ../dest/bar
+and
+.Pa ../dest/baz
+with
+.Pa bar
+and
+.Pa baz :
+.Pp
+.Dl % rsync -t bar baz ../dest
+.Pp
+To update the out-of-date remote files in
+.Pa host:dest
+on a remote host running
+.Nm
+with the local host running
+.Xr rsync 1 :
+.Pp
+.Dl % rsync --rsync-path rsync -t ../dest/* host:dest
+.\" .Sh DIAGNOSTICS
+.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
+.\" .Sh ERRORS
+.\" For sections 2, 3, 4, and 9 errno settings only.
+.Sh SEE ALSO
+.Xr ssh 1 ,
+.Xr rsync 5 ,
+.Xr rsyncd 5
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
+.\" .Sh AUTHORS
+.\" .Sh CAVEATS
+.\" .Sh BUGS
