@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.58 2018/09/12 11:58:28 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.59 2019/02/10 20:07:33 tedu Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -109,7 +109,7 @@ CTASSERT(sizeof(struct pmapvp0) == sizeof(struct pmapvp3));
 
 /* Allocator for VP pool. */
 void *pmap_vp_page_alloc(struct pool *, int, int *);
-void pmap_vp_page_free(struct pool *, void *);
+void pmap_vp_page_free(struct pool *, int, void *);
 
 struct pool_allocator pmap_vp_allocator = {
 	pmap_vp_page_alloc, pmap_vp_page_free, sizeof(struct pmapvp0)
@@ -381,7 +381,7 @@ pmap_vp_page_alloc(struct pool *pp, int flags, int *slowdown)
 }
 
 void
-pmap_vp_page_free(struct pool *pp, void *v)
+pmap_vp_page_free(struct pool *pp, int flags, void *v)
 {
 	km_free(v, pp->pr_pgsize, &kv_any, &kp_dirty);
 }
