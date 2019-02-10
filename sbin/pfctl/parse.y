@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.690 2019/01/31 18:08:36 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.691 2019/02/10 14:55:58 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -809,7 +809,22 @@ varset		: STRING '=' varstring	{
 		}
 		;
 
-anchorname	: STRING			{ $$ = $1; }
+anchorname	: STRING			{
+			if (strlen(pf->anchor->path) + 1 +
+			    strlen($1) >= PATH_MAX) {
+				free($1);
+				yyerror("anchor name is longer than %u",
+				    PATH_MAX - 1);
+				YYERROR;
+			}
+			if ($1[0] == '_' || strstr($1, "/_") != NULL) {
+				free($1);
+				yyerror("anchor names beginning with '_' "
+				    "are reserved for internal use");
+				YYERROR;
+			}
+			$$ = $1;
+		}
 		| /* empty */			{ $$ = NULL; }
 		;
 
@@ -856,13 +871,6 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 		{
 			struct pf_rule	r;
 			struct node_proto	*proto;
-
-			if ($2 && ($2[0] == '_' || strstr($2, "/_") != NULL)) {
-				free($2);
-				yyerror("anchor names beginning with '_' "
-				    "are reserved for internal use");
-				YYERROR;
-			}
 
 			memset(&r, 0, sizeof(r));
 			if (pf->astack[pf->asd + 1]) {
@@ -949,14 +957,11 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 		}
 		;
 
-loadrule	: LOAD ANCHOR string FROM string	{
+loadrule	: LOAD ANCHOR anchorname FROM string	{
 			struct loadanchors	*loadanchor;
 
-			if (strlen(pf->anchor->path) + 1 +
-			    strlen($3) >= PATH_MAX) {
-				yyerror("anchorname %s too long, max %u\n",
-				    $3, PATH_MAX - 1);
-				free($3);
+			if ($3 == NULL) {
+				yyerror("anchor name is missing");
 				YYERROR;
 			}
 			loadanchor = calloc(1, sizeof(struct loadanchors));
