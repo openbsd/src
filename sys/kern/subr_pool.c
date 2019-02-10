@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.224 2019/02/10 20:02:37 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.225 2019/02/10 20:05:04 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1638,6 +1638,9 @@ pool_multi_alloc(struct pool *pp, int flags, int *slowdown)
 	void *v;
 	int s;
 
+	if (flags & PR_WAITOK)
+		return pool_multi_alloc_ni(pp, flags, slowdown);
+
 	if (POOL_INPGHDR(pp))
 		kv.kv_align = pp->pr_pgsize;
 
@@ -1656,6 +1659,11 @@ pool_multi_free(struct pool *pp, int flags, void *v)
 {
 	struct kmem_va_mode kv = kv_intrsafe;
 	int s;
+
+	if (flags & PR_WAITOK) {
+		pool_multi_free_ni(pp, flags, v);
+		return;
+	}
 
 	if (POOL_INPGHDR(pp))
 		kv.kv_align = pp->pr_pgsize;
