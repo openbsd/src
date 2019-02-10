@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: io.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -302,7 +302,7 @@ io_read_flush(struct sess *sess, int fd)
 	LOG0(sess, "%.*s", (int)sess->mplex_read_remain, mpbuf);
 	sess->mplex_read_remain = 0;
 
-	/* 
+	/*
 	 * I only know that a tag of one means an error.
 	 * This means that we should exit.
 	 */
@@ -413,7 +413,7 @@ io_write_int(struct sess *sess, int fd, int32_t val)
  * is insufficient for the new data.
  */
 void
-io_buffer_buf(struct sess *sess, void *buf, 
+io_buffer_buf(struct sess *sess, void *buf,
 	size_t *bufpos, size_t buflen, const void *val, size_t valsz)
 {
 
@@ -426,12 +426,12 @@ io_buffer_buf(struct sess *sess, void *buf,
  * Converts "val" to LE prior to io_buffer_buf().
  */
 void
-io_buffer_int(struct sess *sess, void *buf, 
+io_buffer_int(struct sess *sess, void *buf,
 	size_t *bufpos, size_t buflen, int32_t val)
 {
 	int32_t	nv = htole32(val);
 
-	io_buffer_buf(sess, buf, bufpos, 
+	io_buffer_buf(sess, buf, bufpos,
 		buflen, &nv, sizeof(int32_t));
 }
 
@@ -523,7 +523,7 @@ io_read_int(struct sess *sess, int fd, int32_t *val)
  * Increases "bufpos" to the new position.
  */
 void
-io_unbuffer_buf(struct sess *sess, const void *buf, 
+io_unbuffer_buf(struct sess *sess, const void *buf,
 	size_t *bufpos, size_t bufsz, void *val, size_t valsz)
 {
 
@@ -536,18 +536,18 @@ io_unbuffer_buf(struct sess *sess, const void *buf,
  * Calls io_unbuffer_buf() and converts from LE.
  */
 void
-io_unbuffer_int(struct sess *sess, const void *buf, 
+io_unbuffer_int(struct sess *sess, const void *buf,
 	size_t *bufpos, size_t bufsz, int32_t *val)
 {
 	int32_t	oval;
 
-	io_unbuffer_buf(sess, buf, bufpos, 
+	io_unbuffer_buf(sess, buf, bufpos,
 		bufsz, &oval, sizeof(int32_t));
 	*val = le32toh(oval);
 }
 
 int
-io_unbuffer_size(struct sess *sess, const void *buf, 
+io_unbuffer_size(struct sess *sess, const void *buf,
 	size_t *bufpos, size_t bufsz, size_t *val)
 {
 	int32_t	oval;
@@ -582,4 +582,3 @@ io_write_byte(struct sess *sess, int fd, uint8_t val)
 	}
 	return 1;
 }
-

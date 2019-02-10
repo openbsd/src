@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: receiver.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,7 +40,7 @@ enum	pfdt {
 	PFD__MAX
 };
 
-/* 
+/*
  * Pledges: unveil, rpath, cpath, wpath, stdio, fattr.
  * Pledges (dry-run): -cpath, -wpath, -fattr.
  */
@@ -52,10 +52,10 @@ rsync_receiver(struct sess *sess,
 	size_t		 i, flsz = 0, dflsz = 0, excl;
 	char		*tofree;
 	int		 rc = 0, dfd = -1, phase = 0, c;
-	int32_t	 	 ioerror;
+	int32_t		 ioerror;
 	struct pollfd	 pfd[PFD__MAX];
 	struct download	*dl = NULL;
-	struct upload 	*ul = NULL;
+	struct upload	*ul = NULL;
 	mode_t		 oumask;
 
 	if (-1 == pledge("unveil rpath cpath wpath stdio fattr", NULL)) {
@@ -89,8 +89,8 @@ rsync_receiver(struct sess *sess,
 	if ( ! flist_recv(sess, fdin, &fl, &flsz)) {
 		ERRX1(sess, "flist_recv");
 		goto out;
-	} 
-	
+	}
+
 	/* The IO error is sent after the file list. */
 
 	if ( ! io_read_int(sess, fdin, &ioerror)) {
@@ -152,7 +152,7 @@ rsync_receiver(struct sess *sess,
 	 * unveil.
 	 */
 
-	if (sess->opts->del && 
+	if (sess->opts->del &&
 	    sess->opts->recursive &&
 	    ! flist_gen_dels(sess, root, &dfl, &dflsz, fl, flsz)) {
 		ERRX1(sess, "flist_gen_local");
@@ -193,7 +193,7 @@ rsync_receiver(struct sess *sess,
 	pfd[PFD_DOWNLOADER_IN].events = POLLIN;
 	pfd[PFD_SENDER_OUT].events = POLLOUT;
 
-	ul = upload_alloc(sess, dfd, fdout, 
+	ul = upload_alloc(sess, dfd, fdout,
 		CSUM_LENGTH_PHASE1, fl, flsz, oumask);
 	if (NULL == ul) {
 		ERRX1(sess, "upload_alloc");
@@ -212,9 +212,9 @@ rsync_receiver(struct sess *sess,
 		if (-1 == (c = poll(pfd, PFD__MAX, INFTIM))) {
 			ERR(sess, "poll");
 			goto out;
-		} 
+		}
 
-		for (i = 0; i < PFD__MAX; i++) 
+		for (i = 0; i < PFD__MAX; i++)
 			if (pfd[i].revents & (POLLERR|POLLNVAL)) {
 				ERRX(sess, "poll: bad fd");
 				goto out;
@@ -250,8 +250,8 @@ rsync_receiver(struct sess *sess,
 
 		if ((POLLIN & pfd[PFD_UPLOADER_IN].revents) ||
 		    (POLLOUT & pfd[PFD_SENDER_OUT].revents)) {
-			c = rsync_uploader(ul, 
-				&pfd[PFD_UPLOADER_IN].fd, 
+			c = rsync_uploader(ul,
+				&pfd[PFD_UPLOADER_IN].fd,
 				sess, &pfd[PFD_SENDER_OUT].fd);
 			if (c < 0) {
 				ERRX1(sess, "rsync_uploader");
@@ -259,7 +259,7 @@ rsync_receiver(struct sess *sess,
 			}
 		}
 
-		/* 
+		/*
 		 * We need to run the downloader when we either have
 		 * read events from the sender or an asynchronous local
 		 * open is ready.
@@ -268,9 +268,9 @@ rsync_receiver(struct sess *sess,
 		 * messages, which will otherwise clog up the pipes.
 		 */
 
-		if ((POLLIN & pfd[PFD_SENDER_IN].revents) || 
+		if ((POLLIN & pfd[PFD_SENDER_IN].revents) ||
 		    (POLLIN & pfd[PFD_DOWNLOADER_IN].revents)) {
-			c = rsync_downloader(dl, sess, 
+			c = rsync_downloader(dl, sess,
 				&pfd[PFD_DOWNLOADER_IN].fd);
 			if (c < 0) {
 				ERRX1(sess, "rsync_downloader");
@@ -290,7 +290,7 @@ rsync_receiver(struct sess *sess,
 			 * here we should bump our checksum length and
 			 * go into the second phase.
 			 */
-		} 
+		}
 	}
 
 	/* Properly close us out by progressing through the phases. */

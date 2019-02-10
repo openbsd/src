@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: main.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -284,8 +284,8 @@ int
 main(int argc, char *argv[])
 {
 	struct opts	 opts;
-	pid_t	 	 child;
-	int	 	 fds[2], flags, c, st;
+	pid_t		 child;
+	int		 fds[2], flags, c, st;
 	struct fargs	*fargs;
 	struct option	 lopts[] = {
 		{ "delete",	no_argument,	&opts.del,	1 },

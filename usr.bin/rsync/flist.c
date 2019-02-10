@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: flist.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,7 +65,7 @@ flist_cmp(const void *p1, const void *p2)
 static int
 flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
 {
-	size_t	 	 i, j;
+	size_t		 i, j;
 	struct flist	*new;
 	struct flist	*f, *fnext;
 
@@ -144,7 +144,7 @@ flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
 static void
 flist_topdirs(struct sess *sess, struct flist *fl, size_t flsz)
 {
-	size_t	 	 i;
+	size_t		 i;
 	const char	*cp;
 
 	if ( ! sess->opts->recursive)
@@ -155,7 +155,7 @@ flist_topdirs(struct sess *sess, struct flist *fl, size_t flsz)
 			if ( ! S_ISDIR(fl[i].st.mode))
 				continue;
 			cp = strchr(fl[i].wpath, '/');
-			if (NULL != cp && '\0' != cp[1]) 
+			if (NULL != cp && '\0' != cp[1])
 				continue;
 			fl[i].st.flags |= FLSTAT_TOP_DIR;
 			LOG4(sess, "%s: top-level", fl[i].wpath);
@@ -238,7 +238,7 @@ flist_free(struct flist *f, size_t sz)
  * Return zero on failure, non-zero on success.
  */
 int
-flist_send(struct sess *sess, int fdin, 
+flist_send(struct sess *sess, int fdin,
 	int fdout, const struct flist *fl, size_t flsz)
 {
 	size_t		 i, fnlen;
@@ -256,7 +256,7 @@ flist_send(struct sess *sess, int fdin,
 		fnlen = strlen(f->wpath);
 		assert(fnlen > 0);
 
-		/* 
+		/*
 		 * If applicable, unclog the read buffer.
 		 * This happens when the receiver has a lot of log
 		 * messages and all we're doing is sending our file list
@@ -951,7 +951,7 @@ flist_gen(struct sess *sess, size_t argc,
  * On success, "fl" will need to be freed with flist_free().
  */
 int
-flist_gen_dels(struct sess *sess, const char *root, 
+flist_gen_dels(struct sess *sess, const char *root,
 	struct flist **fl, size_t *sz,
 	const struct flist *wfl, size_t wflsz)
 {
@@ -963,7 +963,7 @@ flist_gen_dels(struct sess *sess, const char *root,
 	size_t		  cargvs = 0, i, j, max = 0, stripdir;
 	ENTRY		  hent;
 	ENTRY		 *hentp;
-	
+
 	*fl = NULL;
 	*sz = 0;
 
@@ -972,7 +972,7 @@ flist_gen_dels(struct sess *sess, const char *root,
 	if ( ! sess->opts->recursive)
 		return 1;
 
-	/* 
+	/*
 	 * Gather up all top-level directories for scanning.
 	 * This is stipulated by rsync's --delete behaviour, where we
 	 * only delete things in the top-level directories given on the
@@ -1013,7 +1013,7 @@ flist_gen_dels(struct sess *sess, const char *root,
 				continue;
 			assert(S_ISDIR(wfl[i].st.mode));
 			assert(strcmp(wfl[i].wpath, "."));
-			c = asprintf(&cargv[j], 
+			c = asprintf(&cargv[j],
 				"%s/%s", root, wfl[i].wpath);
 			if (c < 0) {
 				ERR(sess, "asprintf");
@@ -1060,7 +1060,7 @@ flist_gen_dels(struct sess *sess, const char *root,
 		}
 	}
 
-	/* 
+	/*
 	 * Now we're going to try to descend into all of the top-level
 	 * directories stipulated by the file list.
 	 * If the directories don't exist, it's ok.

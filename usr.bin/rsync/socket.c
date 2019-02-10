@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: socket.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,8 +38,8 @@
  * There can be many, IPV4 or IPV6.
  */
 struct	source {
-	int	 	 family; /* PF_INET or PF_INET6 */
-	char	 	 ip[INET6_ADDRSTRLEN]; /* formatted string */
+	int		 family; /* PF_INET or PF_INET6 */
+	char		 ip[INET6_ADDRSTRLEN]; /* formatted string */
 	struct sockaddr_storage sa; /* socket */
 	socklen_t	 salen; /* length of socket buffer */
 };
@@ -179,7 +179,7 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 				&(((struct sockaddr_in6 *)sa)->sin6_addr),
 				src[i].ip, INET6_ADDRSTRLEN);
 		}
-	
+
 		LOG2(sess, "DNS resolved: %s: %s", host, src[i].ip);
 		i++;
 	}

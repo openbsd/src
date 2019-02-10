@@ -1,4 +1,4 @@
-/*	$Id: server.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: server.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,7 +54,7 @@ int
 rsync_server(const struct opts *opts, size_t argc, char *argv[])
 {
 	struct sess	 sess;
-	int	 	 fdin = STDIN_FILENO,
+	int		 fdin = STDIN_FILENO,
 			 fdout = STDOUT_FILENO, c = 0;
 
 	memset(&sess, 0, sizeof(struct sess));

@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: uploader.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,7 +71,7 @@ log_dir(struct sess *sess, const struct flist *f)
 		return;
 	sz = strlen(f->path);
 	assert(sz > 0);
-	LOG1(sess, "%s%s", f->path, 
+	LOG1(sess, "%s%s", f->path,
 		'/' == f->path[sz - 1] ? "" : "/");
 }
 
@@ -119,7 +119,7 @@ init_blkset(struct blkset *p, off_t sz)
 		v = sqrt(sz);
 		p->len = ceil(v);
 
-		/* 
+		/*
 		 * Always be a multiple of eight.
 		 * There's no reason to do this, but rsync does.
 		 */
@@ -233,7 +233,7 @@ pre_link(struct upload *p, struct sess *sess)
 				return -1;
 			}
 			newlink = 1;
-		} 
+		}
 		free(b);
 	}
 
@@ -244,7 +244,7 @@ pre_link(struct upload *p, struct sess *sess)
 		tv[0].tv_nsec = 0;
 		tv[1].tv_sec = f->st.mtime;
 		tv[1].tv_nsec = 0;
-		rc = utimensat(p->rootfd, 
+		rc = utimensat(p->rootfd,
 			f->path, tv, AT_SYMLINK_NOFOLLOW);
 		if (-1 == rc) {
 			ERR(sess, "%s: utimensat", f->path);
@@ -252,8 +252,8 @@ pre_link(struct upload *p, struct sess *sess)
 		}
 		LOG4(sess, "%s: updated symlink date", f->path);
 	}
-	
-	/* 
+
+	/*
 	 * FIXME: if newlink is set because we updated the symlink, we
 	 * want to carry over the permissions from the last.
 	 */
@@ -281,7 +281,7 @@ static int
 pre_dir(const struct upload *p, struct sess *sess)
 {
 	struct stat	 st;
-	int	 	 rc;
+	int		 rc;
 	const struct flist *f;
 
 	f = &p->fl[p->idx];
@@ -304,7 +304,7 @@ pre_dir(const struct upload *p, struct sess *sess)
 		WARNX(sess, "%s: not a directory", f->path);
 		return -1;
 	} else if (-1 != rc) {
-		/* 
+		/*
 		 * FIXME: we should fchmod the permissions here as well,
 		 * as we may locally have shut down writing into the
 		 * directory and that doesn't work.
@@ -361,13 +361,13 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 		return 0;
 	}
 
-	/* 
+	/*
 	 * Update the modification time if we're a new directory *or* if
 	 * we're preserving times and the time has changed.
 	 */
 
-	if (u->newdir[idx] || 
-	    (sess->opts->preserve_times && 
+	if (u->newdir[idx] ||
+	    (sess->opts->preserve_times &&
 	     st.st_mtime != f->st.mtime)) {
 		tv[0].tv_sec = time(NULL);
 		tv[0].tv_nsec = 0;
@@ -386,7 +386,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 	 * preserving modes and it has changed.
 	 */
 
-	if (u->newdir[idx] || 
+	if (u->newdir[idx] ||
 	    (sess->opts->preserve_perms &&
 	     st.st_mode != f->st.mode)) {
 		rc = fchmodat(u->rootfd, f->path, f->st.mode, 0);
@@ -446,7 +446,7 @@ pre_file(const struct upload *p, int *filefd, struct sess *sess)
  * On success, upload_free() must be called with the allocated pointer.
  */
 struct upload *
-upload_alloc(struct sess *sess, int rootfd, int fdout, 
+upload_alloc(struct sess *sess, int rootfd, int fdout,
 	size_t clen, const struct flist *fl, size_t flsz, mode_t msk)
 {
 	struct upload	*p;
@@ -496,7 +496,7 @@ upload_free(struct upload *p)
  * Otherwise returns <0, which is an error.
  */
 int
-rsync_uploader(struct upload *u, int *fileinfd, 
+rsync_uploader(struct upload *u, int *fileinfd,
 	struct sess *sess, int *fileoutfd)
 {
 	struct blkset	 blk;
@@ -534,7 +534,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 		if (u->bufpos < u->bufsz) {
 			sz = MAX_CHUNK < (u->bufsz - u->bufpos) ?
 				MAX_CHUNK : (u->bufsz - u->bufpos);
-			c = io_write_buf(sess, u->fdout, 
+			c = io_write_buf(sess, u->fdout,
 				u->buf + u->bufpos, sz);
 			if (0 == c) {
 				ERRX1(sess, "io_write_nonblocking");
@@ -545,7 +545,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 				return 1;
 		}
 
-		/* 
+		/*
 		 * Let the UPLOAD_FIND_NEXT state handle things if we
 		 * finish, as we'll need to write a POLLOUT message and
 		 * not have a writable descriptor yet.
@@ -583,7 +583,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 				break;
 		}
 
-		/* 
+		/*
 		 * Whether we've finished writing files or not, we
 		 * disable polling on the output channel.
 		 */
@@ -608,7 +608,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 			return 1;
 	}
 
-	/* 
+	/*
 	 * If an input file is open, stat it and see if it's already up
 	 * to date, in which case close it and go to the next one.
 	 * Either way, we don't have a write channel open.
@@ -655,7 +655,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 	if (-1 != *fileinfd && st.st_size > 0) {
 		mapsz = st.st_size;
-		map = mmap(NULL, mapsz, 
+		map = mmap(NULL, mapsz,
 			PROT_READ, MAP_SHARED, *fileinfd, 0);
 		if (MAP_FAILED == map) {
 			WARN(sess, "%s: mmap", u->fl[u->idx].path);
@@ -678,7 +678,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 		offs = 0;
 		for (i = 0; i < blk.blksz; i++) {
-			init_blk(&blk.blks[i], 
+			init_blk(&blk.blks[i],
 				&blk, offs, i, map, sess);
 			offs += blk.len;
 		}
@@ -687,7 +687,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 		close(*fileinfd);
 		*fileinfd = -1;
 		LOG3(sess, "%s: mapped %jd B with %zu blocks",
-			u->fl[u->idx].path, (intmax_t)blk.size, 
+			u->fl[u->idx].path, (intmax_t)blk.size,
 			blk.blksz);
 	} else {
 		if (-1 != *fileinfd) {
@@ -702,13 +702,13 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 	/* Make sure the block metadata buffer is big enough. */
 
-	u->bufsz = 
+	u->bufsz =
 	     sizeof(int32_t) + /* identifier */
 	     sizeof(int32_t) + /* block count */
 	     sizeof(int32_t) + /* block length */
 	     sizeof(int32_t) + /* checksum length */
 	     sizeof(int32_t) + /* block remainder */
-	     blk.blksz * 
+	     blk.blksz *
 	     (sizeof(int32_t) + /* short checksum */
 	      blk.csum); /* long checksum */
 
@@ -728,9 +728,9 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	io_buffer_int(sess, u->buf, &pos, u->bufsz, blk.csum);
 	io_buffer_int(sess, u->buf, &pos, u->bufsz, blk.rem);
 	for (i = 0; i < blk.blksz; i++) {
-		io_buffer_int(sess, u->buf, &pos, u->bufsz, 
+		io_buffer_int(sess, u->buf, &pos, u->bufsz,
 			blk.blks[i].chksum_short);
-		io_buffer_buf(sess, u->buf, &pos, u->bufsz, 
+		io_buffer_buf(sess, u->buf, &pos, u->bufsz,
 			blk.blks[i].chksum_long, blk.csum);
 	}
 	assert(pos == u->bufsz);

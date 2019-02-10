@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: downloader.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -51,14 +51,14 @@ enum	downloadst {
  */
 struct	download {
 	enum downloadst	    state; /* state of affairs */
-	size_t	 	    idx; /* index of current file */
+	size_t		    idx; /* index of current file */
 	struct blkset	    blk; /* its blocks */
 	void		   *map; /* mmap of current file */
 	size_t		    mapsz; /* length of mapsz */
 	int		    ofd; /* open origin file */
 	int		    fd; /* open output file */
 	char		   *fname; /* output filename */
-	MD4_CTX	 	    ctx; /* current hashing context */
+	MD4_CTX		    ctx; /* current hashing context */
 	off_t		    downloaded; /* total downloaded */
 	off_t		    total; /* total in file */
 	const struct flist *fl; /* file list */
@@ -75,7 +75,7 @@ struct	download {
  * Simply log the filename.
  */
 static void
-log_file(struct sess *sess, 
+log_file(struct sess *sess,
 	const struct download *dl, const struct flist *f)
 {
 	float		 frac, tot = dl->total;
@@ -85,7 +85,7 @@ log_file(struct sess *sess,
 	if (sess->opts->server)
 		return;
 
-	frac = 0 == dl->total ? 100.0 : 
+	frac = 0 == dl->total ? 100.0 :
 		100.0 * dl->downloaded / dl->total;
 
 	if (dl->total > 1024 * 1024 * 1024) {
@@ -102,7 +102,7 @@ log_file(struct sess *sess,
 		unit = "KB";
 	}
 
-	LOG1(sess, "%s (%.*f %s, %.1f%% downloaded)", 
+	LOG1(sess, "%s (%.*f %s, %.1f%% downloaded)",
 		f->path, prec, tot, unit, frac);
 }
 
@@ -155,7 +155,7 @@ download_cleanup(struct download *p, int cleanup)
 	}
 	if (-1 != p->fd) {
 		close(p->fd);
-		if (cleanup && NULL != p->fname) 
+		if (cleanup && NULL != p->fname)
 			unlinkat(p->rootfd, p->fname, 0);
 		p->fd = -1;
 	}
@@ -171,7 +171,7 @@ download_cleanup(struct download *p, int cleanup)
  * On success, download_free() must be called with the pointer.
  */
 struct download *
-download_alloc(struct sess *sess, int fdin, 
+download_alloc(struct sess *sess, int fdin,
 	const struct flist *fl, size_t flsz, int rootfd)
 {
 	struct download	*p;
@@ -191,7 +191,7 @@ download_alloc(struct sess *sess, int fdin,
 	p->obuf = NULL;
 	p->obufmax = OBUF_SIZE;
 	if (p->obufmax &&
-  	    NULL == (p->obuf = malloc(p->obufmax))) {
+	    NULL == (p->obuf = malloc(p->obufmax))) {
 		ERR(sess, "malloc");
 		free(p);
 		return NULL;
@@ -223,7 +223,7 @@ download_free(struct download *p)
  * Returns zero on failure, non-zero on success.
  */
 static int
-buf_copy(struct sess *sess, 
+buf_copy(struct sess *sess,
 	const char *buf, size_t sz, struct download *p)
 {
 	size_t	 rem, tocopy;
@@ -231,7 +231,7 @@ buf_copy(struct sess *sess,
 
 	assert(p->obufsz <= p->obufmax);
 
-	/* 
+	/*
 	 * Copy as much as we can.
 	 * If we've copied everything, exit.
 	 * If we have no pre-write buffer (obufmax of zero), this never
@@ -268,7 +268,7 @@ buf_copy(struct sess *sess,
 		p->obufsz = 0;
 	}
 
-	/* 
+	/*
 	 * Now drain anything left.
 	 * If we have no pre-write buffer, this is it.
 	 */
@@ -302,9 +302,9 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	size_t		 sz, dirlen, tok;
 	const char	*cp;
 	mode_t		 perm;
-	struct stat  	 st;
+	struct stat	 st;
 	char		*buf = NULL;
-	unsigned char	 ourmd[MD4_DIGEST_LENGTH], 
+	unsigned char	 ourmd[MD4_DIGEST_LENGTH],
 			 md[MD4_DIGEST_LENGTH];
 	struct timespec	 tv[2];
 
@@ -332,7 +332,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		if (sess->opts->dry_run)
 			return 1;
 
-		/* 
+		/*
 		 * Now get our block information.
 		 * This is all we'll need to reconstruct the file from
 		 * the map, as block sizes are regular.
@@ -344,7 +344,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 			goto out;
 		}
 
-		/* 
+		/*
 		 * Next, we want to open the existing file for using as
 		 * block input.
 		 * We do this in a non-blocking way, so if the open
@@ -355,7 +355,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		p->state = DOWNLOAD_READ_LOCAL;
 		f = &p->fl[idx];
-		p->ofd = openat(p->rootfd, f->path, 
+		p->ofd = openat(p->rootfd, f->path,
 			O_RDONLY | O_NONBLOCK, 0);
 
 		if (-1 == p->ofd && ENOENT != errno) {
@@ -388,7 +388,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	if (DOWNLOAD_READ_LOCAL == p->state) {
 		assert(NULL == p->fname);
 
-		/* 
+		/*
 		 * Try to fstat() the file descriptor if valid and make
 		 * sure that we're still a regular file.
 		 * Then, if it has non-zero size, mmap() it for hashing.
@@ -405,7 +405,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		if (-1 != p->ofd && st.st_size > 0) {
 			p->mapsz = st.st_size;
-			p->map = mmap(NULL, p->mapsz, 
+			p->map = mmap(NULL, p->mapsz,
 				PROT_READ, MAP_SHARED, p->ofd, 0);
 			if (MAP_FAILED == p->map) {
 				ERR(sess, "%s: mmap", f->path);
@@ -417,7 +417,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		*ofd = -1;
 
-		/* 
+		/*
 		 * Create the temporary file.
 		 * Use a simple scheme of path/.FILE.RANDOM, where we
 		 * fill in RANDOM with an arc4random number.
@@ -434,7 +434,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 			    f->path + dirlen + 1, hash) < 0)
 				p->fname = NULL;
 		} else {
-			if (asprintf(&p->fname, ".%s.%" PRIu32, 
+			if (asprintf(&p->fname, ".%s.%" PRIu32,
 			    f->path, hash) < 0)
 				p->fname = NULL;
 		}
@@ -443,7 +443,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 			goto out;
 		}
 
-		/* 
+		/*
 		 * Inherit permissions from the source file if we're new
 		 * or specifically told with -p.
 		 */
@@ -453,7 +453,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		else
 			perm = f->st.mode;
 
-		p->fd = openat(p->rootfd, p->fname, 
+		p->fd = openat(p->rootfd, p->fname,
 			O_APPEND|O_WRONLY|O_CREAT|O_EXCL, perm);
 
 		if (-1 == p->fd) {
@@ -461,7 +461,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 			goto out;
 		}
 
-		/* 
+		/*
 		 * FIXME: we can technically wait until the temporary
 		 * file is writable, but since it's guaranteed to be
 		 * empty, I don't think this is a terribly expensive
@@ -491,7 +491,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	if ( ! io_read_int(sess, p->fdin, &rawtok)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
-	} 
+	}
 
 	if (rawtok > 0) {
 		sz = rawtok;
@@ -516,7 +516,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		tok = -rawtok - 1;
 		if (tok >= p->blk.blksz) {
 			ERRX(sess, "%s: token not in block "
-				"set: %zu (have %zu blocks)", 
+				"set: %zu (have %zu blocks)",
 				p->fname, tok, p->blk.blksz);
 			goto out;
 		}
@@ -552,7 +552,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	assert(0 == rawtok);
 	assert(0 == p->obufsz);
 
-	/* 
+	/*
 	 * Make sure our resulting MD4 hashes match.
 	 * FIXME: if the MD4 hashes don't match, then our file has
 	 * changed out from under us.

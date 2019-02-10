@@ -1,4 +1,4 @@
-/*	$Id: session.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: session.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,7 +29,7 @@
  * This only prints as the client.
  */
 static void
-stats_log(struct sess *sess, 
+stats_log(struct sess *sess,
 	uint64_t tread, uint64_t twrite, uint64_t tsize)
 {
 	double		 tr, tw, ts;
@@ -89,8 +89,8 @@ stats_log(struct sess *sess,
 		"%.*lf %s sent, "
 		"%.*lf %s read, "
 		"%.*lf %s file size",
-		trsz, tr, tru, 
-		twsz, tw, twu, 
+		trsz, tr, tru,
+		twsz, tw, twu,
 		tssz, ts, tsu);
 }
 
@@ -158,4 +158,3 @@ sess_stats_recv(struct sess *sess, int fd)
 	stats_log(sess, tr, tw, ts);
 	return 1;
 }
-

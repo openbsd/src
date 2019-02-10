@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: sender.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,20 +65,20 @@ rsync_sender(struct sess *sess, int fdin,
 	     ! io_write_int(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_int");
 		goto out;
-	} 
+	}
 
-	/* 
+	/*
 	 * Then the file list in any mode.
 	 * Finally, the IO error (always zero for us).
 	 */
-	
+
 	if ( ! flist_send(sess, fdin, fdout, fl, flsz)) {
 		ERRX1(sess, "flist_send");
 		goto out;
 	} else if ( ! io_write_int(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_int");
 		goto out;
-	} 
+	}
 
 	/* Exit if we're the server with zero files. */
 

@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: fargs.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,7 +22,7 @@
 
 #include "extern.h"
 
-#define	RSYNC_PATH 	"rsync"
+#define	RSYNC_PATH	"rsync"
 
 char **
 fargs_cmdline(struct sess *sess, const struct fargs *f)
@@ -39,9 +39,9 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 
 	/* Be explicit with array size. */
 
-	argsz += 1; 	/* dot separator */
-	argsz += 1; 	/* sink file */
-	argsz += 5; 	/* per-mode maximum */
+	argsz += 1;	/* dot separator */
+	argsz += 1;	/* sink file */
+	argsz += 5;	/* per-mode maximum */
 	argsz += 10;	/* shared args */
 	argsz += 1;	/* NULL pointer */
 	argsz += f->sourcesz;
@@ -101,4 +101,3 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 	args[i] = NULL;
 	return args;
 }
-

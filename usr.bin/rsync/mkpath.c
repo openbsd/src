@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpath.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$OpenBSD: mkpath.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -74,4 +74,3 @@ mkpath(struct sess *sess, char *path)
 
 	return (0);
 }
-

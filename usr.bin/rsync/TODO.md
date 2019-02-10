@@ -8,13 +8,13 @@ I've included the specific security porting topics below.
 This list also does not include adding support for features (e.g., **-u** and
 so on).
 
-- Easy: add a hashtable to `blk_find()` in 
+- Easy: add a hashtable to `blk_find()` in
   [blocks.c](https://github.com/kristapsdz/openrsync/blob/master/blocks.c)
   for quickly looking up fast-hash matches.
 
 - Easy: print more statistics, such as transfer times and rates.
 
-- Easy: tighten the [pledge(2)](https://man.openbsd.org/pledge.2) and 
+- Easy: tighten the [pledge(2)](https://man.openbsd.org/pledge.2) and
   [unveil(2)](https://man.openbsd.org/unveil.2) to work with **-n**, as
   it does not touch files.
 

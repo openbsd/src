@@ -1,4 +1,4 @@
-/*	$Id: hash.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: hash.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,21 +32,21 @@
 uint32_t
 hash_fast(const void *buf, size_t len)
 {
-	size_t 	 	 i = 0;
-	uint32_t 	 a = 0, /* part of a(k, l) */
-			 b = 0; /* b(k, l) */
-	const signed char *dat = buf;
+	size_t			 i = 0;
+	uint32_t		 a = 0, /* part of a(k, l) */
+				 b = 0; /* b(k, l) */
+	const signed char	*dat = buf;
 
 	if (len > 4)
 		for ( ; i < len - 4; i += 4) {
 			b += 4 * (a + dat[i]) +
-			      3 * dat[i + 1] +
-			      2 * dat[i + 2] +
-			          dat[i + 3];
+			    3 * dat[i + 1] +
+			    2 * dat[i + 2] +
+			    dat[i + 3];
 			a += dat[i + 0] +
-			      dat[i + 1] +
-			      dat[i + 2] +
-			      dat[i + 3];
+			    dat[i + 1] +
+			    dat[i + 2] +
+			    dat[i + 3];
 		}
 
 	for ( ; i < len; i++) {

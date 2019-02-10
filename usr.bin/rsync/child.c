@@ -1,4 +1,4 @@
-/*	$Id: child.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: child.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

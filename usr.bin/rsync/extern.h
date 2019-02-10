@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: extern.h,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -201,7 +201,7 @@ void		  rsync_errx1(struct sess *, const char *,
 			size_t, const char *, ...)
 			__attribute__((format(printf, 4, 5)));
 
-int		  flist_del(struct sess *, int, 
+int		  flist_del(struct sess *, int,
 			const struct flist *, size_t);
 int		  flist_gen(struct sess *, size_t, char **,
 			struct flist **, size_t *);
@@ -212,7 +212,7 @@ int		  flist_recv(struct sess *, int,
 			struct flist **, size_t *);
 int		  flist_send(struct sess *, int, int,
 			const struct flist *, size_t);
-int		  flist_gen_dels(struct sess *, const char *, 
+int		  flist_gen_dels(struct sess *, const char *,
 			struct flist **, size_t *,
 			const struct flist *, size_t);
 
@@ -232,16 +232,16 @@ int		  io_write_int(struct sess *, int, int32_t);
 int		  io_write_line(struct sess *, int, const char *);
 int		  io_write_long(struct sess *, int, int64_t);
 
-void		  io_buffer_int(struct sess *, void *, 
+void		  io_buffer_int(struct sess *, void *,
 			size_t *, size_t, int32_t);
-void		  io_buffer_buf(struct sess *, void *, 
+void		  io_buffer_buf(struct sess *, void *,
 			size_t *, size_t, const void *, size_t);
 
-void		  io_unbuffer_int(struct sess *, const void *, 
+void		  io_unbuffer_int(struct sess *, const void *,
 			size_t *, size_t, int32_t *);
-int		  io_unbuffer_size(struct sess *, const void *, 
+int		  io_unbuffer_size(struct sess *, const void *,
 			size_t *, size_t, size_t *);
-void		  io_unbuffer_buf(struct sess *, const void *, 
+void		  io_unbuffer_buf(struct sess *, const void *,
 			size_t *, size_t, void *, size_t);
 
 void		  rsync_child(const struct opts *, int, const struct fargs *)
@@ -252,14 +252,14 @@ int		  rsync_client(const struct opts *, int, const struct fargs *);
 int		  rsync_socket(const struct opts *, const struct fargs *);
 int		  rsync_server(const struct opts *, size_t, char *[]);
 int		  rsync_downloader(struct download *, struct sess *, int *);
-int		  rsync_uploader(struct upload *, 
+int		  rsync_uploader(struct upload *,
 			int *, struct sess *, int *);
 int		  rsync_uploader_tail(struct upload *, struct sess *);
 
 struct download	 *download_alloc(struct sess *, int,
 			const struct flist *, size_t, int);
 void		  download_free(struct download *);
-struct upload	 *upload_alloc(struct sess *, int, int, size_t, 
+struct upload	 *upload_alloc(struct sess *, int, int, size_t,
 			const struct flist *, size_t, mode_t);
 void		  upload_free(struct upload *);
 

@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.1 2019/02/10 23:18:28 benno Exp $ */
+/*	$Id: blocks.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -161,7 +161,7 @@ static int
 blk_match_send(struct sess *sess, const char *path, int fd,
 	const void *buf, off_t size, const struct blkset *blks)
 {
-	off_t	 	 offs, last, end, fromcopy = 0, fromdown = 0,
+	off_t		 offs, last, end, fromcopy = 0, fromdown = 0,
 			 total = 0, sz;
 	int32_t		 tok;
 	struct blk	*blk;
@@ -238,7 +238,7 @@ int
 blk_match(struct sess *sess, int fd,
 	const struct blkset *blks, const char *path)
 {
-	int	 	 nfd, rc = 0, c;
+	int		 nfd, rc = 0, c;
 	struct stat	 st;
 	void		*map = MAP_FAILED;
 	size_t		 mapsz;
@@ -293,7 +293,7 @@ blk_match(struct sess *sess, int fd,
 			"upload ratio", path, (intmax_t)st.st_size);
 	}
 
-	/* 
+	/*
 	 * Now write the full file hash.
 	 * Since we're seeding the hash, this always gives us some sort
 	 * of data even if the file's zero-length.
@@ -408,7 +408,7 @@ blk_recv(struct sess *sess, int fd, const char *path)
 		}
 	}
 
-	/* 
+	/*
 	 * Read each block individually.
 	 * FIXME: read buffer and unbuffer.
 	 */
@@ -635,13 +635,13 @@ blk_send(struct sess *sess, int fd, size_t idx,
 	/* Put the entire send routine into a buffer. */
 
 	sz = sizeof(int32_t) + /* identifier */
-	     sizeof(int32_t) + /* block count */
-	     sizeof(int32_t) + /* block length */
-	     sizeof(int32_t) + /* checksum length */
-	     sizeof(int32_t) + /* block remainder */
-	     p->blksz * 
-	     (sizeof(int32_t) + /* short checksum */
-	      p->csum); /* long checksum */
+	    sizeof(int32_t) + /* block count */
+	    sizeof(int32_t) + /* block length */
+	    sizeof(int32_t) + /* checksum length */
+	    sizeof(int32_t) + /* block remainder */
+	    p->blksz *
+	    (sizeof(int32_t) + /* short checksum */
+		p->csum); /* long checksum */
 
 	if (NULL == (buf = malloc(sz))) {
 		ERR(sess, "malloc");
@@ -655,9 +655,9 @@ blk_send(struct sess *sess, int fd, size_t idx,
 	io_buffer_int(sess, buf, &pos, sz, p->rem);
 
 	for (i = 0; i < p->blksz; i++) {
-		io_buffer_int(sess, buf, &pos, 
+		io_buffer_int(sess, buf, &pos,
 			sz, p->blks[i].chksum_short);
-		io_buffer_buf(sess, buf, &pos, sz, 
+		io_buffer_buf(sess, buf, &pos, sz,
 			p->blks[i].chksum_long, p->csum);
 	}
 
