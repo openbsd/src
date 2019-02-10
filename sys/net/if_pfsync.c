@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.261 2018/10/03 01:24:14 visa Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.262 2019/02/10 16:42:35 phessler Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2062,7 +2062,7 @@ pfsync_update_state_req(struct pf_state *st)
 	struct pfsync_softc *sc = pfsyncif;
 
 	if (sc == NULL)
-		panic("pfsync_update_state_req: nonexistant instance");
+		panic("pfsync_update_state_req: nonexistent instance");
 
 	if (ISSET(st->state_flags, PFSTATE_NOSYNC)) {
 		if (st->sync_state != PFSYNC_S_NONE)

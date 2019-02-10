@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.20 2019/01/17 03:26:19 beck Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.21 2019/02/10 16:42:35 phessler Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -605,8 +605,8 @@ static int
 test_stat2(int do_uv)
 {
 	if (do_uv) {
-		printf("testing stat components to nonexistant \"rw\"\n");
-		if (unveil("/usr/share/man/nonexistant", "rw") == -1)
+		printf("testing stat components to nonexistent \"rw\"\n");
+		if (unveil("/usr/share/man/nonexistent", "rw") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
 	struct stat sb;
@@ -616,7 +616,7 @@ test_stat2(int do_uv)
 	UV_SHOULD_SUCCEED((stat("/usr", &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat("/usr/share", &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat("/usr/share/man", &sb) == -1), "stat");
-	UV_SHOULD_ENOENT((stat("/usr/share/man/nonexistant", &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat("/usr/share/man/nonexistent", &sb) == -1), "stat");
 	return 0;
 }
 

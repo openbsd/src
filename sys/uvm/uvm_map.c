@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.239 2018/10/31 08:50:25 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.240 2019/02/10 16:42:35 phessler Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1491,7 +1491,7 @@ uvm_mapent_merge(struct vm_map *map, struct vm_map_entry *e1,
  * Attempt forward and backward joining of entry.
  *
  * Returns entry after joins.
- * We are guaranteed that the amap of entry is either non-existant or
+ * We are guaranteed that the amap of entry is either non-existent or
  * has never been used.
  */
 struct vm_map_entry*

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.45 2018/07/10 10:37:59 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.46 2019/02/10 16:42:35 phessler Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -299,7 +299,7 @@ sub process_set
 			}
 		}
 		if (keys %$bad2 > 0) {
-			$state->errsay("#1 depends on non-existant #2",
+			$state->errsay("#1 depends on non-existent #2",
 			    $set->print, join(' ', sort keys %$bad2));
 			if (fix_bad_dependencies($state)) {
 				for my $pkg (keys %$bad2) {

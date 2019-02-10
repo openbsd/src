@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.56 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.57 2019/02/10 16:42:35 phessler Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1046,7 +1046,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	item = pqueue_find(s->d1->sent_messages, seq64be);
 	if (item == NULL) {
 #ifdef DEBUG
-		fprintf(stderr, "retransmit:  message %d non-existant\n", seq);
+		fprintf(stderr, "retransmit:  message %d non-existent\n", seq);
 #endif
 		*found = 0;
 		return 0;
