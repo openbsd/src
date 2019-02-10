@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.691 2019/02/10 14:55:58 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.692 2019/02/10 15:05:17 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -810,6 +810,11 @@ varset		: STRING '=' varstring	{
 		;
 
 anchorname	: STRING			{
+			if ($1[0] == '\0') {
+				free($1);
+				yyerror("anchor name must not be empty");
+				YYERROR;
+			}
 			if (strlen(pf->anchor->path) + 1 +
 			    strlen($1) >= PATH_MAX) {
 				free($1);

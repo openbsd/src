@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.369 2019/01/29 10:58:31 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.370 2019/02/10 15:05:17 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2441,6 +2441,8 @@ main(int argc, char *argv[])
 
 	memset(anchorname, 0, sizeof(anchorname));
 	if (anchoropt != NULL) {
+		if (anchoropt[0] == '\0')
+			errx(1, "anchor name must not be empty");
 		if (mode == O_RDONLY && showopt == NULL && tblcmdopt == NULL) {
 			warnx("anchors apply to -f, -F, -s, and -T only");
 			usage();
