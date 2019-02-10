@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: flist.c,v 1.3 2019/02/10 23:56:19 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -102,7 +102,7 @@ flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
 			new[j++] = *f;
 			i++;
 			WARNX(sess, "%s: duplicate path: %s",
-				f->wpath, f->path);
+			    f->wpath, f->path);
 			free(fnext->path);
 			free(fnext->link);
 			fnext->path = fnext->link = NULL;
@@ -110,8 +110,8 @@ flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
 		}
 
 		ERRX(sess, "%s: duplicate working path for "
-			"possibly different file: %s, %s",
-			f->wpath, f->path, fnext->path);
+		    "possibly different file: %s, %s",
+		    f->wpath, f->path, fnext->path);
 		free(new);
 		return 0;
 	}
@@ -208,7 +208,6 @@ flist_fts_check(struct sess *sess, FTSENT *ent)
 static void
 flist_copy_stat(struct flist *f, const struct stat *st)
 {
-
 	f->st.mode = st->st_mode;
 	f->st.uid = st->st_uid;
 	f->st.gid = st->st_gid;
@@ -238,8 +237,8 @@ flist_free(struct flist *f, size_t sz)
  * Return zero on failure, non-zero on success.
  */
 int
-flist_send(struct sess *sess, int fdin,
-	int fdout, const struct flist *fl, size_t flsz)
+flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
+    size_t flsz)
 {
 	size_t		 i, fnlen;
 	uint8_t		 flag;
@@ -344,8 +343,8 @@ flist_send(struct sess *sess, int fdin,
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_recv_name(struct sess *sess, int fd,
-	struct flist *f, uint8_t flags, char last[MAXPATHLEN])
+flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
+    char last[MAXPATHLEN])
 {
 	uint8_t		 bval;
 	size_t		 partial = 0;
@@ -432,8 +431,7 @@ flist_recv_name(struct sess *sess, int fd,
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_realloc(struct sess *sess,
-	struct flist **fl, size_t *sz, size_t *max)
+flist_realloc(struct sess *sess, struct flist **fl, size_t *sz, size_t *max)
 {
 	void	*pp;
 
@@ -460,8 +458,8 @@ flist_realloc(struct sess *sess,
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_append(struct sess *sess, struct flist *f,
-	struct stat *st, const char *path)
+flist_append(struct sess *sess, struct flist *f, struct stat *st,
+    const char *path)
 {
 
 	/*
@@ -630,8 +628,8 @@ out:
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_gen_dirent(struct sess *sess, char *root,
-	struct flist **fl, size_t *sz, size_t *max)
+flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
+    size_t *max)
 {
 	char		*cargv[2], *cp;
 	int		 rc = 0;
@@ -805,8 +803,8 @@ out:
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_gen_dirs(struct sess *sess, size_t argc,
-	char **argv, struct flist **flp, size_t *sz)
+flist_gen_dirs(struct sess *sess, size_t argc, char **argv, struct flist **flp,
+    size_t *sz)
 {
 	size_t		 i, max = 0;
 
@@ -833,8 +831,8 @@ flist_gen_dirs(struct sess *sess, size_t argc,
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_gen_files(struct sess *sess, size_t argc,
-	char **argv, struct flist **flp, size_t *sz)
+flist_gen_files(struct sess *sess, size_t argc, char **argv,
+    struct flist **flp, size_t *sz)
 {
 	struct flist	*fl = NULL, *f;
 	size_t		 i, flsz = 0;
@@ -876,6 +874,7 @@ flist_gen_files(struct sess *sess, size_t argc,
 			continue;
 		}
 
+
 		f = &fl[flsz++];
 		assert(NULL != f);
 
@@ -910,8 +909,8 @@ out:
  * On success, "fl" will need to be freed with flist_free().
  */
 int
-flist_gen(struct sess *sess, size_t argc,
-	char **argv, struct flist **flp, size_t *sz)
+flist_gen(struct sess *sess, size_t argc, char **argv, struct flist **flp,
+    size_t *sz)
 {
 	int	 rc;
 
@@ -951,9 +950,8 @@ flist_gen(struct sess *sess, size_t argc,
  * On success, "fl" will need to be freed with flist_free().
  */
 int
-flist_gen_dels(struct sess *sess, const char *root,
-	struct flist **fl, size_t *sz,
-	const struct flist *wfl, size_t wflsz)
+flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
+    size_t *sz,	const struct flist *wfl, size_t wflsz)
 {
 	char		**cargv = NULL;
 	int		  rc = 0, c;
@@ -1131,8 +1129,7 @@ out:
  * Return zero on failure, non-zero on success.
  */
 int
-flist_del(struct sess *sess, int root,
-	const struct flist *fl, size_t flsz)
+flist_del(struct sess *sess, int root, const struct flist *fl, size_t flsz)
 {
 	ssize_t	 i;
 	int	 flag;
