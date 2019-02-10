@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.128 2018/12/04 18:12:08 florian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.129 2019/02/10 13:41:27 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -1712,6 +1712,13 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 		if (clt->clt_remote_user &&
 		    stravis(&user, clt->clt_remote_user, HTTPD_LOGVIS) == -1)
 			goto done;
+		if (clt->clt_remote_user == NULL &&
+		    clt->clt_tls_ctx != NULL &&
+		    (srv_conf->tls_flags & TLSFLAG_CA) &&
+		    tls_peer_cert_subject(clt->clt_tls_ctx) != NULL &&
+		    stravis(&user, tls_peer_cert_subject(clt->clt_tls_ctx),
+				HTTPD_LOGVIS) == -1)
+			goto done;
 		if (desc->http_version &&
 		    stravis(&version, desc->http_version, HTTPD_LOGVIS) == -1)
 			goto done;
@@ -1730,7 +1737,7 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 		ret = evbuffer_add_printf(clt->clt_log,
 		    "%s %s - %s [%s] \"%s %s%s%s%s%s\""
 		    " %03d %zu \"%s\" \"%s\"\n",
-		    srv_conf->name, ip, clt->clt_remote_user == NULL ? "-" :
+		    srv_conf->name, ip, user == NULL ? "-" :
 		    user, tstamp,
 		    server_httpmethod_byid(desc->http_method),
 		    desc->http_path == NULL ? "" : path,
