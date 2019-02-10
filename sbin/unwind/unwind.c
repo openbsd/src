@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.12 2019/02/08 08:21:05 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.13 2019/02/10 14:10:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -51,9 +51,7 @@
 #define	LEASE_DB_DIR	"/var/db/"
 #define	_PATH_LEASE_DB	"/var/db/dhclient.leases."
 
-#define	TRUST_ANCHOR_DIR	"/etc/unwind/trustanchor/"
 #define	TRUST_ANCHOR_FILE	"/etc/unwind/trustanchor/root.key"
-#define	TRUST_ANCHOR_TEMPLATE	"/etc/unwind/trustanchor/root.key.XXXXXXXXXX"
 
 __dead void	usage(void);
 __dead void	main_shutdown(void);
@@ -73,9 +71,6 @@ static int	main_imsg_send_config(struct unwind_conf *);
 int	main_reload(void);
 int	main_sendall(enum imsg_type, void *, uint16_t);
 void	open_dhcp_lease(int);
-void	open_trust_anchor(void);
-void	open_trust_anchor_w(void);
-void	wrote_trust_anchor(int);
 void	open_ports(void);
 
 struct unwind_conf	*main_conf;
@@ -83,9 +78,6 @@ struct imsgev		*iev_frontend;
 struct imsgev		*iev_resolver;
 struct imsgev		*iev_captiveportal;
 char			*conffile;
-
-char			 trust_anchor_tmp_filename[sizeof(
-			     TRUST_ANCHOR_TEMPLATE)];
 
 pid_t	 frontend_pid;
 pid_t	 resolver_pid;
@@ -139,7 +131,7 @@ main(int argc, char *argv[])
 	int			 pipe_main2resolver[2];
 	int			 pipe_main2captiveportal[2];
 	int			 frontend_routesock, rtfilter;
-	int			 control_fd;
+	int			 control_fd, ta_fd;
 	char			*csock;
 
 	conffile = CONF_FILE;
@@ -306,17 +298,20 @@ main(int argc, char *argv[])
 	    &rtfilter, sizeof(rtfilter)) < 0)
 		fatal("setsockopt(ROUTE_MSGFILTER)");
 
+	if ((ta_fd = open(TRUST_ANCHOR_FILE, O_RDWR | O_CREAT, 0644)) == -1)
+		log_warn("%s", TRUST_ANCHOR_FILE);
+
+	/* receiver handles failed open correctly */
+	main_imsg_compose_frontend_fd(IMSG_TAFD, 0, ta_fd);
+
 	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
 	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
 	main_imsg_send_config(main_conf);
 
-	if (unveil(TRUST_ANCHOR_DIR, "rwc") == -1 && errno != ENOENT)
-		err(1, "unveil");
-
 	if (unveil(LEASE_DB_DIR, "r") == -1 && errno != ENOENT)
 		err(1, "unveil");
 
-	if (pledge("stdio inet dns rpath wpath cpath sendfd", NULL) == -1)
+	if (pledge("stdio inet dns rpath sendfd", NULL) == -1)
 		fatal("pledge");
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
@@ -465,18 +460,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				    "%d", __func__, imsg.hdr.len);
 			memcpy(&rtm_index, imsg.data, sizeof(rtm_index));
 			open_dhcp_lease(rtm_index);
-			break;
-		case IMSG_OPEN_TA_RO:
-			open_trust_anchor();
-			break;
-		case IMSG_OPEN_TA_W:
-			open_trust_anchor_w();
-			break;
-		case IMSG_TA_W_DONE:
-			wrote_trust_anchor(0);
-			break;
-		case IMSG_TA_W_FAILED:
-			wrote_trust_anchor(1);
 			break;
 		case IMSG_OPEN_PORTS:
 			open_ports();
@@ -963,58 +946,4 @@ open_ports(void)
 		main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
 	if (udp6sock != -1)
 		main_imsg_compose_frontend_fd(IMSG_UDP6SOCK, 0, udp6sock);
-}
-
-void
-open_trust_anchor(void)
-{
-	int	 fd;
-
-	if ((fd = open(TRUST_ANCHOR_FILE, O_RDONLY)) == -1)
-		log_warn("%s: %s", __func__, TRUST_ANCHOR_FILE);
-
-	/* Send fd == -1, too. Receiver handles it correctly. */
-	main_imsg_compose_frontend_fd(IMSG_TAFD, 0, fd);
-}
-
-void
-open_trust_anchor_w(void)
-{
-	int fd;
-
-	if (*trust_anchor_tmp_filename != '\0') {
-		log_warnx("already writing trust anchor");
-		return;
-	}
-	strlcpy(trust_anchor_tmp_filename, TRUST_ANCHOR_TEMPLATE, sizeof(
-	    trust_anchor_tmp_filename));
-
-	if ((fd = mkstemp(trust_anchor_tmp_filename)) == -1) {
-		log_warn("%s", trust_anchor_tmp_filename);
-		*trust_anchor_tmp_filename = '\0';
-		return;
-	}
-	main_imsg_compose_frontend_fd(IMSG_TAFD_W, 0, fd);
-}
-
-void
-wrote_trust_anchor(int failure)
-{
-	if (*trust_anchor_tmp_filename == '\0') {
-		log_warnx("%s: not writing trust anchor", __func__);
-		return;
-	}
-
-	if (failure)
-		unlink(trust_anchor_tmp_filename);
-	else {
-		if (rename(trust_anchor_tmp_filename, TRUST_ANCHOR_FILE) ==
-		    -1) {
-			log_warn("%s", __func__);
-			unlink(trust_anchor_tmp_filename);
-		}
-	}
-
-	*trust_anchor_tmp_filename = '\0';
-
 }

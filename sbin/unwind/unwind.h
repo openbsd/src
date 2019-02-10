@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.7 2019/02/07 17:20:35 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.8 2019/02/10 14:10:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -97,15 +97,10 @@ enum imsg_type {
 	IMSG_OPEN_HTTP_PORT,
 	IMSG_HTTPSOCK,
 	IMSG_CAPTIVEPORTAL_STATE,
-	IMSG_OPEN_TA_RO,
-	IMSG_OPEN_TA_W,
 	IMSG_TAFD,
-	IMSG_TAFD_W,
 	IMSG_NEW_TA,
 	IMSG_NEW_TAS_ABORT,
 	IMSG_NEW_TAS_DONE,
-	IMSG_TA_W_DONE,
-	IMSG_TA_W_FAILED
 };
 
 struct unwind_forwarder {

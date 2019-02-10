@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.11 2019/02/07 17:20:35 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.12 2019/02/10 14:10:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -45,6 +45,7 @@
 #include "libunbound/config.h"
 #include "libunbound/sldns/pkthdr.h"
 #include "libunbound/sldns/sbuffer.h"
+#include "libunbound/sldns/str2wire.h"
 #include "libunbound/sldns/wire2str.h"
 
 #include "uw_log.h"
@@ -98,6 +99,7 @@ struct imsgev		*iev_resolver;
 struct imsgev		*iev_captiveportal;
 struct event		 ev_route;
 int			 udp4sock = -1, udp6sock = -1, routesock = -1;
+int			 ta_fd = -1;
 
 static struct trust_anchor_head	 built_in_trust_anchors;
 static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
@@ -473,19 +475,12 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			parse_dhcp_lease(fd);
 			break;
 		case IMSG_TAFD:
-			if ((fd = imsg.fd) != -1)
-				parse_trust_anchor(&trust_anchors, fd);
+			if ((ta_fd = imsg.fd) != -1)
+				parse_trust_anchor(&trust_anchors, ta_fd);
 			if (!TAILQ_EMPTY(&trust_anchors))
 				send_trust_anchors(&trust_anchors);
 			else
 				send_trust_anchors(&built_in_trust_anchors);
-			break;
-		case IMSG_TAFD_W:
-			if ((fd = imsg.fd) == -1)
-				fatalx("%s: expected to receive imsg trust "
-				    "anchor fd but didn't receive any",
-				    __func__);
-			write_trust_anchors(&trust_anchors, fd);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -605,8 +600,8 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			 * always write trust anchors, the modify date on
 			 * the file is an indication when we made progress
 			 */
-			frontend_imsg_compose_main(IMSG_OPEN_TA_W, 0, NULL,
-			    0);
+			if (ta_fd != -1)
+				write_trust_anchors(&trust_anchors, ta_fd);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -676,8 +671,6 @@ frontend_startup(void)
 		    "process", __func__);
 
 	event_add(&ev_route, NULL);
-
-	frontend_imsg_compose_main(IMSG_OPEN_TA_RO, 0, NULL, 0);
 
 	frontend_imsg_compose_main(IMSG_STARTUP_DONE, 0, NULL, 0);
 	rtmget_default();
@@ -1158,36 +1151,53 @@ merge_tas(struct trust_anchor_head *newh, struct trust_anchor_head *oldh)
 void
 parse_trust_anchor(struct trust_anchor_head *tah, int fd)
 {
-	FILE	*f;
-	char	*line = NULL, *p;
-	size_t	 linesize = 0;
-	ssize_t	 linelen;
+	size_t	 len, dname_len;
+	ssize_t	 n, sz;
+	uint8_t	 rr[LDNS_RR_BUF_SIZE];
+	char	*str, *p, buf[512], *line;
 
-	if((f = fdopen(fd, "r")) == NULL) {
-		log_warn("cannot read trust anchor file");
-		close(fd);
-		return;
-	}
+	sz = 0;
+	str = NULL;
 
-	while ((linelen = getline(&line, &linesize, f)) != -1) {
-		if (*line == ';')
-			continue;
-		p = strchr(line, ';');
-		if (p == NULL)
-			p = strchr(line, '\n');
-		if (p != NULL) {
-			do {
-				p--;
-			} while(p != line && *p == ' ');
-			*(p + 1) = '\0';
+	while ((n = read(fd, buf, sizeof(buf))) > 0) {
+		p = recallocarray(str, sz, sz + n, 1);
+		if (p == NULL) {
+			log_warn("%s", __func__);
+			goto out;
 		}
-		log_debug("%s: %s", __func__, line);
-		add_new_ta(tah, line);
+		str = p;
+		memcpy(str + sz, buf, n);
+		sz += n;
 	}
-	free(line);
-	if (ferror(f))
-		log_warn("getline");
-	fclose(f);
+
+	if (n == -1) {
+		log_warn("%s", __func__);
+		goto out;
+	}
+
+	/* make it a string */
+	p = recallocarray(str, sz, sz + 1, 1);
+	if (p == NULL) {
+		log_warn("%s", __func__);
+		goto out;
+	}
+	str = p;
+	sz++;
+
+	len = sizeof(rr);
+
+	while ((line = strsep(&str, "\n")) != NULL) {
+		if (sldns_str2wire_rr_buf(line, rr, &len, &dname_len,
+		    172800, NULL, 0, NULL, 0) != 0)
+			continue;
+		if (sldns_wirerr_get_type(rr, len, dname_len) ==
+		    LDNS_RR_TYPE_DNSKEY)
+			add_new_ta(tah, line);
+	}
+
+out:
+	free(str);
+	return;
 }
 
 void
@@ -1204,33 +1214,34 @@ send_trust_anchors(struct trust_anchor_head *tah)
 void
 write_trust_anchors(struct trust_anchor_head *tah, int fd)
 {
-	FILE			*f;
 	struct trust_anchor	*ta;
+	size_t			 len = 0;
+	ssize_t			 n;
+	char			*str;
 
-	if((f = fdopen(fd, "w+")) == NULL) {
-		log_warn("cannot open trust anchor file for writing");
-		goto err;
-	}
+	log_debug("%s", __func__);
 
-	TAILQ_FOREACH(ta, tah, entry)
-		if (fprintf(f, "%s\n", ta->ta) < 0)
-			goto err;
-	if (ferror(f)) {
+	if (lseek(fd, 0, SEEK_SET) == -1) {
 		log_warn("%s", __func__);
-		goto err;
+		goto out;
 	}
-	if (fclose(f) != 0) {
-		f = NULL;
-		log_warn("%s", __func__);
-		goto err;
-	}
-	frontend_imsg_compose_main(IMSG_TA_W_DONE, 0, NULL, 0);
-	return;
-err:
-	if (f == NULL)
-		close(fd);
-	else
-		fclose(f);
 
-	frontend_imsg_compose_main(IMSG_TA_W_FAILED, 0, NULL, 0);
+	TAILQ_FOREACH(ta, tah, entry) {
+		if ((n = asprintf(&str, "%s\n", ta->ta)) == -1) {
+			log_warn("%s", __func__);
+			len = 0;
+			goto out;
+		}
+		len += n;
+		if (write(fd, str, n) != n) {
+			log_warn("%s", __func__);
+			free(str);
+			len = 0;
+			goto out;
+		}
+		free(str);
+	}
+out:
+	ftruncate(fd, len);
+	fsync(fd);
 }
