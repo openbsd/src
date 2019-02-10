@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.234 2019/02/09 15:26:15 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.235 2019/02/10 13:04:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -451,6 +451,10 @@ typedef struct ssl_handshake_tls13_st {
 
 	uint8_t *cookie;
 	size_t cookie_len;
+
+	/* Preserved transcript hash. */
+	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
+	size_t transcript_hash_len;
 } SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {

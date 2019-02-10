@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.24 2019/02/07 15:54:18 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.25 2019/02/10 13:04:29 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -33,6 +33,7 @@ struct tls13_handshake_action {
 	uint8_t			handshake_type;
 	uint8_t			sender;
 	uint8_t			handshake_complete;
+	uint8_t			preserve_transcript_hash;
 
 	int (*send)(struct tls13_ctx *ctx);
 	int (*recv)(struct tls13_ctx *ctx);
@@ -133,6 +134,7 @@ struct tls13_handshake_action state_machine[] = {
 		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CERTIFICATE_VERIFY,
 		.sender = TLS13_HS_SERVER,
+		.preserve_transcript_hash = 1,
 		.send = tls13_server_certificate_verify_send,
 		.recv = tls13_server_certificate_verify_recv,
 	},
@@ -140,6 +142,7 @@ struct tls13_handshake_action state_machine[] = {
 		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_FINISHED,
 		.sender = TLS13_HS_SERVER,
+		.preserve_transcript_hash = 1,
 		.send = tls13_server_finished_send,
 		.recv = tls13_server_finished_recv,
 	},
@@ -360,6 +363,13 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 
 	if ((ret = tls13_handshake_msg_recv(ctx->hs_msg, ctx->rl)) <= 0)
 		return ret;
+
+	if (action->preserve_transcript_hash) {
+		if (!tls1_transcript_hash_value(ctx->ssl,
+		    ctx->hs->transcript_hash, sizeof(ctx->hs->transcript_hash),
+		    &ctx->hs->transcript_hash_len))
+			return TLS13_IO_FAILURE;
+	}
 
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
 	if (!tls1_transcript_record(ctx->ssl, CBS_data(&cbs), CBS_len(&cbs)))
