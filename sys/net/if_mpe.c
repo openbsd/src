@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.79 2019/02/10 22:36:34 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.80 2019/02/11 00:11:24 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -93,7 +93,10 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	struct mpe_softc	*sc;
 	struct ifnet		*ifp;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (sc == NULL)
+		return (ENOMEM);
+
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "mpe%d", unit);
 	ifp->if_flags = IFF_POINTOPOINT;
