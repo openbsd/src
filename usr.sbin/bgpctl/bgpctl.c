@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.228 2019/01/20 23:30:15 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.229 2019/02/11 15:47:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -346,7 +346,7 @@ main(int argc, char *argv[])
 		bzero(&net, sizeof(net));
 		net.prefix = res->addr;
 		net.prefixlen = res->prefixlen;
-		net.rtableid = tableid;
+		net.rd = res->rd;
 		/* attribute sets are not supported */
 		if (res->action == NETWORK_ADD) {
 			imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
@@ -927,7 +927,7 @@ show_fib_head(void)
 	printf("flags: "
 	    "* = valid, B = BGP, C = Connected, S = Static, D = Dynamic\n");
 	printf("       "
-	    "N = BGP Nexthop reachable via this route R = redistributed\n");
+	    "N = BGP Nexthop reachable via this route\n");
 	printf("       r = reject route, b = blackhole route\n\n");
 	printf("flags prio destination          gateway\n");
 }
@@ -966,11 +966,6 @@ show_fib_flags(u_int16_t flags)
 
 	if (flags & F_NEXTHOP)
 		printf("N");
-	else
-		printf(" ");
-
-	if (flags & F_REDISTRIBUTED)
-		printf("R");
 	else
 		printf(" ");
 
@@ -1983,7 +1978,7 @@ network_bulk(struct parse_result *res)
 				errx(1, "bad prefix: %s", b);
 			net.prefix = h;
 			net.prefixlen = len;
-			net.rtableid = tableid;
+			net.rd = res->rd;
 
 			if (res->action == NETWORK_BULK_ADD) {
 				imsg_compose(ibuf, IMSG_NETWORK_ADD,
@@ -2128,7 +2123,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		net.prefix = ctl.prefix;
 		net.prefixlen = ctl.prefixlen;
 		net.type = NETWORK_MRTCLONE;
-		/* XXX rtableid */
+		/* XXX rd can't be set and will be 0 */
 
 		imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
 		    &net, sizeof(net));

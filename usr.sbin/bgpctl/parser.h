@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.34 2019/01/20 23:30:15 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.35 2019/02/11 15:47:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -67,6 +67,8 @@ struct parse_result {
 	char			 rib[PEER_DESCR_LEN];
 	char			 shutcomm[SHUT_COMM_LEN];
 	char			*irr_outdir;
+	const char		*ext_comm_subtype;
+	u_int64_t		 rd;
 	int			 flags;
 	int			 is_group;
 	u_int8_t		 validation_state;
