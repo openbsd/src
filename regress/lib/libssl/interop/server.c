@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.5 2018/11/10 08:33:45 bluhm Exp $	*/
+/*	$OpenBSD: server.c,v 1.6 2019/02/11 12:22:44 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -48,8 +48,8 @@ main(int argc, char *argv[])
 	SSL *ssl;
 	BIO *abio, *cbio;
 	SSL_SESSION *session;
-	int error, sessionreuse = 0, verify = 0;
-	char buf[256], ch;
+	int ch, error, sessionreuse = 0, verify = 0;
+	char buf[256];
 	char *ca = NULL, *crt = NULL, *key = NULL;
 	char *host_port, *host = "127.0.0.1", *port = "0";
 
