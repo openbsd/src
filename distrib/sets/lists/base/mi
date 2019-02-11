@@ -236,8 +236,6 @@
 ./etc/ssl/lib
 ./etc/ssl/private
 ./etc/termcap
-./etc/unwind
-./etc/unwind/trustanchor
 ./etc/weekly
 ./home
 ./mnt
