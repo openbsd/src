@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
+/*	$Id: socket.c,v 1.5 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,12 +54,12 @@ inet_connect(struct sess *sess, int *sd,
 {
 	int	 c, flags;
 
-	if (-1 != *sd)
+	if (*sd != -1)
 		close(*sd);
 
 	LOG2(sess, "trying: %s, %s", src->ip, host);
 
-	if (-1 == (*sd = socket(src->family, SOCK_STREAM, 0))) {
+	if ((*sd = socket(src->family, SOCK_STREAM, 0)) == -1) {
 		ERR(sess, "socket");
 		return -1;
 	}
@@ -74,9 +74,8 @@ inet_connect(struct sess *sess, int *sd,
 	c = connect(*sd,
 		(const struct sockaddr *)&src->sa,
 		src->salen);
-	if (-1 == c) {
-		if (ECONNREFUSED == errno ||
-		    EHOSTUNREACH == errno) {
+	if (c == -1) {
+		if (errno == ECONNREFUSED || errno == EHOSTUNREACH) {
 			WARNX(sess, "connect refused: "
 				"%s, %s", src->ip, host);
 			return 0;
@@ -87,10 +86,10 @@ inet_connect(struct sess *sess, int *sd,
 
 	/* Set up non-blocking mode. */
 
-	if (-1 == (flags = fcntl(*sd, F_GETFL, 0))) {
+	if ((flags = fcntl(*sd, F_GETFL, 0)) == -1) {
 		ERR(sess, "fcntl");
 		return -1;
-	} else if (-1 == fcntl(*sd, F_SETFL, flags|O_NONBLOCK)) {
+	} else if (fcntl(*sd, F_SETFL, flags|O_NONBLOCK) == -1) {
 		ERR(sess, "fcntl");
 		return -1;
 	}
@@ -140,14 +139,14 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 		    res->ai_family == AF_INET6)
 			srcsz++;
 
-	if (0 == srcsz) {
+	if (srcsz == 0) {
 		ERRX(sess, "no addresses resolved: %s", host);
 		freeaddrinfo(res0);
 		return NULL;
 	}
 
 	src = calloc(srcsz, sizeof(struct source));
-	if (NULL == src) {
+	if (src == NULL) {
 		ERRX(sess, "calloc");
 		freeaddrinfo(res0);
 		return NULL;
@@ -168,7 +167,7 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 		/* Format as a string, too. */
 
 		sa = res->ai_addr;
-		if (AF_INET == res->ai_family) {
+		if (res->ai_family == AF_INET) {
 			src[i].family = PF_INET;
 			inet_ntop(AF_INET,
 				&(((struct sockaddr_in *)sa)->sin_addr),
@@ -210,7 +209,7 @@ protocol_line(struct sess *sess, const char *host, const char *cp)
 
 	/* @RSYNCD: OK indicates that we're finished. */
 
-	if (0 == strcmp(cp, "OK"))
+	if (strcmp(cp, "OK") == 0)
 		return 1;
 
 	/*
@@ -218,10 +217,10 @@ protocol_line(struct sess *sess, const char *host, const char *cp)
 	 * There are two formats: x.y (w/submodule) and x.
 	 */
 
-	if (2 == sscanf(cp, "%d.%d", &major, &minor)) {
+	if (sscanf(cp, "%d.%d", &major, &minor) == 2) {
 		sess->rver = major;
 		return 0;
-	} else if (1 == sscanf(cp, "%d", &major)) {
+	} else if (sscanf(cp, "%d", &major) == 1) {
 		sess->rver = major;
 		return 0;
 	}
@@ -250,17 +249,17 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	sess.lver = RSYNC_PROTOCOL;
 	sess.opts = opts;
 
-	assert(NULL != f->host);
-	assert(NULL != f->module);
+	assert(f->host != NULL);
+	assert(f->module != NULL);
 
-	if (NULL == (args = fargs_cmdline(&sess, f))) {
+	if ((args = fargs_cmdline(&sess, f)) == NULL) {
 		ERRX1(&sess, "fargs_cmdline");
 		return 0;
 	}
 
 	/* Resolve all IP addresses from the host. */
 
-	if (NULL == (src = inet_resolve(&sess, f->host, &srcsz))) {
+	if ((src = inet_resolve(&sess, f->host, &srcsz)) == NULL) {
 		ERRX1(&sess, "inet_resolve");
 		free(args);
 		return 0;
@@ -268,7 +267,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	/* Drop the DNS pledge. */
 
-	if (-1 == pledge("stdio rpath wpath cpath fattr inet unveil", NULL)) {
+	if (pledge("stdio rpath wpath cpath fattr inet unveil", NULL) == -1) {
 		ERR(&sess, "pledge");
 		goto out;
 	}
@@ -289,8 +288,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	}
 
 	/* Drop the inet pledge. */
-
-	if (-1 == pledge("stdio rpath wpath cpath fattr unveil", NULL)) {
+	if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1) {
 		ERR(&sess, "pledge");
 		goto out;
 	}
@@ -331,13 +329,13 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 				ERRX1(&sess, "io_read_byte");
 				goto out;
 			}
-			if ('\n' == (buf[i] = byte))
+			if ((buf[i] = byte) == '\n')
 				break;
 		}
 		if (i == sizeof(buf)) {
 			ERRX(&sess, "line buffer overrun");
 			goto out;
-		} else if (0 == i)
+		} else if (i == 0)
 			continue;
 
 		/*
@@ -348,7 +346,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 		assert(i > 0);
 		buf[i] = '\0';
-		if ('\r' == buf[i - 1])
+		if (buf[i - 1] == '\r')
 			buf[i - 1] = '\0';
 
 		if ((c = protocol_line(&sess, f->host, buf)) < 0) {
@@ -367,7 +365,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	 * Emit a standalone newline afterward.
 	 */
 
-	if (FARGS_RECEIVER == f->mode || FARGS_SENDER == f->mode)
+	if (f->mode == FARGS_RECEIVER || f->mode == FARGS_SENDER)
 		i = 3; /* ssh host rsync... */
 	else
 		i = 1; /* rsync... */
@@ -411,7 +409,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 		", server version %" PRId32 ", seed %" PRId32,
 		sess.lver, sess.rver, sess.seed);
 
-	assert(FARGS_RECEIVER == f->mode);
+	assert(f->mode == FARGS_RECEIVER);
 
 	LOG2(&sess, "client starting receiver: %s", f->host);
 	if (!rsync_receiver(&sess, sd, sd, f->sink)) {
@@ -429,7 +427,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 out:
 	free(src);
 	free(args);
-	if (-1 != sd)
+	if (sd != -1)
 		close(sd);
 	return rc;
 }

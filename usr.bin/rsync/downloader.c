@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
+/*	$Id: downloader.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -116,7 +116,7 @@ download_reinit(struct sess *sess, struct download *p, size_t idx)
 {
 	int32_t seed = htole32(sess->seed);
 
-	assert(DOWNLOAD_READ_NEXT == p->state);
+	assert(p->state == DOWNLOAD_READ_NEXT);
 
 	p->idx = idx;
 	memset(&p->blk, 0, sizeof(struct blkset));
@@ -143,19 +143,19 @@ static void
 download_cleanup(struct download *p, int cleanup)
 {
 
-	if (MAP_FAILED != p->map) {
+	if (p->map != MAP_FAILED) {
 		assert(p->mapsz);
 		munmap(p->map, p->mapsz);
 		p->map = MAP_FAILED;
 		p->mapsz = 0;
 	}
-	if (-1 != p->ofd) {
+	if (p->ofd != -1) {
 		close(p->ofd);
 		p->ofd = -1;
 	}
-	if (-1 != p->fd) {
+	if (p->fd != -1) {
 		close(p->fd);
-		if (cleanup && NULL != p->fname)
+		if (cleanup && p->fname != NULL)
 			unlinkat(p->rootfd, p->fname, 0);
 		p->fd = -1;
 	}
@@ -176,7 +176,7 @@ download_alloc(struct sess *sess, int fdin,
 {
 	struct download	*p;
 
-	if (NULL == (p = malloc(sizeof(struct download)))) {
+	if ((p = malloc(sizeof(struct download))) == NULL) {
 		ERR(sess, "malloc");
 		return NULL;
 	}
@@ -190,8 +190,7 @@ download_alloc(struct sess *sess, int fdin,
 	p->obufsz = 0;
 	p->obuf = NULL;
 	p->obufmax = OBUF_SIZE;
-	if (p->obufmax &&
-	    NULL == (p->obuf = malloc(p->obufmax))) {
+	if (p->obufmax && (p->obuf = malloc(p->obufmax)) == NULL) {
 		ERR(sess, "malloc");
 		free(p);
 		return NULL;
@@ -207,7 +206,7 @@ void
 download_free(struct download *p)
 {
 
-	if (NULL == p)
+	if (p == NULL)
 		return;
 	download_cleanup(p, 1);
 	free(p->obuf);
@@ -239,7 +238,7 @@ buf_copy(struct sess *sess,
 	 */
 
 	if (sz && p->obufsz < p->obufmax) {
-		assert(NULL != p->obuf);
+		assert(p->obuf != NULL);
 		rem = p->obufmax - p->obufsz;
 		assert(rem > 0);
 		tocopy = rem < sz ? rem : sz;
@@ -248,7 +247,7 @@ buf_copy(struct sess *sess,
 		buf += tocopy;
 		p->obufsz += tocopy;
 		assert(p->obufsz <= p->obufmax);
-		if (0 == sz)
+		if (sz == 0)
 			return 1;
 	}
 
@@ -257,7 +256,7 @@ buf_copy(struct sess *sess,
 	if (p->obufsz) {
 		assert(p->obufmax);
 		assert(p->obufsz <= p->obufmax);
-		assert(NULL != p->obuf);
+		assert(p->obuf != NULL);
 		if ((ssz = write(p->fd, p->obuf, p->obufsz)) < 0) {
 			ERR(sess, "%s: write", p->fname);
 			return 0;
@@ -315,7 +314,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	 * metadata, in which case we open our file and wait for data.
 	 */
 
-	if (DOWNLOAD_READ_NEXT == p->state) {
+	if (p->state == DOWNLOAD_READ_NEXT) {
 		if (!io_read_int(sess, p->fdin, &idx)) {
 			ERRX1(sess, "io_read_int");
 			return -1;
@@ -355,13 +354,12 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		p->state = DOWNLOAD_READ_LOCAL;
 		f = &p->fl[idx];
-		p->ofd = openat(p->rootfd, f->path,
-			O_RDONLY | O_NONBLOCK, 0);
+		p->ofd = openat(p->rootfd, f->path, O_RDONLY | O_NONBLOCK, 0);
 
-		if (-1 == p->ofd && ENOENT != errno) {
+		if (p->ofd == -1 && errno != ENOENT) {
 			ERR(sess, "%s: openat", f->path);
 			goto out;
-		} else if (-1 != p->ofd) {
+		} else if (p->ofd != -1) {
 			*ofd = p->ofd;
 			return 1;
 		}
@@ -385,8 +383,8 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	 * original file in a nonblocking way, and we can map it.
 	 */
 
-	if (DOWNLOAD_READ_LOCAL == p->state) {
-		assert(NULL == p->fname);
+	if (p->state == DOWNLOAD_READ_LOCAL) {
+		assert(p->fname == NULL);
 
 		/*
 		 * Try to fstat() the file descriptor if valid and make
@@ -394,20 +392,20 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		 * Then, if it has non-zero size, mmap() it for hashing.
 		 */
 
-		if (-1 != p->ofd &&
-		    -1 == fstat(p->ofd, &st)) {
+		if (p->ofd != -1 &&
+		    fstat(p->ofd, &st) == -1) {
 			ERR(sess, "%s: fstat", f->path);
 			goto out;
-		} else if (-1 != p->ofd && !S_ISREG(st.st_mode)) {
+		} else if (p->ofd != -1 && !S_ISREG(st.st_mode)) {
 			WARNX(sess, "%s: not regular", f->path);
 			goto out;
 		}
 
-		if (-1 != p->ofd && st.st_size > 0) {
+		if (p->ofd != -1 && st.st_size > 0) {
 			p->mapsz = st.st_size;
 			p->map = mmap(NULL, p->mapsz,
 				PROT_READ, MAP_SHARED, p->ofd, 0);
-			if (MAP_FAILED == p->map) {
+			if (p->map == MAP_FAILED) {
 				ERR(sess, "%s: mmap", f->path);
 				goto out;
 			}
@@ -438,7 +436,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 			    f->path, hash) < 0)
 				p->fname = NULL;
 		}
-		if (NULL == p->fname) {
+		if (p->fname == NULL) {
 			ERR(sess, "asprintf");
 			goto out;
 		}
@@ -456,7 +454,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		p->fd = openat(p->rootfd, p->fname,
 			O_APPEND|O_WRONLY|O_CREAT|O_EXCL, perm);
 
-		if (-1 == p->fd) {
+		if (p->fd == -1) {
 			ERR(sess, "%s: openat", p->fname);
 			goto out;
 		}
@@ -483,10 +481,10 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	 * a token indicator.
 	 */
 
-	assert(DOWNLOAD_READ_REMOTE == p->state);
-	assert(NULL != p->fname);
-	assert(-1 != p->fd);
-	assert(-1 != p->fdin);
+	assert(p->state == DOWNLOAD_READ_REMOTE);
+	assert(p->fname != NULL);
+	assert(p->fd != -1);
+	assert(p->fdin != -1);
 
 	if (!io_read_int(sess, p->fdin, &rawtok)) {
 		ERRX1(sess, "io_read_int");
@@ -495,7 +493,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 	if (rawtok > 0) {
 		sz = rawtok;
-		if (NULL == (buf = malloc(sz))) {
+		if ((buf = malloc(sz)) == NULL) {
 			ERR(sess, "realloc");
 			goto out;
 		}
@@ -522,7 +520,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		}
 		sz = tok == p->blk.blksz - 1 ? p->blk.rem : p->blk.len;
 		assert(sz);
-		assert(MAP_FAILED != p->map);
+		assert(p->map != MAP_FAILED);
 		buf = p->map + (tok * p->blk.len);
 
 		/*
@@ -533,7 +531,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		 * profile from it.
 		 */
 
-		assert(MAP_FAILED != p->map);
+		assert(p->map != MAP_FAILED);
 		if (!buf_copy(sess, buf, sz, p)) {
 			ERRX1(sess, "buf_copy");
 			goto out;
@@ -549,8 +547,8 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		goto out;
 	}
 
-	assert(0 == rawtok);
-	assert(0 == p->obufsz);
+	assert(rawtok == 0);
+	assert(p->obufsz == 0);
 
 	/*
 	 * Make sure our resulting MD4 hashes match.
@@ -577,7 +575,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		tv[0].tv_nsec = 0;
 		tv[1].tv_sec = f->st.mtime;
 		tv[1].tv_nsec = 0;
-		if (-1 == futimens(p->fd, tv)) {
+		if (futimens(p->fd, tv) == -1) {
 			ERR(sess, "%s: futimens", p->fname);
 			goto out;
 		}
@@ -586,7 +584,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 	/* Finally, rename the temporary to the real file. */
 
-	if (-1 == renameat(p->rootfd, p->fname, p->rootfd, f->path)) {
+	if (renameat(p->rootfd, p->fname, p->rootfd, f->path) == -1) {
 		ERR(sess, "%s: renameat: %s", p->fname, f->path);
 		goto out;
 	}

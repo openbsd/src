@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
+/*	$Id: receiver.c,v 1.5 2019/02/11 21:41:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -58,7 +58,7 @@ rsync_receiver(struct sess *sess,
 	struct upload	*ul = NULL;
 	mode_t		 oumask;
 
-	if (-1 == pledge("stdio rpath wpath cpath fattr unveil", NULL)) {
+	if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1) {
 		ERR(sess, "pledge");
 		goto out;
 	}
@@ -101,7 +101,7 @@ rsync_receiver(struct sess *sess,
 		goto out;
 	}
 
-	if (0 == flsz && !sess->opts->server) {
+	if (flsz == 0 && !sess->opts->server) {
 		WARNX(sess, "receiver has empty file list: exiting");
 		rc = 1;
 		goto out;
@@ -118,7 +118,7 @@ rsync_receiver(struct sess *sess,
 	 */
 
 	if (!sess->opts->dry_run) {
-		if (NULL == (tofree = strdup(root))) {
+		if ((tofree = strdup(root)) == NULL) {
 			ERR(sess, "strdup");
 			goto out;
 		} else if (mkpath(sess, tofree) < 0) {
@@ -138,7 +138,7 @@ rsync_receiver(struct sess *sess,
 
 	if (!sess->opts->dry_run) {
 		dfd = open(root, O_RDONLY | O_DIRECTORY, 0);
-		if (-1 == dfd) {
+		if (dfd == -1) {
 			ERR(sess, "%s: open", root);
 			goto out;
 		}
@@ -166,10 +166,10 @@ rsync_receiver(struct sess *sess,
 	 * writing into other parts of the file-system.
 	 */
 
-	if (-1 == unveil(root, "rwc")) {
+	if (unveil(root, "rwc") == -1) {
 		ERR(sess, "%s: unveil", root);
 		goto out;
-	} else if (-1 == unveil(NULL, NULL)) {
+	} else if (unveil(NULL, NULL) == -1) {
 		ERR(sess, "%s: unveil", root);
 		goto out;
 	}
@@ -195,13 +195,13 @@ rsync_receiver(struct sess *sess,
 
 	ul = upload_alloc(sess, dfd, fdout,
 		CSUM_LENGTH_PHASE1, fl, flsz, oumask);
-	if (NULL == ul) {
+	if (ul == NULL) {
 		ERRX1(sess, "upload_alloc");
 		goto out;
 	}
 
 	dl = download_alloc(sess, fdin, fl, flsz, dfd);
-	if (NULL == dl) {
+	if (dl == NULL) {
 		ERRX1(sess, "download_alloc");
 		goto out;
 	}
@@ -209,7 +209,7 @@ rsync_receiver(struct sess *sess,
 	LOG2(sess, "%s: ready for phase 1 data", root);
 
 	for (;;) {
-		if (-1 == (c = poll(pfd, PFD__MAX, INFTIM))) {
+		if ((c = poll(pfd, PFD__MAX, INFTIM)) == -1) {
 			ERR(sess, "poll");
 			goto out;
 		}
@@ -237,7 +237,7 @@ rsync_receiver(struct sess *sess,
 			if (!io_read_flush(sess, fdin)) {
 				ERRX1(sess, "io_read_flush");
 				goto out;
-			} else if (0 == sess->mplex_read_remain)
+			} else if (sess->mplex_read_remain == 0)
 				pfd[PFD_SENDER_IN].revents &= ~POLLIN;
 		}
 
@@ -275,8 +275,8 @@ rsync_receiver(struct sess *sess,
 			if (c < 0) {
 				ERRX1(sess, "rsync_downloader");
 				goto out;
-			} else if (0 == c) {
-				assert(0 == phase);
+			} else if (c == 0) {
+				assert(phase == 0);
 				phase++;
 				LOG2(sess, "%s: receiver ready "
 					"for phase 2 data", root);
@@ -295,14 +295,14 @@ rsync_receiver(struct sess *sess,
 
 	/* Properly close us out by progressing through the phases. */
 
-	if (1 == phase) {
+	if (phase == 1) {
 		if (!io_write_int(sess, fdout, -1)) {
 			ERRX1(sess, "io_write_int");
 			goto out;
 		} else if (!io_read_int(sess, fdin, &ioerror)) {
 			ERRX1(sess, "io_read_int");
 			goto out;
-		} else if (-1 != ioerror) {
+		} else if (ioerror != -1) {
 			ERRX(sess, "expected phase ack");
 			goto out;
 		}
@@ -331,7 +331,7 @@ rsync_receiver(struct sess *sess,
 	LOG2(sess, "receiver finished updating");
 	rc = 1;
 out:
-	if (-1 != dfd)
+	if (dfd != -1)
 		close(dfd);
 	upload_free(ul);
 	download_free(dl);

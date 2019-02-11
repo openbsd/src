@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
+/*	$Id: sender.c,v 1.5 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ rsync_sender(struct sess *sess, int fdin,
 	int32_t		 idx;
 	struct blkset	*blks = NULL;
 
-	if (-1 == pledge("stdio rpath unveil", NULL)) {
+	if (pledge("stdio rpath unveil", NULL) == -1) {
 		ERR(sess, "pledge");
 		return 0;
 	}
@@ -82,7 +82,7 @@ rsync_sender(struct sess *sess, int fdin,
 
 	/* Exit if we're the server with zero files. */
 
-	if (0 == flsz && sess->opts->server) {
+	if (flsz == 0 && sess->opts->server) {
 		WARNX(sess, "sender has empty file list: exiting");
 		rc = 1;
 		goto out;
@@ -98,7 +98,7 @@ rsync_sender(struct sess *sess, int fdin,
 		if (!io_read_size(sess, fdin, &excl)) {
 			ERRX1(sess, "io_read_size");
 			goto out;
-		} else if (0 != excl) {
+		} else if (excl != 0) {
 			ERRX1(sess, "exclusion list is non-empty");
 			goto out;
 		}
@@ -123,7 +123,7 @@ rsync_sender(struct sess *sess, int fdin,
 		 * exit, depending upon which phase we're in.
 		 */
 
-		if (-1 == idx) {
+		if (idx == -1) {
 			if (!io_write_int(sess, fdout, idx)) {
 				ERRX1(sess, "io_write_int");
 				goto out;
@@ -187,7 +187,7 @@ rsync_sender(struct sess *sess, int fdin,
 		 */
 
 		blks = blk_recv(sess, fdin, fl[idx].path);
-		if (NULL == blks) {
+		if (blks == NULL) {
 			ERRX1(sess, "blk_recv");
 			goto out;
 		} else if (!blk_recv_ack(sess, fdout, blks, idx)) {
@@ -214,7 +214,7 @@ rsync_sender(struct sess *sess, int fdin,
 	if (!io_read_int(sess, fdin, &idx)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
-	} else if (-1 != idx) {
+	} else if (idx != -1) {
 		ERRX(sess, "read incorrect update complete ack");
 		goto out;
 	}

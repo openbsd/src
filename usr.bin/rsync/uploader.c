@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
+/*	$Id: uploader.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -130,7 +130,7 @@ init_blkset(struct blkset *p, off_t sz)
 		p->len = BLOCK_SIZE_MIN;
 
 	p->size = sz;
-	if (0 == (p->blksz = sz / p->len))
+	if ((p->blksz = sz / p->len) == 0)
 		p->rem = sz;
 	else
 		p->rem = sz % p->len;
@@ -150,7 +150,7 @@ init_blk(struct blk *p, const struct blkset *set, off_t offs,
 	size_t idx, const void *map, const struct sess *sess)
 {
 
-	assert(MAP_FAILED != map);
+	assert(map != MAP_FAILED);
 
 	/* Block length inherits for all but the last. */
 
@@ -187,12 +187,12 @@ pre_link(struct upload *p, struct sess *sess)
 
 	/* See if the symlink already exists. */
 
-	assert(-1 != p->rootfd);
+	assert(p->rootfd != -1);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
-	if (-1 != rc && !S_ISLNK(st.st_mode)) {
+	if (rc != -1 && !S_ISLNK(st.st_mode)) {
 		WARNX(sess, "%s: not a symlink", f->path);
 		return -1;
-	} else if (-1 == rc && ENOENT != errno) {
+	} else if (rc == -1 && errno != ENOENT) {
 		WARN(sess, "%s: fstatat", f->path);
 		return -1;
 	}
@@ -205,17 +205,17 @@ pre_link(struct upload *p, struct sess *sess)
 	 * Do we need a fchmod in here as well?
 	 */
 
-	if (-1 == rc) {
+	if (rc == -1) {
 		LOG3(sess, "%s: creating "
 			"symlink: %s", f->path, f->link);
-		if (-1 == symlinkat(f->link, p->rootfd, f->path)) {
+		if (symlinkat(f->link, p->rootfd, f->path) == -1) {
 			WARN(sess, "%s: symlinkat", f->path);
 			return -1;
 		}
 		newlink = 1;
 	} else {
 		b = symlinkat_read(sess, p->rootfd, f->path);
-		if (NULL == b) {
+		if (b == NULL) {
 			ERRX1(sess, "%s: symlinkat_read", f->path);
 			return -1;
 		}
@@ -224,11 +224,11 @@ pre_link(struct upload *p, struct sess *sess)
 			b = NULL;
 			LOG3(sess, "%s: updating "
 				"symlink: %s", f->path, f->link);
-			if (-1 == unlinkat(p->rootfd, f->path, 0)) {
+			if (unlinkat(p->rootfd, f->path, 0) == -1) {
 				WARN(sess, "%s: unlinkat", f->path);
 				return -1;
 			}
-			if (-1 == symlinkat(f->link, p->rootfd, f->path)) {
+			if (symlinkat(f->link, p->rootfd, f->path) == -1) {
 				WARN(sess, "%s: symlinkat", f->path);
 				return -1;
 			}
@@ -246,7 +246,7 @@ pre_link(struct upload *p, struct sess *sess)
 		tv[1].tv_nsec = 0;
 		rc = utimensat(p->rootfd,
 			f->path, tv, AT_SYMLINK_NOFOLLOW);
-		if (-1 == rc) {
+		if (rc == -1) {
 			ERR(sess, "%s: utimensat", f->path);
 			return -1;
 		}
@@ -259,9 +259,9 @@ pre_link(struct upload *p, struct sess *sess)
 	 */
 
 	if (newlink || sess->opts->preserve_perms) {
-		rc = fchmodat(p->rootfd, f->path,
-			f->st.mode, AT_SYMLINK_NOFOLLOW);
-		if (-1 == rc) {
+		rc = fchmodat(p->rootfd,
+			f->path, f->st.mode, AT_SYMLINK_NOFOLLOW);
+		if (rc == -1) {
 			ERR(sess, "%s: fchmodat", f->path);
 			return -1;
 		}
@@ -295,15 +295,15 @@ pre_dir(const struct upload *p, struct sess *sess)
 		return 0;
 	}
 
-	assert(-1 != p->rootfd);
+	assert(p->rootfd != -1);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
-	if (-1 == rc && ENOENT != errno) {
+	if (rc == -1 && errno != ENOENT) {
 		WARN(sess, "%s: fstatat", f->path);
 		return -1;
-	} else if (-1 != rc && !S_ISDIR(st.st_mode)) {
+	} else if (rc != -1 && !S_ISDIR(st.st_mode)) {
 		WARNX(sess, "%s: not a directory", f->path);
 		return -1;
-	} else if (-1 != rc) {
+	} else if (rc != -1) {
 		/*
 		 * FIXME: we should fchmod the permissions here as well,
 		 * as we may locally have shut down writing into the
@@ -321,7 +321,7 @@ pre_dir(const struct upload *p, struct sess *sess)
 	 */
 
 	LOG3(sess, "%s: creating directory", f->path);
-	if (-1 == mkdirat(p->rootfd, f->path, 0777 & ~p->oumask)) {
+	if (mkdirat(p->rootfd, f->path, 0777 & ~p->oumask) == -1) {
 		WARN(sess, "%s: mkdirat", f->path);
 		return -1;
 	}
@@ -353,7 +353,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 	else if (sess->opts->dry_run)
 		return 1;
 
-	if (-1 == fstatat(u->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW)) {
+	if (fstatat(u->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW) == -1) {
 		ERR(sess, "%s: fstatat", f->path);
 		return 0;
 	} else if (!S_ISDIR(st.st_mode)) {
@@ -374,7 +374,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 		tv[1].tv_sec = f->st.mtime;
 		tv[1].tv_nsec = 0;
 		rc = utimensat(u->rootfd, f->path, tv, 0);
-		if (-1 == rc) {
+		if (rc == -1) {
 			ERR(sess, "%s: utimensat", f->path);
 			return 0;
 		}
@@ -390,7 +390,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 	    (sess->opts->preserve_perms &&
 	     st.st_mode != f->st.mode)) {
 		rc = fchmodat(u->rootfd, f->path, f->st.mode, 0);
-		if (-1 == rc) {
+		if (rc == -1) {
 			ERR(sess, "%s: fchmodat", f->path);
 			return 0;
 		}
@@ -434,7 +434,7 @@ pre_file(const struct upload *p, int *filefd, struct sess *sess)
 
 	*filefd = openat(p->rootfd, f->path,
 		O_RDONLY | O_NOFOLLOW | O_NONBLOCK, 0);
-	if (-1 != *filefd || ENOENT == errno)
+	if (*filefd != -1 || errno == ENOENT)
 		return 1;
 	ERR(sess, "%s: openat", f->path);
 	return -1;
@@ -451,7 +451,7 @@ upload_alloc(struct sess *sess, int rootfd, int fdout,
 {
 	struct upload	*p;
 
-	if (NULL == (p = calloc(1, sizeof(struct upload)))) {
+	if ((p = calloc(1, sizeof(struct upload))) == NULL) {
 		ERR(sess, "calloc");
 		return NULL;
 	}
@@ -464,7 +464,7 @@ upload_alloc(struct sess *sess, int rootfd, int fdout,
 	p->fl = fl;
 	p->flsz = flsz;
 	p->newdir = calloc(flsz, sizeof(int));
-	if (NULL == p->newdir) {
+	if (p->newdir == NULL) {
 		ERR(sess, "calloc");
 		free(p);
 		return NULL;
@@ -480,7 +480,7 @@ void
 upload_free(struct upload *p)
 {
 
-	if (NULL == p)
+	if (p == NULL)
 		return;
 	free(p->newdir);
 	free(p->buf);
@@ -508,7 +508,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 	/* This should never get called. */
 
-	assert(UPLOAD_FINISHED != u->state);
+	assert(u->state != UPLOAD_FINISHED);
 
 	/*
 	 * If we have an upload in progress, then keep writing until the
@@ -517,10 +517,10 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	 * have a valid buffer to write.
 	 */
 
-	if (UPLOAD_WRITE_LOCAL == u->state) {
+	if (u->state == UPLOAD_WRITE_LOCAL) {
 		assert(NULL != u->buf);
-		assert(-1 != *fileoutfd);
-		assert(-1 == *fileinfd);
+		assert(*fileoutfd != -1);
+		assert(*fileinfd == -1);
 
 		/*
 		 * Unfortunately, we need to chunk these: if we're
@@ -536,7 +536,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 				MAX_CHUNK : (u->bufsz - u->bufpos);
 			c = io_write_buf(sess, u->fdout,
 				u->buf + u->bufpos, sz);
-			if (0 == c) {
+			if (c == 0) {
 				ERRX1(sess, "io_write_nonblocking");
 				return -1;
 			}
@@ -563,9 +563,9 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	 * This means we must have the output file descriptor working.
 	 */
 
-	if (UPLOAD_FIND_NEXT == u->state) {
-		assert(-1 == *fileinfd);
-		assert(-1 != *fileoutfd);
+	if (u->state == UPLOAD_FIND_NEXT) {
+		assert(*fileinfd == -1);
+		assert(*fileoutfd != -1);
 
 		for ( ; u->idx < u->flsz; u->idx++) {
 			if (S_ISDIR(u->fl[u->idx].st.mode))
@@ -590,7 +590,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 		*fileoutfd = -1;
 		if (u->idx == u->flsz) {
-			assert(-1 == *fileinfd);
+			assert(*fileinfd == -1);
 			if (!io_write_int(sess, u->fdout, -1)) {
 				ERRX1(sess, "io_write_int");
 				return -1;
@@ -604,7 +604,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 		u->state = -1 == *fileinfd ?
 			UPLOAD_WRITE_LOCAL : UPLOAD_READ_LOCAL;
-		if (UPLOAD_READ_LOCAL == u->state)
+		if (u->state == UPLOAD_READ_LOCAL)
 			return 1;
 	}
 
@@ -614,11 +614,11 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	 * Either way, we don't have a write channel open.
 	 */
 
-	if (UPLOAD_READ_LOCAL == u->state) {
-		assert (-1 != *fileinfd);
-		assert(-1 == *fileoutfd);
+	if (u->state == UPLOAD_READ_LOCAL) {
+		assert(*fileinfd != -1);
+		assert(*fileoutfd == -1);
 
-		if (-1 == fstat(*fileinfd, &st)) {
+		if (fstat(*fileinfd, &st) == -1) {
 			WARN(sess, "%s: fstat", u->fl[u->idx].path);
 			close(*fileinfd);
 			*fileinfd = -1;
@@ -649,15 +649,15 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 	/* Initialies our blocks. */
 
-	assert(UPLOAD_WRITE_LOCAL == u->state);
+	assert(u->state == UPLOAD_WRITE_LOCAL);
 	memset(&blk, 0, sizeof(struct blkset));
 	blk.csum = u->csumlen;
 
-	if (-1 != *fileinfd && st.st_size > 0) {
+	if (*fileinfd != -1 && st.st_size > 0) {
 		mapsz = st.st_size;
 		map = mmap(NULL, mapsz,
 			PROT_READ, MAP_SHARED, *fileinfd, 0);
-		if (MAP_FAILED == map) {
+		if (map == MAP_FAILED) {
 			WARN(sess, "%s: mmap", u->fl[u->idx].path);
 			close(*fileinfd);
 			*fileinfd = -1;
@@ -668,7 +668,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 		assert(blk.blksz);
 
 		blk.blks = calloc(blk.blksz, sizeof(struct blk));
-		if (NULL == blk.blks) {
+		if (blk.blks == NULL) {
 			ERR(sess, "calloc");
 			munmap(map, mapsz);
 			close(*fileinfd);
@@ -690,7 +690,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 			u->fl[u->idx].path, (intmax_t)blk.size,
 			blk.blksz);
 	} else {
-		if (-1 != *fileinfd) {
+		if (*fileinfd != -1) {
 			close(*fileinfd);
 			*fileinfd = -1;
 		}
@@ -698,7 +698,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 		LOG3(sess, "%s: not mapped", u->fl[u->idx].path);
 	}
 
-	assert(-1 == *fileinfd);
+	assert(*fileinfd == -1);
 
 	/* Make sure the block metadata buffer is big enough. */
 
@@ -713,7 +713,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	      blk.csum); /* long checksum */
 
 	if (u->bufsz > u->bufmax) {
-		if (NULL == (bufp = realloc(u->buf, u->bufsz))) {
+		if ((bufp = realloc(u->buf, u->bufsz)) == NULL) {
 			ERR(sess, "realloc");
 			return -1;
 		}

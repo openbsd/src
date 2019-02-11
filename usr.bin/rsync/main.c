@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.5 2019/02/11 20:11:42 deraadt Exp $ */
+/*	$Id: main.c,v 1.6 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,10 +34,10 @@ fargs_free(struct fargs *p)
 {
 	size_t	 i;
 
-	if (NULL == p)
+	if (p == NULL)
 		return;
 
-	if (NULL != p->sources)
+	if (p->sources != NULL)
 		for (i = 0; i < p->sourcesz; i++)
 			free(p->sources[i]);
 
@@ -59,7 +59,7 @@ fargs_is_remote(const char *v)
 	size_t	 pos;
 
 	pos = strcspn(v, ":/");
-	return ':' == v[pos];
+	return v[pos] == ':';
 }
 
 /*
@@ -71,11 +71,11 @@ fargs_is_daemon(const char *v)
 {
 	size_t	 pos;
 
-	if (0 == strncasecmp(v, "rsync://", 8))
+	if (strncasecmp(v, "rsync://", 8) == 0)
 		return 1;
 
 	pos = strcspn(v, ":/");
-	return ':' == v[pos] && ':' == v[pos + 1];
+	return v[pos] == ':' && v[pos + 1] == ':';
 }
 
 /*
@@ -97,18 +97,18 @@ fargs_parse(size_t argc, char *argv[])
 
 	/* Allocations. */
 
-	if (NULL == (f = calloc(1, sizeof(struct fargs))))
+	if ((f = calloc(1, sizeof(struct fargs))) == NULL)
 		err(EXIT_FAILURE, "calloc");
 
 	f->sourcesz = argc - 1;
-	if (NULL == (f->sources = calloc(f->sourcesz, sizeof(char *))))
+	if ((f->sources = calloc(f->sourcesz, sizeof(char *))) == NULL)
 		err(EXIT_FAILURE, "calloc");
 
 	for (i = 0; i < argc - 1; i++)
-		if (NULL == (f->sources[i] = strdup(argv[i])))
+		if ((f->sources[i] = strdup(argv[i])) == NULL)
 			err(EXIT_FAILURE, "strdup");
 
-	if (NULL == (f->sink = strdup(argv[i])))
+	if ((f->sink = strdup(argv[i])) == NULL)
 		err(EXIT_FAILURE, "strdup");
 
 	/*
@@ -123,56 +123,56 @@ fargs_parse(size_t argc, char *argv[])
 
 	if (fargs_is_remote(f->sink)) {
 		f->mode = FARGS_SENDER;
-		if (NULL == (f->host = strdup(f->sink)))
+		if ((f->host = strdup(f->sink)) == NULL)
 			err(EXIT_FAILURE, "strdup");
 	}
 
 	if (fargs_is_remote(f->sources[0])) {
-		if (NULL != f->host)
+		if (f->host != NULL)
 			errx(EXIT_FAILURE, "both source and "
 				"destination cannot be remote files");
 		f->mode = FARGS_RECEIVER;
-		if (NULL == (f->host = strdup(f->sources[0])))
+		if ((f->host = strdup(f->sources[0])) == NULL)
 			err(EXIT_FAILURE, "strdup");
 	}
 
-	if (NULL != f->host) {
-		if (0 == strncasecmp(f->host, "rsync://", 8)) {
+	if (f->host != NULL) {
+		if (strncasecmp(f->host, "rsync://", 8) == 0) {
 			/* rsync://host/module[/path] */
 			f->remote = 1;
 			len = strlen(f->host) - 8 + 1;
 			memmove(f->host, f->host + 8, len);
-			if (NULL == (cp = strchr(f->host, '/')))
+			if ((cp = strchr(f->host, '/')) == NULL)
 				errx(EXIT_FAILURE, "rsync protocol "
 					"requires a module name");
 			*cp++ = '\0';
 			f->module = cp;
-			if (NULL != (cp = strchr(f->module, '/')))
+			if ((cp = strchr(f->module, '/')) != NULL)
 				*cp = '\0';
 		} else {
 			/* host:[/path] */
 			cp = strchr(f->host, ':');
-			assert(NULL != cp);
+			assert(cp != NULL);
 			*cp++ = '\0';
-			if (':' == *cp) {
+			if (*cp == ':') {
 				/* host::module[/path] */
 				f->remote = 1;
 				f->module = ++cp;
 				cp = strchr(f->module, '/');
-				if (NULL != cp)
+				if (cp != NULL)
 					*cp = '\0';
 			}
 		}
-		if (0 == (len = strlen(f->host)))
+		if ((len = strlen(f->host)) == 0)
 			errx(EXIT_FAILURE, "empty remote host");
-		if (f->remote && 0 == strlen(f->module))
+		if (f->remote && strlen(f->module) == 0)
 			errx(EXIT_FAILURE, "empty remote module");
 	}
 
 	/* Make sure we have the same "hostspec" for all files. */
 
 	if (!f->remote) {
-		if (FARGS_SENDER == f->mode)
+		if (f->mode == FARGS_SENDER)
 			for (i = 0; i < f->sourcesz; i++) {
 				if (!fargs_is_remote(f->sources[i]))
 					continue;
@@ -180,7 +180,7 @@ fargs_parse(size_t argc, char *argv[])
 					"list of local sources: %s",
 					f->sources[i]);
 			}
-		if (FARGS_RECEIVER == f->mode)
+		if (f->mode == FARGS_RECEIVER)
 			for (i = 0; i < f->sourcesz; i++) {
 				if (fargs_is_remote(f->sources[i]) &&
 				    !fargs_is_daemon(f->sources[i]))
@@ -195,7 +195,7 @@ fargs_parse(size_t argc, char *argv[])
 					f->sources[i]);
 			}
 	} else {
-		if (FARGS_RECEIVER != f->mode)
+		if (f->mode != FARGS_RECEIVER)
 			errx(EXIT_FAILURE, "sender mode for remote "
 				"daemon receivers not yet supported");
 		for (i = 0; i < f->sourcesz; i++) {
@@ -213,15 +213,15 @@ fargs_parse(size_t argc, char *argv[])
 	 */
 
 	if (!f->remote) {
-		if (NULL == f->host)
+		if (f->host == NULL)
 			return f;
-		if (FARGS_SENDER == f->mode) {
-			assert(NULL != f->host);
+		if (f->mode == FARGS_SENDER) {
+			assert(f->host != NULL);
 			assert(len > 0);
 			j = strlen(f->sink);
 			memmove(f->sink, f->sink + len + 1, j - len);
 			return f;
-		} else if (FARGS_RECEIVER != f->mode)
+		} else if (f->mode != FARGS_RECEIVER)
 			return f;
 	}
 
@@ -233,43 +233,41 @@ fargs_parse(size_t argc, char *argv[])
 	 * Also make sure that the remote hosts are the same.
 	 */
 
-	assert(NULL != f->host);
+	assert(f->host != NULL);
 	assert(len > 0);
 
 	for (i = 0; i < f->sourcesz; i++) {
 		cp = f->sources[i];
 		j = strlen(cp);
 		if (f->remote &&
-		    0 == strncasecmp(cp, "rsync://", 8)) {
+		    strncasecmp(cp, "rsync://", 8) == 0) {
 			/* rsync://path */
 			cp += 8;
 			if (strncmp(cp, f->host, len) ||
-			    ('/' != cp[len] && '\0' != cp[len]))
+			    (cp[len] != '/' && cp[len] != '\0')) 
 				errx(EXIT_FAILURE, "different remote "
 					"host: %s", f->sources[i]);
 			memmove(f->sources[i],
 				f->sources[i] + len + 8 + 1,
 				j - len - 8);
-		} else if (f->remote && 0 == strncmp(cp, "::", 2)) {
+		} else if (f->remote && strncmp(cp, "::", 2) == 0) {
 			/* ::path */
 			memmove(f->sources[i],
 				f->sources[i] + 2, j - 1);
 		} else if (f->remote) {
 			/* host::path */
 			if (strncmp(cp, f->host, len) ||
-			    (':' != cp[len] && '\0' != cp[len]))
+			    (cp[len] != ':' && cp[len] != '\0'))
 				errx(EXIT_FAILURE, "different remote "
 					"host: %s", f->sources[i]);
-			memmove(f->sources[i],
-				f->sources[i] + len + 2,
-				j - len - 1);
-		} else if (':' == cp[0]) {
+			memmove(f->sources[i], f->sources[i] + len + 2, j - len - 1);
+		} else if (cp[0] == ':') {
 			/* :path */
 			memmove(f->sources[i], f->sources[i] + 1, j);
 		} else {
 			/* host:path */
 			if (strncmp(cp, f->host, len) ||
-			    (':' != cp[len] && '\0' != cp[len]))
+			    (cp[len] != ':' && cp[len] != '\0'))
 				errx(EXIT_FAILURE, "different remote "
 					"host: %s", f->sources[i]);
 			memmove(f->sources[i],
@@ -296,18 +294,16 @@ main(int argc, char *argv[])
 
 	/* Global pledge. */
 
-	if (-1 == pledge("stdio rpath wpath cpath inet fattr dns proc exec "
-	    "unveil", NULL))
+	if (pledge("stdio rpath wpath cpath inet fattr dns proc exec unveil",
+	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	memset(&opts, 0, sizeof(struct opts));
 
-	for (;;) {
-		c = getopt_long(argc, argv, "e:lnprtv", lopts, NULL);
-		if (-1 == c)
-			break;
+	while ((c = getopt_long(argc, argv, "e:lnprtv", lopts, NULL)) != -1) {
 		switch (c) {
 		case 'e':
+			opts.ssh = optarg;
 			/* Ignore. */
 			break;
 		case 'l':
@@ -354,7 +350,7 @@ main(int argc, char *argv[])
 	 */
 
 	if (opts.server) {
-		if (-1 == pledge("stdio rpath wpath cpath fattr unveil", NULL))
+		if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_server(&opts, (size_t)argc, argv);
 		return c ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -371,7 +367,7 @@ main(int argc, char *argv[])
 	 */
 
 	fargs = fargs_parse(argc, argv);
-	assert(NULL != fargs);
+	assert(fargs != NULL);
 
 	/*
 	 * If we're contacting an rsync:// daemon, then we don't need to
@@ -380,9 +376,9 @@ main(int argc, char *argv[])
 	 */
 
 	if (fargs->remote) {
-		assert(FARGS_RECEIVER == fargs->mode);
-		if (-1 == pledge("stdio rpath wpath cpath inet fattr dns "
-		    "unveil", NULL))
+		assert(fargs->mode == FARGS_RECEIVER);
+		if (pledge("stdio rpath wpath cpath inet fattr dns unveil",
+		    NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_socket(&opts, fargs);
 		fargs_free(fargs);
@@ -391,16 +387,16 @@ main(int argc, char *argv[])
 
 	/* Drop the dns/inet possibility. */
 
-	if (-1 == pledge("stdio rpath wpath cpath fattr proc exec unveil",
-	    NULL))
+	if (pledge("stdio rpath wpath cpath fattr proc exec unveil",
+	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	/* Create a bidirectional socket and start our child. */
 
-	if (-1 == socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, fds))
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, fds) == -1)
 		err(EXIT_FAILURE, "socketpair");
 
-	if (-1 == (child = fork())) {
+	if ((child = fork()) == -1) {
 		close(fds[0]);
 		close(fds[1]);
 		err(EXIT_FAILURE, "fork");
@@ -408,13 +404,13 @@ main(int argc, char *argv[])
 
 	/* Drop the fork possibility. */
 
-	if (-1 == pledge("stdio rpath wpath cpath fattr exec unveil", NULL))
+	if (pledge("stdio rpath wpath cpath fattr exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
-	if (0 == child) {
+	if (child == 0) {
 		close(fds[0]);
 		fds[0] = -1;
-		if (-1 == pledge("stdio exec", NULL))
+		if (pledge("stdio exec", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		rsync_child(&opts, fds[1], fargs);
 		/* NOTREACHED */
@@ -422,7 +418,7 @@ main(int argc, char *argv[])
 
 	close(fds[1]);
 	fds[1] = -1;
-	if (-1 == pledge("stdio rpath wpath cpath fattr unveil", NULL))
+	if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 	c = rsync_client(&opts, fds[0], fargs);
 	fargs_free(fargs);
@@ -438,12 +434,12 @@ main(int argc, char *argv[])
 		fds[0] = -1;
 	}
 
-	if (-1 == waitpid(child, &st, 0))
+	if (waitpid(child, &st, 0) == -1)
 		err(EXIT_FAILURE, "waitpid");
-	if (!(WIFEXITED(st) && EXIT_SUCCESS == WEXITSTATUS(st)))
+	if (!(WIFEXITED(st) && WEXITSTATUS(st) == EXIT_SUCCESS))
 		c = 0;
 
-	if (-1 != fds[0])
+	if (fds[0] != -1)
 		close(fds[0]);
 	return c ? EXIT_SUCCESS : EXIT_FAILURE;
 usage:

@@ -1,4 +1,4 @@
-/*	$Id: server.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
+/*	$Id: server.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,9 +30,9 @@ fcntl_nonblock(struct sess *sess, int fd)
 {
 	int	 fl;
 
-	if (-1 == (fl = fcntl(fd, F_GETFL, 0)))
+	if ((fl = fcntl(fd, F_GETFL, 0)) == -1)
 		ERR(sess, "fcntl: F_GETFL");
-	else if (-1 == fcntl(fd, F_SETFL, fl|O_NONBLOCK))
+	else if (fcntl(fd, F_SETFL, fl|O_NONBLOCK) == -1)
 		ERR(sess, "fcntl: F_SETFL");
 	else
 		return 1;
@@ -116,7 +116,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 		}
 		argv++;
 		argc--;
-		if (0 == argc) {
+		if (argc == 0) {
 			ERRX(&sess, "must have arguments");
 			goto out;
 		}
@@ -134,7 +134,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 		 * rsync [flags] "." <destination>
 		 */
 
-		if (2 != argc) {
+		if (argc != 2) {
 			ERRX(&sess, "server receiver mode "
 				"requires two argument");
 			goto out;

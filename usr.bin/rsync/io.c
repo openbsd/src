@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
+/*	$Id: io.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -56,7 +56,7 @@ io_write_nonblocking(struct sess *sess,
 
 	*sz = 0;
 
-	if (0 == bsz)
+	if (bsz == 0)
 		return 1;
 
 	pfd.fd = fd;
@@ -102,7 +102,7 @@ io_write_blocking(struct sess *sess,
 		if (!c) {
 			ERRX1(sess, "io_write_nonblocking");
 			return 0;
-		} else if (0 == wsz) {
+		} else if (wsz == 0) {
 			ERRX(sess, "io_write_nonblocking: short write");
 			return 0;
 		}
@@ -182,7 +182,7 @@ io_read_nonblocking(struct sess *sess,
 
 	*sz = 0;
 
-	if (0 == bsz)
+	if (bsz == 0)
 		return 1;
 
 	pfd.fd = fd;
@@ -203,7 +203,7 @@ io_read_nonblocking(struct sess *sess,
 	if ((rsz = read(fd, buf, bsz)) < 0) {
 		ERR(sess, "read");
 		return 0;
-	} else if (0 == rsz) {
+	} else if (rsz == 0) {
 		ERRX(sess, "unexpected end of file");
 		return 0;
 	}
@@ -230,7 +230,7 @@ io_read_blocking(struct sess *sess,
 		if (!c) {
 			ERRX1(sess, "io_read_nonblocking");
 			return 0;
-		} else if (0 == rsz) {
+		} else if (rsz == 0) {
 			ERRX(sess, "io_read_nonblocking: short read");
 			return 0;
 		}
@@ -275,7 +275,7 @@ io_read_flush(struct sess *sess, int fd)
 	tag = le32toh(tagbuf);
 	sess->mplex_read_remain = tag & 0xFFFFFF;
 	tag >>= 24;
-	if (7 == tag)
+	if (tag == 7)
 		return 1;
 
 	tag -= 7;
@@ -283,7 +283,7 @@ io_read_flush(struct sess *sess, int fd)
 	if (sess->mplex_read_remain > sizeof(mpbuf)) {
 		ERRX(sess, "multiplex buffer overflow");
 		return 0;
-	} else if (0 == sess->mplex_read_remain)
+	} else if (sess->mplex_read_remain == 0)
 		return 1;
 
 	if (!io_read_blocking(sess, fd,
@@ -291,7 +291,7 @@ io_read_flush(struct sess *sess, int fd)
 		ERRX1(sess, "io_read_blocking");
 		return 0;
 	}
-	if ('\n' == mpbuf[sess->mplex_read_remain - 1])
+	if (mpbuf[sess->mplex_read_remain - 1] == '\n')
 		mpbuf[--sess->mplex_read_remain] = '\0';
 
 	/*
@@ -307,7 +307,7 @@ io_read_flush(struct sess *sess, int fd)
 	 * This means that we should exit.
 	 */
 
-	if (1 == tag) {
+	if (tag == 1) {
 		ERRX1(sess, "error from remote host");
 		return 0;
 	}
@@ -329,7 +329,7 @@ io_read_buf(struct sess *sess, int fd, void *buf, size_t sz)
 	/* If we're not multiplexing, read directly. */
 
 	if (!sess->mplex_reads) {
-		assert(0 == sess->mplex_read_remain);
+		assert(sess->mplex_read_remain == 0);
 		c = io_read_blocking(sess, fd, buf, sz);
 		sess->total_read += sz;
 		return c;
@@ -357,7 +357,7 @@ io_read_buf(struct sess *sess, int fd, void *buf, size_t sz)
 			continue;
 		}
 
-		assert(0 == sess->mplex_read_remain);
+		assert(sess->mplex_read_remain == 0);
 		if (!io_read_flush(sess, fd)) {
 			ERRX1(sess, "io_read_flush");
 			return 0;
@@ -431,8 +431,7 @@ io_buffer_int(struct sess *sess, void *buf,
 {
 	int32_t	nv = htole32(val);
 
-	io_buffer_buf(sess, buf, bufpos,
-		buflen, &nv, sizeof(int32_t));
+	io_buffer_buf(sess, buf, bufpos, buflen, &nv, sizeof(int32_t));
 }
 
 int
@@ -463,7 +462,7 @@ io_read_long(struct sess *sess, int fd, int64_t *val)
 	if (!io_read_int(sess, fd, &sval)) {
 		ERRX(sess, "io_read_int");
 		return 0;
-	} else if (INT32_MAX != sval) {
+	} else if (sval != INT32_MAX) {
 		*val = sval;
 		return 1;
 	}

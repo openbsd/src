@@ -1,4 +1,4 @@
-/*	$Id: symlinks.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: symlinks.c,v 1.3 2019/02/11 21:41:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -37,18 +37,18 @@ symlink_read(struct sess *sess, const char *path)
 	void	*pp;
 
 	for (sz = MAXPATHLEN; ; sz *= 2) {
-		if (NULL == (pp = realloc(buf, sz + 1))) {
+		if ((pp = realloc(buf, sz + 1)) == NULL) {
 			ERR(sess, "realloc");
 			free(buf);
 			return NULL;
 		}
 		buf = pp;
 
-		if (-1 == (nsz = readlink(path, buf, sz))) {
+		if ((nsz = readlink(path, buf, sz)) == -1) {
 			ERR(sess, "%s: readlink", path);
 			free(buf);
 			return NULL;
-		} else if (0 == nsz) {
+		} else if (nsz == 0) {
 			ERRX(sess, "%s: empty link", path);
 			free(buf);
 			return NULL;
@@ -56,7 +56,7 @@ symlink_read(struct sess *sess, const char *path)
 			break;
 	}
 
-	assert(NULL != buf);
+	assert(buf != NULL);
 	assert(nsz > 0);
 	buf[nsz] = '\0';
 	return buf;
@@ -76,18 +76,18 @@ symlinkat_read(struct sess *sess, int fd, const char *path)
 	void	*pp;
 
 	for (sz = MAXPATHLEN; ; sz *= 2) {
-		if (NULL == (pp = realloc(buf, sz + 1))) {
+		if ((pp = realloc(buf, sz + 1)) == NULL) {
 			ERR(sess, "realloc");
 			free(buf);
 			return NULL;
 		}
 		buf = pp;
 
-		if (-1 == (nsz = readlinkat(fd, path, buf, sz))) {
+		if ((nsz = readlinkat(fd, path, buf, sz)) == -1) {
 			ERR(sess, "%s: readlinkat", path);
 			free(buf);
 			return NULL;
-		} else if (0 == nsz) {
+		} else if (nsz == 0) {
 			ERRX(sess, "%s: empty link", path);
 			free(buf);
 			return NULL;
@@ -95,7 +95,7 @@ symlinkat_read(struct sess *sess, int fd, const char *path)
 			break;
 	}
 
-	assert(NULL != buf);
+	assert(buf != NULL);
 	assert(nsz > 0);
 	buf[nsz] = '\0';
 	return buf;
