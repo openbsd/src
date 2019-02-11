@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.301 2019/01/21 10:38:54 djm Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.302 2019/02/11 09:44:42 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -257,6 +257,11 @@ struct cauthctxt {
 	struct cauthmethod *method;
 	sig_atomic_t success;
 	char *authlist;
+#ifdef GSSAPI
+	/* gssapi */
+	gss_OID_set gss_supported_mechs;
+	u_int mech_tried;
+#endif
 	/* pubkey */
 	struct idlist keys;
 	int agent_fd;
@@ -281,37 +286,36 @@ struct cauthmethod {
 	int	*batch_flag;	/* flag in option struct that disables method */
 };
 
-int	input_userauth_service_accept(int, u_int32_t, struct ssh *);
-int	input_userauth_ext_info(int, u_int32_t, struct ssh *);
-int	input_userauth_success(int, u_int32_t, struct ssh *);
-int	input_userauth_success_unexpected(int, u_int32_t, struct ssh *);
-int	input_userauth_failure(int, u_int32_t, struct ssh *);
-int	input_userauth_banner(int, u_int32_t, struct ssh *);
-int	input_userauth_error(int, u_int32_t, struct ssh *);
-int	input_userauth_info_req(int, u_int32_t, struct ssh *);
-int	input_userauth_pk_ok(int, u_int32_t, struct ssh *);
-int	input_userauth_passwd_changereq(int, u_int32_t, struct ssh *);
+static int input_userauth_service_accept(int, u_int32_t, struct ssh *);
+static int input_userauth_ext_info(int, u_int32_t, struct ssh *);
+static int input_userauth_success(int, u_int32_t, struct ssh *);
+static int input_userauth_failure(int, u_int32_t, struct ssh *);
+static int input_userauth_banner(int, u_int32_t, struct ssh *);
+static int input_userauth_error(int, u_int32_t, struct ssh *);
+static int input_userauth_info_req(int, u_int32_t, struct ssh *);
+static int input_userauth_pk_ok(int, u_int32_t, struct ssh *);
+static int input_userauth_passwd_changereq(int, u_int32_t, struct ssh *);
 
-int	userauth_none(struct ssh *);
-int	userauth_pubkey(struct ssh *);
-int	userauth_passwd(struct ssh *);
-int	userauth_kbdint(struct ssh *);
-int	userauth_hostbased(struct ssh *);
+static int userauth_none(struct ssh *);
+static int userauth_pubkey(struct ssh *);
+static void userauth_pubkey_cleanup(struct ssh *);
+static int userauth_passwd(struct ssh *);
+static int userauth_kbdint(struct ssh *);
+static int userauth_hostbased(struct ssh *);
 
 #ifdef GSSAPI
-int	userauth_gssapi(struct ssh *);
-int	input_gssapi_response(int type, u_int32_t, struct ssh *);
-int	input_gssapi_token(int type, u_int32_t, struct ssh *);
-int	input_gssapi_hash(int type, u_int32_t, struct ssh *);
-int	input_gssapi_error(int, u_int32_t, struct ssh *);
-int	input_gssapi_errtok(int, u_int32_t, struct ssh *);
+static int userauth_gssapi(struct ssh *);
+static void userauth_gssapi_cleanup(struct ssh *);
+static int input_gssapi_response(int type, u_int32_t, struct ssh *);
+static int input_gssapi_token(int type, u_int32_t, struct ssh *);
+static int input_gssapi_error(int, u_int32_t, struct ssh *);
+static int input_gssapi_errtok(int, u_int32_t, struct ssh *);
 #endif
 
 void	userauth(struct ssh *, char *);
 
 static int sign_and_send_pubkey(struct ssh *ssh, Identity *);
 static void pubkey_prepare(Authctxt *);
-static void pubkey_cleanup(Authctxt *);
 static void pubkey_reset(Authctxt *);
 static struct sshkey *load_identity_file(Identity *);
 
@@ -323,7 +327,7 @@ Authmethod authmethods[] = {
 #ifdef GSSAPI
 	{"gssapi-with-mic",
 		userauth_gssapi,
-		NULL,
+		userauth_gssapi_cleanup,
 		&options.gss_authentication,
 		NULL},
 #endif
@@ -334,7 +338,7 @@ Authmethod authmethods[] = {
 		NULL},
 	{"publickey",
 		userauth_pubkey,
-		NULL,
+		userauth_pubkey_cleanup,
 		&options.pubkey_authentication,
 		NULL},
 	{"keyboard-interactive",
@@ -382,6 +386,10 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 	authctxt.info_req_seen = 0;
 	authctxt.attempt_kbdint = 0;
 	authctxt.attempt_passwd = 0;
+#if GSSAPI
+	authctxt.gss_supported_mechs = NULL;
+	authctxt.mech_tried = 0;
+#endif
 	authctxt.agent_fd = -1;
 	pubkey_prepare(&authctxt);
 	if (authctxt.method == NULL) {
@@ -401,7 +409,6 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 	ssh_dispatch_run_fatal(ssh, DISPATCH_BLOCK, &authctxt.success);	/* loop until success */
 	ssh->authctxt = NULL;
 
-	pubkey_cleanup(&authctxt);
 	ssh_dispatch_range(ssh, SSH2_MSG_USERAUTH_MIN, SSH2_MSG_USERAUTH_MAX, NULL);
 
 	if (!authctxt.success)
@@ -410,7 +417,7 @@ ssh_userauth2(struct ssh *ssh, const char *local_user,
 }
 
 /* ARGSUSED */
-int
+static int
 input_userauth_service_accept(int type, u_int32_t seq, struct ssh *ssh)
 {
 	int r;
@@ -442,7 +449,7 @@ input_userauth_service_accept(int type, u_int32_t seq, struct ssh *ssh)
 }
 
 /* ARGSUSED */
-int
+static int
 input_userauth_ext_info(int type, u_int32_t seqnr, struct ssh *ssh)
 {
 	return kex_input_ext_info(type, seqnr, ssh);
@@ -487,7 +494,7 @@ userauth(struct ssh *ssh, char *authlist)
 }
 
 /* ARGSUSED */
-int
+static int
 input_userauth_error(int type, u_int32_t seq, struct ssh *ssh)
 {
 	fatal("%s: bad message during authentication: type %d", __func__, type);
@@ -495,7 +502,7 @@ input_userauth_error(int type, u_int32_t seq, struct ssh *ssh)
 }
 
 /* ARGSUSED */
-int
+static int
 input_userauth_banner(int type, u_int32_t seq, struct ssh *ssh)
 {
 	char *msg = NULL;
@@ -515,7 +522,7 @@ input_userauth_banner(int type, u_int32_t seq, struct ssh *ssh)
 }
 
 /* ARGSUSED */
-int
+static int
 input_userauth_success(int type, u_int32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -532,7 +539,8 @@ input_userauth_success(int type, u_int32_t seq, struct ssh *ssh)
 	return 0;
 }
 
-int
+#if 0
+static int
 input_userauth_success_unexpected(int type, u_int32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -544,9 +552,10 @@ input_userauth_success_unexpected(int type, u_int32_t seq, struct ssh *ssh)
 	    authctxt->method->name);
 	return 0;
 }
+#endif
 
 /* ARGSUSED */
-int
+static int
 input_userauth_failure(int type, u_int32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -601,7 +610,7 @@ format_identity(Identity *id)
 }
 
 /* ARGSUSED */
-int
+static int
 input_userauth_pk_ok(int type, u_int32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -672,35 +681,36 @@ input_userauth_pk_ok(int type, u_int32_t seq, struct ssh *ssh)
 }
 
 #ifdef GSSAPI
-int
+static int
 userauth_gssapi(struct ssh *ssh)
 {
 	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
 	Gssctxt *gssctxt = NULL;
-	static gss_OID_set gss_supported = NULL;
-	static u_int mech = 0;
 	OM_uint32 min;
 	int r, ok = 0;
+	gss_OID mech = NULL;
 
 	/* Try one GSSAPI method at a time, rather than sending them all at
 	 * once. */
 
-	if (gss_supported == NULL)
-		gss_indicate_mechs(&min, &gss_supported);
+	if (authctxt->gss_supported_mechs == NULL)
+		gss_indicate_mechs(&min, &authctxt->gss_supported_mechs);
 
-	/* Check to see if the mechanism is usable before we offer it */
-	while (mech < gss_supported->count && !ok) {
+	/* Check to see whether the mechanism is usable before we offer it */
+	while (authctxt->mech_tried < authctxt->gss_supported_mechs->count &&
+	    !ok) {
+		mech = &authctxt->gss_supported_mechs->
+		    elements[authctxt->mech_tried];
 		/* My DER encoding requires length<128 */
-		if (gss_supported->elements[mech].length < 128 &&
-		    ssh_gssapi_check_mechanism(&gssctxt,
-		    &gss_supported->elements[mech], authctxt->host)) {
+		if (mech->length < 128 && ssh_gssapi_check_mechanism(&gssctxt,
+		    mech, authctxt->host)) {
 			ok = 1; /* Mechanism works */
 		} else {
-			mech++;
+			authctxt->mech_tried++;
 		}
 	}
 
-	if (!ok)
+	if (!ok || mech == NULL)
 		return 0;
 
 	authctxt->methoddata=(void *)gssctxt;
@@ -710,14 +720,10 @@ userauth_gssapi(struct ssh *ssh)
 	    (r = sshpkt_put_cstring(ssh, authctxt->service)) != 0 ||
 	    (r = sshpkt_put_cstring(ssh, authctxt->method->name)) != 0 ||
 	    (r = sshpkt_put_u32(ssh, 1)) != 0 ||
-	    (r = sshpkt_put_u32(ssh,
-	    (gss_supported->elements[mech].length) + 2)) != 0 ||
+	    (r = sshpkt_put_u32(ssh, (mech->length) + 2)) != 0 ||
 	    (r = sshpkt_put_u8(ssh, SSH_GSS_OIDTYPE)) != 0 ||
-	    (r = sshpkt_put_u8(ssh,
-	    gss_supported->elements[mech].length)) != 0 ||
-	    (r = sshpkt_put(ssh,
-	    gss_supported->elements[mech].elements,
-	    gss_supported->elements[mech].length)) != 0 ||
+	    (r = sshpkt_put_u8(ssh, mech->length)) != 0 ||
+	    (r = sshpkt_put(ssh, mech->elements, mech->length)) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0)
 		fatal("%s: %s", __func__, ssh_err(r));
 
@@ -726,9 +732,22 @@ userauth_gssapi(struct ssh *ssh)
 	ssh_dispatch_set(ssh, SSH2_MSG_USERAUTH_GSSAPI_ERROR, &input_gssapi_error);
 	ssh_dispatch_set(ssh, SSH2_MSG_USERAUTH_GSSAPI_ERRTOK, &input_gssapi_errtok);
 
-	mech++; /* Move along to next candidate */
+	authctxt->mech_tried++; /* Move along to next candidate */
 
 	return 1;
+}
+
+static void
+userauth_gssapi_cleanup(struct ssh *ssh)
+{
+	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
+	Gssctxt *gssctxt = (Gssctxt *)authctxt->methoddata;
+
+	ssh_gssapi_delete_ctx(&gssctxt);
+	authctxt->methoddata = NULL;
+
+	free(authctxt->gss_supported_mechs);
+	authctxt->gss_supported_mechs = NULL;
 }
 
 static OM_uint32
@@ -798,7 +817,7 @@ process_gssapi_token(struct ssh *ssh, gss_buffer_t recv_tok)
 }
 
 /* ARGSUSED */
-int
+static int
 input_gssapi_response(int type, u_int32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -843,7 +862,7 @@ input_gssapi_response(int type, u_int32_t plen, struct ssh *ssh)
 }
 
 /* ARGSUSED */
-int
+static int
 input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -876,7 +895,7 @@ input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh)
 }
 
 /* ARGSUSED */
-int
+static int
 input_gssapi_errtok(int type, u_int32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -911,7 +930,7 @@ input_gssapi_errtok(int type, u_int32_t plen, struct ssh *ssh)
 }
 
 /* ARGSUSED */
-int
+static int
 input_gssapi_error(int type, u_int32_t plen, struct ssh *ssh)
 {
 	char *msg = NULL;
@@ -932,7 +951,7 @@ input_gssapi_error(int type, u_int32_t plen, struct ssh *ssh)
 }
 #endif /* GSSAPI */
 
-int
+static int
 userauth_none(struct ssh *ssh)
 {
 	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
@@ -948,7 +967,7 @@ userauth_none(struct ssh *ssh)
 	return 1;
 }
 
-int
+static int
 userauth_passwd(struct ssh *ssh)
 {
 	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
@@ -989,7 +1008,7 @@ userauth_passwd(struct ssh *ssh)
  * parse PASSWD_CHANGEREQ, prompt user and send SSH2_MSG_USERAUTH_REQUEST
  */
 /* ARGSUSED */
-int
+static int
 input_userauth_passwd_changereq(int type, u_int32_t seqnr, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -1611,8 +1630,10 @@ pubkey_prepare(Authctxt *authctxt)
 }
 
 static void
-pubkey_cleanup(Authctxt *authctxt)
+userauth_pubkey_cleanup(struct ssh *ssh)
 {
+	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
+
 	Identity *id;
 
 	if (authctxt->agent_fd != -1) {
@@ -1651,7 +1672,7 @@ try_identity(Identity *id)
 	return 1;
 }
 
-int
+static int
 userauth_pubkey(struct ssh *ssh)
 {
 	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
@@ -1699,7 +1720,7 @@ userauth_pubkey(struct ssh *ssh)
 /*
  * Send userauth request message specifying keyboard-interactive method.
  */
-int
+static int
 userauth_kbdint(struct ssh *ssh)
 {
 	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
@@ -1732,7 +1753,7 @@ userauth_kbdint(struct ssh *ssh)
 /*
  * parse INFO_REQUEST, prompt user and send INFO_RESPONSE
  */
-int
+static int
 input_userauth_info_req(int type, u_int32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
@@ -1912,7 +1933,7 @@ ssh_keysign(struct ssh *ssh, struct sshkey *key, u_char **sigp, size_t *lenp,
 	return 0;
 }
 
-int
+static int
 userauth_hostbased(struct ssh *ssh)
 {
 	Authctxt *authctxt = (Authctxt *)ssh->authctxt;
