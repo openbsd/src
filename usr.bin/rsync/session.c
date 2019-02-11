@@ -1,4 +1,4 @@
-/*	$Id: session.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: session.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -113,13 +113,13 @@ sess_stats_send(struct sess *sess, int fd)
 	ts = sess->total_size;
 
 	if (sess->opts->server) {
-		if ( ! io_write_long(sess, fd, tr)) {
+		if (!io_write_long(sess, fd, tr)) {
 			ERRX1(sess, "io_write_long");
 			return 0;
-		} else if ( ! io_write_long(sess, fd, tw)) {
+		} else if (!io_write_long(sess, fd, tw)) {
 			ERRX1(sess, "io_write_long");
 			return 0;
-		} else if ( ! io_write_long(sess, fd, ts)) {
+		} else if (!io_write_long(sess, fd, ts)) {
 			ERRX1(sess, "io_write_long");
 			return 0;
 		}
@@ -144,13 +144,13 @@ sess_stats_recv(struct sess *sess, int fd)
 	if (sess->opts->server || 0 == sess->opts->verbose)
 		return 1;
 
-	if ( ! io_read_ulong(sess, fd, &tw)) {
+	if (!io_read_ulong(sess, fd, &tw)) {
 		ERRX1(sess, "io_read_ulong");
 		return 0;
-	} else if ( ! io_read_ulong(sess, fd, &tr)) {
+	} else if (!io_read_ulong(sess, fd, &tr)) {
 		ERRX1(sess, "io_read_ulong");
 		return 0;
-	} else if ( ! io_read_ulong(sess, fd, &ts)) {
+	} else if (!io_read_ulong(sess, fd, &ts)) {
 		ERRX1(sess, "io_read_ulong");
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: downloader.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -316,7 +316,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	 */
 
 	if (DOWNLOAD_READ_NEXT == p->state) {
-		if ( ! io_read_int(sess, p->fdin, &idx)) {
+		if (!io_read_int(sess, p->fdin, &idx)) {
 			ERRX1(sess, "io_read_int");
 			return -1;
 		} else if (idx >= 0 && (size_t)idx >= p->flsz) {
@@ -339,7 +339,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		 */
 
 		download_reinit(sess, p, idx);
-		if ( ! blk_send_ack(sess, p->fdin, &p->blk)) {
+		if (!blk_send_ack(sess, p->fdin, &p->blk)) {
 			ERRX1(sess, "blk_send_ack");
 			goto out;
 		}
@@ -398,7 +398,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		    -1 == fstat(p->ofd, &st)) {
 			ERR(sess, "%s: fstat", f->path);
 			goto out;
-		} else if (-1 != p->ofd && ! S_ISREG(st.st_mode)) {
+		} else if (-1 != p->ofd && !S_ISREG(st.st_mode)) {
 			WARNX(sess, "%s: not regular", f->path);
 			goto out;
 		}
@@ -448,7 +448,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		 * or specifically told with -p.
 		 */
 
-		if ( ! sess->opts->preserve_perms)
+		if (!sess->opts->preserve_perms)
 			perm = -1 == p->ofd ? f->st.mode : st.st_mode;
 		else
 			perm = f->st.mode;
@@ -488,7 +488,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	assert(-1 != p->fd);
 	assert(-1 != p->fdin);
 
-	if ( ! io_read_int(sess, p->fdin, &rawtok)) {
+	if (!io_read_int(sess, p->fdin, &rawtok)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
 	}
@@ -499,10 +499,10 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 			ERR(sess, "realloc");
 			goto out;
 		}
-		if ( ! io_read_buf(sess, p->fdin, buf, sz)) {
+		if (!io_read_buf(sess, p->fdin, buf, sz)) {
 			ERRX1(sess, "io_read_int");
 			goto out;
-		} else if ( ! buf_copy(sess, buf, sz, p)) {
+		} else if (!buf_copy(sess, buf, sz, p)) {
 			ERRX1(sess, "buf_copy");
 			goto out;
 		}
@@ -534,7 +534,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		 */
 
 		assert(MAP_FAILED != p->map);
-		if ( ! buf_copy(sess, buf, sz, p)) {
+		if (!buf_copy(sess, buf, sz, p)) {
 			ERRX1(sess, "buf_copy");
 			goto out;
 		}
@@ -544,7 +544,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		return 1;
 	}
 
-	if ( ! buf_copy(sess, NULL, 0, p)) {
+	if (!buf_copy(sess, NULL, 0, p)) {
 		ERRX1(sess, "buf_copy");
 		goto out;
 	}
@@ -562,7 +562,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 	MD4_Final(ourmd, &p->ctx);
 
-	if ( ! io_read_buf(sess, p->fdin, md, MD4_DIGEST_LENGTH)) {
+	if (!io_read_buf(sess, p->fdin, md, MD4_DIGEST_LENGTH)) {
 		ERRX1(sess, "io_read_buf");
 		goto out;
 	} else if (memcmp(md, ourmd, MD4_DIGEST_LENGTH)) {

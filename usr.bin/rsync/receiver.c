@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.3 2019/02/10 23:43:31 benno Exp $ */
+/*	$Id: receiver.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -65,14 +65,14 @@ rsync_receiver(struct sess *sess,
 
 	/* Client sends zero-length exclusions. */
 
-	if ( ! sess->opts->server &&
-	     ! io_write_int(sess, fdout, 0)) {
+	if (!sess->opts->server &&
+	     !io_write_int(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_int");
 		goto out;
 	}
 
 	if (sess->opts->server && sess->opts->del) {
-		if ( ! io_read_size(sess, fdin, &excl)) {
+		if (!io_read_size(sess, fdin, &excl)) {
 			ERRX1(sess, "io_read_size");
 			goto out;
 		} else if (0 != excl) {
@@ -86,14 +86,14 @@ rsync_receiver(struct sess *sess,
 	 * These we're going to be touching on our local system.
 	 */
 
-	if ( ! flist_recv(sess, fdin, &fl, &flsz)) {
+	if (!flist_recv(sess, fdin, &fl, &flsz)) {
 		ERRX1(sess, "flist_recv");
 		goto out;
 	}
 
 	/* The IO error is sent after the file list. */
 
-	if ( ! io_read_int(sess, fdin, &ioerror)) {
+	if (!io_read_int(sess, fdin, &ioerror)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
 	} else if (0 != ioerror) {
@@ -101,11 +101,11 @@ rsync_receiver(struct sess *sess,
 		goto out;
 	}
 
-	if (0 == flsz && ! sess->opts->server) {
+	if (0 == flsz && !sess->opts->server) {
 		WARNX(sess, "receiver has empty file list: exiting");
 		rc = 1;
 		goto out;
-	} else if ( ! sess->opts->server)
+	} else if (!sess->opts->server)
 		LOG1(sess, "Transfer starting: %zu files", flsz);
 
 	LOG2(sess, "%s: receiver destination", root);
@@ -117,7 +117,7 @@ rsync_receiver(struct sess *sess,
 	 * this directory in post_dir().
 	 */
 
-	if ( ! sess->opts->dry_run) {
+	if (!sess->opts->dry_run) {
 		if (NULL == (tofree = strdup(root))) {
 			ERR(sess, "strdup");
 			goto out;
@@ -136,7 +136,7 @@ rsync_receiver(struct sess *sess,
 
 	oumask = umask(0);
 
-	if ( ! sess->opts->dry_run) {
+	if (!sess->opts->dry_run) {
 		dfd = open(root, O_RDONLY | O_DIRECTORY, 0);
 		if (-1 == dfd) {
 			ERR(sess, "%s: open", root);
@@ -154,7 +154,7 @@ rsync_receiver(struct sess *sess,
 
 	if (sess->opts->del &&
 	    sess->opts->recursive &&
-	    ! flist_gen_dels(sess, root, &dfl, &dflsz, fl, flsz)) {
+	    !flist_gen_dels(sess, root, &dfl, &dflsz, fl, flsz)) {
 		ERRX1(sess, "flist_gen_local");
 		goto out;
 	}
@@ -176,7 +176,7 @@ rsync_receiver(struct sess *sess,
 
 	/* If we have a local set, go for the deletion. */
 
-	if ( ! flist_del(sess, dfd, dfl, dflsz)) {
+	if (!flist_del(sess, dfd, dfl, dflsz)) {
 		ERRX1(sess, "flist_del");
 		goto out;
 	}
@@ -234,7 +234,7 @@ rsync_receiver(struct sess *sess,
 
 		if (sess->mplex_reads &&
 		    (POLLIN & pfd[PFD_SENDER_IN].revents)) {
-			if ( ! io_read_flush(sess, fdin)) {
+			if (!io_read_flush(sess, fdin)) {
 				ERRX1(sess, "io_read_flush");
 				goto out;
 			} else if (0 == sess->mplex_read_remain)
@@ -296,10 +296,10 @@ rsync_receiver(struct sess *sess,
 	/* Properly close us out by progressing through the phases. */
 
 	if (1 == phase) {
-		if ( ! io_write_int(sess, fdout, -1)) {
+		if (!io_write_int(sess, fdout, -1)) {
 			ERRX1(sess, "io_write_int");
 			goto out;
-		} else if ( ! io_read_int(sess, fdin, &ioerror)) {
+		} else if (!io_read_int(sess, fdin, &ioerror)) {
 			ERRX1(sess, "io_read_int");
 			goto out;
 		} else if (-1 != ioerror) {
@@ -313,17 +313,17 @@ rsync_receiver(struct sess *sess,
 	 * directory permissions.
 	 */
 
-	if ( ! rsync_uploader_tail(ul, sess)) {
+	if (!rsync_uploader_tail(ul, sess)) {
 		ERRX1(sess, "rsync_uploader_tail");
 		goto out;
 	}
 
 	/* Process server statistics and say good-bye. */
 
-	if ( ! sess_stats_recv(sess, fdin)) {
+	if (!sess_stats_recv(sess, fdin)) {
 		ERRX1(sess, "sess_stats_recv");
 		goto out;
-	} else if ( ! io_write_int(sess, fdout, -1)) {
+	} else if (!io_write_int(sess, fdout, -1)) {
 		ERRX1(sess, "io_write_int");
 		goto out;
 	}

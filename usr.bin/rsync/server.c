@@ -1,4 +1,4 @@
-/*	$Id: server.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: server.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,8 +62,8 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 
 	/* Begin by making descriptors non-blocking. */
 
-	if ( ! fcntl_nonblock(&sess, fdin) ||
-	     ! fcntl_nonblock(&sess, fdout)) {
+	if (!fcntl_nonblock(&sess, fdin) ||
+	     !fcntl_nonblock(&sess, fdout)) {
 		ERRX1(&sess, "fcntl_nonblock");
 		goto out;
 	}
@@ -73,13 +73,13 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 	sess.lver = RSYNC_PROTOCOL;
 	sess.seed = arc4random();
 
-	if ( ! io_read_int(&sess, fdin, &sess.rver)) {
+	if (!io_read_int(&sess, fdin, &sess.rver)) {
 		ERRX1(&sess, "io_read_int");
 		goto out;
-	} else if ( ! io_write_int(&sess, fdout, sess.lver)) {
+	} else if (!io_write_int(&sess, fdout, sess.lver)) {
 		ERRX1(&sess, "io_write_int");
 		goto out;
-	} else if ( ! io_write_int(&sess, fdout, sess.seed)) {
+	} else if (!io_write_int(&sess, fdout, sess.seed)) {
 		ERRX1(&sess, "io_write_int");
 		goto out;
 	}
@@ -121,7 +121,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 			goto out;
 		}
 
-		if ( ! rsync_sender(&sess, fdin, fdout, argc, argv)) {
+		if (!rsync_sender(&sess, fdin, fdout, argc, argv)) {
 			ERRX1(&sess, "rsync_sender");
 			goto out;
 		}
@@ -144,7 +144,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 			goto out;
 		}
 
-		if ( ! rsync_receiver(&sess, fdin, fdout, argv[1])) {
+		if (!rsync_receiver(&sess, fdin, fdout, argv[1])) {
 			ERRX1(&sess, "rsync_receiver");
 			goto out;
 		}

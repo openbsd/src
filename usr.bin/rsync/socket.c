@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.3 2019/02/10 23:43:31 benno Exp $ */
+/*	$Id: socket.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -305,14 +305,14 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	LOG2(&sess, "connected: %s, %s", src[i].ip, f->host);
 
 	(void)snprintf(buf, sizeof(buf), "@RSYNCD: %d", sess.lver);
-	if ( ! io_write_line(&sess, sd, buf)) {
+	if (!io_write_line(&sess, sd, buf)) {
 		ERRX1(&sess, "io_write_line");
 		goto out;
 	}
 
 	LOG2(&sess, "requesting module: %s, %s", f->module, f->host);
 
-	if ( ! io_write_line(&sess, sd, f->module)) {
+	if (!io_write_line(&sess, sd, f->module)) {
 		ERRX1(&sess, "io_write_line");
 		goto out;
 	}
@@ -327,7 +327,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	for (;;) {
 		for (i = 0; i < sizeof(buf); i++) {
-			if ( ! io_read_byte(&sess, sd, &byte)) {
+			if (!io_read_byte(&sess, sd, &byte)) {
 				ERRX1(&sess, "io_read_byte");
 				goto out;
 			}
@@ -373,11 +373,11 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 		i = 1; /* rsync... */
 
 	for ( ; NULL != args[i]; i++)
-		if ( ! io_write_line(&sess, sd, args[i])) {
+		if (!io_write_line(&sess, sd, args[i])) {
 			ERRX1(&sess, "io_write_line");
 			goto out;
 		}
-	if ( ! io_write_byte(&sess, sd, '\n')) {
+	if (!io_write_byte(&sess, sd, '\n')) {
 		ERRX1(&sess, "io_write_line");
 		goto out;
 	}
@@ -389,7 +389,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	/* Protocol exchange: get the random seed. */
 
-	if ( ! io_read_int(&sess, sd, &sess.seed)) {
+	if (!io_read_int(&sess, sd, &sess.seed)) {
 		ERRX1(&sess, "io_read_int");
 		goto out;
 	}
@@ -414,7 +414,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	assert(FARGS_RECEIVER == f->mode);
 
 	LOG2(&sess, "client starting receiver: %s", f->host);
-	if ( ! rsync_receiver(&sess, sd, sd, f->sink)) {
+	if (!rsync_receiver(&sess, sd, sd, f->sink)) {
 		ERRX1(&sess, "rsync_receiver");
 		goto out;
 	}

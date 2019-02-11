@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.3 2019/02/10 23:43:31 benno Exp $ */
+/*	$Id: sender.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,15 +54,15 @@ rsync_sender(struct sess *sess, int fdin,
 	 * This will also remove all invalid files.
 	 */
 
-	if ( ! flist_gen(sess, argc, argv, &fl, &flsz)) {
+	if (!flist_gen(sess, argc, argv, &fl, &flsz)) {
 		ERRX1(sess, "flist_gen");
 		goto out;
 	}
 
 	/* Client sends zero-length exclusions if deleting. */
 
-	if ( ! sess->opts->server && sess->opts->del &&
-	     ! io_write_int(sess, fdout, 0)) {
+	if (!sess->opts->server && sess->opts->del &&
+	     !io_write_int(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_int");
 		goto out;
 	}
@@ -72,10 +72,10 @@ rsync_sender(struct sess *sess, int fdin,
 	 * Finally, the IO error (always zero for us).
 	 */
 
-	if ( ! flist_send(sess, fdin, fdout, fl, flsz)) {
+	if (!flist_send(sess, fdin, fdout, fl, flsz)) {
 		ERRX1(sess, "flist_send");
 		goto out;
-	} else if ( ! io_write_int(sess, fdout, 0)) {
+	} else if (!io_write_int(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_int");
 		goto out;
 	}
@@ -86,7 +86,7 @@ rsync_sender(struct sess *sess, int fdin,
 		WARNX(sess, "sender has empty file list: exiting");
 		rc = 1;
 		goto out;
-	} else if ( ! sess->opts->server)
+	} else if (!sess->opts->server)
 		LOG1(sess, "Transfer starting: %zu files", flsz);
 
 	/*
@@ -95,7 +95,7 @@ rsync_sender(struct sess *sess, int fdin,
 	 */
 
 	if (sess->opts->server) {
-		if ( ! io_read_size(sess, fdin, &excl)) {
+		if (!io_read_size(sess, fdin, &excl)) {
 			ERRX1(sess, "io_read_size");
 			goto out;
 		} else if (0 != excl) {
@@ -112,7 +112,7 @@ rsync_sender(struct sess *sess, int fdin,
 	LOG2(sess, "sender transmitting phase 1 data");
 
 	for (;;) {
-		if ( ! io_read_int(sess, fdin, &idx)) {
+		if (!io_read_int(sess, fdin, &idx)) {
 			ERRX1(sess, "io_read_int");
 			goto out;
 		}
@@ -124,7 +124,7 @@ rsync_sender(struct sess *sess, int fdin,
 		 */
 
 		if (-1 == idx) {
-			if ( ! io_write_int(sess, fdout, idx)) {
+			if (!io_write_int(sess, fdout, idx)) {
 				ERRX1(sess, "io_write_int");
 				goto out;
 			}
@@ -132,7 +132,7 @@ rsync_sender(struct sess *sess, int fdin,
 			/* FIXME: I don't understand this ack. */
 
 			if (sess->opts->server && sess->rver > 27)
-				if ( ! io_write_int(sess, fdout, idx)) {
+				if (!io_write_int(sess, fdout, idx)) {
 					ERRX1(sess, "io_write_int");
 					goto out;
 				}
@@ -158,19 +158,19 @@ rsync_sender(struct sess *sess, int fdin,
 			ERRX(sess, "blocks requested for "
 				"symlink: %s", fl[idx].path);
 			goto out;
-		} else if ( ! S_ISREG(fl[idx].st.mode)) {
+		} else if (!S_ISREG(fl[idx].st.mode)) {
 			ERRX(sess, "blocks requested for "
 				"special: %s", fl[idx].path);
 			goto out;
 		}
 
-		if ( ! sess->opts->server)
+		if (!sess->opts->server)
 			LOG1(sess, "%s", fl[idx].wpath);
 
 		/* Dry-run doesn't do anything. */
 
 		if (sess->opts->dry_run) {
-			if ( ! io_write_int(sess, fdout, idx)) {
+			if (!io_write_int(sess, fdout, idx)) {
 				ERRX1(sess, "io_write_int");
 				goto out;
 			}
@@ -190,7 +190,7 @@ rsync_sender(struct sess *sess, int fdin,
 		if (NULL == blks) {
 			ERRX1(sess, "blk_recv");
 			goto out;
-		} else if ( ! blk_recv_ack(sess, fdout, blks, idx)) {
+		} else if (!blk_recv_ack(sess, fdout, blks, idx)) {
 			ERRX1(sess, "blk_recv_ack");
 			goto out;
 		}
@@ -198,20 +198,20 @@ rsync_sender(struct sess *sess, int fdin,
 		c = blk_match(sess, fdout, blks, fl[idx].path);
 		blkset_free(blks);
 
-		if ( ! c) {
+		if (!c) {
 			ERRX1(sess, "blk_match");
 			goto out;
 		}
 	}
 
-	if ( ! sess_stats_send(sess, fdout)) {
+	if (!sess_stats_send(sess, fdout)) {
 		ERRX1(sess, "sess_stats_end");
 		goto out;
 	}
 
 	/* Final "goodbye" message. */
 
-	if ( ! io_read_int(sess, fdin, &idx)) {
+	if (!io_read_int(sess, fdin, &idx)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
 	} else if (-1 != idx) {

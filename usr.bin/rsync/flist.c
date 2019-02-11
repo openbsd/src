@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.3 2019/02/10 23:56:19 benno Exp $ */
+/*	$Id: flist.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -147,12 +147,12 @@ flist_topdirs(struct sess *sess, struct flist *fl, size_t flsz)
 	size_t		 i;
 	const char	*cp;
 
-	if ( ! sess->opts->recursive)
+	if (!sess->opts->recursive)
 		return;
 
 	if (flsz && strcmp(fl[0].wpath, ".")) {
 		for (i = 0; i < flsz; i++) {
-			if ( ! S_ISDIR(fl[i].st.mode))
+			if (!S_ISDIR(fl[i].st.mode))
 				continue;
 			cp = strchr(fl[i].wpath, '/');
 			if (NULL != cp && '\0' != cp[1])
@@ -264,7 +264,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 
 		if (sess->mplex_reads &&
 		    io_read_check(sess, fdin) &&
-		     ! io_read_flush(sess, fdin)) {
+		     !io_read_flush(sess, fdin)) {
 			ERRX1(sess, "io_read_flush");
 			return 0;
 		}
@@ -286,22 +286,22 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		/* Now write to the wire. */
 		/* FIXME: buffer this. */
 
-		if ( ! io_write_byte(sess, fdout, flag)) {
+		if (!io_write_byte(sess, fdout, flag)) {
 			ERRX1(sess, "io_write_byte");
 			return 0;
-		} else if ( ! io_write_int(sess, fdout, fnlen)) {
+		} else if (!io_write_int(sess, fdout, fnlen)) {
 			ERRX1(sess, "io_write_int");
 			return 0;
-		} else if ( ! io_write_buf(sess, fdout, fn, fnlen)) {
+		} else if (!io_write_buf(sess, fdout, fn, fnlen)) {
 			ERRX1(sess, "io_write_buf");
 			return 0;
-		} else if ( ! io_write_long(sess, fdout, f->st.size)) {
+		} else if (!io_write_long(sess, fdout, f->st.size)) {
 			ERRX1(sess, "io_write_long");
 			return 0;
-		} else if ( ! io_write_int(sess, fdout, f->st.mtime)) {
+		} else if (!io_write_int(sess, fdout, f->st.mtime)) {
 			ERRX1(sess, "io_write_int");
 			return 0;
-		} else if ( ! io_write_int(sess, fdout, f->st.mode)) {
+		} else if (!io_write_int(sess, fdout, f->st.mode)) {
 			ERRX1(sess, "io_write_int");
 			return 0;
 		}
@@ -312,11 +312,11 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		    sess->opts->preserve_links) {
 			fn = f->link;
 			fnlen = strlen(f->link);
-			if ( ! io_write_int(sess, fdout, fnlen)) {
+			if (!io_write_int(sess, fdout, fnlen)) {
 				ERRX1(sess, "io_write_int");
 				return 0;
 			}
-			if ( ! io_write_buf(sess, fdout, fn, fnlen)) {
+			if (!io_write_buf(sess, fdout, fn, fnlen)) {
 				ERRX1(sess, "io_write_int");
 				return 0;
 			}
@@ -326,7 +326,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 			sess->total_size += f->st.size;
 	}
 
-	if ( ! io_write_byte(sess, fdout, 0)) {
+	if (!io_write_byte(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_byte");
 		return 0;
 	}
@@ -359,7 +359,7 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	 */
 
 	if (FLIST_NAME_SAME & flags) {
-		if ( ! io_read_byte(sess, fd, &bval)) {
+		if (!io_read_byte(sess, fd, &bval)) {
 			ERRX1(sess, "io_read_byte");
 			return 0;
 		}
@@ -369,12 +369,12 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	/* Get the (possibly-remaining) filename length. */
 
 	if (FLIST_NAME_LONG & flags) {
-		if ( ! io_read_size(sess, fd, &pathlen)) {
+		if (!io_read_size(sess, fd, &pathlen)) {
 			ERRX1(sess, "io_read_size");
 			return 0;
 		}
 	} else {
-		if ( ! io_read_byte(sess, fd, &bval)) {
+		if (!io_read_byte(sess, fd, &bval)) {
 			ERRX1(sess, "io_read_byte");
 			return 0;
 		}
@@ -399,7 +399,7 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	if (FLIST_NAME_SAME & flags)
 		memcpy(f->path, last, partial);
 
-	if ( ! io_read_buf(sess, fd, f->path + partial, pathlen)) {
+	if (!io_read_buf(sess, fd, f->path + partial, pathlen)) {
 		ERRX1(sess, "io_read_buf");
 		return 0;
 	}
@@ -518,13 +518,13 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	last[0] = '\0';
 
 	for (;;) {
-		if ( ! io_read_byte(sess, fd, &flag)) {
+		if (!io_read_byte(sess, fd, &flag)) {
 			ERRX1(sess, "io_read_byte");
 			goto out;
 		} else if (0 == flag)
 			break;
 
-		if ( ! flist_realloc(sess, &fl, &flsz, &flmax)) {
+		if (!flist_realloc(sess, &fl, &flsz, &flmax)) {
 			ERRX1(sess, "flist_realloc");
 			goto out;
 		}
@@ -534,14 +534,14 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		/* Filename first. */
 
-		if ( ! flist_recv_name(sess, fd, ff, flag, last)) {
+		if (!flist_recv_name(sess, fd, ff, flag, last)) {
 			ERRX1(sess, "flist_recv_name");
 			goto out;
 		}
 
 		/* Read the file size. */
 
-		if ( ! io_read_ulong(sess, fd, &lval)) {
+		if (!io_read_ulong(sess, fd, &lval)) {
 			ERRX1(sess, "io_read_ulong");
 			goto out;
 		}
@@ -549,8 +549,8 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		/* Read the modification time. */
 
-		if ( ! (FLIST_TIME_SAME & flag)) {
-			if ( ! io_read_int(sess, fd, &ival)) {
+		if (!(FLIST_TIME_SAME & flag)) {
+			if (!io_read_int(sess, fd, &ival)) {
 				ERRX1(sess, "io_read_int");
 				goto out;
 			}
@@ -563,8 +563,8 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		/* Read the file mode. */
 
-		if ( ! (FLIST_MODE_SAME & flag)) {
-			if ( ! io_read_int(sess, fd, &ival)) {
+		if (!(FLIST_MODE_SAME & flag)) {
+			if (!io_read_int(sess, fd, &ival)) {
 				ERRX1(sess, "io_read_int");
 				goto out;
 			}
@@ -579,7 +579,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		if (S_ISLNK(ff->st.mode) &&
 		    sess->opts->preserve_links) {
-			if ( ! io_read_size(sess, fd, &lsz)) {
+			if (!io_read_size(sess, fd, &lsz)) {
 				ERRX1(sess, "io_read_size");
 				goto out;
 			} else if (0 == lsz) {
@@ -591,7 +591,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 				ERR(sess, "calloc");
 				goto out;
 			}
-			if ( ! io_read_buf(sess, fd, ff->link, lsz)) {
+			if (!io_read_buf(sess, fd, ff->link, lsz)) {
 				ERRX1(sess, "io_read_buf");
 				goto out;
 			}
@@ -651,14 +651,14 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		ERR(sess, "%s: lstat", root);
 		return 0;
 	} else if (S_ISREG(st.st_mode)) {
-		if ( ! flist_realloc(sess, fl, sz, max)) {
+		if (!flist_realloc(sess, fl, sz, max)) {
 			ERRX1(sess, "flist_realloc");
 			return 0;
 		}
 		f = &(*fl)[(*sz) - 1];
 		assert(NULL != f);
 
-		if ( ! flist_append(sess, f, &st, root)) {
+		if (!flist_append(sess, f, &st, root)) {
 			ERRX1(sess, "flist_append");
 			return 0;
 		} else if (-1 == unveil(root, "r")) {
@@ -667,17 +667,17 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		}
 		return 1;
 	} else if (S_ISLNK(st.st_mode)) {
-		if ( ! sess->opts->preserve_links) {
+		if (!sess->opts->preserve_links) {
 			WARNX(sess, "%s: skipping symlink", root);
 			return 1;
-		} else if ( ! flist_realloc(sess, fl, sz, max)) {
+		} else if (!flist_realloc(sess, fl, sz, max)) {
 			ERRX1(sess, "flist_realloc");
 			return 0;
 		}
 		f = &(*fl)[(*sz) - 1];
 		assert(NULL != f);
 
-		if ( ! flist_append(sess, f, &st, root)) {
+		if (!flist_append(sess, f, &st, root)) {
 			ERRX1(sess, "flist_append");
 			return 0;
 		} else if (-1 == unveil(root, "r")) {
@@ -685,7 +685,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 			return 0;
 		}
 		return 1;
-	} else if ( ! S_ISDIR(st.st_mode)) {
+	} else if (!S_ISDIR(st.st_mode)) {
 		WARNX(sess, "%s: skipping special", root);
 		return 1;
 	}
@@ -725,7 +725,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 
 	errno = 0;
 	while (NULL != (ent = fts_read(fts))) {
-		if ( ! flist_fts_check(sess, ent)) {
+		if (!flist_fts_check(sess, ent)) {
 			errno = 0;
 			continue;
 		}
@@ -734,7 +734,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 
 		assert(NULL != ent->fts_statp);
 		if (S_ISLNK(ent->fts_statp->st_mode) &&
-		    ! sess->opts->preserve_links) {
+		    !sess->opts->preserve_links) {
 			WARNX(sess, "%s: skipping "
 				"symlink", ent->fts_path);
 			continue;
@@ -742,7 +742,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 
 		/* Allocate a new file entry. */
 
-		if ( ! flist_realloc(sess, fl, sz, max)) {
+		if (!flist_realloc(sess, fl, sz, max)) {
 			ERRX1(sess, "flist_realloc");
 			goto out;
 		}
@@ -809,7 +809,7 @@ flist_gen_dirs(struct sess *sess, size_t argc, char **argv, struct flist **flp,
 	size_t		 i, max = 0;
 
 	for (i = 0; i < argc; i++)
-		if ( ! flist_gen_dirent(sess, argv[i], flp, sz, &max))
+		if (!flist_gen_dirent(sess, argv[i], flp, sz, &max))
 			break;
 
 	if (i == argc) {
@@ -864,12 +864,12 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 			WARNX(sess, "%s: skipping directory", argv[i]);
 			continue;
 		} else if (S_ISLNK(st.st_mode)) {
-			if ( ! sess->opts->preserve_links) {
+			if (!sess->opts->preserve_links) {
 				WARNX(sess, "%s: skipping "
 					"symlink", argv[i]);
 				continue;
 			}
-		} else if ( ! S_ISREG(st.st_mode)) {
+		} else if (!S_ISREG(st.st_mode)) {
 			WARNX(sess, "%s: skipping special", argv[i]);
 			continue;
 		}
@@ -883,7 +883,7 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 		if (-1 == unveil(argv[i], "r")) {
 			ERR(sess, "%s: unveil", argv[i]);
 			goto out;
-		} else if ( ! flist_append(sess, f, &st, argv[i])) {
+		} else if (!flist_append(sess, f, &st, argv[i])) {
 			ERRX1(sess, "flist_append");
 			goto out;
 		}
@@ -924,7 +924,7 @@ flist_gen(struct sess *sess, size_t argc, char **argv, struct flist **flp,
 	if (-1 == unveil(NULL, NULL)) {
 		ERR(sess, "unveil");
 		return 0;
-	} else if ( ! rc)
+	} else if (!rc)
 		return 0;
 
 	qsort(*flp, *sz, sizeof(struct flist), flist_cmp);
@@ -967,7 +967,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 
 	/* Only run this code when we're recursive. */
 
-	if ( ! sess->opts->recursive)
+	if (!sess->opts->recursive)
 		return 1;
 
 	/*
@@ -1007,7 +1007,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 		cargv[1] = NULL;
 	} else {
 		for (i = j = 0; i < wflsz; i++) {
-			if ( ! (FLSTAT_TOP_DIR & wfl[i].st.flags))
+			if (!(FLSTAT_TOP_DIR & wfl[i].st.flags))
 				continue;
 			assert(S_ISDIR(wfl[i].st.mode));
 			assert(strcmp(wfl[i].wpath, "."));
@@ -1037,7 +1037,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 	 * we want to delete.
 	 */
 
-	if ( ! hcreate(wflsz)) {
+	if (!hcreate(wflsz)) {
 		ERR(sess, "hcreate");
 		goto out;
 	}
@@ -1074,7 +1074,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 	while (NULL != (ent = fts_read(fts))) {
 		if (FTS_NS == ent->fts_info)
 			continue;
-		if ( ! flist_fts_check(sess, ent)) {
+		if (!flist_fts_check(sess, ent)) {
 			errno = 0;
 			continue;
 		} else if (stripdir >= ent->fts_pathlen)
@@ -1089,7 +1089,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 
 		/* Not found: we'll delete it. */
 
-		if ( ! flist_realloc(sess, fl, sz, &max)) {
+		if (!flist_realloc(sess, fl, sz, &max)) {
 			ERRX1(sess, "flist_realloc");
 			goto out;
 		}

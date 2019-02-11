@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: uploader.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -83,7 +83,7 @@ static void
 log_link(struct sess *sess, const struct flist *f)
 {
 
-	if ( ! sess->opts->server)
+	if (!sess->opts->server)
 		LOG1(sess, "%s -> %s", f->path, f->link);
 }
 
@@ -94,7 +94,7 @@ static void
 log_file(struct sess *sess, const struct flist *f)
 {
 
-	if ( ! sess->opts->server)
+	if (!sess->opts->server)
 		LOG1(sess, "%s", f->path);
 }
 
@@ -177,7 +177,7 @@ pre_link(struct upload *p, struct sess *sess)
 	f = &p->fl[p->idx];
 	assert(S_ISLNK(f->st.mode));
 
-	if ( ! sess->opts->preserve_links) {
+	if (!sess->opts->preserve_links) {
 		WARNX(sess, "%s: ignoring symlink", f->path);
 		return 0;
 	} else if (sess->opts->dry_run) {
@@ -189,7 +189,7 @@ pre_link(struct upload *p, struct sess *sess)
 
 	assert(-1 != p->rootfd);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
-	if (-1 != rc && ! S_ISLNK(st.st_mode)) {
+	if (-1 != rc && !S_ISLNK(st.st_mode)) {
 		WARNX(sess, "%s: not a symlink", f->path);
 		return -1;
 	} else if (-1 == rc && ENOENT != errno) {
@@ -287,7 +287,7 @@ pre_dir(const struct upload *p, struct sess *sess)
 	f = &p->fl[p->idx];
 	assert(S_ISDIR(f->st.mode));
 
-	if ( ! sess->opts->recursive) {
+	if (!sess->opts->recursive) {
 		WARNX(sess, "%s: ignoring directory", f->path);
 		return 0;
 	} else if (sess->opts->dry_run) {
@@ -300,7 +300,7 @@ pre_dir(const struct upload *p, struct sess *sess)
 	if (-1 == rc && ENOENT != errno) {
 		WARN(sess, "%s: fstatat", f->path);
 		return -1;
-	} else if (-1 != rc && ! S_ISDIR(st.st_mode)) {
+	} else if (-1 != rc && !S_ISDIR(st.st_mode)) {
 		WARNX(sess, "%s: not a directory", f->path);
 		return -1;
 	} else if (-1 != rc) {
@@ -348,7 +348,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 
 	/* We already warned about the directory in pre_process_dir(). */
 
-	if ( ! sess->opts->recursive)
+	if (!sess->opts->recursive)
 		return 1;
 	else if (sess->opts->dry_run)
 		return 1;
@@ -356,7 +356,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 	if (-1 == fstatat(u->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW)) {
 		ERR(sess, "%s: fstatat", f->path);
 		return 0;
-	} else if ( ! S_ISDIR(st.st_mode)) {
+	} else if (!S_ISDIR(st.st_mode)) {
 		WARNX(sess, "%s: not a directory", f->path);
 		return 0;
 	}
@@ -416,7 +416,7 @@ pre_file(const struct upload *p, int *filefd, struct sess *sess)
 
 	if (sess->opts->dry_run) {
 		log_file(sess, f);
-		if ( ! io_write_int(sess, p->fdout, p->idx)) {
+		if (!io_write_int(sess, p->fdout, p->idx)) {
 			ERRX1(sess, "io_write_int");
 			return -1;
 		}
@@ -591,7 +591,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 		*fileoutfd = -1;
 		if (u->idx == u->flsz) {
 			assert(-1 == *fileinfd);
-			if ( ! io_write_int(sess, u->fdout, -1)) {
+			if (!io_write_int(sess, u->fdout, -1)) {
 				ERRX1(sess, "io_write_int");
 				return -1;
 			}
@@ -623,7 +623,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 			close(*fileinfd);
 			*fileinfd = -1;
 			return -1;
-		} else if ( ! S_ISREG(st.st_mode)) {
+		} else if (!S_ISREG(st.st_mode)) {
 			WARNX(sess, "%s: not regular", u->fl[u->idx].path);
 			close(*fileinfd);
 			*fileinfd = -1;
@@ -757,15 +757,15 @@ rsync_uploader_tail(struct upload *u, struct sess *sess)
 	size_t	 i;
 
 
-	if ( ! sess->opts->preserve_times &&
-	     ! sess->opts->preserve_perms)
+	if (!sess->opts->preserve_times &&
+	     !sess->opts->preserve_perms)
 		return 1;
 
 	LOG2(sess, "fixing up directory times and permissions");
 
 	for (i = 0; i < u->flsz; i++)
 		if (S_ISDIR(u->fl[i].st.mode))
-			if ( ! post_dir(sess, u, i))
+			if (!post_dir(sess, u, i))
 				return 0;
 
 	return 1;

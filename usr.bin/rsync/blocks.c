@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: blocks.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,17 +45,17 @@ blk_flush(struct sess *sess, int fd,
 	while (i < size) {
 		sz = MAX_CHUNK < (size - i) ?
 			MAX_CHUNK : (size - i);
-		if ( ! io_write_int(sess, fd, sz)) {
+		if (!io_write_int(sess, fd, sz)) {
 			ERRX1(sess, "io_write_int");
 			return 0;
-		} else if ( ! io_write_buf(sess, fd, b + i, sz)) {
+		} else if (!io_write_buf(sess, fd, b + i, sz)) {
 			ERRX1(sess, "io_write_buf");
 			return 0;
 		}
 		i += sz;
 	}
 
-	if ( ! io_write_int(sess, fd, token)) {
+	if (!io_write_int(sess, fd, token)) {
 		ERRX1(sess, "io_write_int");
 		return 0;
 	}
@@ -198,7 +198,7 @@ blk_match_send(struct sess *sess, const char *path, int fd,
 		 * it already has in the matching block.
 		 */
 
-		if ( ! blk_flush(sess, fd, buf + last, sz, tok)) {
+		if (!blk_flush(sess, fd, buf + last, sz, tok)) {
 			ERRX1(sess, "blk_flush");
 			return 0;
 		}
@@ -218,7 +218,7 @@ blk_match_send(struct sess *sess, const char *path, int fd,
 
 	LOG4(sess, "%s: flushing remaining %jd B", path, (intmax_t)sz);
 
-	if ( ! blk_flush(sess, fd, buf + last, sz, 0)) {
+	if (!blk_flush(sess, fd, buf + last, sz, 0)) {
 		ERRX1(sess, "blk_flush");
 		return 0;
 	}
@@ -280,12 +280,12 @@ blk_match(struct sess *sess, int fd,
 	if (st.st_size && blks->blksz) {
 		c = blk_match_send(sess, path,
 			fd, map, st.st_size, blks);
-		if ( ! c) {
+		if (!c) {
 			ERRX1(sess, "blk_match_send");
 			goto out;
 		}
 	} else {
-		if ( ! blk_flush(sess, fd, map, st.st_size, 0)) {
+		if (!blk_flush(sess, fd, map, st.st_size, 0)) {
 			ERRX1(sess, "blk_flush");
 			return 0;
 		}
@@ -301,7 +301,7 @@ blk_match(struct sess *sess, int fd,
 
 	hash_file(map, st.st_size, filemd, sess);
 
-	if ( ! io_write_buf(sess, fd, filemd, MD4_DIGEST_LENGTH)) {
+	if (!io_write_buf(sess, fd, filemd, MD4_DIGEST_LENGTH)) {
 		ERRX1(sess, "io_write_buf");
 		goto out;
 	}
@@ -338,15 +338,15 @@ blk_recv_ack(struct sess *sess,
 
 	/* FIXME: put into static block. */
 
-	if ( ! io_write_int(sess, fd, idx))
+	if (!io_write_int(sess, fd, idx))
 		ERRX1(sess, "io_write_int");
-	else if ( ! io_write_int(sess, fd, blocks->blksz))
+	else if (!io_write_int(sess, fd, blocks->blksz))
 		ERRX1(sess, "io_write_int");
-	else if ( ! io_write_int(sess, fd, blocks->len))
+	else if (!io_write_int(sess, fd, blocks->len))
 		ERRX1(sess, "io_write_int");
-	else if ( ! io_write_int(sess, fd, blocks->csum))
+	else if (!io_write_int(sess, fd, blocks->csum))
 		ERRX1(sess, "io_write_int");
-	else if ( ! io_write_int(sess, fd, blocks->rem))
+	else if (!io_write_int(sess, fd, blocks->rem))
 		ERRX1(sess, "io_write_int");
 	else
 		return 1;
@@ -378,16 +378,16 @@ blk_recv(struct sess *sess, int fd, const char *path)
 	 * FIXME: read into buffer and unbuffer.
 	 */
 
-	if ( ! io_read_size(sess, fd, &s->blksz)) {
+	if (!io_read_size(sess, fd, &s->blksz)) {
 		ERRX1(sess, "io_read_size");
 		goto out;
-	} else if ( ! io_read_size(sess, fd, &s->len)) {
+	} else if (!io_read_size(sess, fd, &s->len)) {
 		ERRX1(sess, "io_read_size");
 		goto out;
-	} else if ( ! io_read_size(sess, fd, &s->csum)) {
+	} else if (!io_read_size(sess, fd, &s->csum)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
-	} else if ( ! io_read_size(sess, fd, &s->rem)) {
+	} else if (!io_read_size(sess, fd, &s->rem)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
 	} else if (s->rem && s->rem >= s->len) {
@@ -415,14 +415,14 @@ blk_recv(struct sess *sess, int fd, const char *path)
 
 	for (j = 0; j < s->blksz; j++) {
 		b = &s->blks[j];
-		if ( ! io_read_int(sess, fd, &i)) {
+		if (!io_read_int(sess, fd, &i)) {
 			ERRX1(sess, "io_read_int");
 			goto out;
 		}
 		b->chksum_short = i;
 
 		assert(s->csum <= sizeof(b->chksum_long));
-		if ( ! io_read_buf(sess,
+		if (!io_read_buf(sess,
 		    fd, b->chksum_long, s->csum)) {
 			ERRX1(sess, "io_read_buf");
 			goto out;
@@ -470,18 +470,18 @@ blk_send_ack(struct sess *sess, int fd, struct blkset *p)
 	     sizeof(int32_t); /* block remainder */
 	assert(sz <= sizeof(buf));
 
-	if ( ! io_read_buf(sess, fd, buf, sz)) {
+	if (!io_read_buf(sess, fd, buf, sz)) {
 		ERRX1(sess, "io_read_buf");
 		return 0;
 	}
 
-	if ( ! io_unbuffer_size(sess, buf, &pos, sz, &p->blksz))
+	if (!io_unbuffer_size(sess, buf, &pos, sz, &p->blksz))
 		ERRX1(sess, "io_unbuffer_size");
-	else if ( ! io_unbuffer_size(sess, buf, &pos, sz, &p->len))
+	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->len))
 		ERRX1(sess, "io_unbuffer_size");
-	else if ( ! io_unbuffer_size(sess, buf, &pos, sz, &p->csum))
+	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->csum))
 		ERRX1(sess, "io_unbuffer_size");
-	else if ( ! io_unbuffer_size(sess, buf, &pos, sz, &p->rem))
+	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->rem))
 		ERRX1(sess, "io_unbuffer_size");
 	else if (p->len && p->rem >= p->len)
 		ERRX1(sess, "non-zero length is less than remainder");
@@ -527,7 +527,7 @@ blk_merge(struct sess *sess, int fd, int ffd,
 		 * <0 for a token indicator.
 		 */
 
-		if ( ! io_read_int(sess, fd, &rawtok)) {
+		if (!io_read_int(sess, fd, &rawtok)) {
 			ERRX1(sess, "io_read_int");
 			goto out;
 		} else if (0 == rawtok)
@@ -540,7 +540,7 @@ blk_merge(struct sess *sess, int fd, int ffd,
 				goto out;
 			}
 			buf = pp;
-			if ( ! io_read_buf(sess, fd, buf, sz)) {
+			if (!io_read_buf(sess, fd, buf, sz)) {
 				ERRX1(sess, "io_read_int");
 				goto out;
 			}
@@ -605,7 +605,7 @@ blk_merge(struct sess *sess, int fd, int ffd,
 
 	MD4_Final(ourmd, &ctx);
 
-	if ( ! io_read_buf(sess, fd, md, MD4_DIGEST_LENGTH)) {
+	if (!io_read_buf(sess, fd, md, MD4_DIGEST_LENGTH)) {
 		ERRX1(sess, "io_read_buf");
 		goto out;
 	} else if (memcmp(md, ourmd, MD4_DIGEST_LENGTH)) {
@@ -663,7 +663,7 @@ blk_send(struct sess *sess, int fd, size_t idx,
 
 	assert(pos == sz);
 
-	if ( ! io_write_buf(sess, fd, buf, sz)) {
+	if (!io_write_buf(sess, fd, buf, sz)) {
 		ERRX1(sess, "io_write_buf");
 		goto out;
 	}

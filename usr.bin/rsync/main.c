@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.3 2019/02/10 23:43:31 benno Exp $ */
+/*	$Id: main.c,v 1.4 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -171,10 +171,10 @@ fargs_parse(size_t argc, char *argv[])
 
 	/* Make sure we have the same "hostspec" for all files. */
 
-	if ( ! f->remote) {
+	if (!f->remote) {
 		if (FARGS_SENDER == f->mode)
 			for (i = 0; i < f->sourcesz; i++) {
-				if ( ! fargs_is_remote(f->sources[i]))
+				if (!fargs_is_remote(f->sources[i]))
 					continue;
 				errx(EXIT_FAILURE, "remote file in "
 					"list of local sources: %s",
@@ -183,7 +183,7 @@ fargs_parse(size_t argc, char *argv[])
 		if (FARGS_RECEIVER == f->mode)
 			for (i = 0; i < f->sourcesz; i++) {
 				if (fargs_is_remote(f->sources[i]) &&
-				    ! fargs_is_daemon(f->sources[i]))
+				    !fargs_is_daemon(f->sources[i]))
 					continue;
 				if (fargs_is_daemon(f->sources[i]))
 					errx(EXIT_FAILURE, "remote "
@@ -212,7 +212,7 @@ fargs_parse(size_t argc, char *argv[])
 	 * Then exit if we're a sender or a local connection.
 	 */
 
-	if ( ! f->remote) {
+	if (!f->remote) {
 		if (NULL == f->host)
 			return f;
 		if (FARGS_SENDER == f->mode) {
@@ -435,14 +435,14 @@ main(int argc, char *argv[])
 	 * So close the connection here so that they don't hang.
 	 */
 
-	if ( ! c) {
+	if (!c) {
 		close(fds[0]);
 		fds[0] = -1;
 	}
 
 	if (-1 == waitpid(child, &st, 0))
 		err(EXIT_FAILURE, "waitpid");
-	if ( ! (WIFEXITED(st) && EXIT_SUCCESS == WEXITSTATUS(st)))
+	if (!(WIFEXITED(st) && EXIT_SUCCESS == WEXITSTATUS(st)))
 		c = 0;
 
 	if (-1 != fds[0])

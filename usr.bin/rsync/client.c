@@ -1,4 +1,4 @@
-/*	$Id: client.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: client.c,v 1.3 2019/02/11 19:18:36 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -47,13 +47,13 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 	sess.opts = opts;
 	sess.lver = RSYNC_PROTOCOL;
 
-	if ( ! io_write_int(&sess, fd, sess.lver)) {
+	if (!io_write_int(&sess, fd, sess.lver)) {
 		ERRX1(&sess, "io_write_int");
 		goto out;
-	} else if ( ! io_read_int(&sess, fd, &sess.rver)) {
+	} else if (!io_read_int(&sess, fd, &sess.rver)) {
 		ERRX1(&sess, "io_read_int");
 		goto out;
-	} else if ( ! io_read_int(&sess, fd, &sess.seed)) {
+	} else if (!io_read_int(&sess, fd, &sess.seed)) {
 		ERRX1(&sess, "io_read_int");
 		goto out;
 	}
@@ -80,7 +80,7 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 	if (FARGS_RECEIVER != f->mode) {
 		LOG2(&sess, "client starting sender: %s",
 			NULL == f->host ? "(local)" : f->host);
-		if ( ! rsync_sender(&sess, fd, fd,
+		if (!rsync_sender(&sess, fd, fd,
 				f->sourcesz, f->sources)) {
 			ERRX1(&sess, "rsync_sender");
 			goto out;
@@ -88,7 +88,7 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 	} else {
 		LOG2(&sess, "client starting receiver: %s",
 			NULL == f->host ? "(local)" : f->host);
-		if ( ! rsync_receiver(&sess, fd, fd, f->sink)) {
+		if (!rsync_receiver(&sess, fd, fd, f->sink)) {
 			ERRX1(&sess, "rsync_receiver");
 			goto out;
 		}
