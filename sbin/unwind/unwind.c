@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.13 2019/02/10 14:10:22 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.14 2019/02/11 13:38:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -51,7 +51,7 @@
 #define	LEASE_DB_DIR	"/var/db/"
 #define	_PATH_LEASE_DB	"/var/db/dhclient.leases."
 
-#define	TRUST_ANCHOR_FILE	"/etc/unwind/trustanchor/root.key"
+#define	TRUST_ANCHOR_FILE	"/var/db/unwind.key"
 
 __dead void	usage(void);
 __dead void	main_shutdown(void);
