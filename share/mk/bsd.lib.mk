@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.95 2018/12/30 21:55:07 guenther Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.96 2019/02/11 17:53:00 deraadt Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -286,6 +286,10 @@ realinstall:
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${FULLSHLIBNAME} ${DESTDIR}${LIBDIR}
 .if defined(LIBREBUILD)
+.if !defined(DESTDIR)
+	@echo cleaning out old relink libraries to conserve disk space
+	rm -f /usr/share/relink/${LIBDIR}/lib${LIB}.*.a
+.endif	
 	${INSTALL} -d -o ${LIBOWN} -g ${LIBGRP} -m 755 \
 	   ${DESTDIR}/usr/share/relink/${LIBDIR}
 	${INSTALL} ${INSTALL_COPY} -S -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
