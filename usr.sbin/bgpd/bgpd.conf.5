@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.183 2019/02/04 20:32:23 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.184 2019/02/11 15:44:25 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 4 2019 $
+.Dd $Mdocdate: February 11 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -558,37 +558,56 @@ See also the
 section.
 .Sh MPLS VPN CONFIGURATION
 .Xr bgpd 8
-supports the setup and distribution of Virtual Private Networks.
-It is possible to import and export prefixes between routing domains.
-Each routing domain is specified by an
-.Ic rdomain
-section, which allows properties to be set specifically for that rdomain:
+supports the setup and distribution of MPLS Virtual Private Networks.
+A router can be configured to participate in a VPN by specifying a
+.Ic vpn
+section with a description for the VPN and an
+.Xr mpe 4
+interface.
+.Pp
+The vpn configuraion section allows properties to be set specifically
+for that VPN:
 .Bd -literal -offset indent
-rdomain 1 {
-	descr "a rdomain"
-	rd 65002:1
+vpn "description" on mpe1 {
+        rd 65002:1
 	import-target rt 65002:42
 	export-target rt 65002:42
 	network 192.168.1/24
-	depend on mpe0
 }
 .Ed
 .Pp
-There are several routing domain properties:
-.Pp
-.Bl -tag -width Ds -compact
-.It Ic depend on Ar interface
-Routes added to the rdomain will use this interface as the outgoing interface.
-Normally this will be an MPLS Provider Edge,
-.Xr mpe 4 ,
-interface that is part of the rdomain.
-Local networks will be announced with the MPLS label specified on the interface.
-.Pp
-.It Ic descr Ar description
-Add a description.
 The description is used when logging but has no further meaning to
 .Xr bgpd 8 .
 .Pp
+The
+.Xr mpe 4
+interface will be used as the outgoing interface for routes to
+the VPN, and local networks will be annouced with the MPLS label
+specified on the interface.
+The interface can provide VPN connectivity for another rdomain by
+being configured in that rdomain.
+The required rdomain must be configured on the interface before
+.Xr bgpd 8
+uses it.
+Multiple VPNs may be connected to a single rdomain, including the rdomain that
+.Xr bgpd 8
+is running in.
+.Pp
+An example
+.Xr hostname.if 8
+configuration for an
+.Xr mpe 4
+interface providing connectivity to rdomain 1:
+.Bd -literal -offset indent
+rdomain 1
+mplslabel 2000
+inet 192.198.0.1 255.255.255.255
+up
+.Ed
+.Pp
+There are several VPN properties:
+.Pp
+.Bl -tag -width Ds -compact
 .It Ic export-target Ar subtype Ar as-number : Ns Ar local
 .It Ic export-target Ar subtype Ar IP : Ns Ar local
 Specify an extended community which will be attached to announced networks.

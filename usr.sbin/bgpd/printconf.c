@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.127 2019/02/04 18:53:10 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.128 2019/02/11 15:44:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -35,8 +35,8 @@ void		 print_community(struct filter_community *c);
 void		 print_origin(u_int8_t);
 void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
-void		 print_rdomain_targets(struct filter_set_head *, const char *);
-void		 print_rdomain(struct rdomain *);
+void		 print_l3vpn_targets(struct filter_set_head *, const char *);
+void		 print_l3vpn(struct l3vpn *);
 const char	*print_af(u_int8_t);
 void		 print_network(struct network_config *, const char *);
 void		 print_as_sets(struct as_set_head *);
@@ -378,7 +378,7 @@ print_mainconf(struct bgpd_config *conf)
 }
 
 void
-print_rdomain_targets(struct filter_set_head *set, const char *tgt)
+print_l3vpn_targets(struct filter_set_head *set, const char *tgt)
 {
 	struct filter_set	*s;
 	TAILQ_FOREACH(s, set, entry) {
@@ -389,26 +389,23 @@ print_rdomain_targets(struct filter_set_head *set, const char *tgt)
 }
 
 void
-print_rdomain(struct rdomain *r)
+print_l3vpn(struct l3vpn *vpn)
 {
 	struct network *n;
 
-	printf("rdomain %u {\n", r->rtableid);
-	if (*r->descr)
-		printf("\tdescr \"%s\"\n", r->descr);
-	if (r->flags & F_RIB_NOFIBSYNC)
+	printf("vpn \"%s\" on %s {\n", vpn->descr, vpn->ifmpe);
+	printf("\n\t%s\n", log_rd(vpn->rd));
+
+	print_l3vpn_targets(&vpn->export, "export-target");
+	print_l3vpn_targets(&vpn->import, "import-target");
+
+	if (vpn->flags & F_RIB_NOFIBSYNC)
 		printf("\tfib-update no\n");
 	else
 		printf("\tfib-update yes\n");
-	printf("\tdepend on %s\n", r->ifmpe);
 
-	TAILQ_FOREACH(n, &r->net_l, entry)
+	TAILQ_FOREACH(n, &vpn->net_l, entry)
 		print_network(&n->net, "\t");
-
-	printf("\n\t%s\n", log_rd(r->rd));
-
-	print_rdomain_targets(&r->export, "export-target");
-	print_rdomain_targets(&r->import, "import-target");
 
 	printf("}\n");
 }
@@ -958,12 +955,12 @@ void
 print_config(struct bgpd_config *conf, struct rib_names *rib_l,
     struct network_head *net_l, struct peer *peer_l,
     struct filter_head *rules_l, struct mrt_head *mrt_l,
-    struct rdomain_head *rdom_l)
+    struct l3vpn_head *vpns_l)
 {
 	struct filter_rule	*r;
 	struct network		*n;
 	struct rde_rib		*rr;
-	struct rdomain		*rd;
+	struct l3vpn		*vpn;
 
 	print_mainconf(conf);
 	print_roa(&conf->roa);
@@ -972,10 +969,10 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	print_originsets(&conf->originsets);
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net, "");
-	if (!SIMPLEQ_EMPTY(rdom_l))
+	if (!SIMPLEQ_EMPTY(vpns_l))
 		printf("\n");
-	SIMPLEQ_FOREACH(rd, rdom_l, entry)
-		print_rdomain(rd);
+	SIMPLEQ_FOREACH(vpn, vpns_l, entry)
+		print_l3vpn(vpn);
 	printf("\n");
 	SIMPLEQ_FOREACH(rr, rib_l, entry) {
 		if (rr->flags & F_RIB_NOEVALUATE)

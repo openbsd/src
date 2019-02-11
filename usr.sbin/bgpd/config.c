@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.79 2018/12/27 20:23:24 remi Exp $ */
+/*	$OpenBSD: config.c,v 1.80 2019/02/11 15:44:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,7 @@
 u_int32_t	get_bgpid(void);
 int		host_ip(const char *, struct bgpd_addr *, u_int8_t *);
 void		free_networks(struct network_head *);
-void		free_rdomains(struct rdomain_head *);
+void		free_l3vpns(struct l3vpn_head *);
 
 struct bgpd_config *
 new_config(void)
@@ -75,7 +75,7 @@ new_config(void)
 
 	/* init the various list for later */
 	TAILQ_INIT(&conf->networks);
-	SIMPLEQ_INIT(&conf->rdomains);
+	SIMPLEQ_INIT(&conf->l3vpns);
 	SIMPLEQ_INIT(&conf->prefixsets);
 	SIMPLEQ_INIT(&conf->originsets);
 	RB_INIT(&conf->roa);
@@ -101,16 +101,16 @@ free_networks(struct network_head *networks)
 }
 
 void
-free_rdomains(struct rdomain_head *rdomains)
+free_l3vpns(struct l3vpn_head *l3vpns)
 {
-	struct rdomain		*rd;
+	struct l3vpn		*vpn;
 
-	while ((rd = SIMPLEQ_FIRST(rdomains)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(rdomains, entry);
-		filterset_free(&rd->export);
-		filterset_free(&rd->import);
-		free_networks(&rd->net_l);
-		free(rd);
+	while ((vpn = SIMPLEQ_FIRST(l3vpns)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(l3vpns, entry);
+		filterset_free(&vpn->export);
+		filterset_free(&vpn->import);
+		free_networks(&vpn->net_l);
+		free(vpn);
 	}
 }
 
@@ -145,7 +145,7 @@ free_config(struct bgpd_config *conf)
 	struct listen_addr	*la;
 	struct mrt		*m;
 
-	free_rdomains(&conf->rdomains);
+	free_l3vpns(&conf->l3vpns);
 	free_networks(&conf->networks);
 	filterlist_free(conf->filters);
 	free_prefixsets(&conf->prefixsets);
@@ -250,9 +250,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		TAILQ_INSERT_TAIL(&xconf->networks, n, entry);
 	}
 
-	/* switch the rdomain configs, first remove the old ones */
-	free_rdomains(&xconf->rdomains);
-	SIMPLEQ_CONCAT(&xconf->rdomains, &conf->rdomains);
+	/* switch the l3vpn configs, first remove the old ones */
+	free_l3vpns(&xconf->l3vpns);
+	SIMPLEQ_CONCAT(&xconf->l3vpns, &conf->l3vpns);
 
 	/*
 	 * merge new listeners:
@@ -469,11 +469,14 @@ prepare_listeners(struct bgpd_config *conf)
 }
 
 int
-get_mpe_label(struct rdomain *r)
+get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 {
 	struct  ifreq	ifr;
 	struct shim_hdr	shim;
 	int		s;
+
+	*label = 0;
+	*rdomain = 0;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s == -1)
@@ -481,15 +484,27 @@ get_mpe_label(struct rdomain *r)
 
 	bzero(&shim, sizeof(shim));
 	bzero(&ifr, sizeof(ifr));
-	strlcpy(ifr.ifr_name, r->ifmpe, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&shim;
 
 	if (ioctl(s, SIOCGETLABEL, (caddr_t)&ifr) == -1) {
 		close(s);
 		return (-1);
 	}
+
+	ifr.ifr_data = NULL;
+	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) == -1) {
+		close(s);
+		return (-1);
+	}
+
 	close(s);
-	r->label = shim.shim_label;
+
+	*rdomain = ifr.ifr_rdomainid;
+	*label = shim.shim_label;
+
+	log_debug("%s: rdomain %u label %u", __func__, *rdomain, *label);
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.364 2019/02/04 18:53:10 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.365 2019/02/11 15:44:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,6 @@
 #define	F_BLACKHOLE		0x0100
 #define	F_LONGER		0x0200
 #define	F_MPLS			0x0400
-#define	F_REDISTRIBUTED		0x0800
 #define	F_CTL_DETAIL		0x1000	/* only used by bgpctl */
 #define	F_CTL_ADJ_IN		0x2000
 #define	F_CTL_ADJ_OUT		0x4000
@@ -231,8 +230,8 @@ struct listen_addr {
 TAILQ_HEAD(listen_addrs, listen_addr);
 TAILQ_HEAD(filter_set_head, filter_set);
 
-struct rdomain;
-SIMPLEQ_HEAD(rdomain_head, rdomain);
+struct l3vpn;
+SIMPLEQ_HEAD(l3vpn_head, l3vpn);
 
 struct network;
 TAILQ_HEAD(network_head, network);
@@ -267,7 +266,7 @@ struct filter_rule;
 TAILQ_HEAD(filter_head, filter_rule);
 
 struct bgpd_config {
-	struct rdomain_head			 rdomains;
+	struct l3vpn_head			 l3vpns;
 	struct network_head			 networks;
 	struct filter_head			*filters;
 	struct listen_addrs			*listen_addrs;
@@ -411,7 +410,7 @@ struct network_config {
 	struct filter_set_head	 attrset;
 	struct rde_aspath	*asp;
 	char			 psname[SET_NAME_LEN];
-	u_int			 rtableid;
+	u_int64_t		 rd;
 	u_int16_t		 rtlabel;
 	enum network_type	 type;
 	u_int8_t		 prefixlen;
@@ -467,10 +466,10 @@ enum imsg_type {
 	IMSG_RECONF_FILTER,
 	IMSG_RECONF_LISTENER,
 	IMSG_RECONF_CTRL,
-	IMSG_RECONF_RDOMAIN,
-	IMSG_RECONF_RDOMAIN_EXPORT,
-	IMSG_RECONF_RDOMAIN_IMPORT,
-	IMSG_RECONF_RDOMAIN_DONE,
+	IMSG_RECONF_VPN,
+	IMSG_RECONF_VPN_EXPORT,
+	IMSG_RECONF_VPN_IMPORT,
+	IMSG_RECONF_VPN_DONE,
 	IMSG_RECONF_PREFIX_SET,
 	IMSG_RECONF_PREFIX_SET_ITEM,
 	IMSG_RECONF_AS_SET,
@@ -567,15 +566,18 @@ enum suberr_cease {
 struct kroute_node;
 struct kroute6_node;
 struct knexthop_node;
+struct kredist_node;
 RB_HEAD(kroute_tree, kroute_node);
 RB_HEAD(kroute6_tree, kroute6_node);
 RB_HEAD(knexthop_tree, knexthop_node);
+RB_HEAD(kredist_tree, kredist_node);
 
 struct ktable {
 	char			 descr[PEER_DESCR_LEN];
 	struct kroute_tree	 krt;
 	struct kroute6_tree	 krt6;
 	struct knexthop_tree	 knt;
+	struct kredist_tree	 kredist;
 	struct network_head	 krn;
 	u_int			 rtableid;
 	u_int			 nhtableid; /* rdomain id for nexthop lookup */
@@ -1024,8 +1026,8 @@ struct as_set {
 	int				 dirty;
 };
 
-struct rdomain {
-	SIMPLEQ_ENTRY(rdomain)		entry;
+struct l3vpn {
+	SIMPLEQ_ENTRY(l3vpn)		entry;
 	char				descr[PEER_DESCR_LEN];
 	char				ifmpe[IFNAMSIZ];
 	struct filter_set_head		import;
@@ -1176,7 +1178,7 @@ void		 kr_nexthop_delete(u_int32_t, struct bgpd_addr *,
 		    struct bgpd_config *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
-int		 kr_net_reload(u_int, struct network_head *);
+void		 kr_net_reload(u_int, u_int64_t, struct network_head *);
 int		 kr_reload(void);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 

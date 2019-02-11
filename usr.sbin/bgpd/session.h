@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.128 2019/01/20 23:27:48 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.129 2019/02/11 15:44:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -248,7 +248,7 @@ int	 carp_demote_set(char *, int);
 int	 merge_config(struct bgpd_config *, struct bgpd_config *,
 	    struct peer *);
 int	 prepare_listeners(struct bgpd_config *);
-int	 get_mpe_label(struct rdomain *);
+int	 get_mpe_config(const char *, u_int *, u_int *);
 
 /* control.c */
 int	control_check(char *);
@@ -285,7 +285,7 @@ int	pfkey_init(struct bgpd_sysdep *);
 /* printconf.c */
 void	print_config(struct bgpd_config *, struct rib_names *,
 	    struct network_head *, struct peer *, struct filter_head *,
-	    struct mrt_head *, struct rdomain_head *);
+	    struct mrt_head *, struct l3vpn_head *);
 
 /* rde.c */
 void	 rde_main(int, int);

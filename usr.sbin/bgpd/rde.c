@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.461 2019/01/21 02:07:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.462 2019/02/11 15:44:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,7 +75,7 @@ void		 rde_dump_ctx_throttle(pid_t, int);
 void		 rde_dump_ctx_terminate(pid_t);
 void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
 
-int		 rde_rdomain_import(struct rde_aspath *, struct rdomain *);
+int		 rde_l3vpn_import(struct rde_aspath *, struct l3vpn *);
 void		 rde_reload_done(void);
 static void	 rde_softreconfig_in_done(void *, u_int8_t);
 static void	 rde_softreconfig_out_done(void *, u_int8_t);
@@ -124,7 +124,7 @@ struct rde_prefixset_head originsets_old;
 struct rde_prefixset	 roa_old;
 struct as_set_head	*as_sets_tmp, *as_sets_old;
 struct filter_head	*out_rules, *out_rules_tmp;
-struct rdomain_head	*rdomains_l, *newdomains;
+struct l3vpn_head	*l3vpns_l, *newdomains;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_se_ctl;
 struct imsgbuf		*ibuf_main;
@@ -227,10 +227,10 @@ rde_main(int debug, int verbose)
 		fatal(NULL);
 	TAILQ_INIT(out_rules);
 
-	rdomains_l = calloc(1, sizeof(struct rdomain_head));
-	if (rdomains_l == NULL)
+	l3vpns_l = calloc(1, sizeof(struct l3vpn_head));
+	if (l3vpns_l == NULL)
 		fatal(NULL);
-	SIMPLEQ_INIT(rdomains_l);
+	SIMPLEQ_INIT(l3vpns_l);
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
@@ -675,7 +675,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	static struct rde_prefixset	*last_prefixset;
 	static struct as_set	*last_as_set;
 	static struct set_table	*last_set;
-	static struct rdomain	*rd;
+	static struct l3vpn	*vpn;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
 	struct rde_rib		 rn;
@@ -764,7 +764,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (out_rules_tmp == NULL)
 				fatal(NULL);
 			TAILQ_INIT(out_rules_tmp);
-			newdomains = calloc(1, sizeof(struct rdomain_head));
+			newdomains = calloc(1, sizeof(struct l3vpn_head));
 			if (newdomains == NULL)
 				fatal(NULL);
 			SIMPLEQ_INIT(newdomains);
@@ -948,34 +948,34 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			set_prep(last_as_set->set);
 			last_as_set = NULL;
 			break;
-		case IMSG_RECONF_RDOMAIN:
+		case IMSG_RECONF_VPN:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct rdomain))
-				fatalx("IMSG_RECONF_RDOMAIN bad len");
-			if ((rd = malloc(sizeof(struct rdomain))) == NULL)
+			    sizeof(struct l3vpn))
+				fatalx("IMSG_RECONF_VPN bad len");
+			if ((vpn = malloc(sizeof(struct l3vpn))) == NULL)
 				fatal(NULL);
-			memcpy(rd, imsg.data, sizeof(struct rdomain));
-			TAILQ_INIT(&rd->import);
-			TAILQ_INIT(&rd->export);
-			SIMPLEQ_INSERT_TAIL(newdomains, rd, entry);
+			memcpy(vpn, imsg.data, sizeof(struct l3vpn));
+			TAILQ_INIT(&vpn->import);
+			TAILQ_INIT(&vpn->export);
+			SIMPLEQ_INSERT_TAIL(newdomains, vpn, entry);
 			break;
-		case IMSG_RECONF_RDOMAIN_EXPORT:
-			if (rd == NULL) {
+		case IMSG_RECONF_VPN_EXPORT:
+			if (vpn == NULL) {
 				log_warnx("rde_dispatch_imsg_parent: "
-				    "IMSG_RECONF_RDOMAIN_EXPORT unexpected");
+				    "IMSG_RECONF_VPN_EXPORT unexpected");
 				break;
 			}
-			parent_set = &rd->export;
+			parent_set = &vpn->export;
 			break;
-		case IMSG_RECONF_RDOMAIN_IMPORT:
-			if (rd == NULL) {
+		case IMSG_RECONF_VPN_IMPORT:
+			if (vpn == NULL) {
 				log_warnx("rde_dispatch_imsg_parent: "
-				    "IMSG_RECONF_RDOMAIN_IMPORT unexpected");
+				    "IMSG_RECONF_VPN_IMPORT unexpected");
 				break;
 			}
-			parent_set = &rd->import;
+			parent_set = &vpn->import;
 			break;
-		case IMSG_RECONF_RDOMAIN_DONE:
+		case IMSG_RECONF_VPN_DONE:
 			parent_set = NULL;
 			break;
 		case IMSG_RECONF_DRAIN:
@@ -2530,7 +2530,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
  * kroute specific functions
  */
 int
-rde_rdomain_import(struct rde_aspath *asp, struct rdomain *rd)
+rde_l3vpn_import(struct rde_aspath *asp, struct l3vpn *rd)
 {
 	struct filter_set	*s;
 
@@ -2548,7 +2548,7 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 	struct bgpd_addr	 addr;
 	struct prefix		*p;
 	struct rde_aspath	*asp;
-	struct rdomain		*rd;
+	struct l3vpn		*vpn;
 	enum imsg_type		 type;
 
 	/*
@@ -2588,8 +2588,8 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 			/* not Loc-RIB, no update for VPNs */
 			break;
 
-		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
-			if (!rde_rdomain_import(asp, rd))
+		SIMPLEQ_FOREACH(vpn, l3vpns_l, entry) {
+			if (!rde_l3vpn_import(asp, vpn))
 				continue;
 			/* must send exit_nexthop so that correct MPLS tunnel
 			 * is chosen
@@ -2599,8 +2599,8 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 				    &prefix_nexthop(p)->exit_nexthop,
 				    sizeof(kr.nexthop));
 			/* XXX not ideal but this will change */
-			kr.ifindex = if_nametoindex(rd->ifmpe);
-			if (imsg_compose(ibuf_main, type, rd->rtableid, 0, -1,
+			kr.ifindex = if_nametoindex(vpn->ifmpe);
+			if (imsg_compose(ibuf_main, type, vpn->rtableid, 0, -1,
 			    &kr, sizeof(kr)) == -1)
 				fatal("%s %d imsg_compose error", __func__,
 				    __LINE__);
@@ -2881,7 +2881,7 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
 void
 rde_reload_done(void)
 {
-	struct rdomain		*rd;
+	struct l3vpn		*vpn;
 	struct rde_peer		*peer;
 	struct filter_head	*fh;
 	u_int16_t		 rid;
@@ -2923,15 +2923,15 @@ rde_reload_done(void)
 	peerself->conf.remote_masklen = 32;
 	peerself->short_as = conf->short_as;
 
-	/* apply new set of rdomain, sync will be done later */
-	while ((rd = SIMPLEQ_FIRST(rdomains_l)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(rdomains_l, entry);
-		filterset_free(&rd->import);
-		filterset_free(&rd->export);
-		free(rd);
+	/* apply new set of l3vpn, sync will be done later */
+	while ((vpn = SIMPLEQ_FIRST(l3vpns_l)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(l3vpns_l, entry);
+		filterset_free(&vpn->import);
+		filterset_free(&vpn->export);
+		free(vpn);
 	}
-	free(rdomains_l);
-	rdomains_l = newdomains;
+	free(l3vpns_l);
+	l3vpns_l = newdomains;
 	/* XXX WHERE IS THE SYNC ??? */
 
 	/* check if roa changed */
@@ -3687,7 +3687,7 @@ void
 network_add(struct network_config *nc, int flagstatic)
 {
 	struct filterstate	 state;
-	struct rdomain		*rd;
+	struct l3vpn		*vpn;
 	struct rde_aspath	*asp;
 	struct filter_set_head	*vpnset = NULL;
 	in_addr_t		 prefix4;
@@ -3695,44 +3695,44 @@ network_add(struct network_config *nc, int flagstatic)
 	u_int8_t		 vstate;
 	u_int16_t		 i;
 
-	if (nc->rtableid != conf->default_tableid) {
-		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
-			if (rd->rtableid != nc->rtableid)
+	if (nc->rd != 0) {
+		SIMPLEQ_FOREACH(vpn, l3vpns_l, entry) {
+			if (vpn->rd != nc->rd)
 				continue;
 			switch (nc->prefix.aid) {
 			case AID_INET:
 				prefix4 = nc->prefix.v4.s_addr;
 				bzero(&nc->prefix, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv4;
-				nc->prefix.vpn4.rd = rd->rd;
+				nc->prefix.vpn4.rd = vpn->rd;
 				nc->prefix.vpn4.addr.s_addr = prefix4;
 				nc->prefix.vpn4.labellen = 3;
 				nc->prefix.vpn4.labelstack[0] =
-				    (rd->label >> 12) & 0xff;
+				    (vpn->label >> 12) & 0xff;
 				nc->prefix.vpn4.labelstack[1] =
-				    (rd->label >> 4) & 0xff;
+				    (vpn->label >> 4) & 0xff;
 				nc->prefix.vpn4.labelstack[2] =
-				    (rd->label << 4) & 0xf0;
+				    (vpn->label << 4) & 0xf0;
 				nc->prefix.vpn4.labelstack[2] |= BGP_MPLS_BOS;
-				vpnset = &rd->export;
+				vpnset = &vpn->export;
 				break;
 			case AID_INET6:
 				memcpy(&prefix6, &nc->prefix.v6.s6_addr,
 				    sizeof(struct in6_addr));
 				memset(&nc->prefix, 0, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv6;
-				nc->prefix.vpn6.rd = rd->rd;
+				nc->prefix.vpn6.rd = vpn->rd;
 				memcpy(&nc->prefix.vpn6.addr.s6_addr, &prefix6,
 				    sizeof(struct in6_addr));
 				nc->prefix.vpn6.labellen = 3;
 				nc->prefix.vpn6.labelstack[0] =
-				    (rd->label >> 12) & 0xff;
+				    (vpn->label >> 12) & 0xff;
 				nc->prefix.vpn6.labelstack[1] =
-				    (rd->label >> 4) & 0xff;
+				    (vpn->label >> 4) & 0xff;
 				nc->prefix.vpn6.labelstack[2] =
-				    (rd->label << 4) & 0xf0;
+				    (vpn->label << 4) & 0xf0;
 				nc->prefix.vpn6.labelstack[2] |= BGP_MPLS_BOS;
-				vpnset = &rd->export;
+				vpnset = &vpn->export;
 				break;
 			default:
 				log_warnx("unable to VPNize prefix");
@@ -3741,10 +3741,11 @@ network_add(struct network_config *nc, int flagstatic)
 			}
 			break;
 		}
-		if (rd == NULL) {
+		if (vpn == NULL) {
 			log_warnx("network_add: "
-			    "prefix %s/%u in non-existing rdomain %u",
-			    log_addr(&nc->prefix), nc->prefixlen, nc->rtableid);
+			    "prefix %s/%u in non-existing l3vpn %s",
+			    log_addr(&nc->prefix), nc->prefixlen,
+			    log_rd(nc->rd));
 			return;
 		}
 	}
@@ -3789,29 +3790,29 @@ network_add(struct network_config *nc, int flagstatic)
 void
 network_delete(struct network_config *nc)
 {
-	struct rdomain	*rd;
+	struct l3vpn	*vpn;
 	in_addr_t	 prefix4;
 	struct in6_addr	 prefix6;
 	u_int32_t	 i;
 
-	if (nc->rtableid) {
-		SIMPLEQ_FOREACH(rd, rdomains_l, entry) {
-			if (rd->rtableid != nc->rtableid)
+	if (nc->rd) {
+		SIMPLEQ_FOREACH(vpn, l3vpns_l, entry) {
+			if (vpn->rd != nc->rd)
 				continue;
 			switch (nc->prefix.aid) {
 			case AID_INET:
 				prefix4 = nc->prefix.v4.s_addr;
 				bzero(&nc->prefix, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv4;
-				nc->prefix.vpn4.rd = rd->rd;
+				nc->prefix.vpn4.rd = vpn->rd;
 				nc->prefix.vpn4.addr.s_addr = prefix4;
 				nc->prefix.vpn4.labellen = 3;
 				nc->prefix.vpn4.labelstack[0] =
-				    (rd->label >> 12) & 0xff;
+				    (vpn->label >> 12) & 0xff;
 				nc->prefix.vpn4.labelstack[1] =
-				    (rd->label >> 4) & 0xff;
+				    (vpn->label >> 4) & 0xff;
 				nc->prefix.vpn4.labelstack[2] =
-				    (rd->label << 4) & 0xf0;
+				    (vpn->label << 4) & 0xf0;
 				nc->prefix.vpn4.labelstack[2] |= BGP_MPLS_BOS;
 				break;
 			case AID_INET6:
@@ -3819,16 +3820,16 @@ network_delete(struct network_config *nc)
 				    sizeof(struct in6_addr));
 				memset(&nc->prefix, 0, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv6;
-				nc->prefix.vpn6.rd = rd->rd;
+				nc->prefix.vpn6.rd = vpn->rd;
 				memcpy(&nc->prefix.vpn6.addr.s6_addr, &prefix6,
 				    sizeof(struct in6_addr));
 				nc->prefix.vpn6.labellen = 3;
 				nc->prefix.vpn6.labelstack[0] =
-				    (rd->label >> 12) & 0xff;
+				    (vpn->label >> 12) & 0xff;
 				nc->prefix.vpn6.labelstack[1] =
-				    (rd->label >> 4) & 0xff;
+				    (vpn->label >> 4) & 0xff;
 				nc->prefix.vpn6.labelstack[2] =
-				    (rd->label << 4) & 0xf0;
+				    (vpn->label << 4) & 0xf0;
 				nc->prefix.vpn6.labelstack[2] |= BGP_MPLS_BOS;
 				break;
 			default:

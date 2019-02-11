@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.207 2019/01/20 06:13:40 bcook Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.208 2019/02/11 15:44:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 
 		if (cmd_opts & BGPD_OPT_VERBOSE)
 			print_config(conf, &ribnames, &conf->networks, peer_l,
-			    conf->filters, conf->mrt, &conf->rdomains);
+			    conf->filters, conf->mrt, &conf->l3vpns);
 		else
 			fprintf(stderr, "configuration OK\n");
 		exit(0);
@@ -438,7 +438,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	struct filter_rule	*r;
 	struct listen_addr	*la;
 	struct rde_rib		*rr;
-	struct rdomain		*rd;
+	struct l3vpn		*vpn;
 	struct as_set		*aset;
 	struct prefixset	*ps;
 	struct prefixset_item	*psi, *npsi;
@@ -512,8 +512,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	}
 
 	/* networks go via kroute to the RDE */
-	if (kr_net_reload(conf->default_tableid, &conf->networks))
-		return (-1);
+	kr_net_reload(conf->default_tableid, 0, &conf->networks);
 
 	/* prefixsets for filters in the RDE */
 	while ((ps = SIMPLEQ_FIRST(&conf->prefixsets)) != NULL) {
@@ -627,43 +626,42 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 		free(r);
 	}
 
-	while ((rd = SIMPLEQ_FIRST(&conf->rdomains)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&conf->rdomains, entry);
-		if (ktable_update(rd->rtableid, rd->descr, rd->flags,
+	while ((vpn = SIMPLEQ_FIRST(&conf->l3vpns)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&conf->l3vpns, entry);
+		if (ktable_update(vpn->rtableid, vpn->descr, vpn->flags,
 		    conf->fib_priority) == -1) {
 			log_warnx("failed to load rdomain %d",
-			    rd->rtableid);
+			    vpn->rtableid);
 			return (-1);
 		}
 		/* networks go via kroute to the RDE */
-		if (kr_net_reload(rd->rtableid, &rd->net_l))
-			return (-1);
+		kr_net_reload(vpn->rtableid, vpn->rd, &vpn->net_l);
 
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN, 0, 0, -1,
-		    rd, sizeof(*rd)) == -1)
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_VPN, 0, 0, -1,
+		    vpn, sizeof(*vpn)) == -1)
 			return (-1);
 
 		/* export targets */
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN_EXPORT, 0, 0,
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_VPN_EXPORT, 0, 0,
 		    -1, NULL, 0) == -1)
 			return (-1);
-		if (send_filterset(ibuf_rde, &rd->export) == -1)
+		if (send_filterset(ibuf_rde, &vpn->export) == -1)
 			return (-1);
-		filterset_free(&rd->export);
+		filterset_free(&vpn->export);
 
 		/* import targets */
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN_IMPORT, 0, 0,
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_VPN_IMPORT, 0, 0,
 		    -1, NULL, 0) == -1)
 			return (-1);
-		if (send_filterset(ibuf_rde, &rd->import) == -1)
+		if (send_filterset(ibuf_rde, &vpn->import) == -1)
 			return (-1);
-		filterset_free(&rd->import);
+		filterset_free(&vpn->import);
 
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_RDOMAIN_DONE, 0, 0,
+		if (imsg_compose(ibuf_rde, IMSG_RECONF_VPN_DONE, 0, 0,
 		    -1, NULL, 0) == -1)
 			return (-1);
 
-		free(rd);
+		free(vpn);
 	}
 
 	/* send a drain message to know when all messages where processed */

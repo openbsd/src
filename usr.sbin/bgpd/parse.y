@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.369 2019/02/04 18:53:10 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.370 2019/02/11 15:44:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,7 +91,7 @@ static struct network_head	*netconf;
 static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
-static struct rdomain		*currdom;
+static struct l3vpn		*curvpn;
 static struct prefixset		*curpset, *curoset;
 static struct prefixset_tree	*curpsitree;
 static struct filter_head	*filter_l;
@@ -154,7 +154,6 @@ void		 optimize_filters(struct filter_head *);
 struct filter_rule	*get_rule(enum action_types);
 
 int		 parsecommunity(struct filter_community *, int, char *);
-int		 parsesubtype(char *, int *, int *);
 int		 parseextcommunity(struct filter_community *, char *,
 		    char *);
 static int	 new_as_set(char *);
@@ -195,7 +194,7 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
-%token	RDOMAIN RD EXPORT EXPORTTRGT IMPORTTRGT
+%token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
@@ -223,7 +222,7 @@ typedef struct {
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
-%type	<v.number>		espah family restart origincode nettype
+%type	<v.number>		espah family safi restart origincode nettype
 %type	<v.number>		yesno inout restricted validity
 %type	<v.string>		string
 %type	<v.addr>		address
@@ -253,7 +252,7 @@ grammar		: /* empty */
 		| grammar roa_set '\n'
 		| grammar origin_set '\n'
 		| grammar conf_main '\n'
-		| grammar rdomain '\n'
+		| grammar l3vpn '\n'
 		| grammar neighbor '\n'
 		| grammar group '\n'
 		| grammar filterrule '\n'
@@ -1044,39 +1043,57 @@ optnumber	: /* empty */		{ $$ = 0; }
 		| NUMBER
 		;
 
-rdomain		: RDOMAIN NUMBER			{
-			if ($2 > RT_TABLEID_MAX) {
-				yyerror("rtable %llu too big: max %u", $2,
-				    RT_TABLEID_MAX);
-				YYERROR;
+l3vpn		: VPN STRING ON STRING			{
+			u_int rdomain, label;
+
+			if (get_mpe_config($4, &rdomain, &label) == -1) {
+				yyerror("troubles getting config of %s", $4);
+				if ((cmd_opts & BGPD_OPT_NOACTION) == 0) {
+					free($4);
+					free($2);
+					YYERROR;
+				}
 			}
-			if ((cmd_opts & BGPD_OPT_NOACTION) == 0 &&
-			    ktable_exists($2, NULL) != 1) {
-				yyerror("rdomain %lld does not exist", $2);
-				YYERROR;
-			}
-			if (!(currdom = calloc(1, sizeof(struct rdomain))))
+
+			if (!(curvpn = calloc(1, sizeof(struct l3vpn))))
 				fatal(NULL);
-			currdom->rtableid = $2;
-			TAILQ_INIT(&currdom->import);
-			TAILQ_INIT(&currdom->export);
-			TAILQ_INIT(&currdom->net_l);
-			netconf = &currdom->net_l;
-		} '{' rdomainopts_l '}'	{
+			strlcpy(curvpn->ifmpe, $4, IFNAMSIZ);
+
+			if (strlcpy(curvpn->descr, $2,
+			    sizeof(curvpn->descr)) >=
+			    sizeof(curvpn->descr)) {
+				yyerror("descr \"%s\" too long: max %zu",
+				    $2, sizeof(curvpn->descr) - 1);
+				free($2);
+				free($4);
+				free(curvpn);
+				curvpn = NULL;
+				YYERROR;
+			}
+			free($2);
+			free($4);
+
+			TAILQ_INIT(&curvpn->import);
+			TAILQ_INIT(&curvpn->export);
+			TAILQ_INIT(&curvpn->net_l);
+			curvpn->label = label;
+			curvpn->rtableid = rdomain;
+			netconf = &curvpn->net_l;
+		} '{' l3vpnopts_l '}'	{
 			/* insert into list */
-			SIMPLEQ_INSERT_TAIL(&conf->rdomains, currdom, entry);
-			currdom = NULL;
+			SIMPLEQ_INSERT_TAIL(&conf->l3vpns, curvpn, entry);
+			curvpn = NULL;
 			netconf = &conf->networks;
 		}
 		;
 
-rdomainopts_l	: /* empty */
-		| rdomainopts_l '\n'
-		| rdomainopts_l rdomainopts '\n'
-		| rdomainopts_l error '\n'
+l3vpnopts_l	: /* empty */
+		| l3vpnopts_l '\n'
+		| l3vpnopts_l l3vpnopts '\n'
+		| l3vpnopts_l error '\n'
 		;
 
-rdomainopts	: RD STRING {
+l3vpnopts	: RD STRING {
 			struct filter_community	ext;
 			u_int64_t		rd;
 
@@ -1108,7 +1125,7 @@ rdomainopts	: RD STRING {
 				yyerror("bad encoding of rd");
 				YYERROR;
 			}
-			currdom->rd = htobe64(rd);
+			curvpn->rd = htobe64(rd);
 		}
 		| EXPORTTRGT STRING STRING	{
 			struct filter_set	*set;
@@ -1126,7 +1143,7 @@ rdomainopts	: RD STRING {
 			}
 			free($3);
 			free($2);
-			TAILQ_INSERT_TAIL(&currdom->export, set, entry);
+			TAILQ_INSERT_TAIL(&curvpn->export, set, entry);
 		}
 		| IMPORTTRGT STRING STRING	{
 			struct filter_set	*set;
@@ -1144,44 +1161,15 @@ rdomainopts	: RD STRING {
 			}
 			free($3);
 			free($2);
-			TAILQ_INSERT_TAIL(&currdom->import, set, entry);
-		}
-		| DESCR string		{
-			if (strlcpy(currdom->descr, $2,
-			    sizeof(currdom->descr)) >=
-			    sizeof(currdom->descr)) {
-				yyerror("descr \"%s\" too long: max %zu",
-				    $2, sizeof(currdom->descr) - 1);
-				free($2);
-				YYERROR;
-			}
-			free($2);
+			TAILQ_INSERT_TAIL(&curvpn->import, set, entry);
 		}
 		| FIBUPDATE yesno		{
 			if ($2 == 0)
-				currdom->flags |= F_RIB_NOFIBSYNC;
+				curvpn->flags |= F_RIB_NOFIBSYNC;
 			else
-				currdom->flags &= ~F_RIB_NOFIBSYNC;
+				curvpn->flags &= ~F_RIB_NOFIBSYNC;
 		}
 		| network
-		| DEPEND ON STRING	{
-			/* XXX this is a hack */
-			if ((cmd_opts & BGPD_OPT_NOACTION) == 0 &&
-			    if_nametoindex($3) == 0) {
-				yyerror("interface %s does not exist", $3);
-				free($3);
-				YYERROR;
-			}
-			strlcpy(currdom->ifmpe, $3, IFNAMSIZ);
-			free($3);
-			/* XXX this is in the wrong place */
-			if ((cmd_opts & BGPD_OPT_NOACTION) == 0 &&
-			    get_mpe_label(currdom)) {
-				yyerror("failed to get mpls label from %s",
-				    currdom->ifmpe);
-				YYERROR;
-			}
-		}
 		;
 
 neighbor	: {	curpeer = new_peer(); }
@@ -1350,30 +1338,23 @@ peeropts	: REMOTEAS as4number	{
 			}
 			curpeer->conf.min_holdtime = $3;
 		}
-		| ANNOUNCE family STRING {
+		| ANNOUNCE family safi {
 			u_int8_t	aid, safi;
-			int8_t		val = 1;
+			u_int16_t	afi;
 
-			if (!strcmp($3, "none")) {
-				safi = SAFI_UNICAST;
-				val = 0;
-			} else if (!strcmp($3, "unicast")) {
-				safi = SAFI_UNICAST;
-			} else if (!strcmp($3, "vpn")) {
-				safi = SAFI_MPLSVPN;
+			if ($3 == SAFI_NONE) {
+				for (aid = 0; aid < AID_MAX; aid++) {
+					if (aid2afi(aid, &afi, &safi) == -1)
+						continue;
+					curpeer->conf.capabilities.mp[aid] = 0;
+				}	
 			} else {
-				yyerror("unknown/unsupported SAFI \"%s\"",
-				    $3);
-				free($3);
-				YYERROR;
+				if (afi2aid($2, $3, &aid) == -1) {
+					yyerror("unknown AFI/SAFI pair");
+					YYERROR;
+				}
+				curpeer->conf.capabilities.mp[aid] = 1;
 			}
-			free($3);
-
-			if (afi2aid($2, safi, &aid) == -1) {
-				yyerror("unknown AFI/SAFI pair");
-				YYERROR;
-			}
-			curpeer->conf.capabilities.mp[aid] = val;
 		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.announce_capa = $3;
@@ -1715,6 +1696,11 @@ restart		: /* nada */		{ $$ = 0; }
 
 family		: IPV4	{ $$ = AFI_IPv4; }
 		| IPV6	{ $$ = AFI_IPv6; }
+		;
+
+safi		: NONE		{ $$ = SAFI_NONE; }
+		| UNICAST	{ $$ = SAFI_UNICAST; }
+		| VPN		{ $$ = SAFI_MPLSVPN; }
 		;
 
 nettype		: STATIC { $$ = 1; },
@@ -2880,6 +2866,7 @@ lookup(char *s)
 		{ "network",		NETWORK},
 		{ "nexthop",		NEXTHOP},
 		{ "no-modify",		NOMODIFY},
+		{ "none",		NONE},
 		{ "on",			ON},
 		{ "or-longer",		LONGER},
 		{ "origin",		ORIGIN},
@@ -2900,7 +2887,6 @@ lookup(char *s)
 		{ "quick",		QUICK},
 		{ "rd",			RD},
 		{ "rde",		RDE},
-		{ "rdomain",		RDOMAIN},
 		{ "refresh",		REFRESH },
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
@@ -2924,7 +2910,9 @@ lookup(char *s)
 		{ "transit-as",		TRANSITAS},
 		{ "transparent-as",	TRANSPARENT},
 		{ "ttl-security",	TTLSECURITY},
+		{ "unicast",		UNICAST},
 		{ "via",		VIA},
+		{ "vpn",		VPN},
 		{ "weight",		WEIGHT}
 	};
 	const struct keywords	*p;
@@ -3586,7 +3574,7 @@ parsecommunity(struct filter_community *c, int type, char *s)
 	return (0);
 }
 
-int
+static int
 parsesubtype(char *name, int *type, int *subtype)
 {
 	const struct ext_comm_pairs *cp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.229 2019/01/18 23:30:45 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.230 2019/02/11 15:44:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -65,6 +65,14 @@ struct knexthop_node {
 	void			*kroute;
 };
 
+struct kredist_node {
+	RB_ENTRY(kredist_node)	 entry;
+	struct bgpd_addr	 prefix;
+	u_int64_t		 rd;
+	u_int8_t		 prefixlen;
+	u_int8_t		 dynamic;
+};
+
 struct kif_kr {
 	LIST_ENTRY(kif_kr)	 entry;
 	struct kroute_node	*kr;
@@ -99,16 +107,16 @@ int	kr6_delete(struct ktable *, struct kroute_full *, u_int8_t);
 int	krVPN4_delete(struct ktable *, struct kroute_full *, u_int8_t);
 int	krVPN6_delete(struct ktable *, struct kroute_full *, u_int8_t);
 void	kr_net_delete(struct network *);
-struct network *kr_net_match(struct ktable *, struct kroute *);
-struct network *kr_net_match6(struct ktable *, struct kroute6 *);
+int	kr_net_match(struct ktable *, struct network_config *, u_int16_t);
 struct network *kr_net_find(struct ktable *, struct network *);
-int	kr_redistribute(int, struct ktable *, struct kroute *);
-int	kr_redistribute6(int, struct ktable *, struct kroute6 *);
+void	kr_redistribute(int, struct ktable *, struct kroute *);
+void	kr_redistribute6(int, struct ktable *, struct kroute6 *);
 struct kroute_full *kr_tofull(struct kroute *);
 struct kroute_full *kr6_tofull(struct kroute6 *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kroute6_compare(struct kroute6_node *, struct kroute6_node *);
 int	knexthop_compare(struct knexthop_node *, struct knexthop_node *);
+int	kredist_compare(struct kredist_node *, struct kredist_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
 void	kr_fib_update_prio(u_int, u_int8_t);
 
@@ -184,6 +192,9 @@ RB_GENERATE(kroute6_tree, kroute6_node, entry, kroute6_compare)
 
 RB_PROTOTYPE(knexthop_tree, knexthop_node, entry, knexthop_compare)
 RB_GENERATE(knexthop_tree, knexthop_node, entry, knexthop_compare)
+
+RB_PROTOTYPE(kredist_tree, kredist_node, entry, kredist_compare)
+RB_GENERATE(kredist_tree, kredist_node, entry, kredist_compare)
 
 RB_HEAD(kif_tree, kif_node)		kit;
 RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
@@ -397,35 +408,6 @@ ktable_update(u_int rtableid, char *name, int flags, u_int8_t fib_prio)
 		strlcpy(kt->descr, name, sizeof(kt->descr));
 	}
 	return (0);
-}
-
-void
-ktable_preload(void)
-{
-	struct ktable	*kt;
-	u_int		 i;
-
-	for (i = 0; i < krt_size; i++) {
-		if ((kt = ktable_get(i)) == NULL)
-			continue;
-		kt->state = RECONF_DELETE;
-	}
-}
-
-void
-ktable_postload(u_int8_t fib_prio)
-{
-	struct ktable	*kt;
-	u_int		 i;
-
-	for (i = krt_size; i > 0; i--) {
-		if ((kt = ktable_get(i - 1)) == NULL)
-			continue;
-		if (kt->state == RECONF_DELETE)
-			ktable_free(i - 1, fib_prio);
-		else if (kt->state == RECONF_REINIT)
-			kt->fib_sync = kt->fib_conf;
-	}
 }
 
 int
@@ -1199,93 +1181,105 @@ kr_net_delete(struct network *n)
 	free(n);
 }
 
-struct network *
-kr_net_match(struct ktable *kt, struct kroute *kr)
+static int
+kr_net_redist_add(struct ktable *kt, struct network_config *net,
+    struct filter_set_head *attr, int dynamic)
 {
-	struct network		*xn;
+	struct kredist_node *r, *xr;
 
-	TAILQ_FOREACH(xn, &kt->krn, entry) {
-		if (xn->net.prefix.aid != AID_INET)
-			continue;
-		switch (xn->net.type) {
-		case NETWORK_DEFAULT:
-			if (xn->net.prefixlen == kr->prefixlen &&
-			    xn->net.prefix.v4.s_addr == kr->prefix.s_addr)
-				/* static match already redistributed */
-				return (NULL);
-			break;
-		case NETWORK_STATIC:
-			if (kr->flags & F_STATIC)
-				return (xn);
-			break;
-		case NETWORK_CONNECTED:
-			if (kr->flags & F_CONNECTED)
-				return (xn);
-			break;
-		case NETWORK_RTLABEL:
-			if (kr->labelid == xn->net.rtlabel)
-				return (xn);
-			break;
-		case NETWORK_MRTCLONE:
-			/* can not happen */
-			break;
-		case NETWORK_PRIORITY:
-			if (kr->priority == xn->net.priority)
-				return (xn);
-			break;
-		case NETWORK_PREFIXSET:
-			/* must not happen */
-			log_warnx("%s: found a NETWORK_PREFIXSET, "
-			    "please send a bug report", __func__);
-			break;
+	if ((r = calloc(1, sizeof(*r))) == NULL)
+		fatal("%s", __func__);
+	r->prefix = net->prefix;
+	r->prefixlen = net->prefixlen;
+	r->rd = net->rd;
+	r->dynamic = dynamic;
+
+	xr = RB_INSERT(kredist_tree, &kt->kredist, r);
+	if (xr != NULL && dynamic != xr->dynamic) {
+		if (dynamic) {
+			/*
+			 * ignore update, a non-dynamic announcement
+			 * is already present.
+			 */
+			free(r);
+			return 0;
 		}
+		/* non-dynamic announcments are preferred */
+		xr->dynamic = dynamic;
 	}
-	return (NULL);
+
+	if (send_network(IMSG_NETWORK_ADD, net, attr) == -1)
+		log_warnx("%s: faild to send network update", __func__);
+	return 1;
 }
 
-struct network *
-kr_net_match6(struct ktable *kt, struct kroute6 *kr6)
+static void
+kr_net_redist_del(struct ktable *kt, struct network_config *net, int dynamic)
+{
+	struct kredist_node *r, node;
+
+	bzero(&node, sizeof(node));
+	node.prefix = net->prefix;
+	node.prefixlen = net->prefixlen;
+	node.rd = net->rd;
+
+	r = RB_FIND(kredist_tree, &kt->kredist, &node);
+	if (r == NULL || dynamic != r->dynamic)
+		return;
+
+	if (RB_REMOVE(kredist_tree, &kt->kredist, r) == NULL) {
+		log_warnx("%s: failed to remove network %s/%u", __func__,
+		    log_addr(&node.prefix), node.prefixlen);
+		return;
+	}
+	free(r);
+
+	if (send_network(IMSG_NETWORK_REMOVE, net, NULL) == -1)
+		log_warnx("%s: faild to send network update", __func__);
+}
+
+int
+kr_net_match(struct ktable *kt, struct network_config *net, u_int16_t flags)
 {
 	struct network		*xn;
+	int			 matched = 0;
 
 	TAILQ_FOREACH(xn, &kt->krn, entry) {
-		if (xn->net.prefix.aid != AID_INET6)
+		if (xn->net.prefix.aid != net->prefix.aid)
 			continue;
 		switch (xn->net.type) {
 		case NETWORK_DEFAULT:
-			if (xn->net.prefixlen == kr6->prefixlen &&
-			    memcmp(&xn->net.prefix.v6, &kr6->prefix,
-			    sizeof(struct in6_addr)) == 0)
-				/* static match already redistributed */
-				return (NULL);
-			break;
+			/* static match already redistributed */
+			continue;
 		case NETWORK_STATIC:
-			if (kr6->flags & F_STATIC)
-				return (xn);
-			break;
+			if (flags & F_STATIC)
+				break;
+			continue;
 		case NETWORK_CONNECTED:
-			if (kr6->flags & F_CONNECTED)
-				return (xn);
-			break;
+			if (flags & F_CONNECTED)
+				break;
+			continue;
 		case NETWORK_RTLABEL:
-			if (kr6->labelid == xn->net.rtlabel)
-				return (xn);
-			break;
-		case NETWORK_MRTCLONE:
-			/* can not happen */
-			break;
+			if (net->rtlabel == xn->net.rtlabel)
+				break;
+			continue;
 		case NETWORK_PRIORITY:
-			if (kr6->priority == xn->net.priority)
-				return (xn);
-			break;
+			if (net->priority == xn->net.priority)
+				break;
+			continue;
+		case NETWORK_MRTCLONE:
 		case NETWORK_PREFIXSET:
 			/* must not happen */
 			log_warnx("%s: found a NETWORK_PREFIXSET, "
 			    "please send a bug report", __func__);
-			break;
+			continue;
 		}
+
+		net->rd = xn->net.rd;
+		if (kr_net_redist_add(kt, net, &xn->net.attrset, 1))
+			matched = 1;
 	}
-	return (NULL);
+	return matched;
 }
 
 struct network *
@@ -1296,7 +1290,7 @@ kr_net_find(struct ktable *kt, struct network *n)
 	TAILQ_FOREACH(xn, &kt->krn, entry) {
 		if (n->net.type != xn->net.type ||
 		    n->net.prefixlen != xn->net.prefixlen ||
-		    n->net.rtableid != xn->net.rtableid)
+		    n->net.rd != xn->net.rd)
 			continue;
 		if (memcmp(&n->net.prefix, &xn->net.prefix,
 		    sizeof(n->net.prefix)) == 0)
@@ -1305,26 +1299,21 @@ kr_net_find(struct ktable *kt, struct network *n)
 	return (NULL);
 }
 
-int
-kr_net_reload(u_int rtableid, struct network_head *nh)
+void
+kr_net_reload(u_int rtableid, u_int64_t rd, struct network_head *nh)
 {
 	struct network		*n, *xn;
 	struct ktable		*kt;
 
-	if ((kt = ktable_get(rtableid)) == NULL) {
-		log_warnx("%s: non-existent rtableid %d", __func__, rtableid);
-		return (-1);
-	}
-
-	TAILQ_FOREACH(n, &kt->krn, entry)
-		n->net.old = 1;
+	if ((kt = ktable_get(rtableid)) == NULL)
+		fatalx("%s: non-existent rtableid %d", __func__, rtableid);
 
 	while ((n = TAILQ_FIRST(nh)) != NULL) {
 		log_debug("%s: processing %s/%u", __func__,
 		    log_addr(&n->net.prefix), n->net.prefixlen);
 		TAILQ_REMOVE(nh, n, entry);
 		n->net.old = 0;
-		n->net.rtableid = rtableid;
+		n->net.rd = rd;
 		xn = kr_net_find(kt, n);
 		if (xn) {
 			xn->net.old = 0;
@@ -1334,44 +1323,33 @@ kr_net_reload(u_int rtableid, struct network_head *nh)
 		} else
 			TAILQ_INSERT_TAIL(&kt->krn, n, entry);
 	}
-
-	for (n = TAILQ_FIRST(&kt->krn); n != NULL; n = xn) {
-		xn = TAILQ_NEXT(n, entry);
-		if (n->net.old) {
-			if (n->net.type == NETWORK_DEFAULT)
-				if (send_network(IMSG_NETWORK_REMOVE, &n->net,
-				    NULL))
-					return (-1);
-			TAILQ_REMOVE(&kt->krn, n, entry);
-			kr_net_delete(n);
-		}
-	}
-
-	return (0);
 }
 
-int
+void
 kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 {
-	struct network		*match;
 	struct network_config	 net;
 	u_int32_t		 a;
 
+	bzero(&net, sizeof(net));
+	net.prefix.aid = AID_INET;
+	net.prefix.v4.s_addr = kr->prefix.s_addr;
+	net.prefixlen = kr->prefixlen;
+	net.rtlabel = kr->labelid;
+	net.priority = kr->priority;
+
 	/* shortcut for removals */
 	if (type == IMSG_NETWORK_REMOVE) {
-		if (!(kr->flags & F_REDISTRIBUTED))
-			return (0);	/* no match, don't redistribute */
-		kr->flags &= ~F_REDISTRIBUTED;
-		match = NULL;
-		goto sendit;
+		kr_net_redist_del(kt, &net, 1);
+		return;
 	}
 
 	if (!(kr->flags & F_KERNEL))
-		return (0);
+		return;
 
 	/* Dynamic routes are not redistributable. */
 	if (kr->flags & F_DYNAMIC)
-		return (0);
+		return;
 
 	/*
 	 * We consider the loopback net, multicast and experimental addresses
@@ -1380,61 +1358,48 @@ kr_redistribute(int type, struct ktable *kt, struct kroute *kr)
 	a = ntohl(kr->prefix.s_addr);
 	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
 	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
-		return (0);
+		return;
 
 	/* Consider networks with nexthop loopback as not redistributable. */
 	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
-		return (0);
+		return;
 
 	/*
 	 * never allow 0.0.0.0/0 the default route can only be redistributed
 	 * with announce default.
 	 */
 	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
-		return (0);
+		return;
 
-	match = kr_net_match(kt, kr);
-	if (match == NULL) {
-		if (!(kr->flags & F_REDISTRIBUTED))
-			return (0);	/* no match, don't redistribute */
-		/* route no longer matches but is redistributed, so remove */
-		kr->flags &= ~F_REDISTRIBUTED;
-		type = IMSG_NETWORK_REMOVE;
-	} else
-		kr->flags |= F_REDISTRIBUTED;
-
-sendit:
-	bzero(&net, sizeof(net));
-	net.prefix.aid = AID_INET;
-	net.prefix.v4.s_addr = kr->prefix.s_addr;
-	net.prefixlen = kr->prefixlen;
-	net.rtlabel = kr->labelid;
-	net.rtableid = kt->rtableid;
-
-	return (send_network(type, &net, match ? &match->net.attrset : NULL));
+	if (kr_net_match(kt, &net, kr->flags) == 0)
+		/* no longer matches, if still present remove it */
+		kr_net_redist_del(kt, &net, 1);
 }
 
-int
+void
 kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 {
-	struct network		*match;
 	struct network_config	 net;
+
+	bzero(&net, sizeof(net));
+	net.prefix.aid = AID_INET6;
+	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	net.prefixlen = kr6->prefixlen;
+	net.rtlabel = kr6->labelid;
+	net.priority = kr6->priority;
 
 	/* shortcut for removals */
 	if (type == IMSG_NETWORK_REMOVE) {
-		if (!(kr6->flags & F_REDISTRIBUTED))
-			return (0);	/* no match, don't redistribute */
-		kr6->flags &= ~F_REDISTRIBUTED;
-		match = NULL;
-		goto sendit;
+		kr_net_redist_del(kt, &net, 1);
+		return;
 	}
 
 	if (!(kr6->flags & F_KERNEL))
-		return (0);
+		return;
 
 	/* Dynamic routes are not redistributable. */
 	if (kr6->flags & F_DYNAMIC)
-		return (0);
+		return;
 
 	/*
 	 * We consider unspecified, loopback, multicast, link- and site-local,
@@ -1447,13 +1412,13 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	    IN6_IS_ADDR_SITELOCAL(&kr6->prefix) ||
 	    IN6_IS_ADDR_V4MAPPED(&kr6->prefix) ||
 	    IN6_IS_ADDR_V4COMPAT(&kr6->prefix))
-		return (0);
+		return;
 
 	/*
 	 * Consider networks with nexthop loopback as not redistributable.
 	 */
 	if (IN6_IS_ADDR_LOOPBACK(&kr6->nexthop))
-		return (0);
+		return;
 
 	/*
 	 * never allow ::/0 the default route can only be redistributed
@@ -1461,26 +1426,57 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	 */
 	if (kr6->prefixlen == 0 &&
 	    memcmp(&kr6->prefix, &in6addr_any, sizeof(struct in6_addr)) == 0)
-		return (0);
+		return;
 
-	match = kr_net_match6(kt, kr6);
-	if (match == NULL) {
-		if (!(kr6->flags & F_REDISTRIBUTED))
-			return (0);	/* no match, don't redistribute */
-		/* route no longer matches but is redistributed, so remove */
-		kr6->flags &= ~F_REDISTRIBUTED;
-		type = IMSG_NETWORK_REMOVE;
-	} else
-		kr6->flags |= F_REDISTRIBUTED;
-sendit:
-	bzero(&net, sizeof(net));
-	net.prefix.aid = AID_INET6;
-	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
-	net.prefixlen = kr6->prefixlen;
-	net.rtlabel = kr6->labelid;
-	net.rtableid = kt->rtableid;
+	if (kr_net_match(kt, &net, kr6->flags) == 0)
+		/* no longer matches, if still present remove it */
+		kr_net_redist_del(kt, &net, 1);
+}
 
-	return (send_network(type, &net, match ? &match->net.attrset : NULL));
+void
+ktable_preload(void)
+{
+	struct ktable	*kt;
+	struct network	*n;
+	u_int		 i;
+
+	for (i = 0; i < krt_size; i++) {
+		if ((kt = ktable_get(i)) == NULL)
+			continue;
+		kt->state = RECONF_DELETE;
+
+		/* mark all networks as old */
+		TAILQ_FOREACH(n, &kt->krn, entry)
+			n->net.old = 1;
+	}
+}
+
+void
+ktable_postload(u_int8_t fib_prio)
+{
+	struct ktable	*kt;
+	struct network	*n, *xn;
+	u_int		 i;
+
+	for (i = krt_size; i > 0; i--) {
+		if ((kt = ktable_get(i - 1)) == NULL)
+			continue;
+		if (kt->state == RECONF_DELETE) {
+			ktable_free(i - 1, fib_prio);
+			continue;
+		} else if (kt->state == RECONF_REINIT)
+			kt->fib_sync = kt->fib_conf;
+
+		/* cleanup old networks */
+		TAILQ_FOREACH_SAFE(n, &kt->krn, entry, xn) {
+			if (n->net.old) {
+				TAILQ_REMOVE(&kt->krn, n, entry);
+				if (n->net.type == NETWORK_DEFAULT)
+					kr_net_redist_del(kt, &n->net, 0);
+				kr_net_delete(n);
+			}
+		}
+	}
 }
 
 int
@@ -1503,9 +1499,8 @@ kr_reload(void)
 
 		TAILQ_FOREACH(n, &kt->krn, entry)
 			if (n->net.type == NETWORK_DEFAULT) {
-				if (send_network(IMSG_NETWORK_ADD, &n->net,
-				    &n->net.attrset))
-					return (-1);
+				kr_net_redist_add(kt, &n->net,
+				    &n->net.attrset, 0);
 			} else
 				hasdyn = 1;
 
@@ -1640,8 +1635,48 @@ knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
 		}
 		break;
 	default:
-		fatalx("knexthop_compare: unknown AF");
+		fatalx("%s: unknown AF", __func__);
 	}
+
+	return (0);
+}
+
+int
+kredist_compare(struct kredist_node *a, struct kredist_node *b)
+{
+	int	i;
+
+	if (a->prefix.aid != b->prefix.aid)
+		return (b->prefix.aid - a->prefix.aid);
+
+	if (a->prefixlen < b->prefixlen)
+		return (-1);
+	if (a->prefixlen > b->prefixlen)
+		return (1);
+
+	switch (a->prefix.aid) {
+	case AID_INET:
+		if (ntohl(a->prefix.v4.s_addr) < ntohl(b->prefix.v4.s_addr))
+			return (-1);
+		if (ntohl(a->prefix.v4.s_addr) > ntohl(b->prefix.v4.s_addr))
+			return (1);
+		break;
+	case AID_INET6:
+		for (i = 0; i < 16; i++) {
+			if (a->prefix.v6.s6_addr[i] < b->prefix.v6.s6_addr[i])
+				return (-1);
+			if (a->prefix.v6.s6_addr[i] > b->prefix.v6.s6_addr[i])
+				return (1);
+		}
+		break;
+	default:
+		fatalx("%s: unknown AF", __func__);
+	}
+
+	if (a->rd < b->rd)
+		return (-1);
+	if (a->rd > b->rd)
+		return (1);
 
 	return (0);
 }
@@ -3506,21 +3541,14 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 					changed = 1;
 				kr->r.flags = flags;
 
-				if (rtlabel_changed) {
-					if (oflags & F_REDISTRIBUTED) {
-						kr->r.flags |= F_REDISTRIBUTED;
-						kr_redistribute(
-						    IMSG_NETWORK_REMOVE, kt,
-						    &kr->r);
-					}
+				if (rtlabel_changed)
 					kr_redistribute(IMSG_NETWORK_ADD,
 					    kt, &kr->r);
-				}
 
 				if ((oflags & F_CONNECTED) &&
 				    !(flags & F_CONNECTED)) {
 					kif_kr_remove(kr);
-					kr_redistribute(IMSG_NETWORK_REMOVE,
+					kr_redistribute(IMSG_NETWORK_ADD,
 					    kt, &kr->r);
 				}
 				if ((flags & F_CONNECTED) &&
@@ -3619,21 +3647,14 @@ add4:
 					changed = 1;
 				kr6->r.flags = flags;
 
-				if (rtlabel_changed) {
-					if (oflags & F_REDISTRIBUTED) {
-						kr6->r.flags |= F_REDISTRIBUTED;
-						kr_redistribute6(
-						    IMSG_NETWORK_REMOVE, kt,
-						    &kr6->r);
-					}
+				if (rtlabel_changed)
 					kr_redistribute6(IMSG_NETWORK_ADD,
 					    kt, &kr6->r);
-				}
 
 				if ((oflags & F_CONNECTED) &&
 				    !(flags & F_CONNECTED)) {
 					kif_kr6_remove(kr6);
-					kr_redistribute6(IMSG_NETWORK_REMOVE,
+					kr_redistribute6(IMSG_NETWORK_ADD,
 					    kt, &kr6->r);
 				}
 				if ((flags & F_CONNECTED) &&
