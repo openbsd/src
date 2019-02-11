@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: blocks.c,v 1.5 2019/02/11 22:22:52 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -237,7 +237,7 @@ int
 blk_match(struct sess *sess, int fd,
 	const struct blkset *blks, const char *path)
 {
-	int		 nfd, rc = 0, c;
+	int		 nfd = -1, rc = 0, c;
 	struct stat	 st;
 	void		*map = MAP_FAILED;
 	size_t		 mapsz;
@@ -247,11 +247,10 @@ blk_match(struct sess *sess, int fd,
 
 	if ((nfd = open(path, O_RDONLY, 0)) == -1) {
 		ERR(sess, "%s: open", path);
-		return 0;
+		goto out;
 	} else if (fstat(nfd, &st) == -1) {
 		ERR(sess, "%s: fstat", path);
-		close(nfd);
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -263,8 +262,7 @@ blk_match(struct sess *sess, int fd,
 		map = mmap(NULL, mapsz, PROT_READ, MAP_SHARED, nfd, 0);
 		if (map == MAP_FAILED) {
 			ERR(sess, "%s: mmap", path);
-			close(nfd);
-			return 0;
+			goto out;
 		}
 	}
 
@@ -277,9 +275,7 @@ blk_match(struct sess *sess, int fd,
 	 */
 
 	if (st.st_size && blks->blksz) {
-
-		c = blk_match_send(sess, path,
-			fd, map, st.st_size, blks);
+		c = blk_match_send(sess, path, fd, map, st.st_size, blks);
 		if (!c) {
 			ERRX1(sess, "blk_match_send");
 			goto out;
@@ -287,10 +283,10 @@ blk_match(struct sess *sess, int fd,
 	} else {
 		if (!blk_flush(sess, fd, map, st.st_size, 0)) {
 			ERRX1(sess, "blk_flush");
-			return 0;
+			goto out;
 		}
-		LOG3(sess, "%s: flushed (un-chunked) %jd B, 100%% "
-			"upload ratio", path, (intmax_t)st.st_size);
+		LOG3(sess, "%s: flushed (un-chunked) %jd B, 100%% upload ratio",
+		    path, (intmax_t)st.st_size);
 	}
 
 	/*
@@ -310,7 +306,8 @@ blk_match(struct sess *sess, int fd,
 out:
 	if (map != MAP_FAILED)
 		munmap(map, mapsz);
-	close(nfd);
+	if (-1 != nfd)
+		close(nfd);
 	return rc;
 }
 
