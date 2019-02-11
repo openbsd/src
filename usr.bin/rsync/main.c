@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.6 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: main.c,v 1.7 2019/02/11 21:44:44 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -303,7 +303,6 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "e:lnprtv", lopts, NULL)) != -1) {
 		switch (c) {
 		case 'e':
-			opts.ssh = optarg;
 			/* Ignore. */
 			break;
 		case 'l':
