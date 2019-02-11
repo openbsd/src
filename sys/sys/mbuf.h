@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.241 2018/12/07 08:37:24 claudio Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.242 2019/02/11 00:25:33 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -119,8 +119,8 @@ struct pkthdr_pf {
 
 #ifdef _KERNEL
 #define MPF_BITS \
-    ("\20\1GENERATED\3TRANSLATE_LOCALHOST\4DIVERTED\5DIVERTED_PACKET" \
-    "\6REROUTE\7REFRAGMENTED\10PROCESSED")
+    ("\20\1GENERATED\2SYNCOOKIE_RECREATED\3TRANSLATE_LOCALHOST\4DIVERTED" \
+    "\5DIVERTED_PACKET\6REROUTE\7REFRAGMENTED\10PROCESSED")
 #endif
 
 /* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
