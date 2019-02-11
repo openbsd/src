@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.306 2019/01/27 16:11:55 florian Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.307 2019/02/11 13:39:32 florian Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -104,12 +104,6 @@ etc
         private			uname=root mode=0700
         ..
         lib
-        ..
-    ..
-
-    # ./etc/unwind
-    unwind
-        trustanchor		gname=_unwind uname=root mode=0775
         ..
     ..
 
