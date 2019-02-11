@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.25 2019/02/10 13:04:29 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.26 2019/02/11 17:48:15 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -491,31 +491,8 @@ tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx)
 }
 
 int
-tls13_server_certificate_recv(struct tls13_ctx *ctx)
-{
-	return 0;
-}
-
-int
 tls13_server_certificate_send(struct tls13_ctx *ctx)
 {
-	return 0;
-}
-
-int
-tls13_server_certificate_request_recv(struct tls13_ctx *ctx)
-{
-	/*
-	 * Thanks to poor state design in the RFC, this function can be called
-	 * when we actually have a certificate message instead of a certificate
-	 * request... in that case we call the certificate handler after
-	 * switching state, to avoid advancing state.
-	 */
-	if (tls13_handshake_msg_type(ctx->hs_msg) == TLS13_MT_CERTIFICATE) {
-		ctx->handshake_stage.hs_type |= WITHOUT_CR;
-		return tls13_server_certificate_recv(ctx);
-	}
-
 	return 0;
 }
 
@@ -527,12 +504,6 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx)
 
 int
 tls13_server_certificate_verify_send(struct tls13_ctx *ctx)
-{
-	return 0;
-}
-
-int
-tls13_server_certificate_verify_recv(struct tls13_ctx *ctx)
 {
 	return 0;
 }
