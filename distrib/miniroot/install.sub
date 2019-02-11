@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1109 2019/01/21 23:06:28 jsg Exp $
+#	$OpenBSD: install.sub,v 1.1110 2019/02/11 17:51:53 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3168,6 +3168,8 @@ do_upgrade() {
 
 	# Ensure that previous installer choices (e.g. method) are available.
 	wait_cgiinfo
+
+	rm -f /mnt/usr/share/relink/usr/lib/*
 
 	# Ask the user for locations, and install whatever sets the user
 	# selected.
