@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.10 2019/02/12 19:19:13 benno Exp $ */
+/*	$Id: flist.c,v 1.11 2019/02/12 19:33:59 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -610,13 +610,13 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		/* Conditional part: gid. */
 
 		if (sess->opts->preserve_gids) {
-			if ( ! (FLIST_GID_SAME & flag)) {
-				if ( ! io_read_int(sess, fd, &ival)) {
+			if (!(FLIST_GID_SAME & flag)) {
+				if (!io_read_int(sess, fd, &ival)) {
 					ERRX1(sess, "io_read_int");
 					goto out;
 				}
 				ff->st.gid = ival;
-			} else if (NULL == fflast) {
+			} else if (fflast == NULL) {
 				ERRX(sess, "same gid "
 					"without last entry");
 				goto out;
