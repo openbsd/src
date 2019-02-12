@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.5,v 1.3 2019/02/12 18:59:34 benno Exp $
+.\"	$OpenBSD: rsync.5,v 1.4 2019/02/12 19:11:54 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -255,6 +255,20 @@ file's.
 .El
 .Pp
 If the status byte is zero, the file-list has terminated.
+If
+.Fl g
+has been specified, the sender sends the list of all groups encountered
+in the file list:
+.Pp
+.Bl -enum -compact
+.It
+group identifier or zero to indicate end of set (integer)
+.It
+length of group (byte)
+.It
+group name (prior length)
+.El
+.Pp
 The sender then sends any IO error values, which for
 .Xr openrsync 1
 is always zero.
