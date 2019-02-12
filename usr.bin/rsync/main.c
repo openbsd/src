@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.7 2019/02/11 21:44:44 deraadt Exp $ */
+/*	$Id: main.c,v 1.8 2019/02/12 14:00:57 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -286,11 +286,17 @@ main(int argc, char *argv[])
 	int		 fds[2], c, st;
 	struct fargs	*fargs;
 	struct option	 lopts[] = {
-		{ "delete",	no_argument,	&opts.del,	1 },
-		{ "rsync-path",	required_argument, NULL,	1 },
-		{ "sender",	no_argument,	&opts.sender,	1 },
-		{ "server",	no_argument,	&opts.server,	1 },
-		{ NULL,		0,		NULL,		0 }};
+		{ "delete",	no_argument,	&opts.del,		1 },
+		{ "rsync-path",	required_argument, NULL,		1 },
+		{ "sender",	no_argument,	&opts.sender,		1 },
+		{ "server",	no_argument,	&opts.server,		1 },
+		{ "verbose",	no_argument,	&opts.verbose,		1 },
+		{ "links",	no_argument,	&opts.preserve_links,	1 },
+		{ "dry-run",	no_argument,	&opts.dry_run,		1 },
+		{ "perms",	no_argument,	&opts.preserve_perms,	1 },
+		{ "recursive",	no_argument,	&opts.recursive,	1 },
+		{ "times",	no_argument,	&opts.preserve_times,	1 },
+		{ NULL,		0,		NULL,			0 }};
 
 	/* Global pledge. */
 
