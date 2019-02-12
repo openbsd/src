@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: extern.h,v 1.3 2019/02/12 14:07:00 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -96,16 +96,16 @@ struct	flist {
  * See struct fargs.
  */
 struct	opts {
-	int		 sender; /* --sender */
-	int		 server; /* --server */
-	int		 recursive; /* -r */
-	int		 verbose; /* -v */
-	int		 dry_run; /* -n */
-	int		 preserve_times; /* -t */
-	int		 preserve_perms; /* -p */
-	int		 preserve_links; /* -l */
-	int		 del; /* --delete */
-	const char	*rsync_path; /* --rsync-path */
+	int		 sender;		/* --sender */
+	int		 server;		/* --server */
+	int		 recursive;		/* -r */
+	int		 verbose;		/* -v */
+	int		 dry_run;		/* -n */
+	int		 preserve_times;	/* -t */
+	int		 preserve_perms;	/* -p */
+	int		 preserve_links;	/* -l */
+	int		 del;			/* --delete */
+	char		*rsync_path;		/* --rsync-path */
 };
 
 /*

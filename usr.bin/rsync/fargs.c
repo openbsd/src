@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.4 2019/02/11 21:44:44 deraadt Exp $ */
+/*	$Id: fargs.c,v 1.5 2019/02/12 14:07:00 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,7 +29,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 {
 	char		**args;
 	size_t		  i = 0, j, argsz = 0;
-	const char	 *rsync_path;
+	char		 *rsync_path;
 
 	assert(f != NULL);
 	assert(f->sourcesz > 0);
@@ -57,12 +57,12 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 		
 		args[i++] = "ssh";
 		args[i++] = f->host;
-		args[i++] = (char *)rsync_path;
+		args[i++] = rsync_path;
 		args[i++] = "--server";
 		if (f->mode == FARGS_RECEIVER)
 			args[i++] = "--sender";
 	} else {
-		args[i++] = (char *)rsync_path;
+		args[i++] = rsync_path;
 		args[i++] = "--server";
 	}
 
