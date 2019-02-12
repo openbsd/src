@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.94 2019/01/20 23:27:48 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.95 2019/02/12 13:30:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -337,7 +337,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					}
 				}
 			}
-			if (!matched) {
+			if (!matched && peers != NULL) {
 				control_result(c, CTL_RES_NOSUCHPEER);
 			} else if (!neighbor || !neighbor->show_timers) {
 				imsg_ctl_rde(IMSG_CTL_END, imsg.hdr.pid,
@@ -461,7 +461,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			for (p = peers; p != NULL; p = p->next)
 				if (peer_matched(p, neighbor))
 					break;
-			if (p == NULL) {
+			if (p == NULL && peers != NULL) {
 				control_result(c, CTL_RES_NOSUCHPEER);
 				break;
 			}
