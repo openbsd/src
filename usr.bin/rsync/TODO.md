@@ -6,7 +6,9 @@ for information on this topic.
 I've included the specific security porting topics below.
 
 This list also does not include adding support for features (e.g., **-u** and
-so on).
+so on).  The **-a** feature is probably most important, and involves a little
+legwork in the protocol getting **-g** and **-u** passing around file modes.
+I would rate this as easy/medium.
 
 - Easy: speed up the uid/gid mapping/remapping with a simple table.
   Right now, the code in 
@@ -44,5 +46,26 @@ so on).
   with files.
 
 - Hard: the same, but for Linux.
+
+- Hard: make the sender loop use an event handler on incoming and
+  outgoing I/O.  Right now it moves in lockstep and can be considerably
+  more responsive to requests by reading them in immediately instead of
+  having them sit in the receiver queue while it waits for disc IO.
+  This isn't *that* hard.
+
+- Hard: once the sender loop is optimised, the uploader can also queue
+  up block metadata to send on-demand instead of reading in the file
+  then sending, then reading again, then sending.
+
+In general, be careful with the last two.
+The rsync protocol is quite brittle and prone to deadlocking if senders
+or receivers send too much data and clog output buffers.
+So I suppose the hardest point, now that the protocol has been
+documented, is:
+
+- Hardest: make the entire system use a event-loop and loop over
+  buffered data with a fine-grained state machine.
+
+I guess that will wait for openrsync v2.
 
 Above all, `grep FIXME *.c *.h` and start from there.
