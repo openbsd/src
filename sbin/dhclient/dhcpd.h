@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.272 2019/01/26 23:26:20 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.273 2019/02/12 16:50:44 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -109,7 +109,6 @@ struct client_config {
 	time_t			 reboot_timeout;
 	time_t			 backoff_cutoff;
 	TAILQ_HEAD(, reject_elem) reject_list;
-	char			*resolv_tail;
 	char			*filename;
 	char			*server_name;
 };
@@ -242,11 +241,7 @@ void		 read_lease_db(char *, struct client_lease_tq *);
 /* kroute.c */
 unsigned int	 extract_classless_route(uint8_t *, unsigned int,
     in_addr_t *, in_addr_t *, in_addr_t *);
-void		 delete_address(struct in_addr);
-void		 set_resolv_conf(char *, uint8_t *, unsigned int,
-    uint8_t *, unsigned int);
 void		 write_resolv_conf(void);
-void		 set_mtu(int, uint16_t);
-void		 set_address(char *, struct in_addr, struct in_addr);
-void		 set_routes(struct in_addr, struct in_addr, uint8_t *,
-    unsigned int);
+
+void		 propose(struct proposal *);
+void		 revoke_proposal(struct proposal *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.58 2019/01/19 21:07:13 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.59 2019/02/12 16:50:44 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -18,49 +18,38 @@
 
 enum imsg_code {
 	IMSG_NONE,
-	IMSG_DELETE_ADDRESS,
-	IMSG_SET_ADDRESS,
-	IMSG_FLUSH_ROUTES,
-	IMSG_ADD_ROUTE,
-	IMSG_SET_MTU,
-	IMSG_SET_RESOLV_CONF,
-	IMSG_WRITE_RESOLV_CONF
+	IMSG_REVOKE,
+	IMSG_WRITE_RESOLV_CONF,
+	IMSG_PROPOSE
 };
 
-struct imsg_delete_address {
-	struct	in_addr addr;
-};
+#define	RTLEN	128
 
-struct imsg_set_address {
-	struct	in_addr	addr;
-	struct	in_addr mask;
-};
-
-struct imsg_flush_routes {
-	uint8_t		rtstatic[RTSTATIC_LEN];
-	unsigned int	rtstatic_len;
-};
-
-struct imsg_add_route {
-	struct in_addr	dest;
+struct proposal {
+	uint8_t		rtstatic[RTLEN];
+	uint8_t		rtsearch[RTLEN];
+	uint8_t		rtdns[RTLEN];
+	struct in_addr	ifa;
 	struct in_addr	netmask;
-	struct in_addr	gateway;
-	int		flags;
+	unsigned int	rtstatic_len;
+	unsigned int	rtsearch_len;
+	unsigned int	rtdns_len;
+	int		mtu;
+	int		addrs;
+	int		inits;
 };
 
-struct imsg_set_mtu {
-	int	mtu;
+struct imsg_propose {
+	struct proposal		proposal;
+};
+
+struct imsg_revoke {
+	struct proposal		proposal;
 };
 
 void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
-int	default_route_index(int, int);
 
-void	priv_add_route(char *, int, int, struct imsg_add_route *);
-void	priv_flush_routes(int, int, int, struct imsg_flush_routes *);
+void	priv_write_resolv_conf(int, int, int, char *, int *);
+void	priv_propose(char *, int, struct imsg_propose *, char **, int, int, int);
 
-void	priv_write_resolv_conf(char *);
-
-void	priv_delete_address(char *, int, struct imsg_delete_address *);
-void	priv_set_address(char *, int, struct imsg_set_address *);
-
-void	priv_set_mtu(char *, int, struct imsg_set_mtu *);
+void	priv_revoke_proposal(char *, int, struct imsg_revoke *, char **);

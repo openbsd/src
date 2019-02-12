@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.182 2019/01/26 23:26:20 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.183 2019/02/12 16:50:44 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -79,7 +79,6 @@ int	parse_reject_statement(FILE *);
 void	apply_ignore_list(char *);
 void	set_default_client_identifier(struct ether_addr *);
 void	set_default_hostname(void);
-void	read_resolv_conf_tail(void);
 
 void
 init_config(void)
@@ -174,7 +173,6 @@ read_conf(char *name, char *ignore_list, struct ether_addr *hwaddr)
 	set_default_client_identifier(hwaddr);
 	set_default_hostname();
 	apply_ignore_list(ignore_list);
-	read_resolv_conf_tail();
 }
 
 /*
@@ -981,42 +979,5 @@ set_default_hostname(void)
 		if (opt->data == NULL)
 			fatal("default host-name");
 		opt->len = strlen(opt->data);
-	}
-}
-
-void
-read_resolv_conf_tail(void)
-{
-	struct stat		 sb;
-	const char		*tail_path = "/etc/resolv.conf.tail";
-	ssize_t			 tailn;
-	int			 tailfd;
-
-	if (config->resolv_tail != NULL) {
-		free(config->resolv_tail);
-		config->resolv_tail = NULL;
-	}
-
-	tailfd = open(tail_path, O_RDONLY);
-	if (tailfd == -1) {
-		if (errno != ENOENT)
-			fatal("open(%s)", tail_path);
-	} else if (fstat(tailfd, &sb) == -1) {
-		fatal("fstat(%s)", tail_path);
-	} else {
-		if (sb.st_size > 0 && sb.st_size < LLONG_MAX) {
-			config->resolv_tail = calloc(1, sb.st_size + 1);
-			if (config->resolv_tail == NULL) {
-				fatal("%s contents", tail_path);
-			}
-			tailn = read(tailfd, config->resolv_tail, sb.st_size);
-			if (tailn == -1)
-				fatal("read(%s)", tail_path);
-			else if (tailn == 0)
-				fatalx("got no data from %s", tail_path);
-			else if (tailn != sb.st_size)
-				fatalx("short read of %s", tail_path);
-		}
-		close(tailfd);
 	}
 }
