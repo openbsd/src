@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2016/09/25 21:35:12 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2019/02/12 21:31:16 bluhm Exp $
 
 GCC_BUILTINS=	sprintf-1 sprintf-2 sprintf-3 stpcpy-1 stpcpy-2 strcat-1 \
 		strcat-2 strcpy-1 strcpy-2 strncat-1 vsprintf-1 vsprintf-2 \
@@ -22,5 +22,17 @@ generate:
 .PHONY:	${REGRESS_TARGETS} generate regress
 
 NOOBJ= Yes
+
+.include <bsd.own.mk>
+
+.if ${BUILD_GCC3:L} == "yes"
+EXP=            .exp.gcc3
+.elif ${BUILD_GCC4:L} == "yes"
+EXP=            .exp.gcc4
+.else
+regress:
+	@echo neither gcc3 nor gcc4 exists on ${MACHINE_ARCH}
+	@echo SKIPPED
+.endif
 
 .include <bsd.regress.mk>
