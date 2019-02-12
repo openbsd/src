@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.8 2019/02/12 14:00:57 deraadt Exp $ */
+/*	$Id: main.c,v 1.9 2019/02/12 14:09:59 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -288,6 +288,7 @@ main(int argc, char *argv[])
 	struct option	 lopts[] = {
 		{ "delete",	no_argument,	&opts.del,		1 },
 		{ "rsync-path",	required_argument, NULL,		1 },
+		{ "rsh",	required_argument, NULL,		'e' },
 		{ "sender",	no_argument,	&opts.sender,		1 },
 		{ "server",	no_argument,	&opts.server,		1 },
 		{ "verbose",	no_argument,	&opts.verbose,		1 },
@@ -309,6 +310,7 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "e:lnprtv", lopts, NULL)) != -1) {
 		switch (c) {
 		case 'e':
+			opts.ssh_prog = optarg;
 			/* Ignore. */
 			break;
 		case 'l':
@@ -449,7 +451,7 @@ main(int argc, char *argv[])
 	return c ? EXIT_SUCCESS : EXIT_FAILURE;
 usage:
 	fprintf(stderr, "usage: %s [-lnprtv] "
-		"[--delete] [--rsync-path=prog] src ... dst\n",
+		"[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",
 		getprogname());
 	return EXIT_FAILURE;
 }

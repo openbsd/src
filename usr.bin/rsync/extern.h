@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.3 2019/02/12 14:07:00 deraadt Exp $ */
+/*	$Id: extern.h,v 1.4 2019/02/12 14:09:59 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -106,6 +106,7 @@ struct	opts {
 	int		 preserve_links;	/* -l */
 	int		 del;			/* --delete */
 	char		*rsync_path;		/* --rsync-path */
+	char		*ssh_prog;		/* --rsh or -e */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.5 2019/02/12 14:07:00 deraadt Exp $ */
+/*	$Id: fargs.c,v 1.6 2019/02/12 14:09:59 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,13 +29,15 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 {
 	char		**args;
 	size_t		  i = 0, j, argsz = 0;
-	char		 *rsync_path;
+	char		 *rsync_path, *ssh_prog;
 
 	assert(f != NULL);
 	assert(f->sourcesz > 0);
 
 	if ((rsync_path = sess->opts->rsync_path) == NULL)
 		rsync_path = RSYNC_PATH;
+	if ((ssh_prog = sess->opts->ssh_prog) == NULL)
+		ssh_prog = "ssh";
 
 	/* Be explicit with array size. */
 
@@ -55,7 +57,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 	if (f->host != NULL) {
 		assert(f->host != NULL);
 		
-		args[i++] = "ssh";
+		args[i++] = ssh_prog;
 		args[i++] = f->host;
 		args[i++] = rsync_path;
 		args[i++] = "--server";
