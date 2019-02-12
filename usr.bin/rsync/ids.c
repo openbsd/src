@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.3 2019/02/12 19:13:03 benno Exp $ */
+/*	$Id: ids.c,v 1.4 2019/02/12 19:39:57 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -77,13 +77,13 @@ idents_gid_assign(struct sess *sess, struct flist *fl, size_t flsz,
 void
 idents_gid_remap(struct sess *sess, struct ident *gids, size_t gidsz)
 {
-	size_t	 	 i;
+	size_t		 i;
 	struct group	*grp;
 
 	for (i = 0; i < gidsz; i++) {
 		assert(gids[i].id != 0);
 
-		/* 
+		/*
 		 * (1) Empty names inherit.
 		 * (2) Unknown group names inherit.
 		 * (3) Group wheel inherits.
@@ -124,7 +124,7 @@ idents_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
 		if ((*gids)[i].id == (int32_t)gid)
 			return 1;
 
-	/* 
+	/*
 	 * Look us up in /etc/group.
 	 * Make sure that the group name length is sane: we transmit it
 	 * using a single byte.
@@ -157,7 +157,7 @@ idents_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
 		return 0;
 	}
 
-	LOG4(sess, "adding group to list: %s (%u)", 
+	LOG4(sess, "adding group to list: %s (%u)",
 		(*gids)[*gidsz].name, (*gids)[*gidsz].id);
 	(*gidsz)++;
 	return 1;
@@ -170,7 +170,7 @@ idents_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
  * Return zero on failure, non-zero on success.
  */
 int
-idents_send(struct sess *sess, 
+idents_send(struct sess *sess,
 	int fd, const struct ident *ids, size_t idsz)
 {
 	size_t	 i, sz;
@@ -220,8 +220,8 @@ idents_recv(struct sess *sess,
 			return 0;
 		} else if (id == 0)
 			break;
-		
-		pp = reallocarray(*ids, 
+
+		pp = reallocarray(*ids,
 			*idsz + 1, sizeof(struct ident));
 		if (pp == NULL) {
 			ERR(sess, "reallocarray");

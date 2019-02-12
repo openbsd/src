@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.6 2019/02/12 19:13:59 benno Exp $ */
+/*	$Id: downloader.c,v 1.7 2019/02/12 19:39:57 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -568,7 +568,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		goto out;
 	}
 
-	/* 
+	/*
 	 * Conditionally adjust group id.
 	 * FIXME: remember the original file's group id and don't
 	 * reassign it if it's the same.

@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.7 2019/02/12 19:13:03 benno Exp $ */
+/*	$Id: extern.h,v 1.8 2019/02/12 19:39:57 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -302,10 +302,11 @@ int		  sess_stats_send(struct sess *, int);
 int		  sess_stats_recv(struct sess *, int);
 
 void		  idents_free(struct ident *, size_t);
-void		  idents_gid_assign(struct sess *, 
+void		  idents_gid_assign(struct sess *,
 			struct flist *, size_t, const struct ident *, size_t);
 void		  idents_gid_remap(struct sess *, struct ident *, size_t);
-int		  idents_gid_add(struct sess *, struct ident **, size_t *, gid_t);
+int		  idents_gid_add(struct sess *, struct ident **, size_t *,
+			gid_t);
 int		  idents_recv(struct sess *, int, struct ident **, size_t *);
 int		  idents_send(struct sess *, int, const struct ident *, size_t);
 

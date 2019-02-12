@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.7 2019/02/12 18:06:25 benno Exp $ */
+/*	$Id: fargs.c,v 1.8 2019/02/12 19:39:57 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -56,7 +56,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 
 	if (f->host != NULL) {
 		assert(f->host != NULL);
-		
+
 		args[i++] = ssh_prog;
 		args[i++] = f->host;
 		args[i++] = rsync_path;

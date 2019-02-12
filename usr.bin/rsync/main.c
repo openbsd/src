@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.10 2019/02/12 17:58:35 benno Exp $ */
+/*	$Id: main.c,v 1.11 2019/02/12 19:39:57 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -244,7 +244,7 @@ fargs_parse(size_t argc, char *argv[])
 			/* rsync://path */
 			cp += 8;
 			if (strncmp(cp, f->host, len) ||
-			    (cp[len] != '/' && cp[len] != '\0')) 
+			    (cp[len] != '/' && cp[len] != '\0'))
 				errx(EXIT_FAILURE, "different remote "
 					"host: %s", f->sources[i]);
 			memmove(f->sources[i],
@@ -260,7 +260,8 @@ fargs_parse(size_t argc, char *argv[])
 			    (cp[len] != ':' && cp[len] != '\0'))
 				errx(EXIT_FAILURE, "different remote "
 					"host: %s", f->sources[i]);
-			memmove(f->sources[i], f->sources[i] + len + 2, j - len - 1);
+			memmove(f->sources[i], f->sources[i] + len + 2,
+			    j - len - 1);
 		} else if (cp[0] == ':') {
 			/* :path */
 			memmove(f->sources[i], f->sources[i] + 1, j);
