@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.80 2019/02/11 15:44:25 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.81 2019/02/12 09:00:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -502,8 +502,6 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 
 	*rdomain = ifr.ifr_rdomainid;
 	*label = shim.shim_label;
-
-	log_debug("%s: rdomain %u label %u", __func__, *rdomain, *label);
 
 	return (0);
 }
