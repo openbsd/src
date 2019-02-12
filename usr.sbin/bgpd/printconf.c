@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.128 2019/02/11 15:44:25 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.129 2019/02/12 09:00:56 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -394,7 +394,7 @@ print_l3vpn(struct l3vpn *vpn)
 	struct network *n;
 
 	printf("vpn \"%s\" on %s {\n", vpn->descr, vpn->ifmpe);
-	printf("\n\t%s\n", log_rd(vpn->rd));
+	printf("\t%s\n", log_rd(vpn->rd));
 
 	print_l3vpn_targets(&vpn->export, "export-target");
 	print_l3vpn_targets(&vpn->import, "import-target");
