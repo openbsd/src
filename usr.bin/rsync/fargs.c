@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.6 2019/02/12 14:09:59 deraadt Exp $ */
+/*	$Id: fargs.c,v 1.7 2019/02/12 18:06:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,7 +44,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 	argsz += 1;	/* dot separator */
 	argsz += 1;	/* sink file */
 	argsz += 5;	/* per-mode maximum */
-	argsz += 10;	/* shared args */
+	argsz += 11;	/* shared args */
 	argsz += 1;	/* NULL pointer */
 	argsz += f->sourcesz;
 
@@ -70,6 +70,20 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 
 	/* Shared arguments. */
 
+	if (sess->opts->del)
+		args[i++] = "--delete";
+	if (sess->opts->preserve_gids)
+		args[i++] = "-g";
+	if (sess->opts->preserve_links)
+		args[i++] = "-l";
+	if (sess->opts->dry_run)
+		args[i++] = "-n";
+	if (sess->opts->preserve_perms)
+		args[i++] = "-p";
+	if (sess->opts->recursive)
+		args[i++] = "-r";
+	if (sess->opts->preserve_times)
+		args[i++] = "-t";
 	if (sess->opts->verbose > 3)
 		args[i++] = "-v";
 	if (sess->opts->verbose > 2)
@@ -78,18 +92,6 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 		args[i++] = "-v";
 	if (sess->opts->verbose > 0)
 		args[i++] = "-v";
-	if (sess->opts->dry_run)
-		args[i++] = "-n";
-	if (sess->opts->preserve_times)
-		args[i++] = "-t";
-	if (sess->opts->preserve_perms)
-		args[i++] = "-p";
-	if (sess->opts->recursive)
-		args[i++] = "-r";
-	if (sess->opts->preserve_links)
-		args[i++] = "-l";
-	if (sess->opts->del)
-		args[i++] = "--delete";
 
 	/* Terminate with a full-stop for reasons unknown. */
 
