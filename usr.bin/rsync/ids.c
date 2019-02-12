@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.1 2019/02/12 19:08:29 benno Exp $ */
+/*	$Id: ids.c,v 1.2 2019/02/12 19:09:12 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,6 +45,12 @@ idents_free(struct ident *p, size_t sz)
  * identifiers of the same names.
  * Use the remote numeric identifier if we can't find the group OR the
  * group has identifier zero.
+ * FIXME: what happens if we don't find the local group (we should
+ * really warn about this), but the remote group identifier maps into a
+ * different group name for us?
+ * These are pretty unexpected things for rsync to do.
+ * Another FIXME because we shouldn't let that happen even though the
+ * reference rsync does.
  */
 void
 idents_gid_remap(struct sess *sess, struct ident *gids, size_t gidsz)
@@ -59,6 +65,7 @@ idents_gid_remap(struct sess *sess, struct ident *gids, size_t gidsz)
 			gids[i].mapped = gids[i].id;
 		else
 			gids[i].mapped = grp->gr_gid;
+
 		LOG4(sess, "remapped group %s: %" PRId32 " -> %" PRId32,
 			gids[i].name, gids[i].id, gids[i].mapped);
 	}
@@ -203,4 +210,3 @@ idents_recv(struct sess *sess,
 
 	return 1;
 }
-
