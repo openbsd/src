@@ -473,6 +473,58 @@ struct sxiccmu_ccu_bit sun8i_r40_gates[] = {
 	[R40_CLK_USB_PHY2]  = { 0x00cc, 10 },
 };
 
+/* V3s */
+
+#define V3S_CLK_PLL_PERIPH0	9
+#define V3S_CLK_AXI		15
+#define V3S_CLK_AHB1		16
+#define V3S_CLK_APB2		18
+#define V3S_CLK_AHB2		19
+
+#define V3S_CLK_BUS_MMC0	22
+#define V3S_CLK_BUS_MMC1	23
+#define V3S_CLK_BUS_MMC2	24
+#define V3S_CLK_BUS_EMAC	26
+#define V3S_CLK_BUS_EHCI0	30
+#define V3S_CLK_BUS_OHCI0	31
+#define V3S_CLK_BUS_PIO		37
+#define V3S_CLK_BUS_I2C0	38
+#define V3S_CLK_BUS_I2C1	39
+#define V3S_CLK_BUS_UART0	40
+#define V3S_CLK_BUS_UART1	41
+#define V3S_CLK_BUS_UART2	42
+#define V3S_CLK_BUS_EPHY	43
+
+#define V3S_CLK_MMC0		45
+#define V3S_CLK_MMC1		48
+#define V3S_CLK_MMC2		51
+#define V3S_CLK_USB_PHY0	56
+#define V3S_CLK_USB_OHCI0	57
+
+#define V3S_CLK_LOSC		254
+#define V3S_CLK_HOSC		253
+
+struct sxiccmu_ccu_bit sun8i_v3s_gates[] = {
+	[V3S_CLK_BUS_OHCI0] =	{ 0x0060, 29 },
+	[V3S_CLK_BUS_EHCI0] =	{ 0x0060, 26 },
+	[V3S_CLK_BUS_EMAC] =	{ 0x0060, 17, V3S_CLK_AHB2 },
+	[V3S_CLK_BUS_MMC2] =	{ 0x0060, 10 },
+	[V3S_CLK_BUS_MMC1] =	{ 0x0060, 9 },
+	[V3S_CLK_BUS_MMC0] =	{ 0x0060, 8 },
+	[V3S_CLK_BUS_PIO] =	{ 0x0068, 5 },
+	[V3S_CLK_BUS_UART2] =	{ 0x006c, 18, V3S_CLK_APB2 },
+	[V3S_CLK_BUS_UART1] =	{ 0x006c, 17, V3S_CLK_APB2 },
+	[V3S_CLK_BUS_UART0] =	{ 0x006c, 16, V3S_CLK_APB2 },
+	[V3S_CLK_BUS_I2C1] =	{ 0x006c, 1, V3S_CLK_APB2 },
+	[V3S_CLK_BUS_I2C0] =	{ 0x006c, 0, V3S_CLK_APB2 },
+	[V3S_CLK_BUS_EPHY] =	{ 0x0070, 0 },
+	[V3S_CLK_MMC0] =	{ 0x0088, 31 },
+	[V3S_CLK_MMC1] =	{ 0x008c, 31 },
+	[V3S_CLK_MMC2] =	{ 0x0090, 31 },
+	[V3S_CLK_USB_OHCI0] =	{ 0x00cc, 16 },
+	[V3S_CLK_USB_PHY0] =	{ 0x00cc, 8 },
+};
+
 /*
  * Reset Signals
  */
@@ -726,4 +778,37 @@ struct sxiccmu_ccu_bit sun8i_r40_resets[] = {
 	[R40_RST_BUS_UART5] = { 0x02d8, 21 },
 	[R40_RST_BUS_UART6] = { 0x02d8, 22 },
 	[R40_RST_BUS_UART7] = { 0x02d8, 23 },
+};
+
+/* V3s */
+
+#define V3S_RST_USB_PHY0	0
+
+#define V3S_RST_BUS_MMC0	7
+#define V3S_RST_BUS_MMC1	8
+#define V3S_RST_BUS_MMC2	9
+#define V3S_RST_BUS_EMAC	12
+#define V3S_RST_BUS_EHCI0	18
+#define V3S_RST_BUS_OHCI0	22
+#define V3S_RST_BUS_EPHY	39
+#define V3S_RST_BUS_I2C0	46
+#define V3S_RST_BUS_I2C1	47
+#define V3S_RST_BUS_UART0	49
+#define V3S_RST_BUS_UART1	50
+#define V3S_RST_BUS_UART2	51
+
+struct sxiccmu_ccu_bit sun8i_v3s_resets[] = {
+	[V3S_RST_USB_PHY0] =	{ 0x00cc, 0 },
+	[V3S_RST_BUS_OHCI0] =	{ 0x02c0, 29 },
+	[V3S_RST_BUS_EHCI0] =	{ 0x02c0, 26 },
+	[V3S_RST_BUS_EMAC] =	{ 0x02c0, 17 },
+	[V3S_RST_BUS_MMC2] =	{ 0x02c0, 10 },
+	[V3S_RST_BUS_MMC1] =	{ 0x02c0, 9 },
+	[V3S_RST_BUS_MMC0] =	{ 0x02c0, 8 },
+	[V3S_RST_BUS_EPHY] =	{ 0x02c8, 2 },
+	[V3S_RST_BUS_UART2] =	{ 0x02d8, 18 },
+	[V3S_RST_BUS_UART1] =	{ 0x02d8, 17 },
+	[V3S_RST_BUS_UART0] =	{ 0x02d8, 16 },
+	[V3S_RST_BUS_I2C1] =	{ 0x02d8, 1 },
+	[V3S_RST_BUS_I2C0] =	{ 0x02d8, 0 },
 };
