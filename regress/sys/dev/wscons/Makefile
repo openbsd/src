@@ -1,8 +1,13 @@
-# $OpenBSD: Makefile,v 1.7 2019/02/01 07:15:01 anton Exp $
+# $OpenBSD: Makefile,v 1.8 2019/02/12 22:26:15 bluhm Exp $
 
 WARNINGS=	yes
 
 DEVICES=	wskbd0 wsmouse0 wskbd
+.for d in ${DEVICES}
+HAVE_${d} ?!= if dd if=/dev/${d} count=0 status=none; \
+    then echo yes; else echo no; fi
+MAKE := HAVE_${d}="${HAVE_${d}}" ${MAKE}
+.endfor
 
 PROG_sigio=	sigio
 PROGS+=		${PROG_sigio}
@@ -26,7 +31,12 @@ IGNORE_sigio+=	wsmouse0-sigio
 REGRESS_TARGETS+=	${PROG_sigio}-$d-$t
 ${PROG_sigio}-$d-$t: ${PROG_sigio}
 	@echo "\n======== ${@} ========"
+.      if ${HAVE_${d}:L} == "yes"
 	./${PROG_sigio} -d /dev/$d $t
+.      else
+	# no access to device ${d} on this machine
+	@echo SKIPPED
+.      endif
 .    endif
 .  endfor
 .endfor
@@ -42,7 +52,12 @@ TESTS_wscons+=	ioctl-unknown
 REGRESS_TARGETS+=	${PROG_wscons}-$d-$t
 ${PROG_wscons}-$d-$t: ${PROG_wscons}
 	@echo "\n======== ${@} ========"
+.    if ${HAVE_${d}:L} == "yes"
 	./${PROG_wscons} -d /dev/$d $t
+.    else
+	# device ${d} does not exists on this machine
+	@echo SKIPPED
+.    endif
 .  endfor
 .endfor
 
