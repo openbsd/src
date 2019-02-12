@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.5 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: socket.c,v 1.6 2019/02/12 19:20:15 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -267,7 +267,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	/* Drop the DNS pledge. */
 
-	if (pledge("stdio rpath wpath cpath fattr inet unveil", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath fattr getpw inet unveil", NULL) == -1) {
 		ERR(&sess, "pledge");
 		goto out;
 	}
@@ -288,7 +288,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	}
 
 	/* Drop the inet pledge. */
-	if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath fattr getpw unveil", NULL) == -1) {
 		ERR(&sess, "pledge");
 		goto out;
 	}
