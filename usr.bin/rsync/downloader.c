@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: downloader.c,v 1.5 2019/02/12 19:10:28 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -566,6 +566,18 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	} else if (memcmp(md, ourmd, MD4_DIGEST_LENGTH)) {
 		ERRX(sess, "%s: hash does not match", p->fname);
 		goto out;
+	}
+
+	if (sess->opts->preserve_gids) {
+		if (fchown(p->fd, -1, f->st.gid) == -1) {
+			if (errno != EPERM) {
+				ERR(sess, "%s: fchown", p->fname);
+				goto out;
+			}
+			WARNX(sess, "%s: gid not available to user: %u",
+				f->path, f->st.gid);
+		} else
+			LOG4(sess, "%s: updated gid", f->path);
 	}
 
 	/* Conditionally adjust file modification time. */
