@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.5 2019/02/12 18:06:25 benno Exp $ */
+/*	$Id: extern.h,v 1.6 2019/02/12 19:04:52 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -151,6 +151,15 @@ struct	sess {
 	int		   mplex_writes; /* multiplexing writes? */
 };
 
+/*
+ * Combination of name and numeric id for groups and users.
+ */
+struct	ident {
+	int32_t	 id; /* the gid_t or uid_t */
+	int32_t	 mapped; /* if receiving, the mapped gid */
+	char	*name; /* resolved name */
+};
+
 struct	download;
 struct	upload;
 
@@ -291,6 +300,12 @@ char		 *symlinkat_read(struct sess *, int, const char *);
 
 int		  sess_stats_send(struct sess *, int);
 int		  sess_stats_recv(struct sess *, int);
+
+void		  idents_free(struct ident *, size_t);
+void		  idents_gid_remap(struct sess *, struct ident *, size_t);
+int		  idents_gid_add(struct sess *, struct ident **, size_t *, gid_t);
+int		  idents_send(struct sess *, int, const struct ident *, size_t);
+int		  idents_recv(struct sess *, int, struct ident **, size_t *);
 
 __END_DECLS
 
