@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.5 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: flist.c,v 1.6 2019/02/12 18:59:34 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,6 +43,7 @@
  * information that affects subsequent transmissions.
  */
 #define FLIST_MODE_SAME  0x0002 /* mode is repeat */
+#define	FLIST_GID_SAME	 0x0010 /* gid is repeat */
 #define	FLIST_NAME_SAME  0x0020 /* name is repeat */
 #define FLIST_NAME_LONG	 0x0040 /* name >255 bytes */
 #define FLIST_TIME_SAME  0x0080 /* time is repeat */
@@ -306,7 +307,15 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 			return 0;
 		}
 
-		/* Optional link information. */
+		/* Conditional part: gid. */
+
+		if (sess->opts->preserve_gids &&
+		    ! io_write_int(sess, fdout, f->st.gid)) {
+			ERRX1(sess, "io_write_int");
+			return 0;
+		}
+
+		/* Conditional part: link. */
 
 		if (S_ISLNK(f->st.mode) &&
 		    sess->opts->preserve_links) {
@@ -575,7 +584,24 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		} else
 			ff->st.mode = fflast->st.mode;
 
-		/* Optionally read the link information. */
+		/* Conditional part: gid. */
+
+		if (sess->opts->preserve_gids) {
+			if ( ! (FLIST_GID_SAME & flag)) {
+				if ( ! io_read_int(sess, fd, &ival)) {
+					ERRX1(sess, "io_read_int");
+					goto out;
+				}
+				ff->st.gid = ival;
+			} else if (NULL == fflast) {
+				ERRX(sess, "same gid "
+					"without last entry");
+				goto out;
+			} else
+				ff->st.gid = fflast->st.gid;
+		}
+
+		/* Conditional part: link. */
 
 		if (S_ISLNK(ff->st.mode) &&
 		    sess->opts->preserve_links) {

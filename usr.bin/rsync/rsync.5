@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.5,v 1.2 2019/02/10 23:24:14 benno Exp $
+.\"	$OpenBSD: rsync.5,v 1.3 2019/02/12 18:59:34 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 10 2019 $
+.Dd $Mdocdate: February 12 2019 $
 .Dt RSYNC 5
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@ flags.
 These will be noted as
 .Fl n
 for dry-run,
+.Fl g
+for group ids,
 .Fl l
 for links,
 .Fl r
@@ -218,6 +220,10 @@ file modification time (optional, time_t, integer)
 .It
 file mode (optional, mode_t, integer)
 .It
+if
+.Fl g ,
+the group id (integer)
+.It
 if a symbolic link and
 .Fl l ,
 the link target's length (integer)
@@ -233,6 +239,10 @@ of the optional fields are transmitted.
 .Bl -tag -compact -width Ds
 .It 0x02
 Do not send the file mode: it is a repeat of the last file's mode.
+.It 0x10
+Like
+.Li 0x02 ,
+but for the group id.
 .It 0x20
 Inherit some of the prior file name.
 Enables the inherited filename length transmission.
