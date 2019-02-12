@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.5 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: receiver.c,v 1.6 2019/02/12 17:58:35 benno Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -58,7 +58,7 @@ rsync_receiver(struct sess *sess,
 	struct upload	*ul = NULL;
 	mode_t		 oumask;
 
-	if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath fattr getpw unveil", NULL) == -1) {
 		ERR(sess, "pledge");
 		goto out;
 	}

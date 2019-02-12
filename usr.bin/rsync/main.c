@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.9 2019/02/12 14:09:59 deraadt Exp $ */
+/*	$Id: main.c,v 1.10 2019/02/12 17:58:35 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -301,17 +301,20 @@ main(int argc, char *argv[])
 
 	/* Global pledge. */
 
-	if (pledge("stdio rpath wpath cpath inet fattr dns proc exec unveil",
+	if (pledge("stdio rpath wpath cpath inet fattr dns getpw proc exec unveil",
 	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	memset(&opts, 0, sizeof(struct opts));
 
-	while ((c = getopt_long(argc, argv, "e:lnprtv", lopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "e:glnprtv", lopts, NULL)) != -1) {
 		switch (c) {
 		case 'e':
 			opts.ssh_prog = optarg;
 			/* Ignore. */
+			break;
+		case 'g':
+			opts.preserve_gids = 1;
 			break;
 		case 'l':
 			opts.preserve_links = 1;
@@ -384,7 +387,7 @@ main(int argc, char *argv[])
 
 	if (fargs->remote) {
 		assert(fargs->mode == FARGS_RECEIVER);
-		if (pledge("stdio rpath wpath cpath inet fattr dns unveil",
+		if (pledge("stdio rpath wpath cpath inet fattr dns getpw unveil",
 		    NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_socket(&opts, fargs);
@@ -394,7 +397,7 @@ main(int argc, char *argv[])
 
 	/* Drop the dns/inet possibility. */
 
-	if (pledge("stdio rpath wpath cpath fattr proc exec unveil",
+	if (pledge("stdio rpath wpath cpath fattr getpw proc exec unveil",
 	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
@@ -411,7 +414,7 @@ main(int argc, char *argv[])
 
 	/* Drop the fork possibility. */
 
-	if (pledge("stdio rpath wpath cpath fattr exec unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	if (child == 0) {
@@ -425,7 +428,7 @@ main(int argc, char *argv[])
 
 	close(fds[1]);
 	fds[1] = -1;
-	if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 	c = rsync_client(&opts, fds[0], fargs);
 	fargs_free(fargs);
@@ -450,7 +453,7 @@ main(int argc, char *argv[])
 		close(fds[0]);
 	return c ? EXIT_SUCCESS : EXIT_FAILURE;
 usage:
-	fprintf(stderr, "usage: %s [-lnprtv] "
+	fprintf(stderr, "usage: %s [-glnprtv] "
 		"[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",
 		getprogname());
 	return EXIT_FAILURE;

@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.5 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: sender.c,v 1.6 2019/02/12 17:58:35 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ rsync_sender(struct sess *sess, int fdin,
 	int32_t		 idx;
 	struct blkset	*blks = NULL;
 
-	if (pledge("stdio rpath unveil", NULL) == -1) {
+	if (pledge("stdio getpw rpath unveil", NULL) == -1) {
 		ERR(sess, "pledge");
 		return 0;
 	}
