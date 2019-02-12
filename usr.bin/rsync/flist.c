@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.9 2019/02/12 19:13:03 benno Exp $ */
+/*	$Id: flist.c,v 1.10 2019/02/12 19:19:13 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -733,7 +733,8 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		if (!flist_append(sess, f, &st, root)) {
 			ERRX1(sess, "flist_append");
 			return 0;
-		} else if (unveil(root, "r") == -1) {
+		}
+		if (unveil(root, "r") == -1) {
 			ERR(sess, "%s: unveil", root);
 			return 0;
 		}
@@ -752,7 +753,8 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		if (!flist_append(sess, f, &st, root)) {
 			ERRX1(sess, "flist_append");
 			return 0;
-		} else if (unveil(root, "r") == -1) {
+		}
+		if (unveil(root, "r") == -1) {
 			ERR(sess, "%s: unveil", root);
 			return 0;
 		}
@@ -855,7 +857,8 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 	if (errno) {
 		ERR(sess, "fts_read");
 		goto out;
-	} else if (unveil(root, "r") == -1) {
+	}
+	if (unveil(root, "r") == -1) {
 		ERR(sess, "%s: unveil", root);
 		goto out;
 	}
@@ -955,7 +958,8 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 		if (unveil(argv[i], "r") == -1) {
 			ERR(sess, "%s: unveil", argv[i]);
 			goto out;
-		} else if (!flist_append(sess, f, &st, argv[i])) {
+		}
+		if (!flist_append(sess, f, &st, argv[i])) {
 			ERRX1(sess, "flist_append");
 			goto out;
 		}
@@ -996,7 +1000,8 @@ flist_gen(struct sess *sess, size_t argc, char **argv, struct flist **flp,
 	if (unveil(NULL, NULL) == -1) {
 		ERR(sess, "unveil");
 		return 0;
-	} else if (!rc)
+	}
+	if (!rc)
 		return 0;
 
 	qsort(*flp, *sz, sizeof(struct flist), flist_cmp);
