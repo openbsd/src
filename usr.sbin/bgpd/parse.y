@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.370 2019/02/11 15:44:25 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.371 2019/02/12 09:02:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1047,8 +1047,9 @@ l3vpn		: VPN STRING ON STRING			{
 			u_int rdomain, label;
 
 			if (get_mpe_config($4, &rdomain, &label) == -1) {
-				yyerror("troubles getting config of %s", $4);
 				if ((cmd_opts & BGPD_OPT_NOACTION) == 0) {
+					yyerror("troubles getting config of %s",
+					    $4);
 					free($4);
 					free($2);
 					YYERROR;
