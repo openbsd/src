@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.8 2019/02/12 19:04:52 benno Exp $ */
+/*	$Id: flist.c,v 1.9 2019/02/12 19:13:03 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -540,7 +540,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	struct flist	*fl = NULL;
 	struct flist	*ff;
 	const struct flist *fflast = NULL;
-	size_t		 i, j, flsz = 0, flmax = 0, lsz, gidsz = 0;
+	size_t		 flsz = 0, flmax = 0, lsz, gidsz = 0;
 	uint8_t		 flag;
 	char		 last[MAXPATHLEN];
 	uint64_t	 lval; /* temporary values... */
@@ -666,7 +666,6 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 			goto out;
 		}
 		LOG2(sess, "received gid list: %zu", gidsz);
-		idents_gid_remap(sess, gids, gidsz);
 	}
 
 	/* Remember to order the received list. */
@@ -677,16 +676,11 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	*sz = flsz;
 	*flp = fl;
 
-	/* Lastly, reassign group identifiers. */
+	/* Lastly, remap and reassign group identifiers. */
 
 	if (sess->opts->preserve_gids) {
-		for (i = 0; i < flsz; i++) {
-			for (j = 0; j < gidsz; j++)
-				if ((int32_t)fl[i].st.gid == gids[j].id)
-					break;
-			assert(j < gidsz);
-			fl[i].st.gid = gids[j].mapped;
-		}
+		idents_gid_remap(sess, gids, gidsz);
+		idents_gid_assign(sess, fl, flsz, gids, gidsz);
 	}
 
 	idents_free(gids, gidsz);

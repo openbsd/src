@@ -8,6 +8,12 @@ I've included the specific security porting topics below.
 This list also does not include adding support for features (e.g., **-u** and
 so on).
 
+- Easy: speed up the uid/gid mapping/remapping with a simple table.
+  Right now, the code in 
+  [ids.c](https://github.com/kristapsdz/openrsync/blob/master/ids.c)
+  is simple, but could easily bottleneck with a large number of groups
+  and files with **-g**.
+
 - Easy: add a hashtable to `blk_find()` in
   [blocks.c](https://github.com/kristapsdz/openrsync/blob/master/blocks.c)
   for quickly looking up fast-hash matches.

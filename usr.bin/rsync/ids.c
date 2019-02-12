@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.2 2019/02/12 19:09:12 benno Exp $ */
+/*	$Id: ids.c,v 1.3 2019/02/12 19:13:03 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,11 +33,33 @@ idents_free(struct ident *p, size_t sz)
 {
 	size_t	 i;
 
-	if (NULL == p)
+	if (p == NULL)
 		return;
 	for (i = 0; i < sz; i++)
 		free(p[i].name);
 	free(p);
+}
+
+/*
+ * Given a list of files with the groups as set by the sender, re-assign
+ * the groups from the list of remapped group identifiers.
+ * Don't ever remap group wheel.
+ */
+void
+idents_gid_assign(struct sess *sess, struct flist *fl, size_t flsz,
+	const struct ident *gids, size_t gidsz)
+{
+	size_t	 i, j;
+
+	for (i = 0; i < flsz; i++) {
+		if (0 == fl[i].st.gid)
+			continue;
+		for (j = 0; j < gidsz; j++)
+			if ((int32_t)fl[i].st.gid == gids[j].id)
+				break;
+		assert(j < gidsz);
+		fl[i].st.gid = gids[j].mapped;
+	}
 }
 
 /*
@@ -59,9 +81,20 @@ idents_gid_remap(struct sess *sess, struct ident *gids, size_t gidsz)
 	struct group	*grp;
 
 	for (i = 0; i < gidsz; i++) {
-		if (NULL == (grp = getgrnam(gids[i].name)))
+		assert(gids[i].id != 0);
+
+		/* 
+		 * (1) Empty names inherit.
+		 * (2) Unknown group names inherit.
+		 * (3) Group wheel inherits.
+		 * (4) Otherwise, use the local identifier.
+		 */
+
+		if (gids[i].name[0] == '\0')
 			gids[i].mapped = gids[i].id;
-		else if (0 == grp->gr_gid)
+		else if ((grp = getgrnam(gids[i].name)) == NULL)
+			gids[i].mapped = gids[i].id;
+		else if (grp->gr_gid == 0)
 			gids[i].mapped = gids[i].id;
 		else
 			gids[i].mapped = grp->gr_gid;
@@ -74,6 +107,7 @@ idents_gid_remap(struct sess *sess, struct ident *gids, size_t gidsz)
 /*
  * If "gid" is not part of the list of known groups, add it.
  * This also verifies that the group name isn't too long.
+ * Does nothing with group zero.
  * Return zero on failure, non-zero on success.
  */
 int
@@ -82,6 +116,9 @@ idents_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
 	struct group	*grp;
 	size_t		 i, sz;
 	void		*pp;
+
+	if (gid == 0)
+		return 1;
 
 	for (i = 0; i < *gidsz; i++)
 		if ((*gids)[i].id == (int32_t)gid)
@@ -94,13 +131,13 @@ idents_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
 	 */
 
 	assert(i == *gidsz);
-	if (NULL == (grp = getgrgid(gid))) {
+	if ((grp = getgrgid(gid)) == NULL) {
 		ERR(sess, "%u: unknown gid", gid);
 		return 0;
 	} else if ((sz = strlen(grp->gr_name)) > UINT8_MAX) {
 		ERRX(sess, "%u: group name too long: %s", gid, grp->gr_name);
 		return 0;
-	} else if (0 == sz) {
+	} else if (sz == 0) {
 		ERRX(sess, "%u: group name zero-length", gid);
 		return 0;
 	}
@@ -108,7 +145,7 @@ idents_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
 	/* Add the group to the array. */
 
 	pp = reallocarray(*gids, *gidsz + 1, sizeof(struct ident));
-	if (NULL == pp) {
+	if (pp == NULL) {
 		ERR(sess, "reallocarray");
 		return 0;
 	}
@@ -139,7 +176,8 @@ idents_send(struct sess *sess,
 	size_t	 i, sz;
 
 	for (i = 0; i < idsz; i++) {
-		assert(NULL != ids[i].name);
+		assert(ids[i].name != NULL);
+		assert(ids[i].id != 0);
 		sz = strlen(ids[i].name);
 		assert(sz > 0 && sz <= UINT8_MAX);
 		if (!io_write_int(sess, fd, ids[i].id)) {
@@ -180,24 +218,35 @@ idents_recv(struct sess *sess,
 		if (!io_read_int(sess, fd, &id)) {
 			ERRX1(sess, "io_read_int");
 			return 0;
-		} else if (0 == id)
+		} else if (id == 0)
 			break;
 		
 		pp = reallocarray(*ids, 
 			*idsz + 1, sizeof(struct ident));
-		if (NULL == pp) {
+		if (pp == NULL) {
 			ERR(sess, "reallocarray");
 			return 0;
 		}
 		*ids = pp;
 		memset(&(*ids)[*idsz], 0, sizeof(struct ident));
+
+		/*
+		 * When reading the size, warn if we get a group size of
+		 * zero.
+		 * The spec doesn't allow this, but we might have a
+		 * noncomformant or adversarial sender.
+		 */
+
 		if (!io_read_byte(sess, fd, &sz)) {
 			ERRX1(sess, "io_read_byte");
 			return 0;
-		}
+		} else if (0 == sz)
+			WARNX(sess, "zero-length group name "
+				"in group list");
+
 		(*ids)[*idsz].id = id;
 		(*ids)[*idsz].name = calloc(sz + 1, 1);
-		if (NULL == (*ids)[*idsz].name) {
+		if ((*ids)[*idsz].name == NULL) {
 			ERR(sess, "calloc");
 			return 0;
 		}
