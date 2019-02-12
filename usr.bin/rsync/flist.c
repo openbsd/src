@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.6 2019/02/12 18:59:34 benno Exp $ */
+/*	$Id: flist.c,v 1.7 2019/02/12 19:02:06 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,8 +20,9 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <fts.h>
+#include <grp.h>
+#include <inttypes.h>
 #include <search.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +48,110 @@
 #define	FLIST_NAME_SAME  0x0020 /* name is repeat */
 #define FLIST_NAME_LONG	 0x0040 /* name >255 bytes */
 #define FLIST_TIME_SAME  0x0080 /* time is repeat */
+
+/*
+ * Combination of name and numeric id for groups and users.
+ */
+struct	ident {
+	int32_t	 id; /* the gid_t or uid_t */
+	int32_t	 mapped; /* if receiving, the mapped gid */
+	char	*name; /* resolved name */
+};
+
+/*
+ * Free a list of struct ident previously allocated with flist_gid_add().
+ * Does nothing if the pointer is NULL.
+ */
+static void
+flist_ident_free(struct ident *p, size_t sz)
+{
+	size_t	 i;
+
+	if (NULL == p)
+		return;
+	for (i = 0; i < sz; i++)
+		free(p[i].name);
+	free(p);
+}
+
+/*
+ * Given a list of groups from the remote host, fill in our local
+ * identifiers of the same names.
+ * Use the remote numeric identifier if we can't find the group OR the
+ * group has identifier zero.
+ */
+static void
+flist_gid_remap(struct sess *sess, struct ident *gids, size_t gidsz)
+{
+	size_t	 	 i;
+	struct group	*grp;
+
+	for (i = 0; i < gidsz; i++) {
+		if (NULL == (grp = getgrnam(gids[i].name)))
+			gids[i].mapped = gids[i].id;
+		else if (0 == grp->gr_gid)
+			gids[i].mapped = gids[i].id;
+		else
+			gids[i].mapped = grp->gr_gid;
+		LOG4(sess, "remapped group %s: %" PRId32 " -> %" PRId32,
+			gids[i].name, gids[i].id, gids[i].mapped);
+	}
+}
+
+/*
+ * If "gid" is not part of the list of known groups, add it.
+ * This also verifies that the group name isn't too long.
+ * Return zero on failure, non-zero on success.
+ */
+static int
+flist_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
+{
+	struct group	*grp;
+	size_t		 i, sz;
+	void		*pp;
+
+	for (i = 0; i < *gidsz; i++)
+		if ((*gids)[i].id == (int32_t)gid)
+			return 1;
+
+	/* 
+	 * Look us up in /etc/group.
+	 * Make sure that the group name length is sane: we transmit it
+	 * using a single byte.
+	 */
+
+	assert(i == *gidsz);
+	if (NULL == (grp = getgrgid(gid))) {
+		ERR(sess, "%u: unknown gid", gid);
+		return 0;
+	} else if ((sz = strlen(grp->gr_name)) > UINT8_MAX) {
+		ERRX(sess, "%u: group name too long: %s", gid, grp->gr_name);
+		return 0;
+	} else if (0 == sz) {
+		ERRX(sess, "%u: group name zero-length", gid);
+		return 0;
+	}
+
+	/* Add the group to the array. */
+
+	pp = reallocarray(*gids, *gidsz + 1, sizeof(struct ident));
+	if (NULL == pp) {
+		ERR(sess, "reallocarray");
+		return 0;
+	}
+	*gids = pp;
+	(*gids)[*gidsz].id = gid;
+	(*gids)[*gidsz].name = strdup(grp->gr_name);
+	if (NULL == (*gids)[*gidsz].name) {
+		ERR(sess, "strdup");
+		return 0;
+	}
+
+	LOG4(sess, "adding group to list: %s (%u)", 
+		(*gids)[*gidsz].name, (*gids)[*gidsz].id);
+	(*gidsz)++;
+	return 1;
+}
 
 /*
  * Requied way to sort a filename list.
@@ -232,6 +337,42 @@ flist_free(struct flist *f, size_t sz)
 }
 
 /*
+ * Send a list of struct ident.
+ * See flist_recv_ident().
+ * We should only do this if we're preserving gids/uids.
+ * Return zero on failure, non-zero on success.
+ */
+static int
+flist_send_ident(struct sess *sess, 
+	int fd, const struct ident *ids, size_t idsz)
+{
+	size_t	 i, sz;
+
+	for (i = 0; i < idsz; i++) {
+		assert(NULL != ids[i].name);
+		sz = strlen(ids[i].name);
+		assert(sz > 0 && sz <= UINT8_MAX);
+		if (!io_write_int(sess, fd, ids[i].id)) {
+			ERRX1(sess, "io_write_int");
+			return 0;
+		} else if (!io_write_byte(sess, fd, sz)) {
+			ERRX1(sess, "io_write_byte");
+			return 0;
+		} else if (!io_write_buf(sess, fd, ids[i].name, sz)) {
+			ERRX1(sess, "io_write_byte");
+			return 0;
+		}
+	}
+
+	if (!io_write_int(sess, fd, 0)) {
+		ERRX1(sess, "io_write_int");
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
  * Serialise our file list (which may be zero-length) to the wire.
  * Makes sure that the receiver isn't going to block on sending us
  * return messages on the log channel.
@@ -241,10 +382,12 @@ int
 flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
     size_t flsz)
 {
-	size_t		 i, fnlen;
+	size_t		 i, sz, gidsz = 0;
 	uint8_t		 flag;
 	const struct flist *f;
 	const char	*fn;
+	struct ident	*gids = NULL;
+	int		 rc = 0;
 
 	/* Double-check that we've no pending multiplexed data. */
 
@@ -253,8 +396,8 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 	for (i = 0; i < flsz; i++) {
 		f = &fl[i];
 		fn = f->wpath;
-		fnlen = strlen(f->wpath);
-		assert(fnlen > 0);
+		sz = strlen(f->wpath);
+		assert(sz > 0);
 
 		/*
 		 * If applicable, unclog the read buffer.
@@ -267,7 +410,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		    io_read_check(sess, fdin) &&
 		     !io_read_flush(sess, fdin)) {
 			ERRX1(sess, "io_read_flush");
-			return 0;
+			goto out;
 		}
 
 		/*
@@ -289,30 +432,35 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 
 		if (!io_write_byte(sess, fdout, flag)) {
 			ERRX1(sess, "io_write_byte");
-			return 0;
-		} else if (!io_write_int(sess, fdout, fnlen)) {
+			goto out;
+		} else if (!io_write_int(sess, fdout, sz)) {
 			ERRX1(sess, "io_write_int");
-			return 0;
-		} else if (!io_write_buf(sess, fdout, fn, fnlen)) {
+			goto out;
+		} else if (!io_write_buf(sess, fdout, fn, sz)) {
 			ERRX1(sess, "io_write_buf");
-			return 0;
+			goto out;
 		} else if (!io_write_long(sess, fdout, f->st.size)) {
 			ERRX1(sess, "io_write_long");
-			return 0;
+			goto out;
 		} else if (!io_write_int(sess, fdout, f->st.mtime)) {
 			ERRX1(sess, "io_write_int");
-			return 0;
+			goto out;
 		} else if (!io_write_int(sess, fdout, f->st.mode)) {
 			ERRX1(sess, "io_write_int");
-			return 0;
+			goto out;
 		}
 
 		/* Conditional part: gid. */
 
-		if (sess->opts->preserve_gids &&
-		    ! io_write_int(sess, fdout, f->st.gid)) {
-			ERRX1(sess, "io_write_int");
-			return 0;
+		if (sess->opts->preserve_gids) {
+			if (!io_write_int(sess, fdout, f->st.gid)) {
+				ERRX1(sess, "io_write_int");
+				goto out;
+			} 
+			if (!flist_gid_add(sess, &gids, &gidsz, f->st.gid)) {
+				ERRX1(sess, "flist_gid_add");
+				goto out;
+			}
 		}
 
 		/* Conditional part: link. */
@@ -320,14 +468,14 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		if (S_ISLNK(f->st.mode) &&
 		    sess->opts->preserve_links) {
 			fn = f->link;
-			fnlen = strlen(f->link);
-			if (!io_write_int(sess, fdout, fnlen)) {
+			sz = strlen(f->link);
+			if (!io_write_int(sess, fdout, sz)) {
 				ERRX1(sess, "io_write_int");
-				return 0;
+				goto out;
 			}
-			if (!io_write_buf(sess, fdout, fn, fnlen)) {
+			if (!io_write_buf(sess, fdout, fn, sz)) {
 				ERRX1(sess, "io_write_int");
-				return 0;
+				goto out;
 			}
 		}
 
@@ -335,12 +483,27 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 			sess->total_size += f->st.size;
 	}
 
+	/* Signal end of file list. */
+
 	if (!io_write_byte(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_byte");
-		return 0;
+		goto out;
 	}
 
-	return 1;
+	/* Conditionally write gid list and terminator. */
+
+	if (sess->opts->preserve_gids) {
+		LOG2(sess, "sending gid list: %zu", gidsz);
+		if (!flist_send_ident(sess, fdout, gids, gidsz)) {
+			ERRX1(sess, "flist_send_ident");
+			goto out;
+		}
+	}
+
+	rc = 1;
+out:
+	flist_ident_free(gids, gidsz);
+	return rc;
 }
 
 /*
@@ -508,6 +671,55 @@ flist_append(struct sess *sess, struct flist *f, struct stat *st,
 }
 
 /*
+ * Receive a list of struct ident.
+ * See flist_send_ident().
+ * We should only do this if we're preserving gids/uids.
+ * Return zero on failure, non-zero on success.
+ */
+static int
+flist_recv_ident(struct sess *sess,
+	int fd, struct ident **ids, size_t *idsz)
+{
+	int32_t	 id;
+	uint8_t	 sz;
+	void	*pp;
+
+	for (;;) {
+		if (!io_read_int(sess, fd, &id)) {
+			ERRX1(sess, "io_read_int");
+			return 0;
+		} else if (0 == id)
+			break;
+		
+		pp = reallocarray(*ids, 
+			*idsz + 1, sizeof(struct ident));
+		if (NULL == pp) {
+			ERR(sess, "reallocarray");
+			return 0;
+		}
+		*ids = pp;
+		memset(&(*ids)[*idsz], 0, sizeof(struct ident));
+		if (!io_read_byte(sess, fd, &sz)) {
+			ERRX1(sess, "io_read_byte");
+			return 0;
+		}
+		(*ids)[*idsz].id = id;
+		(*ids)[*idsz].name = calloc(sz + 1, 1);
+		if (NULL == (*ids)[*idsz].name) {
+			ERR(sess, "calloc");
+			return 0;
+		}
+		if (!io_read_buf(sess, fd, (*ids)[*idsz].name, sz)) {
+			ERRX1(sess, "io_read_buf");
+			return 0;
+		}
+		(*idsz)++;
+	}
+
+	return 1;
+}
+
+/*
  * Receive a file list from the wire, filling in length "sz" (which may
  * possibly be zero) and list "flp" on success.
  * Return zero on failure, non-zero on success.
@@ -518,11 +730,12 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	struct flist	*fl = NULL;
 	struct flist	*ff;
 	const struct flist *fflast = NULL;
-	size_t		 flsz = 0, flmax = 0, lsz;
+	size_t		 i, j, flsz = 0, flmax = 0, lsz, gidsz = 0;
 	uint8_t		 flag;
 	char		 last[MAXPATHLEN];
 	uint64_t	 lval; /* temporary values... */
 	int32_t		 ival;
+	struct ident	*gids = NULL;
 
 	last[0] = '\0';
 
@@ -632,6 +845,20 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 			sess->total_size += ff->st.size;
 	}
 
+	/* 
+	 * Now conditionally read the group list.
+	 * We then remap all group identifiers to the local ids.
+	 */
+
+	if (sess->opts->preserve_gids) {
+		if (!flist_recv_ident(sess, fd, &gids, &gidsz)) {
+			ERRX1(sess, "flist_recv_ident");
+			goto out;
+		}
+		LOG2(sess, "received gid list: %zu", gidsz);
+		flist_gid_remap(sess, gids, gidsz);
+	}
+
 	/* Remember to order the received list. */
 
 	LOG2(sess, "received file metadata list: %zu", flsz);
@@ -639,9 +866,24 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	flist_topdirs(sess, fl, flsz);
 	*sz = flsz;
 	*flp = fl;
+
+	/* Lastly, reassign group identifiers. */
+
+	if (sess->opts->preserve_gids) {
+		for (i = 0; i < flsz; i++) {
+			for (j = 0; j < gidsz; j++)
+				if ((int32_t)fl[i].st.gid == gids[j].id)
+					break;
+			assert(j < gidsz);
+			fl[i].st.gid = gids[j].mapped;
+		}
+	}
+
+	flist_ident_free(gids, gidsz);
 	return 1;
 out:
 	flist_free(fl, flsz);
+	flist_ident_free(gids, gidsz);
 	*sz = 0;
 	*flp = NULL;
 	return 0;
