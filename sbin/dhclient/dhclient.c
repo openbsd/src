@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.624 2019/02/13 15:01:42 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.625 2019/02/13 21:18:32 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -921,7 +921,6 @@ void
 bind_lease(struct interface_info *ifi)
 {
 	struct client_lease	*lease, *pl, *ll;
-	struct proposal		*offered_proposal = NULL;
 	struct proposal		*effective_proposal = NULL;
 	char			*msg = NULL;
 	time_t			 cur_time, renewal;
@@ -1005,7 +1004,6 @@ newlease:
 	write_resolv_conf();
 
 	free_client_lease(lease);
-	free(offered_proposal);
 	free(effective_proposal);
 	free(ifi->offer_src);
 	ifi->offer_src = NULL;
