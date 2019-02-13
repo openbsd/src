@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.17 2017/01/20 11:55:08 benno Exp $ */
+/*	$OpenBSD: schema.c,v 1.18 2019/02/13 22:57:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -401,7 +401,7 @@ top:
 	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
 			*p++ = c;
-			if ((unsigned)(p-buf) >= sizeof(buf)) {
+			if ((size_t)(p-buf) >= sizeof(buf)) {
 				log_warnx("string too long");
 				return (findeol(schema));
 			}
