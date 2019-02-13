@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.11 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_rwlock_rdlock.3,v 1.12 2019/02/13 23:54:10 mpi Exp $
 .\" Copyright (c) 1998 Alex Nash
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD: pthread_rwlock_rdlock.3,v 1.2 1999/08/28 00:03:09 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: February 13 2019 $
 .Dt PTHREAD_RWLOCK_RDLOCK 3
 .Os
 .Sh NAME
@@ -74,8 +74,6 @@ must be called once for each lock obtained.
 .Pp
 The results of acquiring a read lock while the calling thread holds
 a write lock are undefined.
-.Sh IMPLEMENTATION NOTES
-To prevent writer starvation, writers are favored over readers.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_rwlock_rdlock ,
