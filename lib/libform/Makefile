@@ -23,9 +23,6 @@ includes:
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
 
-form.3: form.3tbl
-	cp ${.ALLSRC} ${.TARGET}
-
 .include <bsd.own.mk>
 
 afterinstall:
