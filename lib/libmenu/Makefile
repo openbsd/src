@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2019/02/13 07:18:58 nicm Exp $
+# $OpenBSD: Makefile,v 1.19 2019/02/13 15:10:40 nicm Exp $
 
 LIB=	menu
 SRCS=	m_attribs.c m_cursor.c m_driver.c m_format.c \
@@ -13,7 +13,6 @@ MAN=	menu.3 menu_attributes.3 menu_cursor.3 menu_driver.3 menu_format.3 \
 	menu_pattern.3 menu_post.3 menu_requestname.3 menu_spacing.3 \
 	menu_userptr.3 menu_win.3 mitem_current.3 mitem_name.3 mitem_new.3 \
 	mitem_opts.3 mitem_userptr.3 mitem_value.3 mitem_visible.3
-CLEANFILES+= menu.3
 
 includes:
 	@cd ${.CURDIR}; for i in ${HDRS}; do \

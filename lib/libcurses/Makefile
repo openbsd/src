@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 2019/02/13 07:11:21 nicm Exp $
+#	$OpenBSD: Makefile,v 1.74 2019/02/13 15:10:40 nicm Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -95,8 +95,7 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 \
 
 GENERATED= init_keytry.h codes.c comp_captab.c expanded.c fallback.c \
 	keys.list lib_gen.c lib_keyname.c names.c unctrl.c make_hash make_keys
-CLEANFILES+= ${GENERATED} term.5 terminfo.5 curses.3 \
-	curs_addch.3 curs_attr.3 curs_getch.3 curs_inch.3 curs_mouse.3
+CLEANFILES+= ${GENERATED}
 
 BUILDFIRST = ${GENERATED}
 
