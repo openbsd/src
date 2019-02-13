@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.623 2019/02/12 16:50:44 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.624 2019/02/13 15:01:42 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -264,6 +264,7 @@ interface_state(struct interface_info *ifi)
 
 	newlinkup = LINK_STATE_IS_UP(ifi->link_state);
 	if (newlinkup != oldlinkup) {
+		tick_msg("", 0, INT64_MAX);
 		log_debug("%s: link %s -> %s", log_procname,
 		    (oldlinkup != 0) ? "up" : "down",
 		    (newlinkup != 0) ? "up" : "down");
@@ -1010,6 +1011,7 @@ newlease:
 	ifi->offer_src = NULL;
 
 	if (msg != NULL) {
+		tick_msg("", 0, INT64_MAX);
 		if ((cmd_opts & OPT_FOREGROUND) != 0) {
 			/* log msg on console only. */
 			;
