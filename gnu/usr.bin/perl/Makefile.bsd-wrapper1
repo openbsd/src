@@ -51,8 +51,7 @@ POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
 
 MANLOCALBUILD=	yes
 
-MLINKS=		c2ph.1 pstruct.1 \
-		Carp.3p carp.3p Carp.3p cluck.3p Carp.3p croak.3p \
+MLINKS=		Carp.3p carp.3p Carp.3p cluck.3p Carp.3p croak.3p \
 		Carp.3p confess.3p Carp.3p shortmess.3p Carp.3p longmess.3p \
 		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
 		File::Basename.3p dirname.3p File::Basename.3p basename.3p \
@@ -71,7 +70,6 @@ _quick1=
 _quick3p=
 
 .for page sect file in \
-    c2ph 1				utils/pstruct \
     corelist 1				utils/corelist \
     cpan 1				utils/cpan \
     enc2xs 1				utils/enc2xs \
@@ -79,7 +77,9 @@ _quick3p=
     h2ph 1				utils/h2ph \
     h2xs 1				utils/h2xs \
     instmodsh 1				utils/instmodsh \
+    Internals 1				lib/Internals.pod \
     libnetcfg 1				utils/libnetcfg \
+    PACKAGING 1				PACKAGING \
     perl 1				pod/perl.pod \
     perl5004delta 1			pod/perl5004delta.pod \
     perl5005delta 1			pod/perl5005delta.pod \
@@ -111,8 +111,18 @@ _quick3p=
     perl5220delta 1			pod/perl5220delta.pod \
     perl5221delta 1			pod/perl5221delta.pod \
     perl5222delta 1			pod/perl5222delta.pod \
+    perl5223delta 1			pod/perl5223delta.pod \
+    perl5224delta 1			pod/perl5224delta.pod \
     perl5240delta 1			pod/perl5240delta.pod \
     perl5241delta 1			pod/perl5241delta.pod \
+    perl5242delta 1			pod/perl5242delta.pod \
+    perl5243delta 1			pod/perl5243delta.pod \
+    perl5244delta 1			pod/perl5244delta.pod \
+    perl5260delta 1			pod/perl5260delta.pod \
+    perl5261delta 1			pod/perl5261delta.pod \
+    perl5262delta 1			pod/perl5262delta.pod \
+    perl5280delta 1			pod/perl5280delta.pod \
+    perl5281delta 1			pod/perl5281delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -140,6 +150,7 @@ _quick3p=
     perldebtut 1			pod/perldebtut.pod \
     perldebug 1				pod/perldebug.pod \
     perldelta 1				pod/perldelta.pod \
+    perldeprecation 1			pod/perldeprecation.pod \
     perldiag 1				pod/perldiag.pod \
     perldoc 1				lib/perldoc.pod \
     perldsc 1				pod/perldsc.pod \
@@ -511,7 +522,6 @@ _quick3p=
     List::Util::XS 3p			lib/List/Util/XS.pm \
     locale 3p				lib/locale.pm \
     Locale::Codes 3p			lib/Locale/Codes.pod \
-    Locale::Codes::API 3p		lib/Locale/Codes/API.pod \
     Locale::Codes::Changes 3p		lib/Locale/Codes/Changes.pod \
     Locale::Codes::Country 3p		lib/Locale/Codes/Country.pod \
     Locale::Codes::Currency 3p		lib/Locale/Codes/Currency.pod \
@@ -520,6 +530,7 @@ _quick3p=
     Locale::Codes::Language 3p		lib/Locale/Codes/Language.pod \
     Locale::Codes::LangVar 3p		lib/Locale/Codes/LangVar.pod \
     Locale::Codes::Script 3p		lib/Locale/Codes/Script.pod \
+    Locale::Codes::Types 3p		lib/Locale/Codes/Types.pod \
     Locale::Country 3p			lib/Locale/Country.pod \
     Locale::Currency 3p			lib/Locale/Currency.pod \
     Locale::Language 3p			lib/Locale/Language.pod \
@@ -535,6 +546,7 @@ _quick3p=
     Math::BigInt::Calc 3p		lib/Math/BigInt/Calc.pm \
     Math::BigInt::CalcEmu 3p		lib/Math/BigInt/CalcEmu.pm \
     Math::BigInt::FastCalc 3p		lib/Math/BigInt/FastCalc.pm \
+    Math::BigInt::Lib 3p		lib/Math/BigInt/Lib.pm \
     Math::BigRat 3p			lib/Math/BigRat.pm \
     Math::Complex 3p			lib/Math/Complex.pm \
     Math::Trig 3p			lib/Math/Trig.pm \
@@ -714,11 +726,63 @@ _quick3p=
     Term::ReadKey 3p			cpan/Term-ReadKey/ReadKey.pm \
     Term::ReadLine 3p			lib/Term/ReadLine.pm \
     Test 3p				lib/Test.pm \
+    Test2 3p				lib/Test2.pm \
+    Test2::API 3p			lib/Test2/API.pm \
+    Test2::API::Breakage 3p		lib/Test2/API/Breakage.pm \
+    Test2::API::Context 3p		lib/Test2/API/Context.pm \
+    Test2::API::Instance 3p		lib/Test2/API/Instance.pm \
+    Test2::API::Stack 3p		lib/Test2/API/Stack.pm \
+    Test2::Event 3p			lib/Test2/Event.pm \
+    Test2::Event::Bail 3p		lib/Test2/Event/Bail.pm \
+    Test2::Event::Diag 3p		lib/Test2/Event/Diag.pm \
+    Test2::Event::Encoding 3p		lib/Test2/Event/Encoding.pm \
+    Test2::Event::Exception 3p		lib/Test2/Event/Exception.pm \
+    Test2::Event::Fail 3p		lib/Test2/Event/Fail.pm \
+    Test2::Event::Generic 3p		lib/Test2/Event/Generic.pm \
+    Test2::Event::Note 3p		lib/Test2/Event/Note.pm \
+    Test2::Event::Ok 3p			lib/Test2/Event/Ok.pm \
+    Test2::Event::Pass 3p		lib/Test2/Event/Pass.pm \
+    Test2::Event::Plan 3p		lib/Test2/Event/Plan.pm \
+    Test2::Event::Skip 3p		lib/Test2/Event/Skip.pm \
+    Test2::Event::Subtest 3p		lib/Test2/Event/Subtest.pm \
+    Test2::Event::TAP::Version 3p	lib/Test2/Event/TAP/Version.pm \
+    Test2::Event::V2 3p			lib/Test2/Event/V2.pm \
+    Test2::Event::Waiting 3p		lib/Test2/Event/Waiting.pm \
+    Test2::EventFacet 3p		lib/Test2/EventFacet.pm \
+    Test2::EventFacet::About 3p		lib/Test2/EventFacet/About.pm \
+    Test2::EventFacet::Amnesty 3p	lib/Test2/EventFacet/Amnesty.pm \
+    Test2::EventFacet::Assert 3p	lib/Test2/EventFacet/Assert.pm \
+    Test2::EventFacet::Control 3p	lib/Test2/EventFacet/Control.pm \
+    Test2::EventFacet::Error 3p		lib/Test2/EventFacet/Error.pm \
+    Test2::EventFacet::Info 3p		lib/Test2/EventFacet/Info.pm \
+    Test2::EventFacet::Meta 3p		lib/Test2/EventFacet/Meta.pm \
+    Test2::EventFacet::Parent 3p	lib/Test2/EventFacet/Parent.pm \
+    Test2::EventFacet::Plan 3p		lib/Test2/EventFacet/Plan.pm \
+    Test2::EventFacet::Render 3p	lib/Test2/EventFacet/Render.pm \
+    Test2::EventFacet::Trace 3p		lib/Test2/EventFacet/Trace.pm \
+    Test2::Formatter 3p			lib/Test2/Formatter.pm \
+    Test2::Formatter::TAP 3p		lib/Test2/Formatter/TAP.pm \
+    Test2::Hub 3p			lib/Test2/Hub.pm \
+    Test2::Hub::Interceptor 3p		lib/Test2/Hub/Interceptor.pm \
+    Test2::Hub::Interceptor::Terminator 3p	lib/Test2/Hub/Interceptor/Terminator.pm \
+    Test2::Hub::Subtest 3p		lib/Test2/Hub/Subtest.pm \
+    Test2::IPC 3p			lib/Test2/IPC.pm \
+    Test2::IPC::Driver 3p		lib/Test2/IPC/Driver.pm \
+    Test2::IPC::Driver::Files 3p	lib/Test2/IPC/Driver/Files.pm \
+    Test2::Tools::Tiny 3p		lib/Test2/Tools/Tiny.pm \
+    Test2::Transition 3p		lib/Test2/Transition.pod \
+    Test2::Util 3p			lib/Test2/Util.pm \
+    Test2::Util::ExternalMeta 3p	lib/Test2/Util/ExternalMeta.pm \
+    Test2::Util::Facets2Legacy 3p	lib/Test2/Util/Facets2Legacy.pm \
+    Test2::Util::HashBase 3p		lib/Test2/Util/HashBase.pm \
+    Test2::Util::Trace 3p		lib/Test2/Util/Trace.pm \
     Test::Builder 3p			lib/Test/Builder.pm \
+    Test::Builder::Formatter 3p		lib/Test/Builder/Formatter.pm \
     Test::Builder::IO::Scalar 3p	lib/Test/Builder/IO/Scalar.pm \
     Test::Builder::Module 3p		lib/Test/Builder/Module.pm \
     Test::Builder::Tester 3p		lib/Test/Builder/Tester.pm \
     Test::Builder::Tester::Color 3p	lib/Test/Builder/Tester/Color.pm \
+    Test::Builder::TodoDiag 3p		lib/Test/Builder/TodoDiag.pm \
     Test::Harness 3p			lib/Test/Harness.pm \
     Test::More 3p			lib/Test/More.pm \
     Test::Simple 3p			lib/Test/Simple.pm \
@@ -848,7 +912,7 @@ DynaLoader.c: miniperl ${DYNALOADER} lib/Config.pm
 
 perl.lib:	${GENERATED} ${_LIBS}
 
-afterinstall: install.perl
+install: install.lib install.perl maninstall
 	-chmod -R a+rX ${DESTDIR}/usr/libdata/perl5
 
 install.perl:
@@ -856,4 +920,23 @@ install.perl:
 	 STRIPFLAGS=${STRIPFLAGS} INSTALLFLAGS=-o NOLIBINSTALL=1 \
 	 LD_LIBRARY_PATH=${.OBJDIR} exec ./perl installperl --user=${LIBOWN} --group=${LIBGRP} --destdir=${DESTDIR} -o ${STRIPFLAGS}
 
-.PHONY: perl.lib perl.build install.perl man.build
+install.lib:
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
+	    ${DESTDIR}${LIBDIR}
+.if (${INSTALL_COPY} != "-p")
+	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.endif
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.if !defined(NOPROFILE)
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
+.if (${INSTALL_COPY} != "-p")
+	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.endif
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.endif
+.if !defined(NOPIC) && defined(major) && defined(minor)
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    lib${LIB}.so.${major}.${minor} ${DESTDIR}${LIBDIR}
+.endif
+.PHONY: perl.lib install.lib perl.build install.perl man.build

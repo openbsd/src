@@ -1796,16 +1796,16 @@
 #define unshare_hek_or_pvn(a,b,c,d)	S_unshare_hek_or_pvn(aTHX_ a,b,c,d)
 #  endif
 #  if defined(PERL_IN_LOCALE_C)
-#define category_name		S_category_name
-#define restore_switched_locale(a,b)	S_restore_switched_locale(aTHX_ a,b)
 #define save_to_buffer		S_save_to_buffer
-#define switch_category_locale_to_template(a,b,c)	S_switch_category_locale_to_template(aTHX_ a,b,c)
 #    if defined(USE_LOCALE)
+#define category_name		S_category_name
 #define new_collate(a)		S_new_collate(aTHX_ a)
 #define new_ctype(a)		S_new_ctype(aTHX_ a)
 #define new_numeric(a)		S_new_numeric(aTHX_ a)
+#define restore_switched_locale(a,b)	S_restore_switched_locale(aTHX_ a,b)
 #define set_numeric_radix(a)	S_set_numeric_radix(aTHX_ a)
 #define stdize_locale(a)	S_stdize_locale(aTHX_ a)
+#define switch_category_locale_to_template(a,b,c)	S_switch_category_locale_to_template(aTHX_ a,b,c)
 #      if defined(USE_POSIX_2008_LOCALE)
 #define emulate_setlocale	S_emulate_setlocale
 #      endif

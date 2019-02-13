@@ -1,3 +1,4 @@
+Digest::MD5 cpan/Digest-MD5/t/files.t f8fe234035918d3b7324eba05f73e7e903a45ca0
 # Regenerate this file using:
 #     cd t
 #     ./perl -I../lib porting/customized.t --regen
@@ -25,6 +26,7 @@ autodie cpan/autodie/t/exceptions.t ad315a208f875e06b0964012ce8d65daa438c036
 autodie cpan/autodie/t/lib/Hints_pod_examples.pm 6944c218e9754b3613c8d0c90a5ae8aceccb5c99
 autodie cpan/autodie/t/mkdir.t 9e70d2282a3cc7d76a78bf8144fccba20fb37dac
 experimental cpan/experimental/t/basic.t a073ea03ccc98dec496569f3648ab01a5fe1c7a0
+version vutil.c 45ff345c3d8424ba63e130a223848f5b336bd87b
 perlfaq cpan/perlfaq/lib/perlfaq5.pod bcc1b6af3b6dff3973643acf8d5e741463374123
 perlfaq cpan/perlfaq/lib/perlfaq8.pod bffbc0c8fa828aead24e0891a5e789369a8e0743
 podlators pod/perlpodstyle.pod c6500c9950b46e8228d4adbc09a3ee2ef23de2d0

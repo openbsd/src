@@ -4886,8 +4886,6 @@ PERL_CALLCONV SV*	Perl_hfree_next_entry(pTHX_ HV *hv, STRLEN *indexp);
 	assert(hv); assert(indexp)
 #endif
 #if defined(PERL_IN_LOCALE_C)
-STATIC const char*	S_category_name(const int category);
-STATIC void	S_restore_switched_locale(pTHX_ const int category, const char * const original_locale);
 #ifndef PERL_NO_INLINE_FUNCTIONS
 PERL_STATIC_INLINE const char *	S_save_to_buffer(const char * string, char **buf, Size_t *buf_size, const Size_t offset)
 			__attribute__warn_unused_result__;
@@ -4895,17 +4893,19 @@ PERL_STATIC_INLINE const char *	S_save_to_buffer(const char * string, char **buf
 	assert(buf_size)
 #endif
 
-STATIC const char*	S_switch_category_locale_to_template(pTHX_ const int switch_category, const int template_category, const char * template_locale);
 #  if defined(USE_LOCALE)
+STATIC const char*	S_category_name(const int category);
 STATIC void	S_new_collate(pTHX_ const char* newcoll);
 STATIC void	S_new_ctype(pTHX_ const char* newctype);
 #define PERL_ARGS_ASSERT_NEW_CTYPE	\
 	assert(newctype)
 STATIC void	S_new_numeric(pTHX_ const char* newnum);
+STATIC void	S_restore_switched_locale(pTHX_ const int category, const char * const original_locale);
 STATIC void	S_set_numeric_radix(pTHX_ const bool use_locale);
 STATIC char*	S_stdize_locale(pTHX_ char* locs);
 #define PERL_ARGS_ASSERT_STDIZE_LOCALE	\
 	assert(locs)
+STATIC const char*	S_switch_category_locale_to_template(pTHX_ const int switch_category, const int template_category, const char * template_locale);
 #    if defined(USE_POSIX_2008_LOCALE)
 STATIC const char*	S_emulate_setlocale(const int category, const char* locale, unsigned int index, const bool is_index_valid);
 #    endif

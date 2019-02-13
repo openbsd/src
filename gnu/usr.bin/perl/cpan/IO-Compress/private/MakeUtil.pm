@@ -35,7 +35,8 @@ sub MY::libscan
     my $path = shift;
 
     return undef
-        if $path =~ /(~|\.bak|_bak)$/ ||
+        if $path =~ /^(?:RCS|CVS|SCCS|\.svn|_darcs)$/ ||
+           $path =~ /(~|\.bak|_bak)$/ ||
            $path =~ /\..*\.sw(o|p)$/  ||
            $path =~ /\B\.svn\b/;
 
