@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: checknewfs,v 1.6 2019/02/12 21:47:19 bluhm Exp $
+#	$OpenBSD: checknewfs,v 1.7 2019/02/13 11:50:43 bluhm Exp $
 # Written by Otto Moerbeek, 2007,  Public domain
 
 
@@ -14,6 +14,7 @@ dotest() {
 	if ! grep -q "$2|" /etc/disktab; then
 		echo disk type $2 does not exists in /etc/disktab
 		echo SKIPPED
+		return
 	fi
 	image=$(mktemp -t imageXXXXXXXXXX);
 	dd if=/dev/random of=$image bs=512 count=$1 2>/dev/null &&
