@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.26 2019/02/11 17:48:15 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.27 2019/02/13 16:28:28 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -459,12 +459,6 @@ tls13_client_finished_recv(struct tls13_ctx *ctx)
 }
 
 int
-tls13_client_finished_send(struct tls13_ctx *ctx)
-{
-	return 0;
-}
-
-int
 tls13_client_key_update_send(struct tls13_ctx *ctx)
 {
 	return 0;
@@ -504,12 +498,6 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx)
 
 int
 tls13_server_certificate_verify_send(struct tls13_ctx *ctx)
-{
-	return 0;
-}
-
-int
-tls13_server_finished_recv(struct tls13_ctx *ctx)
 {
 	return 0;
 }

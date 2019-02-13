@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.6 2019/02/11 17:48:15 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.7 2019/02/13 16:28:28 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -552,6 +552,135 @@ tls13_server_certificate_verify_recv(struct tls13_ctx *ctx)
 	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(mdctx);
 	free(sig_content);
+
+	return ret;
+}
+
+int
+tls13_server_finished_recv(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secret context = { .data = "", .len = 0 };
+	struct tls13_secret finished_key;
+	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
+	size_t transcript_hash_len;
+	uint8_t *verify_data = NULL;
+	size_t verify_data_len;
+	uint8_t key[EVP_MAX_MD_SIZE];
+	HMAC_CTX *hmac_ctx = NULL;
+	unsigned int hlen;
+	int ret = 0;
+	CBS cbs;
+
+	if (!tls13_handshake_msg_content(ctx->hs_msg, &cbs))
+		goto err;
+
+	/*
+	 * Verify server finished.
+	 */
+	finished_key.data = key;
+	finished_key.len = EVP_MD_size(ctx->hash);
+
+	if (!tls13_hkdf_expand_label(&finished_key, ctx->hash,
+	    &secrets->server_handshake_traffic, "finished",
+	    &context))
+		goto err;
+
+	if ((hmac_ctx = HMAC_CTX_new()) == NULL)
+		goto err;
+	if (!HMAC_Init_ex(hmac_ctx, finished_key.data, finished_key.len,
+	    ctx->hash, NULL))
+		goto err;
+	if (!HMAC_Update(hmac_ctx, ctx->hs->transcript_hash,
+	    ctx->hs->transcript_hash_len))
+		goto err;
+	verify_data_len = HMAC_size(hmac_ctx);
+	if ((verify_data = calloc(1, verify_data_len)) == NULL)
+		goto err;
+	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
+		goto err;
+	if (hlen != verify_data_len)
+		goto err;
+
+	if (!CBS_mem_equal(&cbs, verify_data, verify_data_len)) {
+		/* XXX - send alert. */
+		goto err;
+	}
+
+	/*
+	 * Derive application traffic keys.
+	 */
+	if (!tls1_transcript_hash_value(ctx->ssl, transcript_hash,
+	    sizeof(transcript_hash), &transcript_hash_len))
+		goto err;
+
+	context.data = transcript_hash;
+	context.len = transcript_hash_len;
+
+	if (!tls13_derive_application_secrets(secrets, &context))
+		return TLS13_IO_FAILURE;
+
+	ret = 1;
+
+ err:
+	HMAC_CTX_free(hmac_ctx);
+	free(verify_data);
+
+	return ret;
+}
+
+int
+tls13_client_finished_send(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+	struct tls13_secret context = { .data = "", .len = 0 };
+	struct tls13_secret finished_key;
+	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
+	size_t transcript_hash_len;
+	uint8_t key[EVP_MAX_MD_SIZE];
+	uint8_t *verify_data;
+	size_t hmac_len;
+	unsigned int hlen;
+	HMAC_CTX *hmac_ctx = NULL;
+	int ret = 0;
+	CBB body;
+
+	finished_key.data = key;
+	finished_key.len = EVP_MD_size(ctx->hash);
+
+	if (!tls13_hkdf_expand_label(&finished_key, ctx->hash,
+	    &secrets->client_handshake_traffic, "finished",
+	    &context))
+		goto err;
+
+	if (!tls1_transcript_hash_value(ctx->ssl, transcript_hash,
+	    sizeof(transcript_hash), &transcript_hash_len))
+		goto err;
+
+	if ((hmac_ctx = HMAC_CTX_new()) == NULL)
+		goto err;
+	if (!HMAC_Init_ex(hmac_ctx, finished_key.data, finished_key.len,
+	    ctx->hash, NULL))
+		goto err;
+	if (!HMAC_Update(hmac_ctx, transcript_hash, transcript_hash_len))
+		goto err;
+
+	if (!tls13_handshake_msg_start(ctx->hs_msg, &body, TLS13_MT_FINISHED))
+		goto err;
+	hmac_len = HMAC_size(hmac_ctx);
+	if (!CBB_add_space(&body, &verify_data, hmac_len))
+		goto err;
+	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
+		goto err;
+	if (hlen != hmac_len)
+		goto err;
+	if (!tls13_handshake_msg_finish(ctx->hs_msg))
+		goto err;
+
+	ret = 1;
+
+ err:
+	HMAC_CTX_free(hmac_ctx);
 
 	return ret;
 }
