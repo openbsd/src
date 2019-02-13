@@ -1,8 +1,7 @@
-/*	$OpenBSD: rthread_rwlock.c,v 1.11 2018/04/24 16:28:42 pirofti Exp $ */
+/*	$OpenBSD: rthread_rwlock.c,v 1.12 2019/02/13 13:22:14 mpi Exp $ */
 /*
- * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
+ * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
- * All Rights Reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,11 +15,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/*
- * rwlocks
- */
 
-#include <assert.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -28,6 +23,20 @@
 #include <pthread.h>
 
 #include "rthread.h"
+#include "synch.h"
+
+#define UNLOCKED	0
+#define MAXREADER	0x7ffffffe
+#define WRITER		0x7fffffff
+#define WAITING		0x80000000
+#define COUNT(v)	((v) & WRITER)
+
+#define SPIN_COUNT	128
+#if defined(__i386__) || defined(__amd64__)
+#define SPIN_WAIT()	asm volatile("pause": : : "memory")
+#else
+#define SPIN_WAIT()	do { } while (0)
+#endif
 
 static _atomic_lock_t rwlock_init_lock = _SPINLOCK_UNLOCKED;
 
@@ -35,15 +44,13 @@ int
 pthread_rwlock_init(pthread_rwlock_t *lockp,
     const pthread_rwlockattr_t *attrp __unused)
 {
-	pthread_rwlock_t lock;
+	pthread_rwlock_t rwlock;
 
-	lock = calloc(1, sizeof(*lock));
-	if (!lock)
+	rwlock = calloc(1, sizeof(*rwlock));
+	if (!rwlock)
 		return (errno);
-	lock->lock = _SPINLOCK_UNLOCKED;
-	TAILQ_INIT(&lock->writers);
 
-	*lockp = lock;
+	*lockp = rwlock;
 
 	return (0);
 }
@@ -52,26 +59,25 @@ DEF_STD(pthread_rwlock_init);
 int
 pthread_rwlock_destroy(pthread_rwlock_t *lockp)
 {
-	pthread_rwlock_t lock;
+	pthread_rwlock_t rwlock;
 
-	assert(lockp);
-	lock = *lockp;
-	if (lock) {
-		if (lock->readers || !TAILQ_EMPTY(&lock->writers)) {
+	rwlock = *lockp;
+	if (rwlock) {
+		if (rwlock->value != UNLOCKED) {
 #define MSG "pthread_rwlock_destroy on rwlock with waiters!\n"
 			write(2, MSG, sizeof(MSG) - 1);
 #undef MSG
 			return (EBUSY);
 		}
-		free(lock);
+		free((void *)rwlock);
+		*lockp = NULL;
 	}
-	*lockp = NULL;
 
 	return (0);
 }
 
 static int
-_rthread_rwlock_ensure_init(pthread_rwlock_t *lockp)
+_rthread_rwlock_ensure_init(pthread_rwlock_t *rwlockp)
 {
 	int ret = 0;
 
@@ -79,182 +85,195 @@ _rthread_rwlock_ensure_init(pthread_rwlock_t *lockp)
 	 * If the rwlock is statically initialized, perform the dynamic
 	 * initialization.
 	 */
-	if (*lockp == NULL)
-	{
+	if (*rwlockp == NULL) {
 		_spinlock(&rwlock_init_lock);
-		if (*lockp == NULL)
-			ret = pthread_rwlock_init(lockp, NULL);
+		if (*rwlockp == NULL)
+			ret = pthread_rwlock_init(rwlockp, NULL);
 		_spinunlock(&rwlock_init_lock);
 	}
 	return (ret);
 }
 
+static int
+_rthread_rwlock_tryrdlock(pthread_rwlock_t rwlock)
+{
+	unsigned int val;
+
+	do {
+		val = rwlock->value;
+		if (COUNT(val) == WRITER)
+			return (EBUSY);
+		if (COUNT(val) == MAXREADER)
+			return (EAGAIN);
+	} while (atomic_cas_uint(&rwlock->value, val, val + 1) != val);
+
+	membar_enter_after_atomic();
+	return (0);
+}
 
 static int
-_rthread_rwlock_rdlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
-    int try)
+_rthread_rwlock_timedrdlock(pthread_rwlock_t *rwlockp, int trywait,
+    const struct timespec *abs, int timed)
 {
-	pthread_rwlock_t lock;
-	pthread_t thread = pthread_self();
-	int error;
+	pthread_t self = pthread_self();
+	pthread_rwlock_t rwlock;
+	unsigned int val, new;
+	int i, error;
 
-	if ((error = _rthread_rwlock_ensure_init(lockp)))
+	if ((error = _rthread_rwlock_ensure_init(rwlockp)))
 		return (error);
 
-	lock = *lockp;
-	_rthread_debug(5, "%p: rwlock_rdlock %p\n", (void *)thread,
-	    (void *)lock);
-	_spinlock(&lock->lock);
+	rwlock = *rwlockp;
+	_rthread_debug(5, "%p: rwlock_%srdlock %p (%u)\n", self,
+	    (timed ? "timed" : (trywait ? "try" : "")), (void *)rwlock,
+	    rwlock->value);
 
-	/* writers have precedence */
-	if (lock->owner == NULL && TAILQ_EMPTY(&lock->writers))
-		lock->readers++;
-	else if (try)
-		error = EBUSY;
-	else if (lock->owner == thread)
-		error = EDEADLK;
-	else {
-		do {
-			if (__thrsleep(lock, CLOCK_REALTIME, abstime,
-			    &lock->lock, NULL) == EWOULDBLOCK)
-				return (ETIMEDOUT);
-			_spinlock(&lock->lock);
-		} while (lock->owner != NULL || !TAILQ_EMPTY(&lock->writers));
-		lock->readers++;
+	error = _rthread_rwlock_tryrdlock(rwlock);
+	if (error != EBUSY || trywait)
+		return (error);
+
+	/* Try hard to not enter the kernel. */
+	for (i = 0; i < SPIN_COUNT; i++) {
+		val = rwlock->value;
+		if (val == UNLOCKED || (val & WAITING))
+			break;
+
+		SPIN_WAIT();
 	}
-	_spinunlock(&lock->lock);
 
-	return (error);
-}
-
-int
-pthread_rwlock_rdlock(pthread_rwlock_t *lockp)
-{
-	return (_rthread_rwlock_rdlock(lockp, NULL, 0));
-}
-
-int
-pthread_rwlock_tryrdlock(pthread_rwlock_t *lockp)
-{
-	return (_rthread_rwlock_rdlock(lockp, NULL, 1));
-}
-
-int
-pthread_rwlock_timedrdlock(pthread_rwlock_t *lockp,
-    const struct timespec *abstime)
-{
-	if (abstime == NULL || abstime->tv_nsec < 0 ||
-	    abstime->tv_nsec >= 1000000000)
-		return (EINVAL);
-	return (_rthread_rwlock_rdlock(lockp, abstime, 0));
-}
-
-
-static int
-_rthread_rwlock_wrlock(pthread_rwlock_t *lockp, const struct timespec *abstime,
-    int try)
-{
-	pthread_rwlock_t lock;
-	pthread_t thread = pthread_self();
-	int error;
-
-	if ((error = _rthread_rwlock_ensure_init(lockp)))
-		return (error);
-
-	lock = *lockp;
-
-	_rthread_debug(5, "%p: rwlock_timedwrlock %p\n", (void *)thread,
-	    (void *)lock);
-	_spinlock(&lock->lock);
-	if (lock->readers == 0 && lock->owner == NULL)
-		lock->owner = thread;
-	else if (try)
-		error = EBUSY;
-	else if (lock->owner == thread)
-		error = EDEADLK;
-	else {
-		int do_wait;
-
-		/* gotta block */
-		TAILQ_INSERT_TAIL(&lock->writers, thread, waiting);
-		do {
-			do_wait = __thrsleep(thread, CLOCK_REALTIME, abstime,
-			    &lock->lock, NULL) != EWOULDBLOCK;
-			_spinlock(&lock->lock);
-		} while (lock->owner != thread && do_wait);
-
-		if (lock->owner != thread) {
-			/* timed out, sigh */
-			TAILQ_REMOVE(&lock->writers, thread, waiting);
-			error = ETIMEDOUT;
+	while ((error = _rthread_rwlock_tryrdlock(rwlock)) == EBUSY) {
+		val = rwlock->value;
+		if (val == UNLOCKED || (COUNT(val)) != WRITER)
+			continue;
+		new = val | WAITING;
+		if (atomic_cas_uint(&rwlock->value, val, new) == val) {
+			error = _twait(&rwlock->value, new, CLOCK_REALTIME,
+			    abs);
 		}
+		if (error == ETIMEDOUT)
+			break;
 	}
-	_spinunlock(&lock->lock);
+
+	return (error);
+
+}
+
+int
+pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlockp)
+{
+	return (_rthread_rwlock_timedrdlock(rwlockp, 1, NULL, 0));
+}
+
+int
+pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlockp,
+    const struct timespec *abs)
+{
+	return (_rthread_rwlock_timedrdlock(rwlockp, 0, abs, 1));
+}
+
+int
+pthread_rwlock_rdlock(pthread_rwlock_t *rwlockp)
+{
+	return (_rthread_rwlock_timedrdlock(rwlockp, 0, NULL, 0));
+}
+
+static int
+_rthread_rwlock_tryrwlock(pthread_rwlock_t rwlock)
+{
+	if (atomic_cas_uint(&rwlock->value, UNLOCKED, WRITER) != UNLOCKED)
+		return (EBUSY);
+
+	membar_enter_after_atomic();
+	return (0);
+}
+
+
+static int
+_rthread_rwlock_timedwrlock(pthread_rwlock_t *rwlockp, int trywait,
+    const struct timespec *abs, int timed)
+{
+	pthread_t self = pthread_self();
+	pthread_rwlock_t rwlock;
+	unsigned int val, new;
+	int i, error;
+
+	if ((error = _rthread_rwlock_ensure_init(rwlockp)))
+		return (error);
+
+	rwlock = *rwlockp;
+	_rthread_debug(5, "%p: rwlock_%swrlock %p (%u)\n", self,
+	    (timed ? "timed" : (trywait ? "try" : "")), (void *)rwlock,
+	    rwlock->value);
+
+	error = _rthread_rwlock_tryrwlock(rwlock);
+	if (error != EBUSY || trywait)
+		return (error);
+
+	/* Try hard to not enter the kernel. */
+	for (i = 0; i < SPIN_COUNT; i++) {
+		val = rwlock->value;
+		if (val == UNLOCKED || (val & WAITING))
+			break;
+
+		SPIN_WAIT();
+	}
+
+	while ((error = _rthread_rwlock_tryrwlock(rwlock)) == EBUSY) {
+		val = rwlock->value;
+		if (val == UNLOCKED)
+			continue;
+		new = val | WAITING;
+		if (atomic_cas_uint(&rwlock->value, val, new) == val) {
+			error = _twait(&rwlock->value, new, CLOCK_REALTIME,
+			    abs);
+		}
+		if (error == ETIMEDOUT)
+			break;
+	}
 
 	return (error);
 }
 
 int
-pthread_rwlock_wrlock(pthread_rwlock_t *lockp)
+pthread_rwlock_trywrlock(pthread_rwlock_t *rwlockp)
 {
-	return (_rthread_rwlock_wrlock(lockp, NULL, 0));
+	return (_rthread_rwlock_timedwrlock(rwlockp, 1, NULL, 0));
 }
 
 int
-pthread_rwlock_trywrlock(pthread_rwlock_t *lockp)
+pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlockp,
+    const struct timespec *abs)
 {
-	return (_rthread_rwlock_wrlock(lockp, NULL, 1));
+	return (_rthread_rwlock_timedwrlock(rwlockp, 0, abs, 1));
 }
 
 int
-pthread_rwlock_timedwrlock(pthread_rwlock_t *lockp,
-    const struct timespec *abstime)
+pthread_rwlock_wrlock(pthread_rwlock_t *rwlockp)
 {
-	if (abstime == NULL || abstime->tv_nsec < 0 ||
-	    abstime->tv_nsec >= 1000000000)
-		return (EINVAL);
-	return (_rthread_rwlock_wrlock(lockp, abstime, 0));
+	return (_rthread_rwlock_timedwrlock(rwlockp, 0, NULL, 0));
 }
 
-
 int
-pthread_rwlock_unlock(pthread_rwlock_t *lockp)
+pthread_rwlock_unlock(pthread_rwlock_t *rwlockp)
 {
-	pthread_rwlock_t lock;
-	pthread_t thread = pthread_self();
-	pthread_t next;
-	int was_writer;
+	pthread_t self = pthread_self();
+	pthread_rwlock_t rwlock;
+	unsigned int val, new;
 
-	lock = *lockp;
+	rwlock = *rwlockp;
+	_rthread_debug(5, "%p: rwlock_unlock %p\n", self, (void *)rwlock);
 
-	_rthread_debug(5, "%p: rwlock_unlock %p\n", (void *)thread,
-	    (void *)lock);
-	_spinlock(&lock->lock);
-	if (lock->owner != NULL) {
-		assert(lock->owner == thread);
-		was_writer = 1;
-	} else {
-		assert(lock->readers > 0);
-		lock->readers--;
-		if (lock->readers > 0)
-			goto out;
-		was_writer = 0;
-	}
+	membar_exit_before_atomic();
+	do {
+		val = rwlock->value;
+		if (COUNT(val) == WRITER || COUNT(val) == 1)
+			new = UNLOCKED;
+		else
+			new = val - 1;
+	} while (atomic_cas_uint(&rwlock->value, val, new) != val);
 
-	lock->owner = next = TAILQ_FIRST(&lock->writers);
-	if (next != NULL) {
-		/* dequeue and wake first writer */
-		TAILQ_REMOVE(&lock->writers, next, waiting);
-		_spinunlock(&lock->lock);
-		__thrwakeup(next, 1);
-		return (0);
-	}
-
-	/* could there have been blocked readers?  wake them all */
-	if (was_writer)
-		__thrwakeup(lock, 0);
-out:
-	_spinunlock(&lock->lock);
+	if (new == UNLOCKED && (val & WAITING))
+		_wake(&rwlock->value, COUNT(val));
 
 	return (0);
 }

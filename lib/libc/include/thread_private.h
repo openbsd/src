@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.34 2019/01/10 18:45:33 otto Exp $ */
+/* $OpenBSD: thread_private.h,v 1.35 2019/02/13 13:22:14 mpi Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -298,6 +298,10 @@ struct pthread_cond {
 	struct pthread_mutex *mutex;
 };
 
+struct pthread_rwlock {
+	volatile unsigned int value;
+};
+
 #else
 
 struct pthread_mutex {
@@ -314,6 +318,13 @@ struct pthread_cond {
 	struct pthread_queue waiters;
 	struct pthread_mutex *mutex;
 	clockid_t clock;
+};
+
+struct pthread_rwlock {
+	_atomic_lock_t lock;
+	pthread_t owner;
+	struct pthread_queue writers;
+	int readers;
 };
 #endif /* FUTEX */
 
