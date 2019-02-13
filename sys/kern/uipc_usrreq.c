@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.138 2019/02/04 21:40:52 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.139 2019/02/13 11:55:21 martijn Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
 	struct unpcb *unp = sotounpcb(so);
+	struct unpcb *unp2;
 	struct socket *so2;
 	int error = 0;
 
@@ -141,6 +142,17 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_CONNECT2:
 		error = unp_connect2(so, (struct socket *)nam);
+		if (!error) {
+			unp->unp_connid.uid = p->p_ucred->cr_uid;
+			unp->unp_connid.gid = p->p_ucred->cr_gid;
+			unp->unp_connid.pid = p->p_p->ps_pid;
+			unp->unp_flags |= UNP_FEIDS;
+			unp2 = sotounpcb((struct socket *)nam);
+			unp2->unp_connid.uid = p->p_ucred->cr_uid;
+			unp2->unp_connid.gid = p->p_ucred->cr_gid;
+			unp2->unp_connid.pid = p->p_p->ps_pid;
+			unp2->unp_flags |= UNP_FEIDS;
+		}
 		break;
 
 	case PRU_DISCONNECT:
