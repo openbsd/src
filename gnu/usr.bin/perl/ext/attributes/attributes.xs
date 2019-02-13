@@ -15,6 +15,8 @@
  *     [p.597 of _The Lord of the Rings_, III/xi: "The Palantír"]
  */
 
+#define PERL_EXT
+
 #define PERL_NO_GET_CONTEXT
 
 #include "EXTERN.h"
@@ -44,7 +46,7 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 	case SVt_PVCV:
 	    switch ((int)len) {
 	    case 5:
-		if (memEQ(name, "const", 5)) {
+		if (memEQs(name, 5, "const")) {
 		    if (negated)
 			CvANONCONST_off(sv);
 		    else {
@@ -60,11 +62,11 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 	    case 6:
 		switch (name[3]) {
 		case 'l':
-		    if (memEQ(name, "lvalue", 6)) {
+		    if (memEQs(name, 6, "lvalue")) {
 			bool warn =
 			    !CvISXSUB(MUTABLE_CV(sv))
 			 && CvROOT(MUTABLE_CV(sv))
-			 && !CvLVALUE(MUTABLE_CV(sv)) != negated;
+			 && cBOOL(CvLVALUE(MUTABLE_CV(sv))) == negated;
 			if (negated)
 			    CvFLAGS(MUTABLE_CV(sv)) &= ~CVf_LVALUE;
 			else
@@ -74,7 +76,7 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 		    }
 		    break;
 		case 'h':
-		    if (memEQ(name, "method", 6)) {
+		    if (memEQs(name, 6, "method")) {
 			if (negated)
 			    CvFLAGS(MUTABLE_CV(sv)) &= ~CVf_METHOD;
 			else
@@ -85,8 +87,9 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 		}
 		break;
 	    default:
-		if (len > 10 && memEQ(name, "prototype(", 10)) {
-		    SV * proto = newSVpvn(name+10,len-11);
+		if (memBEGINPs(name, len, "prototype(")) {
+                    const STRLEN proto_len = sizeof("prototype(") - 1;
+		    SV * proto = newSVpvn(name + proto_len, len - proto_len - 1);
 		    HEK *const hek = CvNAME_HEK((CV *)sv);
 		    SV *subname;
 		    if (name[len-1] != ')')
@@ -96,7 +99,7 @@ modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 		    else
 			subname=(SV *)CvGV((const CV *)sv);
 		    if (ckWARN(WARN_ILLEGALPROTO))
-			Perl_validate_proto(aTHX_ subname, proto, TRUE);
+			Perl_validate_proto(aTHX_ subname, proto, TRUE, 0);
 		    Perl_cv_ckproto_len_flags(aTHX_ (const CV *)sv,
 		                                    (const GV *)subname,
 		                                    name+10,

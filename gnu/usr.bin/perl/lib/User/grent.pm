@@ -2,15 +2,15 @@ package User::grent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
+our ($gr_name, $gr_gid, $gr_passwd, $gr_mem, @gr_members);
 BEGIN { 
     use Exporter   ();
     @EXPORT      = qw(getgrent getgrgid getgrnam getgr);
     @EXPORT_OK   = qw($gr_name $gr_gid $gr_passwd $gr_mem @gr_members);
     %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 }
-use vars      @EXPORT_OK;
 
 # Class::Struct forbids use of @ISA
 sub import { goto &Exporter::import }

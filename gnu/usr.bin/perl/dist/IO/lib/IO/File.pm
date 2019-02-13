@@ -124,9 +124,8 @@ Derived from FileHandle.pm by Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
 
 =cut
 
-use 5.006_001;
+use 5.008_001;
 use strict;
-our($VERSION, @EXPORT, @EXPORT_OK, @ISA);
 use Carp;
 use Symbol;
 use SelectSaver;
@@ -134,11 +133,11 @@ use IO::Seekable;
 
 require Exporter;
 
-@ISA = qw(IO::Handle IO::Seekable Exporter);
+our @ISA = qw(IO::Handle IO::Seekable Exporter);
 
-$VERSION = "1.16";
+our $VERSION = "1.39";
 
-@EXPORT = @IO::Seekable::EXPORT;
+our @EXPORT = @IO::Seekable::EXPORT;
 
 eval {
     # Make all Fcntl O_XXX constants available for importing

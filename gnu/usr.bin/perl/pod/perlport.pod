@@ -67,9 +67,9 @@ The important thing is to decide where the code will run and to be
 deliberate in your decision.
 
 The material below is separated into three main sections: main issues of
-portability (L<"ISSUES">), platform-specific issues (L<"PLATFORMS">), and
+portability (L</"ISSUES">), platform-specific issues (L</"PLATFORMS">), and
 built-in Perl functions that behave differently on various ports
-(L<"FUNCTION IMPLEMENTATIONS">).
+(L</"FUNCTION IMPLEMENTATIONS">).
 
 This information should not be considered complete; it includes possibly
 transient information about idiosyncrasies of some of the ports, almost
@@ -95,42 +95,50 @@ translates it to (or from) C<\015\012>, depending on whether you're
 reading or writing. Unix does the same thing on ttys in canonical
 mode.  C<\015\012> is commonly referred to as CRLF.
 
-To trim trailing newlines from text lines use C<chomp()>.  With default
-settings that function looks for a trailing C<\n> character and thus
-trims in a portable way.
+To trim trailing newlines from text lines use
+L<C<chomp>|perlfunc/chomp VARIABLE>.  With default settings that function
+looks for a trailing C<\n> character and thus trims in a portable way.
 
 When dealing with binary files (or text files in binary mode) be sure
-to explicitly set $/ to the appropriate value for your file format
-before using C<chomp()>.
+to explicitly set L<C<$E<sol>>|perlvar/$E<sol>> to the appropriate value for
+your file format before using L<C<chomp>|perlfunc/chomp VARIABLE>.
 
-Because of the "text" mode translation, DOSish perls have limitations
-in using C<seek> and C<tell> on a file accessed in "text" mode.
-Stick to C<seek>-ing to locations you got from C<tell> (and no
-others), and you are usually free to use C<seek> and C<tell> even
-in "text" mode.  Using C<seek> or C<tell> or other file operations
-may be non-portable.  If you use C<binmode> on a file, however, you
-can usually C<seek> and C<tell> with arbitrary values safely.
+Because of the "text" mode translation, DOSish perls have limitations in
+using L<C<seek>|perlfunc/seek FILEHANDLE,POSITION,WHENCE> and
+L<C<tell>|perlfunc/tell FILEHANDLE> on a file accessed in "text" mode.
+Stick to L<C<seek>|perlfunc/seek FILEHANDLE,POSITION,WHENCE>-ing to
+locations you got from L<C<tell>|perlfunc/tell FILEHANDLE> (and no
+others), and you are usually free to use
+L<C<seek>|perlfunc/seek FILEHANDLE,POSITION,WHENCE> and
+L<C<tell>|perlfunc/tell FILEHANDLE> even in "text" mode.  Using
+L<C<seek>|perlfunc/seek FILEHANDLE,POSITION,WHENCE> or
+L<C<tell>|perlfunc/tell FILEHANDLE> or other file operations may be
+non-portable.  If you use L<C<binmode>|perlfunc/binmode FILEHANDLE> on a
+file, however, you can usually
+L<C<seek>|perlfunc/seek FILEHANDLE,POSITION,WHENCE> and
+L<C<tell>|perlfunc/tell FILEHANDLE> with arbitrary values safely.
 
 A common misconception in socket programming is that S<C<\n eq \012>>
 everywhere.  When using protocols such as common Internet protocols,
 C<\012> and C<\015> are called for specifically, and the values of
 the logical C<\n> and C<\r> (carriage return) are not reliable.
 
-    print SOCKET "Hi there, client!\r\n";      # WRONG
-    print SOCKET "Hi there, client!\015\012";  # RIGHT
+    print $socket "Hi there, client!\r\n";      # WRONG
+    print $socket "Hi there, client!\015\012";  # RIGHT
 
 However, using C<\015\012> (or C<\cM\cJ>, or C<\x0D\x0A>) can be tedious
 and unsightly, as well as confusing to those maintaining the code.  As
-such, the C<Socket> module supplies the Right Thing for those who want it.
+such, the L<C<Socket>|Socket> module supplies the Right Thing for those
+who want it.
 
     use Socket qw(:DEFAULT :crlf);
-    print SOCKET "Hi there, client!$CRLF"      # RIGHT
+    print $socket "Hi there, client!$CRLF"      # RIGHT
 
 When reading from a socket, remember that the default input record
-separator C<$/> is C<\n>, but robust socket code will recognize as
-either C<\012> or C<\015\012> as end of line:
+separator L<C<$E<sol>>|perlvar/$E<sol>> is C<\n>, but robust socket code
+will recognize as either C<\012> or C<\015\012> as end of line:
 
-    while (<SOCKET>) {  # NOT ADVISABLE!
+    while (<$socket>) {  # NOT ADVISABLE!
         # ...
     }
 
@@ -140,7 +148,7 @@ be set to LF and any CR stripped later.  Better to write:
     use Socket qw(:DEFAULT :crlf);
     local($/) = LF;      # not needed if $/ is already \012
 
-    while (<SOCKET>) {
+    while (<$socket>) {
         s/$CR?$LF/\n/;   # not sure if socket uses LF or CRLF, OK
     #   s/\015?\012/\n/; # same thing
     }
@@ -210,7 +218,8 @@ decimal), a big-endian host (Motorola, Sparc, PA) reads it as
 0x78563412 (2018915346 in decimal).  Alpha and MIPS can be either:
 Digital/Compaq used/uses them in little-endian mode; SGI/Cray uses
 them in big-endian mode.  To avoid this problem in network (socket)
-connections use the C<pack> and C<unpack> formats C<n> and C<N>, the
+connections use the L<C<pack>|perlfunc/pack TEMPLATE,LIST> and
+L<C<unpack>|perlfunc/unpack TEMPLATE,EXPR> formats C<n> and C<N>, the
 "network" orders.  These are guaranteed to be portable.
 
 As of Perl 5.10.0, you can also use the C<E<gt>> and C<E<lt>> modifiers
@@ -237,10 +246,9 @@ transferring or storing raw binary numbers.
 
 One can circumnavigate both these problems in two ways.  Either
 transfer and store numbers always in text format, instead of raw
-binary, or else consider using modules like C<Data::Dumper> and
-C<Storable>
-(included as of Perl 5.8).  Keeping all data as text significantly
-simplifies matters.
+binary, or else consider using modules like
+L<C<Data::Dumper>|Data::Dumper> and L<C<Storable>|Storable> (included as
+of Perl 5.8).  Keeping all data as text significantly simplifies matters.
 
 =head2 Files and Filesystems
 
@@ -261,16 +269,20 @@ and LPT:).
 
 S<Mac OS> 9 and earlier used C<:> as a path separator instead of C</>.
 
-The filesystem may support neither hard links (C<link>) nor
-symbolic links (C<symlink>, C<readlink>, C<lstat>).
+The filesystem may support neither hard links
+(L<C<link>|perlfunc/link OLDFILE,NEWFILE>) nor symbolic links
+(L<C<symlink>|perlfunc/symlink OLDFILE,NEWFILE>,
+L<C<readlink>|perlfunc/readlink EXPR>,
+L<C<lstat>|perlfunc/lstat FILEHANDLE>).
 
 The filesystem may support neither access timestamp nor change
 timestamp (meaning that about the only portable timestamp is the
 modification timestamp), or one second granularity of any timestamps
 (e.g. the FAT filesystem limits the time granularity to two seconds).
 
-The "inode change timestamp" (the C<-C> filetest) may really be the
-"creation timestamp" (which it is not in Unix).
+The "inode change timestamp" (the L<C<-C>|perlfunc/-X FILEHANDLE>
+filetest) may really be the "creation timestamp" (which it is not in
+Unix).
 
 VOS perl can emulate Unix filenames with C</> as path separator.  The
 native pathname characters greater-than, less-than, number-sign, and
@@ -282,19 +294,19 @@ signal filesystems and disk names.
 
 Don't assume Unix filesystem access semantics: that read, write,
 and execute are all the permissions there are, and even if they exist,
-that their semantics (for example what do C<"r">, C<"w">, and C<"x"> mean on
+that their semantics (for example what do C<r>, C<w>, and C<x> mean on
 a directory) are the Unix ones.  The various Unix/POSIX compatibility
-layers usually try to make interfaces like C<chmod()> work, but sometimes
-there simply is no good mapping.
+layers usually try to make interfaces like L<C<chmod>|perlfunc/chmod LIST>
+work, but sometimes there simply is no good mapping.
 
-The C<File::Spec> modules provide methods to manipulate path
+The L<C<File::Spec>|File::Spec> modules provide methods to manipulate path
 specifications and return the results in native format for each
 platform.  This is often unnecessary as Unix-style paths are
 understood by Perl on every supported platform, but if you need to
 produce native paths for a native utility that does not understand
 Unix syntax, or if you are operating on paths or path components
-in unknown (and thus possibly native) syntax, C<File::Spec> is
-your friend.  Here are two brief examples:
+in unknown (and thus possibly native) syntax, L<C<File::Spec>|File::Spec>
+is your friend.  Here are two brief examples:
 
     use File::Spec::Functions;
     chdir(updir());        # go up one directory
@@ -313,9 +325,9 @@ machines.
 This is especially noticeable in scripts like Makefiles and test suites,
 which often assume C</> as a path separator for subdirectories.
 
-Also of use is C<File::Basename> from the standard distribution, which
-splits a pathname into pieces (base filename, full path to directory,
-and file suffix).
+Also of use is L<C<File::Basename>|File::Basename> from the standard
+distribution, which splits a pathname into pieces (base filename, full
+path to directory, and file suffix).
 
 Even when on a single platform (if you can call Unix a single platform),
 remember not to count on the existence or the contents of particular
@@ -338,9 +350,9 @@ not to have non-word characters (except for C<.>) in the names, and
 keep them to the 8.3 convention, for maximum portability, onerous a
 burden though this may appear.
 
-Likewise, when using the C<AutoSplit> module, try to keep your functions to
-8.3 naming and case-insensitive conventions; or, at the least,
-make it so the resulting files have a unique (case-insensitively)
+Likewise, when using the L<C<AutoSplit>|AutoSplit> module, try to keep
+your functions to 8.3 naming and case-insensitive conventions; or, at the
+least, make it so the resulting files have a unique (case-insensitively)
 first 8 characters.
 
 Whitespace in filenames is tolerated on most systems, but not all,
@@ -351,18 +363,16 @@ Many systems (DOS, VMS ODS-2) cannot have more than one C<.> in their
 filenames.
 
 Don't assume C<< > >> won't be the first character of a filename.
-Always use C<< < >> explicitly to open a file for reading, or even
-better, use the three-arg version of C<open>, unless you want the user to
-be able to specify a pipe open.
+Always use the three-arg version of
+L<C<open>|perlfunc/open FILEHANDLE,EXPR>:
 
     open my $fh, '<', $existing_file) or die $!;
 
-If filenames might use strange characters, it is safest to open it
-with C<sysopen> instead of C<open>.  C<open> is magic and can
-translate characters like C<< > >>, C<< < >>, and C<|>, which may
-be the wrong thing to do.  (Sometimes, though, it's the right thing.)
-Three-arg open can also help protect against this translation in cases
-where it is undesirable.
+Two-arg L<C<open>|perlfunc/open FILEHANDLE,EXPR> is magic and can
+translate characters like C<< > >>, C<< < >>, and C<|> in filenames,
+which is usually the wrong thing to do.
+L<C<sysopen>|perlfunc/sysopen FILEHANDLE,FILENAME,MODE> and three-arg
+L<C<open>|perlfunc/open FILEHANDLE,EXPR> don't have this problem.
 
 Don't use C<:> as a part of a filename since many systems use that for
 their own semantics (Mac OS Classic for separating pathname components,
@@ -381,7 +391,7 @@ The I<portable filename characters> as defined by ANSI C are
  0 1 2 3 4 5 6 7 8 9
  . _ -
 
-and the C<"-"> shouldn't be the first character.  If you want to be
+and C<-> shouldn't be the first character.  If you want to be
 hypercorrect, stay case-insensitive and within the 8.3 naming
 convention (all the files and directories have to be unique within one
 directory if their names are lowercased and truncated to eight
@@ -398,10 +408,14 @@ to deal with, so don't stay up late worrying about it.
 
 Some platforms can't delete or rename files held open by the system,
 this limitation may also apply to changing filesystem metainformation
-like file permissions or owners.  Remember to C<close> files when you
-are done with them.  Don't C<unlink> or C<rename> an open file.  Don't
-C<tie> or C<open> a file already tied or opened; C<untie> or C<close>
-it first.
+like file permissions or owners.  Remember to
+L<C<close>|perlfunc/close FILEHANDLE> files when you are done with them.
+Don't L<C<unlink>|perlfunc/unlink LIST> or
+L<C<rename>|perlfunc/rename OLDNAME,NEWNAME> an open file.  Don't
+L<C<tie>|perlfunc/tie VARIABLE,CLASSNAME,LIST> or
+L<C<open>|perlfunc/open FILEHANDLE,EXPR> a file already tied or opened;
+L<C<untie>|perlfunc/untie VARIABLE> or
+L<C<close>|perlfunc/close FILEHANDLE> it first.
 
 Don't open the same file more than once at a time for writing, as some
 operating systems put mandatory locks on such files.
@@ -413,84 +427,95 @@ permission also (or even just) in the file/directory itself.  In some
 filesystems (AFS, DFS) the permission to add/delete directory entries
 is a completely separate permission.
 
-Don't assume that a single C<unlink> completely gets rid of the file:
-some filesystems (most notably the ones in VMS) have versioned
-filesystems, and C<unlink()> removes only the most recent one (it doesn't
-remove all the versions because by default the native tools on those
-platforms remove just the most recent version, too).  The portable
-idiom to remove all the versions of a file is
+Don't assume that a single L<C<unlink>|perlfunc/unlink LIST> completely
+gets rid of the file: some filesystems (most notably the ones in VMS) have
+versioned filesystems, and L<C<unlink>|perlfunc/unlink LIST> removes only
+the most recent one (it doesn't remove all the versions because by default
+the native tools on those platforms remove just the most recent version,
+too).  The portable idiom to remove all the versions of a file is
 
     1 while unlink "file";
 
-This will terminate if the file is undeleteable for some reason
+This will terminate if the file is undeletable for some reason
 (protected, not there, and so on).
 
-Don't count on a specific environment variable existing in C<%ENV>.
-Don't count on C<%ENV> entries being case-sensitive, or even
-case-preserving.  Don't try to clear C<%ENV> by saying C<%ENV = ();>, or,
-if you really have to, make it conditional on C<$^O ne 'VMS'> since in
-VMS the C<%ENV> table is much more than a per-process key-value string
-table.
+Don't count on a specific environment variable existing in
+L<C<%ENV>|perlvar/%ENV>.  Don't count on L<C<%ENV>|perlvar/%ENV> entries
+being case-sensitive, or even case-preserving.  Don't try to clear
+L<C<%ENV>|perlvar/%ENV> by saying C<%ENV = ();>, or, if you really have
+to, make it conditional on C<$^O ne 'VMS'> since in VMS the
+L<C<%ENV>|perlvar/%ENV> table is much more than a per-process key-value
+string table.
 
-On VMS, some entries in the C<%ENV> hash are dynamically created when
-their key is used on a read if they did not previously exist.  The
-values for C<$ENV{HOME}>, C<$ENV{TERM}>, C<$ENV{PATH}>, and C<$ENV{USER}>,
-are known to be dynamically generated.  The specific names that are
-dynamically generated may vary with the version of the C library on VMS,
-and more may exist than are documented.
+On VMS, some entries in the L<C<%ENV>|perlvar/%ENV> hash are dynamically
+created when their key is used on a read if they did not previously
+exist.  The values for C<$ENV{HOME}>, C<$ENV{TERM}>, C<$ENV{PATH}>, and
+C<$ENV{USER}>, are known to be dynamically generated.  The specific names
+that are dynamically generated may vary with the version of the C library
+on VMS, and more may exist than are documented.
 
-On VMS by default, changes to the %ENV hash persist after perl exits.
-Subsequent invocations of perl in the same process can inadvertently
-inherit environment settings that were meant to be temporary.
+On VMS by default, changes to the L<C<%ENV>|perlvar/%ENV> hash persist
+after perl exits.  Subsequent invocations of perl in the same process can
+inadvertently inherit environment settings that were meant to be
+temporary.
 
-Don't count on signals or C<%SIG> for anything.
+Don't count on signals or L<C<%SIG>|perlvar/%SIG> for anything.
 
-Don't count on filename globbing.  Use C<opendir>, C<readdir>, and
-C<closedir> instead.
+Don't count on filename globbing.  Use
+L<C<opendir>|perlfunc/opendir DIRHANDLE,EXPR>,
+L<C<readdir>|perlfunc/readdir DIRHANDLE>, and
+L<C<closedir>|perlfunc/closedir DIRHANDLE> instead.
 
 Don't count on per-program environment variables, or per-program current
 directories.
 
-Don't count on specific values of C<$!>, neither numeric nor
+Don't count on specific values of L<C<$!>|perlvar/$!>, neither numeric nor
 especially the string values. Users may switch their locales causing
 error messages to be translated into their languages.  If you can
 trust a POSIXish environment, you can portably use the symbols defined
-by the C<Errno> module, like C<ENOENT>.  And don't trust on the values of C<$!>
-at all except immediately after a failed system call.
+by the L<C<Errno>|Errno> module, like C<ENOENT>.  And don't trust on the
+values of L<C<$!>|perlvar/$!> at all except immediately after a failed
+system call.
 
 =head2 Command names versus file pathnames
 
 Don't assume that the name used to invoke a command or program with
-C<system> or C<exec> can also be used to test for the existence of the
-file that holds the executable code for that command or program.
+L<C<system>|perlfunc/system LIST> or L<C<exec>|perlfunc/exec LIST> can
+also be used to test for the existence of the file that holds the
+executable code for that command or program.
 First, many systems have "internal" commands that are built-in to the
 shell or OS and while these commands can be invoked, there is no
 corresponding file.  Second, some operating systems (e.g., Cygwin,
 DJGPP, OS/2, and VOS) have required suffixes for executable files;
 these suffixes are generally permitted on the command name but are not
-required.  Thus, a command like F<"perl"> might exist in a file named
-F<"perl">, F<"perl.exe">, or F<"perl.pm">, depending on the operating system.
-The variable C<"_exe"> in the C<Config> module holds the executable suffix,
-if any.  Third, the VMS port carefully sets up C<$^X> and
-C<$Config{perlpath}> so that no further processing is required.  This is
-just as well, because the matching regular expression used below would
-then have to deal with a possible trailing version number in the VMS
-file name.
+required.  Thus, a command like C<perl> might exist in a file named
+F<perl>, F<perl.exe>, or F<perl.pm>, depending on the operating system.
+The variable L<C<$Config{_exe}>|Config/C<_exe>> in the
+L<C<Config>|Config> module holds the executable suffix, if any.  Third,
+the VMS port carefully sets up L<C<$^X>|perlvar/$^X> and
+L<C<$Config{perlpath}>|Config/C<perlpath>> so that no further processing
+is required.  This is just as well, because the matching regular
+expression used below would then have to deal with a possible trailing
+version number in the VMS file name.
 
-To convert C<$^X> to a file pathname, taking account of the requirements
-of the various operating system possibilities, say:
+To convert L<C<$^X>|perlvar/$^X> to a file pathname, taking account of
+the requirements of the various operating system possibilities, say:
 
  use Config;
  my $thisperl = $^X;
- if ($^O ne 'VMS')
-    {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
+ if ($^O ne 'VMS') {
+     $thisperl .= $Config{_exe}
+         unless $thisperl =~ m/\Q$Config{_exe}\E$/i;
+ }
 
-To convert C<$Config{perlpath}> to a file pathname, say:
+To convert L<C<$Config{perlpath}>|Config/C<perlpath>> to a file pathname, say:
 
  use Config;
  my $thisperl = $Config{perlpath};
- if ($^O ne 'VMS')
-    {$thisperl .= $Config{_exe} unless $thisperl =~ m/$Config{_exe}$/i;}
+ if ($^O ne 'VMS') {
+     $thisperl .= $Config{_exe}
+         unless $thisperl =~ m/\Q$Config{_exe}\E$/i;
+ }
 
 =head2 Networking
 
@@ -512,17 +537,18 @@ can't bind to many virtual IP addresses.
 
 Don't assume a particular network device name.
 
-Don't assume a particular set of C<ioctl()>s will work.
+Don't assume a particular set of
+L<C<ioctl>|perlfunc/ioctl FILEHANDLE,FUNCTION,SCALAR>s will work.
 
 Don't assume that you can ping hosts and get replies.
 
 Don't assume that any particular port (service) will respond.
 
-Don't assume that C<Sys::Hostname> (or any other API or command) returns
-either a fully qualified hostname or a non-qualified hostname: it all
-depends on how the system had been configured.  Also remember that for
-things such as DHCP and NAT, the hostname you get back might not be
-very useful.
+Don't assume that L<C<Sys::Hostname>|Sys::Hostname> (or any other API or
+command) returns either a fully qualified hostname or a non-qualified
+hostname: it all depends on how the system had been configured.  Also
+remember that for things such as DHCP and NAT, the hostname you get back
+might not be very useful.
 
 All the above I<don't>s may look daunting, and they are, but the key
 is to degrade gracefully if one cannot reach the particular network
@@ -531,9 +557,12 @@ service one wants.  Croaking or hanging do not look very professional.
 =head2 Interprocess Communication (IPC)
 
 In general, don't directly access the system in code meant to be
-portable.  That means, no C<system>, C<exec>, C<fork>, C<pipe>,
-C<``>, C<qx//>, C<open> with a C<|>, nor any of the other things
-that makes being a Perl hacker worth being.
+portable.  That means, no L<C<system>|perlfunc/system LIST>,
+L<C<exec>|perlfunc/exec LIST>, L<C<fork>|perlfunc/fork>,
+L<C<pipe>|perlfunc/pipe READHANDLE,WRITEHANDLE>,
+L<C<``> or C<qxE<sol>E<sol>>|perlop/C<qxE<sol>I<STRING>E<sol>>>,
+L<C<open>|perlfunc/open FILEHANDLE,EXPR> with a C<|>, nor any of the other
+things that makes being a Perl hacker worth being.
 
 Commands that launch external processes are generally supported on
 most platforms (though many of them do not support any type of
@@ -542,22 +571,23 @@ them on.  External tools are often named differently on different
 platforms, may not be available in the same location, might accept
 different arguments, can behave differently, and often present their
 results in a platform-dependent way.  Thus, you should seldom depend
-on them to produce consistent results. (Then again, if you're calling
-I<netstat -a>, you probably don't expect it to run on both Unix and CP/M.)
+on them to produce consistent results.  (Then again, if you're calling
+C<netstat -a>, you probably don't expect it to run on both Unix and CP/M.)
 
 One especially common bit of Perl code is opening a pipe to B<sendmail>:
 
-    open(MAIL, '|/usr/lib/sendmail -t')
+    open(my $mail, '|-', '/usr/lib/sendmail -t')
 	or die "cannot fork sendmail: $!";
 
 This is fine for systems programming when sendmail is known to be
 available.  But it is not fine for many non-Unix systems, and even
 some Unix systems that may not have sendmail installed.  If a portable
 solution is needed, see the various distributions on CPAN that deal
-with it.  C<Mail::Mailer> and C<Mail::Send> in the C<MailTools> distribution are
-commonly used, and provide several mailing methods, including C<mail>,
-C<sendmail>, and direct SMTP (via C<Net::SMTP>) if a mail transfer agent is
-not available.  C<Mail::Sendmail> is a standalone module that provides
+with it.  L<C<Mail::Mailer>|Mail::Mailer> and L<C<Mail::Send>|Mail::Send>
+in the C<MailTools> distribution are commonly used, and provide several
+mailing methods, including C<mail>, C<sendmail>, and direct SMTP (via
+L<C<Net::SMTP>|Net::SMTP>) if a mail transfer agent is not available.
+L<C<Mail::Sendmail>|Mail::Sendmail> is a standalone module that provides
 simple, platform-independent mailing.
 
 The Unix System V IPC (C<msg*(), sem*(), shm*()>) is not available
@@ -568,8 +598,10 @@ bare v-strings (such as C<v10.20.30.40>) to represent IPv4 addresses:
 both forms just pack the four bytes into network order.  That this
 would be equal to the C language C<in_addr> struct (which is what the
 socket code internally uses) is not guaranteed.  To be portable use
-the routines of the C<Socket> extension, such as C<inet_aton()>,
-C<inet_ntoa()>, and C<sockaddr_in()>.
+the routines of the L<C<Socket>|Socket> module, such as
+L<C<inet_aton>|Socket/$ip_address = inet_aton $string>,
+L<C<inet_ntoa>|Socket/$string = inet_ntoa $ip_address>, and
+L<C<sockaddr_in>|Socket/$sockaddr = sockaddr_in $port, $ip_address>.
 
 The rule of thumb for portable code is: Do it all in portable Perl, or
 use a module (that may internally implement it with platform-specific
@@ -592,19 +624,20 @@ achieve portability.
 =head2 Standard Modules
 
 In general, the standard modules work across platforms.  Notable
-exceptions are the C<CPAN> module (which currently makes connections to external
-programs that may not be available), platform-specific modules (like
-C<ExtUtils::MM_VMS>), and DBM modules.
+exceptions are the L<C<CPAN>|CPAN> module (which currently makes
+connections to external programs that may not be available),
+platform-specific modules (like L<C<ExtUtils::MM_VMS>|ExtUtils::MM_VMS>),
+and DBM modules.
 
 There is no one DBM module available on all platforms.
-C<SDBM_File> and the others are generally available on all Unix and DOSish
-ports, but not in MacPerl, where only C<NDBM_File> and C<DB_File> are
-available.
+L<C<SDBM_File>|SDBM_File> and the others are generally available on all
+Unix and DOSish ports, but not in MacPerl, where only
+L<C<NDBM_File>|NDBM_File> and L<C<DB_File>|DB_File> are available.
 
 The good news is that at least some DBM module should be available, and
-C<AnyDBM_File> will use whichever module it can find.  Of course, then
-the code needs to be fairly strict, dropping to the greatest common
-factor (e.g., not exceeding 1K for each record), so that it will
+L<C<AnyDBM_File>|AnyDBM_File> will use whichever module it can find.  Of
+course, then the code needs to be fairly strict, dropping to the greatest
+common factor (e.g., not exceeding 1K for each record), so that it will
 work with any DBM module.  See L<AnyDBM_File> for more details.
 
 =head2 Time and Date
@@ -627,15 +660,17 @@ defines YYYY-MM-DD as the date format, or YYYY-MM-DDTHH:MM:SS
 Please do use the ISO 8601 instead of making us guess what
 date 02/03/04 might be.  ISO 8601 even sorts nicely as-is.
 A text representation (like "1987-12-18") can be easily converted
-into an OS-specific value using a module like C<Date::Parse>.
-An array of values, such as those returned by C<localtime>, can be
-converted to an OS-specific representation using C<Time::Local>.
+into an OS-specific value using a module like
+L<C<Time::Piece>|Time::Piece> (see L<Time::Piece/Date Parsing>) or
+L<C<Date::Parse>|Date::Parse>.  An array of values, such as those
+returned by L<C<localtime>|perlfunc/localtime EXPR>, can be converted to an OS-specific
+representation using L<C<Time::Local>|Time::Local>.
 
 When calculating specific times, such as for tests in time or date modules,
 it may be appropriate to calculate an offset for the epoch.
 
-    require Time::Local;
-    my $offset = Time::Local::timegm(0, 0, 0, 1, 0, 70);
+    use Time::Local qw(timegm);
+    my $offset = timegm(0, 0, 0, 1, 0, 70);
 
 The value for C<$offset> in Unix will be C<0>, but in Mac OS Classic
 will be some large number.  C<$offset> can then be added to a Unix time
@@ -645,20 +680,25 @@ value to get what should be the proper value on any system.
 
 Assume very little about character sets.
 
-Assume nothing about numerical values (C<ord>, C<chr>) of characters.
+Assume nothing about numerical values (L<C<ord>|perlfunc/ord EXPR>,
+L<C<chr>|perlfunc/chr NUMBER>) of characters.
 Do not use explicit code point ranges (like C<\xHH-\xHH)>.  However,
 starting in Perl v5.22, regular expression pattern bracketed character
 class ranges specified like C<qr/[\N{U+HH}-\N{U+HH}]/> are portable,
-and starting in Perl v5.24, the same ranges are portable in C<tr///>.
+and starting in Perl v5.24, the same ranges are portable in
+L<C<trE<sol>E<sol>E<sol>>|perlop/C<trE<sol>I<SEARCHLIST>E<sol>I<REPLACEMENTLIST>E<sol>cdsr>>.
 You can portably use symbolic character classes like C<[:print:]>.
 
 Do not assume that the alphabetic characters are encoded contiguously
 (in the numeric sense).  There may be gaps.  Special coding in Perl,
 however, guarantees that all subsets of C<qr/[A-Z]/>, C<qr/[a-z]/>, and
-C<qr/[0-9]/> behave as expected.  C<tr///> behaves the same for these
-ranges.  In patterns, any ranges specified with end points using the
-C<\N{...}> notations ensures character set portability, but it is a bug
-in Perl v5.22, that this isn't true of C<tr///>, fixed in v5.24.
+C<qr/[0-9]/> behave as expected.
+L<C<trE<sol>E<sol>E<sol>>|perlop/C<trE<sol>I<SEARCHLIST>E<sol>I<REPLACEMENTLIST>E<sol>cdsr>>
+behaves the same for these ranges.  In patterns, any ranges specified with
+end points using the C<\N{...}> notations ensures character set
+portability, but it is a bug in Perl v5.22 that this isn't true of
+L<C<trE<sol>E<sol>E<sol>>|perlop/C<trE<sol>I<SEARCHLIST>E<sol>I<REPLACEMENTLIST>E<sol>cdsr>>,
+fixed in v5.24.
 
 Do not assume anything about the ordering of the characters.
 The lowercase letters may come before or after the uppercase letters;
@@ -679,18 +719,13 @@ and time formatting--amongst other things.
 If you really want to be international, you should consider Unicode.
 See L<perluniintro> and L<perlunicode> for more information.
 
-If you want to use non-ASCII bytes (outside the bytes 0x00..0x7f) in
-the "source code" of your code, to be portable you have to be explicit
-about what bytes they are.  Someone might for example be using your
-code under a UTF-8 locale, in which case random native bytes might be
-illegal ("Malformed UTF-8 ...")  This means that for example embedding
-ISO 8859-1 bytes beyond 0x7f into your strings might cause trouble
-later.  If the bytes are native 8-bit bytes, you can use the C<bytes>
-pragma.  If the bytes are in a string (regular expressions being
-curious strings), you can often also use the C<\xHH> or more portably,
-the C<\N{U+HH}> notations instead
-of embedding the bytes as-is.  If you want to write your code in UTF-8,
-you can use L<utf8>.
+By default Perl assumes your source code is written in an 8-bit ASCII
+superset. To embed Unicode characters in your strings and regexes, you can
+use the L<C<\x{HH}> or (more portably) C<\N{U+HH}>
+notations|perlop/Quote and Quote-like Operators>. You can also use the
+L<C<utf8>|utf8> pragma and write your code in UTF-8, which lets you use
+Unicode characters directly (not just in quoted constructs but also in
+identifiers).
 
 =head2 System Resources
 
@@ -731,19 +766,20 @@ permissions between the permissions check and the actual operation.
 Just try the operation.)
 
 Don't assume the Unix user and group semantics: especially, don't
-expect C<< $< >> and C<< $> >> (or C<$(> and C<$)>) to work
-for switching identities (or memberships).
+expect L<C<< $< >>|perlvar/$E<lt>> and L<C<< $> >>|perlvar/$E<gt>> (or
+L<C<$(>|perlvar/$(> and L<C<$)>|perlvar/$)>) to work for switching
+identities (or memberships).
 
-Don't assume set-uid and set-gid semantics. (And even if you do,
+Don't assume set-uid and set-gid semantics.  (And even if you do,
 think twice: set-uid and set-gid are a known can of security worms.)
 
 =head2 Style
 
 For those times when it is necessary to have platform-specific code,
 consider keeping the platform-specific code in one place, making porting
-to other platforms easier.  Use the C<Config> module and the special
-variable C<$^O> to differentiate platforms, as described in
-L<"PLATFORMS">.
+to other platforms easier.  Use the L<C<Config>|Config> module and the
+special variable L<C<$^O>|perlvar/$^O> to differentiate platforms, as
+described in L</"PLATFORMS">.
 
 Beware of the "else syndrome":
 
@@ -762,12 +798,12 @@ often happens when tests spawn off other processes or call external
 programs to aid in the testing, or when (as noted above) the tests
 assume certain things about the filesystem and paths.  Be careful not
 to depend on a specific output style for errors, such as when checking
-C<$!> after a failed system call.  Using C<$!> for anything else than
-displaying it as output is doubtful (though see the C<Errno> module for
-testing reasonably portably for error value). Some platforms expect
-a certain output format, and Perl on those platforms may have been
-adjusted accordingly.  Most specifically, don't anchor a regex when
-testing an error value.
+L<C<$!>|perlvar/$!> after a failed system call.  Using
+L<C<$!>|perlvar/$!> for anything else than displaying it as output is
+doubtful (though see the L<C<Errno>|Errno> module for testing reasonably
+portably for error value). Some platforms expect a certain output format,
+and Perl on those platforms may have been adjusted accordingly.  Most
+specifically, don't anchor a regex when testing an error value.
 
 =head1 CPAN Testers
 
@@ -797,30 +833,31 @@ Testing results: L<http://www.cpantesters.org/>
 
 =head1 PLATFORMS
 
-Perl is built with a C<$^O> variable that indicates the operating
-system it was built on.  This was implemented
+Perl is built with a L<C<$^O>|perlvar/$^O> variable that indicates the
+operating system it was built on.  This was implemented
 to help speed up code that would otherwise have to C<use Config>
-and use the value of C<$Config{osname}>.  Of course, to get more
-detailed information about the system, looking into C<%Config> is
-certainly recommended.
+and use the value of L<C<$Config{osname}>|Config/C<osname>>.  Of course,
+to get more detailed information about the system, looking into
+L<C<%Config>|Config/DESCRIPTION> is certainly recommended.
 
-C<%Config> cannot always be trusted, however, because it was built
-at compile time.  If perl was built in one place, then transferred
-elsewhere, some values may be wrong.  The values may even have been
-edited after the fact.
+L<C<%Config>|Config/DESCRIPTION> cannot always be trusted, however,
+because it was built at compile time.  If perl was built in one place,
+then transferred elsewhere, some values may be wrong.  The values may
+even have been edited after the fact.
 
 =head2 Unix
 
 Perl works on a bewildering variety of Unix and Unix-like platforms (see
 e.g. most of the files in the F<hints/> directory in the source code kit).
-On most of these systems, the value of C<$^O> (hence C<$Config{'osname'}>,
-too) is determined either by lowercasing and stripping punctuation from the
-first field of the string returned by typing C<uname -a> (or a similar command)
-at the shell prompt or by testing the file system for the presence of
-uniquely named files such as a kernel or header file.  Here, for example,
-are a few of the more popular Unix flavors:
+On most of these systems, the value of L<C<$^O>|perlvar/$^O> (hence
+L<C<$Config{osname}>|Config/C<osname>>, too) is determined either by
+lowercasing and stripping punctuation from the first field of the string
+returned by typing C<uname -a> (or a similar command) at the shell prompt
+or by testing the file system for the presence of uniquely named files
+such as a kernel or header file.  Here, for example, are a few of the
+more popular Unix flavors:
 
-    uname         $^O        $Config{'archname'}
+    uname         $^O        $Config{archname}
     --------------------------------------------
     AIX           aix        aix
     BSD/OS        bsdos      i386-bsdos
@@ -850,8 +887,9 @@ are a few of the more popular Unix flavors:
     SunOS         solaris    i86pc-solaris
     SunOS4        sunos      sun4-sunos
 
-Because the value of C<$Config{archname}> may depend on the
-hardware architecture, it can vary more than the value of C<$^O>.
+Because the value of L<C<$Config{archname}>|Config/C<archname>> may
+depend on the hardware architecture, it can vary more than the value of
+L<C<$^O>|perlvar/$^O>.
 
 =head2 DOS and Derivatives
 
@@ -878,68 +916,96 @@ not to.
 The DOS FAT filesystem can accommodate only "8.3" style filenames.  Under
 the "case-insensitive, but case-preserving" HPFS (OS/2) and NTFS (NT)
 filesystems you may have to be careful about case returned with functions
-like C<readdir> or used with functions like C<open> or C<opendir>.
+like L<C<readdir>|perlfunc/readdir DIRHANDLE> or used with functions like
+L<C<open>|perlfunc/open FILEHANDLE,EXPR> or
+L<C<opendir>|perlfunc/opendir DIRHANDLE,EXPR>.
 
-DOS also treats several filenames as special, such as AUX, PRN,
-NUL, CON, COM1, LPT1, LPT2, etc.  Unfortunately, sometimes these
-filenames won't even work if you include an explicit directory
-prefix.  It is best to avoid such filenames, if you want your code
-to be portable to DOS and its derivatives.  It's hard to know what
-these all are, unfortunately.
+DOS also treats several filenames as special, such as F<AUX>, F<PRN>,
+F<NUL>, F<CON>, F<COM1>, F<LPT1>, F<LPT2>, etc.  Unfortunately, sometimes
+these filenames won't even work if you include an explicit directory
+prefix.  It is best to avoid such filenames, if you want your code to be
+portable to DOS and its derivatives.  It's hard to know what these all
+are, unfortunately.
 
 Users of these operating systems may also wish to make use of
-scripts such as I<pl2bat.bat> or I<pl2cmd> to
-put wrappers around your scripts.
+scripts such as F<pl2bat.bat> to put wrappers around your scripts.
 
-Newline (C<\n>) is translated as C<\015\012> by STDIO when reading from
-and writing to files (see L<"Newlines">).  C<binmode(FILEHANDLE)>
-will keep C<\n> translated as C<\012> for that filehandle.  Since it is a
-no-op on other systems, C<binmode> should be used for cross-platform code
-that deals with binary data.  That's assuming you realize in advance
-that your data is in binary.  General-purpose programs should
-often assume nothing about their data.
+Newline (C<\n>) is translated as C<\015\012> by the I/O system when
+reading from and writing to files (see L</"Newlines">).
+C<binmode($filehandle)> will keep C<\n> translated as C<\012> for that
+filehandle.
+L<C<binmode>|perlfunc/binmode FILEHANDLE> should always be used for code
+that deals with binary data.  That's assuming you realize in advance that
+your data is in binary.  General-purpose programs should often assume
+nothing about their data.
 
-The C<$^O> variable and the C<$Config{archname}> values for various
-DOSish perls are as follows:
+The L<C<$^O>|perlvar/$^O> variable and the
+L<C<$Config{archname}>|Config/C<archname>> values for various DOSish
+perls are as follows:
 
-     OS            $^O      $Config{archname}   ID    Version
-     --------------------------------------------------------
-     MS-DOS        dos        ?
-     PC-DOS        dos        ?
-     OS/2          os2        ?
-     Windows 3.1   ?          ?                 0      3 01
-     Windows 95    MSWin32    MSWin32-x86       1      4 00
-     Windows 98    MSWin32    MSWin32-x86       1      4 10
-     Windows ME    MSWin32    MSWin32-x86       1      ?
-     Windows NT    MSWin32    MSWin32-x86       2      4 xx
-     Windows NT    MSWin32    MSWin32-ALPHA     2      4 xx
-     Windows NT    MSWin32    MSWin32-ppc       2      4 xx
-     Windows 2000  MSWin32    MSWin32-x86       2      5 00
-     Windows XP    MSWin32    MSWin32-x86       2      5 01
-     Windows 2003  MSWin32    MSWin32-x86       2      5 02
-     Windows Vista MSWin32    MSWin32-x86       2      6 00
-     Windows 7     MSWin32    MSWin32-x86       2      6 01
-     Windows 7     MSWin32    MSWin32-x64       2      6 01
-     Windows 2008  MSWin32    MSWin32-x86       2      6 01
-     Windows 2008  MSWin32    MSWin32-x64       2      6 01
-     Windows CE    MSWin32    ?                 3
-     Cygwin        cygwin     cygwin
+    OS             $^O       $Config{archname}  ID    Version
+    ---------------------------------------------------------
+    MS-DOS         dos       ?
+    PC-DOS         dos       ?
+    OS/2           os2       ?
+    Windows 3.1    ?         ?                  0     3 01
+    Windows 95     MSWin32   MSWin32-x86        1     4 00
+    Windows 98     MSWin32   MSWin32-x86        1     4 10
+    Windows ME     MSWin32   MSWin32-x86        1     ?
+    Windows NT     MSWin32   MSWin32-x86        2     4 xx
+    Windows NT     MSWin32   MSWin32-ALPHA      2     4 xx
+    Windows NT     MSWin32   MSWin32-ppc        2     4 xx
+    Windows 2000   MSWin32   MSWin32-x86        2     5 00
+    Windows XP     MSWin32   MSWin32-x86        2     5 01
+    Windows 2003   MSWin32   MSWin32-x86        2     5 02
+    Windows Vista  MSWin32   MSWin32-x86        2     6 00
+    Windows 7      MSWin32   MSWin32-x86        2     6 01
+    Windows 7      MSWin32   MSWin32-x64        2     6 01
+    Windows 2008   MSWin32   MSWin32-x86        2     6 01
+    Windows 2008   MSWin32   MSWin32-x64        2     6 01
+    Windows CE     MSWin32   ?                  3
+    Cygwin         cygwin    cygwin
 
 The various MSWin32 Perl's can distinguish the OS they are running on
 via the value of the fifth element of the list returned from
-C<Win32::GetOSVersion()>.  For example:
+L<C<Win32::GetOSVersion()>|Win32/Win32::GetOSVersion()>.  For example:
 
     if ($^O eq 'MSWin32') {
         my @os_version_info = Win32::GetOSVersion();
         print +('3.1','95','NT')[$os_version_info[4]],"\n";
     }
 
-There are also C<Win32::IsWinNT()> and C<Win32::IsWin95()>; try C<perldoc Win32>,
-and as of libwin32 0.19 (not part of the core Perl distribution)
-C<Win32::GetOSName()>.  The very portable C<POSIX::uname()> will work too:
+There are also C<Win32::IsWinNT()|Win32/Win32::IsWinNT()>,
+C<Win32::IsWin95()|Win32/Win32::IsWin95()>, and
+L<C<Win32::GetOSName()>|Win32/Win32::GetOSName()>; try
+L<C<perldoc Win32>|Win32>.
+The very portable L<C<POSIX::uname()>|POSIX/C<uname>> will work too:
 
     c:\> perl -MPOSIX -we "print join '|', uname"
     Windows NT|moonru|5.0|Build 2195 (Service Pack 2)|x86
+
+Errors set by Winsock functions are now put directly into C<$^E>,
+and the relevant C<WSAE*> error codes are now exported from the
+L<Errno> and L<POSIX> modules for testing this against.
+
+The previous behavior of putting the errors (converted to POSIX-style
+C<E*> error codes since Perl 5.20.0) into C<$!> was buggy due to
+the non-equivalence of like-named Winsock and POSIX error constants,
+a relationship between which has unfortunately been established
+in one way or another since Perl 5.8.0.
+
+The new behavior provides a much more robust solution for checking
+Winsock errors in portable software without accidentally matching
+POSIX tests that were intended for other OSes and may have different
+meanings for Winsock.
+
+The old behavior is currently retained, warts and all, for backwards
+compatibility, but users are encouraged to change any code that
+tests C<$!> against C<E*> constants for Winsock errors to instead
+test C<$^E> against C<WSAE*> constants.  After a suitable deprecation
+period, which started with Perl 5.24, the old behavior may be
+removed, leaving C<$!> unchanged after Winsock function calls, to
+avoid any possible confusion over which error variable to check.
 
 Also see:
 
@@ -1036,32 +1102,34 @@ but not a mixture of both as in:
 In general, the easiest path to portability is always to specify
 filenames in Unix format unless they will need to be processed by native
 commands or utilities.  Because of this latter consideration, the
-File::Spec module by default returns native format specifications
+L<File::Spec> module by default returns native format specifications
 regardless of input format.  This default may be reversed so that
 filenames are always reported in Unix format by specifying the
 C<DECC$FILENAME_UNIX_REPORT> feature logical in the environment.
 
 The file type, or extension, is always present in a VMS-format file
 specification even if it's zero-length.  This means that, by default,
-C<readdir> will return a trailing dot on a file with no extension, so
-where you would see C<"a"> on Unix you'll see C<"a."> on VMS.  However,
-the trailing dot may be suppressed by enabling the
-C<DECC$READDIR_DROPDOTNOTYPE> feature in the environment (see the CRTL
+L<C<readdir>|perlfunc/readdir DIRHANDLE> will return a trailing dot on a
+file with no extension, so where you would see C<"a"> on Unix you'll see
+C<"a."> on VMS.  However, the trailing dot may be suppressed by enabling
+the C<DECC$READDIR_DROPDOTNOTYPE> feature in the environment (see the CRTL
 documentation on feature logical names).
 
 What C<\n> represents depends on the type of file opened.  It usually
 represents C<\012> but it could also be C<\015>, C<\012>, C<\015\012>,
 C<\000>, C<\040>, or nothing depending on the file organization and
-record format.  The C<VMS::Stdio> module provides access to the
-special C<fopen()> requirements of files with unusual attributes on VMS.
+record format.  The L<C<VMS::Stdio>|VMS::Stdio> module provides access to
+the special C<fopen()> requirements of files with unusual attributes on
+VMS.
 
-The value of C<$^O> on OpenVMS is "VMS".  To determine the architecture
-that you are running on refer to C<$Config{'archname'}>.
+The value of L<C<$^O>|perlvar/$^O> on OpenVMS is "VMS".  To determine the
+architecture that you are running on refer to
+L<C<$Config{archname}>|Config/C<archname>>.
 
 On VMS, perl determines the UTC offset from the C<SYS$TIMEZONE_DIFFERENTIAL>
 logical name.  Although the VMS epoch began at 17-NOV-1858 00:00:00.00,
-calls to C<localtime> are adjusted to count offsets from
-01-JAN-1970 00:00:00.00, just like Unix.
+calls to L<C<localtime>|perlfunc/localtime EXPR> are adjusted to count
+offsets from 01-JAN-1970 00:00:00.00, just like Unix.
 
 Also see:
 
@@ -1108,13 +1176,13 @@ must be renamed before they can be processed by Perl.
 Older releases of VOS (prior to OpenVOS Release 17.0) limit file
 names to 32 or fewer characters, prohibit file names from
 starting with a C<-> character, and prohibit file names from
-containing any character matching C<< tr/ !#%&'()*;<=>?// >>.
+containing C< > (space) or any character from the set C<< !#%&'()*;<=>? >>.
 
 Newer releases of VOS (OpenVOS Release 17.0 or later) support a
 feature known as extended names.  On these releases, file names
 can contain up to 255 characters, are prohibited from starting
 with a C<-> character, and the set of prohibited characters is
-reduced to any character matching C<< tr/#%*<>?// >>.  There are
+reduced to C<< #%*<>? >>.  There are
 restrictions involving spaces and apostrophes:  these characters
 must not begin or end a name, nor can they immediately precede or
 follow a period.  Additionally, a space must not immediately
@@ -1126,17 +1194,9 @@ trailing apostrophe.  Although an extended file name is limited
 to 255 characters, a path name is still limited to 256
 characters.
 
-The value of C<$^O> on VOS is "vos".  To determine the
-architecture that you are running on without resorting to loading
-all of C<%Config> you can examine the content of the C<@INC> array
-like so:
-
-    if ($^O =~ /vos/) {
-        print "I'm on a Stratus box!\n";
-    } else {
-        print "I'm not on a Stratus box!\n";
-        die;
-    }
+The value of L<C<$^O>|perlvar/$^O> on VOS is "vos".  To determine the
+architecture that you are running on refer to
+L<C<$Config{archname}>|Config/C<archname>>.
 
 Also see:
 
@@ -1170,9 +1230,8 @@ VOS Open-Source Software on the web at L<http://ftp.stratus.com/pub/vos/vos.html
 v5.22 core Perl runs on z/OS (formerly OS/390).  Theoretically it could
 run on the successors of OS/400 on AS/400 minicomputers as well as
 VM/ESA, and BS2000 for S/390 Mainframes.  Such computers use EBCDIC
-character sets internally (usually
-Character Code Set ID 0037 for OS/400 and either 1047 or POSIX-BC for S/390
-systems).
+character sets internally (usually Character Code Set ID 0037 for OS/400
+and either 1047 or POSIX-BC for S/390 systems).
 
 The rest of this section may need updating, but we don't know what it
 should say.  Please email comments to
@@ -1198,8 +1257,8 @@ similar to the following simple script:
     print "Hello from perl!\n";
 
 OS/390 will support the C<#!> shebang trick in release 2.8 and beyond.
-Calls to C<system> and backticks can use POSIX shell syntax on all
-S/390 systems.
+Calls to L<C<system>|perlfunc/system LIST> and backticks can use POSIX
+shell syntax on all S/390 systems.
 
 On the AS/400, if PERL5 is in your library list, you may need
 to wrap your Perl scripts in a CL procedure to invoke them like so:
@@ -1209,15 +1268,20 @@ to wrap your Perl scripts in a CL procedure to invoke them like so:
     ENDPGM
 
 This will invoke the Perl script F<hello.pl> in the root of the
-QOpenSys file system.  On the AS/400 calls to C<system> or backticks
-must use CL syntax.
+QOpenSys file system.  On the AS/400 calls to
+L<C<system>|perlfunc/system LIST> or backticks must use CL syntax.
 
 On these platforms, bear in mind that the EBCDIC character set may have
-an effect on what happens with some Perl functions (such as C<chr>,
-C<pack>, C<print>, C<printf>, C<ord>, C<sort>, C<sprintf>, C<unpack>), as
-well as bit-fiddling with ASCII constants using operators like C<^>, C<&>
-and C<|>, not to mention dealing with socket interfaces to ASCII computers
-(see L<"Newlines">).
+an effect on what happens with some Perl functions (such as
+L<C<chr>|perlfunc/chr NUMBER>, L<C<pack>|perlfunc/pack TEMPLATE,LIST>,
+L<C<print>|perlfunc/print FILEHANDLE LIST>,
+L<C<printf>|perlfunc/printf FILEHANDLE FORMAT, LIST>,
+L<C<ord>|perlfunc/ord EXPR>, L<C<sort>|perlfunc/sort SUBNAME LIST>,
+L<C<sprintf>|perlfunc/sprintf FORMAT, LIST>,
+L<C<unpack>|perlfunc/unpack TEMPLATE,EXPR>), as
+well as bit-fiddling with ASCII constants using operators like
+L<C<^>, C<&> and C<|>|perlop/Bitwise String Operators>, not to mention
+dealing with socket interfaces to ASCII computers (see L</"Newlines">).
 
 Fortunately, most web servers for the mainframe will correctly
 translate the C<\n> in the following statement to its ASCII equivalent
@@ -1225,9 +1289,9 @@ translate the C<\n> in the following statement to its ASCII equivalent
 
     print "Content-type: text/html\r\n\r\n";
 
-The values of C<$^O> on some of these platforms includes:
+The values of L<C<$^O>|perlvar/$^O> on some of these platforms include:
 
-    uname         $^O        $Config{'archname'}
+    uname         $^O        $Config{archname}
     --------------------------------------------
     OS/390        os390      os390
     OS400         os400      os400
@@ -1236,7 +1300,7 @@ The values of C<$^O> on some of these platforms includes:
 Some simple tricks for determining if you are running on an EBCDIC
 platform could include any of the following (perhaps all):
 
-    if ("\t" eq "\005")   { print "EBCDIC may be spoken here!\n"; }
+    if ("\t" eq "\005")  { print "EBCDIC may be spoken here!\n"; }
 
     if (ord('A') == 193) { print "EBCDIC may be spoken here!\n"; }
 
@@ -1297,11 +1361,12 @@ where
     ^ is the parent directory
     Directory and File =~ m|[^\0- "\.\$\%\&:\@\\^\|\177]+|
 
-The default filename translation is roughly C<tr|/.|./|;>
+The default filename translation is roughly C<tr|/.|./|>, swapping dots
+and slashes.
 
 Note that C<"ADFS::HardDisk.$.File" ne 'ADFS::HardDisk.$.File'> and that
 the second stage of C<$> interpolation in regular expressions will fall
-foul of the C<$.> if scripts are not careful.
+foul of the L<C<$.>|perlvar/$.> variable if scripts are not careful.
 
 Logical paths specified by system variables containing comma-separated
 search lists are also allowed; hence C<System:Modules> is a valid
@@ -1312,8 +1377,9 @@ C<System$Path> contains a single item list.  The filesystem will also
 expand system variables in filenames if enclosed in angle brackets, so
 C<< <System$Dir>.Modules >> would look for the file
 S<C<$ENV{'System$Dir'} . 'Modules'>>.  The obvious implication of this is
-that B<fully qualified filenames can start with C<< <> >>> and should
-be protected when C<open> is used for input.
+that B<fully qualified filenames can start with C<< <> >>> and the
+three-argument form of L<C<open>|perlfunc/open FILEHANDLE,EXPR> should
+always be used.
 
 Because C<.> was in use as a directory separator and filenames could not
 be assumed to be unique after 10 characters, Acorn implemented the C
@@ -1332,13 +1398,15 @@ The Unix emulation library's translation of filenames to native assumes
 that this sort of translation is required, and it allows a user-defined list
 of known suffixes that it will transpose in this fashion.  This may
 seem transparent, but consider that with these rules F<foo/bar/baz.h>
-and F<foo/bar/h/baz> both map to F<foo.bar.h.baz>, and that C<readdir> and
-C<glob> cannot and do not attempt to emulate the reverse mapping.  Other
+and F<foo/bar/h/baz> both map to F<foo.bar.h.baz>, and that
+L<C<readdir>|perlfunc/readdir DIRHANDLE> and L<C<glob>|perlfunc/glob EXPR>
+cannot and do not attempt to emulate the reverse mapping.  Other
 C<.>'s in filenames are translated to C</>.
 
-As implied above, the environment accessed through C<%ENV> is global, and
-the convention is that program specific environment variables are of the
-form C<Program$Name>.  Each filesystem maintains a current directory,
+As implied above, the environment accessed through
+L<C<%ENV>|perlvar/%ENV> is global, and the convention is that program
+specific environment variables are of the form C<Program$Name>.
+Each filesystem maintains a current directory,
 and the current filesystem's current directory is the B<global> current
 directory.  Consequently, sociable programs don't change the current
 directory but rely on full pathnames, and programs (and Makefiles) cannot
@@ -1353,9 +1421,9 @@ passing C<STDIN>, C<STDOUT>, or C<STDERR> to your children.
 
 The desire of users to express filenames of the form
 C<< <Foo$Dir>.Bar >> on the command line unquoted causes problems,
-too: C<``> command output capture has to perform a guessing game.  It
-assumes that a string C<< <[^<>]+\$[^<>]> >> is a
-reference to an environment variable, whereas anything else involving
+too: L<C<``>|perlop/C<qxE<sol>I<STRING>E<sol>>> command output capture has
+to perform a guessing game.  It assumes that a string C<< <[^<>]+\$[^<>]> >>
+is a reference to an environment variable, whereas anything else involving
 C<< < >> or C<< > >> is redirection, and generally manages to be 99%
 right.  Of course, the problem remains that scripts cannot rely on any
 Unix tools being available, or that any tools found have Unix-like command
@@ -1366,11 +1434,11 @@ tools.  In practice, many don't, as users of the Acorn platform are
 used to binary distributions.  MakeMaker does run, but no available
 make currently copes with MakeMaker's makefiles; even if and when
 this should be fixed, the lack of a Unix-like shell will cause
-problems with makefile rules, especially lines of the form C<cd
-sdbm && make all>, and anything using quoting.
+problems with makefile rules, especially lines of the form
+C<cd sdbm && make all>, and anything using quoting.
 
-"S<RISC OS>" is the proper name for the operating system, but the value
-in C<$^O> is "riscos" (because we don't like shouting).
+S<"RISC OS"> is the proper name for the operating system, but the value
+in L<C<$^O>|perlvar/$^O> is "riscos" (because we don't like shouting).
 
 =head2 Other perls
 
@@ -1383,10 +1451,10 @@ aos, Atari ST, lynxos, riscos, Novell Netware, Tandem Guardian,
 I<etc.>  (Yes, we know that some of these OSes may fall under the
 Unix category, but we are not a standards body.)
 
-Some approximate operating system names and their C<$^O> values
-in the "OTHER" category include:
+Some approximate operating system names and their L<C<$^O>|perlvar/$^O>
+values in the "OTHER" category include:
 
-    OS            $^O        $Config{'archname'}
+    OS            $^O        $Config{archname}
     ------------------------------------------
     Amiga DOS     amigaos    m68k-amigos
 
@@ -1414,7 +1482,7 @@ S<Plan 9>, F<README.plan9>
 
 Listed below are functions that are either completely unimplemented
 or else have been implemented differently on various platforms.
-Following each description will be, in parentheses, a list of
+Preceding each description will be, in parentheses, a list of
 platforms that the description applies to.
 
 The list may well be incomplete, or even wrong in some places.  When
@@ -1424,10 +1492,11 @@ a given port.
 
 Be aware, moreover, that even among Unix-ish systems there are variations.
 
-For many functions, you can also query C<%Config>, exported by
-default from the C<Config> module.  For example, to check whether the
-platform has the C<lstat> call, check C<$Config{d_lstat}>.  See
-L<Config> for a full description of available variables.
+For many functions, you can also query L<C<%Config>|Config/DESCRIPTION>,
+exported by default from the L<C<Config>|Config> module.  For example, to
+check whether the platform has the L<C<lstat>|perlfunc/lstat FILEHANDLE>
+call, check L<C<$Config{d_lstat}>|Config/C<d_lstat>>.  See L<Config> for a
+full description of available variables.
 
 =head2 Alphabetical Listing of Perl Functions
 
@@ -1435,362 +1504,447 @@ L<Config> for a full description of available variables.
 
 =item -X
 
+(Win32)
 C<-w> only inspects the read-only file attribute (FILE_ATTRIBUTE_READONLY),
 which determines whether the directory can be deleted, not whether it can
 be written to. Directories always have read and write access unless denied
-by discretionary access control lists (DACLs).  (S<Win32>)
+by discretionary access control lists (DACLs).
 
+(VMS)
 C<-r>, C<-w>, C<-x>, and C<-o> tell whether the file is accessible,
-which may not reflect UIC-based file protections.  (VMS)
+which may not reflect UIC-based file protections.
 
+(S<RISC OS>)
 C<-s> by name on an open file will return the space reserved on disk,
 rather than the current extent.  C<-s> on an open filehandle returns the
-current size.  (S<RISC OS>)
+current size.
 
-C<-R>, C<-W>, C<-X>, C<-O> are indistinguishable from C<-r>, C<-w>,
-C<-x>, C<-o>. (Win32, VMS, S<RISC OS>)
-
-C<-g>, C<-k>, C<-l>, C<-u>, C<-A> are not particularly meaningful.
 (Win32, VMS, S<RISC OS>)
+C<-R>, C<-W>, C<-X>, C<-O> are indistinguishable from C<-r>, C<-w>,
+C<-x>, C<-o>.
 
-C<-p> is not particularly meaningful. (VMS, S<RISC OS>)
+(Win32, VMS, S<RISC OS>)
+C<-g>, C<-k>, C<-l>, C<-u>, C<-A> are not particularly meaningful.
 
-C<-d> is true if passed a device spec without an explicit directory.
+(VMS, S<RISC OS>)
+C<-p> is not particularly meaningful.
+
 (VMS)
+C<-d> is true if passed a device spec without an explicit directory.
 
+(Win32)
 C<-x> (or C<-X>) determine if a file ends in one of the executable
-suffixes.  C<-S> is meaningless.  (Win32)
+suffixes.  C<-S> is meaningless.
 
-C<-x> (or C<-X>) determine if a file has an executable file type.
 (S<RISC OS>)
+C<-x> (or C<-X>) determine if a file has an executable file type.
 
 =item alarm
 
+(Win32)
 Emulated using timers that must be explicitly polled whenever Perl
 wants to dispatch "safe signals" and therefore cannot interrupt
-blocking system calls.  (Win32)
+blocking system calls.
 
 =item atan2
 
+(Tru64, HP-UX 10.20)
 Due to issues with various CPUs, math libraries, compilers, and standards,
-results for C<atan2()> may vary depending on any combination of the above.
+results for C<atan2> may vary depending on any combination of the above.
 Perl attempts to conform to the Open Group/IEEE standards for the results
-returned from C<atan2()>, but cannot force the issue if the system Perl is
-run on does not allow it.  (Tru64, HP-UX 10.20)
+returned from C<atan2>, but cannot force the issue if the system Perl is
+run on does not allow it.
 
-The current version of the standards for C<atan2()> is available at
+The current version of the standards for C<atan2> is available at
 L<http://www.opengroup.org/onlinepubs/009695399/functions/atan2.html>.
 
 =item binmode
 
-Meaningless.  (S<RISC OS>)
+(S<RISC OS>)
+Meaningless.
 
+(VMS)
 Reopens file and restores pointer; if function fails, underlying
 filehandle may be closed, or pointer may be in a different position.
-(VMS)
 
-The value returned by C<tell> may be affected after the call, and
-the filehandle may be flushed. (Win32)
+(Win32)
+The value returned by L<C<tell>|perlfunc/tell FILEHANDLE> may be affected
+after the call, and the filehandle may be flushed.
 
 =item chmod
 
-Only good for changing "owner" read-write access, "group", and "other"
-bits are meaningless. (Win32)
+(Win32)
+Only good for changing "owner" read-write access; "group" and "other"
+bits are meaningless.
 
-Only good for changing "owner" and "other" read-write access. (S<RISC OS>)
+(S<RISC OS>)
+Only good for changing "owner" and "other" read-write access.
 
-Access permissions are mapped onto VOS access-control list changes. (VOS)
+(VOS)
+Access permissions are mapped onto VOS access-control list changes.
 
-The actual permissions set depend on the value of the C<CYGWIN>
-in the SYSTEM environment settings.  (Cygwin)
+(Cygwin)
+The actual permissions set depend on the value of the C<CYGWIN> variable
+in the SYSTEM environment settings.
 
+(Android)
 Setting the exec bit on some locations (generally F</sdcard>) will return true
-but not actually set the bit. (Android)
+but not actually set the bit.
+
+(VMS)
+A mode argument of zero sets permissions to the user's default permission mask
+rather than disabling all permissions.
 
 =item chown
 
-Not implemented. (Win32, S<Plan 9>, S<RISC OS>)
+(S<Plan 9>, S<RISC OS>)
+Not implemented.
 
-Does nothing, but won't fail. (Win32)
+(Win32)
+Does nothing, but won't fail.
 
-A little funky, because VOS's notion of ownership is a little funky (VOS).
+(VOS)
+A little funky, because VOS's notion of ownership is a little funky.
 
 =item chroot
 
-Not implemented. (Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
+(Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
+Not implemented.
 
 =item crypt
 
+(Win32)
 May not be available if library or source was not provided when building
-perl. (Win32)
+perl.
 
-Not implemented. (Android)
+(Android)
+Not implemented.
 
 =item dbmclose
 
-Not implemented. (VMS, S<Plan 9>, VOS)
+(VMS, S<Plan 9>, VOS)
+Not implemented.
 
 =item dbmopen
 
-Not implemented. (VMS, S<Plan 9>, VOS)
+(VMS, S<Plan 9>, VOS)
+Not implemented.
 
 =item dump
 
-Not useful. (S<RISC OS>)
+(S<RISC OS>)
+Not useful.
 
-Not supported. (Cygwin, Win32)
+(Cygwin, Win32)
+Not supported.
 
-Invokes VMS debugger. (VMS)
+(VMS)
+Invokes VMS debugger.
 
 =item exec
 
+(Win32)
 C<exec LIST> without the use of indirect object syntax (C<exec PROGRAM LIST>)
-may fall back to trying the shell if the first C<spawn()> fails.  (Win32)
+may fall back to trying the shell if the first C<spawn()> fails.
 
-Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
+Does not automatically flush output handles on some platforms.
 
-Not supported. (Symbian OS)
+(Symbian OS)
+Not supported.
 
 =item exit
 
-Emulates Unix C<exit()> (which considers C<exit 1> to indicate an error) by
+(VMS)
+Emulates Unix C<exit> (which considers C<exit 1> to indicate an error) by
 mapping the C<1> to C<SS$_ABORT> (C<44>).  This behavior may be overridden
-with the pragma C<use vmsish 'exit'>.  As with the CRTL's C<exit()>
-function, C<exit 0> is also mapped to an exit status of C<SS$_NORMAL>
-(C<1>); this mapping cannot be overridden.  Any other argument to
-C<exit()>
+with the pragma L<C<use vmsish 'exit'>|vmsish/C<vmsish exit>>.  As with
+the CRTL's C<exit()> function, C<exit 0> is also mapped to an exit status
+of C<SS$_NORMAL> (C<1>); this mapping cannot be overridden.  Any other
+argument to C<exit>
 is used directly as Perl's exit status.  On VMS, unless the future
 POSIX_EXIT mode is enabled, the exit code should always be a valid
 VMS exit code and not a generic number.  When the POSIX_EXIT mode is
 enabled, a generic number will be encoded in a method compatible with
 the C library _POSIX_EXIT macro so that it can be decoded by other
-programs, particularly ones written in C, like the GNV package.  (VMS)
+programs, particularly ones written in C, like the GNV package.
 
-C<exit()> resets file pointers, which is a problem when called
-from a child process (created by C<fork()>) in C<BEGIN>.
-A workaround is to use C<POSIX::_exit>.  (Solaris)
+(Solaris)
+C<exit> resets file pointers, which is a problem when called
+from a child process (created by L<C<fork>|perlfunc/fork>) in
+L<C<BEGIN>|perlmod/BEGIN, UNITCHECK, CHECK, INIT and END>.
+A workaround is to use L<C<POSIX::_exit>|POSIX/C<_exit>>.
 
     exit unless $Config{archname} =~ /\bsolaris\b/;
-    require POSIX and POSIX::_exit(0);
+    require POSIX;
+    POSIX::_exit(0);
 
 =item fcntl
 
-Not implemented. (Win32)
+(Win32)
+Not implemented.
 
-Some functions available based on the version of VMS. (VMS)
+(VMS)
+Some functions available based on the version of VMS.
 
 =item flock
 
-Not implemented (VMS, S<RISC OS>, VOS).
+(VMS, S<RISC OS>, VOS)
+Not implemented.
 
 =item fork
 
-Not implemented. (AmigaOS, S<RISC OS>, VMS)
+(AmigaOS, S<RISC OS>, VMS)
+Not implemented.
 
-Emulated using multiple interpreters.  See L<perlfork>.  (Win32)
+(Win32)
+Emulated using multiple interpreters.  See L<perlfork>.
 
-Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
+Does not automatically flush output handles on some platforms.
 
 =item getlogin
 
-Not implemented. (S<RISC OS>)
+(S<RISC OS>)
+Not implemented.
 
 =item getpgrp
 
-Not implemented. (Win32, VMS, S<RISC OS>)
+(Win32, VMS, S<RISC OS>)
+Not implemented.
 
 =item getppid
 
-Not implemented. (Win32, S<RISC OS>)
+(Win32, S<RISC OS>)
+Not implemented.
 
 =item getpriority
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS)
+(Win32, VMS, S<RISC OS>, VOS)
+Not implemented.
 
 =item getpwnam
 
-Not implemented. (Win32)
+(Win32)
+Not implemented.
 
-Not useful. (S<RISC OS>)
+(S<RISC OS>)
+Not useful.
 
 =item getgrnam
 
-Not implemented. (Win32, VMS, S<RISC OS>)
+(Win32, VMS, S<RISC OS>)
+Not implemented.
 
 =item getnetbyname
 
-Not implemented. (Android, Win32, S<Plan 9>)
+(Android, Win32, S<Plan 9>)
+Not implemented.
 
 =item getpwuid
 
-Not implemented. (Win32)
+(Win32)
+Not implemented.
 
-Not useful. (S<RISC OS>)
+(S<RISC OS>)
+Not useful.
 
 =item getgrgid
 
-Not implemented. (Win32, VMS, S<RISC OS>)
+(Win32, VMS, S<RISC OS>)
+Not implemented.
 
 =item getnetbyaddr
 
-Not implemented. (Android, Win32, S<Plan 9>)
+(Android, Win32, S<Plan 9>)
+Not implemented.
 
 =item getprotobynumber
 
-Not implemented. (Android)
-
-=item getservbyport
+(Android)
+Not implemented.
 
 =item getpwent
 
-Not implemented. (Android, Win32)
+(Android, Win32)
+Not implemented.
 
 =item getgrent
 
-Not implemented. (Android, Win32, VMS)
+(Android, Win32, VMS)
+Not implemented.
 
 =item gethostbyname
 
+(S<Irix 5>)
 C<gethostbyname('localhost')> does not work everywhere: you may have
-to use C<gethostbyname('127.0.0.1')>. (S<Irix 5>)
+to use C<gethostbyname('127.0.0.1')>.
 
 =item gethostent
 
-Not implemented. (Win32)
+(Win32)
+Not implemented.
 
 =item getnetent
 
-Not implemented. (Android, Win32, S<Plan 9>)
+(Android, Win32, S<Plan 9>)
+Not implemented.
 
 =item getprotoent
 
-Not implemented. (Android, Win32, S<Plan 9>)
+(Android, Win32, S<Plan 9>)
+Not implemented.
 
 =item getservent
 
-Not implemented. (Win32, S<Plan 9>)
+(Win32, S<Plan 9>)
+Not implemented.
 
 =item seekdir
 
-Not implemented. (Android)
+(Android)
+Not implemented.
 
 =item sethostent
 
-Not implemented. (Android, Win32, S<Plan 9>, S<RISC OS>)
+(Android, Win32, S<Plan 9>, S<RISC OS>)
+Not implemented.
 
 =item setnetent
 
-Not implemented. (Win32, S<Plan 9>, S<RISC OS>)
+(Win32, S<Plan 9>, S<RISC OS>)
+Not implemented.
 
 =item setprotoent
 
-Not implemented. (Android, Win32, S<Plan 9>, S<RISC OS>)
+(Android, Win32, S<Plan 9>, S<RISC OS>)
+Not implemented.
 
 =item setservent
 
-Not implemented. (S<Plan 9>, Win32, S<RISC OS>)
+(S<Plan 9>, Win32, S<RISC OS>)
+Not implemented.
 
 =item endpwent
 
-Not implemented. (Win32)
+(Win32)
+Not implemented.
 
-Either not implemented or a no-op. (Android)
+(Android)
+Either not implemented or a no-op.
 
 =item endgrent
 
-Not implemented. (Android, S<RISC OS>, VMS, Win32)
+(Android, S<RISC OS>, VMS, Win32)
+Not implemented.
 
 =item endhostent
 
-Not implemented. (Android, Win32)
+(Android, Win32)
+Not implemented.
 
 =item endnetent
 
-Not implemented. (Android, Win32, S<Plan 9>)
+(Android, Win32, S<Plan 9>)
+Not implemented.
 
 =item endprotoent
 
-Not implemented. (Android, Win32, S<Plan 9>)
+(Android, Win32, S<Plan 9>)
+Not implemented.
 
 =item endservent
 
-Not implemented. (S<Plan 9>, Win32)
+(S<Plan 9>, Win32)
+Not implemented.
 
-=item getsockopt SOCKET,LEVEL,OPTNAME
+=item getsockopt
 
-Not implemented. (S<Plan 9>)
+(S<Plan 9>)
+Not implemented.
 
 =item glob
 
-This operator is implemented via the C<File::Glob> extension on most
-platforms.  See L<File::Glob> for portability information.
+This operator is implemented via the L<C<File::Glob>|File::Glob> extension
+on most platforms.  See L<File::Glob> for portability information.
 
 =item gmtime
 
-In theory, C<gmtime()> is reliable from -2**63 to 2**63-1.  However,
-because work arounds in the implementation use floating point numbers,
+In theory, C<gmtime> is reliable from -2**63 to 2**63-1.  However,
+because work-arounds in the implementation use floating point numbers,
 it will become inaccurate as the time gets larger.  This is a bug and
 will be fixed in the future.
 
-On VOS, time values are 32-bit quantities.
+(VOS)
+Time values are 32-bit quantities.
 
-=item ioctl FILEHANDLE,FUNCTION,SCALAR
+=item ioctl
 
-Not implemented. (VMS)
+(VMS)
+Not implemented.
 
+(Win32)
 Available only for socket handles, and it does what the C<ioctlsocket()> call
-in the Winsock API does. (Win32)
+in the Winsock API does.
 
-Available only for socket handles. (S<RISC OS>)
+(S<RISC OS>)
+Available only for socket handles.
 
 =item kill
 
-Not implemented, hence not useful for taint checking. (S<RISC OS>)
+(S<RISC OS>)
+Not implemented, hence not useful for taint checking.
 
-C<kill()> doesn't have the semantics of C<raise()>, i.e. it doesn't send
-a signal to the identified process like it does on Unix platforms.
-Instead C<kill($sig, $pid)> terminates the process identified by C<$pid>,
-and makes it exit immediately with exit status $sig.  As in Unix, if
-$sig is 0 and the specified process exists, it returns true without
-actually terminating it. (Win32)
+(Win32)
+C<kill> doesn't send a signal to the identified process like it does on
+Unix platforms.  Instead C<kill($sig, $pid)> terminates the process
+identified by C<$pid>, and makes it exit immediately with exit status
+C<$sig>.  As in Unix, if C<$sig> is 0 and the specified process exists, it
+returns true without actually terminating it.
 
+(Win32)
 C<kill(-9, $pid)> will terminate the process specified by C<$pid> and
 recursively all child processes owned by it.  This is different from
 the Unix semantics, where the signal will be delivered to all
 processes in the same process group as the process specified by
-$pid. (Win32)
+C<$pid>.
 
+(VMS)
 A pid of -1 indicating all processes on the system is not currently
-supported. (VMS)
+supported.
 
 =item link
 
-Not implemented. (S<RISC OS>, VOS)
+(S<RISC OS>, VOS)
+Not implemented.
 
+(AmigaOS)
 Link count not updated because hard links are not quite that hard
-(They are sort of half-way between hard and soft links). (AmigaOS)
+(They are sort of half-way between hard and soft links).
 
+(Win32)
 Hard links are implemented on Win32 under NTFS only. They are
 natively supported on Windows 2000 and later.  On Windows NT they
 are implemented using the Windows POSIX subsystem support and the
 Perl process will need Administrator or Backup Operator privileges
 to create hard links.
 
-Available on 64 bit OpenVMS 8.2 and later.  (VMS)
+(VMS)
+Available on 64 bit OpenVMS 8.2 and later.
 
 =item localtime
 
-localtime() has the same range as L</gmtime>, but because time zone
-rules change its accuracy for historical and future times may degrade
+C<localtime> has the same range as L</gmtime>, but because time zone
+rules change, its accuracy for historical and future times may degrade
 but usually by no more than an hour.
 
 =item lstat
 
-Not implemented. (S<RISC OS>)
+(S<RISC OS>)
+Not implemented.
 
-Return values (especially for device and inode) may be bogus. (Win32)
+(Win32)
+Return values (especially for device and inode) may be bogus.
 
 =item msgctl
 
@@ -1800,36 +1954,45 @@ Return values (especially for device and inode) may be bogus. (Win32)
 
 =item msgrcv
 
-Not implemented. (Android, Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
+(Android, Win32, VMS, S<Plan 9>, S<RISC OS>, VOS)
+Not implemented.
 
 =item open
 
-open to C<|-> and C<-|> are unsupported. (Win32, S<RISC OS>)
+(Win32, S<RISC OS>)
+Open modes C<|-> and C<-|> are unsupported.
 
+(SunOS, Solaris, HP-UX)
 Opening a process does not automatically flush output handles on some
-platforms.  (SunOS, Solaris, HP-UX)
+platforms.
 
 =item readlink
 
-Not implemented. (Win32, VMS, S<RISC OS>)
+(Win32, VMS, S<RISC OS>)
+Not implemented.
 
 =item rename
 
-Can't move directories between directories on different logical volumes. (Win32)
+(Win32)
+Can't move directories between directories on different logical volumes.
 
 =item rewinddir
 
-Will not cause C<readdir()> to re-read the directory stream.  The entries
-already read before the C<rewinddir()> call will just be returned again
-from a cache buffer. (Win32)
+(Win32)
+Will not cause L<C<readdir>|perlfunc/readdir DIRHANDLE> to re-read the
+directory stream.  The entries already read before the C<rewinddir> call
+will just be returned again from a cache buffer.
 
 =item select
 
-Only implemented on sockets. (Win32, VMS)
+(Win32, VMS)
+Only implemented on sockets.
 
-Only reliable on sockets. (S<RISC OS>)
+(S<RISC OS>)
+Only reliable on sockets.
 
-Note that the C<select FILEHANDLE> form is generally portable.
+Note that the L<C<select FILEHANDLE>|perlfunc/select FILEHANDLE> form is
+generally portable.
 
 =item semctl
 
@@ -1837,27 +2000,33 @@ Note that the C<select FILEHANDLE> form is generally portable.
 
 =item semop
 
-Not implemented. (Android, Win32, VMS, S<RISC OS>)
+(Android, Win32, VMS, S<RISC OS>)
+Not implemented.
 
 =item setgrent
 
-Not implemented. (Android, VMS, Win32, S<RISC OS>)
+(Android, VMS, Win32, S<RISC OS>)
+Not implemented.
 
 =item setpgrp
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS)
+(Win32, VMS, S<RISC OS>, VOS)
+Not implemented.
 
 =item setpriority
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS)
+(Win32, VMS, S<RISC OS>, VOS)
+Not implemented.
 
 =item setpwent
 
-Not implemented. (Android, Win32, S<RISC OS>)
+(Android, Win32, S<RISC OS>)
+Not implemented.
 
 =item setsockopt
 
-Not implemented. (S<Plan 9>)
+(S<Plan 9>)
+Not implemented.
 
 =item shmctl
 
@@ -1867,154 +2036,186 @@ Not implemented. (S<Plan 9>)
 
 =item shmwrite
 
-Not implemented. (Android, Win32, VMS, S<RISC OS>)
+(Android, Win32, VMS, S<RISC OS>)
+Not implemented.
 
 =item sleep
 
+(Win32)
 Emulated using synchronization functions such that it can be
-interrupted by C<alarm()>, and limited to a maximum of 4294967 seconds,
-approximately 49 days. (Win32)
-
-=item sockatmark
-
-A relatively recent addition to socket functions, may not
-be implemented even in Unix platforms.
+interrupted by L<C<alarm>|perlfunc/alarm SECONDS>, and limited to a
+maximum of 4294967 seconds, approximately 49 days.
 
 =item socketpair
 
-Not implemented. (S<RISC OS>)
+(S<RISC OS>)
+Not implemented.
 
-Available on 64 bit OpenVMS 8.2 and later.  (VMS)
+(VMS)
+Available on 64 bit OpenVMS 8.2 and later.
 
 =item stat
 
-Platforms that do not have rdev, blksize, or blocks will return these
-as '', so numeric comparison or manipulation of these fields may cause
-'not numeric' warnings.
+Platforms that do not have C<rdev>, C<blksize>, or C<blocks> will return
+these as C<''>, so numeric comparison or manipulation of these fields may
+cause 'not numeric' warnings.
 
-ctime not supported on UFS (S<Mac OS X>).
+(S<Mac OS X>)
+C<ctime> not supported on UFS.
 
-ctime is creation time instead of inode change time  (Win32).
+(Win32)
+C<ctime> is creation time instead of inode change time.
 
-device and inode are not meaningful.  (Win32)
+(Win32)
+C<dev> and C<ino> are not meaningful.
 
-device and inode are not necessarily reliable.  (VMS)
+(VMS)
+C<dev> and C<ino> are not necessarily reliable.
 
-mtime, atime and ctime all return the last modification time.  Device and
-inode are not necessarily reliable.  (S<RISC OS>)
+(S<RISC OS>)
+C<mtime>, C<atime> and C<ctime> all return the last modification time.
+C<dev> and C<ino> are not necessarily reliable.
 
-dev, rdev, blksize, and blocks are not available.  inode is not
-meaningful and will differ between stat calls on the same file.  (os2)
+(OS/2)
+C<dev>, C<rdev>, C<blksize>, and C<blocks> are not available.  C<ino> is not
+meaningful and will differ between stat calls on the same file.
 
-some versions of cygwin when doing a C<stat("foo")> and if not finding it
-may then attempt to C<stat("foo.exe")> (Cygwin)
+(Cygwin)
+Some versions of cygwin when doing a C<stat("foo")> and not finding it
+may then attempt to C<stat("foo.exe")>.
 
-On Win32 C<stat()> needs to open the file to determine the link count
+(Win32)
+C<stat> needs to open the file to determine the link count
 and update attributes that may have been changed through hard links.
-Setting C<${^WIN32_SLOPPY_STAT}> to a true value speeds up C<stat()> by
-not performing this operation. (Win32)
+Setting L<C<${^WIN32_SLOPPY_STAT}>|perlvar/${^WIN32_SLOPPY_STAT}> to a
+true value speeds up C<stat> by not performing this operation.
 
 =item symlink
 
-Not implemented. (Win32, S<RISC OS>)
+(Win32, S<RISC OS>)
+Not implemented.
 
+(VMS)
 Implemented on 64 bit VMS 8.3.  VMS requires the symbolic link to be in Unix
 syntax if it is intended to resolve to a valid path.
 
 =item syscall
 
-Not implemented. (Win32, VMS, S<RISC OS>, VOS)
+(Win32, VMS, S<RISC OS>, VOS)
+Not implemented.
 
 =item sysopen
 
-The traditional "0", "1", and "2" MODEs are implemented with different
-numeric values on some systems.  The flags exported by C<Fcntl>
-(O_RDONLY, O_WRONLY, O_RDWR) should work everywhere though.  (S<Mac
-OS>, OS/390)
+(S<Mac OS>, OS/390)
+The traditional C<0>, C<1>, and C<2> MODEs are implemented with different
+numeric values on some systems.  The flags exported by L<C<Fcntl>|Fcntl>
+(C<O_RDONLY>, C<O_WRONLY>, C<O_RDWR>) should work everywhere though.
 
 =item system
 
+(Win32)
 As an optimization, may not call the command shell specified in
 C<$ENV{PERL5SHELL}>.  C<system(1, @args)> spawns an external
 process and immediately returns its process designator, without
 waiting for it to terminate.  Return value may be used subsequently
-in C<wait> or C<waitpid>.  Failure to C<spawn()> a subprocess is indicated
-by setting C<$?> to S<C<"255 << 8">>.  C<$?> is set in a way compatible with
-Unix (i.e. the exitstatus of the subprocess is obtained by S<C<"$? >> 8">>,
-as described in the documentation).  (Win32)
+in L<C<wait>|perlfunc/wait> or L<C<waitpid>|perlfunc/waitpid PID,FLAGS>.
+Failure to C<spawn()> a subprocess is indicated by setting
+L<C<$?>|perlvar/$?> to C<<< 255 << 8 >>>.  L<C<$?>|perlvar/$?> is set in a
+way compatible with Unix (i.e. the exit status of the subprocess is
+obtained by C<<< $? >> 8 >>>, as described in the documentation).
 
+(S<RISC OS>)
 There is no shell to process metacharacters, and the native standard is
 to pass a command line terminated by "\n" "\r" or "\0" to the spawned
 program.  Redirection such as C<< > foo >> is performed (if at all) by
-the run time library of the spawned program.  C<system> I<list> will call
-the Unix emulation library's C<exec> emulation, which attempts to provide
-emulation of the stdin, stdout, stderr in force in the parent, providing
-the child program uses a compatible version of the emulation library.
-I<scalar> will call the native command line direct and no such emulation
-of a child Unix program will exists.  Mileage B<will> vary.  (S<RISC OS>)
+the run time library of the spawned program.  C<system LIST> will call
+the Unix emulation library's L<C<exec>|perlfunc/exec LIST> emulation,
+which attempts to provide emulation of the stdin, stdout, stderr in force
+in the parent, provided the child program uses a compatible version of the
+emulation library.  C<system SCALAR> will call the native command line
+directly and no such emulation of a child Unix program will occur.
+Mileage B<will> vary.
 
+(Win32)
 C<system LIST> without the use of indirect object syntax (C<system PROGRAM LIST>)
-may fall back to trying the shell if the first C<spawn()> fails.  (Win32)
+may fall back to trying the shell if the first C<spawn()> fails.
 
-Does not automatically flush output handles on some platforms.
 (SunOS, Solaris, HP-UX)
+Does not automatically flush output handles on some platforms.
 
-The return value is POSIX-like (shifted up by 8 bits), which only allows
-room for a made-up value derived from the severity bits of the native
-32-bit condition code (unless overridden by C<use vmsish 'status'>).
-If the native condition code is one that has a POSIX value encoded, the
-POSIX value will be decoded to extract the expected exit value.
-For more details see L<perlvms/$?>. (VMS)
+(VMS)
+As with Win32, C<system(1, @args)> spawns an external process and
+immediately returns its process designator without waiting for the
+process to terminate.  In this case the return value may be used subsequently
+in L<C<wait>|perlfunc/wait> or L<C<waitpid>|perlfunc/waitpid PID,FLAGS>.
+Otherwise the return value is POSIX-like (shifted up by 8 bits), which only
+allows room for a made-up value derived from the severity bits of the native
+32-bit condition code (unless overridden by
+L<C<use vmsish 'status'>|vmsish/C<vmsish status>>).  If the native
+condition code is one that has a POSIX value encoded, the POSIX value will
+be decoded to extract the expected exit value.  For more details see
+L<perlvms/$?>.
 
 =item telldir
 
-Not implemented. (Android)
+(Android)
+Not implemented.
 
 =item times
 
-"cumulative" times will be bogus.  On anything other than Windows NT
+(Win32)
+"Cumulative" times will be bogus.  On anything other than Windows NT
 or Windows 2000, "system" time will be bogus, and "user" time is
-actually the time returned by the C<clock()> function in the C runtime
-library. (Win32)
+actually the time returned by the L<C<clock()>|clock(3)> function in the C
+runtime library.
 
-Not useful. (S<RISC OS>)
+(S<RISC OS>)
+Not useful.
 
 =item truncate
 
-Not implemented. (Older versions of VMS)
+(Older versions of VMS)
+Not implemented.
 
-Truncation to same-or-shorter lengths only. (VOS)
+(VOS)
+Truncation to same-or-shorter lengths only.
 
+(Win32)
 If a FILEHANDLE is supplied, it must be writable and opened in append
-mode (i.e., use C<<< open(FH, '>>filename') >>>
-or C<sysopen(FH,...,O_APPEND|O_RDWR)>.  If a filename is supplied, it
-should not be held open elsewhere. (Win32)
+mode (i.e., use C<<< open(my $fh, '>>', 'filename') >>>
+or C<sysopen(my $fh, ..., O_APPEND|O_RDWR)>.  If a filename is supplied, it
+should not be held open elsewhere.
 
 =item umask
 
-Returns undef where unavailable.
+Returns C<undef> where unavailable.
 
+(AmigaOS)
 C<umask> works but the correct permissions are set only when the file
-is finally closed. (AmigaOS)
+is finally closed.
 
 =item utime
 
-Only the modification time is updated. (VMS, S<RISC OS>)
+(VMS, S<RISC OS>)
+Only the modification time is updated.
 
+(Win32)
 May not behave as expected.  Behavior depends on the C runtime
-library's implementation of C<utime()>, and the filesystem being
-used.  The FAT filesystem typically does not support an "access
-time" field, and it may limit timestamps to a granularity of
-two seconds. (Win32)
+library's implementation of L<C<utime()>|utime(2)>, and the filesystem
+being used.  The FAT filesystem typically does not support an "access
+time" field, and it may limit timestamps to a granularity of two seconds.
 
 =item wait
 
 =item waitpid
 
+(Win32)
 Can only be applied to process handles returned for processes spawned
-using C<system(1, ...)> or pseudo processes created with C<fork()>. (Win32)
+using C<system(1, ...)> or pseudo processes created with
+L<C<fork>|perlfunc/fork>.
 
-Not useful. (S<RISC OS>)
+(S<RISC OS>)
+Not useful.
 
 =back
 
@@ -2215,7 +2416,6 @@ available at L<http://www.cpan.org/src/>
         Open UNIX       (Unixware) (since Perl 5.8.1/5.9.0)
         OS/2
         OS/400          (using the PASE) (since Perl 5.8.1/5.9.0)
-        PowerUX
         POSIX-BC        (formerly BS2000)
         QNX
         Solaris
@@ -2326,7 +2526,7 @@ L<perlunicode>, L<perlvms>, L<perlvos>, L<perlwin32>, and L<Win32>.
 
 =head1 AUTHORS / CONTRIBUTORS
 
-Abigail <abigail@foad.org>,
+Abigail <abigail@abigail.be>,
 Charles Bailey <bailey@newman.upenn.edu>,
 Graham Barr <gbarr@pobox.com>,
 Tom Christiansen <tchrist@perl.com>,
@@ -2344,6 +2544,7 @@ Nick Ing-Simmons <nick@ing-simmons.net>,
 Andreas J. KE<ouml>nig <a.koenig@mind.de>,
 Markus Laker <mlaker@contax.co.uk>,
 Andrew M. Langmead <aml@world.std.com>,
+Lukas Mai <l.mai@web.de>,
 Larry Moore <ljmoore@freespace.net>,
 Paul Moore <Paul.Moore@uk.origin-it.com>,
 Chris Nandor <pudge@pobox.com>,

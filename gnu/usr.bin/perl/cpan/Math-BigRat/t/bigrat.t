@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!perl
 
 use strict;
 use warnings;
@@ -27,7 +27,7 @@ is($x->isa('Math::BigInt'), 0);
 ##############################################################################
 # new and bnorm()
 
-foreach my $func (qw/new bnorm/) {
+foreach my $func (qw/ new bnorm /) {
     $x = $mbr->$func(1234);
     is($x, 1234, qq|\$x = $mbr->$func(1234)|);
 
@@ -108,50 +108,50 @@ foreach my $func (qw/new bnorm/) {
 my $n = 'numerator';
 my $d = 'denominator';
 
-$x =  $mbr->new('-0');
+$x = $mbr->new('-0');
 is($x, '0');
-        is($x->$n(), '0');
+is($x->$n(), '0');
 is($x->$d(), '1');
 
-$x =  $mbr->new('NaN');
+$x = $mbr->new('NaN');
 is($x, 'NaN');  is($x->$n(), 'NaN');
 is($x->$d(), 'NaN');
 
-$x =  $mbr->new('-NaN');
+$x = $mbr->new('-NaN');
 is($x, 'NaN');  is($x->$n(), 'NaN');
 is($x->$d(), 'NaN');
 
-$x =  $mbr->new('-1r4');
+$x = $mbr->new('-1r4');
 is($x, 'NaN');  is($x->$n(), 'NaN');
 is($x->$d(), 'NaN');
 
-$x =  $mbr->new('+inf');
+$x = $mbr->new('+inf');
 is($x, 'inf');  is($x->$n(), 'inf');
 is($x->$d(), '1');
 
-$x =  $mbr->new('-inf');
+$x = $mbr->new('-inf');
 is($x, '-inf');
 is($x->$n(), '-inf');
 is($x->$d(), '1');
 
-$x =  $mbr->new('123a4');
+$x = $mbr->new('123a4');
 is($x, 'NaN');
 is($x->$n(), 'NaN');
 is($x->$d(), 'NaN');
 
 # wrong inputs
-$x =  $mbr->new('1e2e2');
+$x = $mbr->new('1e2e2');
 is($x, 'NaN');
 is($x->$n(), 'NaN');
 is($x->$d(), 'NaN');
 
-$x =  $mbr->new('1+2+2');
+$x = $mbr->new('1+2+2');
 is($x, 'NaN');
 is($x->$n(), 'NaN');
 is($x->$d(), 'NaN');
 
 # failed due to BigFloat bug
-$x =  $mbr->new('1.2.2');
+$x = $mbr->new('1.2.2');
 is($x, 'NaN');
 is($x->$n(), 'NaN');
 is($x->$d(), 'NaN');
@@ -276,8 +276,8 @@ is($x, '4');
 
 $x = $mbr->new('3/4')->bsqrt();
 is($x,
-   '1732050807568877293527446341505872366943/'
-   .'2000000000000000000000000000000000000000');
+   '4330127018922193233818615853764680917357/' .
+   '5000000000000000000000000000000000000000');
 
 ##############################################################################
 # bpow

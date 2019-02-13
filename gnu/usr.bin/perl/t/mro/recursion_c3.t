@@ -1,13 +1,12 @@
 #!./perl
 
 BEGIN {
+    require './test.pl';
     unless (-d 'blib') {
         chdir 't' if -d 't';
-        @INC = '../lib';
     }
+    set_up_inc('../lib');
 }
-
-require './test.pl';
 
 use strict;
 use warnings;

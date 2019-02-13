@@ -6,25 +6,25 @@ use strict;
 use warnings;
 use bytes;
 
-use IO::Compress::Base::Common  2.069 ();
+use IO::Compress::Base::Common  2.074 ();
 
-use IO::Uncompress::Adapter::Inflate  2.069 ();
+use IO::Uncompress::Adapter::Inflate  2.074 ();
 
 
-use IO::Uncompress::Base  2.069 ;
-use IO::Uncompress::Gunzip  2.069 ;
-use IO::Uncompress::Inflate  2.069 ;
-use IO::Uncompress::RawInflate  2.069 ;
-use IO::Uncompress::Unzip  2.069 ;
+use IO::Uncompress::Base  2.074 ;
+use IO::Uncompress::Gunzip  2.074 ;
+use IO::Uncompress::Inflate  2.074 ;
+use IO::Uncompress::RawInflate  2.074 ;
+use IO::Uncompress::Unzip  2.074 ;
 
 require Exporter ;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS, $AnyInflateError);
 
-$VERSION = '2.069_001';
+$VERSION = '2.074';
 $AnyInflateError = '';
 
-@ISA = qw( Exporter IO::Uncompress::Base );
+@ISA = qw(IO::Uncompress::Base Exporter);
 @EXPORT_OK = qw( $AnyInflateError anyinflate ) ;
 %EXPORT_TAGS = %IO::Uncompress::Base::DEFLATE_CONSTANTS ;
 push @{ $EXPORT_TAGS{all} }, @EXPORT_OK ;
@@ -48,7 +48,7 @@ sub anyinflate
 
 sub getExtraParams
 {
-    use IO::Compress::Base::Common  2.069 qw(:Parse);
+    use IO::Compress::Base::Common  2.074 qw(:Parse);
     return ( 'rawinflate' => [Parse_boolean,  0] ) ;
 }
 
@@ -973,21 +973,21 @@ L<Archive::Tar|Archive::Tar>,
 L<IO::Zlib|IO::Zlib>
 
 For RFC 1950, 1951 and 1952 see 
-F<http://www.faqs.org/rfcs/rfc1950.html>,
-F<http://www.faqs.org/rfcs/rfc1951.html> and
-F<http://www.faqs.org/rfcs/rfc1952.html>
+L<http://www.faqs.org/rfcs/rfc1950.html>,
+L<http://www.faqs.org/rfcs/rfc1951.html> and
+L<http://www.faqs.org/rfcs/rfc1952.html>
 
 The I<zlib> compression library was written by Jean-loup Gailly
-F<gzip@prep.ai.mit.edu> and Mark Adler F<madler@alumni.caltech.edu>.
+C<gzip@prep.ai.mit.edu> and Mark Adler C<madler@alumni.caltech.edu>.
 
 The primary site for the I<zlib> compression library is
-F<http://www.zlib.org>.
+L<http://www.zlib.org>.
 
-The primary site for gzip is F<http://www.gzip.org>.
+The primary site for gzip is L<http://www.gzip.org>.
 
 =head1 AUTHOR
 
-This module was written by Paul Marquess, F<pmqs@cpan.org>. 
+This module was written by Paul Marquess, C<pmqs@cpan.org>. 
 
 =head1 MODIFICATION HISTORY
 
@@ -995,7 +995,7 @@ See the Changes file.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2005-2015 Paul Marquess. All rights reserved.
+Copyright (c) 2005-2017 Paul Marquess. All rights reserved.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

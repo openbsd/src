@@ -406,7 +406,7 @@ C<wordmatch> program.  The wallclock, user and system, times are at the top of
 the analysis, and after this are the main columns defining which define the
 report.  Check the C<dprofpp> docs for details of the many options it supports.
 
-See also C<Apache::DProf> which hooks C<Devel::DProf> into C<mod_perl>.
+See also C<L<Apache::DProf>> which hooks C<Devel::DProf> into C<mod_perl>.
 
 =head2 Devel::Profiler
 
@@ -470,7 +470,8 @@ As the author of C<Devel::Proviler> writes:
 
 YMMV.
 
-See also C<Devel::Apache::Profiler> which hooks C<Devel::Profiler> into C<mod_perl>.
+See also C<L<Devel::Apache::Profiler>> which hooks C<Devel::Profiler>
+into C<mod_perl>.
 
 =head2 Devel::SmallProf
 
@@ -530,7 +531,8 @@ time.  That regex line is looking a bit suspicious, for example.  Remember that
 these tools are supposed to be used together, there is no single best way to
 profile your code, you need to use the best tools for the job.
 
-See also C<Apache::SmallProf> which hooks C<Devel::SmallProf> into C<mod_perl>.
+See also C<L<Apache::SmallProf>> which hooks C<Devel::SmallProf> into
+C<mod_perl>.
 
 =head2 Devel::FastProf
 
@@ -749,7 +751,8 @@ sort of output you can expect from this cool tool.
 
 Oodles of very useful information in there - this seems to be the way forward.
 
-See also C<Devel::NYTProf::Apache> which hooks C<Devel::NYTProf> into C<mod_perl>.
+See also C<L<Devel::NYTProf::Apache>> which hooks C<Devel::NYTProf> into
+C<mod_perl>.
 
 =head1  SORTING
 

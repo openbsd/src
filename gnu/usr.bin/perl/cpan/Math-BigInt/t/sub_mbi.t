@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3724            # tests in require'd file
+use Test::More tests => 3942            # tests in require'd file
                          + 5;           # tests in this file
 
 use lib 't';

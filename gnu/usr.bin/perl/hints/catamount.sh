@@ -31,11 +31,11 @@
 # mkdir -p /opt/perl-catamount
 # mkdir -p /opt/perl-catamount/include
 # mkdir -p /opt/perl-catamount/lib
-# mkdir -p /opt/perl-catamount/lib/perl5/5.24.3
+# mkdir -p /opt/perl-catamount/lib/perl5/5.28.1
 # mkdir -p /opt/perl-catamount/bin
 # cp *.h /opt/perl-catamount/include
 # cp libperl.a /opt/perl-catamount/lib
-# cp -pr lib/* /opt/perl-catamount/lib/perl5/5.24.3
+# cp -pr lib/* /opt/perl-catamount/lib/perl5/5.28.1
 # cp miniperl perl run.sh cc.sh /opt/perl-catamount/lib
 #
 # With the headers and the libperl.a you can embed Perl to your Catamount
@@ -77,7 +77,6 @@ archname='x86_64-catamount'
 archobjs='catalib.o'
 d_mmap='undef'
 d_setlocale='undef' # There is setlocale() but no locales.
-d_vprintf='define'
 hintfile='catamount'
 i_arpainet='undef'
 i_db='undef'

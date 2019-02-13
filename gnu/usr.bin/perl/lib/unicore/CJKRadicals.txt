@@ -1,27 +1,29 @@
-# CJKRadicals-8.0.0.txt
-# Date: 2015-02-19, 00:30:00 GMT [RC, KW, LI]
+# CJKRadicals-10.0.0.txt
+# Date: 2017-02-15, 00:00:00 GMT [RC, KW, LI]
+# © 2017 Unicode®, Inc.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see UAX #38: Unicode Han Database (Unihan),
-# at http://www.unicode.org/reports/tr38/
+# For documentation, see http://www.unicode.org/reports/tr44/
 #
-# Mapping from radical numbers to characters.
+# Mapping from CJK radical numbers to characters
 #
-# This data file provides a mapping from the radical numbers used
+# This data file provides a mapping from the CJK radical numbers used
 # in the kRSUnicode property to the corresponding character in
 # the Kangxi Radicals block or the CJK Radicals Supplement block,
 # as well as to a CJK unified ideograph which is formed from that
 # radical only.
 #
-# There is one line per radical number. Each line contains three
+# There is one line per CJK radical number. Each line contains three
 # fields, separated by a semicolon (';'). The first field is the
-# radical number. The second field is the CJK radical character.
+# CJK radical number. The second field is the CJK radical character.
 # The third field is the CJK unified ideograph.
 #
-# Radical numbers match the regular expression [1-9][0-9]{0,2}\'?
+# CJK radical numbers match the regular expression [1-9][0-9]{0,2}\'?
 # and in particular they can end with a U+0027 ' APOSTROPHE.
+#
+# For more information, see UAX #38: Unicode Han Database (Unihan),
+# at http://www.unicode.org/reports/tr38/
 #
 # This file was created for Unicode 5.2 by Richard Cook.
 # Updated for Unicode 6.0 by Richard Cook.

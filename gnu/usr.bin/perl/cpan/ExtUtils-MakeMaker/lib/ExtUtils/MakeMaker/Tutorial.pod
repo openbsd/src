@@ -1,6 +1,7 @@
 package ExtUtils::MakeMaker::Tutorial;
 
-our $VERSION = '7.10_01';
+our $VERSION = '7.34';
+$VERSION = eval $VERSION;
 
 
 =head1 NAME
@@ -103,8 +104,39 @@ is F<lib/Foo/Bar.pm>.
 =item t/
 
 Tests for your modules go here.  Each test filename ends with a .t.
-So F<t/foo.t>/  'make test' will run these tests.  The directory is flat,
-you cannot, for example, have t/foo/bar.t run by 'make test'.
+So F<t/foo.t>  'make test' will run these tests.
+
+Typically, the F<t/> test directory is flat, with all test files located
+directly within it. However, you can nest tests within subdirectories, for
+example:
+
+    t/foo/subdir_test.t
+
+To do this, you need to inform C<WriteMakeFile()> in your I<Makefile.PL> file
+in the following fashion:
+
+    test => {TESTS => 't/*.t t/*/*.t'}
+
+That will run all tests in F<t/>, as well as all tests in all subdirectories
+that reside under F<t/>. You can nest as deeply as makes sense for your project. 
+Simply add another entry in the test location string. For example, to test:
+
+    t/foo/bar/subdir_test.t
+
+You would use the following C<test> directive:
+
+    test => {TESTS => 't/*.t t/*/*/*.t'}
+
+Note that in the above example, tests in the first subdirectory will not be
+run. To run all tests in the intermediary subdirectory preceding the one
+the test files are in, you need to explicitly note it:
+
+    test => {TESTS => 't/*.t t/*/*.t t/*/*/*.t'}
+
+You don't need to specify wildcards if you only want to test within specific
+subdirectories. The following example will only run tests in F<t/foo>:
+
+    test => {TESTS => 't/foo/*.t'}
 
 Tests are run from the top level of your distribution.  So inside a test
 you would refer to ./lib to enter the lib directory, for example.

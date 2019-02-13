@@ -6,10 +6,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
     require "./test.pl";
-    plan(tests => 28);
+    set_up_inc(qw(. ../lib));
 }
+
+plan(tests => 28);
 
 use strict;
 

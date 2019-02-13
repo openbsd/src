@@ -374,7 +374,7 @@ my @ChangedFiles;
 ### update the manifest
 {   my $file        = $Repo . '/MANIFEST';
     my @manifest;
-    {   open my $fh, "<$file" or die "Could not open $file: $!";
+    {   open my $fh, '<', $file or die "Could not open $file: $!";
         @manifest    = <$fh>;
         close $fh;
     }
@@ -414,7 +414,7 @@ my @ChangedFiles;
     push @manifest, values %pkg_files;
 
     {   chmod 0644, $file;
-        open my $fh, ">$file" or die "Could not open $file for writing: $!";
+        open my $fh, '>', $file or die "Could not open $file for writing: $!";
         #print $fh sort { lc $a cmp lc $b } @manifest;
         ### XXX stolen from pod/buildtoc:sub do_manifest
         print $fh

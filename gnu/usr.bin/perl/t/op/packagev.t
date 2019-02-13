@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw '../lib ../cpan/version/lib';
     require './test.pl';
+    set_up_inc(qw '../lib ../cpan/version/lib');
 }
 
 # XXX remove this later -- dagolden, 2010-01-13

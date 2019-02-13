@@ -3,8 +3,9 @@
 BEGIN {
     unless (-d 'blib') {
         chdir 't' if -d 't';
-        @INC = '../lib';
     }
+    require q(./test.pl);
+    set_up_inc('../lib');
 }
 
 use strict;
@@ -13,7 +14,7 @@ use warnings;
 use utf8;
 use open qw( :utf8 :std );
 
-require q(./test.pl); plan(tests => 1);
+plan(tests => 1);
 
 require mro;
 

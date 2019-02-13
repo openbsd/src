@@ -19,10 +19,10 @@ eval {
 };
 
 ok($@,			"Exception thrown"		        );
-ok($@ ~~ 'open',	"Exception from open"		        );
-ok($@ ~~ ':file',	"Exception from open / class :file"	);
-ok($@ ~~ ':io',		"Exception from open / class :io"	);
-ok($@ ~~ ':all',	"Exception from open / class :all"	);
+ok('open' ~~ $@,	"Exception from open"		        );
+ok(':file' ~~ $@,	"Exception from open / class :file"	);
+ok(':io' ~~ $@,		"Exception from open / class :io"	);
+ok(':all' ~~ $@,	"Exception from open / class :all"	);
 
 eval {
     no warnings 'once';    # To prevent the following close from complaining.
@@ -39,10 +39,10 @@ eval {
 like($@, qr{Can't close filehandle 'THIS_FILEHANDLE_AINT_OPEN'},"Nice msg from close");
 
 ok($@,			"Exception thrown"		        );
-ok($@ ~~ 'close',	"Exception from close"		        );
-ok($@ ~~ ':file',	"Exception from close / class :file"	);
-ok($@ ~~ ':io',		"Exception from close / class :io"	);
-ok($@ ~~ ':all',	"Exception from close / class :all"	);
+ok('close' ~~ $@,	"Exception from close"		        );
+ok(':file' ~~ $@,	"Exception from close / class :file"	);
+ok(':io' ~~ $@,		"Exception from close / class :io"	);
+ok(':all' ~~ $@,	"Exception from close / class :all"	);
 
 ok $@ eq $@.'',                 "string overloading is complete (eq)";
 ok( ($@ cmp $@.'') == 0,        "string overloading is complete (cmp)" );

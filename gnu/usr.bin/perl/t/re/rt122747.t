@@ -7,13 +7,13 @@ $| = 1;
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = ('../lib','.','../ext/re');
     require './test.pl';
+    set_up_inc( '../lib', '.', '../ext/re' );
+}
     if (is_miniperl()) {
         skip_all_if_miniperl("Unicode tables not built yet", 2)
             unless eval 'require "unicore/Heavy.pl"';
     }
-}
 
 plan tests => 3;
 use strict;

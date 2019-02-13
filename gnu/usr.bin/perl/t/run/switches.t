@@ -12,7 +12,7 @@ BEGIN {
 
 BEGIN { require "./test.pl";  require "./loc_tools.pl"; }
 
-plan(tests => 115);
+plan(tests => 137);
 
 use Config;
 
@@ -165,7 +165,7 @@ SWTEST
     is( $r, 'foo1', '-s on the shebang line' );
 }
 
-# Bug ID 20011106.084
+# Bug ID 20011106.084 (#7876)
 $filename = tempfile();
 SKIP: {
     open my $f, ">$filename" or skip( "Can't write temp file $filename: $!" );
@@ -194,12 +194,12 @@ sub import { print map "<\$_>", \@_ }
 SWTESTPM
     close $f or die "Could not close: $!";
     $r = runperl(
-	switches    => [ "-M$package" ],
+	switches    => [ "-I.", "-M$package" ],
 	prog	    => '1',
     );
     is( $r, "<$package>", '-M' );
     $r = runperl(
-	switches    => [ "-M$package=foo" ],
+	switches    => [ "-I.", "-M$package=foo" ],
 	prog	    => '1',
     );
     is( $r, "<$package><foo>", '-M with import parameter' );
@@ -213,7 +213,7 @@ SWTESTPM
         is( $r, '', '-m' );
     }
     $r = runperl(
-	switches    => [ "-m$package=foo,bar" ],
+	switches    => [ "-I.", "-m$package=foo,bar" ],
 	prog	    => '1',
     );
     is( $r, "<$package><foo><bar>", '-m with import parameters' );
@@ -294,8 +294,8 @@ is runperl(stderr => 1, prog => '#!perl -M'),
 
 {
     local $TODO = '';   # these ones should work on VMS
-    # there are definitely known build configs where this test will fail
-    # DG/UX comes to mind. Maybe we should remove these special cases?
+    # There may be build configs where this test will fail; DG/UX was one,
+    # but we no longer support it. Maybe we should remove these special cases?
   SKIP:
     {
         skip "Win32 miniperl produces a default archname in -v", 1
@@ -349,28 +349,30 @@ for (qw( e f x E S V )) {
 
 # Tests for -i
 
+SKIP:
 {
     local $TODO = '';   # these ones should work on VMS
 
-    sub do_i_unlink { unlink_all("file", "file.bak") }
+    sub do_i_unlink { unlink_all("tmpswitches", "tmpswitches.bak") }
 
-    open(FILE, ">file") or die "$0: Failed to create 'file': $!";
-    print FILE <<__EOF__;
+    open(FILE, ">tmpswitches") or die "$0: Failed to create 'tmpswitches': $!";
+    my $yada = <<__EOF__;
 foo yada dada
 bada foo bing
 king kong foo
 __EOF__
+    print FILE $yada;
     close FILE;
 
     END { do_i_unlink() }
 
-    runperl( switches => ['-pi.bak'], prog => 's/foo/bar/', args => ['file'] );
+    runperl( switches => ['-pi.bak'], prog => 's/foo/bar/', args => ['tmpswitches'] );
 
-    open(FILE, "file") or die "$0: Failed to open 'file': $!";
+    open(FILE, "tmpswitches") or die "$0: Failed to open 'tmpswitches': $!";
     chomp(my @file = <FILE>);
     close FILE;
 
-    open(BAK, "file.bak") or die "$0: Failed to open 'file': $!";
+    open(BAK, "tmpswitches.bak") or die "$0: Failed to open 'tmpswitches.bak': $!";
     chomp(my @bak = <BAK>);
     close BAK;
 
@@ -397,9 +399,258 @@ __EOF__
         prog     => 'exit',
         stderr   => 1,
         stdin    => "1\n",
-        args     => ['file'],
+        args     => ['tmpswitches'],
     );
     is($out2, "", "no warning when files given");
+
+    open my $f, ">", "tmpswitches" or die "$0: failed to create 'tmpswitches': $!";
+    print $f "foo\nbar\n";
+    close $f;
+
+    # a backup extension is no longer required on any platform
+    my $out3 = runperl(
+        switches => [ '-i', '-p' ],
+        prog => 's/foo/quux/',
+        stderr => 1,
+        args => [ 'tmpswitches' ],
+    );
+    is($out3, "", "no warnings/errors without backup extension");
+    open $f, "<", "tmpswitches" or die "$0: cannot open 'tmpswitches': $!";
+    chomp(my @out4 = <$f>);
+    close $f;
+    is(join(":", @out4), "quux:bar", "correct output without backup extension");
+
+    eval { require File::Spec; 1 }
+      or skip "Cannot load File::Spec - miniperl?", 20;
+
+    -d "tmpinplace" or mkdir("tmpinplace")
+      or die "Cannot mkdir 'tmpinplace': $!";
+    my $work = File::Spec->catfile("tmpinplace", "foo");
+
+    # exit or die should leave original content in file
+    for my $inplace (qw/-i -i.bak/) {
+        for my $prog (qw/die exit/) {
+            open my $fh, ">", $work or die "$0: failed to open '$work': $!";
+            print $fh $yada;
+            close $fh or die "Failed to close: $!";
+            my $out = runperl (
+               switches => [ $inplace, '-n' ],
+               prog => "print q(foo\n); $prog",
+               stderr => 1,
+               args => [ $work ],
+            );
+            open my $in, "<", $work or die "$0: failed to open '$work': $!";
+            my $data = do { local $/; <$in> };
+            close $in;
+            is ($data, $yada, "check original content still in file");
+            unlink $work;
+        }
+    }
+
+    # test that path parsing is correct
+    open $f, ">", $work or die "Cannot create $work: $!";
+    print $f "foo\nbar\n";
+    close $f;
+
+    my $out4 = runperl
+      (
+       switches => [ "-i", "-p" ],
+       prog => 's/foo/bar/',
+       stderr => 1,
+       args => [ $work ],
+      );
+    is ($out4, "", "no errors or warnings");
+    open $f, "<", $work or die "Cannot open $work: $!";
+    chomp(my @file4 = <$f>);
+    close $f;
+    is(join(":", @file4), "bar:bar", "check output");
+
+  SKIP:
+    {
+        # this needs to match how ARGV_USE_ATFUNCTIONS is defined in doio.c
+        skip "Not enough *at functions", 3
+          unless $Config{d_unlinkat} && $Config{d_renameat} && $Config{d_fchmodat}
+              && ($Config{d_dirfd} || $Config{d_dir_dd_fd})
+              && $Config{d_linkat}
+              && $Config{ccflags} !~ /-DNO_USE_ATFUNCTIONS\b/;
+        my ($osvers) = ($Config{osvers} =~ /^(\d+(?:\.\d+)?)/);
+        skip "NetBSD 6 libc defines at functions, but they're incomplete", 3
+            if $^O eq "netbsd" && $osvers < 7;
+        fresh_perl_is(<<'CODE', "ok\n", { },
+@ARGV = ("tmpinplace/foo");
+$^I = "";
+while (<>) {
+  chdir "..";
+  print "xx\n";
+}
+print "ok\n";
+CODE
+                       "chdir while in-place editing");
+        ok(open(my $fh, "<", $work), "open out file");
+        is(scalar <$fh>, "xx\n", "file successfully saved after chdir");
+        close $fh;
+    }
+
+  SKIP:
+    {
+        skip "Need threads and full perl", 3
+          if !$Config{useithreads} || is_miniperl();
+        fresh_perl_is(<<'CODE', "ok\n", { stderr => 1 },
+use threads;
+use strict;
+@ARGV = ("tmpinplace/foo");
+$^I = "";
+while (<>) {
+  threads->create(sub { })->join;
+  print "yy\n";
+}
+print "ok\n";
+CODE
+                      "threads while in-place editing");
+        ok(open(my $fh, "<", $work), "open out file");
+        is(scalar <$fh>, "yy\n", "file successfully saved after chdir");
+        close $fh;
+    }
+
+  SKIP:
+    {
+        skip "Need fork", 3 if !$Config{d_fork};
+        open my $fh, ">", $work
+          or die "Cannot open $work: $!";
+        # we want only a single line for this test, otherwise
+        # it attempts to close the file twice
+        print $fh "foo\n";
+        close $fh or die "Cannot close $work: $!";
+        fresh_perl_is(<<'CODE', "ok\n", { stderr => 1 },
+use strict;
+@ARGV = ("tmpinplace/foo");
+$^I = "";
+while (<>) {
+  my $pid = fork;
+  if (defined $pid && !$pid) {
+     # child
+     close ARGVOUT or die "Cannot close in child\n"; # this shouldn't do ARGVOUT magic
+     exit 0;
+  }
+  wait;
+  print "yy\n";
+  close ARGVOUT or die "Cannot close in parent\n"; # this should
+}
+print "ok\n";
+CODE
+                      "fork while in-place editing");
+        ok(open($fh, "<", $work), "open out file");
+        is(scalar <$fh>, "yy\n", "file successfully saved after fork");
+        close $fh;
+    }
+
+    {
+        # test we handle the rename to the backup failing
+        if ($^O eq 'VMS') {
+            # make it fail by creating a .bak file with a version than which no higher can be created
+            # can't make a directory because foo.bak and foo^.bak.DIR do not conflict.
+            open my $fh, '>', "$work.bak;32767" or die "Cannot make mask backup file: $!";
+            close $fh or die "Failed to close: $!";
+        }
+        else {
+            # make it fail by creating a directory of the backup name
+            mkdir "$work.bak" or die "Cannot make mask backup directory: $!";
+        }
+        fresh_perl_like(<<'CODE', qr/Can't rename/, { stderr => 1 }, "fail backup rename");
+@ARGV = ("tmpinplace/foo");
+$^I = ".bak";
+while (<>) {
+  print;
+}
+print "ok\n";
+CODE
+        if ($^O eq 'VMS') {
+            1 while unlink "$work.bak";
+        }
+        else {
+            rmdir "$work.bak" or die "Cannot remove mask backup directory: $!";
+        }
+    }
+
+    {
+        # test with absolute paths, this was failing on FreeBSD 11ish due
+        # to a bug in renameat()
+        my $abs_work = File::Spec->rel2abs($work);
+        fresh_perl_is(<<'CODE', "",
+while (<>) {
+  print;
+}
+CODE
+                      { stderr => 1, args => [ $abs_work ], switches => [ "-i" ] },
+                      "abs paths");
+    }
+
+    # we now use temp files for in-place editing, make sure we didn't leave
+    # any behind in the above test
+    opendir my $d, "tmpinplace" or die "Cannot opendir tmpinplace: $!";
+    my @names = grep !/^\.\.?$/ && $_ ne 'foo' && $_ ne 'foo.', readdir $d;
+    closedir $d;
+    is(scalar(@names), 0, "no extra files")
+      or diag "Found @names, expected none";
+
+    # the following tests might leave work files behind
+
+    # this test can leave the work file in the directory, since making
+    # the directory non-writable also prevents removing the work file
+  SKIP:
+    {
+        # test we handle the rename of the work to the original failing
+        # make it fail by removing write perms from the directory
+        # but first check that doesn't prevent writing
+        chmod 0500, "tmpinplace";
+        my $check = File::Spec->catfile("tmpinplace", "check");
+        my $canwrite = open my $fh, ">", $check;
+        unlink $check;
+        chmod 0700, "tmpinplace" or die "Cannot make tmpinplace writable again: $!";
+        skip "Cannot make tmpinplace read only", 1
+          if $canwrite;
+        fresh_perl_like(<<'CODE', qr/failed to rename/, { stderr => 1 }, "fail final rename");
+@ARGV = ("tmpinplace/foo");
+$^I = "";
+while (<>) {
+  chmod 0500, "tmpinplace";
+  print;
+}
+print "ok\n";
+CODE
+        chmod 0700, "tmpinplace" or die "Cannot make tmpinplace writable again: $!";
+    }
+
+  SKIP:
+    {
+        # this needs to reverse match how ARGV_USE_ATFUNCTIONS is defined in doio.c
+        skip "Testing without *at functions", 1
+          if $Config{d_unlinkat} && $Config{d_renameat} && $Config{d_fchmodat}
+              && ($Config{d_dirfd} || $Config{d_dir_dd_fd})
+              && $Config{d_linkat}
+              && $Config{ccflags} !~ /-DNO_USE_ATFUNCTIONS\b/;
+        fresh_perl_like(<<'CODE', qr/^Cannot complete in-place edit of tmpinplace\/foo: .* - line 5, <> line \d+\./, { },
+@ARGV = ("tmpinplace/foo");
+$^I = "";
+while (<>) {
+  chdir "..";
+  print "xx\n";
+}
+print "ok\n";
+CODE
+                       "chdir while in-place editing (no at-functions)");
+    }
+
+    unlink $work;
+
+    opendir $d, "tmpinplace" or die "Cannot opendir tmpinplace: $!";
+    @names = grep !/^\.\.?$/ && !/foo$/aai, readdir $d;
+    closedir $d;
+
+    # clean up in case the above failed
+    unlink map File::Spec->catfile("tmpinplace", $_), @names;
+
+    rmdir "tmpinplace";
 }
 
 # Tests for -E

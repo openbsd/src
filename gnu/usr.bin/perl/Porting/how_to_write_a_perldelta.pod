@@ -51,7 +51,7 @@ C<[rt.cpan.org #43010]>.  This mirrors how rt.cpan.org subject lines appear.
 
 =item ActiveState
 
-C<http://bugs.activestate.com/show_bug.cgi?id=72443>
+C<L<http://bugs.activestate.com/show_bug.cgi?id=72443>>
 
 =item Debian
 
@@ -91,8 +91,8 @@ For a release on a stable branch, follows this formula:
 
 For the start of a new stable branch, follows this formula:
 
-    This document describes differences between the 5.12.0 release
-    and the 5.10.0 release.
+    This document describes differences between the 5.10.0 release
+    and the 5.12.0 release.
 
 Clearly this sets the scope of which changes are to be summarised in the rest
 of the document.

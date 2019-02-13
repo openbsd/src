@@ -1,6 +1,5 @@
 # This is a replacement for the old BEGIN preamble which heads (or
-# should head) up every core test program to prepare it for running.
-# Now instead of:
+# should head) up every core test program to prepare it for running:
 #
 # BEGIN {
 #   chdir 't' if -d 't';
@@ -10,8 +9,28 @@
 # Its primary purpose is to clear @INC so core tests don't pick up
 # modules from an installed Perl.
 #
-# t/TEST will use -MTestInit.  You may "use TestInit" in the test
-# programs but it is not required.
+# t/TEST and t/harness will invoke each test script with
+#      perl -MTestInit[=arg,arg,..] some/test.t
+# You may "use TestInit" in the test # programs but it is not required.
+#
+# TestInit will completely empty the current @INC and replace it with
+# new entries based on the args:
+#
+#    U2T: adds ../../lib and ../../t;
+#    U1:  adds ../lib;
+#    T:   adds lib  and chdir's to the top-level directory.
+#
+# In the absence of any of the above options, it chdir's to
+#  t/ or cpan/Foo-Bar/ etc as appropriate and correspondingly
+#  sets @INC to (../lib) or ( ../../lib, ../../t)
+#
+# In addition,
+#
+#   A:   converts any added @INC entries to absolute paths;
+#   NC:  unsets $ENV{PERL_CORE};
+#   DOT: unconditionally appends '.' to @INC.
+#
+# Any trailing '.' in @INC present on entry will be preserved.
 #
 # P.S. This documentation is not in POD format in order to avoid
 # problems when there are fundamental bugs in perl.
@@ -28,6 +47,8 @@ $VERSION = 1.04;
 $ENV{PERL_CORE} = $^X;
 
 $0 =~ s/\.dp$//; # for the test.deparse make target
+
+my $add_dot = (@INC && $INC[-1] eq '.'); # preserve existing,
 
 sub import {
     my $self = shift;
@@ -49,6 +70,8 @@ sub import {
 		unless -f 't/TEST' && -f 'MANIFEST' && -d 'lib' && -d 'ext';
 	    @INC = 'lib';
 	    $setopt = 1;
+	} elsif ($_ eq 'DOT') {
+            $add_dot = 1;
 	} else {
 	    die "Unknown option '$_'";
 	}
@@ -118,7 +141,7 @@ sub import {
 	}
     }
 
-    push @INC, '.' unless ${^TAINT};
+    push @INC, '.' if $add_dot;
 }
 
 1;

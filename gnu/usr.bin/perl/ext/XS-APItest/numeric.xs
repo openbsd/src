@@ -40,7 +40,7 @@ grok_atoUV(number, endsv)
 	const char *pv = SvPV(number, len);
 	UV value = 0xdeadbeef;
 	bool result;
-	const char* endptr;
+	const char* endptr = NULL;
     PPCODE:
 	EXTEND(SP,2);
 	if (endsv == &PL_sv_undef) {

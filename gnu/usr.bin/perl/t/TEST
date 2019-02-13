@@ -23,6 +23,8 @@ my $deparse_failures;
 # And skip even running these
 my $deparse_skips;
 
+my $deparse_skip_file = '../Porting/deparse-skips.txt';
+
 # directories with special sets of test switches
 my %dir_to_switch =
     (base => '',
@@ -39,7 +41,6 @@ my %abs = (
 	   '../cpan/Archive-Tar' => 1,
 	   '../cpan/AutoLoader' => 1,
 	   '../cpan/CPAN' => 1,
-	   '../cpan/Devel-PPPort' => 1,
 	   '../cpan/Encode' => 1,
 	   '../cpan/ExtUtils-Constant' => 1,
 	   '../cpan/ExtUtils-Install' => 1,
@@ -51,11 +52,11 @@ my %abs = (
 	   '../cpan/Locale-Codes' => 1,
 	   '../cpan/Module-Load' => 1,
 	   '../cpan/Module-Load-Conditional' => 1,
-	   '../cpan/Parse-CPAN-Meta' => 1,
 	   '../cpan/Pod-Simple' => 1,
 	   '../cpan/Test-Simple' => 1,
 	   '../cpan/podlators' => 1,
 	   '../dist/Cwd' => 1,
+	   '../dist/Devel-PPPort' => 1,
 	   '../dist/ExtUtils-ParseXS' => 1,
 	   '../dist/Tie-File' => 1,
 	  );
@@ -69,14 +70,29 @@ my %temp_no_core =
      '../cpan/IO-Compress' => 1,
      '../cpan/MIME-Base64' => 1,
      '../cpan/parent' => 1,
-     '../cpan/Parse-CPAN-Meta' => 1,
      '../cpan/Pod-Simple' => 1,
      '../cpan/podlators' => 1,
      '../cpan/Test-Simple' => 1,
      '../cpan/Tie-RefHash' => 1,
      '../cpan/Unicode-Collate' => 1,
-     '../cpan/Unicode-Normalize' => 1,
+     '../dist/Unicode-Normalize' => 1,
     );
+
+# temporary workaround Apr 2017.  These need '.' in @INC.
+# Ideally this # list will eventually be empty
+
+my %temp_needs_dot  = map { $_ => 1 } qw(
+    ../cpan/ExtUtils-Install
+    ../cpan/Filter-Util-Call
+    ../cpan/libnet
+    ../cpan/Locale-Codes
+    ../cpan/Math-BigInt
+    ../cpan/Math-BigRat
+    ../cpan/Test-Harness
+    ../cpan/Test-Simple
+    ../cpan/version
+);
+
 
 # delete env vars that may influence the results
 # but allow override via *_TEST env var if wanted
@@ -156,7 +172,7 @@ if (-f 'TEST' && -f 'harness' && -d '../lib') {
     @INC = '../lib';
 }
 
-die "You need to run \"make test\" first to set things up.\n"
+die "You need to run \"make test_prep\" first to set things up.\n"
   unless -e 'perl' or -e 'perl.exe' or -e 'perl.pm';
 
 # check leakage for embedders
@@ -246,6 +262,9 @@ sub _scan_test {
 		if ($temp_no_core{$run_dir}) {
 		    $testswitch = $testswitch . ',NC';
 		}
+		if($temp_needs_dot{$run_dir}) {
+		    $testswitch = $testswitch . ',DOT';
+		}
 	    }
 	} elsif ($test =~ m!^\.\./lib!) {
 	    $testswitch = '-I.. -MTestInit=U1'; # -T will remove . from @INC
@@ -296,7 +315,8 @@ sub _cmd {
             my $perl_supp = $options->{return_dir} ? "$options->{return_dir}/perl.supp" : "perl.supp";
             my $valgrind_exe = $ENV{VALGRIND} // 'valgrind';
             if ($options->{run_dir}) {
-                $Valgrind_Log = "$options->{run_dir}/$Valgrind_Log";
+                require Cwd;
+                $Valgrind_Log = Cwd::abs_path("$options->{run_dir}/$Valgrind_Log");
             }
             my $vg_opts = $ENV{VG_OPTS}
 	       //   "--log-file=$Valgrind_Log "
@@ -480,6 +500,37 @@ unless (@ARGV) {
 	_find_tests('bigmem') if $ENV{PERL_TEST_MEMORY};
     }
 }
+@ARGV= do {
+    my @order= (
+	"base",
+	"comp",
+	"run",
+	"cmd",
+	"io",
+	"re",
+	"opbasic",
+	"op",
+	"uni",
+	"mro",
+	"lib",
+	"ext",
+	"dist",
+	"cpan",
+	"perf",
+	"porting",
+    );
+    my %order= map { $order[$_] => 1+$_ } 0..$#order;
+    my $idx= 0;
+    map {
+	$_->[0]
+    } sort {
+	    $a->[3] <=> $b->[3] ||
+	    $a->[1] <=> $b->[1]
+    } map {
+	my $root= /(\w+)/ ? $1 : "";
+	[ $_, $idx++, $root, $order{$root}||=0 ]
+    } @ARGV;
+};
 
 if ($::deparse) {
     _testprogs('deparse', '',   @ARGV);
@@ -545,6 +596,7 @@ EOT
     my $tested_files  = 0;
     my $totmax = 0;
     my %failed_tests;
+    my @unexpected_pass; # files where deparse-skips.txt says fail but passed
     my $toolnm;		# valgrind, cachegrind, perf
 
     while (my $test = shift @tests) {
@@ -696,8 +748,8 @@ EOT
 	# Deparse? Should it have passed or failed?
 	if ($type eq 'deparse' && $test =~ $deparse_failures) {
 	    if (!$failure) {
-		# Wait, it didn't fail? Great news! Tell someone!
-		$failure = "FAILED--all tests passed but test should have failed";
+		# Wait, it didn't fail? Great news!
+		push @unexpected_pass, $test;
 	    } else {
 		# Bah, still failing. Mask it.
 		print "${te}skipped\n";
@@ -757,6 +809,17 @@ EOT
 	for my $test ( sort keys %failed_tests ) {
 	    print "\t$test\n";
 	}
+
+	if (@unexpected_pass) {
+	    print <<EOF;
+
+The following scripts were expected to fail under -deparse (at least
+according to $deparse_skip_file), but unexpectedly succeeded:
+EOF
+	    print "\t$_\n" for sort @unexpected_pass;
+	    print "\n";
+	}
+
 	warn <<'SHRDLU_1';
 ### Since not all tests were successful, you may want to run some of
 ### them individually and examine any diagnostic messages they produce.
@@ -930,13 +993,12 @@ sub _cleanup_valgrind {
 }
 
 # Generate regexps of known bad filenames / skips from Porting/deparse-skips.txt
-my $in;
 
 sub _process_deparse_config {
     my @deparse_failures;
     my @deparse_skips;
 
-    my $f = '../Porting/deparse-skips.txt';
+    my $f = $deparse_skip_file;
 
     my $skips;
     if (!open($skips, '<', $f)) {
@@ -944,6 +1006,7 @@ sub _process_deparse_config {
         return;
     }
 
+    my $in;
     while(<$skips>) {
         if (/__DEPARSE_FAILURES__/) {
             $in = \@deparse_failures; next;
@@ -959,6 +1022,7 @@ sub _process_deparse_config {
         next unless $_;
 
         push @$in, $_;
+	warn "WARNING: $f:$.: excluded file doesn't exist: $_\n" unless -f $_;
     }
 
     for my $f (@deparse_failures, @deparse_skips) {

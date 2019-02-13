@@ -55,7 +55,6 @@ libswanted=`echo " $libswanted " | sed -e 's/ malloc / /'` # -e 's/ ucb / /'`
 #   it is needed for ODBM_File and NDBM_File extensions.
 if [ -r /usr/ucblib/libucb.a ]; then	# If using BSD-compat. library:
     # Use the "native" counterparts, not the BSD emulation stuff:
-    d_bcmp='undef'; d_bcopy='undef'; d_bzero='undef'; d_safebcpy='undef'
     d_index='undef'; d_killpg='undef'; d_getprior='undef'; d_setprior='undef'
     d_setlinebuf='undef'; d_setregid='undef'; d_setreuid='undef'
 fi

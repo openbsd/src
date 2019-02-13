@@ -210,8 +210,9 @@ function should not be used outside the package that defined it.
 
 =item *
 
-If you have a really hairy regular expression, use the C</x> modifier and
-put in some whitespace to make it look a little less like line noise.
+If you have a really hairy regular expression, use the C</x>  or C</xx>
+modifiers and put in some whitespace to make it look a little less like
+line noise.
 Don't use slash as a delimiter when your regexp has slashes or backslashes.
 
 =item *

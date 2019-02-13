@@ -5,7 +5,7 @@ use Exporter;
 use File::Spec;
 use ExtUtils::ParseXS::Constants ();
 
-our $VERSION = '3.31';
+our $VERSION = '3.39';
 
 our (@ISA, @EXPORT_OK);
 @ISA = qw(Exporter);
@@ -472,7 +472,7 @@ S_croak_xs_usage(const CV *const cv, const char *const params)
 	    Perl_croak_nocontext("Usage: %s(%s)", gvname, params);
     } else {
         /* Pants. I don't think that it should be possible to get here. */
-	Perl_croak_nocontext("Usage: CODE(0x%"UVxf")(%s)", PTR2UV(cv), params);
+	Perl_croak_nocontext("Usage: CODE(0x%" UVxf ")(%s)", PTR2UV(cv), params);
     }
 }
 #undef  PERL_ARGS_ASSERT_CROAK_XS_USAGE

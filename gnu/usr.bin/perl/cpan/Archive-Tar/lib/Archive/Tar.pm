@@ -31,7 +31,7 @@ use vars qw[$DEBUG $error $VERSION $WARN $FOLLOW_SYMLINK $CHOWN $CHMOD
 $DEBUG                  = 0;
 $WARN                   = 1;
 $FOLLOW_SYMLINK         = 0;
-$VERSION                = "2.04_01";
+$VERSION                = "2.30";
 $CHOWN                  = 1;
 $CHMOD                  = 1;
 $SAME_PERMISSIONS       = $> == 0 ? 1 : 0;
@@ -263,7 +263,7 @@ sub _get_handle {
 
             ### different reader/writer modules, different error vars... sigh
             if( MODE_READ->($mode) ) {
-                $fh = IO::Uncompress::Bunzip2->new( $file ) or do {
+                $fh = IO::Uncompress::Bunzip2->new( $file, MultiStream => 1 ) or do {
                     $self->_error( qq[Could not read '$file': ] .
                         $IO::Uncompress::Bunzip2::Bunzip2Error
                     );
@@ -601,6 +601,7 @@ sub extract {
     my $self    = shift;
     my @args    = @_;
     my @files;
+    my $hashmap;
 
     # use the speed optimization for all extracted files
     local($self->{cwd}) = cwd() unless $self->{cwd};
@@ -617,16 +618,15 @@ sub extract {
             ### go find it then
             } else {
 
-                my $found;
-                for my $entry ( @{$self->_data} ) {
-                    next unless $file eq $entry->full_path;
+                # create hash-map once to speed up lookup
+                $hashmap = $hashmap || {
+                    map { $_->full_path, $_ } @{$self->_data}
+                };
 
+                if (exists $hashmap->{$file}) {
                     ### we found the file you're looking for
-                    push @files, $entry;
-                    $found++;
-                }
-
-                unless( $found ) {
+                    push @files, $hashmap->{$file};
+                } else {
                     return $self->_error(
                         qq[Could not find '$file' in archive] );
                 }
@@ -861,7 +861,7 @@ sub _extract_file {
     }
     if( length $entry->type && $entry->is_file ) {
         my $fh = IO::File->new;
-        $fh->open( '>' . $full ) or (
+        $fh->open( $full, '>' ) or (
             $self->_error( qq[Could not open file '$full': $!] ),
             return
         );
@@ -1770,7 +1770,8 @@ Example usage:
 
 sub iter {
     my $class       = shift;
-    my $filename    = shift or return;
+    my $filename    = shift;
+    return unless defined $filename;
     my $compressed  = shift || 0;
     my $opts        = shift || {};
 
@@ -2263,7 +2264,7 @@ For example, if you add a Unicode string like
     $tar->add_data('file.txt', "Euro: \x{20AC}");
 
 then there will be a problem later when the tarfile gets written out
-to disk via C<$tar->write()>:
+to disk via C<< $tar->write() >>:
 
     Wide character in print at .../Archive/Tar.pm line 1014.
 

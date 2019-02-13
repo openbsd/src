@@ -1,9 +1,0 @@
-5.013002
-SvNV_nomg                      # U
-find_rundefsv                  # U
-foldEQ                         # U
-foldEQ_locale                  # U
-foldEQ_utf8                    # U
-hv_fill                        # U
-sv_dec_nomg                    # U
-sv_inc_nomg                    # U

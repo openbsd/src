@@ -2,15 +2,16 @@ package Encode::Guess;
 use strict;
 use warnings;
 use Encode qw(:fallbacks find_encoding);
-our $VERSION = do { my @r = ( q$Revision: 2.6 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 my $Canon = 'Guess';
 use constant DEBUG => !!$ENV{PERL_ENCODE_DEBUG};
 our %DEF_SUSPECTS = map { $_ => find_encoding($_) } qw(ascii utf8);
-$Encode::Encoding{$Canon} = bless {
+my $obj = bless {
     Name     => $Canon,
     Suspects => {%DEF_SUSPECTS},
 } => __PACKAGE__;
+Encode::define_encoding($obj, $Canon);
 
 use parent qw(Encode::Encoding);
 sub needs_lines { 1 }

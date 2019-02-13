@@ -5,11 +5,10 @@
 require 5.000;
 package I18N::LangTags;
 use strict;
-use vars qw(@ISA @EXPORT @EXPORT_OK %EXPORT_TAGS $VERSION %Panic);
 require Exporter;
-@ISA = qw(Exporter);
-@EXPORT = qw();
-@EXPORT_OK = qw(is_language_tag same_language_tag
+our @ISA = qw(Exporter);
+our @EXPORT = qw();
+our @EXPORT_OK = qw(is_language_tag same_language_tag
                 extract_language_tags super_languages
                 similarity_language_tag is_dialect_of
                 locale2language_tag alternate_language_tags
@@ -17,9 +16,10 @@ require Exporter;
                 implicate_supers
                 implicate_supers_strictly
                );
-%EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
+our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
-$VERSION = "0.40";
+our $VERSION = "0.43";
+our %Panic;
 
 sub uniq { my %seen; return grep(!($seen{$_}++), @_); } # a util function
 
@@ -460,7 +460,7 @@ interaction looks like:
 So far so good.  But suppose the way you're implementing this is:
 
           my %greetings;
-          die unless open(IN, "<in.dat");
+          die unless open(IN, "<", "in.dat");
           while(<IN>) {
             chomp;
             next unless /^([^=]+)=(.+)/s;
@@ -502,7 +502,7 @@ program with:
 
           use I18N::LangTags qw(encode_language_tag);
           my %greetings;
-          die unless open(IN, "<in.dat");
+          die unless open(IN, "<", "in.dat");
           while(<IN>) {
             chomp;
             next unless /^([^=]+)=(.+)/s;

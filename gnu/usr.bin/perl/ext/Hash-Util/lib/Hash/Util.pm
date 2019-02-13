@@ -34,10 +34,18 @@ our @EXPORT_OK  = qw(
                      lock_hashref_recurse unlock_hashref_recurse
 
                      hash_traversal_mask
+
+                     bucket_ratio
+                     used_buckets
+                     num_buckets
                     );
-our $VERSION = '0.19';
-require XSLoader;
-XSLoader::load();
+BEGIN {
+    # make sure all our XS routines are available early so their prototypes
+    # are correctly applied in the following code.
+    our $VERSION = '0.22';
+    require XSLoader;
+    XSLoader::load();
+}
 
 sub import {
     my $class = shift;
@@ -168,7 +176,7 @@ Both routines return a reference to the hash operated on.
 sub lock_ref_keys {
     my($hash, @keys) = @_;
 
-    Internals::hv_clear_placeholders %$hash;
+    _clear_placeholders(%$hash);
     if( @keys ) {
         my %keys = map { ($_ => 1) } @keys;
         my %original_keys = map { ($_ => 1) } keys %$hash;
@@ -203,6 +211,19 @@ sub unlock_ref_keys {
 sub   lock_keys (\%;@) {   lock_ref_keys(@_) }
 sub unlock_keys (\%)   { unlock_ref_keys(@_) }
 
+#=item B<_clear_placeholders>
+#
+# This function removes any placeholder keys from a hash. See Perl_hv_clear_placeholders()
+# in hv.c for what it does exactly. It is currently exposed as XS by universal.c and
+# injected into the Hash::Util namespace.
+#
+# It is not intended for use outside of this module, and may be changed
+# or removed without notice or deprecation cycle.
+#
+#=cut
+#
+# sub _clear_placeholders {} # just in case someone searches...
+
 =item B<lock_keys_plus>
 
   lock_keys_plus(%hash,@additional_keys)
@@ -221,7 +242,7 @@ Returns a reference to %hash
 sub lock_ref_keys_plus {
     my ($hash,@keys) = @_;
     my @delete;
-    Internals::hv_clear_placeholders(%$hash);
+    _clear_placeholders(%$hash);
     foreach my $key (@keys) {
         unless (exists($hash->{$key})) {
             $hash->{$key}=undef;
@@ -726,6 +747,29 @@ hash. Setting the mask ensures that a given hash will produce the same key
 order. B<Note> that this does B<not> guarantee that B<two> hashes will produce
 the same key order for the same hash seed and traversal mask, items that
 collide into one bucket may have different orders regardless of this setting.
+
+=item B<bucket_ratio>
+
+This function behaves the same way that scalar(%hash) behaved prior to
+Perl 5.25. Specifically if the hash is tied, then it calls the SCALAR tied
+hash method, if untied then if the hash is empty it return 0, otherwise it
+returns a string containing the number of used buckets in the hash,
+followed by a slash, followed by the total number of buckets in the hash.
+
+    my %hash=("foo"=>1);
+    print Hash::Util::bucket_ratio(%hash); # prints "1/8"
+
+=item B<used_buckets>
+
+This function returns the count of used buckets in the hash. It is expensive
+to calculate and the value is NOT cached, so avoid use of this function
+in production code.
+
+=item B<num_buckets>
+
+This function returns the total number of buckets the hash holds, or would
+hold if the array were created. (When a hash is freshly created the array
+may not be allocated even though this value will be non-zero.)
 
 =back
 

@@ -217,7 +217,12 @@ is ($err, '', 'No errors when determining @INC');
 
 my @default_inc = split /\n/, $out;
 
-is ($default_inc[-1], '.', '. is last in @INC');
+if ($Config{default_inc_excludes_dot}) {
+    ok !(grep { $_ eq '.' } @default_inc), '. is not in @INC';
+}
+else {
+    is ($default_inc[-1], '.', '. is last in @INC');
+}
 
 my $sep = $Config{path_sep};
 my @test_cases = (

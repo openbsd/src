@@ -1,7 +1,7 @@
 package PerlIO::encoding;
 
 use strict;
-our $VERSION = '0.24';
+our $VERSION = '0.26';
 our $DEBUG = 0;
 $DEBUG and warn __PACKAGE__, " called by ", join(", ", caller), "\n";
 

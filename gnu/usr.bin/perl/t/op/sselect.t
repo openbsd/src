@@ -1,18 +1,19 @@
 #!./perl
 
+# Four-argument select
+
 my $hires;
 BEGIN {
     chdir 't' if -d 't';
-    @INC = ('.', '../lib');
+    require './test.pl';
+    set_up_inc('.', '../lib');
     $hires = eval 'use Time::HiResx "time"; 1';
 }
-
-require './test.pl';
 
 skip_all("Win32 miniperl has no socket select")
   if $^O eq "MSWin32" && is_miniperl();
 
-plan (15);
+plan (16);
 
 my $blank = "";
 eval {select undef, $blank, $blank, 0};
@@ -94,3 +95,12 @@ note("diff=$diff under=$under");
     select (undef, undef, undef, $sleep);
     ::is($count, 1, 'RT120102');
 }
+
+package _131645{
+    sub TIESCALAR { bless [] }
+    sub FETCH     { 0        }
+    sub STORE     {          }
+}
+tie $tie, _131645::;
+select ($tie, undef, undef, $tie);
+ok("no crash from select $numeric_tie, undef, undef, $numeric_tie")

@@ -4,16 +4,16 @@ require 5.003000;
 
 use strict;
 use warnings;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
-use Fcntl;
+use vars qw($VERSION @ISA @EXPORT_OK $errmsg);
+use Fcntl qw(O_RDONLY);
 use integer;
 
-$VERSION = '5.95_01';
+$VERSION = '6.01';
 
 require Exporter;
-require DynaLoader;
-@ISA = qw(Exporter DynaLoader);
+@ISA = qw(Exporter);
 @EXPORT_OK = qw(
+	$errmsg
 	hmac_sha1	hmac_sha1_base64	hmac_sha1_hex
 	hmac_sha224	hmac_sha224_base64	hmac_sha224_hex
 	hmac_sha256	hmac_sha256_base64	hmac_sha256_hex
@@ -68,6 +68,7 @@ sub add_bits {
 sub _bail {
 	my $msg = shift;
 
+	$errmsg = $!;
 	$msg .= ": $!";
 	require Carp;
 	Carp::croak($msg);
@@ -110,8 +111,8 @@ sub addfile {
 	return(_addfile($self, $file)) unless ref(\$file) eq 'SCALAR';
 
 	$mode = defined($mode) ? $mode : "";
-	my ($binary, $UNIVERSAL, $BITS, $portable) =
-		map { $_ eq $mode } ("b", "U", "0", "p");
+	my ($binary, $UNIVERSAL, $BITS) =
+		map { $_ eq $mode } ("b", "U", "0");
 
 		## Always interpret "-" to mean STDIN; otherwise use
 		## sysopen to handle full range of POSIX file names
@@ -124,7 +125,7 @@ sub addfile {
 	if ($BITS) {
 		my ($n, $buf) = (0, "");
 		while (($n = read(FH, $buf, 4096))) {
-			$buf =~ s/[^01]//g;
+			$buf =~ tr/01//cd;
 			$self->add_bits($buf);
 		}
 		_bail("Read failed") unless defined $n;
@@ -132,16 +133,9 @@ sub addfile {
 		return($self);
 	}
 
-	binmode(FH) if $binary || $portable || $UNIVERSAL;
+	binmode(FH) if $binary || $UNIVERSAL;
 	if ($UNIVERSAL && _istext(*FH, $file)) {
 		$self->_addfileuniv(*FH);
-	}
-	elsif ($portable && _istext(*FH, $file)) {
-		while (<FH>) {
-			s/\015?\015\012/\012/g;
-			s/\015/\012/g;
-			$self->add($_);
-		}
 	}
 	else { $self->_addfilebin(*FH) }
 	close(FH);
@@ -243,7 +237,15 @@ sub load {
 	$class->putstate($str);
 }
 
-Digest::SHA->bootstrap($VERSION);
+eval {
+	require XSLoader;
+	XSLoader::load('Digest::SHA', $VERSION);
+	1;
+} or do {
+	require DynaLoader;
+	push @ISA, 'DynaLoader';
+	Digest::SHA->bootstrap($VERSION);
+};
 
 1;
 __END__
@@ -617,20 +619,12 @@ argument to one of the following values:
 
 	"0"	use BITS mode
 
-	"p"	use portable mode (to be deprecated)
-
 The "U" mode is modeled on Python's "Universal Newlines" concept, whereby
 DOS and Mac OS line terminators are converted internally to UNIX newlines
 before processing.  This ensures consistent digest values when working
 simultaneously across multiple file systems.  B<The "U" mode influences
 only text files>, namely those passing Perl's I<-T> test; binary files
 are processed with no translation whatsoever.
-
-The "p" mode differs from "U" only in that it treats "\r\r\n" as a single
-newline, a quirky feature designed to accommodate legacy applications that
-occasionally added an extra carriage return before DOS line terminators.
-The "p" mode will be phased out eventually in favor of the cleaner and
-more well-established Universal Newlines concept.
 
 The BITS mode ("0") interprets the contents of I<$filename> as a logical
 stream of bits, where each ASCII '0' or '1' character represents a 0 or
@@ -790,6 +784,7 @@ The author is particularly grateful to
 	Sean Burke
 	Chris Carey
 	Alexandr Ciornii
+	Chris David
 	Jim Doble
 	Thomas Drugeon
 	Julius Duque
@@ -813,7 +808,7 @@ darkness and moored it in so perfect a calm and in so brilliant a light"
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2003-2015 Mark Shelor
+Copyright (C) 2003-2017 Mark Shelor
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

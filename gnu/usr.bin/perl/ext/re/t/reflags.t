@@ -11,7 +11,7 @@ BEGIN {
 
 use strict;
 
-use Test::More tests => 67;
+use Test::More tests => 74;
 
 my @flags = qw( a d l u );
 
@@ -24,10 +24,19 @@ ok "Foo" !~ /(??{'foo'})/, 'no re "/i" (??{})';
 use re '/x';
 ok "foo" =~ / foo /, 'use re "/x"';
 ok "foo" =~ / (??{' foo '}) /, 'use re "/x" (??{})';
+like " ", qr/[a b]/, 'use re "/x" [a b]';
 no re '/x';
 ok "foo" !~ / foo /, 'no re "/x"';
 ok "foo" !~ /(??{' foo '})/, 'no re "/x" (??{})';
 ok "foo" !~ / (??{'foo'}) /, 'no re "/x" (??{})';
+use re '/xx';
+ok "foo" =~ / foo /, 'use re "/xx"';
+ok "foo" =~ / (??{' foo '}) /, 'use re "/xx" (??{})';
+unlike " ", qr/[a b]/, 'use re "/xx" [a b] # Space in [] gobbled up';
+no re '/xx';
+ok "foo" !~ / foo /, 'no re "/xx"';
+ok "foo" !~ /(??{' foo '})/, 'no re "/xx" (??{})';
+ok "foo" !~ / (??{'foo'}) /, 'no re "/xx" (??{})';
 use re '/s';
 ok "\n" =~ /./, 'use re "/s"';
 ok "\n" =~ /(??{'.'})/, 'use re "/s" (??{})';
@@ -178,8 +187,8 @@ is qr//, '(?^:)', 'no re "/aai"';
     "warning with eval \"use re \"/amaa\"";
 
   $w = "";
-  eval "use re '/xamax'";
-  like $w, qr/Having more than one \/x regexp modifier is deprecated/,
-    "warning with eval \"use re \"/xamax\"";
+  eval "use re '/xamaxx'";
+  like $w, qr/The "x" flag may only appear a maximum of twice/,
+    "warning with eval \"use re \"/xamaxx\"";
 
 }

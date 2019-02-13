@@ -3,6 +3,7 @@ use strict;
 use ExtUtils::MakeMaker;
 use File::Copy;
 use File::Spec;
+use Config;
 
 
 # create a typemap for Perl 5.6
@@ -13,7 +14,7 @@ if ($] < 5.008) {
 }
 
 # create a lib/ dir in order to avoid warnings in Test::Distribution
-mkdir "lib", $ENV{PERL_CORE} ? 0770 : 0755;
+mkdir "lib", 0755;
 
 # virtual paths given to EU::MM
 my %virtual_path = ( 'Syslog.pm' => '$(INST_LIBDIR)/Syslog.pm' );
@@ -33,7 +34,7 @@ if ($^O =~ /Win32/) {
     $virtual_path{'win32/Win32.pm'   } = '$(INST_LIBDIR)/Syslog/Win32.pm';
     $virtual_path{'win32/PerlLog.dll'} = '$(INST_ARCHAUTODIR)/PerlLog.dll';
 
-    push @extra_params, CCFLAGS => "-Ifallback";
+    push @extra_params, CCFLAGS => "$Config{ccflags} -Ifallback";
 
     # recreate the DLL from its uuencoded form if it's not here
     if (! -f File::Spec->catfile("win32", "$name.dll")) {

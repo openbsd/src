@@ -28,9 +28,7 @@ if (locales_enabled('LC_MESSAGES')) {
     local $! = 1;
     my $english_message = "$!"; # Should be C locale since not in scope of
                                 # "use locale"
-    for $non_english_locale (find_locales(&POSIX::LC_MESSAGES,
-                                          'reasonable_locales_only'))
-    {
+    for $non_english_locale (find_locales(&POSIX::LC_MESSAGES)) {
         use locale;
         setlocale(&POSIX::LC_MESSAGES, $non_english_locale);
         $! = 1;
@@ -163,9 +161,6 @@ SKIP: {
     cmp_ok($past, '<=', $present, 'time');
     cmp_ok($present, '<=', $future, 'time');
 }
-
-is(POSIX::tolower('Perl Rules'), 'perl rules', 'tolower');
-is(POSIX::toupper('oi!'), 'OI!', 'toupper');
 
 is(-e NOT_HERE, undef, NOT_HERE . ' does not exist');
 

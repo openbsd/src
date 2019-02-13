@@ -12,7 +12,7 @@ my $no_endianness = $] > 5.009 ? '' :
 my $no_signedness = $] > 5.009 ? '' :
   "Signed/unsigned pack modifiers not available on this perl";
 
-plan tests => 14716;
+plan tests => 14717;
 
 use strict;
 use warnings qw(FATAL all);
@@ -295,7 +295,7 @@ sub list_eq ($$) {
     # Is this a stupid thing to do on VMS, VOS and other unusual platforms?
 
     skip("-- the IEEE infinity model is unavailable in this configuration.", 1)
-       if (($^O eq 'VMS') && !defined($Config{useieee}));
+       if (($^O eq 'VMS') && !defined($Config{useieee}) || !$Config{d_double_has_inf});
 
     skip("-- $^O has serious fp indigestion on w-packed infinities", 1)
        if (
@@ -320,7 +320,7 @@ sub list_eq ($$) {
  SKIP: {
 
     skip("-- the full range of an IEEE double may not be available in this configuration.", 3)
-       if (($^O eq 'VMS') && !defined($Config{useieee}));
+       if (($^O eq 'VMS') && !defined($Config{useieee}) || !$Config{d_double_style_ieee});
 
     skip("-- $^O does not like 2**1023", 3)
        if (($^O eq 'ultrix'));
@@ -962,7 +962,7 @@ is("@{[unpack('U*', pack('U*', 100, 200))]}", "100 200");
         my $bad = pack("U0C", 202);
         local $SIG{__WARN__} = sub { $@ = "@_" };
         my @null = unpack('U0U', $bad);
-        like($@, qr/^Malformed UTF-8 character /);
+        like($@, qr/^Malformed UTF-8 character: /);
     }
 }
 
@@ -1340,7 +1340,7 @@ SKIP: {
 			| [Bb]  (?{ '101' })
 			| [Hh]  (?{ 'b8' })
 			| [svnSiIlVNLqQjJ]  (?{ 10111 })
-			| [FfDd]  (?{ 1.36514538e67 })
+			| [FfDd]  (?{ 1.36514538e37 })
 			| [pP]  (?{ "try this buffer" })
 			/x; $^R } @codes;
    my @end = (0x12345678, 0x23456781, 0x35465768, 0x15263748);
@@ -1414,7 +1414,7 @@ is(scalar unpack('A /A /A Z20', '3004bcde'), 'bcde');
   my @b = unpack "$t X[$t] $t", $p;	# Extract, step back, extract again
   is(scalar @b, 2 * scalar @a);
   $b = "@b";
-  $b =~ s/(?:17000+|16999+)\d+(e-45) /17$1 /gi; # stringification is gamble
+  $b =~ s/(?:17000+|16999+)\d+(e-0?45) /17$1 /gi; # stringification is gamble
   is($b, "@a @a");
 
   use warnings qw(NONFATAL all);;
@@ -1427,7 +1427,7 @@ is(scalar unpack('A /A /A Z20', '3004bcde'), 'bcde');
   is($warning, undef);
   is(scalar @b, scalar @a);
   $b = "@b";
-  $b =~ s/(?:17000+|16999+)\d+(e-45) /17$1 /gi; # stringification is gamble
+  $b =~ s/(?:17000+|16999+)\d+(e-0?45) /17$1 /gi; # stringification is gamble
   is($b, "@a");
 }
 
@@ -1531,8 +1531,11 @@ is(unpack('c'), 65, "one-arg unpack (change #18751)"); # defaulting to $_
     my (@y) = unpack("%b10a", "abcd");
     is($x[1], $y[1], "checksum advance ok");
 
-    # verify that the checksum is not overflowed with C0
-    is(unpack("C0%128U", "abcd"), unpack("U0%128U", "abcd"), "checksum not overflowed");
+    SKIP: {
+        skip("-- non-IEEE float", 1) if !$Config{d_double_style_ieee};
+        # verify that the checksum is not overflowed with C0
+        is(unpack("C0%128U", "abcd"), unpack("U0%128U", "abcd"), "checksum not overflowed");
+    }
 }
 
 my $U_1FFC_bytes = byte_utf8a_to_utf8n("\341\277\274");
@@ -2043,6 +2046,18 @@ ok(1, "argument underflow did not crash");
        "check pack H zero fills (utf8 none)");
     is(pack("H40", $up_nul), $twenty_nuls,
        "check pack H zero fills (utf8 source)");
+}
+
+SKIP:
+{
+    # [perl #129149] the code below would write one past the end of the output
+    # buffer, only detected by ASAN, not by valgrind
+    $Config{ivsize} >= 8
+      or skip "[perl #129149] need 64-bit for this test", 1;
+    fresh_perl_is(<<'EOS', "ok\n", { stderr => 1 }, "pack W overflow");
+print pack("ucW", "0000", 0, 140737488355327) eq "\$,#`P,```\n\0\x{7fffffffffff}"
+ ? "ok\n" : "not ok\n";
+EOS
 }
 
 SKIP:

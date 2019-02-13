@@ -1,8 +1,0 @@
-5.013008
-foldEQ_latin1                  # U
-mg_findext                     # U
-parse_arithexpr                # U
-parse_fullexpr                 # U
-parse_listexpr                 # U
-parse_termexpr                 # U
-sv_unmagicext                  # U

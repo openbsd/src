@@ -5,8 +5,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
     skip_all_if_miniperl("miniperl can't load attributes");
 }
 use warnings;

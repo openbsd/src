@@ -4,7 +4,12 @@ use 5.006_001;
 
 use Time::tm;
 
-our(@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
+our (@ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $VERSION);
+our (   $tm_sec, $tm_min, $tm_hour, $tm_mday,
+        $tm_mon, $tm_year, $tm_wday, $tm_yday, 
+		$tm_isdst,
+);
+ 
 BEGIN { 
     use Exporter   ();
     @ISA         = qw(Exporter Time::tm);
@@ -15,9 +20,8 @@ BEGIN {
 			$tm_isdst
 		    );
     %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
-    $VERSION     = 1.03;
+    $VERSION     = 1.04;
 }
-use vars      @EXPORT_OK;
 
 sub populate (@) {
     return unless @_;

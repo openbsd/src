@@ -137,6 +137,7 @@ foo-bar-0^.01/	vmsify [.foo-bar-0_01] [.foo-bar-0^.01]
 +foo.tmp	vmsify ^+foo.tmp ^
 ../foo\ \ bar/	vmsify [-.foo^_^_bar] ^
 ./foo.tmp	vmsify []foo.tmp ^
+x/r*???????	vmsify [.x]r*??????? ^
 
 # Fileifying directory specs
 __down_:[__the_.__garden_.__path_]     fileify __down_:[__the_.__garden_]__path_.dir;1 ^

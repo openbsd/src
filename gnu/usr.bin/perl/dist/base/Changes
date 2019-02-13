@@ -70,7 +70,7 @@
       pseudohashes
     * Fixing inheritance from classes which have only private fields
     * Fixing inheritance when an intermediate class has no fields.
-      [perlbug 20020326.004]
+      [perlbug 20020326.004 (#8884)]
     - Removing uses of 'our' from tests for backwards compat.
 
 2.02 Wed Sep  3 20:40:13 PDT 2003

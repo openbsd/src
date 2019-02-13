@@ -90,6 +90,16 @@ When prompted, pick a subject that summarizes your changes.
 The porters appreciate the time you spent helping to make Perl better.
 Thank you!
 
+=item * Acknowledgement
+
+All contributors are credited (by name and email address) in the
+AUTHORS file, which is part of the perl distribution, as well as the
+Git commit history.
+
+If you don’t want to be included in the AUTHORS file, just let us
+know. Otherwise we will take your submission of a patch as permission
+to credit you in the AUTHORS file.
+
 =item * Next time
 
 The next time you wish to make a patch, you need to start from the
@@ -218,6 +228,9 @@ You'll know your submission has been processed when you receive an
 email from our ticket tracking system.  This email will give you a
 ticket number.  Once your patch has made it to the ticket tracking
 system, it will also be sent to the perl5-porters@perl.org list.
+
+If your patch is related to an already-opened ticket you can also
+attach your patch to that ticket, without having to use perlbug.
 
 Patches are reviewed and discussed on the p5p list.  Simple,
 uncontroversial patches will usually be applied without any discussion.
@@ -356,11 +369,16 @@ sources:
 
 =item *
 
-8-wide tabs (no exceptions!)
+4-wide indents for code, 2-wide indents for nested CPP C<#define>s,
+with 8-wide tabstops.
 
 =item *
 
-4-wide indents for code, 2-wide indents for nested CPP #defines
+Use spaces for indentation, not tab characters.
+
+The codebase is a mixture of tabs and spaces for indentation, and we
+are moving to spaces only.  Converting lines you're patching from 8-wide
+tabs to spaces will help this migration.
 
 =item *
 
@@ -1036,6 +1054,55 @@ is broken (for example, the utf8 length cache on long utf8 strings).
 Add a test that will take a fraction of a second normally, and minutes
 otherwise, causing the test file to time out on failure.
 
+=head2 Building perl at older commits
+
+In the course of hacking on the Perl core distribution, you may have occasion
+to configure, build and test perl at an old commit.  Sometimes C<make> will
+fail during this process.  If that happens, you may be able to salvage the
+situation by using the Devel::PatchPerl library from CPAN (not included in the
+core) to bring the source code at that commit to a buildable state.
+
+Here's a real world example, taken from work done to resolve
+L<perl #72414|https://rt.perl.org/Ticket/Display.html?id=72414>.
+Use of F<Porting/bisect.pl> had identified commit
+C<ba77e4cc9d1ceebf472c9c5c18b2377ee47062e6> as the commit in which a bug was
+corrected.  To confirm, a P5P developer wanted to configure and build perl at
+commit C<ba77e4c^> (presumably "bad") and then at C<ba77e4c> (presumably
+"good").  Normal configuration and build was attempted:
+
+    $ sh ./Configure -des -Dusedevel
+    $ make test_prep
+
+C<make>, however, failed with output (excerpted) like this:
+
+    cc -fstack-protector -L/usr/local/lib -o miniperl \
+      gv.o toke.o perly.o pad.o regcomp.o dump.o util.o \
+      mg.o reentr.o mro.o hv.o av.o run.o pp_hot.o sv.o \
+      pp.o scope.o pp_ctl.o pp_sys.o doop.o doio.o regexec.o \
+      utf8.o taint.o deb.o universal.o globals.o perlio.o \
+      perlapi.o numeric.o mathoms.o locale.o pp_pack.o pp_sort.o  \
+      miniperlmain.o opmini.o perlmini.o
+    pp.o: In function `Perl_pp_pow':
+    pp.c:(.text+0x2db9): undefined reference to `pow'
+    ...
+    collect2: error: ld returned 1 exit status
+    makefile:348: recipe for target 'miniperl' failed
+    make: *** [miniperl] Error 1
+
+Another P5P contributor recommended installation and use of Devel::PatchPerl
+for this situation, first to determine the version of perl at the commit in
+question, then to patch the source code at that point to facilitate a build.
+
+    $ perl -MDevel::PatchPerl -e \
+        'print Devel::PatchPerl->determine_version("/path/to/sourcecode"), "\n";'
+    5.11.1
+    $ perl -MDevel::PatchPerl -e \
+        'Devel::PatchPerl->patch_source("5.11.1", "/path/to/sourcecode");'
+
+Once the source was patched, C<./Configure> and C<make test_prep> were called
+and completed successfully, enabling confirmation of the findings in RT
+#72414.
+
 =head1 MORE READING FOR GUTS HACKERS
 
 To hack on the Perl guts, you'll need to read the following things:
@@ -1102,11 +1169,11 @@ wanting to go about Perl development.
 
 =head1 CPAN TESTERS AND PERL SMOKERS
 
-The CPAN testers ( http://testers.cpan.org/ ) are a group of volunteers
+The CPAN testers ( L<http://testers.cpan.org/> ) are a group of volunteers
 who test CPAN modules on a variety of platforms.
 
-Perl Smokers ( http://www.nntp.perl.org/group/perl.daily-build/ and
-http://www.nntp.perl.org/group/perl.daily-build.reports/ )
+Perl Smokers ( L<http://www.nntp.perl.org/group/perl.daily-build/> and
+L<http://www.nntp.perl.org/group/perl.daily-build.reports/> )
 automatically test Perl source releases on platforms with various
 configurations.
 

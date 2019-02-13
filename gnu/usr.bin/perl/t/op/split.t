@@ -7,7 +7,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 131;
+plan tests => 176;
 
 $FS = ':';
 
@@ -207,8 +207,8 @@ $cnt =           split //, v1.20.300.4000.50000.4000.300.20.1;
 is("@ary", "1 20 300 4000 50000 4000 300 20 1");
 is($cnt, scalar(@ary));
 
-@ary = split(/\x{FE}/, "\x{FF}\x{FE}\x{FD}"); # bug id 20010105.016
-$cnt = split(/\x{FE}/, "\x{FF}\x{FE}\x{FD}"); # bug id 20010105.016
+@ary = split(/\x{FE}/, "\x{FF}\x{FE}\x{FD}"); # bug id 20010105.016 (#5088)
+$cnt = split(/\x{FE}/, "\x{FF}\x{FE}\x{FD}"); # bug id 20010105.016 (#5088)
 ok(@ary == 2 &&
    $ary[0] eq "\xFF"   && $ary[1] eq "\xFD" &&
    $ary[0] eq "\x{FF}" && $ary[1] eq "\x{FD}");
@@ -244,7 +244,7 @@ is($cnt, scalar(@ary));
 }
 
 {
-    # bug id 20000427.003 
+    # bug id 20000427.003 (#3173)
 
     use warnings;
     use strict;
@@ -266,7 +266,7 @@ is($cnt, scalar(@ary));
     my $s = "\x20\x40\x{80}\x{100}\x{80}\x40\x20";
 
   {
-	# bug id 20000426.003
+	# bug id 20000426.003 (#3166)
 
 	my ($a, $b, $c) = split(/\x40/, $s);
 	ok($a eq "\x20" && $b eq "\x{80}\x{100}\x{80}" && $c eq $a);
@@ -288,7 +288,7 @@ is($cnt, scalar(@ary));
 }
 
 {
-    # 20001205.014
+    # 20001205.014 (#4844)
 
     my $a = "ABC\x{263A}";
 
@@ -480,6 +480,24 @@ is($cnt, scalar(@ary));
         qq{split(\$cond ? qr/ / : " ", "$exp") behaves as expected over repeated similar patterns};
 }
 
+SKIP: {
+    # RT #130907: unicode_strings feature doesn't work with split ' '
+
+    my ($sp) = grep /\s/u, map chr, reverse 128 .. 255 # prefer \xA0 over \x85
+        or skip 'no unicode whitespace found in high-8-bit range', 9;
+
+    for (["$sp$sp. /", "leading unicode whitespace"],
+         [".$sp$sp/",  "unicode whitespace separator"],
+         [". /$sp$sp", "trailing unicode whitespace"]) {
+        my ($str, $desc) = @$_;
+        use feature "unicode_strings";
+        my @got = split " ", $str;
+        is @got, 2, "whitespace split: $desc: field count";
+        is $got[0], '.', "whitespace split: $desc: field 0";
+        is $got[1], '/', "whitespace split: $desc: field 1";
+    }
+}
+
 {
     # 'RT #116086: split "\x20" does not work as documented';
     my @results;
@@ -523,3 +541,129 @@ is "@a", '1 2 3', 'assignment to split-to-array (pmtarget/package array)';
 }
 (@{\@a} = split //, "abc") = 1..10;
 is "@a", '1 2 3', 'assignment to split-to-array (stacked)';
+
+# check that re-evals work
+
+{
+    my $c = 0;
+    @a = split /-(?{ $c++ })/, "a-b-c";
+    is "@a", "a b c", "compile-time re-eval";
+    is $c, 2, "compile-time re-eval count";
+
+    my $sep = '-';
+    $c = 0;
+    @a = split /$sep(?{ $c++ })/, "a-b-c";
+    is "@a", "a b c", "run-time re-eval";
+    is $c, 2, "run-time re-eval count";
+}
+
+# check that that my/local @array = split works
+
+{
+    my $s = "a:b:c";
+
+    local @a = qw(x y z);
+    {
+        local @a = split /:/, $s;
+        is "@a", "a b c", "local split inside";
+    }
+    is "@a", "x y z", "local split outside";
+
+    my @b = qw(x y z);
+    {
+        my @b = split /:/, $s;
+        is "@b", "a b c", "my split inside";
+    }
+    is "@b", "x y z", "my split outside";
+}
+
+# check that the (@a = split) optimisation works in scalar/list context
+
+{
+    my $s = "a:b:c:d:e";
+    my @outer;
+    my $outer;
+    my @lex;
+    local our @pkg;
+
+    $outer = (@lex = split /:/, $s);
+    is "@lex",   "a b c d e", "array split: scalar cx lex: inner";
+    is $outer,   5,           "array split: scalar cx lex: outer";
+
+    @outer = (@lex = split /:/, $s);
+    is "@lex",   "a b c d e", "array split: list cx lex: inner";
+    is "@outer", "a b c d e", "array split: list cx lex: outer";
+
+    $outer = (@pkg = split /:/, $s);
+    is "@pkg",   "a b c d e", "array split: scalar cx pkg inner";
+    is $outer,   5,           "array split: scalar cx pkg outer";
+
+    @outer = (@pkg = split /:/, $s);
+    is "@pkg",   "a b c d e", "array split: list cx pkg inner";
+    is "@outer", "a b c d e", "array split: list cx pkg outer";
+
+    $outer = (my @a1 = split /:/, $s);
+    is "@a1",    "a b c d e", "array split: scalar cx my lex: inner";
+    is $outer,   5,           "array split: scalar cx my lex: outer";
+
+    @outer = (my @a2 = split /:/, $s);
+    is "@a2",    "a b c d e", "array split: list cx my lex: inner";
+    is "@outer", "a b c d e", "array split: list cx my lex: outer";
+
+    $outer = (local @pkg = split /:/, $s);
+    is "@pkg",   "a b c d e", "array split: scalar cx local pkg inner";
+    is $outer,   5,           "array split: scalar cx local pkg outer";
+
+    @outer = (local @pkg = split /:/, $s);
+    is "@pkg",   "a b c d e", "array split: list cx local pkg inner";
+    is "@outer", "a b c d e", "array split: list cx local pkg outer";
+
+    $outer = (@{\@lex} = split /:/, $s);
+    is "@lex",   "a b c d e", "array split: scalar cx lexref inner";
+    is $outer,   5,           "array split: scalar cx lexref outer";
+
+    @outer = (@{\@pkg} = split /:/, $s);
+    is "@pkg",   "a b c d e", "array split: list cx pkgref inner";
+    is "@outer", "a b c d e", "array split: list cx pkgref outer";
+
+
+}
+
+# splitting directly to an array wasn't filling unused AvARRAY slots with
+# NULL
+
+{
+    my @a;
+    @a = split(/-/,"-");
+    $a[1] = 'b';
+    ok eval { $a[0] = 'a'; 1; }, "array split filling AvARRAY: assign 0";
+    is "@a", "a b", "array split filling AvARRAY: result";
+}
+
+# splitting an empty utf8 string gave an assert failure
+{
+    my $s = "\x{100}";
+    chop $s;
+    my @a = split ' ', $s;
+    is (+@a, 0, "empty utf8 string");
+}
+
+fresh_perl_is(<<'CODE', '', {}, "scalar split stack overflow");
+map{int"";split//.0>60for"0000000000000000"}split// for"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+CODE
+
+# RT #132334: /o modifier no longer has side effects on split
+{
+    my @records = (
+        { separator => '0', effective => '',  text => 'ab' },
+        { separator => ';', effective => ';', text => 'a;b' },
+    );
+
+    for (@records) {
+        my ($separator, $effective, $text) = @$_{qw(separator effective text)};
+        $separator =~ s/0//o;
+        is($separator,$effective,"Going to split '$text' with '$separator'");
+        my @result = split($separator,$text);
+        ok(eq_array(\@result,['a','b']), "Resulting in ('a','b')");
+    }
+}

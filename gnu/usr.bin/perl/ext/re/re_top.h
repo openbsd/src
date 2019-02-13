@@ -5,6 +5,7 @@
 /* need access to debugger hooks */
 #if defined(PERL_EXT_RE_DEBUG) && !defined(DEBUGGING)
 #  define DEBUGGING
+#  define DEBUGGING_RE_ONLY
 #endif
 
 /* We *really* need to overwrite these symbols: */

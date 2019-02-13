@@ -957,12 +957,12 @@ tt+$	xxxtt	y	-	-
 (abc)?(abc)+	abc	y	$1:$2	:abc	-
 'b\s^'m	a\nb\n	n	-	-
 \ba	a	y	-	-
-^(a(??{"(?!)"})|(a)(?{1}))b	ab	y	$2	a	# [ID 20010811.006]
-ab(?i)cd	AbCd	n	-	-	# [ID 20010809.023]
+^(a(??{"(?!)"})|(a)(?{1}))b	ab	y	$2	a	# [ID 20010811.006 (#7512)]
+ab(?i)cd	AbCd	n	-	-	# [ID 20010809.023 (#7503)]
 ab(?i)cd	abCd	y	-	-
 (A|B)*(?(1)(CD)|(CD))	CD	y	$2-$3	-CD
 (A|B)*(?(1)(CD)|(CD))	ABCD	y	$2-$3	CD-
-(A|B)*?(?(1)(CD)|(CD))	CD	y	$2-$3	-CD	# [ID 20010803.016]
+(A|B)*?(?(1)(CD)|(CD))	CD	y	$2-$3	-CD	# [ID 20010803.016 (#7438)]
 (A|B)*?(?(1)(CD)|(CD))	ABCD	y	$2-$3	CD-
 '^(o)(?!.*\1)'i	Oo	n	-	-
 (.*)\d+\1	abc12bc	y	$1	bc
@@ -1443,7 +1443,6 @@ foo(\h)bar	foo\tbar	y	$1	\t
 /\N{U+41}\x{c1}/i	a\x{e1}	y	$&	a\x{e1}
 /[\N{U+41}\x{c1}]/i	\x{e1}	y	$&	\x{e1}
 '\N{U+41}'	A	y	$&	A		# Even for single quoted patterns
-/\N{}\xe4/i	\xc4	y	$&	\xc4		# Empty \N{} should change /d to /u
 
 [\s][\S]	\x{a0}\x{a0}	n	-	-	# Unicode complements should not match same character
 
@@ -1454,8 +1453,8 @@ foo(\h)bar	foo\tbar	y	$1	\t
 
 # Verify that \ escapes the { after \N, and causes \N to match non-newline
 abc\N\{U+BEEF}	abc\n{UBEEF}	n		
-abc\N\{U+BEEF}	abc.{UBEEF}	y	$&	abc.{UBEEF}
-[abc\N\{U+BEEF}]	-	c	-	\\N in a character class must be a named character
+abc\N\{U+BEEF\}	abc.{UBEEF}	y	$&	abc.{UBEEF}
+[abc\N\{U+BEEF\}]	-	c	-	\\N in a character class must be a named character
 
 # Verify that \N can be trailing and causes \N to match non-newline
 abc\N	abcd	y	$&	abcd
@@ -1464,13 +1463,10 @@ abc\N	abc\n	n
 # Verify get errors.  For these, we need // or else puts it in single quotes,
 # and bypasses the lexer.
 /\N{U+}/	-	c	-	Invalid hexadecimal number
-# Below currently gives a misleading message
-/[\N{U+}]/	-	Sc	-	Unmatched
-/[\N{U+}]/	-	sc	-	Syntax error in (?[...])
+/[\N{U+}]/	-	c	-	Invalid hexadecimal number
 /abc\N{def/	-	c	-	Missing right brace
 /\N{U+4AG3}/	-	c	-	Invalid hexadecimal number
-/[\N{U+4AG3}]/	-	Sc	-	Unmatched
-/[\N{U+4AG3}]/	-	sc	-	Syntax error in (?[...])
+/[\N{U+4AG3}]/	-	c	-	Invalid hexadecimal number
 
 # And verify that in single quotes which bypasses the lexer, the regex compiler
 # figures it out.
@@ -1478,7 +1474,10 @@ abc\N	abc\n	n
 [\N{U+}]	-	c	-	Invalid hexadecimal number
 \N{U+4AG3}	-	c	-	Invalid hexadecimal number
 [\N{U+4AG3}]	-	c	-	Invalid hexadecimal number
-abc\N{def	-	c	-	\\N{NAME} must be resolved by the lexer
+abc\N{def}	-	c	-	\\N{NAME} must be resolved by the lexer
+abc\N{U+4AG3	-	c	-	Missing right brace on \\N{}
+abc\N{def	-	c	-	Missing right brace on \\N{}
+abc\N{	-	c	-	Missing right brace on \\N{}
 
 # Verify that under /x that still cant have space before left brace
 /abc\N {U+41}/x	-	c	-	Missing braces
@@ -1968,7 +1967,32 @@ ab(?#Comment){2}c	abbc	y	$&	abbc
 (?:.||)(?|)000000000@	000000000@	y	$&	000000000@		#  [perl #126405]
 aa$|a(?R)a|a	aaa	y	$&	aaa		# [perl 128420] recursive matches
 (?:\1|a)([bcd])\1(?:(?R)|e)\1	abbaccaddedcb	y	$&	abbaccaddedcb		# [perl 128420] recursive match with backreferences
-(?il)\x{100}|\x{100}|\x{FF}	\xFF	y	$&	\xFF
+AB\s+\x{100}	AB \x{100}X	y	-	-
+\b\z0*\x{100}	.\x{100}	n	-	-	# [perl #129350] crashed in intuit_start
+(.*?(a(a)|i(i))n)	riiaan	y	$2-$3-$4-$1	aa-a--riiaan		#  Jump trie capture buffer issue [perl #129897]
+(^(?:(\d)x)?\d$)	1	y	[$1-$2]	[1-]		#  make sure that we reset capture buffers properly (from regtry)
+(X{2,}[-X]{1,4}){3,}X{2,}	XXX-XXX-XXX--	n	-	-	# [perl #130307]
+
+/[a b]/x	\N{SPACE}	yS	$&	 		# Note a space char here
+/[a b]/xx	\N{SPACE}	n	-	-
+/[a\ b]/xx	\N{SPACE}	y	$&	 		# Note a space char here
+/[ ^ a b ]/xx	a	n	-	-
+/[ ^ a b ]/xx	b	n	-	-
+/[ ^ a b ]/xx	A	y	$&	A
+/(?x:[a b])/xx	\N{SPACE}	yS	$&	 	# Note a space char here
+/(?xx:[a b])/x	\N{SPACE}	n	-	-
+/(?x)[a b]/xx	\N{SPACE}	yS	$&	 	# Note a space char here
+/(?xx)[a b]/x	\N{SPACE}	n	-	-
+/(?-x:[a b])/xx	\N{SPACE}	yS	$&	 	# Note a space char here
+^a?bcd\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff	ABCDEFGHIJKLMNOPQRSTUVWXYZ	n	-	-	# [perl #132187] for valgrind's benefit
+^Xaaa?Xaa	aaa\x{400000}	n	-	-	# [perl #132552] for valgrind's benefit
+([[:ascii:]]+)\x81	a\x80b\x81	y	$&	b\x81
+[[:^ascii:]]+b	\x80a\x81b	y	$&	\x81b
+[[:^ascii:]]+b	\x80a\x81\x{100}b	y	$&	\x81\x{100}b
+/\A\x80+\z/	\x80\x80\x80\x80\x80\x80\x80\x80\x80	y	$&	\x80\x80\x80\x80\x80\x80\x80\x80\x80		# [perl #132900]
+^(\d+)*?4X$	1234X	y	$1	123	# perl #131648
+(?il)\x{100}|\x{100}|\x{FE}	\xFE	y	$&	\xFE
+
 
 # Keep these lines at the end of the file
 # vim: softtabstop=0 noexpandtab

@@ -13,11 +13,11 @@ TAP::Parser::Scheduler - Schedule tests during parallel testing
 
 =head1 VERSION
 
-Version 3.36
+Version 3.42
 
 =cut
 
-our $VERSION = '3.36_01';
+our $VERSION = '3.42';
 
 =head1 SYNOPSIS
 
@@ -87,7 +87,7 @@ Here are some examples:
                ],
     }
 
-    # Run some  startup tests in sequence, then some parallel tests than some
+    # Run some  startup tests in sequence, then some parallel tests then some
     # teardown tests in sequence.
     {
         seq => [

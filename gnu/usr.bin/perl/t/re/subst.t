@@ -11,7 +11,7 @@ BEGIN {
     require './loc_tools.pl';
 }
 
-plan( tests => 271 );
+plan(tests => 276);
 
 $_ = 'david';
 $a = s/david/rules/r;
@@ -996,7 +996,7 @@ SKIP:{
 	/e;
     };
     is $locker{key}, '3', 'locking target in $hash{key} =~ s//.../e';
-    like $@, qr/^Modification of a read-only value/, 'err msg';
+    like $@, qr/^Modification of a read-only value/, 'err msg' . ($@ ? ": $@" : "");
 }
 delete $::{does_not_exist}; # just in case
 eval { no warnings; $::{does_not_exist}=~s/(?:)/*{"does_not_exist"}; 4/e };
@@ -1119,3 +1119,60 @@ SKIP: {
                    {stderr => 1 },
                    '[perl #129038 ] s/\xff//l no longer crashes');
 }
+
+ SKIP: {
+    skip("no Tie::Hash::NamedCapture under miniperl", 3) if is_miniperl;
+
+    # RT #23624 scoping of @+/@- when used with tie()
+    #! /usr/bin/perl -w
+
+    package Tie::Prematch;
+    sub TIEHASH { bless \my $dummy => __PACKAGE__ }
+    sub FETCH   { return substr $_[1], 0, $-[0] }
+
+    package main;
+
+    eval <<'__EOF__';
+    tie my %pre, 'Tie::Prematch';
+    my $foo = 'foobar';
+    $foo =~ s/.ob/$pre{ $foo }/;
+    is($foo, 'ffar', 'RT #23624');
+
+    $foo = 'foobar';
+    $foo =~ s/.ob/tied(%pre)->FETCH($foo)/e;
+    is($foo, 'ffar', 'RT #23624');
+
+    tie %-, 'Tie::Prematch';
+    $foo = 'foobar';
+    $foo =~ s/.ob/$-{$foo}/;
+    is($foo, 'ffar', 'RT #23624');
+
+    undef *Tie::Prematch::TIEHASH;
+    undef *Tie::Prematch::FETCH;
+__EOF__
+}
+
+# [perl #130188] crash on return from substitution in subroutine
+# make sure returning from s///e doesn't SEGV
+{
+    my $f = sub {
+        my $x = 'a';
+        $x =~ s/./return;/e;
+    };
+    my $x = $f->();
+    pass("RT #130188");
+}
+
+# RT #131930
+# a multi-line s/// wasn't resetting the cop_line correctly
+{
+    my $l0 = __LINE__;
+    my $s = "a";
+    $s =~ s[a]
+           [b];
+    my $lines = __LINE__ - $l0;
+    is $lines, 4, "RT #131930";
+}
+
+
+

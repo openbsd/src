@@ -188,7 +188,7 @@ sub test_vianame ($$$) {
 }
 
 {
-    # 20001114.001
+    # 20001114.001 (#4690)
 
     no utf8; # naked Latin-1
 
@@ -1009,7 +1009,7 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
         die "Can't open ../../lib/unicore/UnicodeData.txt: $!";
     while (<$fh>) {
         chomp;
-        my ($code, $name, undef, undef, undef, undef, undef, undef, undef, undef, $u1name) = split ";";
+        my ($code, $name, $category, undef, undef, undef, undef, undef, undef, undef, $u1name) = split ";";
         my $decimal = utf8::unicode_to_native(hex $code);
         $code = sprintf("%04X", $decimal) unless $::IS_ASCII;
 
@@ -1042,12 +1042,26 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
             /^(.*?);/;
             my $end_decimal = hex $1;
 
-            # Only the CJK (and the Hangul which are instead dealt with below)
-            # ones have names, and they all have the code point as part of the
-            # name, which we can construct
-            if ($name =~ /^<CJK/) {
+            # Only the ones whose category is a letter currently have names,
+            # and of those the Hangul Syllables are dealt with below
+            if ( $category eq 'Lo' && $name !~ /^Hangul/i) {
+
+                # The CJK ones all get translated to a particular form; we
+                # just capitalize any others in the hopes that Unicode will
+                # use the correct term in any future ones it might add.
+                if ($name =~ /^<CJK/) {
+                    $name = "CJK UNIFIED IDEOGRAPH";
+                }
+                else {
+                    $name =~ s/<//;
+                    $name =~ s/,.*//;
+                    $name = uc($name);
+                }
+
+                # They all have the code point as part of the name, which we
+                # can construct
                 for my $i ($decimal .. $end_decimal) {
-                    $names[$i] = sprintf "CJK UNIFIED IDEOGRAPH-%04X", $i;
+                    $names[$i] = sprintf "$name-%04X", $i;
                     my $block = $i >> $block_size_bits;
                     $algorithmic_names_count[$block]++;
                 }

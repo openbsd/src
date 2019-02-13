@@ -326,8 +326,10 @@ improve performance at the expense of the BYTLM UAF quota.
 
 =head1 PERL5LIB and PERLLIB
 
-The PERL5LIB and PERLLIB logical names work as documented in L<perl>,
-except that the element separator is '|' instead of ':'.  The
+The PERL5LIB and PERLLIB environment elements work as documented in L<perl>,
+except that the element separator is, by default, '|' instead of ':'.
+However, when running under a Unix shell as determined by the logical
+name C<GNV$UNIX_SHELL>, the separator will be ':' as on Unix systems. The
 directory specifications may use either VMS or Unix syntax.
 
 =head1 The Perl Forked Debugger

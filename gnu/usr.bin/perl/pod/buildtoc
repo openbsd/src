@@ -1,12 +1,12 @@
 #!/usr/bin/perl -w
 
 use strict;
-use vars qw($Quiet);
 use File::Spec;
 use FindBin;
 use Text::Wrap;
 use Getopt::Long;
 
+our $Quiet;
 no locale;
 
 # Assumption is that we're either already being run from the top level (*nix,
@@ -14,11 +14,11 @@ no locale;
 BEGIN {
   my $Top = File::Spec->catdir($FindBin::Bin, File::Spec->updir);
   chdir $Top or die "Can't chdir to $Top: $!";
-  require 'Porting/pod_lib.pl';
+  require './Porting/pod_lib.pl';
 }
 
 die "$0: Usage: $0 [--quiet]\n"
-    unless GetOptions (quiet => \$Quiet) && !@ARGV;
+    unless GetOptions ('q|quiet' => \$Quiet) && !@ARGV;
 
 my $state = get_pod_metadata(0, sub { warn @_ if @_ }, 'pod/perltoc.pod');
 
@@ -186,7 +186,7 @@ my ($inhead1, $inhead2, $initem);
 sub podset {
     my ($pod, $file) = @_;
 
-    open my $fh, '<', $file or my_die "Can't open file '$file' for $pod: $!";
+    open my $fh, '<:raw', $file or my_die "Can't open file '$file' for $pod: $!";
 
     local *_;
     my $found_pod;

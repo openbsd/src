@@ -1,9 +1,0 @@
-5.009004
-PerlIO_context_layers          # U
-gv_name_set                    # U
-hv_copy_hints_hv               # U
-my_vsnprintf                   # U
-newXS_flags                    # U
-regclass_swash                 # E (Perl_regclass_swash)
-sv_does                        # U
-sv_usepvn_flags                # U

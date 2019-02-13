@@ -2,13 +2,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
     require './test.pl';
+    set_up_inc( qw(. ../lib) );
 }
 
 use strict qw(refs subs);
 
-plan(235);
+plan(254);
 
 # Test this first before we extend the stack with other operations.
 # This caused an asan failure due to a bad write past the end of the stack.
@@ -124,6 +124,10 @@ is (join(':',@{$spring2{"foo"}}), "1:2:3:4");
     is ($called, 1);
 }
 is ref eval {\&{""}}, "CODE", 'reference to &{""} [perl #94476]';
+delete $My::{"Foo::"}; 
+is ref \&My::Foo::foo, "CODE",
+  'creating stub with \&deleted_stash::foo [perl #128532]';
+
 
 # Test references to return values of operators (TARGs/PADTMPs)
 {
@@ -814,6 +818,79 @@ for ("4eounthouonth") {
     my $aref = \123;
     is \$$aref, $aref,
 	'[perl #109746] referential identity of \literal under threads+mad'
+}
+
+# ref in boolean context
+{
+    my $false = 0;
+    my $true  = 1;
+    my $plain = [];
+    my $obj     = bless {}, "Foo";
+    my $objnull = bless [], "";
+    my $obj0    = bless [], "0";
+    my $obj00   = bless [], "00";
+    my $obj1    = bless [], "1";
+
+    is !ref $false,   1, '!ref $false';
+    is !ref $true,    1, '!ref $true';
+    is !ref $plain,   "", '!ref $plain';
+    is !ref $obj,     "", '!ref $obj';
+    is !ref $objnull, "", '!ref $objnull';
+    is !ref $obj0   , 1, '!ref $obj0';
+    is !ref $obj00,   "", '!ref $obj00';
+    is !ref $obj1,    "", '!ref $obj1';
+
+    is ref $obj || 0,               "Foo",   'ref $obj || 0';
+    is ref $obj // 0,               "Foo",   'ref $obj // 0';
+    is $true && ref $obj,           "Foo",   '$true && ref $obj';
+    is ref $obj ? "true" : "false", "true",  'ref $obj ? "true" : "false"';
+
+    my $r = 2;
+    if (ref $obj) { $r = 1 };
+    is $r, 1, 'if (ref $obj)';
+
+    $r = 2;
+    if (ref $obj0) { $r = 1 };
+    is $r, 2, 'if (ref $obj0)';
+
+    $r = 2;
+    if (ref $obj) { $r = 1 } else { $r = 0 };
+    is $r, 1, 'if (ref $obj) else';
+
+    $r = 2;
+    if (ref $obj0) { $r = 1 } else { $r = 0 };
+    is $r, 0, 'if (ref $obj0) else';
+}
+
+{
+    # RT #78288
+    # if an op returns &PL_sv_zero rather than newSViv(0), the
+    # value should be mutable. So ref (via the PADTMP flag) should
+    # make a mutable copy
+
+    my @a = ();
+    my $r = \ scalar grep $_ == 1, @a;
+    $$r += 10;
+    is $$r, 10, "RT #78288 - mutable PL_sv_zero copy";
+}
+
+
+# RT#130861: heap-use-after-free in pp_rv2sv, from asan fuzzing
+SKIP: {
+    skip_if_miniperl("no dynamic loading on miniperl, so can't load arybase", 1);
+    # this value is critical - its just enough so that the stack gets
+    # grown which loading/calling arybase
+    my $n = 125;
+
+    my $code = <<'EOF';
+$ary = '[';
+my @a = map $$ary, 1..NNN;
+print "@a\n";
+EOF
+    $code =~ s/NNN/$n/g;
+    my @exp = ("0") x $n;
+    fresh_perl_is($code, "@exp", { stderr => 1 },
+                    'rt#130861: heap uaf in pp_rv2sv');
 }
 
 # Bit of a hack to make test.pl happy. There are 3 more tests after it leaves.

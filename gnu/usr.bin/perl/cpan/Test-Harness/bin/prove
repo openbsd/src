@@ -72,6 +72,7 @@ Options that take arguments:
  -a,  --archive out.tgz Store the resulting TAP in an archive file.
  -j,  --jobs N          Run N test jobs in parallel (try 9.)
       --state=opts      Control prove's persistent state.
+      --statefile=file  Use `file` instead of `.prove` for state
       --rc=rcfile       Process options from rcfile
       --rules           Rules for parallel vs sequential processing.
 
@@ -109,12 +110,12 @@ matching the pattern C<t/*.t>.
 
 =head2 Colored Test Output
 
-Colored test output using L<TAP::Formatter::Color> is the default, but 
-if output is not to a terminal, color is disabled. You can override this by 
+Colored test output using L<TAP::Formatter::Color> is the default, but
+if output is not to a terminal, color is disabled. You can override this by
 adding the C<--color> switch.
 
-Color support requires L<Term::ANSIColor> on Unix-like platforms and
-L<Win32::Console> on windows. If the necessary module is not installed
+Color support requires L<Term::ANSIColor> and, on windows platforms, also
+L<Win32::Console::ANSI>. If the necessary module(s) are not installed
 colored output will not be available.
 
 =head2 Exit Code

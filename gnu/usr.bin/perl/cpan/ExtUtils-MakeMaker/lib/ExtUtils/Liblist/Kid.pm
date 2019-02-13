@@ -11,7 +11,8 @@ use 5.006;
 
 use strict;
 use warnings;
-our $VERSION = '7.10_02';
+our $VERSION = '7.34';
+$VERSION = eval $VERSION;
 
 use ExtUtils::MakeMaker::Config;
 use Cwd 'cwd';
@@ -55,6 +56,12 @@ sub _unix_os2_ext {
     my ( $fullname,   @fullname );
     my ( $pwd )   = cwd();    # from Cwd.pm
     my ( $found ) = 0;
+
+    if ( $^O eq 'darwin' or $^O eq 'next' )  {
+        # 'escape' Mach-O ld -framework and -F flags, so they aren't dropped later on
+        $potential_libs =~ s/(^|\s)(-(?:weak_|reexport_|lazy_)?framework)\s+(\S+)/$1-Wl,$2 -Wl,$3/g;
+        $potential_libs =~ s/(^|\s)(-F)\s*(\S+)/$1-Wl,$2 -Wl,$3/g;
+    }
 
     foreach my $thislib ( split ' ', $potential_libs ) {
         my ( $custom_name ) = '';
@@ -337,7 +344,7 @@ sub _win32_ext {
         $libs_seen{$fullname} = 1 if $path;    # why is this a special case?
     }
 
-    my @libs = keys %libs_seen;
+    my @libs = sort keys %libs_seen;
 
     return ( '', '', '', '', ( $give_libs ? \@libs : () ) ) unless @extralibs;
 

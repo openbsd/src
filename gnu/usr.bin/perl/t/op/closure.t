@@ -168,7 +168,7 @@ ok($foo[4]->()->(4));
 {
     use strict;
 
-    use vars qw!$test!;
+    our $test;
     my($debugging, %expected, $inner_type, $where_declared, $within);
     my($nc_attempt, $call_outer, $call_inner, $undef_outer);
     my($code, $inner_sub_test, $expected, $line, $errors, $output);
@@ -611,7 +611,7 @@ f16302();
 }
 
 {
-   # bugid #23265 - this used to coredump during destruction of PL_maincv
+   # bugid #23265 - this used to coredump during destruction of PL_main_cv
    # and its children
 
     fresh_perl_is(<< '__EOF__', "yxx\n", {stderr => 1}, 'RT #23265');

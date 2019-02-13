@@ -5,33 +5,10 @@ $_ = "\x80  \xff" ;
 chop ;
 EXPECT
 ########
-# NAME deprecation of logical bit operations with above ff code points
-$_ = "\xFF" & "\x{100}";        # Above ff second
-$_ = "\xFF" | "\x{101}";
-$_ = "\xFF" ^ "\x{102}";
-$_ = "\x{100}" & "\x{FF}";      # Above ff first
-$_ = "\x{101}" | "\x{FF}";
-$_ = "\x{102}" ^ "\x{FF}";
-$_ = "\x{100}" & "\x{103}";     # both above ff has just one message raised
-$_ = "\x{101}" | "\x{104}";
-$_ = "\x{102}" ^ "\x{105}";
+# NAME vec with above ff code points is deprecated
+my $foo = "\x{100}" . "\xff\xfe";
+eval { vec($foo, 1, 8) };
 no warnings 'deprecated';
-$_ = "\xFF" & "\x{100}";
-$_ = "\xFF" | "\x{101}";
-$_ = "\xFF" ^ "\x{101}";
-$_ = "\x{100}" & "\x{FF}";
-$_ = "\x{101}" | "\x{FF}";
-$_ = "\x{102}" ^ "\x{FF}";
-$_ = "\x{100}" & "\x{103}";
-$_ = "\x{101}" | "\x{104}";
-$_ = "\x{102}" ^ "\x{105}";
+eval { vec($foo, 1, 8) };
 EXPECT
-Use of strings with code points over 0xFF as arguments to bitwise and (&) operator is deprecated at - line 1.
-Use of strings with code points over 0xFF as arguments to bitwise or (|) operator is deprecated at - line 2.
-Use of strings with code points over 0xFF as arguments to bitwise xor (^) operator is deprecated at - line 3.
-Use of strings with code points over 0xFF as arguments to bitwise and (&) operator is deprecated at - line 4.
-Use of strings with code points over 0xFF as arguments to bitwise or (|) operator is deprecated at - line 5.
-Use of strings with code points over 0xFF as arguments to bitwise xor (^) operator is deprecated at - line 6.
-Use of strings with code points over 0xFF as arguments to bitwise and (&) operator is deprecated at - line 7.
-Use of strings with code points over 0xFF as arguments to bitwise or (|) operator is deprecated at - line 8.
-Use of strings with code points over 0xFF as arguments to bitwise xor (^) operator is deprecated at - line 9.
+Use of strings with code points over 0xFF as arguments to vec is deprecated. This will be a fatal error in Perl 5.32 at - line 2.

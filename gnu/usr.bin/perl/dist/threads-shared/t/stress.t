@@ -83,7 +83,7 @@ use threads::shared;
         print "# Looping for $busycount iterations should take about 0.025s\n";
     }
 
-    my $TIMEOUT = 600;
+    my $TIMEOUT = 60;
 
     my $mutex = 1;
     share($mutex);

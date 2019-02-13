@@ -7,7 +7,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 use warnings;
-plan(tests => 195);
+plan(tests => 199);
 
 # these shouldn't hang
 {
@@ -408,7 +408,7 @@ cmp_ok($x,'eq','123',q(optimized-away comparison block doesn't take any other ar
 {
     sub routine { "one", "two" };
     @a = sort(routine(1));
-    cmp_ok("@a",'eq',"one two",'bug id 19991001.003');
+    cmp_ok("@a",'eq',"one two",'bug id 19991001.003 (#1549)');
 }
 
 
@@ -417,21 +417,21 @@ cmp_ok($x,'eq','123',q(optimized-away comparison block doesn't take any other ar
     my ($r1,$r2,@a);
     our @g;
     @g = (3,2,1); $r1 = \$g[2]; @g = sort @g; $r2 = \$g[0];
-    is "$r1-@g", "$r2-1 2 3", "inplace sort of global";
+    is "$$r1-$$r2-@g", "1-1-1 2 3", "inplace sort of global";
 
     @a = qw(b a c); $r1 = \$a[1]; @a = sort @a; $r2 = \$a[0];
-    is "$r1-@a", "$r2-a b c", "inplace sort of lexical";
+    is "$$r1-$$r2-@a", "a-a-a b c", "inplace sort of lexical";
 
     @g = (2,3,1); $r1 = \$g[1]; @g = sort { $b <=> $a } @g; $r2 = \$g[0];
-    is "$r1-@g", "$r2-3 2 1", "inplace reversed sort of global";
+    is "$$r1-$$r2-@g", "3-3-3 2 1", "inplace reversed sort of global";
 
     @g = (2,3,1);
     $r1 = \$g[1]; @g = sort { $a<$b?1:$a>$b?-1:0 } @g; $r2 = \$g[0];
-    is "$r1-@g", "$r2-3 2 1", "inplace custom sort of global";
+    is "$$r1-$$r2-@g", "3-3-3 2 1", "inplace custom sort of global";
 
     sub mysort { $b cmp $a };
     @a = qw(b c a); $r1 = \$a[1]; @a = sort mysort @a; $r2 = \$a[0];
-    is "$r1-@a", "$r2-c b a", "inplace sort with function of lexical";
+    is "$$r1-$$r2-@a", "c-c-c b a", "inplace sort with function of lexical";
 
     use Tie::Array;
     my @t;
@@ -474,6 +474,25 @@ cmp_ok($x,'eq','123',q(optimized-away comparison block doesn't take any other ar
     no warnings 'void';
     my @m; push @m, 0 for 1 .. 1024; $#m; @m = sort @m;
     ::pass("in-place sorting segfault");
+
+    # RT #39358 - array should be preserved during sort
+
+    {
+        my @aa = qw(b c a);
+        my @copy;
+        @aa = sort { @copy = @aa; $a cmp $b } @aa;
+        is "@aa",   "a b c", "RT 39358 - aa";
+        is "@copy", "b c a", "RT 39358 - copy";
+    }
+
+    # RT #128340: in-place sort incorrectly preserves element lvalue identity
+
+    @a = (5, 4, 3);
+    my $r = \$a[2];
+    @a = sort { $a <=> $b } @a;
+    $$r = "z";
+    is ("@a", "3 4 5", "RT #128340");
+
 }
 
 # Test optimisations of reversed sorts. As we now guarantee stability by
@@ -846,16 +865,6 @@ cmp_ok($answer,'eq','good','sort subr called from other package');
 }
 
 
-# Bug 7567 - an array shouldn't be modifiable while it's being
-# sorted in-place.
-{
-    eval { @a=(1..8); @a = sort { @a = (0) } @a; };
-
-    $fail_msg = q(Modification of a read-only value attempted);
-    cmp_ok(substr($@,0,length($fail_msg)),'eq',$fail_msg,'bug 7567');
-    eval { @a=1..3 };
-    is $@, "", 'abrupt scope exit turns off readonliness';
-}
 
 # I commented out this TODO test because messing with FREEd scalars on the
 # stack can have all sorts of strange side-effects, not made safe by eval
@@ -1137,4 +1146,40 @@ pass "no crash when sort block deletes *a and *b";
     sub a { 0 };
     @a = sort { *a = sub { 1 }; $a <=> $b } 0 .. 1;
     ok(a(), "*a wasn't localized inadvertantly");
+}
+
+SKIP:
+{
+    eval { require Config; 1 }
+      or skip "Cannot load Config", 1;
+    $Config::Config{ivsize} == 8
+      or skip "this test can only fail with 64-bit integers", 1;
+    # sort's built-in numeric comparison wasn't careful enough in a world
+    # of integers with more significant digits than NVs
+    my @in = ( "0", "20000000000000001", "20000000000000000" );
+    my @out = sort { $a <=> $b } @in;
+    is($out[1], "20000000000000000", "check sort order");
+}
+
+# [perl #92264] refcounting of GvSV slot of *a and *b
+{
+    my $act;
+    package ReportDestruction {
+	sub new { bless({ p => $_[1] }, $_[0]) }
+	sub DESTROY { $act .= $_[0]->{p}; }
+    }
+    $act = "";
+    my $filla = \(ReportDestruction->new("[filla]"));
+    () = sort { my $r = $a cmp $b; $act .= "0"; *a = \$$filla; $act .= "1"; $r }
+	    ReportDestruction->new("[sorta]"), "foo";
+    $act .= "2";
+    $filla = undef;
+    is $act, "01[sorta]2[filla]";
+    $act = "";
+    my $fillb = \(ReportDestruction->new("[fillb]"));
+    () = sort { my $r = $a cmp $b; $act .= "0"; *b = \$$fillb; $act .= "1"; $r }
+	    "foo", ReportDestruction->new("[sortb]");
+    $act .= "2";
+    $fillb = undef;
+    is $act, "01[sortb]2[fillb]";
 }

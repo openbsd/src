@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..27\n"; }
+BEGIN { $| = 1; print "1..28\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -37,7 +37,7 @@ my $objEsTrad = Unicode::Collate::Locale->
     new(locale => 'ES-trad', normalization => undef);
 
 ok($objEsTrad->getlocale, 'es__traditional');
-ok($objEsTrad->locale_version, 1.14);
+ok($objEsTrad->locale_version, 1.25);
 
 $objEsTrad->change(level => 1);
 
@@ -48,9 +48,10 @@ ok($objEsTrad->lt("l", "ll"));
 ok($objEsTrad->lt("lz","ll"));
 ok($objEsTrad->gt("m", "ll"));
 ok($objEsTrad->lt("n", "n\x{303}"));
+ok($objEsTrad->lt("nz","n\x{303}"));
 ok($objEsTrad->gt("o", "n\x{303}"));
 
-# 11
+# 12
 
 ok($objEsTrad->eq("a\x{300}a", "aa\x{300}"));
 
@@ -60,7 +61,7 @@ ok($objEsTrad->gt("a\x{300}a", "aa\x{300}"));
 ok($objEsTrad->lt("Ca\x{300}ca\x{302}", "ca\x{302}ca\x{300}"));
 ok($objEsTrad->lt("ca\x{300}ca\x{302}", "Ca\x{302}ca\x{300}"));
 
-# 15
+# 16
 
 ok($objEsTrad->eq("ch", "Ch"));
 ok($objEsTrad->eq("Ch", "CH"));
@@ -68,7 +69,7 @@ ok($objEsTrad->eq("ll", "Ll"));
 ok($objEsTrad->eq("Ll", "LL"));
 ok($objEsTrad->eq("n\x{303}", "N\x{303}"));
 
-# 20
+# 21
 
 $objEsTrad->change(level => 3);
 
@@ -80,4 +81,4 @@ ok($objEsTrad->lt("n\x{303}", "N\x{303}"));
 ok($objEsTrad->eq("n\x{303}", pack('U', 0xF1)));
 ok($objEsTrad->eq("N\x{303}", pack('U', 0xD1)));
 
-# 27
+# 28

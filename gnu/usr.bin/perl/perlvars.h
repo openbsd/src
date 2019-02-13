@@ -99,8 +99,16 @@ PERLVARI(G, mmap_page_size, IV, 0)
 
 #if defined(USE_ITHREADS)
 PERLVAR(G, hints_mutex, perl_mutex)    /* Mutex for refcounted he refcounting */
+#  if ! defined(USE_THREAD_SAFE_LOCALE) || defined(TS_W32_BROKEN_LOCALECONV)
 PERLVAR(G, locale_mutex, perl_mutex)   /* Mutex for setlocale() changing */
+#  endif
+#  ifndef USE_THREAD_SAFE_LOCALE
+PERLVAR(G, lc_numeric_mutex, perl_mutex)   /* Mutex for switching LC_NUMERIC */
+#  endif
+#endif
 
+#ifdef USE_POSIX_2008_LOCALE
+PERLVAR(G, C_locale_obj, locale_t)
 #endif
 
 #ifdef DEBUGGING
@@ -219,9 +227,15 @@ at a chain of handler functions, all of which have an opportunity to
 handle keywords, and only the last function in the chain (built into
 the Perl core) will normally return C<KEYWORD_PLUGIN_DECLINE>.
 
+For thread safety, modules should not set this variable directly.
+Instead, use the function L</wrap_keyword_plugin>.
+
 =cut
 */
 
+#if defined(USE_ITHREADS)
+PERLVAR(G, keyword_plugin_mutex, perl_mutex)   /* Mutex for PL_keyword_plugin */
+#endif
 PERLVARI(G, keyword_plugin, Perl_keyword_plugin_t, Perl_keyword_plugin_standard)
 
 PERLVARI(G, op_sequence, HV *, NULL)	/* dump.c */
@@ -244,3 +258,51 @@ PERLVAR(G, malloc_mutex, perl_mutex)	/* Mutex for malloc */
 
 PERLVARI(G, hash_seed_set, bool, FALSE)	/* perl.c */
 PERLVARA(G, hash_seed, PERL_HASH_SEED_BYTES, unsigned char) /* perl.c and hv.h */
+#if defined(PERL_HASH_STATE_BYTES)
+PERLVARA(G, hash_state, PERL_HASH_STATE_BYTES, unsigned char) /* perl.c and hv.h */
+#endif
+#if defined(PERL_USE_SINGLE_CHAR_HASH_CACHE)
+PERLVARA(G, hash_chars, (1+256) * sizeof(U32), unsigned char) /* perl.c and hv.h */
+#endif
+
+/* The path separator can vary depending on whether we're running under DCL or
+ * a Unix shell.
+ */
+#ifdef __VMS
+PERLVAR(G, perllib_sep, char)
+#endif
+
+PERLVAR(G, AboveLatin1,	SV *)
+PERLVAR(G, Assigned_invlist, SV *)
+PERLVAR(G, GCB_invlist, SV *)
+PERLVAR(G, HasMultiCharFold,   SV *)
+PERLVAR(G, Latin1,	SV *)
+PERLVAR(G, LB_invlist, SV *)
+PERLVAR(G, NonL1NonFinalFold,   SV *)
+PERLVAR(G, SB_invlist, SV *)
+PERLVAR(G, SCX_invlist, SV *)
+PERLVAR(G, UpperLatin1,	SV *)   /* Code points 128 - 255 */
+
+/* List of characters that participate in folds (except marks, etc in
+ * multi-char folds) */
+PERLVARI(G, utf8_foldable, SV *, NULL)
+
+PERLVAR(G, utf8_idcont,	SV *)
+PERLVAR(G, utf8_idstart, SV *)
+PERLVAR(G, utf8_perl_idcont, SV *)
+PERLVAR(G, utf8_perl_idstart, SV *)
+PERLVAR(G, utf8_xidcont, SV *)
+PERLVAR(G, utf8_xidstart, SV *)
+PERLVAR(G, WB_invlist, SV *)
+PERLVARA(G, XPosix_ptrs, POSIX_CC_COUNT, SV *)
+PERLVAR(G, utf8_toupper, SV *)
+PERLVAR(G, utf8_totitle, SV *)
+PERLVAR(G, utf8_tolower, SV *)
+PERLVAR(G, utf8_tofold,	SV *)
+PERLVAR(G, utf8_tosimplefold,	SV *)
+PERLVAR(G, utf8_charname_begin, SV *)
+PERLVAR(G, utf8_charname_continue, SV *)
+
+/* Everything that folds to a given character, for case insensitivity regex
+ * matching */
+PERLVAR(G, utf8_foldclosures, SV *)

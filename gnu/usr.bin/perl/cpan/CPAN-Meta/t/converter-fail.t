@@ -7,9 +7,12 @@ use CPAN::Meta::Validator;
 use CPAN::Meta::Converter;
 use File::Spec;
 use IO::Dir;
-use Parse::CPAN::Meta 1.4400;
+use Parse::CPAN::Meta;
 
-delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
+delete $ENV{PERL_YAML_BACKEND};
+delete $ENV{PERL_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_DECODER};
 
 my $data_dir = IO::Dir->new( 't/data-fail' );
 my @files = sort grep { /^\w/ } $data_dir->read;

@@ -23,20 +23,6 @@ not, but if your patch is incorporated, then we'll add your name to the
 F<AUTHORS> file, which ships in the official distribution. How many other
 programming languages offer you 1 line of immortality?
 
-=head1 Tasks that need only a little Perl knowledge
-
-=head2 Fix POD errors in Perl documentation
-
-Perl documentation is furnished in POD (Plain Old Documentation); see
-L<perlpod>.  We also have a utility that checks for various errors in
-this documentation: F<t/porting/podcheck.t>.  Unfortunately many files
-have errors in them, and there is a database of known problems, kept in
-F<t/porting/known_pod_issues.dat>.  The most prevalent errors are lines
-too wide to fit in a standard terminal window, but there are more
-serious problems as well; and there are items listed there that are not
-in fact errors.  The task would be to go through and clean up the
-documentation.  This would be a good way to learn more about Perl.
-
 =head1 Tasks that only need Perl knowledge
 
 =head2 Classify bug tickets by type
@@ -200,6 +186,38 @@ of t/porting/diag.t.
 Sometimes bugs get fixed as a side effect of something else, and
 the bug remains open because no one realizes that it has been fixed.
 Ideally, every open bug should have a TODO test in the core test suite.
+
+=head2 deparse warnings nicely
+
+Currently Deparse punts on deparsing the bitmask for warnings, which it
+dumps uglily as-is. Try running this:
+
+    $ ./perl -Ilib -MO=Deparse -e 'use warnings "pipe"; die'
+
+Deparse.pm could use the package variables in warnings.pm that warnings.pm
+itself uses to convert the list passed to it into a bitfield. Deparse just
+needs to reverse that.
+
+=head2 test and fix Deparse with perl's test suite
+
+If you run perl's tests with the TEST_ARGS environment variable set to
+C<-deparse> (e.g., run C<TEST=-deparse make test>), each test file will be
+deparsed and the deparsed output will be run. Currently there are many 
+failures, which ought to be fixed. There is in F<Porting/deparse-skips.txt>
+a list of tests known to fail, but it is out of date. Updating it would
+also help.
+
+This is an incremental task. Every small bit helps. It is also a task that
+may never end. As new tests are added, they tickle corner cases that
+B::Deparse cannot yet handle correctly.
+
+This task I<may> need a bit of perl guts knowledge. But what changes need
+to be made is usually easy to see by dumping op trees with B::Concise:
+
+    $ ./perl -Ilib -MO=Concise -e 'foo(); print @_; die $$_'
+
+and adjusting B::Deparse to handle whatever you see B::Concise produce.
+This is also a good way to I<learn> how perl's op trees work.
 
 =head1 Tasks that need a little sysadmin-type knowledge
 
@@ -467,7 +485,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.24.3.
+options would be nice for perl 5.26.0.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -543,19 +561,6 @@ the correct answer.
 been written so that it reflects the state of the read-only attribute, even
 for directories (whatever CRT is being used), for symmetry with chmod().)
 
-=head2 strcat(), strcpy(), strncat(), strncpy(), sprintf(), vsprintf()
-
-Maybe create a utility that checks after each libperl.a creation that
-none of the above (nor sprintf(), vsprintf(), or *SHUDDER* gets())
-ever creep back to libperl.a.
-
- nm libperl.a | ./miniperl -alne '$o = $F[0] if /:$/;
-   print "$o $F[1]" if $F[0] eq "U" && $F[1]
-                              =~ /^(?:strn?c(?:at|py)|v?sprintf|gets)$/'
-
-Note, of course, that this will only tell whether B<your> platform
-is using those naughty interfaces.
-
 =head2 Arenas for GPs? For MAGIC?
 
 C<struct gp> and C<struct magic> are both currently allocated by C<malloc>.
@@ -621,6 +626,11 @@ straightforward for the type of XSUB that would benefit the most. Longer
 term, once the run-time implementation is proven, it should be possible to
 progressively update ExtUtils::ParseXS to generate OP implementations for
 some XSUBs.
+
+=head2 Document how XS modules can install lexical subs
+
+There is an example in XS::APItest (look for C<lexical_import> in
+F<ext/XS-APItest/APItest.xs>). The documentation could be based on it.
 
 =head2 Remove the use of SVs as temporaries in dump.c
 
@@ -788,7 +798,9 @@ allow taint to "leak" everywhere within an expression.
 
 system() accepts a LIST syntax (and a PROGRAM LIST syntax) to avoid
 running a shell. readpipe() (the function behind qx//) could be similarly
-extended.
+extended. Note that changing readpipe() itself may not be the solution, as
+it currently has unary precedence, and allowing a list would change the
+precedence.
 
 =head2 Audit the code for destruction ordering assumptions
 
@@ -856,6 +868,35 @@ also the warning messages (see L<warnings>, F<regen/warnings.pl>).
 These tasks would need C knowledge, and knowledge of how the interpreter works,
 or a willingness to learn.
 
+=head2 fix refaliasing with nested and recursive subroutines
+
+Currently aliasing lexical variables via reference only applies to the
+current subroutine, and does not propagate to inner closures, nor does
+aliasing of outer variables within closures propagate to the outer
+subroutine. This is because each subroutine has its own lexical pad and the
+aliasing works by changing which SV the pad points to.
+
+One possible way to fix this would be to create new ops for accessing
+variables that are closed over. So C<my $x; sub {$x}> would use a new op
+type, say C<padoutsv>, instead of the C<padsv> currently used in the
+sub. That new op would possibly check a flag or some such and see if it
+needs to fetch the variable from an outer pad. If we follow this approach,
+it should be possible at compile time to detect cases where the more
+complex C<padoutsv> op is unnecessary and revert back to the simpler,
+faster C<padsv>. There would need to be corresponding ops for arrays,
+hashes, and subs, too.
+
+There is also a related issue with recursion and C<state> variables. A
+subroutine actually has a list of lexical pads, each one used at a
+different recursion level. If a C<state> variable is aliased to another
+variable after a recursive call to the same subroutine, that higher call
+depth will not see the effect of aliasing, because the second pad will have
+been created already. Similarly, aliasing a state variable within a
+recursive call will not affect outer calls, even though all call depths are
+supposed to share the same C<state> variables.
+
+Both of these bugs affect C<foreach> aliasing, too.
+
 =head2 forbid labels with keyword names
 
 Currently C<goto keyword> "computes" the label value:
@@ -870,7 +911,7 @@ bareword expressions after a "goto" as a label and never as a keyword.
 =head2 truncate() prototype
 
 The prototype of truncate() is currently C<$$>. It should probably
-be C<*$> instead. (This is changed in F<opcode.pl>)
+be C<*$> instead. (This is changed in F<regen/opcodes>.)
 
 =head2 error reporting of [$a ; $b]
 
@@ -962,11 +1003,6 @@ program if you pass the process ID. It would be good to do this with the Perl
 debugger on a running Perl program, although I'm not sure how it would be
 done." ssh and screen do this with named pipes in /tmp. Maybe we can too.
 
-=head2 LVALUE functions for lists
-
-The old perltodo notes that lvalue functions don't work for list or hash
-slices. This would be good to fix.
-
 =head2 regexp optimizer optional
 
 The regexp optimizer is not optional. It should be configurable to be optional
@@ -998,10 +1034,6 @@ place to pass in the number of return values wanted. It would be useful to
 have a general mechanism for this, backwards compatible and little speed hit.
 This would allow proposals such as short circuiting sort to be implemented
 as a module on CPAN.
-
-=head2 lexical aliases
-
-Allow lexical aliases (maybe via the syntax C<my \$alias = \$foo>).
 
 =head2 Self-ties
 
@@ -1050,6 +1082,9 @@ implement per-thread working directories: Win32 already does this.
 See also L</"Extend PerlIO and PerlIO::Scalar">.
 
 =head2 repack the optree
+
+B<Note:> This entry was written in reference to the I<old> slab allocator,
+removed in commit 7aef8e5bd14.
 
 Repacking the optree after execution order is determined could allow
 removal of NULL ops, and optimal ordering of OPs with respect to cache-line
@@ -1170,7 +1205,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.24.3"
+of 5.26.0"
 
 =head2 make ithreads more robust
 

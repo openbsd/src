@@ -6,8 +6,6 @@ use Getopt::Long;
 
 use JSON::PP ();
 
-my $VERSION = '1.00';
-
 # imported from JSON-XS/bin/json_xs
 
 my %allow_json_opt = map { $_ => 1 } qw(
@@ -22,18 +20,18 @@ GetOptions(
    't=s' => \( my $opt_to = 'json' ),
    'json_opt=s' => \( my $json_opt = 'pretty' ),
    'V'   => \( my $version ),
-) or die "Usage: $0 [-v] -f from_format [-t to_format]\n";
+) or die "Usage: $0 [-V] [-f from_format] [-t to_format] [-json_opt options_to_json1[,options_to_json2[,...]]]\n";
 
 
 if ( $version ) {
-    print "$VERSION\n";
+    print "$JSON::PP::VERSION\n";
     exit;
 }
 
 
 $json_opt = '' if $json_opt eq '-';
 
-my @json_opt = grep { $allow_json_opt{ $_ } or die "'$_' is invalid json opttion" } split/,/, $json_opt;
+my @json_opt = grep { $allow_json_opt{ $_ } or die "'$_' is not a valid json option" } split/,/, $json_opt;
 
 my %F = (
    'json' => sub {
@@ -52,12 +50,17 @@ my %F = (
 my %T = (
    'null' => sub { "" },
    'json' => sub {
-      my $json = JSON::PP->new;
+      my $json = JSON::PP->new->utf8;
       $json->$_() for @json_opt;
       $json->encode( $_ );
    },
    'dumper' => sub {
       require Data::Dumper;
+      local $Data::Dumper::Terse     = 1;
+      local $Data::Dumper::Indent    = 1;
+      local $Data::Dumper::Useqq     = 1;
+      local $Data::Dumper::Quotekeys = 0;
+      local $Data::Dumper::Sortkeys  = 1;
       Data::Dumper::Dumper($_)
    },
 );
@@ -91,7 +94,7 @@ json_pp - JSON::PP command utility
 
 =head1 SYNOPSIS
 
-    json_pp [-v] [-f from_format] [-t to_format] [-json_opt options_to_json]
+    json_pp [-v] [-f from_format] [-t to_format] [-json_opt options_to_json1[,options_to_json2[,...]]]
 
 =head1 DESCRIPTION
 
@@ -150,6 +153,12 @@ Acceptable options are:
 
     ascii latin1 utf8 pretty indent space_before space_after relaxed canonical allow_nonref
     allow_singlequote allow_barekey allow_bignum loose escape_slash
+
+Multiple options must be separated by commas:
+
+    Right: -json_opt pretty,canonical
+
+    Wrong: -json_opt pretty -json_opt canonical
 
 =head2 -v
 

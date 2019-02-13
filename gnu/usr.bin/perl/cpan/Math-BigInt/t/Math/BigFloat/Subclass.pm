@@ -14,9 +14,9 @@ use Math::BigFloat 1.38;
 
 our ($accuracy, $precision, $round_mode, $div_scale);
 
-our @ISA = qw(Exporter Math::BigFloat);
+our @ISA = qw(Math::BigFloat Exporter);
 
-our $VERSION = "0.06";
+our $VERSION = "0.07";
 
 use overload;                   # inherit overload from BigInt
 

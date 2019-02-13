@@ -12,7 +12,7 @@ CPAN::HandleConfig - internal configuration handling for CPAN.pm
 
 =cut 
 
-$VERSION = "5.5006"; # see also CPAN::Config::VERSION at end of file
+$VERSION = "5.5008"; # see also CPAN::Config::VERSION at end of file
 
 %can = (
         commit   => "Commit changes to disk",
@@ -42,6 +42,7 @@ $VERSION = "5.5006"; # see also CPAN::Config::VERSION at end of file
      "bzip2",
      "cache_metadata",
      "check_sigs",
+     "cleanup_after_install",
      "colorize_debug",
      "colorize_output",
      "colorize_print",
@@ -250,7 +251,7 @@ sub prettyprint {
                     sprintf "\t%-18s => %s\n",
                                "[$_]",
                                         defined $v->{$_} ? "[$v->{$_}]" : "undef"
-                } keys %$v;
+                } sort keys %$v;
         }
         $CPAN::Frontend->myprint(
                                  join(
@@ -384,9 +385,9 @@ sub neatvalue {
         return join "", @m;
     }
     return "$v" unless $t eq 'HASH';
-    my(@m, $key, $val);
-    while (($key,$val) = each %$v) {
-        last unless defined $key; # cautious programming in case (undef,undef) is true
+    my @m;
+    foreach my $key (sort keys %$v) {
+        my $val = $v->{$key};
         push(@m,"q[$key]=>".$self->neatvalue($val)) ;
     }
     return "{ ".join(', ',@m)." }";
@@ -769,7 +770,7 @@ sub prefs_lookup {
 
     use strict;
     use vars qw($AUTOLOAD $VERSION);
-    $VERSION = "5.5006";
+    $VERSION = "5.5008";
 
     # formerly CPAN::HandleConfig was known as CPAN::Config
     sub AUTOLOAD { ## no critic

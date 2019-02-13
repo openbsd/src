@@ -7,7 +7,7 @@ BEGIN {
 
 use warnings;
 use strict;
-use vars qw($foo $bar $baz $ballast);
+our ($foo, $bar, $baz, $ballast);
 use Test::More tests => 213;
 
 use Benchmark qw(:all);

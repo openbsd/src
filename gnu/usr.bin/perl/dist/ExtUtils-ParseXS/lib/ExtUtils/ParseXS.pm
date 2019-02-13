@@ -11,12 +11,12 @@ use Symbol;
 
 our $VERSION;
 BEGIN {
-  $VERSION = '3.31';
+  $VERSION = '3.39';
+  require ExtUtils::ParseXS::Constants; ExtUtils::ParseXS::Constants->VERSION($VERSION);
+  require ExtUtils::ParseXS::CountLines; ExtUtils::ParseXS::CountLines->VERSION($VERSION);
+  require ExtUtils::ParseXS::Utilities; ExtUtils::ParseXS::Utilities->VERSION($VERSION);
+  require ExtUtils::ParseXS::Eval; ExtUtils::ParseXS::Eval->VERSION($VERSION);
 }
-use ExtUtils::ParseXS::Constants $VERSION;
-use ExtUtils::ParseXS::CountLines $VERSION;
-use ExtUtils::ParseXS::Utilities $VERSION;
-use ExtUtils::ParseXS::Eval $VERSION;
 $VERSION = eval $VERSION if $VERSION =~ /_/;
 
 use ExtUtils::ParseXS::Utilities qw(
@@ -519,9 +519,10 @@ EOF
 EOF
     }
     else {
-    # cv likely to be unused
+    # cv and items likely to be unused
     print Q(<<"EOF");
 #    PERL_UNUSED_VAR(cv); /* -W */
+#    PERL_UNUSED_VAR(items); /* -W */
 EOF
     }
 
@@ -686,7 +687,7 @@ EOF
         var         => $_,
         do_setmagic => $self->{DoSetMagic},
         do_push     => undef,
-      } ) for grep $self->{in_out}->{$_} =~ /OUT$/, keys %{ $self->{in_out} };
+      } ) for grep $self->{in_out}->{$_} =~ /OUT$/, sort keys %{ $self->{in_out} };
 
       my $prepush_done;
       # all OUTPUT done, so now push the return value on the stack
@@ -871,6 +872,7 @@ EOF
 #XS_EUPXS(XS_$self->{Packid}_nil)
 #{
 #   dXSARGS;
+#   PERL_UNUSED_VAR(items);
 #   XSRETURN_EMPTY;
 #}
 #

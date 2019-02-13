@@ -17,6 +17,279 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.29.4 - The Mountain Goats, "Oceanographer's Choice"
+
+L<Announced on 2018-10-20 by Aaron Crane|https://www.nntp.perl.org/group/perl.perl5.porters/2018/10/msg252575.html>
+
+  Well
+  Guy in a skeleton costume
+  Comes up to the guy in the Superman suit
+  Runs through him with a broadsword
+  I flipped the television off
+  Bring all the bright lights up
+  Turn the radio up loud
+  I don't know why I'm so persuaded
+  That if I think things through
+  Long enough and hard enough
+  I'll somehow get to you
+  But then you came in and we locked eyes
+  You kicked the ashtray over as we came toward each other
+  Stubbed my cigarette out against the west wall
+  Quickly lit another
+  Look at that
+  Would you look at that?
+  We're throwing off sparks
+  What will I do when I don't have you
+  To hold onto in the dark?
+
+=head2 v5.29.3 - Mac Miller, "Senior Skip Day"
+
+L<Announced on 2018-09-20 by John 'genehack' Anderson|https://www.nntp.perl.org/group/perl.perl5.porters/2018/09/msg252255.html>
+
+  Enjoy the best things in your life
+  ’Cause you ain’t gonna get to live it twice
+  They say you waste time asleep
+  But I’m just tryin’ to dream
+
+=head2 v5.29.2 - Rick Riordan, "The Lightning Thief"
+
+L<Announced on 2018-08-20 by Chris 'BinGOs' Williams|https://www.nntp.perl.org/group/perl.perl5.porters/2018/08/msg251918.html>
+
+  Look, I didn't want to be a half-blood.
+
+  If you're reading this because you think you might be one,
+  my advice is: close this book right now. Believe whatever
+  lie your mom or dad told you about your birth, and try
+  to lead a normal life.
+
+  Being a half-blood is dangerous. It's scary. Most of the time,
+  it gets you killed in painful, nasty ways.
+
+  If you're a normal kid, reading this because you think it's
+  fiction, great. Read on. I envy you for being able to believe
+  that none of this ever happened.
+
+  But if you recognize yourself in these pages - if you feel
+  something stirring inside - stop reading immediately.
+  You might be one of us. And once you know that, it's only a
+  matter of time before they sense it too, and they'll come for you.
+
+=head2 v5.29.1 - Richard Curtis & Ben Elton, "Blackadder, Series 3, Episode 2: Ink and Incapability"
+
+L<Announced on 2018-07-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2018/07/msg251605.html>
+
+  Dr. Samuel Johnson: Here it is, sir: the very cornerstone of English
+  scholarship.  This book, sir, contains every word in our beloved
+  language.
+
+  Prince Regent George: Hmm.
+
+  Edmund Blackadder: Every single one, sir?
+
+  Johnson: (confidently) Every single word, sir!
+
+  Blackadder: (to Prince) Oh, well, in that case, sir, I hope you will
+  not object if I also offer the Doctor my most enthusiastic
+  contrafribularities.
+
+  Johnson: What?
+
+  Blackadder: 'Contrafribularities,' sir? It is a common word down our
+  way.
+
+  Johnson: Damn! (writes in the book)
+
+  Blackadder: Oh, I'm sorry, sir.  I'm anaspeptic, phrasmotic, even
+  compunctious to have caused you such pericombobulation.
+
+  Johnson: What? What? WHAT?
+
+=head2 v5.29.0 - Erle Stanley Gardner, The Case of the Grinning Gorilla
+
+L<Announced on 2018-06-26 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251297>
+
+  Courage is the only antidote for danger.
+
+=head2 v5.28.0 - Martin Luther King, Jr., 1967
+
+L<Announced on 2018-06-22 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251240>
+
+  When we look at modern man we have to face the fact that modern man
+  suffers from a kind of poverty of the spirit which stands in glaring
+  contrast with his scientific and technological abundance. We've learned
+  to fly the air as birds, we've learned to swim the seas as fish, yet we
+  haven't learned to walk the earth as brothers and sisters.
+
+=head2 v5.28.0-RC4 - Neil Gaiman, The Graveyard Book
+
+L<Announced on 2018-06-19 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251212>
+
+  You're alive, Bod. That means you have infinite potential. You can do
+  anything, make anything, dream anything. If you can change the world,
+  the world will change. Potential. Once you're dead, it's gone. Over.
+  You've made what you've made, dreamed your dream, written your name.
+  You may be buried here, you may even walk. But that potential is
+  finished.
+
+=head2 v5.28.0-RC3 - Anthony Horowitz, Magpie Murders
+
+L<Announced on 2018-06-18 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251204>
+
+  These had been his plans. But if there was one thing that life had
+  taught him, it was the futility of making plans. Life had its own
+  agenda.
+
+=head2 v5.28.0-RC2 - Oliver Sacks, The Man Who Mistook His Wife For A Hat: And Other Clinical Tales
+
+L<Announced on 2018-06-06 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251122>
+
+  Had she not been of exceptional intelligence and literacy, with an
+  imagination filled and sustained, so to speak, by the images of
+  others, images conveyed by language, by the word, she might have
+  remained almost as helpless as a baby.
+
+=head2 v5.28.0-RC1 - Anu Garg, A Word A Day
+
+L<Announced on 2018-05-21 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2018/05/msg250999.html>
+
+  One doesn't have to know the unit of pain (dol) to realize that the
+  unit of joy is not the dollar, or any other currency for that matter.
+
+=head2 v5.27.11 - Tana French, In the Woods
+
+L<Announced on 2018-04-20 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2018/04/msg250571.html>
+
+  And then, too, I had learned early to assume something dark and
+  lethal hidden at the heart of anything I loved. When I couldn't find
+  it, I responded, bewildered and wary, in the only way I knew how: by
+  planting it there myself.
+
+=head2 v5.27.10 - Robert A. Heinlein, Time Enough for Love, p. 248
+
+L<Announced on 2018-03-20 by Todd Rinaldo|https://www.nntp.perl.org/group/perl.perl5.porters/2018/03/msg250042.html>
+
+  A human being should be able to change a diaper, plan an invasion, butcher
+  a hog, conn a ship, design a building, write a sonnet, balance accounts,
+  build a wall, set a bone, comfort the dying, take orders, give orders,
+  cooperate, act alone, solve equations, analyze a new problem, pitch manure,
+  program a computer, cook a tasty meal, fight efficiently, die gallantly.
+  Specialization is for insects.
+
+=head2 v5.27.9 - Agatha Christie, "The Mysterious Affair at Styles"
+
+L<Announced on 2018-02-20 by Renee Bäcker|https://www.nntp.perl.org/group/perl.perl5.porters/2018/02/msg249549.html>
+
+  Poirot was an extraordinary looking little man. He was hardly more
+  than five feet, four inches, but carried himself with great dignity.
+  His head was exactly the shape of an egg, and he always perched it
+  a little on one side. His moustache was very stiff and military.
+  The neatness of his attire was almost incredible. I believe a
+  speck of dust would have caused him more pain than a bullet wound.
+  Yet this quaint dandified little man who, I was sorry to see, now
+  limped badly, had been in his time one of the most celebrated members
+  of the Belgian police. As a detective, his flair had been extraordinary,
+  and he had achieved triumphs by unravelling some of the most baffling
+  cases of the day.
+    He pointed out to me the little house inhabited by him and his fellow
+  Belgians, and I promised to go and see him at an early date. Then he
+  raised his hat with a flourish to Cynthia, and we drove away.
+    "He's a dear little man," said Cynthia. "I'd no idea you knew him."
+    "You've been entertaining a celebrity unawares," I replied.
+    And, for the rest of the way home, I recited to them the various
+  exploits and triumphs of Hercule Poirot.
+
+=head2 v5.27.8 - Jasper Fforde, "Shades of Grey"
+
+L<Announced on 2018-01-20 by Abigail|http://nntp.perl.org/group/perl.perl5.porters/248914>
+
+2.4.16.55.021: Males are to wear dresscode #6 during inter-Collective
+travel. Hats are encouraged, but not required.
+
+9.3.88.32.025: The cucumber and tomato are both fruit; the avocado
+is a nut. To assist with the dietary requirements of vegetarians,
+on the first Tuesday of the month a chicken is officially a vegetable.
+
+5.3.21.01.002: Once allocated, postcodes are permanent, and for life.
+
+6.1.02.11.235: Artifacture from before the Something That Happened
+may be collected, so long it does not appear on the Leapback list
+or possess color above 23 percent saturation.
+
+2.3.06.02.087: Unnecessary sharpening of pencils constitutes a waste
+of public resources, and will be punished as appropriate.
+
+2.1.01.05.002: All children are to attent school until the age of
+sixteen or until they have learned everything, whichever be the sooner.
+
+1.3.02.06.023: There shall be no staring at the sun, however good
+the reason.
+
+1.1.19.02.006: Team sports are mandatory in order to build character.
+Character is there to give purpose to team sports.
+
+2.3.03.01.006: Juggling shall not be practiced after 4:00 pm.
+
+
+=head2 v5.27.7 - Terry Pratchett, "Hogfather"
+
+L<Announced on 2017-12-20 by Chris 'BinGOs' Williams|https://www.nntp.perl.org/group/perl.perl5.porters/2017/12/msg248274.html>
+
+  Death looked at the sacks.
+
+  It was a strange but demonstrable fact that the sacks of
+  toys carried by the Hogfather, no matter what they
+  really contained, always appeared to have sticking out
+  of the top a teddy bear, a toy soldier in the kind of
+  colorful uniform that would stand out in a disco, a
+  drum and a red-and-white candy cane. The actual
+  contents always turned out to be something a bit
+  garish and costing $5.99.
+
+  Death had investigated one or two. There had been a
+  Real Agatean Ninja, for example, with Fearsome
+  Death Grip, and a Captain Carrot One-Man Night
+  Watch with a complete wardrobe of toy weapons, each
+  of which cost as much as the original wooden doll in
+  the first place.
+
+  Mind you, the stuff for the girls was just as
+  depressing. It seemed to be nearly all horses. Most of
+  them were grinning. Horses, Death felt, shouldn't grin.
+
+  Any horse that was grinning was planning something.
+
+=head2 v5.27.6 - Ogden Nash, "Behold the Duck"
+
+L<Announced on 2017-11-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2017/11/msg247489.html>
+
+  Behold the duck,
+  it does not cluck;
+  a cluck it lacks,
+  it quacks!
+
+  It is 'specially fond
+  of puddles or ponds;
+  when it dines or sups
+  it bottoms ups.
+
+
+=head2 v5.27.5 - Frank Birch, Dilly Knox & G. P. Mackeson, "Alice in I.D.25"
+
+L<Announced on 2017-10-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2017/10/msg246785.html>
+
+    'Can I do anything?' Alice suggested timidly, thinking that something
+  dreadful must have happened.
+    The Waterflap jumped as if it had been shot. 'What are you doing
+  here?' it snapped. 'Take this at once into the Directional room,' and it
+  thrust the paper which had caused all the fuss into her hands.
+    'But where is the Directional room?' she inquired, bewildered.
+    'Why, there of course,' howled the Waterflap, pointing to a door.
+    'How could I possibly know that!' Alice exclaimed, angered by his
+  rudeness.
+    'Silly girl,' it hissed. 'Why, it's called the Directional room
+  because it's in that direction,' and it pushed her roughly through the
+  doorway.
+
 =head2 v5.27.4 - Richard Brautigan, "All Watched Over By Machines Of Loving Grace"
 
 L<Announced on 2017-09-20 by John SJ Anderson|https://www.nntp.perl.org/group/perl.perl5.porters/2017/09/msg246371.html>
@@ -130,6 +403,49 @@ L<Announced on 2017-05-31 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.
   pleasure brings no happiness, but only a deeper despair.
 
     -- Bertrand Russell, The Road to Happiness
+
+=head2 v5.26.2 - Desmond Morris, "Catwatching: The Essential Guide to Cat Behaviour"
+
+L<Announced on 2018-04-14 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2018/04/msg250440.html>
+
+How does a cat use its whiskers?  The usual answer is that the whiskers
+are feelers that enable a cat to tell whether a gap is wide enough for
+it to squeeze through, but the truth is more complicated and more
+remarkable.  In addition to their obvious role as feelers sensitive to
+touch, the whiskers also operate as air-current detectors.  As the cat
+moves along in the dark it needs to manoeuvre past solid objects without
+touching them.  Each solid object it approaches causes slight eddies in
+the air, minute disturbances in the currents of air movements, and the
+cat's whiskers are so amazingly sensitive that they can read these air
+changes and respond to the presence of solid obstacles even without
+touching them.
+
+=head2 v5.26.2-RC1 - Desmond Morris, "Catwatching: The Essential Guide to Cat Behaviour"
+
+L<Announced on 2018-03-24 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2018/03/msg250103.html>
+
+Cats have a way of endearing themselves to their owners, not just by
+their 'kittenoid' behaviour, which stimulates strong parental feelings,
+but also by their sheer gracefulness. There is an elegance and a
+composure about them that captivates the human eye. To the sensitive
+human being it becomes a privilege to share a room with a cat, exchange
+its glance, feel its greeting rub, or watch it gently luxuriate itself
+into a snoozing ball on a soft cushion.
+
+=head2 v5.26.1 - Samuel Taylor Coleridge, "The Rime of the Ancient Mariner"
+
+L<Announced on 2017-09-22 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/09/msg246408.html>
+
+  And soon I heard a roaring wind:
+  It did not come anear;
+  But with its sound it shook the sails,
+  That were so thin and sere.
+
+  The upper air burst into life!
+  And a hundred fire-flags sheen,
+  To and fro they were hurried about!
+  And to and fro, and in and out,
+  The wan stars danced between.
 
 =head2 v5.26.1-RC1 - Samuel Taylor Coleridge, "The Rime of the Ancient Mariner"
 
@@ -263,7 +579,7 @@ L<Announced on 2016-10-10 by Aaron Crane|http://www.nntp.perl.org/group/perl.per
 
   I'm up on all the pop trivia, says the guy with the stud in his tongue.
       Are you?
-      Yes. Do you know who he lead singer of Echo and the Bunnymen is?
+      Yes. Do you know who the lead singer of Echo and the Bunnymen is?
       Let me guess, is he called Echo?
       Good guess but no, anyway when they played Glastonbury it was so
   muddy he had two roadies to hold up a binliner on each of his legs so
@@ -403,6 +719,47 @@ L<Announced on 2016-05-09 by Ricardo Signes|http://www.nntp.perl.org/group/perl.
     Wide fields of asphodel fore’er,
   To find that the utmost reward
     Of daring should be still to dare.
+
+=head2 v5.24.4 - Desmond Morris, "Catwatching: The Essential Guide to Cat Behaviour"
+
+L<Announced on 2018-04-14 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2018/04/msg250439.html>
+
+Cats hate doors.  Doors simply do not register in the evolutionary story
+of the cat family.  They constantly block patrolling activities and
+prevent cats from exploring their home range and then returning to their
+central, secure base at will.  Humans often do not understand that a cat
+needs to make only a brief survey of its territory before returning with
+all the necessary information about the activities of other cats in the
+vicinity.  It likes to make these tours of inspection at frequent
+intervals, but does not want to stay outside for very long, unless there
+has been some special and unexpected change in the condition of the
+local feline population.
+
+=head2 v5.24.4-RC1 - Desmond Morris, "Catwatching: The Essential Guide to Cat Behaviour"
+
+L<Announced on 2018-03-24 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2018/03/msg250102.html>
+
+The domestic cat is a contradiction. No animal has developed such an
+intimate relationship with mankind, while at the same time demanding and
+getting such independence of movement and action. The dog may be man's
+best friend, but it is rarely allowed out on its own to wander from
+garden to garden or street to street. The obedient dog has to be taken
+for a walk. The headstrong cat walks alone.
+
+=head2 v5.24.3 - Samuel Taylor Coleridge, "The Rime of the Ancient Mariner"
+
+L<Announced on 2017-09-22 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2017/09/msg246407.html>
+
+  Oh sleep! it is a gentle thing,
+  Beloved from pole to pole!
+  To Mary Queen the praise be given!
+  She sent the gentle sleep from Heaven,
+  That slid into my soul.
+
+  The silly buckets on the deck,
+  That had so long remained,
+  I dreamt that they were filled with dew;
+  And when I awoke, it rained.
 
 =head2 v5.24.3-RC1 - Samuel Taylor Coleridge, "The Rime of the Ancient Mariner"
 

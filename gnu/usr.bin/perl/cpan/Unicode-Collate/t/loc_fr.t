@@ -39,8 +39,8 @@ my $AE = pack 'U', 0xC6;
 my $objFr = Unicode::Collate::Locale->
     new(locale => 'FR', normalization => undef);
 
-ok($objFr->getlocale, 'fr');
-ok($objFr->locale_version, 1.14);
+ok($objFr->getlocale, 'default'); # no tailoring since 1.18
+ok($objFr->locale_version, undef);
 
 $objFr->change(level => 1);
 

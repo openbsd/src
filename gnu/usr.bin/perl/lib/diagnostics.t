@@ -4,7 +4,7 @@ BEGIN {
     chdir '..' if -d '../pod' && -d '../t';
     @INC = 'lib';
     require './t/test.pl';
-    plan(29);
+    plan(31);
 }
 
 BEGIN {
@@ -144,17 +144,30 @@ like $warning,
 {
 # Find last warning in perldiag.pod, and last items if any
     my $lw;
+    my $over_level = 0;
     my $inlast;
     my $item;
+    my $items_not_in_overs = 0;
 
     open(my $f, '<', "pod/perldiag.pod")
         or die "failed to open pod/perldiag.pod for reading: $!";
 
     while (<$f>) {
-        if ( /^=item\s+(.*)/) {
-            $lw = $1;
-        } elsif (/^=back/) {
-	    $inlast = 1;
+
+        # We only look for entries (=item lines) in the first level of =overs
+
+        if ( /^=over\b/) {
+            $over_level++;
+        } elsif ( /^=item\s+(.*)/) {
+            if ($over_level < 1) {
+                $items_not_in_overs++;
+            }
+            elsif ($over_level == 1) {
+                $lw = $1;
+            }
+        } elsif (/^=back\b/) {
+	    $inlast = 1 if $over_level == 1;
+            $over_level--;
         } elsif ($inlast) {
             # Skip headings
             next if /^=/;
@@ -174,6 +187,8 @@ like $warning,
     }
     close($f);
 
+    is($over_level, 0, "(sanity...) =over balanced with =back (off by $over_level)");
+    is($items_not_in_overs, 0, "(sanity...) all =item lines are within =over..=back blocks");
     ok($item, "(sanity...) found an item to check with ($item)");
     seek STDERR, 0,0;
     $warning = '';

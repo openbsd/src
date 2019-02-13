@@ -103,9 +103,9 @@ sub numbers_first { # Sort helper: All digit entries sort in front of others
     is( $counter, 1, "list each doesn't trigger");
     is( "@x", "abc 123", "the return is correct");
 
-    $x = %h;
+    $x = scalar %h;
     is( $counter, 1, "hash in scalar context doesn't trigger");
-    like( $x, qr!^\d+/\d+$!, "correct result");
+    is( $x, 1, "correct result");
 
     (@x) = %h;
     is( $counter, 1, "hash in list context doesn't trigger");

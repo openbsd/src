@@ -4,7 +4,7 @@ BEGIN {
       print("1..0 # miniperl: no Unicode::Normalize");
       exit(0);
     }
-    require "uni/case.pl";
+    require "./uni/case.pl";
 }
 
 use feature 'unicode_strings';

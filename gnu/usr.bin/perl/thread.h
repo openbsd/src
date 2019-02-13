@@ -16,8 +16,7 @@
 
 #ifdef WIN32
 #  include <win32thread.h>
-#else
-#ifdef NETWARE
+#elif defined(NETWARE)
 #  include <nw5thread.h>
 #else
 #  ifdef OLD_PTHREADS_API /* Here be dragons. */
@@ -71,7 +70,6 @@
 #    define pthread_mutexattr_default NULL
 #    define pthread_condattr_default  NULL
 #  endif
-#endif	/* NETWARE */
 #endif
 
 #ifndef PTHREAD_CREATE
@@ -147,7 +145,7 @@
     } STMT_END
 
 #define THREAD_CREATE(thr, f)	(thr->self = cthread_fork(f, thr), 0)
-#define THREAD_POST_CREATE(thr)
+#define THREAD_POST_CREATE(thr)	NOOP
 
 #define THREAD_RET_TYPE		any_t
 #define THREAD_RET_CAST(x)	((any_t) x)
@@ -169,16 +167,12 @@
 #ifndef YIELD
 #  ifdef SCHED_YIELD
 #    define YIELD SCHED_YIELD
-#  else
-#    ifdef HAS_SCHED_YIELD
-#      define YIELD sched_yield()
-#    else
-#      ifdef HAS_PTHREAD_YIELD
+#  elif defined(HAS_SCHED_YIELD)
+#    define YIELD sched_yield()
+#  elif defined(HAS_PTHREAD_YIELD)
     /* pthread_yield(NULL) platforms are expected
      * to have #defined YIELD for themselves. */
-#        define YIELD pthread_yield()
-#      endif
-#    endif
+#    define YIELD pthread_yield()
 #  endif
 #endif
 
@@ -378,47 +372,47 @@
 #endif /* USE_ITHREADS */
 
 #ifndef MUTEX_LOCK
-#  define MUTEX_LOCK(m)
+#  define MUTEX_LOCK(m)           NOOP
 #endif
 
 #ifndef MUTEX_UNLOCK
-#  define MUTEX_UNLOCK(m)
+#  define MUTEX_UNLOCK(m)         NOOP
 #endif
 
 #ifndef MUTEX_INIT
-#  define MUTEX_INIT(m)
+#  define MUTEX_INIT(m)           NOOP
 #endif
 
 #ifndef MUTEX_DESTROY
-#  define MUTEX_DESTROY(m)
+#  define MUTEX_DESTROY(m)        NOOP
 #endif
 
 #ifndef COND_INIT
-#  define COND_INIT(c)
+#  define COND_INIT(c)            NOOP
 #endif
 
 #ifndef COND_SIGNAL
-#  define COND_SIGNAL(c)
+#  define COND_SIGNAL(c)          NOOP
 #endif
 
 #ifndef COND_BROADCAST
-#  define COND_BROADCAST(c)
+#  define COND_BROADCAST(c)       NOOP
 #endif
 
 #ifndef COND_WAIT
-#  define COND_WAIT(c, m)
+#  define COND_WAIT(c, m)         NOOP
 #endif
 
 #ifndef COND_DESTROY
-#  define COND_DESTROY(c)
+#  define COND_DESTROY(c)         NOOP
 #endif
 
 #ifndef LOCK_DOLLARZERO_MUTEX
-#  define LOCK_DOLLARZERO_MUTEX
+#  define LOCK_DOLLARZERO_MUTEX   NOOP
 #endif
 
 #ifndef UNLOCK_DOLLARZERO_MUTEX
-#  define UNLOCK_DOLLARZERO_MUTEX
+#  define UNLOCK_DOLLARZERO_MUTEX NOOP
 #endif
 
 /* THR, SET_THR, and dTHR are there for compatibility with old versions */

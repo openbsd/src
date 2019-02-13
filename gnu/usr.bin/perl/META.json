@@ -4,7 +4,7 @@
       "perl5-porters@perl.org"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "CPAN::Meta version 2.150005",
+   "generated_by" : "CPAN::Meta version 2.150010",
    "license" : [
       "perl_5"
    ],
@@ -21,6 +21,7 @@
          "dist/Carp",
          "dist/constant",
          "dist/Data-Dumper",
+         "dist/Devel-PPPort",
          "dist/Devel-SelfStubber",
          "dist/Dumpvalue",
          "dist/encoding-warnings",
@@ -51,6 +52,7 @@
          "dist/threads-shared",
          "dist/Tie-File",
          "dist/Time-HiRes",
+         "dist/Unicode-Normalize",
          "dist/XSLoader",
          "lib/perl5db",
          "win32"
@@ -84,6 +86,7 @@
          "dist/IO/t/io_dup.t",
          "dist/IO/t/io_file.t",
          "dist/IO/t/io_file_export.t",
+         "dist/IO/t/io_leak.t",
          "dist/IO/t/io_linenum.t",
          "dist/IO/t/io_multihomed.t",
          "dist/IO/t/io_pipe.t",
@@ -124,6 +127,6 @@
          "url" : "http://perl5.git.perl.org/"
       }
    },
-   "version" : "5.024003",
-   "x_serialization_backend" : "JSON::PP version 2.27300_01"
+   "version" : "5.028001",
+   "x_serialization_backend" : "JSON::PP version 2.97001"
 }

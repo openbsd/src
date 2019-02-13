@@ -200,7 +200,7 @@ $C .= $A ;
 EXPECT
 Use of uninitialized value $A in concatenation (.) or string at - line 10.
 ########
-# perlbug 20011116.125
+# perlbug 20011116.125 (#7917)
 use warnings 'uninitialized';
 $a = undef;
 $foo = join '', $a, "\n";
@@ -341,10 +341,13 @@ Invalid conversion in sprintf: "%+2L\003" at - line 19.
 # sv.c
 use warnings 'misc' ;
 *a = undef ;
+(*c) = ();
 no warnings 'misc' ;
 *b = undef ;
+(*d) = ();
 EXPECT
 Undefined value assigned to typeglob at - line 3.
+Undefined value assigned to typeglob at - line 4.
 ########
 # sv.c
 use warnings 'numeric' ;
@@ -413,3 +416,11 @@ Argument "a_c" isn't numeric in preincrement (++) at - line 5.
 Argument "(?^:abc)" isn't numeric in preincrement (++) at - line 6.
 Argument "123x" isn't numeric in preincrement (++) at - line 7.
 Argument "123e" isn't numeric in preincrement (++) at - line 8.
+########
+# RT #128257 This used to SEGV
+use warnings;
+sub Foo::f {}
+undef *Foo::;
+*Foo::f =sub {};
+EXPECT
+Subroutine f redefined at - line 5.

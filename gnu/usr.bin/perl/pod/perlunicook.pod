@@ -26,7 +26,7 @@ to work correctly, with the C<#!> adjusted to work on your system:
  use strict;    # quote strings, declare variables
  use warnings;  # on by default
  use warnings  qw(FATAL utf8);    # fatalize encoding glitches
- use open      qw(:std :utf8);    # undeclared streams in UTF-8
+ use open      qw(:std :encoding(UTF-8)); # undeclared streams in UTF-8
  use charnames qw(:full :short);  # unneeded in v5.16
 
 This I<does> make even Unix programmers C<binmode> your binary streams,
@@ -234,8 +234,8 @@ C<binmode> as described later below.
  or
      $ export PERL_UNICODE=A
  or
-    use Encode qw(decode_utf8);
-    @ARGV = map { decode_utf8($_, 1) } @ARGV;
+    use Encode qw(decode);
+    @ARGV = map { decode('UTF-8', $_, 1) } @ARGV;
 
 =head2 ℞ 14: Decode program arguments as locale encoding
 
@@ -255,9 +255,9 @@ call C<binmode> explicitly:
  or
      $ export PERL_UNICODE=S
  or
-     use open qw(:std :utf8);
+     use open qw(:std :encoding(UTF-8));
  or
-     binmode(STDIN,  ":utf8");
+     binmode(STDIN,  ":encoding(UTF-8)");
      binmode(STDOUT, ":utf8");
      binmode(STDERR, ":utf8");
 
@@ -280,7 +280,7 @@ Files opened without an encoding argument will be in UTF-8:
  or
      $ export PERL_UNICODE=D
  or
-     use open qw(:utf8);
+     use open qw(:encoding(UTF-8));
 
 =head2 ℞ 18: Make all I/O and args default to utf8
 
@@ -288,9 +288,9 @@ Files opened without an encoding argument will be in UTF-8:
  or
      $ export PERL_UNICODE=SDA
  or
-     use open qw(:std :utf8);
-     use Encode qw(decode_utf8);
-     @ARGV = map { decode_utf8($_, 1) } @ARGV;
+     use open qw(:std :encoding(UTF-8));
+     use Encode qw(decode);
+     @ARGV = map { decode('UTF-8', $_, 1) } @ARGV;
 
 =head2 ℞ 19: Open file with specific encoding
 
@@ -391,7 +391,7 @@ one codepoint lacking that property.
  \p{Sk}, \p{Ps}, \p{Lt}
  \p{alpha}, \p{upper}, \p{lower}
  \p{Latin}, \p{Greek}
- \p{script=Latin}, \p{script=Greek}
+ \p{script_extensions=Latin}, \p{scx=Greek}
  \p{East_Asian_Width=Wide}, \p{EA=W}
  \p{Line_Break=Hyphen}, \p{LB=HY}
  \p{Numeric_Value=4}, \p{NV=4}
@@ -701,7 +701,7 @@ Here's that program; tested on v5.14.
  use strict;
  use warnings;
  use warnings  qw(FATAL utf8);    # fatalize encoding faults
- use open      qw(:std :utf8);    # undeclared streams in UTF-8
+ use open      qw(:std :encoding(UTF-8)); # undeclared streams in UTF-8
  use charnames qw(:full :short);  # unneeded in v5.16
 
  # std modules

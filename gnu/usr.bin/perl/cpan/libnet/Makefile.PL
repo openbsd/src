@@ -66,7 +66,7 @@ MAIN: {
         ABSTRACT => 'Collection of network protocol modules',
         AUTHOR   => 'Graham Barr <gbarr@pobox.com>, Steve Hay <shay@cpan.org>',
         LICENSE  => 'perl_5',
-        VERSION  => '3.08',
+        VERSION  => '3.11',
 
         META_MERGE => {
             'meta-spec' => {
@@ -120,7 +120,7 @@ MAIN: {
                     prereqs => {
                         runtime => {
                             requires => {
-                                'IO::Socket::IP' => '0.20'
+                                'IO::Socket::IP' => '0.25'
                             # or IO::Socket::INET6 2.62
                             }
                         }

@@ -5,7 +5,7 @@
 #	Windows SDK 64-bit compiler and tools
 #
 # This is set up to build a perl.exe that runs off a shared library
-# (perl524.dll).  Also makes individual DLLs for the XS extensions.
+# (perl528.dll).  Also makes individual DLLs for the XS extensions.
 #
 
 ##
@@ -38,7 +38,7 @@ INST_TOP	= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	= \5.24.3
+#INST_VER	= \5.28.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -96,6 +96,12 @@ USE_LARGE_FILES	= define
 #USE_64_BIT_INT	= define
 
 #
+# Comment this out if you want the legacy default behavior of including '.' at
+# the end of @INC.
+#
+DEFAULT_INC_EXCLUDES_DOT = define
+
+#
 # Uncomment this if you want to disable looking up values from
 # HKEY_CURRENT_USER\Software\Perl and HKEY_LOCAL_MACHINE\Software\Perl in
 # the Registry.
@@ -113,26 +119,20 @@ CCTYPE		= MSVC60
 #CCTYPE		= MSVC70FREE
 # Windows Server 2003 SP1 Platform SDK (April 2005)
 #CCTYPE		= SDK2003SP1
-# Visual C++ 2005 (aka Visual C++ 8.0) (full version)
+# Visual C++ 2005 (aka Visual C++ 8.0) (full version or Express Edition)
 #CCTYPE		= MSVC80
-# Visual C++ 2005 Express Edition (aka Visual C++ 8.0) (free version)
-#CCTYPE		= MSVC80FREE
-# Visual C++ 2008 (aka Visual C++ 9.0) (full version)
+# Visual C++ 2008 (aka Visual C++ 9.0) (full version or Express Edition)
 #CCTYPE		= MSVC90
-# Visual C++ 2008 Express Edition (aka Visual C++ 9.0) (free version)
-#CCTYPE		= MSVC90FREE
-# Visual C++ 2010 (aka Visual C++ 10.0) (full version)
+# Visual C++ 2010 (aka Visual C++ 10.0) (full version or Express Edition)
 #CCTYPE		= MSVC100
-# Visual C++ 2010 Express Edition (aka Visual C++ 10.0) (free version)
-#CCTYPE		= MSVC100FREE
-# Visual C++ 2012 (aka Visual C++ 11.0) (full version)
+# Visual C++ 2012 (aka Visual C++ 11.0) (full version or Express Edition)
 #CCTYPE		= MSVC110
-# Visual C++ 2012 Express Edition (aka Visual C++ 11.0) (free version)
-#CCTYPE		= MSVC110FREE
-# Visual C++ 2013 (aka Visual C++ 12.0) (full version)
+# Visual C++ 2013 (aka Visual C++ 12.0) (full version or Express Edition)
 #CCTYPE		= MSVC120
-# Visual C++ 2013 Express Edition (aka Visual C++ 12.0) (free version)
-#CCTYPE		= MSVC120FREE
+# Visual C++ 2015 (aka Visual C++ 14.0) (full version or Express Edition)
+#CCTYPE		= MSVC140
+# Visual C++ 2017 (aka Visual C++ 14.1) (full version or Community Edition)
+#CCTYPE		= MSVC141
 
 #
 # If you are using Intel C++ Compiler uncomment this
@@ -192,31 +192,38 @@ CCTYPE		= MSVC60
 # set this to additionally provide a statically linked perl-static.exe.
 # Note that dynamic loading will not work with this perl, so you must
 # include required modules statically using the STATIC_EXT or ALL_STATIC
-# variables below. A static library perl524s.lib will also be created.
+# variables below. A static library perl528s.lib will also be created.
 # Ordinary perl.exe is not affected by this option.
 #
 #BUILD_STATIC	= define
 
 #
 # in addition to BUILD_STATIC the option ALL_STATIC makes *every*
-# extension get statically built
+# extension get statically built.
 # This will result in a very large perl executable, but the main purpose
 # is to have proper linking set so as to be able to create miscellaneous
-# executables with different built-in extensions
+# executables with different built-in extensions.
 #
 #ALL_STATIC	= define
 
 #
+# set the install location of the compiler
+# Running VCVARS32.BAT, VCVARSALL.BAT or similar is *required* when using
+# Visual C++.
+# Versions of Visual C++ up to VC++ 7.1 define $(MSVCDir); versions since then
+# define $(VCINSTALLDIR) instead, but for VC++ 14.1 we need the subfolder given
+# by $(VCToolsInstallDir).
 #
-# set the install locations of the compiler include/libraries
-# Running VCVARS32.BAT is *required* when using Visual C.
-# Some versions of Visual C don't define MSVCDIR in the environment,
-# so you may have to set CCHOME explicitly (spaces in the path name should
-# not be quoted)
-#
+!IF "$(CCTYPE)" == "MSVC60" || \
+    "$(CCTYPE)" == "MSVC70" || "$(CCTYPE)" == "MSVC70FREE"
 CCHOME		= $(MSVCDIR)
-CCINCDIR	= $(CCHOME)\include
-CCLIBDIR	= $(CCHOME)\lib
+!ELSE
+!  IF "$(CCTYPE)" == "MSVC141"
+CCHOME		= $(VCTOOLSINSTALLDIR)
+!  ELSE
+CCHOME		= $(VCINSTALLDIR)
+!  ENDIF
+!ENDIF
 
 #
 # Additional compiler flags can be specified here.
@@ -299,6 +306,10 @@ USE_LARGE_FILES	= undef
 
 !IF "$(USE_64_BIT_INT)" == ""
 USE_64_BIT_INT	= undef
+!ENDIF
+
+!IF "$(DEFAULT_INC_EXCLUDES_DOT)" == ""
+DEFAULT_INC_EXCLUDES_DOT = undef
 !ENDIF
 
 !IF "$(USE_NO_REGISTRY)" == ""
@@ -425,6 +436,23 @@ EMBED_EXE_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputre
 EMBED_DLL_MANI	= if exist $@.manifest mt -nologo -manifest $@.manifest -outputresource:$@;2 && \
 		  if exist $@.manifest del $@.manifest
 
+# Set the install location of the compiler headers/libraries.
+# These are saved into $Config{incpath} and $Config{libpth}.
+CCINCDIR	= $(CCHOME)\include
+!IF "$(CCTYPE)" == "MSVC141"
+!  IF "$(WIN64)" == "define"
+CCLIBDIR	= $(CCHOME)\lib\x64
+!  ELSE
+CCLIBDIR	= $(CCHOME)\lib\x86
+!  ENDIF
+!ELSE
+!  IF "$(WIN64)" == "define"
+CCLIBDIR	= $(CCHOME)\lib\amd64
+!  ELSE
+CCLIBDIR	= $(CCHOME)\lib
+!  ENDIF
+!ENDIF
+
 ARCHDIR		= ..\lib\$(ARCHNAME)
 COREDIR		= ..\lib\CORE
 AUTODIR		= ..\lib\auto
@@ -435,7 +463,6 @@ CPANDIR		= ..\cpan
 PODDIR		= ..\pod
 HTMLDIR		= .\html
 
-#
 INST_SCRIPT	= $(INST_TOP)$(INST_VER)\bin
 INST_BIN	= $(INST_SCRIPT)$(INST_ARCH)
 INST_LIB	= $(INST_TOP)$(INST_VER)\lib
@@ -467,7 +494,11 @@ DEFINES		= -DWIN32 -D_CONSOLE -DNO_STRICT
 LOCDEFS		= -DPERLDLL -DPERL_CORE
 CXX_FLAG	= -TP -EHsc
 
+!IF "$(CCTYPE)" == "MSVC140" || "$(CCTYPE)" == "MSVC141"
+LIBC		= ucrt.lib
+!ELSE
 LIBC		= msvcrt.lib
+!ENDIF
 
 !IF  "$(CFG)" == "Debug"
 OPTIMIZE	= -Od -MD -Zi -DDEBUGGING
@@ -478,7 +509,11 @@ OPTIMIZE	= -Od -MD -Zi
 LINK_DBG	= -debug
 !ELSE
 !IF  "$(CFG)" == "DebugFull"
+!IF "$(CCTYPE)" == "MSVC140" || "$(CCTYPE)" == "MSVC141"
+LIBC		= ucrtd.lib
+!ELSE
 LIBC		= msvcrtd.lib
+!ENDIF
 OPTIMIZE	= -Od -MDd -Zi -D_DEBUG -DDEBUGGING
 LINK_DBG	= -debug
 !ELSE
@@ -513,6 +548,11 @@ OPTIMIZE	= $(OPTIMIZE) -fp:precise
 DEFINES		= $(DEFINES) -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
 !ENDIF
 
+# Likewise for deprecated Winsock APIs in VC++ 14.0 onwards for now.
+!IF "$(CCTYPE)" == "MSVC140" || "$(CCTYPE)" == "MSVC141"
+DEFINES		= $(DEFINES) -D_WINSOCK_DEPRECATED_NO_WARNINGS
+!ENDIF
+
 # In VS 2005 (VC++ 8.0) Microsoft changes time_t from 32-bit to
 # 64-bit, even in 32-bit mode.  It also provides the _USE_32BIT_TIME_T
 # preprocessor option to revert back to the old functionality for
@@ -532,6 +572,14 @@ LIBBASEFILES	= \
 		comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib \
 		netapi32.lib uuid.lib ws2_32.lib mpr.lib winmm.lib \
 		version.lib odbc32.lib odbccp32.lib comctl32.lib
+
+!IF "$(CCTYPE)" == "MSVC140" || "$(CCTYPE)" == "MSVC141"
+!  IF  "$(CFG)" == "DebugFull"
+LIBBASEFILES	= $(LIBBASEFILES) msvcrtd.lib vcruntimed.lib
+!  ELSE
+LIBBASEFILES	= $(LIBBASEFILES) msvcrt.lib vcruntime.lib
+!  ENDIF
+!ENDIF
 
 # Avoid __intel_new_proc_init link error for libircmt.
 # libmmd is /MD equivelent, other variants exist.
@@ -576,12 +624,13 @@ PRIV_LINK_FLAGS	= $(PRIV_LINK_FLAGS) "/manifestdependency:type='Win32' name='Mic
 RSC_FLAGS	= -DINCLUDE_MANIFEST
 !ENDIF
 
+# VS 2017 (VC++ 14.1) requires at minimum Windows 7 SP1 (with latest Windows Updates)
+
 # For XP support in >= VS 2013 (VC++ 12.0), subsystem is always in Config.pm
 # LINK_FLAGS else subsystem is only needed for EXE building, not XS DLL building
 # Console vs GUI makes no difference for DLLs, so use default for cleaner
 # building cmd lines
-!IF "$(CCTYPE)" == "MSVC120" || "$(CCTYPE)" == "MSVC120FREE" \
-    || "$(CCTYPE)" == "MSVC140" || "$(CCTYPE)" == "MSVC140FREE"
+!IF "$(CCTYPE)" == "MSVC120" || "$(CCTYPE)" == "MSVC140"
 !  IF "$(WIN64)" == "define"
 LINK_FLAGS	= $(LINK_FLAGS) -subsystem:console,"5.02"
 !  ELSE
@@ -630,9 +679,9 @@ $(o).dll:
 
 # makedef.pl must be updated if this changes, and this should normally
 # only change when there is an incompatible revision of the public API.
-PERLIMPLIB	= ..\perl524.lib
-PERLSTATICLIB	= ..\perl524s.lib
-PERLDLL		= ..\perl524.dll
+PERLIMPLIB	= ..\perl528.lib
+PERLSTATICLIB	= ..\perl528s.lib
+PERLDLL		= ..\perl528.dll
 
 MINIPERL	= ..\miniperl.exe
 MINIDIR		= .\mini
@@ -679,8 +728,6 @@ UTILS		=			\
 		..\utils\splain		\
 		..\utils\perlbug	\
 		..\utils\pl2pm 		\
-		..\utils\c2ph		\
-		..\utils\pstruct	\
 		..\utils\h2xs		\
 		..\utils\perldoc	\
 		..\utils\perlivp	\
@@ -882,6 +929,7 @@ CFG_VARS	=					\
 		"uselongdouble=undef"			\
 		"uselargefiles=$(USE_LARGE_FILES)"	\
 		"usesitecustomize=$(USE_SITECUST)"	\
+		"default_inc_excludes_dot=$(DEFAULT_INC_EXCLUDES_DOT)"	\
 		"LINK_FLAGS=$(LINK_FLAGS:"=\")"		\
 		"optimize=$(OPTIMIZE:"=\")"		\
 		"WIN64=$(WIN64)"
@@ -891,7 +939,8 @@ CFG_VARS	=					\
 #
 
 all : .\config.h ..\git_version.h $(GLOBEXE) $(CONFIGPM) \
-	$(UNIDATAFILES) MakePPPort $(PERLEXE) Extensions_nonxs Extensions $(PERLSTATIC)
+	$(UNIDATAFILES) MakePPPort $(PERLEXE) Extensions_nonxs Extensions PostExt \
+	$(PERLSTATIC)
 	@echo	Everything is up to date. '$(MAKE_BARE) test' to run test suite.
 
 regnodes : ..\regnodes.h
@@ -930,6 +979,17 @@ perlglob$(o)  : perlglob.c
 	@echo.>>$@
 	@echo #ifndef _config_h_footer_>>$@
 	@echo #define _config_h_footer_>>$@
+!IF "$(CCTYPE)" == "MSVC140" || "$(CCTYPE)" == "MSVC141"
+	@echo #undef FILE_ptr>>$@
+	@echo #define FILE_ptr(fp) PERLIO_FILE_ptr(fp)>>$@
+	@echo #undef FILE_cnt>>$@
+	@echo #define FILE_cnt(fp) PERLIO_FILE_cnt(fp)>>$@
+	@echo #undef FILE_base>>$@
+	@echo #define FILE_base(fp) PERLIO_FILE_base(fp)>>$@
+	@echo #undef FILE_bufsiz>>$@
+	@echo #define FILE_bufsiz(fp) (PERLIO_FILE_cnt(fp) + PERLIO_FILE_ptr(fp) - PERLIO_FILE_base(fp))>>$@
+	@echo #define I_STDBOOL>>$@
+!ENDIF
 	@echo #undef Off_t>>$@
 	@echo #undef LSEEKSIZE>>$@
 	@echo #undef Off_t_size>>$@
@@ -1165,6 +1225,13 @@ Extensions_clean:
 Extensions_realclean: 
 	-if exist $(MINIPERL) $(MINIPERL) -I..\lib ..\make_ext.pl "MAKE=$(MAKE)" --dir=$(CPANDIR) --dir=$(DISTDIR) --dir=$(EXTDIR) --all --target=realclean
 
+PostExt: ..\lib\Storable\Limit.pm
+
+..\lib\Storable\Limit.pm: $(PERLEXE) Extensions
+	cd ..\dist\Storable && $(MAKE) lib\Storable\Limit.pm
+	if not exist ..\lib\Storable mkdir ..\lib\Storable
+	copy ..\dist\Storable\lib\Storable\Limit.pm ..\lib\Storable\Limit.pm
+
 #-------------------------------------------------------------------------------
 
 doc: $(PERLEXE) ..\pod\perltoc.pod
@@ -1215,7 +1282,7 @@ utils: $(PERLEXE) ..\utils\Makefile
 	copy ..\README.tw       ..\pod\perltw.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perldelta.pod ..\pod\perl5243delta.pod
+	copy ..\pod\perldelta.pod ..\pod\perl5281delta.pod
 	cd ..\win32
 	$(PERLEXE) $(PL2BAT) $(UTILS)
 	$(MINIPERL) -I..\lib ..\autodoc.pl ..
@@ -1243,6 +1310,7 @@ distclean: realclean
 	-del /f $(LIBDIR)\Time\HiRes.pm
 	-del /f $(LIBDIR)\Unicode\Normalize.pm
 	-del /f $(LIBDIR)\Math\BigInt\FastCalc.pm
+	-del /f $(LIBDIR)\Storable.pm $(LIBDIR)\Storable\Limit.pm
 	-del /f $(LIBDIR)\Win32.pm
 	-del /f $(LIBDIR)\Win32CORE.pm
 	-del /f $(LIBDIR)\Win32API\File.pm
@@ -1288,7 +1356,6 @@ distclean: realclean
 	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME
 	-if exist $(LIBDIR)\Module rmdir /s /q $(LIBDIR)\Module
 	-if exist $(LIBDIR)\Net\FTP rmdir /s /q $(LIBDIR)\Net\FTP
-	-if exist $(LIBDIR)\OpenBSD rmdir /s /q $(LIBDIR)\OpenBSD
 	-if exist $(LIBDIR)\Params rmdir /s /q $(LIBDIR)\Params
 	-if exist $(LIBDIR)\Parse rmdir /s /q $(LIBDIR)\Parse
 	-if exist $(LIBDIR)\Perl rmdir /s /q $(LIBDIR)\Perl
@@ -1303,6 +1370,7 @@ distclean: realclean
 	-if exist $(LIBDIR)\TAP rmdir /s /q $(LIBDIR)\TAP
 	-if exist $(LIBDIR)\Term rmdir /s /q $(LIBDIR)\Term
 	-if exist $(LIBDIR)\Test rmdir /s /q $(LIBDIR)\Test
+	-if exist $(LIBDIR)\Test2 rmdir /s /q $(LIBDIR)\Test2
 	-if exist $(LIBDIR)\Text rmdir /s /q $(LIBDIR)\Text
 	-if exist $(LIBDIR)\Thread rmdir /s /q $(LIBDIR)\Thread
 	-if exist $(LIBDIR)\threads rmdir /s /q $(LIBDIR)\threads
@@ -1314,7 +1382,7 @@ distclean: realclean
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-cd $(PODDIR) && del /f *.html *.bat roffitall \
-	    perl5243delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
+	    perl5281delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
 	    perlapi.pod perlbs2000.pod perlce.pod perlcn.pod perlcygwin.pod \
 	    perldos.pod perlfreebsd.pod perlhaiku.pod perlhpux.pod \
 	    perlhurd.pod perlintern.pod perlirix.pod perljp.pod perlko.pod \
@@ -1322,8 +1390,9 @@ distclean: realclean
 	    perlnetware.pod perlopenbsd.pod perlos2.pod perlos390.pod \
 	    perlos400.pod perlplan9.pod perlqnx.pod perlriscos.pod \
 	    perlsolaris.pod perlsymbian.pod perlsynology.pod perltoc.pod \
-	    perltru64.pod perltw.pod perlvos.pod perlwin32.pod
-	-cd ..\utils && del /f h2ph splain perlbug pl2pm c2ph pstruct h2xs \
+	    perltru64.pod perltw.pod perluniprops.pod perlvos.pod \
+	    perlwin32.pod
+	-cd ..\utils && del /f h2ph splain perlbug pl2pm h2xs \
 	    perldoc perlivp libnetcfg enc2xs encguess piconv cpan *.bat \
 	    xsubpp pod2html instmodsh json_pp prove ptar ptardiff ptargrep shasum corelist zipdetails
 	-del /f ..\config.sh perlmain.c dlutils.c config.h.new \

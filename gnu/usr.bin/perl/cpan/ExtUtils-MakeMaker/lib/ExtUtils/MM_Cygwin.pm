@@ -9,7 +9,8 @@ require ExtUtils::MM_Unix;
 require ExtUtils::MM_Win32;
 our @ISA = qw( ExtUtils::MM_Unix );
 
-our $VERSION = '7.10_02';
+our $VERSION = '7.34';
+$VERSION = eval $VERSION;
 
 
 =head1 NAME
@@ -86,7 +87,7 @@ sub init_linker {
     if ($Config{useshrplib} eq 'true') {
         my $libperl = '$(PERL_INC)' .'/'. "$Config{libperl}";
         if( $] >= 5.006002 ) {
-            $libperl =~ s/a$/dll.a/;
+            $libperl =~ s/(dll\.)?a$/dll.a/;
         }
         $self->{PERL_ARCHIVE} = $libperl;
     } else {
@@ -129,16 +130,31 @@ But for new archdir dll's use the same rebase address if the old exists.
 sub dynamic_lib {
     my($self, %attribs) = @_;
     my $s = ExtUtils::MM_Unix::dynamic_lib($self, %attribs);
-    my $ori = "$self->{INSTALLARCHLIB}/auto/$self->{FULLEXT}/$self->{BASEEXT}.$self->{DLEXT}";
-    if (-e $ori) {
-        my $imagebase = `/bin/objdump -p $ori | /bin/grep ImageBase | /bin/cut -c12-`;
-        chomp $imagebase;
-        if ($imagebase gt "40000000") {
-            my $LDDLFLAGS = $self->{LDDLFLAGS};
-            $LDDLFLAGS =~ s/-Wl,--enable-auto-image-base/-Wl,--image-base=0x$imagebase/;
-            $s =~ s/ \$\(LDDLFLAGS\) / $LDDLFLAGS /m;
-        }
-    }
+    return '' unless $s;
+    return $s unless %{$self->{XS}};
+
+    # do an ephemeral rebase so the new DLL fits to the current rebase map
+    $s .= "\t/bin/find \$\(INST_ARCHLIB\)/auto -xdev -name \\*.$self->{DLEXT} | /bin/rebase -sOT -" if (( $Config{myarchname} eq 'i686-cygwin' ) and not ( exists $ENV{CYGPORT_PACKAGE_VERSION} ));
+    $s;
+}
+
+=item install
+
+Rebase dll's with the global rebase database after installation.
+
+=cut
+
+sub install {
+    my($self, %attribs) = @_;
+    my $s = ExtUtils::MM_Unix::install($self, %attribs);
+    return '' unless $s;
+    return $s unless %{$self->{XS}};
+
+    my $INSTALLDIRS = $self->{INSTALLDIRS};
+    my $INSTALLLIB = $self->{"INSTALL". ($INSTALLDIRS eq 'perl' ? 'ARCHLIB' : uc($INSTALLDIRS)."ARCH")};
+    my $dop = "\$\(DESTDIR\)$INSTALLLIB/auto/";
+    my $dll = "$dop/$self->{FULLEXT}/$self->{BASEEXT}.$self->{DLEXT}";
+    $s =~ s|^(pure_install :: pure_\$\(INSTALLDIRS\)_install\n\t)\$\(NOECHO\) \$\(NOOP\)\n|$1\$(CHMOD) \$(PERM_RWX) $dll\n\t/bin/find $dop -xdev -name \\*.$self->{DLEXT} \| /bin/rebase -sOT -\n|m if (( $Config{myarchname} eq 'i686-cygwin') and not ( exists $ENV{CYGPORT_PACKAGE_VERSION} ));
     $s;
 }
 

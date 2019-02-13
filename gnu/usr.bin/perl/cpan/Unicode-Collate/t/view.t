@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..106\n"; } # 62 + 4 x @Versions
+BEGIN { $| = 1; print "1..174\n"; } # 62 + 8 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -268,26 +268,35 @@ ok($el->viewSortKey("L\x{FF2C}\x{216C}\x{2112}\x{24C1}"),
 
 ##### 62
 
-my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26, 28, 30);
+my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36);
 
 for my $v (@Versions) {
     $Collator->change(UCA_Version => $v);
     my $app = $v >= 26 ? ' |]' : ']';
+    my $sec = $v >= 36 ? '' : ' FFFF';
 
     $Collator->change(variable => 'Shifted', level => 4);
     ok($Collator->viewSortKey("1+2"),
 	'[0A0C 0A0D | 0020 0020 | 0002 0002 | FFFF 039F FFFF'.$app);
+    ok($Collator->viewSortKey("\x{4E02}"),
+	'[FB40 CE02 | 0020 | 0002 | FFFF'.$sec.$app);
 
     $Collator->change(variable => 'Shift-Trimmed');
     ok($Collator->viewSortKey("1+2"),
 	'[0A0C 0A0D | 0020 0020 | 0002 0002 | 039F'.$app);
+    ok($Collator->viewSortKey("\x{4E02}"),
+	'[FB40 CE02 | 0020 | 0002 |'.$app);
 
     $Collator->change(variable => 'Non-ignorable', level => 3);
     ok($Collator->viewSortKey("1+2"),
 	'[0A0C 039F 0A0D | 0020 0020 0020 | 0002 0002 0002 |]');
+    ok($Collator->viewSortKey("\x{4E02}"),
+	'[FB40 CE02 | 0020 | 0002 |]');
 
     $Collator->change(variable => 'Blanked');
     ok($Collator->viewSortKey("1+2"),
 	'[0A0C 0A0D | 0020 0020 | 0002 0002 |]');
+    ok($Collator->viewSortKey("\x{4E02}"),
+	'[FB40 CE02 | 0020 | 0002 |]');
 }
 

@@ -7,6 +7,16 @@
 MODULE = Hash::Util		PACKAGE = Hash::Util
 
 void
+_clear_placeholders(hashref)
+        HV *hashref
+    PROTOTYPE: \%
+    PREINIT:
+        HV *hv;
+    CODE:
+        hv = MUTABLE_HV(hashref);
+        hv_clear_placeholders(hv);
+
+void
 all_keys(hash,keys,placeholder)
 	HV *hash
 	AV *keys
@@ -85,7 +95,8 @@ hash_value(string,...)
         U8 *seedbuf= (U8 *)SvPV(ST(1),seedlen);
         if ( seedlen < PERL_HASH_SEED_BYTES ) {
             sv_dump(ST(1));
-            Perl_croak(aTHX_ "seed len must be at least %d long only got %"UVuf" bytes", PERL_HASH_SEED_BYTES, (UV)seedlen);
+            Perl_croak(aTHX_ "seed len must be at least %d long only got %"
+                             UVuf " bytes", PERL_HASH_SEED_BYTES, (UV)seedlen);
         }
 
         PERL_HASH_WITH_SEED(seedbuf, uv, pv, len);
@@ -263,3 +274,55 @@ bucket_array(rhv)
     }
     XSRETURN(0);
 }
+
+void
+bucket_ratio(rhv)
+        SV* rhv
+    PROTOTYPE: \%
+    PPCODE:
+{
+    if (SvROK(rhv)) {
+        rhv= SvRV(rhv);
+        if ( SvTYPE(rhv)==SVt_PVHV ) {
+#if PERL_VERSION < 25
+            SV *ret= Perl_hv_scalar(aTHX_ (HV*)rhv);
+#else
+            SV *ret= Perl_hv_bucket_ratio(aTHX_ (HV*)rhv);
+#endif
+            ST(0)= ret;
+            XSRETURN(1);
+        }
+    }
+    XSRETURN_UNDEF;
+}
+
+void
+num_buckets(rhv)
+        SV* rhv
+    PROTOTYPE: \%
+    PPCODE:
+{
+    if (SvROK(rhv)) {
+        rhv= SvRV(rhv);
+        if ( SvTYPE(rhv)==SVt_PVHV ) {
+            XSRETURN_UV(HvMAX((HV*)rhv)+1);
+        }
+    }
+    XSRETURN_UNDEF;
+}
+
+void
+used_buckets(rhv)
+        SV* rhv
+    PROTOTYPE: \%
+    PPCODE:
+{
+    if (SvROK(rhv)) {
+        rhv= SvRV(rhv);
+        if ( SvTYPE(rhv)==SVt_PVHV ) {
+            XSRETURN_UV(HvFILL((HV*)rhv));
+        }
+    }
+    XSRETURN_UNDEF;
+}
+

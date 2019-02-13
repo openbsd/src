@@ -1,7 +1,0 @@
-5.010000
-hv_common                      # U
-hv_common_key_len              # U
-sv_destroyable                 # U
-sys_init                       # U
-sys_init3                      # U
-sys_term                       # U

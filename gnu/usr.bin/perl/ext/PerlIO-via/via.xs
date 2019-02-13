@@ -38,6 +38,8 @@ typedef struct
  CV *UTF8;
 } PerlIOVia;
 
+static const MGVTBL PerlIOVia_tag = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
 #define MYMethod(x) #x,&s->x
 
 static CV *
@@ -131,8 +133,14 @@ PerlIOVia_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 		 PerlIO_funcs * tab)
 {
     IV code = PerlIOBase_pushed(aTHX_ f, mode, Nullsv, tab);
+
+    if (SvTYPE(arg) >= SVt_PVMG
+		&& mg_findext(arg, PERL_MAGIC_ext, &PerlIOVia_tag)) {
+	return code;
+    }
+
     if (code == 0) {
-	PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
+        PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
 	if (!arg) {
 	    if (ckWARN(WARN_LAYER))
 		Perl_warner(aTHX_ packWARN(WARN_LAYER),
@@ -583,9 +591,28 @@ static SV *
 PerlIOVia_getarg(pTHX_ PerlIO * f, CLONE_PARAMS * param, int flags)
 {
     PerlIOVia *s = PerlIOSelf(f, PerlIOVia);
-    PERL_UNUSED_ARG(param);
+    SV *arg;
     PERL_UNUSED_ARG(flags);
-    return PerlIOVia_method(aTHX_ f, MYMethod(GETARG), G_SCALAR, Nullsv);
+
+    /* During cloning, return an undef token object so that _pushed() knows
+     * that it should not call methods and wait for _dup() to actually dup the
+     * object. */
+    if (param) {
+	SV *sv = newSV(0);
+	sv_magicext(sv, NULL, PERL_MAGIC_ext, &PerlIOVia_tag, 0, 0);
+	return sv;
+    }
+
+    arg = PerlIOVia_method(aTHX_ f, MYMethod(GETARG), G_SCALAR, Nullsv);
+    if (arg) {
+        /* arg is a temp, and PerlIOBase_dup() will explicitly free it */
+        SvREFCNT_inc(arg);
+    }
+    else {
+        arg = newSVpvn(HvNAME(s->stash), HvNAMELEN(s->stash));
+    }
+
+    return arg;
 }
 
 static PerlIO *
@@ -593,10 +620,30 @@ PerlIOVia_dup(pTHX_ PerlIO * f, PerlIO * o, CLONE_PARAMS * param,
 	      int flags)
 {
     if ((f = PerlIOBase_dup(aTHX_ f, o, param, flags))) {
-	/* Most of the fields will lazily set themselves up as needed
-	   stash and obj have been set up by the implied push
-	 */
+#ifdef USE_ITHREADS
+        if (param) {
+            /* For a non-interpreter dup stash and obj have been set up
+               by the implied push.
+
+               But if this is a clone for a new interpreter we need to
+               translate the objects to their dups.
+            */
+
+            PerlIOVia *fs = PerlIOSelf(f, PerlIOVia);
+            PerlIOVia *os = PerlIOSelf(o, PerlIOVia);
+
+            fs->obj = sv_dup_inc(os->obj, param);
+            fs->stash = (HV*)sv_dup((SV*)os->stash, param);
+            fs->var = sv_dup_inc(os->var, param);
+            fs->cnt = os->cnt;
+
+            /* fh, io, cached CVs left as NULL, PerlIOVia_method()
+               will reinitialize them if needed */
+        }
+#endif
+        /* for a non-threaded dup fs->obj and stash should be set by _pushed() */
     }
+
     return f;
 }
 

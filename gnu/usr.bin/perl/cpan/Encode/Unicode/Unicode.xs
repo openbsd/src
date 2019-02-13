@@ -1,5 +1,5 @@
 /*
- $Id: Unicode.xs,v 2.14 2016/01/22 06:33:07 dankogai Exp $
+ $Id: Unicode.xs,v 2.17 2018/02/08 00:26:15 dankogai Exp $
  */
 
 #define PERL_NO_GET_CONTEXT
@@ -125,36 +125,62 @@ PROTOTYPES: DISABLE
 
 #define attr(k, l)  (hv_exists((HV *)SvRV(obj),k,l) ? \
     *hv_fetch((HV *)SvRV(obj),k,l,0) : &PL_sv_undef)
-#define attr_true(k, l)  (hv_exists((HV *)SvRV(obj),k,l) ? \
-    SvTRUE(*hv_fetch((HV *)SvRV(obj),k,l,0)) : FALSE)
 
 void
-decode_xs(obj, str, check = 0)
+decode(obj, str, check = 0)
 SV *	obj
 SV *	str
 IV	check
 CODE:
 {
-    U8 endian    = *((U8 *)SvPV_nolen(attr("endian", 6)));
-    int size     = SvIV(attr("size", 4));
+    SV *sve      = attr("endian", 6);
+    U8 endian    = *((U8 *)SvPV_nolen(sve));
+    SV *svs      = attr("size", 4);
+    int size     = SvIV(svs);
     int ucs2     = -1; /* only needed in the event of surrogate pairs */
     SV *result   = newSVpvn("",0);
     STRLEN usize = (size > 0 ? size : 1); /* protect against rogue size<=0 */
     STRLEN ulen;
     STRLEN resultbuflen;
     U8 *resultbuf;
-    U8 *s = (U8 *)SvPVbyte(str,ulen);
-    U8 *e = (U8 *)SvEND(str);
+    U8 *s;
+    U8 *e;
+    bool modify = (check && !(check & ENCODE_LEAVE_SRC));
+    bool temp_result;
+
+    SvGETMAGIC(str);
+    if (!SvOK(str))
+        XSRETURN_UNDEF;
+    s = modify ? (U8 *)SvPV_force_nomg(str, ulen) : (U8 *)SvPV_nomg(str, ulen);
+    if (SvUTF8(str)) {
+        if (!modify) {
+            SV *tmp = sv_2mortal(newSVpvn((char *)s, ulen));
+            SvUTF8_on(tmp);
+            if (SvTAINTED(str))
+                SvTAINTED_on(tmp);
+            str = tmp;
+            s = (U8 *)SvPVX(str);
+        }
+        if (ulen) {
+            if (!utf8_to_bytes(s, &ulen))
+                croak("Wide character");
+            SvCUR_set(str, ulen);
+        }
+        SvUTF8_off(str);
+    }
+    e = s+ulen;
+
     /* Optimise for the common case of being called from PerlIOEncode_fill()
        with a standard length buffer. In this case the result SV's buffer is
        only used temporarily, so we can afford to allocate the maximum needed
        and not care about unused space. */
-    const bool temp_result = (ulen == PERLIO_BUFSIZ);
+    temp_result = (ulen == PERLIO_BUFSIZ);
 
     ST(0) = sv_2mortal(result);
     SvUTF8_on(result);
 
     if (!endian && s+size <= e) {
+	SV *sv;
 	UV bom;
 	endian = (size == 4) ? 'N' : 'n';
 	bom = enc_unpack(aTHX_ &s,e,size,endian);
@@ -183,8 +209,9 @@ CODE:
 	}
 #if 1
 	/* Update endian for next sequence */
-	if (attr_true("renewed", 7)) {
-	    hv_store((HV *)SvRV(obj),"endian",6,newSVpv((char *)&endian,1),0);
+	sv = attr("renewed", 7);
+	if (SvTRUE(sv)) {
+	    (void)hv_store((HV *)SvRV(obj),"endian",6,newSVpv((char *)&endian,1),0);
 	}
 #endif
     }
@@ -202,11 +229,12 @@ CODE:
 	U8 *d;
 	if (issurrogate(ord)) {
 	    if (ucs2 == -1) {
-		ucs2 = attr_true("ucs2", 4);
+		SV *sv = attr("ucs2", 4);
+		ucs2 = SvTRUE(sv);
 	    }
 	    if (ucs2 || size == 4) {
 		if (check) {
-		    croak("%"SVf":no surrogates allowed %"UVxf,
+		    croak("%" SVf ":no surrogates allowed %" UVxf,
 			  *hv_fetch((HV *)SvRV(obj),"Name",4,0),
 			  ord);
 		}
@@ -216,7 +244,7 @@ CODE:
 		UV lo;
 		if (!isHiSurrogate(ord)) {
 		    if (check) {
-			croak("%"SVf":Malformed HI surrogate %"UVxf,
+			croak("%" SVf ":Malformed HI surrogate %" UVxf,
 			      *hv_fetch((HV *)SvRV(obj),"Name",4,0),
 			      ord);
 		    }
@@ -231,7 +259,7 @@ CODE:
 		             break;
 		        }
 		        else {
-		             croak("%"SVf":Malformed HI surrogate %"UVxf,
+		             croak("%" SVf ":Malformed HI surrogate %" UVxf,
 				   *hv_fetch((HV *)SvRV(obj),"Name",4,0),
 				   ord);
 		        }
@@ -244,7 +272,7 @@ CODE:
 		    lo = enc_unpack(aTHX_ &s,e,size,endian);
 		    if (!isLoSurrogate(lo)) {
 			if (check) {
-			    croak("%"SVf":Malformed LO surrogate %"UVxf,
+			    croak("%" SVf ":Malformed LO surrogate %" UVxf,
 				  *hv_fetch((HV *)SvRV(obj),"Name",4,0),
 				  ord);
 			}
@@ -262,7 +290,7 @@ CODE:
 
 	if ((ord & 0xFFFE) == 0xFFFE || (ord >= 0xFDD0 && ord <= 0xFDEF)) {
 	    if (check) {
-		croak("%"SVf":Unicode character %"UVxf" is illegal",
+		croak("%" SVf ":Unicode character %" UVxf " is illegal",
 		      *hv_fetch((HV *)SvRV(obj),"Name",4,0),
 		      ord);
 	    } else {
@@ -287,7 +315,7 @@ CODE:
 	    resultbuflen = SvLEN(result);
 	}
 
-	d = uvuni_to_utf8_flags(resultbuf+SvCUR(result), ord,
+	d = uvchr_to_utf8_flags(resultbuf+SvCUR(result), ord,
                                             UNICODE_WARN_ILLEGAL_INTERCHANGE);
 	SvCUR_set(result, d - (U8 *)SvPVX(result));
     }
@@ -295,7 +323,7 @@ CODE:
     if (s < e) {
 	/* unlikely to happen because it's fixed-length -- dankogai */
 	if (check & ENCODE_WARN_ON_ERR) {
-	    Perl_warner(aTHX_ packWARN(WARN_UTF8),"%"SVf":Partial character",
+	    Perl_warner(aTHX_ packWARN(WARN_UTF8),"%" SVf ":Partial character",
 			*hv_fetch((HV *)SvRV(obj),"Name",4,0));
 	}
     }
@@ -308,6 +336,7 @@ CODE:
 	    SvCUR_set(str,0);
 	}
 	*SvEND(str) = '\0';
+	SvSETMAGIC(str);
     }
 
     if (!temp_result) shrink_buffer(result);
@@ -316,25 +345,46 @@ CODE:
 }
 
 void
-encode_xs(obj, utf8, check = 0)
+encode(obj, utf8, check = 0)
 SV *	obj
 SV *	utf8
 IV	check
 CODE:
 {
-    U8 endian = *((U8 *)SvPV_nolen(attr("endian", 6)));
-    const int size = SvIV(attr("size", 4));
+    SV *sve = attr("endian", 6);
+    U8 endian = *((U8 *)SvPV_nolen(sve));
+    SV *svs = attr("size", 4);
+    const int size = SvIV(svs);
     int ucs2 = -1; /* only needed if there is invalid_ucs2 input */
     const STRLEN usize = (size > 0 ? size : 1);
     SV *result = newSVpvn("", 0);
     STRLEN ulen;
-    U8 *s = (U8 *) SvPVutf8(utf8, ulen);
-    const U8 *e = (U8 *) SvEND(utf8);
+    U8 *s;
+    U8 *e;
+    bool modify = (check && !(check & ENCODE_LEAVE_SRC));
+    bool temp_result;
+
+    SvGETMAGIC(utf8);
+    if (!SvOK(utf8))
+        XSRETURN_UNDEF;
+    s = modify ? (U8 *)SvPV_force_nomg(utf8, ulen) : (U8 *)SvPV_nomg(utf8, ulen);
+    if (!SvUTF8(utf8)) {
+        if (!modify) {
+            SV *tmp = sv_2mortal(newSVpvn((char *)s, ulen));
+            if (SvTAINTED(utf8))
+                SvTAINTED_on(tmp);
+            utf8 = tmp;
+        }
+        sv_utf8_upgrade_nomg(utf8);
+        s = (U8 *)SvPV_nomg(utf8, ulen);
+    }
+    e = s+ulen;
+
     /* Optimise for the common case of being called from PerlIOEncode_flush()
        with a standard length buffer. In this case the result SV's buffer is
        only used temporarily, so we can afford to allocate the maximum needed
        and not care about unused space. */
-    const bool temp_result = (ulen == PERLIO_BUFSIZ);
+    temp_result = (ulen == PERLIO_BUFSIZ);
 
     ST(0) = sv_2mortal(result);
 
@@ -344,18 +394,20 @@ CODE:
     SvGROW(result, ((ulen+1) * usize));
 
     if (!endian) {
+	SV *sv;
 	endian = (size == 4) ? 'N' : 'n';
 	enc_pack(aTHX_ result,size,endian,BOM_BE);
 #if 1
 	/* Update endian for next sequence */
-	if (attr_true("renewed", 7)) {
-	    hv_store((HV *)SvRV(obj),"endian",6,newSVpv((char *)&endian,1),0);
+	sv = attr("renewed", 7);
+	if (SvTRUE(sv)) {
+	    (void)hv_store((HV *)SvRV(obj),"endian",6,newSVpv((char *)&endian,1),0);
 	}
 #endif
     }
     while (s < e && s+UTF8SKIP(s) <= e) {
 	STRLEN len;
-	UV ord = utf8n_to_uvuni(s, e-s, &len, (UTF8_DISALLOW_SURROGATE
+	UV ord = utf8n_to_uvchr(s, e-s, &len, (UTF8_DISALLOW_SURROGATE
                                                |UTF8_WARN_SURROGATE
                                                |UTF8_DISALLOW_FE_FF
                                                |UTF8_WARN_FE_FF
@@ -364,11 +416,12 @@ CODE:
 	if (size != 4 && invalid_ucs2(ord)) {
 	    if (!issurrogate(ord)) {
 		if (ucs2 == -1) {
-		    ucs2 = attr_true("ucs2", 4);
+		    SV *sv = attr("ucs2", 4);
+		    ucs2 = SvTRUE(sv);
 		}
 		if (ucs2 || ord > 0x10FFFF) {
 		    if (check) {
-			croak("%"SVf":code point \"\\x{%"UVxf"}\" too high",
+			croak("%" SVf ":code point \"\\x{%" UVxf "}\" too high",
 				  *hv_fetch((HV *)SvRV(obj),"Name",4,0),ord);
 		    }
 		    enc_pack(aTHX_ result,size,endian,FBCHAR);
@@ -394,7 +447,7 @@ CODE:
 	   But this is critical when you choose to LEAVE_SRC
 	   in which case we die */
 	if (check & (ENCODE_DIE_ON_ERR|ENCODE_LEAVE_SRC)) {
-	    Perl_croak(aTHX_ "%"SVf":partial character is not allowed "
+	    Perl_croak(aTHX_ "%" SVf ":partial character is not allowed "
 		       "when CHECK = 0x%" UVuf,
 		       *hv_fetch((HV *)SvRV(obj),"Name",4,0), check);
 	}
@@ -408,12 +461,11 @@ CODE:
 	    SvCUR_set(utf8,0);
 	}
 	*SvEND(utf8) = '\0';
+	SvSETMAGIC(utf8);
     }
 
     if (!temp_result) shrink_buffer(result);
     if (SvTAINTED(utf8)) SvTAINTED_on(result); /* propagate taintedness */
-
-    SvSETMAGIC(utf8);
 
     XSRETURN(1);
 }

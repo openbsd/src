@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
     eval { my $q = pack "q", 0 };
     skip_all('no 64-bit types') if $@;
 }

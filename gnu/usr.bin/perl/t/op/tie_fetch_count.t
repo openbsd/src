@@ -7,11 +7,14 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-    plan (tests => 345);
 }
+
+plan (tests => 343);
 
 use strict;
 use warnings;
+
+my $can_config = eval { require Config; 1 };
 
 my $count = 0;
 
@@ -116,8 +119,16 @@ $dummy  =   abs $var    ; check_count 'abs';
 $dummy  =   log $var    ; check_count 'log';
 $dummy  =  sqrt $var    ; check_count 'sqrt';
 $dummy  =   int $var    ; check_count 'int';
+SKIP: {
+    unless ($can_config) {
+        skip "no config (no infinity for int)", 1;
+    }
+    unless ($Config::Config{d_double_has_inf}) {
+        skip "no infinity for int", 1;
+    }
 $var = "inf" for 1..5;
 $dummy  =   int $var    ; check_count 'int $tied_inf';
+}
 $dummy  = atan2 $var, 1 ; check_count 'atan2';
 
 # Readline/glob
@@ -242,7 +253,6 @@ for ([chdir=>''],[chmod=>'0,'],[chown=>'0,0,'],[utime=>'0,0,'],
     check_count "$op $args\\\$tied_glob$postargs";
 }
 
-my $can_config = eval { require Config; 1 };
 SKIP:
 {
     skip "No Config", 4 unless $can_config;
@@ -285,14 +295,24 @@ pos$var = 0             ; check_count 'lvalue pos $utf8';
 $dummy=sprintf"%1s",$var; check_count 'sprintf "%1s", $utf8';
 $dummy=sprintf"%.1s",$var; check_count 'sprintf "%.1s", $utf8';
 
+my @fmt = qw(B b c D d i O o u U X x);
+
 tie $var, "main", 23;
-for (qw(B b c D d i O o p u U X x)) {
+for (@fmt) {
     $dummy=sprintf"%$_",$var; check_count "sprintf '%$_'"
 }
+SKIP: {
+unless ($can_config) {
+    skip "no Config (no infinity for sprintf @fmt)", scalar @fmt;
+}
+unless ($Config::Config{d_double_has_inf}) {
+    skip "no infinity for sprintf @fmt", scalar @fmt;
+}
 tie $var, "main", "Inf";
-for (qw(B b c D d i O o p u U X x)) {
+for (@fmt) {
     $dummy = eval { sprintf "%$_", $var };
                               check_count "sprintf '%$_', \$tied_inf"
+}
 }
 
 tie $var, "main", "\x{100}";

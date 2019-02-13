@@ -42,9 +42,9 @@ typedef struct yy_parser {
     /* Number of tokens to shift before error messages enabled.  */
     int		    yyerrstatus;
 
-    int		    stack_size;
     int		    yylen;	/* length of active reduction */
     yy_stack_frame  *stack;	/* base of stack */
+    yy_stack_frame  *stack_max1;/* (top-1)th element of allocated stack */
     yy_stack_frame  *ps;	/* current stack frame */
 
     /* lexer state */
@@ -56,8 +56,9 @@ typedef struct yy_parser {
     U8		lex_defer;	/* state after determined token */
     U8		lex_dojoin;	/* doing an array interpolation
 				   1 = @{...}  2 = ->@ */
-    U8		lex_expect;	/* UNUSED */
     U8		expect;		/* how to interpret ambiguous tokens */
+    bool	preambled;
+    bool        sub_no_recover; /* can't recover from a sublex error */
     I32		lex_formbrack;	/* bracket count at outer format level */
     OP		*lex_inpat;	/* in pattern $) and $| are special */
     OP		*lex_op;	/* extra info to pass back on op */
@@ -68,12 +69,14 @@ typedef struct yy_parser {
     SV		*lex_stuff;	/* runtime pattern from m// or s/// */
     I32		multi_start;	/* 1st line of multi-line string */
     I32		multi_end;	/* last line of multi-line string */
-    char	multi_open;	/* delimiter of said string */
-    char	multi_close;	/* delimiter of said string */
-    bool	preambled;
+    UV		multi_open;	/* delimiter of said string */
+    UV		multi_close;	/* delimiter of said string */
     bool        lex_re_reparsing; /* we're doing G_RE_REPARSING */
+    U8		lex_super_state;/* lexer state to save */
+    U16		lex_sub_inwhat;	/* "lex_inwhat" to use in sublex_push */
     I32		lex_allbrackets;/* (), [], {}, ?: bracket count */
-    SUBLEXINFO	sublex_info;
+    OP		*lex_sub_op;	/* current op in y/// or pattern */
+    SV		*lex_sub_repl;	/* repl of s/// used in sublex_push */
     LEXSHARED	*lex_shared;
     SV		*linestr;	/* current chunk of src text */
     char	*bufptr;	/* carries the cursor (current parsing
@@ -93,21 +96,30 @@ typedef struct yy_parser {
     U16		in_my;		/* we're compiling a "my"/"our" declaration */
     U8		lex_state;	/* next token is determined */
     U8		error_count;	/* how many compile errors so far, max 10 */
+    U8		sub_error_count; /* the number of errors before sublexing */
     HV		*in_my_stash;	/* declared class of this "my" declaration */
     PerlIO	*rsfp;		/* current source file pointer */
     AV		*rsfp_filters;	/* holds chain of active source filters */
-    U8		form_lex_state;	/* remember lex_state when parsing fmt */
 
     YYSTYPE	nextval[5];	/* value of next token, if any */
     I32		nexttype[5];	/* type of next token */
-    U32		nexttoke;
-
+    U8		nexttoke;
+    U8		form_lex_state;	/* remember lex_state when parsing fmt */
+    U8		lex_fakeeof;	/* precedence at which to fake EOF */
+    U8		lex_flags;
     COP		*saved_curcop;	/* the previous PL_curcop */
     char	tokenbuf[256];
     line_t	herelines;	/* number of lines in here-doc */
     line_t	preambling;	/* line # when processing $ENV{PERL5DB} */
-    U8		lex_fakeeof;	/* precedence at which to fake EOF */
-    U8		lex_flags;
+
+    bool        sig_seen;       /* the currently parsing sub has a signature */
+    /* these are valid while parsing a subroutine signature */
+    IV          sig_elems;      /* number of signature elements seen so far */
+    IV          sig_optelems;   /* number of optional signature elems seen */
+    char        sig_slurpy;     /* the sigil of the slurpy var (or null) */
+
+    bool        recheck_utf8_validity;
+
     PERL_BITFIELD16	in_pod:1;      /* lexer is within a =pod section */
     PERL_BITFIELD16	filtered:1;    /* source filters in evalbytes */
     PERL_BITFIELD16	saw_infix_sigil:1; /* saw & or * or % operator */

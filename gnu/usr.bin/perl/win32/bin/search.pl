@@ -626,7 +626,7 @@ sub read_rc
 
     { package magic; $^W= 0; } ## turn off warnings for when we run EXPR's
 
-    unless (open(RC, "$file")) {
+    unless (open(RC, '<', $file)) {
 	$use_default=1;
 	$file = "<internal default startup file>";
 	## no RC file -- use this default.
@@ -950,7 +950,7 @@ sub dodir
     }
 
     if ($DO_MAGIC_TESTS) {
-	if (!open(FILE_IN, $file)) {
+	if (!open(FILE_IN, '<', $file)) {
 	    &clear_message if $VERBOSE && $STDERR_SCREWS_STDOUT;
 	    warn qq/$0: can't open: $file\n/;
 	    next;
@@ -990,7 +990,7 @@ sub dodir
 	next;
     } else {
 	## if we weren't doing magic tests, file won't be open yet...
-	if (!$DO_MAGIC_TESTS && !open(FILE_IN, $file)) {
+	if (!$DO_MAGIC_TESTS && !open(FILE_IN, '<', $file)) {
 	    &clear_message if $VERBOSE && $STDERR_SCREWS_STDOUT;
 	    warn qq/$0: can't open: $file\n/;
 	    next;

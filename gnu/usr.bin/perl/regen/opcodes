@@ -57,8 +57,6 @@ padav		private array		ck_null		d0
 padhv		private hash		ck_null		d0
 padany		private value		ck_null		d0
 
-pushre		push regexp		ck_null		d/
-
 # References and stuff.
 
 rv2gv		ref-to-glob cast	ck_rvconst	ds1	
@@ -94,9 +92,8 @@ trans		transliteration (tr///)	ck_match	is"	S
 transr		transliteration (tr///)	ck_match	is"	S
 
 # Lvalue operators.
-# sassign is special-cased for op class
 
-sassign		scalar assignment	ck_sassign	s0
+sassign		scalar assignment	ck_sassign	s2	S S
 aassign		list assignment		ck_null		t2	L L
 
 chop		chop			ck_spair	mts%	L
@@ -134,6 +131,7 @@ i_add		integer addition (+)	ck_null		ifsT2	S S
 subtract	subtraction (-)		ck_null		IfsT2	S S
 i_subtract	integer subtraction (-)	ck_null		ifsT2	S S
 concat		concatenation (.) or string	ck_concat	fsT2	S S
+multiconcat	concatenation (.) or string	ck_null	sT+
 stringify	string			ck_stringify	fsT@	S
 
 left_shift	left bitshift (<<)	ck_bitop	fsT2	S S
@@ -147,10 +145,10 @@ le		numeric le (<=)		ck_cmp		Iifs2	S S<
 i_le		integer le (<=)		ck_cmp		ifs2	S S<
 ge		numeric ge (>=)		ck_cmp		Iifs2	S S<
 i_ge		integer ge (>=)		ck_cmp		ifs2	S S<
-eq		numeric eq (==)		ck_null		Iifs2	S S<
-i_eq		integer eq (==)		ck_null		ifs2	S S<
-ne		numeric ne (!=)		ck_null		Iifs2	S S<
-i_ne		integer ne (!=)		ck_null		ifs2	S S<
+eq		numeric eq (==)		ck_cmp		Iifs2	S S<
+i_eq		integer eq (==)		ck_cmp		ifs2	S S<
+ne		numeric ne (!=)		ck_cmp		Iifs2	S S<
+i_ne		integer ne (!=)		ck_cmp		ifs2	S S<
 ncmp		numeric comparison (<=>)	ck_null		Iifst2	S S<
 i_ncmp		integer comparison (<=>)	ck_null		ifst2	S S<
 
@@ -177,9 +175,7 @@ i_negate	integer negation (-)	ck_null		ifst1	S
 not		not			ck_null		ifs1	S
 complement	1's complement (~)	ck_bitop	fst1	S
 ncomplement	numeric 1's complement (~)	ck_bitop	fsT1	S
-# scomplement uses ck_bitop only for the experimental warning.  Once the
-# warning is gone, this can change to ck_null.
-scomplement	string 1's complement (~)	ck_bitop	fsT1	S
+scomplement	string 1's complement (~)	ck_null	fsT1	S
 
 smartmatch	smart match		ck_smartmatch	s2
 
@@ -231,8 +227,8 @@ aslice		array slice		ck_null		m@	A L
 kvaslice	index/value array slice	ck_null		m@	A L
 
 aeach		each on array		ck_each		d%	A
-akeys		keys on array		ck_each		t%	A
 avalues		values on array		ck_each		dt%	A
+akeys		keys on array		ck_each		t%	A
 
 # Hashes.
 
@@ -241,7 +237,7 @@ values		values			ck_each		dt%	H
 keys		keys			ck_each		t%	H
 delete		delete			ck_delete	%	S
 exists		exists			ck_exists	is%	S
-rv2hv		hash dereference	ck_rvconst	d1	
+rv2hv		hash dereference	ck_rvconst	dt1	
 helem		hash element		ck_null		s2	H S
 hslice		hash slice		ck_null		m@	H L
 kvhslice	key/value hash slice	ck_null		m@	H L
@@ -254,7 +250,7 @@ multideref	array or hash lookup	ck_null		ds+
 
 unpack		unpack			ck_fun		u@	S S?
 pack		pack			ck_fun		fmst@	S L
-split		split			ck_split	t@	S S S
+split		split			ck_split	t/	S S S
 join		join or string		ck_join		fmst@	S L
 
 # List operators.
@@ -295,10 +291,12 @@ andassign	logical and assignment (&&=)	ck_null		s|
 orassign	logical or assignment (||=)	ck_null		s|	
 dorassign	defined or assignment (//=)	ck_null		s|
 
-method		method lookup		ck_method	d.
 entersub	subroutine entry	ck_subr		dm1	L
 leavesub	subroutine exit		ck_null		1	
 leavesublv	lvalue subroutine return	ck_null		1	
+argcheck	check subroutine arguments	ck_null		+
+argelem		subroutine argument	ck_null		+
+argdefelem	subroutine argument default value	ck_null		|
 caller		caller			ck_fun		t%	S?
 warn		warn			ck_fun		imst@	L
 die		die			ck_fun		imst@	L
@@ -322,6 +320,7 @@ redo		redo			ck_null		s}
 dump		dump			ck_null		ds}	
 goto		goto			ck_null		s}	
 exit		exit			ck_fun		s%	S?
+method		method lookup		ck_method	d.
 method_named	method with known name	ck_null		d.
 method_super	super with known name	ck_null		d.
 method_redir	redirect method with known name	ck_null	d.
@@ -556,6 +555,7 @@ custom		unknown custom operator		ck_null		0
 
 # For CORE:: subs
 coreargs	CORE:: subroutine	ck_null		$	
+avhvswitch	Array/hash switch	ck_null		t1
 
 runcv		__SUB__			ck_null		s0
 

@@ -367,7 +367,7 @@ Unicode character should belong).
 
 Not very popular.  Needs CNS 11643-1 and -2 which are not available in
 this module.  CNS 11643 is supported (via euc-tw) in Encode::HanExtra.
-Autrijus Tang may add support for this encoding in his module in future.
+Audrey Tang may add support for this encoding in her module in future.
 
 =item Various HP-UX encodings
 

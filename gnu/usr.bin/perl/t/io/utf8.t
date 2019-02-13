@@ -2,10 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl'; require './charset_tools.pl';
-    skip_all_without_perlio();
+    set_up_inc('../lib');
 }
+skip_all_without_perlio();
 
 no utf8; # needed for use utf8 not griping about the raw octets
 
@@ -174,7 +174,7 @@ SKIP: {
 	local $SIG{__WARN__} = sub { push @warnings, $_[0]; };
 	eval { sprintf "%vd\n", $x };
 	is (scalar @warnings, 1);
-	like ($warnings[0], qr/Malformed UTF-8 character \(unexpected continuation byte 0x82, with no preceding start byte/);
+	like ($warnings[0], qr/Malformed UTF-8 character: \\x82 \(unexpected continuation byte 0x82, with no preceding start byte/);
     }
 }
 
@@ -313,6 +313,7 @@ is($failed, undef);
     # [perl #23428] Somethings rotten in unicode semantics
     open F, ">$a_file";
     binmode F, ":utf8";
+    no warnings qw(deprecated);
     syswrite(F, $a = chr(0x100));
     close F;
     is( ord($a), 0x100, '23428 syswrite should not downgrade scalar' );

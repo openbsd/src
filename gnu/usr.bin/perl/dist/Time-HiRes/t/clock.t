@@ -1,6 +1,7 @@
 use strict;
 
 use Test::More tests => 5;
+BEGIN { push @INC, '.' }
 use t::Watchdog;
 
 BEGIN { require_ok "Time::HiRes"; }
@@ -78,10 +79,16 @@ SKIP: {
 
 SKIP: {
     skip "no clock", 1 unless &Time::HiRes::d_clock;
+    skip "no CLOCKS_PER_SEC", 1 unless has_symbol("CLOCKS_PER_SEC"); 
     my @clock = Time::HiRes::clock();
+    # If we have a relatively low precision clock() and we haven't seen much
+    # CPU usage thus far with clock(), we will want to have a bit longer delay.
+    my $delay = $clock[0] < (5 / &Time::HiRes::CLOCKS_PER_SEC) ? 1e7 : 1e6;
+    printf("# CLOCKS_PER_SEC = %d\n", &Time::HiRes::CLOCKS_PER_SEC);
+    printf("# delay = %d\n", $delay);
     print("# clock = @clock\n");
     for my $i (1..3) {
-	for (my $j = 0; $j < 1e6; $j++) { }
+        for (my $j = 0; $j < $delay; $j++) { }
 	push @clock, Time::HiRes::clock();
 	print("# clock = @clock\n");
     }

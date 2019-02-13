@@ -8,7 +8,7 @@ use CPAN::Module;
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5001";
+$VERSION = "5.5003";
 
 sub look {
     my $self = shift;
@@ -21,6 +21,11 @@ sub undelay {
     delete $self->{later};
     for my $c ( $self->contains ) {
         my $obj = CPAN::Shell->expandany($c) or next;
+        if ($obj->id eq $self->id){
+            my $id = $obj->id;
+            $CPAN::Frontend->mywarn("$id seems to contain itself, skipping\n");
+            next;
+        }
         $obj->undelay;
     }
 }
@@ -39,7 +44,12 @@ sub color_cmd_tmps {
         && $color==1
         && $self->{incommandcolor}==$color;
     if ($depth>=$CPAN::MAX_RECURSION) {
-        die(CPAN::Exception::RecursiveDependency->new($ancestors));
+        my $e = CPAN::Exception::RecursiveDependency->new($ancestors);
+        if ($e->is_resolvable) {
+            return $self->{incommandcolor}=2;
+        } else {
+            die $e;
+        }
     }
     # warn "color_cmd_tmps $depth $color " . $self->id; # sleep 1;
 

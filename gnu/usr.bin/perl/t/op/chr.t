@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib); # ../lib needed for test.deparse
     require "./test.pl";
+    set_up_inc(qw(. ../lib)); # ../lib needed for test.deparse
 }
 
 plan tests => 45;

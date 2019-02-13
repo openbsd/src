@@ -84,6 +84,7 @@ my %skip;
     'cpan/ExtUtils-Install/t/lib/MakeMaker/Test/Setup/BFD.pm', # just a test module
     'cpan/ExtUtils-MakeMaker/t/lib/MakeMaker/Test/Setup/BFD.pm', # just a test module
     'cpan/ExtUtils-MakeMaker/t/lib/MakeMaker/Test/Setup/XS.pm',  # just a test module
+    'cpan/IO-Compress/lib/File/GlobMapper.pm', # upstream needs to supply $VERSION
     'cpan/Math-BigInt/t/Math/BigFloat/Subclass.pm', # just a test module
     'cpan/Math-BigInt/t/Math/BigInt/BareCalc.pm',   # just a test module
     'cpan/Math-BigInt/t/Math/BigInt/Scalar.pm',     # just a test module
@@ -95,6 +96,8 @@ my %skip;
     'cpan/version/t/coretests.pm', # just a test module
     'dist/Attribute-Handlers/demo/MyClass.pm', # it's just demonstration code
     'dist/Exporter/lib/Exporter/Heavy.pm',
+    'dist/Module-CoreList/lib/Module/CoreList.pm',
+    'dist/Module-CoreList/lib/Module/CoreList/Utils.pm',
     'lib/Carp/Heavy.pm',
     'lib/Config.pm',		# no version number but contents will vary
     'win32/FindExt.pm',
@@ -169,6 +172,7 @@ unless (%module_diffs) {
 }
 
 printf "1..%d\n" => scalar keys %module_diffs if $tap;
+print "#\n# Comparing against $tag_to_compare ....\n#\n" if $tap;
 
 my $count;
 my $diff_cmd = "git --no-pager diff $tag_to_compare ";
@@ -194,9 +198,14 @@ foreach my $pm_file (sort keys %module_diffs) {
         print "ok $count - $pm_file\n" if $tap;
     } else {
 	if ($tap) {
+            print "#\n# " . '-' x 75 . "\n"
+            . "# Version number ($pm_version) unchanged since"
+            . " $tag_to_compare, but contents have changed:\n#\n";
 	    foreach (sort @{$module_diffs{$pm_file}}) {
 		print "# $_" for `$diff_cmd $q$_$q`;
 	    }
+            print "# " . '-' x 75 . "\n";
+
 	    if (exists $skip_versions{$pm_file}
 		and grep $pm_version eq $_, @{$skip_versions{$pm_file}}) {
 		print "ok $count - SKIP $pm_file version $pm_version\n";

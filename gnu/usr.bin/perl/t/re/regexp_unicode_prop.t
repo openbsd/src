@@ -100,6 +100,9 @@ my @USER_DEFINED_PROPERTIES = (
    Dash                      => ['-'],
    ASCII_Hex_Digit           => ['!-', 'A'],
    IsAsciiHexAndDash         => ['-', 'A'],
+
+   # This overrides the official one
+   InLatin1                  => ['\x{0100}', '!\x{00FF}'],
 );
 
 my @USER_CASELESS_PROPERTIES = (
@@ -341,6 +344,10 @@ sub IsAsciiHexAndDash {<<'--'}
 +utf8::ASCII_Hex_Digit
 +utf8::Dash
 --
+
+sub InLatin1 {
+    return "0100\t10FFFF";
+}
 
 sub IsMyUpper {
     my $caseless = shift;

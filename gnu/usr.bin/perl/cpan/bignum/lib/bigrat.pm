@@ -1,10 +1,10 @@
 package bigrat;
 
-use 5.006;
+use 5.010;
 use strict;
 use warnings;
 
-our $VERSION = '0.42_01';
+our $VERSION = '0.49';
 
 use Exporter;
 our @ISA            = qw( bigint );
@@ -548,6 +548,24 @@ Compare this to:
         perl -Mbigrat -le 'print 12->is_odd()';
         perl -Mbignum=l,GMP -le 'print 7 ** 7777'
 
+=head1 BUGS
+
+For information about bugs and how to report them, see the BUGS section in the
+documentation available with the perldoc command.
+
+    perldoc bignum
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc bigrat
+
+For more information, see the SUPPORT section in the documentation available
+with the perldoc command.
+
+    perldoc bignum
+
 =head1 LICENSE
 
 This program is free software; you may redistribute it and/or modify it under
@@ -555,13 +573,23 @@ the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-Especially L<bignum>.
+L<bignum> and L<bigint>.
 
-L<Math::BigFloat>, L<Math::BigInt>, L<Math::BigRat> and L<Math::Big> as well
-as L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
+L<Math::BigInt>, L<Math::BigFloat>, L<Math::BigRat> and L<Math::Big> as well as
+L<Math::BigInt::FastCalc>, L<Math::BigInt::Pari> and L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 
+=over 4
+
+=item *
+
 (C) by Tels L<http://bloodgate.com/> in early 2002 - 2007.
+
+=item *
+
+Peter John Acklam E<lt>pjacklam@gmail.com<gt>, 2014-.
+
+=back
 
 =cut

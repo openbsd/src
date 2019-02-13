@@ -22,13 +22,13 @@ use vars    qw[ $VERBOSE $PREFER_BIN $FROM_EMAIL $USER_AGENT
                 $FTP_PASSIVE $TIMEOUT $DEBUG $WARN $FORCEIPV4
             ];
 
-$VERSION        = '0.48_01';
+$VERSION        = '0.56';
 $VERSION        = eval $VERSION;    # avoid warnings with development releases
 $PREFER_BIN     = 0;                # XXX TODO implement
 $FROM_EMAIL     = 'File-Fetch@example.com';
 $USER_AGENT     = "File::Fetch/$VERSION";
 $BLACKLIST      = [qw|ftp|];
-push @$BLACKLIST, qw|lftp| if $^O eq 'dragonfly';
+push @$BLACKLIST, qw|lftp| if $^O eq 'dragonfly' || $^O eq 'hpux';
 $METHOD_FAIL    = { };
 $FTP_PASSIVE    = 1;
 $TIMEOUT        = 0;
@@ -39,6 +39,7 @@ $FORCEIPV4      = 0;
 ### methods available to fetch the file depending on the scheme
 $METHODS = {
     http    => [ qw|lwp httptiny wget curl lftp fetch httplite lynx iosock| ],
+    https   => [ qw|lwp wget curl| ],
     ftp     => [ qw|lwp netftp wget curl lftp fetch ncftp ftp| ],
     file    => [ qw|lwp lftp file| ],
     rsync   => [ qw|rsync| ],
@@ -50,6 +51,9 @@ local $Params::Check::VERBOSE               = 1;
 local $Params::Check::VERBOSE               = 1;
 local $Module::Load::Conditional::VERBOSE   = 0;
 local $Module::Load::Conditional::VERBOSE   = 0;
+
+### Fix CVE-2016-1238 ###
+local $Module::Load::Conditional::FORCE_SAFE_INC = 1;
 
 ### see what OS we are on, important for file:// uris ###
 use constant ON_WIN     => ($^O eq 'MSWin32');
@@ -164,6 +168,7 @@ http://www.abc.net.au/ the contents retrieved may be from a remote file called
         path            => { default => '/' },
         file            => { required => 1 },
         uri             => { required => 1 },
+        userinfo        => { default => '' },
         vol             => { default => '' }, # windows for file:// uris
         share           => { default => '' }, # windows for file:// uris
         file_default    => { default => 'file_default' },
@@ -401,7 +406,7 @@ sub _parse_uri {
     } else {
         ### using anything but qw() in hash slices may produce warnings
         ### in older perls :-(
-        @{$href}{ qw(host path) } = $uri =~ m|([^/]*)(/.*)$|s;
+        @{$href}{ qw(userinfo host path) } = $uri =~ m|(?:([^\@:]*:[^\:\@]*)@)?([^/]*)(/.*)$|s;
     }
 
     ### split the path into file + dir ###
@@ -567,8 +572,10 @@ sub _lwp_fetch {
 
     };
 
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
+    if ($self->scheme eq 'https') {
+        $use_list->{'LWP::Protocol::https'} = '0';
+    }
+
     unless( can_load( modules => $use_list ) ) {
         $METHOD_FAIL->{'lwp'} = 1;
         return;
@@ -582,7 +589,12 @@ sub _lwp_fetch {
     ### special rules apply for file:// uris ###
     $uri->scheme( $self->scheme );
     $uri->host( $self->scheme eq 'file' ? '' : $self->host );
-    $uri->userinfo("anonymous:$FROM_EMAIL") if $self->scheme ne 'file';
+
+    if ($self->userinfo) {
+        $uri->userinfo($self->userinfo);
+    } elsif ($self->scheme ne 'file') {
+        $uri->userinfo("anonymous:$FROM_EMAIL");
+    }
 
     ### set up the useragent object
     my $ua = LWP::UserAgent->new();
@@ -621,8 +633,6 @@ sub _httptiny_fetch {
 
     };
 
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
     unless( can_load(modules => $use_list) ) {
         $METHOD_FAIL->{'httptiny'} = 1;
         return;
@@ -659,11 +669,9 @@ sub _httplite_fetch {
     ### modules required to download with lwp ###
     my $use_list = {
         'HTTP::Lite'    => '2.2',
-
+        'MIME::Base64'  => '0',
     };
 
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
     unless( can_load(modules => $use_list) ) {
         $METHOD_FAIL->{'httplite'} = 1;
         return;
@@ -678,6 +686,11 @@ sub _httplite_fetch {
       # Naughty naughty but there isn't any accessor/setter
       $http->{timeout} = $TIMEOUT if $TIMEOUT;
       $http->http11_mode(1);
+
+      if ($self->userinfo) {
+          my $encoded = MIME::Base64::encode($self->userinfo, '');
+          $http->add_req_header("Authorization", "Basic $encoded");
+      }
 
       my $fh = FileHandle->new;
 
@@ -739,8 +752,6 @@ sub _iosock_fetch {
         'IO::Select'       => '0.0',
     };
 
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
     unless( can_load(modules => $use_list) ) {
         $METHOD_FAIL->{'iosock'} = 1;
         return;
@@ -822,8 +833,6 @@ sub _netftp_fetch {
     check( $tmpl, \%hash ) or return;
 
     ### required modules ###
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
     my $use_list = { 'Net::FTP' => 0 };
 
     unless( can_load( modules => $use_list ) ) {
@@ -1512,7 +1521,7 @@ Below is a mapping of what utilities will be used in what order
 for what schemes, if available:
 
     file    => LWP, lftp, file
-    http    => LWP, HTTP::Lite, wget, curl, lftp, fetch, lynx, iosock
+    http    => LWP, HTTP::Tiny, wget, curl, lftp, fetch, HTTP::Lite, lynx, iosock
     ftp     => LWP, Net::FTP, wget, curl, lftp, fetch, ncftp, ftp
     rsync   => rsync
     git     => git

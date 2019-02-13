@@ -1,6 +1,5 @@
 # Common tools for test files files to find the locales which exist on the
-# system.  Caller should have defined ok() for the unlikely event that setup
-# here fails, and should have verified that this isn't miniperl before calling
+# system.  Caller should have verified that this isn't miniperl before calling
 # the functions.
 
 # Note that it's okay that some languages have their native names
@@ -11,23 +10,120 @@
 # Functions whose names begin with underscore are internal helper functions
 # for this file, and are not to be used by outside callers.
 
+use Config;
+use strict;
+
 eval { require POSIX; import POSIX 'locale_h'; };
-$has_locale_h = ! $@;
+my $has_locale_h = ! $@;
+
+my @known_categories = ( qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY
+                            LC_NUMERIC LC_TIME LC_ADDRESS LC_IDENTIFICATION
+                            LC_MEASUREMENT LC_PAPER LC_TELEPHONE));
+my @platform_categories;
+
+# LC_ALL can be -1 on some platforms.  And, in fact the implementors could
+# legally use any integer to represent any category.  But it makes the most
+# sense for them to have used small integers.  Below, we create new locale
+# numbers for ones missing from this machine.  We make them very negative,
+# hopefully more negative than anything likely to be a valid category on the
+# platform, but also below is a check to be sure that our guess is valid.
+my $max_bad_category_number = -1000000;
+
+# Initialize this hash so that it looks like e.g.,
+#   6 => 'CTYPE',
+# where 6 is the value of &POSIX::LC_CTYPE
+my %category_name;
+my %category_number;
+if ($has_locale_h) {
+    my $number_for_missing_category = $max_bad_category_number;
+    foreach my $name (@known_categories) {
+        my $number = eval "&POSIX::$name";
+        if ($@) {
+            # Use a negative number (smaller than any legitimate category
+            # number) if the platform doesn't support this category, so we
+            # have an entry for all the ones that might be specified in calls
+            # to us.
+            $number = $number_for_missing_category-- if $@;
+        }
+        elsif (   $number !~ / ^ -? \d+ $ /x
+               || $number <=  $max_bad_category_number)
+        {
+            # We think this should be an int.  And it has to be larger than
+            # any of our synthetic numbers.
+            die "Unexpected locale category number '$number' for $name"
+        }
+        else {
+            push @platform_categories, $name;
+        }
+
+        $name =~ s/LC_//;
+        $category_name{$number} = "$name";
+        $category_number{$name} = $number;
+    }
+}
+
+sub _my_diag($) {
+    my $message = shift;
+    if (defined &main::diag) {
+        diag($message);
+    }
+    else {
+        local($\, $", $,) = (undef, ' ', '');
+        print STDERR $message, "\n";
+    }
+}
+
+sub _my_fail($) {
+    my $message = shift;
+    if (defined &main::fail) {
+        fail($message);
+    }
+    else {
+        local($\, $", $,) = (undef, ' ', '');
+        print "not ok 0 $message\n";
+    }
+}
 
 sub _trylocale ($$$$) { # For use only by other functions in this file!
 
     # Adds the locale given by the first parameter to the list given by the
-    # 3rd iff the platform supports the locale in each of the categories given
-    # by the 2nd parameter, which is either a single category or a reference
-    # to a list of categories The 4th parameter is true if to reject locales
-    # that aren't apparently fully compatible with Perl.
+    # 3rd iff the platform supports the locale in each of the category numbers
+    # given by the 2nd parameter, which is either a single category or a
+    # reference to a list of categories.  The list MUST be sorted so that
+    # CTYPE is first, COLLATE is last unless ALL is present, in which case
+    # that comes after COLLATE.  This is because locale.c detects bad locales
+    # only with CTYPE, and COLLATE on some platforms can core dump if it is a
+    # bad locale.
+    #
+    # The 4th parameter is true if to accept locales that aren't apparently
+    # fully compatible with Perl.
 
     my $locale = shift;
     my $categories = shift;
     my $list = shift;
-    my $only_plays_well = shift;
+    my $allow_incompatible = shift;
 
     return if ! $locale || grep { $locale eq $_ } @$list;
+
+    # This is a toy (pig latin) locale that is not fully implemented on some
+    # systems
+    return if $locale =~ / ^ pig $ /ix;
+
+    # As of 6.3, this platform's locale handling is basically broken.  khw
+    # filed a bug report (no ticket number was returned), and it is supposedly
+    # going to change in a future release, so the statements here below sunset
+    # for any larger version, at which point this may start failing and have
+    # to be revisited.
+    #
+    # Given a legal individual category, basically whatever you set the locale
+    # to, the return from setlocale() indicates that it has taken effect, even
+    # if it hasn't.  However, the return from querying LC_ALL won't reflect
+    # this.
+    if ($Config{osname} =~ /openbsd/i && $locale !~ / ^ (?: C | POSIX ) $/ix) {
+        my ($major, $minor) = $Config{osvers} =~ / ^ ( \d+ ) \. ( \d+ ) /ax;
+        return if ! defined $major || ! defined $minor
+                         || $major < 6 || ($major == 6 && $minor <= 3);
+    }
 
     $categories = [ $categories ] unless ref $categories;
 
@@ -37,20 +133,29 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
     use warnings 'locale';
 
     local $SIG{__WARN__} = sub {
-        $badutf8 = 1 if $_[0] =~ /Malformed UTF-8/;
-        $plays_well = 0 if $_[0] =~ /Locale .* may not work well/i
+        $badutf8 = 1 if grep { /Malformed UTF-8/ } @_;
+        $plays_well = 0 if grep {
+                    /Locale .* may not work well(?#
+                   )|The Perl program will use the expected meanings/i
+            } @_;
     };
 
+    # Incompatible locales aren't warned about unless using locales.
+    use locale;
+
     foreach my $category (@$categories) {
+        die "category '$category' must instead be a number"
+                                            unless $category =~ / ^ -? \d+ $ /x;
+
         return unless setlocale($category, $locale);
-        return if $only_plays_well && ! $plays_well;
+        last if $badutf8 || ! $plays_well;
     }
 
     if ($badutf8) {
-        ok(0, "Verify locale name doesn't contain malformed utf8");
+        _my_fail("Verify locale name doesn't contain malformed utf8");
         return;
     }
-    push @$list, $locale;
+    push @$list, $locale if $plays_well || $allow_incompatible;
 }
 
 sub _decode_encodings { # For use only by other functions in this file!
@@ -80,40 +185,11 @@ sub _decode_encodings { # For use only by other functions in this file!
     return @enc;
 }
 
-# LC_ALL can be -1 on some platforms.  And, in fact the implementors could
-# legally use any integer to represent any category.  But it makes the most
-# sense for them to have used small integers.  Below, we create new locale
-# numbers for ones missing from this machine.  We make them very negative,
-# hopefully more negative than anything likely to be a valid category on the
-# platform, but also below is a check to be sure that our guess is valid.
-my $max_bad_category_number = -1000000;
+sub valid_locale_categories() {
+    # Returns a list of the locale categories (expressed as strings, like
+    # "LC_ALL) known to this program that are available on this platform.
 
-# Initialize this hash so that it looks like e.g.,
-#   6 => 'CTYPE',
-# where 6 is the value of &POSIX::LC_CTYPE
-my %category_name;
-unless ($@) {
-    my $number_for_missing_category = $max_bad_category_number;
-    foreach my $name (qw(ALL COLLATE CTYPE MESSAGES MONETARY NUMERIC TIME)) {
-        my $number = eval "&POSIX::LC_$name";
-
-        if ($@) {
-            # Use a negative number (smaller than any legitimate category
-            # number) if the platform doesn't support this category, so we
-            # have an entry for all the ones that might be specified in calls
-            # to us.
-            $number = $number_for_missing_category-- if $@;
-        }
-        elsif (   $number !~ / ^ -? \d+ $ /x
-               || $number <=  $max_bad_category_number)
-        {
-            # We think this should be an int.  And it has to be larger than
-            # any of our synthetic numbers.
-            die "Unexpected locale category number '$number' for LC_$name"
-        }
-
-        $category_name{$number} = "$name";
-    }
+    return @platform_categories;
 }
 
 sub locales_enabled(;$) {
@@ -121,19 +197,22 @@ sub locales_enabled(;$) {
     # 1.
     #
     # The optional parameter is a reference to a list of individual POSIX
-    # locale categories.  If present, this function also returns 0 if any of
-    # them are individually not available on this platform; otherwise 1.
-    # Actually, it is acceptable for the list to be just a simple scalar
-    # denoting a single category.
+    # locale categories.  If any of the individual categories specified by the
+    # optional parameter is all digits (and an optional leading minus), it is
+    # taken to be the C enum for the category (e.g., &POSIX::LC_CTYPE).
+    # Otherwise it should be a string name of the category, like 'LC_TIME'.
+    # The initial 'LC_' is optional.  It is a fatal error to call this with
+    # something that isn't a known category to this file.
     #
-    # If any of the individual categories specified by the optional parameter
-    # is all digits (and an optional leading minus), it is taken to be the C
-    # enum for the category (e.g., &POSIX::LC_CTYPE).  Otherwise it should be
-    # a string name of the category, like 'LC_TIME'.  The initial 'LC_' is
-    # optional.  It is a fatal error to call this with something that isn't a
-    # known category
-
-    use Config;
+    # This optional parameter denotes which POSIX locale categories must be
+    # available on the platform.  If any aren't available, this function
+    # returns 0; otherwise it returns 1 and changes the list for the caller so
+    # that any category names are converted into their equivalent numbers, and
+    # sorts it to match the expectations of _trylocale.
+    #
+    # It is acceptable for the second parameter to be just a simple scalar
+    # denoting a single category (either name or number).  No conversion into
+    # a number is done in this case.
 
     return 0 unless    $Config{d_setlocale}
                         # I (khw) cargo-culted the '?' in the pattern on the
@@ -143,10 +222,24 @@ sub locales_enabled(;$) {
 
     # Done with the global possibilities.  Now check if any passed in category
     # is disabled.
+
     my $categories_ref = shift;
+    my $return_categories_numbers = 0;
+    my @categories_numbers;
+    my $has_LC_ALL = 0;
+    my $has_LC_COLLATE = 0;
+
     if (defined $categories_ref) {
-        $categories_ref = [ $categories_ref ] if ! ref $categories_ref;
-        my @local_categories_copy = @$categories_ref;
+        my @local_categories_copy;
+
+        if (ref $categories_ref) {
+            @local_categories_copy = @$$categories_ref;
+            $return_categories_numbers = 1;
+        }
+        else {  # Single category passed in
+            @local_categories_copy = $categories_ref;
+        }
+
         for my $category_name_or_number (@local_categories_copy) {
             my $name;
             my $number;
@@ -174,25 +267,60 @@ sub locales_enabled(;$) {
 
             eval "defined &POSIX::LC_$name";
             return 0 if $@;
+
+            if ($return_categories_numbers) {
+                if ($name eq 'CTYPE') {
+                    unshift @categories_numbers, $number;   # Always first
+                }
+                elsif ($name eq 'ALL') {
+                    $has_LC_ALL = 1;
+                }
+                elsif ($name eq 'COLLATE') {
+                    $has_LC_COLLATE = 1;
+                }
+                else {
+                    push @categories_numbers, $number;
+                }
+            }
         }
+    }
+
+    if ($return_categories_numbers) {
+
+        # COLLATE comes after all other locales except ALL, which comes last
+        if ($has_LC_COLLATE) {
+            push @categories_numbers, $category_number{'COLLATE'};
+        }
+        if ($has_LC_ALL) {
+            push @categories_numbers, $category_number{'ALL'};
+        }
+        $$categories_ref = \@categories_numbers;
     }
 
     return 1;
 }
 
 
-sub find_locales ($;$) {  # Returns an array of all the locales we found on the
-                          # system.  If the optional 2nd parameter is
-                          # non-zero, the list is restricted to those locales
-                          # that play well with Perl.
-                          # The first parameter is either a single locale
-                          # category or a reference to a list of categories to
-                          # find valid locales for it (or in the case of
-                          # multiple) for all of them.
-    my $categories = shift;
-    my $only_plays_well = shift // 0;
+sub find_locales ($;$) {
 
-    return unless locales_enabled($categories);
+    # Returns an array of all the locales we found on the system.  If the
+    # optional 2nd parameter is non-zero, the list includes all found locales;
+    # otherwise it is restricted to those locales that play well with Perl, as
+    # far as we can easily determine.
+    #
+    # The first parameter is either a single locale category or a reference to
+    # a list of categories to find valid locales for it (or in the case of
+    # multiple) for all of them.  Each category can be a name (like 'LC_ALL'
+    # or simply 'ALL') or the C enum value for the category.
+
+    my $categories = shift;
+    my $allow_incompatible = shift // 0;
+
+    $categories = [ $categories ] unless ref $categories;
+    return unless locales_enabled(\$categories);
+
+    # Note, the subroutine call above converts the $categories into a form
+    # suitable for _trylocale().
 
     # Visual C's CRT goes silly on strings of the form "en_US.ISO8859-1"
     # and mingw32 uses said silly CRT
@@ -206,16 +334,17 @@ sub find_locales ($;$) {  # Returns an array of all the locales we found on the
     # UWIN seems to loop after taint tests, just skip for now
     return if ($^O =~ /^uwin/);
 
-    _trylocale("C", $categories, \@Locale, $only_plays_well);
-    _trylocale("POSIX", $categories, \@Locale, $only_plays_well);
-    foreach (0..15) {
-        _trylocale("ISO8859-$_", $categories, \@Locale, $only_plays_well);
-        _trylocale("iso8859$_", $categories, \@Locale, $only_plays_well);
-        _trylocale("iso8859-$_", $categories, \@Locale, $only_plays_well);
-        _trylocale("iso_8859_$_", $categories, \@Locale, $only_plays_well);
-        _trylocale("isolatin$_", $categories, \@Locale, $only_plays_well);
-        _trylocale("isolatin-$_", $categories, \@Locale, $only_plays_well);
-        _trylocale("iso_latin_$_", $categories, \@Locale, $only_plays_well);
+    my @Locale;
+    _trylocale("C", $categories, \@Locale, $allow_incompatible);
+    _trylocale("POSIX", $categories, \@Locale, $allow_incompatible);
+    foreach (1..16) {
+        _trylocale("ISO8859-$_", $categories, \@Locale, $allow_incompatible);
+        _trylocale("iso8859$_", $categories, \@Locale, $allow_incompatible);
+        _trylocale("iso8859-$_", $categories, \@Locale, $allow_incompatible);
+        _trylocale("iso_8859_$_", $categories, \@Locale, $allow_incompatible);
+        _trylocale("isolatin$_", $categories, \@Locale, $allow_incompatible);
+        _trylocale("isolatin-$_", $categories, \@Locale, $allow_incompatible);
+        _trylocale("iso_latin_$_", $categories, \@Locale, $allow_incompatible);
     }
 
     # Sanitize the environment so that we can run the external 'locale'
@@ -228,7 +357,7 @@ sub find_locales ($;$) {  # Returns an array of all the locales we found on the
     delete local @ENV{qw(IFS CDPATH ENV BASH_ENV)};
 
     if (-x "/usr/bin/locale"
-        && open(LOCALES, "/usr/bin/locale -a 2>/dev/null|"))
+        && open(LOCALES, '-|', "/usr/bin/locale -a 2>/dev/null"))
     {
         while (<LOCALES>) {
             # It seems that /usr/bin/locale steadfastly outputs 8 bit data, which
@@ -236,7 +365,7 @@ sub find_locales ($;$) {  # Returns an array of all the locales we found on the
             # locales will cause all IO hadles to default to (assume) utf8
             next unless utf8::valid($_);
             chomp;
-            _trylocale($_, $categories, \@Locale, $only_plays_well);
+            _trylocale($_, $categories, \@Locale, $allow_incompatible);
         }
         close(LOCALES);
     } elsif ($^O eq 'VMS'
@@ -248,7 +377,7 @@ sub find_locales ($;$) {  # Returns an array of all the locales we found on the
         opendir(LOCALES, "SYS\$I18N_LOCALE:");
         while ($_ = readdir(LOCALES)) {
             chomp;
-            _trylocale($_, $categories, \@Locale, $only_plays_well);
+            _trylocale($_, $categories, \@Locale, $allow_incompatible);
         }
         close(LOCALES);
     } elsif (($^O eq 'openbsd' || $^O eq 'bitrig' ) && -e '/usr/share/locale') {
@@ -260,7 +389,7 @@ sub find_locales ($;$) {  # Returns an array of all the locales we found on the
         opendir(LOCALES, '/usr/share/locale');
         while ($_ = readdir(LOCALES)) {
             chomp;
-            _trylocale($_, $categories, \@Locale, $only_plays_well);
+            _trylocale($_, $categories, \@Locale, $allow_incompatible);
         }
         close(LOCALES);
     } else { # Final fallback.  Try our list of locales hard-coded here
@@ -268,12 +397,16 @@ sub find_locales ($;$) {  # Returns an array of all the locales we found on the
         # This is going to be slow.
         my @Data;
 
-        # Locales whose name differs if the utf8 bit is on are stored in these two
-        # files with appropriate encodings.
-        if ($^H & 0x08 || (${^OPEN} || "") =~ /:utf8/) {
-            @Data = do "lib/locale/utf8";
-        } else {
-            @Data = do "lib/locale/latin1";
+        # Locales whose name differs if the utf8 bit is on are stored in these
+        # two files with appropriate encodings.
+        my $data_file = ($^H & 0x08 || (${^OPEN} || "") =~ /:utf8/)
+                        ? _source_location() . "/lib/locale/utf8"
+                        : _source_location() . "/lib/locale/latin1";
+        if (-e $data_file) {
+            @Data = do $data_file;
+        }
+        else {
+            _my_diag(__FILE__ . ":" . __LINE__ . ": '$data_file' doesn't exist");
         }
 
         # The rest of the locales are in this file.
@@ -282,33 +415,35 @@ sub find_locales ($;$) {  # Returns an array of all the locales we found on the
         foreach my $line (@Data) {
             my ($locale_name, $language_codes, $country_codes, $encodings) =
                 split /:/, $line;
+            _my_diag(__FILE__ . ":" . __LINE__ . ": Unexpected syntax in '$line'")
+                                                     unless defined $locale_name;
             my @enc = _decode_encodings($encodings);
             foreach my $loc (split(/ /, $locale_name)) {
-                _trylocale($loc, $categories, \@Locale, $only_plays_well);
+                _trylocale($loc, $categories, \@Locale, $allow_incompatible);
                 foreach my $enc (@enc) {
                     _trylocale("$loc.$enc", $categories, \@Locale,
-                                                            $only_plays_well);
+                                                            $allow_incompatible);
                 }
                 $loc = lc $loc;
                 foreach my $enc (@enc) {
                     _trylocale("$loc.$enc", $categories, \@Locale,
-                                                            $only_plays_well);
+                                                            $allow_incompatible);
                 }
             }
             foreach my $lang (split(/ /, $language_codes)) {
-                _trylocale($lang, $categories, \@Locale, $only_plays_well);
+                _trylocale($lang, $categories, \@Locale, $allow_incompatible);
                 foreach my $country (split(/ /, $country_codes)) {
                     my $lc = "${lang}_${country}";
-                    _trylocale($lc, $categories, \@Locale, $only_plays_well);
+                    _trylocale($lc, $categories, \@Locale, $allow_incompatible);
                     foreach my $enc (@enc) {
                         _trylocale("$lc.$enc", $categories, \@Locale,
-                                                            $only_plays_well);
+                                                            $allow_incompatible);
                     }
                     my $lC = "${lang}_\U${country}";
-                    _trylocale($lC, $categories, \@Locale, $only_plays_well);
+                    _trylocale($lC, $categories, \@Locale, $allow_incompatible);
                     foreach my $enc (@enc) {
                         _trylocale("$lC.$enc", $categories, \@Locale,
-                                                            $only_plays_well);
+                                                            $allow_incompatible);
                     }
                 }
             }
@@ -378,9 +513,7 @@ sub find_utf8_ctype_locale (;$) { # Return the name of a locale that core Perl
 
     if (! defined $locales_ref) {
 
-        my @locales = find_locales(&POSIX::LC_CTYPE(),
-                                   1 # Reject iffy locales.
-                                  );
+        my @locales = find_locales(&POSIX::LC_CTYPE());
         $locales_ref = \@locales;
     }
 
@@ -389,6 +522,22 @@ sub find_utf8_ctype_locale (;$) { # Return the name of a locale that core Perl
     }
 
     return;
+}
+
+# returns full path to the directory containing the current source
+# file, inspired by mauke's Dir::Self
+sub _source_location {
+    require File::Spec;
+
+    my $caller_filename = (caller)[1];
+
+    my $loc = File::Spec->rel2abs(
+        File::Spec->catpath(
+            (File::Spec->splitpath($caller_filename))[0, 1], ''
+        )
+    );
+
+    return ($loc =~ /^(.*)$/)[0]; # untaint
 }
 
 1

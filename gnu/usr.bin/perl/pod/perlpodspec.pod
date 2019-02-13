@@ -480,7 +480,7 @@ the current document.
 
 Discussed briefly in L<perlpod/"Formatting Codes">.
 
-This code is unusual is that it should have no content.  That is,
+This code is unusual in that it should have no content.  That is,
 a processor may complain if it sees C<ZE<lt>potatoesE<gt>>.  Whether
 or not it complains, the I<potatoes> text should ignored.
 
@@ -837,7 +837,7 @@ is noncompliant behavior.)
 Authors of Pod formatters/processors should make every effort to
 avoid writing their own Pod parser.  There are already several in
 CPAN, with a wide range of interface styles -- and one of them,
-Pod::Parser, comes with modern versions of Perl.
+Pod::Simple, comes with modern versions of Perl.
 
 =item *
 

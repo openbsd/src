@@ -5,14 +5,14 @@ require 5;
 package I18N::LangTags::Detect;
 use strict;
 
-use vars qw( @ISA $VERSION $MATCH_SUPERS $USING_LANGUAGE_TAGS
-             $USE_LITERALS $MATCH_SUPERS_TIGHTLY);
+our ( $MATCH_SUPERS, $USING_LANGUAGE_TAGS,
+             $USE_LITERALS, $MATCH_SUPERS_TIGHTLY);
 
 BEGIN { unless(defined &DEBUG) { *DEBUG = sub () {0} } }
  # define the constant 'DEBUG' at compile-time
 
-$VERSION = "1.05_01";
-@ISA = ();
+our $VERSION = "1.07";
+our @ISA = ();
 use I18N::LangTags qw(alternate_language_tags locale2language_tag);
 
 sub _uniq { my %seen; return grep(!($seen{$_}++), @_); }

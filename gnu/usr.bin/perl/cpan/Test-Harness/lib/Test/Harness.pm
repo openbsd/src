@@ -31,11 +31,11 @@ Test::Harness - Run Perl standard test scripts with statistics
 
 =head1 VERSION
 
-Version 3.36
+Version 3.42
 
 =cut
 
-our $VERSION = '3.36_01';
+our $VERSION = '3.42';
 
 # Backwards compatibility for exportable variable names.
 *verbose  = *Verbose;
@@ -147,6 +147,7 @@ sub runtests {
     my $harness   = _new_harness();
     my $aggregate = TAP::Parser::Aggregator->new();
 
+    local $ENV{PERL_USE_UNSAFE_INC} = 1 if not exists $ENV{PERL_USE_UNSAFE_INC};
     _aggregate( $harness, $aggregate, @tests );
 
     $harness->formatter->summary($aggregate);
@@ -354,6 +355,7 @@ sub execute_tests {
         }
     );
 
+    local $ENV{PERL_USE_UNSAFE_INC} = 1 if not exists $ENV{PERL_USE_UNSAFE_INC};
     _aggregate( $harness, $aggregate, @{ $args{tests} } );
 
     $tot{bench} = $aggregate->elapsed;

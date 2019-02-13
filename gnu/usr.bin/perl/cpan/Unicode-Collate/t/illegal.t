@@ -30,7 +30,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..136\n"; } # 81 + 5 x @Versions
+BEGIN { $| = 1; print "1..156\n"; } # 81 + 5 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -192,7 +192,7 @@ my $out = Unicode::Collate->new(
     overrideOut => sub { 0xFFFD },
 );
 
-my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24, 26, 28);
+my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36);
 
 for my $v (@Versions) {
     $out->change(UCA_Version => $v);

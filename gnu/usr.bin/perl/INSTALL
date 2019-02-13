@@ -361,67 +361,95 @@ disabling them via environment variables.
 You can override various aspects of this feature by defining various
 symbols during configure. An example might be:
 
-    Configure -Accflags=-DPERL_HASH_FUNC_SIPHASH
+    sh Configure -Accflags=-DPERL_HASH_FUNC_SIPHASH
 
 B<Unless stated otherwise these options are considered experimental or
 insecure and are not recommended for production use.>
 
-Perl 5.18 includes support for multiple hash functions, and changed
-the default (to ONE_AT_A_TIME_HARD), you can choose a different
-algorithm by defining one of the following symbols. Note that as of
-Perl 5.18 we can only recommend use of the default or SIPHASH. All
-the others are known to have security issues and are for research
-purposes only.
+Since Perl 5.18 we have included support for multiple hash functions,
+although from time to time we change which functions we support,
+and which function is default (currently SBOX+STADTX on 64 bit builds
+and SBOX+ZAPHOD32 for 32 bit builds). You can choose a different
+algorithm by defining one of the following symbols during configure.
+Note that there security implications of which hash function you choose
+to use. The functions are listed roughly by how secure they are believed
+to be, with the one believed to be most secure at release time being PERL_HASH_FUNC_SIPHASH.
 
     PERL_HASH_FUNC_SIPHASH
-    PERL_HASH_FUNC_SDBM
-    PERL_HASH_FUNC_DJB2
-    PERL_HASH_FUNC_SUPERFAST
-    PERL_HASH_FUNC_MURMUR3
-    PERL_HASH_FUNC_ONE_AT_A_TIME
-    PERL_HASH_FUNC_ONE_AT_A_TIME_HARD
-    PERL_HASH_FUNC_ONE_AT_A_TIME_OLD
+    PERL_HASH_FUNC_SIPHASH13
+    PERL_HASH_FUNC_ZAPHOD32
+    PERL_HASH_FUNC_STADTX
 
-Perl 5.18 randomizes the order returned by keys(), values(), and each(),
-and allows controlling this behavior by using of the PERL_PERTURB_KEYS
-option. You can disable this option entirely with the define:
+In addition, these, (or custom hash functions), may be "fronted" by the
+SBOX32 hash function for keys under a chosen size. This hash function is
+special in that it has proven theoretical security properties, and is very
+fast to hash, but which by nature is restricted to a maximum key length,
+and which has rather expensive setup costs (relatively speaking), both in
+terms of performance and more importantly in terms of memory. SBOX32
+requires 1k of storage per character it can hash, and it must populate that
+storage with 256 32-bit random values as well. In practice the RNG we use
+for seeding the SBOX32 storage is very efficient and populating the table
+required for hashing even fairly long keys is negligble as we only do it
+during startup. By default we build with SBOX32 enabled, but you change that
+by setting
+
+   PERL_HASH_USE_SBOX32_ALSO
+
+to zero in configure. By default Perl will use SBOX32 to hash strings 24 bytes
+or shorter, you can change this length by setting
+
+    SBOX32_MAX_LEN
+
+to the desired length, with the maximum length being 256.
+
+As of Perl 5.18 the order returned by keys(), values(), and each() is
+non-deterministic and distinct per hash, and the insert order for
+colliding keys is randomized as well, and perl allows for controlling this
+by the PERL_PERTURB_KEYS environment setting. You can disable this behavior
+entirely with the define
 
     PERL_PERTURB_KEYS_DISABLED
 
-You can disable the environment variable checks and specify the type of
-key traversal randomization to be used by defining one of these:
+You can disable the environment variable checks and compile time specify
+the type of key traversal randomization to be used by defining one of these:
 
     PERL_PERTURB_KEYS_RANDOM
     PERL_PERTURB_KEYS_DETERMINISTIC
 
-In Perl 5.18 the seed used for the hash function is randomly selected
-at process start which can be overridden by specifying a seed by setting
+Since Perl 5.18 the seed used for the hash function is randomly selected
+at process start, which can be overridden by specifying a seed by setting
 the PERL_HASH_SEED environment variable.
 
-You can change this behavior by building perl with the
-
-   USE_HASH_SEED_EXPLICIT
-
-define, in which case one has to explicitly set the PERL_HASH_SEED
-environment variable to enable the security feature or by adding
+You can change this behavior so that your perl is built with a hard coded
+seed with the define
 
     NO_HASH_SEED
 
-to the compilation flags to completely disable the randomisation feature.
-Note these modes are poorly tested, insecure and not recommended.
+Note that if you do this you should modify the code in hv_func.h to specify
+your own key. In the future this define may be renamed and replaced with one
+that requires you to specify the key to use.
 
-B<Perl has never guaranteed any ordering of the hash keys>, and the
+B<NOTE WELL: Perl has never guaranteed any ordering of the hash keys>, and the
 ordering has already changed several times during the lifetime of Perl
 5.  Also, the ordering of hash keys has always been, and continues to
-be, affected by the insertion order.  Note that because of this
-randomisation for example the Data::Dumper results will be different
-between different runs of Perl, since Data::Dumper by default dumps
-hashes "unordered".  The use of the Data::Dumper C<Sortkeys> option is
-recommended.
+be, affected by the insertion order regardless of whether you build with
+or without the randomization features.  Note that because of this
+and especially with randomization that the key order of a hash is *undefined*
+and that things like Data::Dumper, for example, may produce different output
+between different runs of Perl, since Data::Dumper serializes the key in the
+native order for the hash.  The use of the Data::Dumper C<Sortkeys> option is
+recommended if you are comparing dumps between different invocations of perl.
 
 See L<perlrun/PERL_HASH_SEED> and L<perlrun/PERL_PERTURB_KEYS> for
 details on the environment variables, and L<perlsec/Algorithmic
 Complexity Attacks> for further security details.
+
+The C<PERL_HASH_SEED> and PERL_PERTURB_KEYS> environment variables can
+be disabled by building configuring perl with
+C<-Accflags=-DNO_PERL_HASH_ENV>.
+
+The C<PERL_HASH_SEED_DEBUG> environment variable can be disabled by
+configuring perl with C<-Accflags=-DNO_PERL_HASH_SEED_DEBUG>.
 
 =head3 SOCKS
 
@@ -491,7 +519,7 @@ shared library path might be required.  For example, if you want to run
 something like the following with the newly-built but not-yet-installed
 ./perl:
 
-        ./perl -MTestInit t/misc/failing_test.t
+        ./perl -I. -MTestInit t/misc/failing_test.t
 
 or
 
@@ -581,7 +609,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.24.3.
+By default, Configure will use the following directories for 5.28.1.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -714,7 +742,7 @@ version-specific subdirectories) for add-on modules and extensions.
 For example, if you have a bundle of perl libraries from a previous
 installation, perhaps in a strange place:
 
-	Configure -Dotherlibdirs=/usr/lib/perl5/site_perl/5.8.1
+	sh Configure -Dotherlibdirs=/usr/lib/perl5/site_perl/5.8.1
 
 =item APPLLIB_EXP
 
@@ -732,6 +760,16 @@ version and architecture specific subdirectories are also searched, if
 present, at run time.  Of course, you can still search other @INC
 directories ahead of those in APPLLIB_EXP by using any of the standard
 run-time methods: $PERLLIB, $PERL5LIB, -I, use lib, etc.
+
+=item default_inc_excludes_dot
+
+Since version 5.26.0, default perl builds no longer includes C<'.'> as the
+last element of @INC. The old behaviour can restored using 
+
+	sh Configure -Udefault_inc_excludes_dot
+
+Note that this is likely to make programs run under such a perl
+interpreter less secure.
 
 =item usesitecustomize
 
@@ -751,6 +789,10 @@ are normally /usr/local/man/man1 and /usr/local/man/man3.  If you
 want to use a .3pm suffix for perl man pages, you can do that with
 
 	sh Configure -Dman3ext=3pm
+
+You can disable installation of man pages completely using
+
+	sh Configure -Dman1dir=none -Dman3dir=none
 
 =item HTML pages
 
@@ -930,46 +972,47 @@ You can run perl scripts under the perl debugger at any time with
 B<perl -d your_script>.  If, however, you want to debug perl itself,
 you probably want to have support for perl internal debugging code
 (activated by adding -DDEBUGGING to ccflags), and/or support for the
-system debugger by adding -g to the optimisation flags. For that,
-use the parameter:
+system debugger by adding -g to the optimisation flags.
 
-	sh Configure -DDEBUGGING
+A perl compiled with the DEBUGGING C preprocessor macro will support the
+C<-D> perl command-line switch, have assertions enabled, and have many
+extra checks compiled into the code; but will execute much more slowly
+(typically 2-3x) and the binary will be much larger (typically 2-3x).
 
-or
-
-	sh Configure -DDEBUGGING=<mode>
-
-For a more eye appealing call, -DEBUGGING is defined to be an alias
-for -DDEBUGGING. For both, the -U calls are also supported, in order
-to be able to overrule the hints or Policy.sh settings.
+As a convenience, debugging code (-DDEBUGGING) and debugging symbols (-g)
+can be enabled jointly or separately using a Configure switch, also
+(somewhat confusingly) named -DDEBUGGING.  For a more eye appealing call,
+-DEBUGGING is defined to be an alias for -DDEBUGGING. For both, the -U
+calls are also supported, in order to be able to overrule the hints or
+Policy.sh settings.
 
 Here are the DEBUGGING modes:
 
 =over 4
 
-=item -DDEBUGGING
+=item Configure -DDEBUGGING
 
-=item -DEBUGGING
+=item Configure -DEBUGGING
 
-=item -DEBUGGING=both
+=item Configure -DEBUGGING=both
 
 Sets both -DDEBUGGING in the ccflags, and adds -g to optimize.
 
 You can actually specify -g and -DDEBUGGING independently (see below),
 but usually it's convenient to have both.
 
-=item -DEBUGGING=-g
+=item Configure -DEBUGGING=-g
 
-=item -Doptimize=-g
+=item Configure -Doptimize=-g
 
 Adds -g to optimize, but does not set -DDEBUGGING.
 
 (Note:  Your system may actually require something like cc -g2.
 Check your man pages for cc(1) and also any hint file for your system.)
 
-=item -DEBUGGING=none
+=item Configure -DEBUGGING=none
 
-=item -UDEBUGGING
+=item Configure -UDEBUGGING
 
 Removes -g from optimize, and -DDEBUGGING from ccflags.
 
@@ -1493,28 +1536,6 @@ PERL5LIB, and PERL5OPT will influence the behaviour of the test suite.
 So if you are getting strange test failures, you may want to try
 retesting with the various PERL variables unset.
 
-=item varargs
-
-If you get varargs problems with gcc, be sure that gcc is installed
-correctly and that you are not passing -I/usr/include to gcc.  When using
-gcc, you should probably have i_stdarg='define' and i_varargs='undef'
-in config.sh.  The problem is usually solved by installing gcc
-correctly.  If you do change config.sh, don't forget to propagate
-your changes (see L<"Propagating your changes to config.sh"> below).
-See also the L<"vsprintf"> item below.
-
-=item util.c
-
-If you get error messages such as the following (the exact line
-numbers and function name may vary in different versions of perl):
-
-    util.c: In function 'Perl_form':
-    util.c:1107: number of arguments doesn't match prototype
-    proto.h:125: prototype declaration
-
-it might well be a symptom of the gcc "varargs problem".  See the
-previous L<"varargs"> item.
-
 =item LD_LIBRARY_PATH
 
 If you run into dynamic loading problems, check your setting of
@@ -1542,20 +1563,6 @@ is probably that Configure couldn't find your umask() system call.
 Check your config.sh.  You should have d_umask='define'.  If you don't,
 this is probably the L<"nm extraction"> problem discussed above.  Also,
 try reading the hints file for your system for further information.
-
-=item vsprintf
-
-If you run into problems with vsprintf in compiling util.c, the
-problem is probably that Configure failed to detect your system's
-version of vsprintf().  Check whether your system has vprintf().
-(Virtually all modern Unix systems do.)  Then, check the variable
-d_vprintf in config.sh.  If your system has vprintf, it should be:
-
-	d_vprintf='define'
-
-If Configure guessed wrong, it is likely that Configure guessed wrong
-on a number of other common functions too.  This is probably
-the L<"nm extraction"> problem discussed above.
 
 =item do_aspawn
 
@@ -1676,7 +1683,7 @@ error, as the header file is broken. There are two ways to deal with this
 
  1. Disable the use of ODBM_FILE
 
-    Configure ... -Dnoextensions=ODBM_File
+    sh Configure ... -Dnoextensions=ODBM_File
 
  2. Fix the header file, somewhat like this:
 
@@ -2231,8 +2238,6 @@ make install will install the following:
 
 	cppstdin	This is used by the deprecated switch perl -P,
 			if your cc -E can't read from stdin.
-	c2ph, pstruct	Scripts for handling C structures in header
-                        files.
 	corelist	Shows versions of modules that come with
                         different
 			versions of perl.
@@ -2285,12 +2290,11 @@ under $archlib so that any user may later build new modules, run the
 optional Perl compiler, or embed the perl interpreter into another
 program even if the Perl source is no longer available.
 
-=head2 Installing only version-specific parts
+=head2 Installing with a version-specific suffix
 
-Sometimes you only want to install the version-specific parts of the perl
-installation.  For example, you may wish to install a newer version of
-perl alongside an already installed production version without
-disabling installation of new modules for the production version.
+Sometimes you only want to install the perl distribution with a
+version-specific suffix.  For example, you may wish to install a newer
+version of perl alongside an already installed production version.
 To only install the version-specific parts of the perl installation, run
 
 	Configure -Dversiononly
@@ -2370,7 +2374,7 @@ or
 
 The only difference between the two is that make distclean also removes
 your old config.sh and Policy.sh files.  (A plain 'make clean' is now
-eqivalent to 'make realclean'.)
+equivalent to 'make realclean'.)
 
 If you are upgrading from a previous version of perl, or if you
 change systems or compilers or make other significant changes, or if
@@ -2389,10 +2393,9 @@ to report problems, as it automatically includes summary configuration
 information about your perl, which may help us track down problems far
 more quickly. But first you should read the advice in this file,
 carefully re-read the error message and check the relevant manual pages
-on your system, as these may help you find an immediate solution.  If
-you are not sure whether what you are seeing is a bug, you can send a
-message describing the problem to the comp.lang.perl.misc newsgroup to
-get advice.
+on your system, as these may help you find an immediate solution.
+Once you've exhausted the documentation, please report bugs to us using
+the 'perlbug' tool.
 
 The perlbug tool is installed along with perl, so after you have
 completed C<make install> it should be possible to run it with plain
@@ -2437,8 +2440,8 @@ http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.24.3 is not binary compatible with versions of Perl earlier than
-5.24.0.
+Perl 5.28.1 is not binary compatible with versions of Perl earlier than
+5.28.0.
 In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one version of Perl
@@ -2513,9 +2516,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.24.3
+	sh Configure -Dprefix=/opt/perl5.28.1
 
-and adding /opt/perl5.24.3/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.28.1/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2528,13 +2531,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.23.9 or earlier
+=head2 Upgrading from 5.27.11 or earlier
 
-B<Perl 5.24.3 may not be binary compatible with Perl 5.23.9 or
+B<Perl 5.28.1 may not be binary compatible with Perl 5.27.11 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.24.3.  If you find you do need to rebuild an extension with
-5.24.3, you may safely do so without disturbing the older
+used with 5.28.1.  If you find you do need to rebuild an extension with
+5.28.1, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2567,15 +2570,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.24.3 is as follows (under $Config{prefix}):
+in Linux with perl-5.28.1 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.24.3/strict.pm
-  ./lib/perl5/5.24.3/warnings.pm
-  ./lib/perl5/5.24.3/i686-linux/File/Glob.pm
-  ./lib/perl5/5.24.3/feature.pm
-  ./lib/perl5/5.24.3/XSLoader.pm
-  ./lib/perl5/5.24.3/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.28.1/strict.pm
+  ./lib/perl5/5.28.1/warnings.pm
+  ./lib/perl5/5.28.1/i686-linux/File/Glob.pm
+  ./lib/perl5/5.28.1/feature.pm
+  ./lib/perl5/5.28.1/XSLoader.pm
+  ./lib/perl5/5.28.1/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its
@@ -2687,6 +2690,12 @@ F<mathoms.c> will not be compiled in. Those functions are no longer used
 by perl itself; for source compatibility reasons, though, they weren't
 completely removed.
 
+=head2 C<-DNO_PERL_INTERNAL_RAND_SEED>
+X<PERL_INTERNAL_RAND_SEED>
+
+If you configure perl with C<-Accflags=-DNO_PERL_INTERNAL_RAND_SEED>,
+perl will ignore the C<PERL_INTERNAL_RAND_SEED> enviroment variable.
+
 =head1 DOCUMENTATION
 
 Read the manual entries before running perl.  The main documentation
@@ -2710,4 +2719,5 @@ This document is part of the Perl package and may be distributed under
 the same terms as perl itself, with the following additional request:
 If you are distributing a modified version of perl (perhaps as part of
 a larger package) please B<do> modify these installation instructions
-and the contact information to match your distribution.
+and the contact information to match your distribution. Additional
+information for packagers is in F<PACKAGING>.

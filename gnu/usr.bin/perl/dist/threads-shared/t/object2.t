@@ -17,7 +17,7 @@ use ExtUtils::testlib;
 
 BEGIN {
     $| = 1;
-    print("1..131\n");   ### Number of tests that will be run ###
+    print("1..133\n");   ### Number of tests that will be run ###
 };
 
 use threads;
@@ -445,6 +445,28 @@ ok($destroyed[$ID], 'Scalar object removed from shared scalar');
     ::ok($count == $n, "remove array object by undef");
 }
 
+# RT #131124
+# Emptying a shared array creates new temp SVs. If there are no spare
+# SVs, a new arena is allocated. shared.xs was mallocing a new arena
+# with the wrong perl context set, meaning that when the arena was later
+# freed, it would "panic: realloc from wrong pool"
+#
+
+{
+    threads->new(sub {
+        my @a :shared;
+        push @a, bless &threads::shared::share({}) for 1..1000;
+        undef @a; # this creates lots of temp SVs
+    })->join;
+    ok(1, "#131124 undef array doesnt panic");
+
+    threads->new(sub {
+        my @a :shared;
+        push @a, bless &threads::shared::share({}) for 1..1000;
+        @a = (); # this creates lots of temp SVs
+    })->join;
+    ok(1, "#131124 clear array doesnt panic");
+}
 
 
 # EOF

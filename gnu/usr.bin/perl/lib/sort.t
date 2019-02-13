@@ -26,10 +26,8 @@ use strict;
 use warnings;
 
 use Test::More tests => @TestSizes * 2	# sort() tests
-			* 6		# number of pragmas to test
-			+ 1 		# extra test for qsort instability
-			+ 3		# tests for sort::current
-			+ 3;		# tests for "defaults" and "no sort"
+			* 3		# number of pragmas to test
+			+ 2;		# tests for sort::current
 
 # Generate array of specified size for testing sort.
 #
@@ -130,46 +128,32 @@ sub main {
     }
 }
 
-# Test with no pragma still loaded -- stability expected (this is a mergesort)
+# Test with no pragma yet loaded. Stability is expected from default sort.
 main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
 
+# Verify that we have eliminated the segfault that could be triggered
+# by invoking a sort as part of a comparison routine.
+# No need for an explicit test. If we don't segfault, we're good.
+
 {
-    use sort qw(_qsort);
-    my $sort_current; BEGIN { $sort_current = sort::current(); }
-    is($sort_current, 'quicksort', 'sort::current for _qsort');
-    main(sub { sort {&{$_[0]}} @{$_[1]} }, 1);
+    sub dumbsort {
+	my ($a, $b) = @_;
+	use sort qw( defaults stable );
+	my @ignore = sort (5,4,3,2,1);
+	return $a <=> $b;
+    }
+    use sort qw( defaults stable );
+    my @nested = sort { dumbsort($a,$b) } (3,2,2,1);
 }
 
 {
-    use sort qw(_mergesort);
+    use sort qw(stable);
     my $sort_current; BEGIN { $sort_current = sort::current(); }
-    is($sort_current, 'mergesort', 'sort::current for _mergesort');
-    main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
-}
-
-{
-    use sort qw(_qsort stable);
-    my $sort_current; BEGIN { $sort_current = sort::current(); }
-    is($sort_current, 'quicksort stable', 'sort::current for _qsort stable');
+    is($sort_current, 'stable', 'sort::current for stable');
     main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
 }
 
 # Tests added to check "defaults" subpragma, and "no sort"
-
-{
-    use sort qw(_qsort stable);
-    no sort qw(_qsort);
-    my $sort_current; BEGIN { $sort_current = sort::current(); }
-    is($sort_current, 'stable', 'sort::current after no _qsort');
-    main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
-}
-
-{
-    use sort qw(defaults _qsort);
-    my $sort_current; BEGIN { $sort_current = sort::current(); }
-    is($sort_current, 'quicksort', 'sort::current after defaults _qsort');
-    # Not expected to be stable, so don't test for stability here
-}
 
 {
     use sort qw(defaults stable);

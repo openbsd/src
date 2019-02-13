@@ -159,7 +159,7 @@ define_alias( sub {
     return "iso-8859-2"     if $enc =~ /hebrew/i;
     return "does-not-exist" if $enc =~ /arabic/i;  # should then use other override alias
     return "utf-8"          if $enc =~ /eight/i;
-    return;
+    return "unknown";
 });
 
 print "# alias test with alias overrides\n";

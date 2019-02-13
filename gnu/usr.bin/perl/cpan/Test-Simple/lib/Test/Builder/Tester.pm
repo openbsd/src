@@ -1,9 +1,9 @@
 package Test::Builder::Tester;
 
 use strict;
-our $VERSION = "1.28";
+our $VERSION = '1.302133';
 
-use Test::Builder 0.99;
+use Test::Builder;
 use Symbol;
 use Carp;
 
@@ -104,15 +104,25 @@ my $original_is_passing;
 my $original_output_handle;
 my $original_failure_handle;
 my $original_todo_handle;
+my $original_formatter;
 
 my $original_harness_env;
 
 # function that starts testing and redirects the filehandles for now
 sub _start_testing {
+    # Hack for things that conditioned on Test-Stream being loaded
+    $INC{'Test/Stream.pm'} ||= 'fake' if $INC{'Test/Moose/More.pm'};
     # even if we're running under Test::Harness pretend we're not
     # for now.  This needed so Test::Builder doesn't add extra spaces
     $original_harness_env = $ENV{HARNESS_ACTIVE} || 0;
     $ENV{HARNESS_ACTIVE} = 0;
+
+    my $hub = $t->{Hub} || ($t->{Stack} ? $t->{Stack}->top : Test2::API::test2_stack->top);
+    $original_formatter = $hub->format;
+    unless ($original_formatter && $original_formatter->isa('Test::Builder::Formatter')) {
+        my $fmt = Test::Builder::Formatter->new;
+        $hub->format($fmt);
+    }
 
     # remember what the handles were set to
     $original_output_handle  = $t->output();
@@ -304,6 +314,8 @@ will function normally and cause success/errors for L<Test::Harness>.
 =cut
 
 sub test_test {
+    # END the hack
+    delete $INC{'Test/Stream.pm'} if $INC{'Test/Stream.pm'} && $INC{'Test/Stream.pm'} eq 'fake';
     # decode the arguments as described in the pod
     my $mess;
     my %args;
@@ -320,6 +332,10 @@ sub test_test {
     # er, are we testing?
     croak "Not testing.  You must declare output with a test function first."
       unless $testing;
+
+
+    my $hub = $t->{Hub} || Test2::API::test2_stack->top;
+    $hub->format($original_formatter);
 
     # okay, reconnect the test suite back to the saved handles
     $t->output($original_output_handle);
@@ -420,17 +436,26 @@ sub color {
 
 =head1 BUGS
 
+Test::Builder::Tester does not handle plans well. It has never done anything
+special with plans. This means that plans from outside Test::Builder::Tester
+will effect Test::Builder::Tester, worse plans when using Test::Builder::Tester
+will effect overall testing. At this point there are no plans to fix this bug
+as people have come to depend on it, and Test::Builder::Tester is now
+discouraged in favor of C<Test2::API::intercept()>. See
+L<https://github.com/Test-More/test-more/issues/667>
+
 Calls C<< Test::Builder->no_ending >> turning off the ending tests.
 This is needed as otherwise it will trip out because we've run more
 tests than we strictly should have and it'll register any failures we
 had that we were testing for as real failures.
 
 The color function doesn't work unless L<Term::ANSIColor> is
-compatible with your terminal.
+compatible with your terminal. Additionally, L<Win32::Console::ANSI>
+must be installed on windows platforms for color output.
 
 Bugs (and requests for new features) can be reported to the author
-though the CPAN RT system:
-L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Test-Builder-Tester>
+though GitHub:
+L<https://github.com/Test-More/test-more/issues>
 
 =head1 AUTHOR
 
@@ -487,8 +512,9 @@ sub expect {
 sub _account_for_subtest {
     my( $self, $check ) = @_;
 
-    # Since we ship with Test::Builder, calling a private method is safe...ish.
-    return ref($check) ? $check : $t->_indent . $check;
+    my $hub = $t->{Stack}->top;
+    my $nesting = $hub->isa('Test2::Hub::Subtest') ? $hub->nested : 0;
+    return ref($check) ? $check : ('    ' x $nesting) . $check;
 }
 
 sub _translate_Failed_check {
@@ -535,6 +561,8 @@ sub complaint {
         # get color
         eval { require Term::ANSIColor };
         unless($@) {
+            eval { require Win32::Console::ANSI } if 'MSWin32' eq $^O;  # support color on windows platforms
+
             # colours
 
             my $green = Term::ANSIColor::color("black") . Term::ANSIColor::color("on_green");
@@ -561,6 +589,33 @@ sub complaint {
             $got    = $start . $gotend;
             $wanted = $start . $wantedend;
         }
+    }
+
+    my @got = split "\n", $got;
+    my @wanted = split "\n", $wanted;
+
+    $got = "";
+    $wanted = "";
+
+    while (@got || @wanted) {
+        my $g = shift @got    || "";
+        my $w = shift @wanted || "";
+        if ($g ne $w) {
+            if($g =~ s/(\s+)$/    |> /g) {
+                $g .= ($_ eq ' ' ? '_' : '\t') for split '', $1;
+            }
+            if($w =~ s/(\s+)$/    |> /g) {
+                $w .= ($_ eq ' ' ? '_' : '\t') for split '', $1;
+            }
+            $g = "> $g";
+            $w = "> $w";
+        }
+        else {
+            $g = "  $g";
+            $w = "  $w";
+        }
+        $got = $got ? "$got\n$g" : $g;
+        $wanted = $wanted ? "$wanted\n$w" : $w;
     }
 
     return "$type is:\n" . "$got\nnot:\n$wanted\nas expected";

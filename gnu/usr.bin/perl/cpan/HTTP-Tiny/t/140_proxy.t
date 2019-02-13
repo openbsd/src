@@ -6,7 +6,8 @@ use warnings;
 use File::Basename;
 use Test::More 0.88;
 
-use t::Util qw[ monkey_patch ];
+use lib 't';
+use Util qw[ monkey_patch ];
 use HTTP::Tiny;
 
 BEGIN {
@@ -67,6 +68,10 @@ for my $var ( qw/http_proxy https_proxy all_proxy/ ) {
 
 # ignore HTTP_PROXY with REQUEST_METHOD
 {
+    # in case previous clean-up failed for some reason
+    delete local @ENV{'http_proxy', 'https_proxy', 'all_proxy',
+                      'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY'};
+
     local $ENV{HTTP_PROXY} = "http://localhost:8080";
     local $ENV{REQUEST_METHOD} = 'GET';
     my $c = HTTP::Tiny->new();

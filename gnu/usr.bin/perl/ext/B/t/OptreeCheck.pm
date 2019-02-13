@@ -2,10 +2,10 @@ package OptreeCheck;
 use parent 'Exporter';
 use strict;
 use warnings;
-use vars qw($TODO $Level $using_open);
+our ($TODO, $Level, $using_open);
 require "test.pl";
 
-our $VERSION = '0.13';
+our $VERSION = '0.16';
 
 # now export checkOptree, and those test.pl functions used by tests
 our @EXPORT = qw( checkOptree plan skip skip_all pass is like unlike
@@ -208,14 +208,9 @@ In either case, $coderef is then passed to B::Concise::compile():
 =head2 expect and expect_nt
 
 expect and expect_nt args are the B<golden-sample> renderings, and are
-sampled from known-ok threaded and un-threaded bleadperl (5.9.1) builds.
+sampled from known-ok threaded and un-threaded bleadperl builds.
 They're both required, and the correct one is selected for the platform
 being tested, and saved into the synthesized property B<wanted>.
-
-Individual sample lines may be suffixed with whitespace followed
-by (<|<=|==|>=|>)5.nnnn (up to two times) to
-select that line only for the listed perl
-version; the whitespace and conditional are stripped.
 
 =head2 bcopts => $bcopts || [ @bcopts ]
 
@@ -640,33 +635,6 @@ sub mkCheckRex {
 
     $str =~ s/^\# //mg;	# ease cut-paste testcase authoring
 
-    # strip out conditional lines
-
-    $str =~ s{^(.*?)   \s+(<|<=|==|>=|>)\s*(5\.\d+)
-		    (?:\s+(<|<=|==|>=|>)\s*(5\.\d+))? \ *\n}
-     {
-	my ($line, $cmp, $version, $cmp2, $v2) = ($1,$2,$3,$4,$5,$6);
-	my $repl = "";
-	if (  $cmp eq '<'  ? $] <  $version
-	    : $cmp eq '<=' ? $] <= $version
-	    : $cmp eq '==' ? $] == $version
-	    : $cmp eq '>=' ? $] >= $version
-	    : $cmp eq '>'  ? $] >  $version
-	    : die("bad comparison '$cmp' in string [$str]\n")
-	 and !$cmp2 || (
-	      $cmp2 eq '<'  ? $] <  $v2
-	    : $cmp2 eq '<=' ? $] <= $v2
-	    : $cmp2 eq '==' ? $] == $v2
-	    : $cmp2 eq '>=' ? $] >= $v2
-	    : $cmp2 eq '>'  ? $] >  $v2
-	    : die("bad comparison '$cmp2' in string [$str]\n")
-	  )
-	) {
-	    $repl = "$line\n";
-	}
-	$repl;
-     }gemx;
-
     $tc->{wantstr} = $str;
 
     # make UNOP_AUX flag type literal
@@ -703,12 +671,12 @@ sub mkCheckRex {
 		 .*			# all sorts of things follow it
 		 v			# The opening v
 		)
-		(?:(:>,<,%,\\{)		# hints when open.pm is in force
+		(?:(:>,<,%,\\\{)		# hints when open.pm is in force
 		   |(:>,<,%))		# (two variations)
 		(\ ->(?:-|[0-9a-z]+))?
 		$
 	       ]
-	[$1 . ($2 && ':{') . $4]xegm;	# change to the hints without open.pm
+        [$1 . ($2 && ':\{') . $4]xegm;	# change to the hints without open.pm
     }
 
 
@@ -781,8 +749,9 @@ sub reduceDiffs {
         my $exp = shift @want;
         my $line = shift @got;
         # remove matches, and report
-        unless ($got =~ s/($rex\n)//msg) {
+        unless ($got =~ s/^($rex\n)//ms) {
             _diag("got:\t\t'$line'\nwant:\t $rex\n");
+            last;
         }
     }
     _diag("remainder:\n$got");
@@ -1001,7 +970,7 @@ sub OptreeCheck::processExamples {
     # turned into optreeCheck tests,
 
     foreach my $file (@files) {
-	open (my $fh, $file) or die "cant open $file: $!\n";
+	open (my $fh, '<', $file) or die "cant open $file: $!\n";
 	$/ = "";
 	my @chunks = <$fh>;
 	print preamble (scalar @chunks);

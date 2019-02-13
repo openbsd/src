@@ -760,7 +760,6 @@ struct IPerlLIOInfo
 #  define PerlLIO_lstat(name, buf)	PerlLIO_stat((name), (buf))
 #endif
 #define PerlLIO_mktemp(file)		mktemp((file))
-#define PerlLIO_mkstemp(file)		mkstemp((file))
 #define PerlLIO_open(file, flag)	open((file), (flag))
 #define PerlLIO_open3(file, flag, perm)	open((file), (flag), (perm))
 #define PerlLIO_read(fd, buf, count)	read((fd), (buf), (count))

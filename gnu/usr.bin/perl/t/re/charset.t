@@ -2,9 +2,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw '../lib ../dist/if';
     require './test.pl';
     require './loc_tools.pl';
+    set_up_inc('../lib', '../dist/if');
 }
 
 use strict;
@@ -41,7 +41,8 @@ $testcases{'[:word:]'} = $testcases{'\w'};
 my $utf8_locale;
 
 my @charsets = qw(a d u aa);
-if (! is_miniperl() && locales_enabled('LC_CTYPE')) {
+my $locales_ok = eval { locales_enabled('LC_CTYPE'); 1 };
+if (! is_miniperl() && $locales_ok) {
     require POSIX;
     my $current_locale = POSIX::setlocale( &POSIX::LC_ALL, "C") // "";
     if ($current_locale eq 'C') {

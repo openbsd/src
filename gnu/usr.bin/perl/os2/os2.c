@@ -970,7 +970,6 @@ file_type(char *path)
 }
 
 /* Spawn/exec a program, revert to shell if needed. */
-/* global PL_Argv[] contains arguments. */
 
 extern ULONG _emx_exception (	EXCEPTIONREPORTRECORD *,
 				EXCEPTIONREGISTRATIONRECORD *,
@@ -978,7 +977,7 @@ extern ULONG _emx_exception (	EXCEPTIONREPORTRECORD *,
                                 void *);
 
 int
-do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
+do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inicmd, U32 addflag)
 {
 	int trueflag = flag;
 	int rc, pass = 1;
@@ -997,16 +996,21 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 	
 	if (flag == P_WAIT)
 		flag = P_NOWAIT;
-	if (really && !*(real_name = SvPV(really, n_a)))
-	    really = NULL;
+	if (really) {
+	    real_name = SvPV(really, n_a);
+	    real_name = savepv(real_name);
+	    SAVEFREEPV(real_name);
+	    if (!*real_name)
+		really = NULL;
+	}
 
       retry:
-	if (strEQ(PL_Argv[0],"/bin/sh")) 
-	    PL_Argv[0] = PL_sh_path;
+	if (strEQ(argv[0],"/bin/sh")) 
+	    argv[0] = PL_sh_path;
 
 	/* We should check PERL_SH* and PERLLIB_* as well? */
 	if (!really || pass >= 2)
-	    real_name = PL_Argv[0];
+	    real_name = argv[0];
 	if (real_name[0] != '/' && real_name[0] != '\\'
 	    && !(real_name[0] && real_name[1] == ':' 
 		 && (real_name[2] == '/' || real_name[2] != '\\'))
@@ -1098,30 +1102,30 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 	}
 
 #if 0
-	rc = result(aTHX_ trueflag, spawnvp(flag,real_name,PL_Argv));
+	rc = result(aTHX_ trueflag, spawnvp(flag,real_name,argv));
 #else
 	if (execf == EXECF_TRUEEXEC)
-	    rc = execvp(real_name,PL_Argv);
+	    rc = execvp(real_name,argv);
 	else if (execf == EXECF_EXEC)
-	    rc = spawnvp(trueflag | P_OVERLAY,real_name,PL_Argv);
+	    rc = spawnvp(trueflag | P_OVERLAY,real_name,argv);
 	else if (execf == EXECF_SPAWN_NOWAIT)
-	    rc = spawnvp(flag,real_name,PL_Argv);
+	    rc = spawnvp(flag,real_name,argv);
         else if (execf == EXECF_SYNC)
-	    rc = spawnvp(trueflag,real_name,PL_Argv);
+	    rc = spawnvp(trueflag,real_name,argv);
         else				/* EXECF_SPAWN, EXECF_SPAWN_BYFLAG */
 	    rc = result(aTHX_ trueflag, 
-			spawnvp(flag,real_name,PL_Argv));
+			spawnvp(flag,real_name,argv));
 #endif 
 	if (rc < 0 && pass == 1) {
 	      do_script:
-	  if (real_name == PL_Argv[0]) {
+	  if (real_name == argv[0]) {
 	    int err = errno;
 
 	    if (err == ENOENT || err == ENOEXEC) {
 		/* No such file, or is a script. */
 		/* Try adding script extensions to the file name, and
 		   search on PATH. */
-		char *scr = find_script(PL_Argv[0], TRUE, NULL, 0);
+		char *scr = find_script(argv[0], TRUE, NULL, 0);
 
 		if (scr) {
 		    char *s = 0, *s1;
@@ -1132,7 +1136,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 		    scr = SvPV(scrsv, n_a); /* free()ed later */
 
 		    file = PerlIO_open(scr, "r");
-		    PL_Argv[0] = scr;
+		    argv[0] = scr;
 		    if (!file)
 			goto panic_file;
 
@@ -1148,7 +1152,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 			   does not append ".exe", so we could have
 			   reached this place). */
 			sv_catpv(scrsv, ".exe");
-	                PL_Argv[0] = scr = SvPV(scrsv, n_a);	/* Reload */
+	                argv[0] = scr = SvPV(scrsv, n_a);	/* Reload */
                         if (PerlLIO_stat(scr,&statbuf) >= 0
                             && !S_ISDIR(statbuf.st_mode)) {	/* Found */
 				real_name = scr;
@@ -1171,11 +1175,11 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 			if (buf[1] == '!')
 			    s = buf + 2;
 		    } else if (buf[0] == 'e') {
-			if (strnEQ(buf, "extproc", 7) 
+			if (strBEGINs(buf, "extproc")
 			    && isSPACE(buf[7]))
 			    s = buf + 8;
 		    } else if (buf[0] == 'E') {
-			if (strnEQ(buf, "EXTPROC", 7)
+			if (strBEGINs(buf, "EXTPROC")
 			    && isSPACE(buf[7]))
 			    s = buf + 8;
 		    }
@@ -1214,7 +1218,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 		    /* Can jump from far, buf/file invalid if force_shell: */
 		  doshell_args:
 		    {
-			char **a = PL_Argv;
+			char **a = argv;
 			const char *exec_args[2];
 
 			if (force_shell 
@@ -1240,7 +1244,7 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 				    }
 				}
 				if (!inicmd) {
-				    s = PL_Argv[0];
+				    s = argv[0];
 				    while (*s) { 
 					/* Dosish shells will choke on slashes
 					   in paths, fortunately, this is
@@ -1265,29 +1269,29 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 				/* Use the original cmd line */
 				/* XXXX This is good only until we refuse
 				        quoted arguments... */
-				PL_Argv[0] = inicmd;
-				PL_Argv[1] = NULL;
+				argv[0] = inicmd;
+				argv[1] = NULL;
 			    }
 			} else if (!buf[0] && inicmd) { /* No file */
 			    /* Start with the original cmdline. */
 			    /* XXXX This is good only until we refuse
 			            quoted arguments... */
 
-			    PL_Argv[0] = inicmd;
-			    PL_Argv[1] = NULL;
+			    argv[0] = inicmd;
+			    argv[1] = NULL;
 			    nargs = 2;	/* shell -c */
 			} 
 
 			while (a[1])		/* Get to the end */
 			    a++;
 			a++;			/* Copy finil NULL too */
-			while (a >= PL_Argv) {
-			    *(a + nargs) = *a;	/* PL_Argv was preallocated to be
+			while (a >= argv) {
+			    *(a + nargs) = *a;	/* argv was preallocated to be
 						   long enough. */
 			    a--;
 			}
 			while (--nargs >= 0) /* XXXX Discard const... */
-			    PL_Argv[nargs] = (char*)argsp[nargs];
+			    argv[nargs] = (char*)argsp[nargs];
 			/* Enable pathless exec if #! (as pdksh). */
 			pass = (buf[0] == '#' ? 2 : 3);
 			goto retry;
@@ -1301,23 +1305,23 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 		    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s script `%s' with ARGV[0] being `%s'", 
 			 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
 			  ? "spawn" : "exec"),
-			 real_name, PL_Argv[0]);
+			 real_name, argv[0]);
 		goto warned;
 	  } else if (errno == ENOENT) { /* Cannot transfer `real_name' via shell. */
 		if (rc < 0 && ckWARN(WARN_EXEC))
 		    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s `%s' with ARGV[0] being `%s' (looking for executables only, not found)", 
 			 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
 			  ? "spawn" : "exec"),
-			 real_name, PL_Argv[0]);
+			 real_name, argv[0]);
 		goto warned;
 	  }
 	} else if (rc < 0 && pass == 2 && errno == ENOENT) { /* File not found */
-	    char *no_dir = strrchr(PL_Argv[0], '/');
+	    char *no_dir = strrchr(argv[0], '/');
 
 	    /* Do as pdksh port does: if not found with /, try without
 	       path. */
 	    if (no_dir) {
-		PL_Argv[0] = no_dir + 1;
+		argv[0] = no_dir + 1;
 		pass++;
 		goto retry;
 	    }
@@ -1346,11 +1350,12 @@ do_spawn_ve(pTHX_ SV *really, U32 flag, U32 execf, char *inicmd, U32 addflag)
 int
 do_spawn3(pTHX_ char *cmd, int execf, int flag)
 {
-    char **a;
+    char **argv, **a;
     char *s;
     char *shell, *copt, *news = NULL;
     int rc, seenspace = 0, mergestderr = 0;
 
+    ENTER;
 #ifdef TRYSHELL
     if ((shell = getenv("EMXSHELL")) != NULL)
     	copt = "-c";
@@ -1372,7 +1377,7 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
     while (*cmd && isSPACE(*cmd))
 	cmd++;
 
-    if (strnEQ(cmd,"/bin/sh",7) && isSPACE(cmd[7])) {
+    if (strBEGINs(cmd,"/bin/sh") && isSPACE(cmd[7])) {
 	STRLEN l = strlen(PL_sh_path);
 	
 	Newx(news, strlen(cmd) - 7 + l + 1, char);
@@ -1387,7 +1392,7 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
     if (*cmd == '.' && isSPACE(cmd[1]))
 	goto doshell;
 
-    if (strnEQ(cmd,"exec",4) && isSPACE(cmd[4]))
+    if (strBEGINs(cmd,"exec") && isSPACE(cmd[4]))
 	goto doshell;
 
     for (s = cmd; *s && isALPHA(*s); s++) ;	/* catch VAR=val gizmo */
@@ -1441,17 +1446,19 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
 	    }
 	    if (news)
 		Safefree(news);
-	    return rc;
+	    goto leave;
 	} else if (*s == ' ' || *s == '\t') {
 	    seenspace = 1;
 	}
     }
 
     /* cmd="a" may lead to "sh", "-c", "\"$@\"", "a", "a.cmd", NULL */
-    Newx(PL_Argv, (s - cmd + 11) / 2, char*);
-    PL_Cmd = savepvn(cmd, s-cmd);
-    a = PL_Argv;
-    for (s = PL_Cmd; *s;) {
+    Newx(argv, (s - cmd + 11) / 2, char*);
+    SAVEFREEPV(argv);
+    cmd = savepvn(cmd, s-cmd);
+    SAVEFREEPV(cmd);
+    a = argv;
+    for (s = cmd; *s;) {
 	while (*s && isSPACE(*s)) s++;
 	if (*s)
 	    *(a++) = s;
@@ -1460,13 +1467,14 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
 	    *s++ = '\0';
     }
     *a = NULL;
-    if (PL_Argv[0])
-	rc = do_spawn_ve(aTHX_ NULL, flag, execf, cmd, mergestderr);
+    if (argv[0])
+	rc = do_spawn_ve(aTHX_ NULL, argv, flag, execf, cmd, mergestderr);
     else
     	rc = -1;
     if (news)
 	Safefree(news);
-    do_execfree();
+leave:
+    LEAVE;
     return rc;
 }
 
@@ -1480,14 +1488,16 @@ os2_aspawn_4(pTHX_ SV *really, SV **args, I32 cnt, int execing)
 {
     SV **argp = (SV **)args;
     SV **last = argp + cnt;
-    char **a;
+    char **argv, **a;
     int rc;
     int flag = P_WAIT, flag_set = 0;
     STRLEN n_a;
 
+    ENTER;
     if (cnt) {
-	Newx(PL_Argv, cnt + 3, char*); /* 3 extra to expand #! */
-	a = PL_Argv;
+	Newx(argv, cnt + 3, char*); /* 3 extra to expand #! */
+	SAVEFREEPV(argv);
+	a = argv;
 
 	if (cnt > 1 && SvNIOKp(*argp) && !SvPOKp(*argp)) {
 	    flag = SvIVx(*argp);
@@ -1496,24 +1506,27 @@ os2_aspawn_4(pTHX_ SV *really, SV **args, I32 cnt, int execing)
 	    --argp;
 
 	while (++argp < last) {
-	    if (*argp)
-		*a++ = SvPVx(*argp, n_a);
-	    else
+	    if (*argp) {
+		char *arg = SvPVx(*argp, n_a);
+		arg = savepv(arg);
+		SAVEFREEPV(arg);
+		*a++ = arg;
+	    } else
 		*a++ = "";
 	}
 	*a = NULL;
 
-	if ( flag_set && (a == PL_Argv + 1)
+	if ( flag_set && (a == argv + 1)
 	     && !really && execing == ASPAWN_WAIT ) { 		/* One arg? */
 	    rc = do_spawn3(aTHX_ a[-1], EXECF_SPAWN_BYFLAG, flag);
 	} else {
 	    const int execf[3] = {EXECF_SPAWN, EXECF_EXEC, EXECF_SPAWN_NOWAIT};
 	    
-	    rc = do_spawn_ve(aTHX_ really, flag, execf[execing], NULL, 0);
+	    rc = do_spawn_ve(aTHX_ really, argv, flag, execf[execing], NULL, 0);
 	}
     } else
     	rc = -1;
-    do_execfree();
+    LEAVE;
     return rc;
 }
 
@@ -2632,7 +2645,7 @@ XS(XS_OS2_Errors2Drive)
 	if (DOS_suppression_state > 0)
 	    sv_setpvn(ST(0), &DOS_suppression_state, 1);
 	else if (DOS_suppression_state == 0)
-	    sv_setpvn(ST(0), "", 0);
+            SvPVCLEAR(ST(0));
 	DOS_suppression_state = drive;
     }
     XSRETURN(1);
@@ -4103,7 +4116,7 @@ XS(XS_OS2_pipe)
 	if (!pszName || !*pszName)
 	    Perl_croak(aTHX_ "OS2::pipe(): empty pipe name");
 	s = SvPV(OpenMode, len);
-	if (len == 4 && strEQ(s, "wait")) {	/* DosWaitNPipe() */
+	if (memEQs(s, len, "wait")) {	/* DosWaitNPipe() */
 	    ULONG ms = 0xFFFFFFFF, ret = ERROR_INTERRUPT; /* Indefinite */
 
 	    if (items == 3) {
@@ -4121,7 +4134,7 @@ XS(XS_OS2_pipe)
 	    os2cp_croak(ret, "DosWaitNPipe()");
 	    XSRETURN_YES;
 	}
-	if (len == 4 && strEQ(s, "call")) {	/* DosCallNPipe() */
+	if (memEQs(s, len, "call")) {	/* DosCallNPipe() */
 	    ULONG ms = 0xFFFFFFFF, got; /* Indefinite */
 	    STRLEN l;
 	    char *s;
@@ -4200,9 +4213,9 @@ XS(XS_OS2_pipe)
 	    connect = -1;			/* no wait */
 	else if (SvTRUE(ST(2))) {
 	    s = SvPV(ST(2), len);
-	    if (len == 6 && strEQ(s, "nowait"))
+	    if (memEQs(s, len, "nowait"))
 		connect = -1;			/* no wait */
-	    else if (len == 4 && strEQ(s, "wait"))
+	    else if (memEQs(s, len, "wait"))
 		connect = 1;			/* wait */
 	    else
 		Perl_croak(aTHX_ "OS2::pipe(): unknown connect argument: `%s'", s);
@@ -4257,7 +4270,8 @@ XS(XS_OS2_pipe)
 	perlio = PerlIO_fdopen(hpipe, buf);
 	ST(0) = sv_newmortal();
 	{
-	    GV *gv = newGVgen("OS2::pipe");
+	    GV *gv = (GV *)sv_newmortal();
+	    gv_init_pvn(gv, gv_stashpvs("OS2::pipe",1),"__ANONIO__",10,0);
 	    if ( do_open6(gv, perltype, strlen(perltype), perlio, NULL, 0) )
 		sv_setsv(ST(0), sv_bless(newRV((SV*)gv), gv_stashpv("IO::Handle",1)));
 	    else
@@ -4959,10 +4973,8 @@ Perl_OS2_init3(char **env, void **preg, int flags)
 	    if (PL_sh_path[i] == '\\') PL_sh_path[i] = '/';
 	}
     }
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
     MUTEX_INIT(&start_thread_mutex);
     MUTEX_INIT(&perlos2_state_mutex);
-#endif
     os2_mytype = my_type();		/* Do it before morphing.  Needed? */
     os2_mytype_ini = os2_mytype;
     Perl_os2_initial_mode = -1;		/* Uninit */

@@ -105,6 +105,14 @@ case "$osvers" in
 	;;
 esac
 
+case "$osvers" in
+10.*)
+	# dtrace on 10.x needs libelf symbols, but we don't know if the
+	# user is going to request usedtrace and there's no .cbu for usedtrace
+	libswanted="$libswanted elf"
+	;;
+esac
+
 # Dynamic Loading flags have not changed much, so they are separated
 # out here to avoid duplicating them everywhere.
 case "$osvers" in
@@ -304,9 +312,43 @@ esac
 # XXX Under FreeBSD 6.0 (and probably most other similar versions)
 # Perl_die(NULL) generates a warning:
 #    pp_sys.c:491: warning: null format string
-# Configure supposedely tests for this, but apparently the test doesn't
+# Configure supposedly tests for this, but apparently the test doesn't
 # work.  Volunteers with FreeBSD are needed to improving the Configure test.
 # Meanwhile, the following workaround should be safe on all versions
 # of FreeBSD.
 d_printf_format_null='undef'
 
+# See [perl #128867]
+# Interpreting: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=211743#c10
+# khw workaround no longer needed in the following FREEBSD_KERNEL_VERSIONs
+#1200004 and up
+#1100502 >= version < 1200000
+#1003507 >= version < 1100000
+# Experiments have shown that this doesn't fully work.  The first kernel we know it works is 1200056
+
+FREEBSD_KERNEL_VERSION=`uname -U`
+#if  [ $FREEBSD_KERNEL_VERSION -lt 1003507 ] || \
+#    [ $FREEBSD_KERNEL_VERSION -ge 1100000 ] && [ $FREEBSD_KERNEL_VERSION -lt 1100502 ] || \
+#    [ $FREEBSD_KERNEL_VERSION -ge 1200000 ] && [ $FREEBSD_KERNEL_VERSION -lt 1200004 ]
+if  [ $FREEBSD_KERNEL_VERSION -lt 1200056 ]
+then
+    d_uselocale='undef'
+fi
+
+# https://rt.perl.org/Ticket/Display.html?id=131337
+# Reported in 11.0-CURRENT with g++-4.8.5:
+# If using g++, the Configure scan for dlopen() fails.
+# Easier for now to just to forcibly set it.
+case "$cc" in
+*g++*)
+  d_dlopen='define'
+  ;;
+esac
+
+case `uname -p` in
+arm|mips)
+  ;;
+*)
+  test "$optimize" || optimize='-O2'
+  ;;
+esac

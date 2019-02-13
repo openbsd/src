@@ -204,10 +204,11 @@ elsif (IS_VMS) {
 {
     # Cwd needs to be built before Encode recurses into subdirectories.
     # Pod::Simple needs to be built before Pod::Functions
+    # lib needs to be built before IO-Compress
     # This seems to be the simplest way to ensure this ordering:
     my (@first, @other);
     foreach (@extspec) {
-	if ($_ eq 'Cwd' || $_ eq 'Pod/Simple') {
+	if ($_ eq 'Cwd' || $_ eq 'Pod/Simple' || $_ eq 'lib') {
 	    push @first, $_;
 	} else {
 	    push @other, $_;
@@ -287,7 +288,7 @@ sub build_extension {
     
     if (-f $makefile) {
 	$makefile_no_minus_f = 0;
-	open my $mfh, $makefile or die "Cannot open $makefile: $!";
+	open my $mfh, '<', $makefile or die "Cannot open $makefile: $!";
 	while (<$mfh>) {
 	    # Plagiarised from CPAN::Distribution
 	    last if /MakeMaker post_initialize section/;
@@ -302,7 +303,7 @@ sub build_extension {
 	    last unless defined $oldv;
 	    require ExtUtils::MM_Unix;
 	    defined (my $newv = parse_version MM $vmod) or last;
-	    if ($newv ne $oldv) {
+	    if (version->parse($newv) ne $oldv) {
 		close $mfh or die "close $makefile: $!";
 		_unlink($makefile);
 		{
@@ -652,7 +653,7 @@ sub just_pm_to_blib {
     die "Inconsistent module $mname has both lib/ and $first/"
         if $has_lib && $has_topdir;
 
-    print "\nRunning pm_to_blib for $ext_dir directly\n"
+    print "Running pm_to_blib for $ext_dir directly\n"
       unless $silent;
 
     my %pm;
@@ -699,20 +700,37 @@ sub just_pm_to_blib {
     }
     # This is running under miniperl, so no autodie
     if ($target eq 'all') {
-        local $ENV{PERL_INSTALL_QUIET} = 1;
-        require ExtUtils::Install;
-        ExtUtils::Install::pm_to_blib(\%pm, '../../lib/auto');
-        open my $fh, '>', $pm_to_blib
-            or die "Can't open '$pm_to_blib': $!";
-        print $fh "$0 has handled pm_to_blib directly\n";
-        close $fh
-            or die "Can't close '$pm_to_blib': $!";
-	if (IS_UNIX) {
-            # Fake the fallback cleanup
-            my $fallback
-                = join '', map {s!^\.\./\.\./!!; "rm -f $_\n"} sort values %pm;
-            foreach my $clean_target ('realclean', 'veryclean') {
-                fallback_cleanup($return_dir, $clean_target, $fallback);
+        my $need_update = 1;
+        if (-f $pm_to_blib) {
+            # avoid touching pm_to_blib unless there's something that
+            # needs updating, see #126710
+            $need_update = 0;
+            my $test_at = -M _;
+            while (my $from = each(%pm)) {
+                if (-M $from < $test_at) {
+                    ++$need_update;
+                    last;
+                }
+            }
+            keys %pm; # reset iterator
+        }
+
+        if ($need_update) {
+            local $ENV{PERL_INSTALL_QUIET} = 1;
+            require ExtUtils::Install;
+            ExtUtils::Install::pm_to_blib(\%pm, '../../lib/auto');
+            open my $fh, '>', $pm_to_blib
+                or die "Can't open '$pm_to_blib': $!";
+            print $fh "$0 has handled pm_to_blib directly\n";
+            close $fh
+                or die "Can't close '$pm_to_blib': $!";
+            if (IS_UNIX) {
+                # Fake the fallback cleanup
+                my $fallback
+                    = join '', map {s!^\.\./\.\./!!; "rm -f $_\n"} sort values %pm;
+                foreach my $clean_target ('realclean', 'veryclean') {
+                    fallback_cleanup($return_dir, $clean_target, $fallback);
+                }
             }
         }
     } else {

@@ -4,20 +4,22 @@ BEGIN {
     unshift @INC, 't/lib';
 }
 
-use File::Temp qw[tempdir];
-my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
-chdir $tmpdir;
-
 use strict;
 use Test::More tests => 7;
 
 use MakeMaker::Test::Setup::BFD;
 use MakeMaker::Test::Utils;
 
+chdir 't';
+perl_lib; # sets $ENV{PERL5LIB} relative to t/
+
+use File::Temp qw[tempdir];
+my $tmpdir = tempdir( DIR => '../t', CLEANUP => 1 );
+use Cwd; my $cwd = getcwd; END { chdir $cwd } # so File::Temp can cleanup
+chdir $tmpdir;
+
 my $perl = which_perl();
 my $make = make_run();
-perl_lib();
-
 
 ok( setup_recurs(), 'setup' );
 END {

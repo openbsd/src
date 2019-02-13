@@ -2,10 +2,10 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
-plan tests=>209;
+plan tests=>211;
 
 sub a : lvalue { my $a = 34; ${\(bless \$a)} }  # Return a temporary
 sub b : lvalue { ${\shift} }
@@ -549,12 +549,25 @@ while (/f/g) {
 }
 is("@p", "1 8");
 
-sub keeze : lvalue { keys %__ }
-%__ = ("a","b");
-keeze = 64;
-is scalar %__, '1/64', 'keys assignment through lvalue sub';
+SKIP: {
+    skip "no Hash::Util on miniperl", 3, if is_miniperl;
+    require Hash::Util;
+    sub Hash::Util::bucket_ratio (\%);
 
-# Bug 20001223.002: split thought that the list had only one element
+    sub keeze : lvalue { keys %__ }
+    %__ = ("a","b");
+    keeze = 64;
+    like Hash::Util::bucket_ratio(%__), qr!1/(?:64|128)!, 'keys assignment through lvalue sub';
+    eval { (keeze) = 64 };
+    like $@, qr/^Can't modify keys in list assignment at /,
+         'list assignment to keys through lv sub is forbidden';
+    sub akeeze : lvalue { keys @_ }
+    eval { (akeeze) = 64 };
+    like $@, qr/^Can't modify keys on array in list assignment at /,
+         'list assignment to keys @_ through lv sub is forbidden';
+}
+
+# Bug 20001223.002 (#5005): split thought that the list had only one element
 @ary = qw(4 5 6);
 sub lval1 : lvalue { $ary[0]; }
 sub lval2 : lvalue { $ary[1]; }
@@ -813,7 +826,8 @@ is $wheel, 8, 'tied pad var explicitly returned in list ref context';
     is ($result, 'bar', "RT #41550");
 }
 
-SKIP: { skip 'no attributes.pm', 1 unless eval 'require attributes';
+SKIP: {
+  skip 'no attributes.pm', 1 unless eval 'require attributes';
 fresh_perl_is(<<'----', <<'====', {}, "lvalue can not be set after definition. [perl #68758]");
 use warnings;
 our $x;

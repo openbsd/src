@@ -4,8 +4,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
     skip_all_if_miniperl("miniperl can't load attributes");
 }
 
@@ -37,7 +37,7 @@ like $@, qr/^Invalid SCALAR attribute: ["']?plǖgh["']? at/;
 eval '{my $x : plǖgh}';
 like $@, qr/^Invalid SCALAR attribute: ["']?plǖgh["']? at/;
 eval '{my ($x,$y) : plǖgh(})}';
-like $@, qr/^Invalid SCALAR attribute: ["']?plǖgh\(}\)["']? at/;
+like $@, qr/^Invalid SCALAR attribute: ["']?plǖgh\(\}\)["']? at/;
 
 # More syntax tests from the attributes manpage
 eval 'my $x : Şʨᚻ(10,ᕘ(7,3))  :  에ㄒ펜ሲ;';

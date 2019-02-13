@@ -2,8 +2,13 @@ package Net::netent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
+our (
+    $n_name, @n_aliases,
+    $n_addrtype, $n_net
+);
+ 
 BEGIN { 
     use Exporter   ();
     @EXPORT      = qw(getnetbyname getnetbyaddr getnet);
@@ -13,7 +18,6 @@ BEGIN {
 		   );
     %EXPORT_TAGS = ( FIELDS => [ @EXPORT_OK, @EXPORT ] );
 }
-use vars      @EXPORT_OK;
 
 # Class::Struct forbids use of @ISA
 sub import { goto &Exporter::import }

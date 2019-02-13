@@ -21,10 +21,8 @@ plan tests => 15;
 my $verbose = @ARGV; # set if ANY ARGS
 
 my $a;
-my $Is_VMS = $^O eq 'VMS';
 
 my $path = join " ", map { qq["-I$_"] } @INC;
-$path = '"-I../lib" "-Iperl_root:[lib]"' if $Is_VMS;   # gets too long otherwise
 my $is_thread = $Config{use5005threads} && $Config{use5005threads} eq 'define';
 
 if ($is_thread) {

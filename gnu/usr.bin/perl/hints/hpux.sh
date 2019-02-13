@@ -812,3 +812,10 @@ case "`grep 'isfinite' /usr/include/math.h`" in
 *"isfinite"*) ;;
 *) d_isfinite=undef ;;
 esac
+
+# 11.23 says it has mbrlen and mbrtowc, but compiling them fails as it can't
+# find the type definition for mbstate_t which one of the parameters is.  It's
+# not in the hdr the man page says it is.  Perhaps a better Configure probe is
+# needed, but for now simply undefine them
+d_mbrlen='undef'
+d_mbrtowc='undef'

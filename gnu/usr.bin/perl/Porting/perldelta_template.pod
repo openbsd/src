@@ -51,7 +51,7 @@ XXX Any deprecated features, syntax, modules etc. should be listed here.
 
 =head2 Module removals
 
-XXX Remove this section if inapplicable.
+XXX Remove this section if not applicable.
 
 The following modules will be removed from the core distribution in a
 future release, and will at that time need to be installed from CPAN.
@@ -83,7 +83,7 @@ as an updated module in the L</Modules and Pragmata> section.
 XXX Changes which enhance performance without changing behaviour go here.
 There may well be none in a stable release.
 
-[ List each enhancement as a =item entry ]
+[ List each enhancement as an =item entry ]
 
 =over 4
 
@@ -101,7 +101,13 @@ following sections using F<Porting/corelist-perldelta.pl>.  A paragraph summary
 for important changes should then be added by hand.  In an ideal world,
 dual-life modules would have a F<Changes> file that could be cribbed.
 
-[ Within each section, list entries as a =item entry ]
+The list of new and updated modules is modified automatically as part of
+preparing a Perl release, so the only reason to manually add entries here is if
+you're summarising the important changes in the module update. (Also, if the
+manually-added details don't match the automatically-generated ones, the
+release manager will have to investigate the situation carefully.)
+
+[ Within each section, list entries as an =item entry ]
 
 =head2 New Modules and Pragmata
 
@@ -109,7 +115,7 @@ dual-life modules would have a F<Changes> file that could be cribbed.
 
 =item *
 
-XXX
+XXX Remove this section if not applicable.
 
 =back
 
@@ -120,6 +126,8 @@ XXX
 =item *
 
 L<XXX> has been upgraded from version A.xx to B.yy.
+
+If there was something important to note about this change, include that here.
 
 =back
 
@@ -148,9 +156,15 @@ XXX Description of the purpose of the new file here
 
 =head2 Changes to Existing Documentation
 
+We have attempted to update the documentation to reflect the changes
+listed in this document.  If you find any we have missed, send email
+to L<perlbug@perl.org|mailto:perlbug@perl.org>.
+
 XXX Changes which significantly change existing files in F<pod/> go here.
 However, any changes to F<pod/perldiag.pod> should go in the L</Diagnostics>
 section.
+
+Additionally, the following selected changes have been made:
 
 =head3 L<XXX>
 
@@ -234,7 +248,7 @@ go here.  Any other changes to the Perl build process should be listed here.
 However, any platform-specific changes should be listed in the
 L</Platform Support> section, instead.
 
-[ List changes as a =item entry ].
+[ List changes as an =item entry ].
 
 =over 4
 
@@ -252,7 +266,18 @@ large changes to the testing harness (e.g. when parallel testing was added).
 Changes to existing files in F<t/> aren't worth summarizing, although the bugs
 that they represent may be covered elsewhere.
 
-[ List each test improvement as a =item entry ]
+XXX If there were no significant test changes, say this:
+
+Tests were added and changed to reflect the other additions and changes
+in this release.
+
+XXX If instead there were significant changes, say this:
+
+Tests were added and changed to reflect the other additions and
+changes in this release.  Furthermore, these significant changes were
+made:
+
+[ List each test improvement as an =item entry ]
 
 =over 4
 
@@ -266,7 +291,7 @@ XXX
 
 XXX Any changes to platform support should be listed in the sections below.
 
-[ Within the sections, list each platform as a =item entry with specific
+[ Within the sections, list each platform as an =item entry with specific
 changes as paragraphs below it. ]
 
 =head2 New Platforms
@@ -317,7 +342,7 @@ XXX Changes which affect the interface available to C<XS> code go here.  Other
 significant internal changes for future core maintainers should be noted as
 well.
 
-[ List each change as a =item entry ]
+[ List each change as an =item entry ]
 
 =over 4
 
@@ -332,7 +357,7 @@ XXX
 XXX Important bug fixes in the core language are summarized here.  Bug fixes in
 files in F<ext/> and F<lib/> are best summarized in L</Modules and Pragmata>.
 
-[ List each fix as a =item entry ]
+[ List each fix as an =item entry ]
 
 =over 4
 
@@ -348,7 +373,7 @@ XXX Descriptions of platform agnostic bugs we know we can't fix go here.  Any
 tests that had to be C<TODO>ed for the release would be noted here.  Unfixed
 platform specific bugs also go here.
 
-[ List each fix as a =item entry ]
+[ List each fix as an =item entry ]
 
 =over 4
 
@@ -371,20 +396,19 @@ the perldelta of a previous release.
 
 =head1 Obituary
 
-XXX If any significant core contributor has died, we've added a short obituary
-here.
+XXX If any significant core contributor or member of the CPAN community has
+died, add a short obituary here.
 
 =head1 Acknowledgements
 
 XXX Generate this with:
 
-  perl Porting/acknowledgements.pl v5.24.3..HEAD
+  perl Porting/acknowledgements.pl v5.27.11..HEAD
 
 =head1 Reporting Bugs
 
-If you find what you think is a bug, you might check the articles recently
-posted to the comp.lang.perl.misc newsgroup and the perl bug database at
-L<https://rt.perl.org/> .  There may also be information at
+If you find what you think is a bug, you might check the perl bug database
+at L<https://rt.perl.org/> .  There may also be information at
 L<http://www.perl.org/> , the Perl Home Page.
 
 If you believe you have an unreported bug, please run the L<perlbug> program
@@ -396,6 +420,15 @@ If the bug you are reporting has security implications which make it
 inappropriate to send to a publicly archived mailing list, then see
 L<perlsec/SECURITY VULNERABILITY CONTACT INFORMATION>
 for details of how to report the issue.
+
+=head1 Give Thanks
+
+If you wish to thank the Perl 5 Porters for the work we had done in Perl 5,
+you can do so by running the C<perlthanks> program:
+
+    perlthanks
+
+This will send an email to the Perl 5 Porters list with your show of thanks.
 
 =head1 SEE ALSO
 

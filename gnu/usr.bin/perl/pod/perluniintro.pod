@@ -112,7 +112,7 @@ unallocated, for future growth.  But there have been occasions when
 a later release needed more code points than the available extras, and a
 new block had to allocated somewhere else, not contiguous to the initial
 one, to handle the overflow.  Thus, it became apparent early on that
-"block" wasn't an adequate organizing principal, and so the C<Script>
+"block" wasn't an adequate organizing principle, and so the C<Script>
 property was created.  (Later an improved script property was added as
 well, the C<Script_Extensions> property.)  Those code points that are in
 overflow blocks can still
@@ -151,9 +151,14 @@ serious Unicode work.  The maintenance release 5.6.1 fixed many of the
 problems of the initial Unicode implementation, but for example
 regular expressions still do not work with Unicode in 5.6.1.
 Perl v5.14.0 is the first release where Unicode support is
-(almost) seamlessly integrable without some gotchas (the exception being
-some differences in L<quotemeta|perlfunc/quotemeta>, and that is fixed
-starting in Perl 5.16.0).   To enable this
+(almost) seamlessly integrable without some gotchas. (There are a few
+exceptions. Firstly, some differences in L<quotemeta|perlfunc/quotemeta>
+were fixed starting in Perl 5.16.0. Secondly, some differences in
+L<the range operator|perlop/Range Operators> were fixed starting in
+Perl 5.26.0. Thirdly, some differences in L<split|perlfunc/split> were fixed
+started in Perl 5.28.0.)
+
+To enable this
 seamless support, you should C<use feature 'unicode_strings'> (which is
 automatically selected if you C<use 5.012> or higher).  See L<feature>.
 (5.14 also fixes a number of bugs and departures from the Unicode
@@ -354,7 +359,7 @@ The C<Encode> module knows about many encodings and has interfaces
 for doing conversions between those encodings:
 
     use Encode 'decode';
-    $data = decode("iso-8859-3", $data); # convert from legacy to utf-8
+    $data = decode("iso-8859-3", $data); # convert from legacy
 
 =head2 Unicode I/O
 
@@ -389,7 +394,7 @@ many encodings have several aliases.  Note that the C<:utf8> layer
 must always be specified exactly like that; it is I<not> subject to
 the loose matching of encoding names. Also note that currently C<:utf8> is unsafe for
 input, because it accepts the data without validating that it is indeed valid
-UTF-8; you should instead use C<:encoding(utf-8)> (with or without a
+UTF-8; you should instead use C<:encoding(UTF-8)> (with or without a
 hyphen).
 
 See L<PerlIO> for the C<:utf8> layer, L<PerlIO::encoding> and
@@ -402,7 +407,7 @@ Unicode or legacy encodings does not magically turn the data into
 Unicode in Perl's eyes.  To do that, specify the appropriate
 layer when opening files
 
-    open(my $fh,'<:encoding(utf8)', 'anything');
+    open(my $fh,'<:encoding(UTF-8)', 'anything');
     my $line_of_unicode = <$fh>;
 
     open(my $fh,'<:encoding(Big5)', 'anything');
@@ -411,8 +416,8 @@ layer when opening files
 The I/O layers can also be specified more flexibly with
 the C<open> pragma.  See L<open>, or look at the following example.
 
-    use open ':encoding(utf8)'; # input/output default encoding will be
-                                # UTF-8
+    use open ':encoding(UTF-8)'; # input/output default encoding will be
+                                 # UTF-8
     open X, ">file";
     print X chr(0x100), "\n";
     close X;
@@ -468,8 +473,11 @@ standardisation organisations are recognised; for a more detailed
 list see L<Encode::Supported>.
 
 C<read()> reads characters and returns the number of characters.
-C<seek()> and C<tell()> operate on byte counts, as do C<sysread()>
-and C<sysseek()>.
+C<seek()> and C<tell()> operate on byte counts, as does C<sysseek()>.
+
+C<sysread()> and C<syswrite()> should not be used on file handles with
+character encoding layers, they behave badly, and that behaviour has
+been deprecated since perl 5.24.
 
 Notice that because of the default behaviour of not doing any
 conversion upon input if there is no default layer,
@@ -481,12 +489,12 @@ by repeatedly encoding the data:
     local $/; ## read in the whole file of 8-bit characters
     $t = <F>;
     close F;
-    open F, ">:encoding(utf8)", "file";
+    open F, ">:encoding(UTF-8)", "file";
     print F $t; ## convert to UTF-8 on output
     close F;
 
 If you run this code twice, the contents of the F<file> will be twice
-UTF-8 encoded.  A C<use open ':encoding(utf8)'> would have avoided the
+UTF-8 encoded.  A C<use open ':encoding(UTF-8)'> would have avoided the
 bug, or explicitly opening also the F<file> for input as UTF-8.
 
 B<NOTE>: the C<:utf8> and C<:encoding> features work only if your
@@ -530,15 +538,17 @@ you want to see what the native values are.)
 
 =item *
 
-Bit Complement Operator ~ And vec()
+Starting in Perl 5.28, it is illegal for bit operators, like C<~>, to
+operate on strings containing code points above 255.
 
-The bit complement operator C<~> may produce surprising results if
+=item *
+
+The vec() function may produce surprising results if
 used on strings containing characters with ordinal values above
 255. In such a case, the results are consistent with the internal
 encoding of the characters, but not with much else. So don't do
-that. Similarly for C<vec()>: you will be operating on the
-internally-encoded bit patterns of the Unicode characters, not on
-the code point values, which is very probably not what you want.
+that, and starting in Perl 5.28, a deprecation message is issued if you
+do so, becoming illegal in Perl 5.32.
 
 =item *
 
@@ -641,13 +651,12 @@ Starting in v5.22, you can use Unicode code points as the end points of
 regular expression pattern character ranges, and the range will include
 all Unicode code points that lie between those end points, inclusive.
 
- qr/ [\N{U+03]-\N{U+20}] /x
+ qr/ [ \N{U+03} - \N{U+20} ] /xx
 
 includes the code points
 C<\N{U+03}>, C<\N{U+04}>, ..., C<\N{U+20}>.
 
-(It is planned to extend this behavior to ranges in C<tr///> in Perl
-v5.24.)
+This also works for ranges in C<tr///> starting in Perl v5.24.
 
 =item *
 
@@ -726,16 +735,13 @@ the output string will be UTF-8-encoded C<ab\x80c = \x{100}\n>, but
 C<$a> will stay byte-encoded.
 
 Sometimes you might really need to know the byte length of a string
-instead of the character length. For that use either the
-C<Encode::encode_utf8()> function or the C<bytes> pragma
+instead of the character length. For that use the C<bytes> pragma
 and the C<length()> function:
 
     my $unicode = chr(0x100);
     print length($unicode), "\n"; # will print 1
-    require Encode;
-    print length(Encode::encode_utf8($unicode)),"\n"; # will print 2
     use bytes;
-    print length($unicode), "\n"; # will also print 2
+    print length($unicode), "\n"; # will print 2
                                   # (the 0xC4 0x80 of the UTF-8)
     no bytes;
 
@@ -752,12 +758,12 @@ How Do I Detect Data That's Not Valid In a Particular Encoding?
 Use the C<Encode> package to try converting it.
 For example,
 
-    use Encode 'decode_utf8';
+    use Encode 'decode';
 
-    if (eval { decode_utf8($string, Encode::FB_CROAK); 1 }) {
-        # $string is valid utf8
+    if (eval { decode('UTF-8', $string, Encode::FB_CROAK); 1 }) {
+        # $string is valid UTF-8
     } else {
-        # $string is not valid utf8
+        # $string is not valid UTF-8
     }
 
 Or use C<unpack> to try decoding it:
@@ -788,7 +794,7 @@ If you have a raw sequence of bytes that you know should be
 interpreted via a particular encoding, you can use C<Encode>:
 
     use Encode 'from_to';
-    from_to($data, "iso-8859-1", "utf-8"); # from latin-1 to utf-8
+    from_to($data, "iso-8859-1", "UTF-8"); # from latin-1 to UTF-8
 
 The call to C<from_to()> changes the bytes in C<$data>, but nothing
 material about the nature of the string has changed as far as Perl is
@@ -817,8 +823,8 @@ pack/unpack to convert to/from Unicode.
 If you have a sequence of bytes you B<know> is valid UTF-8,
 but Perl doesn't know it yet, you can make Perl a believer, too:
 
-    use Encode 'decode_utf8';
-    $Unicode = decode_utf8($bytes);
+    $Unicode = $bytes;
+    utf8::decode($Unicode);
 
 or:
 
@@ -843,9 +849,13 @@ L<http://www.cl.cam.ac.uk/~mgk25/unicode.html>
 
 How Does Unicode Work With Traditional Locales?
 
-If your locale is a UTF-8 locale, starting in Perl v5.20, Perl works
-well for all categories except C<LC_COLLATE> dealing with sorting and
-the C<cmp> operator.
+If your locale is a UTF-8 locale, starting in Perl v5.26, Perl works
+well for all categories; before this, starting with Perl v5.20, it works
+for all categories but C<LC_COLLATE>, which deals with
+sorting and the C<cmp> operator.  But note that the standard
+C<L<Unicode::Collate>> and C<L<Unicode::Collate::Locale>> modules offer
+much more powerful solutions to collation issues, and work on earlier
+releases.
 
 For other locales, starting in Perl 5.16, you can specify
 

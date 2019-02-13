@@ -10,7 +10,8 @@ use Config;
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(&Mksymlists);
-our $VERSION = '7.10_02';
+our $VERSION = '7.34';
+$VERSION = eval $VERSION;
 
 sub Mksymlists {
     my(%spec) = @_;
@@ -135,7 +136,7 @@ sub _write_win32 {
     open( my $def, ">", "$data->{FILE}.def" )
         or croak("Can't create $data->{FILE}.def: $!\n");
     # put library name in quotes (it could be a keyword, like 'Alias')
-    if ($Config::Config{'cc'} !~ /^gcc/i) {
+    if ($Config::Config{'cc'} !~ /\bgcc/i) {
         print $def "LIBRARY \"$data->{DLBASE}\"\n";
     }
     print $def "EXPORTS\n  ";

@@ -944,114 +944,249 @@ is($params[0], $x, q|$params[0] = $x|);               # self
 
 foreach my $class ($mbi, $mbf) {
     $x = $class->new(2)->bzero();
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2)->bzero(); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2)->bzero(); \$x->{_p}|);
 
     $x = $class->new(2)->bone();
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2)->bone(); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2)->bone(); \$x->{_p}|);
 
     $x = $class->new(2)->binf();
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2)->binf(); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2)->binf(); \$x->{_p}|);
 
     $x = $class->new(2)->bnan();
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2)->bnan(); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2)->bnan(); \$x->{_p}|);
+
+    note "Verify that bnan() does not delete/undefine accuracy and precision.";
 
     $x = $class->new(2);
     $x->{_a} = 1;
-    $x->{_p} = 2;
     $x->bnan();
+    is($x->{_a}, 1, qq|\$x = $class->new(2); \$x->{_a} = 1; \$x->bnan(); \$x->{_a}|);
 
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    $x = $class->new(2);
+    $x->{_p} = 1;
+    $x->bnan();
+    is($x->{_p}, 1, qq|\$x = $class->new(2); \$x->{_p} = 1; \$x->bnan(); \$x->{_p}|);
+
+    note "Verify that binf() does not delete/undefine accuracy and precision.";
 
     $x = $class->new(2);
     $x->{_a} = 1;
-    $x->{_p} = 2;
     $x->binf();
+    is($x->{_a}, 1, qq|\$x = $class->new(2); \$x->{_a} = 1; \$x->binf(); \$x->{_a}|);
 
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    $x = $class->new(2);
+    $x->{_p} = 1;
+    $x->binf();
+    is($x->{_p}, 1, qq|\$x = $class->new(2); \$x->{_p} = 1; \$x->binf(); \$x->{_p}|);
+
+    note "Verify that accuracy can be set as argument to new().";
 
     $x = $class->new(2, 1);
-    is($x->{_a}, 1, q|$x->{_a} = 1|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, 1,     qq|\$x = $class->new(2, 1); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2, 1); \$x->{_p}|);
+
+    note "Verify that precision can be set as argument to new().";
 
     $x = $class->new(2, undef, 1);
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, 1, q|$x->{_p} = 1|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2, undef, 1); \$x->{_a}|);
+    is($x->{_p}, 1,     qq|\$x = $class->new(2, undef, 1); \$x->{_p}|);
+
+    note "Verify that accuracy set with new() is preserved after calling bzero().";
 
     $x = $class->new(2, 1)->bzero();
-    is($x->{_a}, 1, q|$x->{_a} = 1|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, 1,     qq|\$x = $class->new(2, 1)->bzero(); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2, 1)->bzero(); \$x->{_p}|);
+
+    note "Verify that precision set with new() is preserved after calling bzero().";
 
     $x = $class->new(2, undef, 1)->bzero();
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, 1, q|$x->{_p} = 1|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2, undef, 1)->bzero(); \$x->{_a}|);
+    is($x->{_p}, 1,     qq|\$x = $class->new(2, undef, 1)->bzero(); \$x->{_p}|);
+
+    note "Verify that accuracy set with new() is preserved after calling bone().";
 
     $x = $class->new(2, 1)->bone();
-    is($x->{_a}, 1, q|$x->{_a} = 1|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, 1,     qq|\$x = $class->new(2, 1)->bone(); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2, 1)->bone(); \$x->{_p}|);
+
+    note "Verify that precision set with new() is preserved after calling bone().";
 
     $x = $class->new(2, undef, 1)->bone();
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, 1, q|$x->{_p} = 1|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2, undef, 1)->bone(); \$x->{_a}|);
+    is($x->{_p}, 1,     qq|\$x = $class->new(2, undef, 1)->bone(); \$x->{_p}|);
+
+    note "Verify that accuracy can be set with instance method bone('+').";
 
     $x = $class->new(2);
     $x->bone('+', 2, undef);
-    is($x->{_a}, 2, q|$x->{_a} = 2|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, 2,     qq|\$x = $class->new(2); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2); \$x->{_p}|);
+
+    note "Verify that precision can be set with instance method bone('+').";
 
     $x = $class->new(2);
     $x->bone('+', undef, 2);
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, 2, q|$x->{_p} = 2|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2); \$x->bone('+', undef, 2); \$x->{_a}|);
+    is($x->{_p}, 2,     qq|\$x = $class->new(2); \$x->bone('+', undef, 2); \$x->{_p}|);
+
+    note "Verify that accuracy can be set with instance method bone('-').";
 
     $x = $class->new(2);
     $x->bone('-', 2, undef);
-    is($x->{_a}, 2, q|$x->{_a} = 2|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, 2,     qq|\$x = $class->new(2); \$x->bone('-', 2, undef); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2); \$x->bone('-', 2, undef); \$x->{_p}|);
+
+    note "Verify that precision can be set with instance method bone('-').";
 
     $x = $class->new(2);
     $x->bone('-', undef, 2);
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, 2, q|$x->{_p} = 2|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2); \$x->bone('-', undef, 2); \$x->{_a}|);
+    is($x->{_p}, 2,     qq|\$x = $class->new(2); \$x->bone('-', undef, 2); \$x->{_p}|);
+
+    note "Verify that accuracy can be set with instance method bzero().";
 
     $x = $class->new(2);
     $x->bzero(2, undef);
-    is($x->{_a}, 2, q|$x->{_a} = 2|);
-    is($x->{_p}, undef, q|$x->{_p} = undef|);
+    is($x->{_a}, 2,     qq|\$x = $class->new(2);\$x->bzero(2, undef); \$x->{_a}|);
+    is($x->{_p}, undef, qq|\$x = $class->new(2);\$x->bzero(2, undef); \$x->{_p}|);
+
+    note "Verify that precision can be set with instance method bzero().";
 
     $x = $class->new(2);
     $x->bzero(undef, 2);
-    is($x->{_a}, undef, q|$x->{_a} = undef|);
-    is($x->{_p}, 2, q|$x->{_p} = 2|);
+    is($x->{_a}, undef, qq|\$x = $class->new(2); \$x->bzero(undef, 2); \$x->{_a}|);
+    is($x->{_p}, 2,     qq|\$x = $class->new(2); \$x->bzero(undef, 2); \$x->{_p}|);
 }
 
 ###############################################################################
-# test whether bone/bzero honour globals
+# test whether bone/bzero honour class variables
 
 for my $class ($mbi, $mbf) {
 
-    $class->accuracy(2);
-    $x = $class->bone();
-    is($x->accuracy(), 2, q|$x->accuracy() = 2|);
+    note "Verify that class accuracy is copied into new objects.";
+
+    $class->accuracy(3);                # set
 
     $x = $class->bzero();
-    is($x->accuracy(), 2, q|$x->accuracy() = 2|);
+    is($x->accuracy(), 3,
+       qq|$class->accuracy(3); \$x = $class->bzero(); \$x->accuracy()|);
 
-    $class->accuracy(undef);        # reset
-
-    $class->precision(-2);
     $x = $class->bone();
-    is($x->precision(), -2, q|$x->precision() = -2|);
+    is($x->accuracy(), 3,
+       qq|$class->accuracy(3); \$x = $class->bone(); \$x->accuracy()|);
+
+    $x = $class->new(2);
+    is($x->accuracy(), 3,
+       qq|$class->accuracy(3); \$x = $class->new(2); \$x->accuracy()|);
+
+    $class->accuracy(undef);            # reset
+
+    note "Verify that class precision is copied into new objects.";
+
+    $class->precision(-4);              # set
 
     $x = $class->bzero();
-    is($x->precision(), -2, q|$x->precision() = -2|);
+    is($x->precision(), -4,
+       qq|$class->precision(-4); \$x = $class->bzero(); \$x->precision()|);
 
-    $class->precision(undef);       # reset
+    $x = $class->bone();
+    is($x->precision(), -4,
+       qq|$class->precision(-4); \$x = $class->bone(); \$x->precision()|);
+
+    $x = $class->new(2);
+    is($x->precision(), -4,
+       qq|$class->precision(-4); \$x = $class->new(2); \$x->precision()|);
+
+    $class->precision(undef);           # reset
+
+    note "Verify that setting accuracy as method argument overrides class variable";
+
+    $class->accuracy(2);                # set
+
+    $x = $class->bzero(5);
+    is($x->accuracy(), 5,
+       qq|$class->accuracy(2); \$x = $class->bzero(5); \$x->accuracy()|);
+
+    SKIP: {
+          skip 1, "this won't work until we have a better OO implementation";
+
+          $x = $class->bzero(undef);
+          is($x->accuracy(), undef,
+             qq|$class->accuracy(2); \$x = $class->bzero(undef); \$x->accuracy()|);
+      }
+
+    $x = $class->bone("+", 5);
+    is($x->accuracy(), 5,
+       qq|$class->accuracy(2); \$x = $class->bone("+", 5); \$x->accuracy()|);
+
+    SKIP: {
+          skip 1, "this won't work until we have a better OO implementation";
+
+          $x = $class->bone("+", undef);
+          is($x->accuracy(), undef,
+             qq|$class->accuracy(2); \$x = $class->bone("+", undef); \$x->accuracy()|);
+      }
+
+    $x = $class->new(2, 5);
+    is($x->accuracy(), 5,
+       qq|$class->accuracy(2); \$x = $class->new(2, 5); \$x->accuracy()|);
+
+
+    SKIP: {
+          skip 1, "this won't work until we have a better OO implementation";
+
+          $x = $class->new(2, undef);
+          is($x->accuracy(), undef,
+             qq|$class->accuracy(2); \$x = $class->new(2, undef); \$x->accuracy()|);
+      }
+
+    $class->accuracy(undef);            # reset
+
+    note "Verify that setting precision as method argument overrides class variable";
+
+    $class->precision(-2);              # set
+
+    $x = $class->bzero(undef, -6);
+    is($x->precision(), -6,
+       qq|$class->precision(-2); \$x = $class->bzero(undef, -6); \$x->precision()|);
+
+    SKIP: {
+          skip 1, "this won't work until we have a better OO implementation";
+
+          $x = $class->bzero(undef, undef);
+          is($x->precision(), undef,
+             qq|$class->precision(-2); \$x = $class->bzero(undef, undef); \$x->precision()|);
+      }
+
+    $x = $class->bone("+", undef, -6);
+    is($x->precision(), -6,
+       qq|$class->precision(-2); \$x = $class->bone("+", undef, -6); \$x->precision()|);
+
+    SKIP: {
+          skip 1, "this won't work until we have a better OO implementation";
+
+          $x = $class->bone("+", undef, undef);
+          is($x->precision(), undef,
+             qq|$class->precision(-2); \$x = $class->bone("+", undef, undef); \$x->precision()|);
+      }
+
+    $x = $class->new(2, undef, -6);
+    is($x->precision(), -6,
+       qq|$class->precision(-2); \$x = $class->new(2, undef, -6); \$x->precision()|);
+
+    SKIP: {
+          skip 1, "this won't work until we have a better OO implementation";
+
+          $x = $class->new(2, undef, undef);
+          is($x->precision(), undef,
+             qq|$class->precision(-2); \$x = $class->new(2, undef, undef); \$x->precision()|);
+      }
+
+    $class->precision(undef);           # reset
 }
 
 ###############################################################################
@@ -1113,7 +1248,7 @@ foreach my $class ($mbi, $mbf) {
 
 my ($got, $f, $a, $p, $xp, $yp, $xa, $ya, $try, $want, @args);
 
-my $CALC = Math::BigInt->config()->{lib};
+my $CALC = Math::BigInt->config('lib');
 
 while (<DATA>) {
     s/#.*$//;                   # remove comments

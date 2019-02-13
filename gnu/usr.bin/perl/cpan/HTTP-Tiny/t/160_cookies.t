@@ -5,14 +5,15 @@ use warnings;
 
 use File::Basename;
 use Test::More 0.96;
-use t::Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
+use lib 't';
+use Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
   hashify connect_args clear_socket_source set_socket_source sort_headers
   $CRLF $LF];
 
 use HTTP::Tiny;
 BEGIN { monkey_patch() }
 
-SKIP: for my $class ( qw/t::SimpleCookieJar HTTP::CookieJar/ ) {
+SKIP: for my $class ( qw/SimpleCookieJar HTTP::CookieJar/ ) {
 
     subtest $class => sub {
         eval "require $class; 1"
@@ -23,7 +24,7 @@ SKIP: for my $class ( qw/t::SimpleCookieJar HTTP::CookieJar/ ) {
             my $data = do { local (@ARGV,$/) = $file; <> };
             my @cases = split /--+\n/, $data;
 
-            my $jar = t::SimpleCookieJar->new();
+            my $jar = SimpleCookieJar->new();
             my $http = undef;
             while (@cases) {
                 my ($params, $expect_req, $give_res) = splice( @cases, 0, 3 );

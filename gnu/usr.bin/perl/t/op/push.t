@@ -20,7 +20,7 @@ BEGIN {
 -4,			4 5 6 7,	0 1 2 3
 EOF
 
-plan tests => 8 + @tests*2;
+plan tests => 10 + @tests*2;
 die "blech" unless @tests;
 
 @x = (1,2,3);
@@ -69,6 +69,19 @@ foreach $line (@tests) {
     }
     is(join(':',@got), join(':',@get),   "got: @got == @get");
     is(join(':',@x),   join(':',@leave), "left: @x == @leave");
+}
+
+# See RT#131000
+{
+    local $@;
+    my @readonly_array = 10..11;
+    Internals::SvREADONLY(@readonly_array, 1);
+    eval { push @readonly_array, () };
+    is $@, '', "can push empty list onto readonly array";
+
+    eval { push @readonly_array, 9 };
+    like $@, qr/^Modification of a read-only value/,
+        "croak when pushing onto readonly array";
 }
 
 1;  # this file is require'd by lib/tie-stdpush.t

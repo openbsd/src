@@ -3,7 +3,7 @@ Locale::Codes::Country_Codes;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'harvest_data' is run.
-#    Generated on: Tue Dec  1 14:41:05 EST 2015
+#    Generated on: Fri Feb 23 12:17:40 EST 2018
 
 use strict;
 require 5.006;
@@ -11,9 +11,9 @@ use warnings;
 use utf8;
 
 our($VERSION);
-$VERSION='3.37';
+$VERSION='3.56';
 
-$Locale::Codes::Data{'country'}{'id'} = '0250';
+$Locale::Codes::Data{'country'}{'id'} = '0280';
 
 $Locale::Codes::Data{'country'}{'id2names'} = {
    q(0001) => [
@@ -105,6 +105,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       ],
    q(0028) => [
       q(Bonaire, Sint Eustatius and Saba),
+      q(Bonaire, Sint Eustatius, and Saba),
       ],
    q(0029) => [
       q(Bosnia and Herzegovina),
@@ -238,6 +239,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(Cyprus),
       ],
    q(0060) => [
+      q(Czechia),
       q(Czech Republic),
       q(The Czech Republic),
       q(Czech Republic, The),
@@ -456,6 +458,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(The Democratic People's Republic of Korea),
       q(Democratic People's Republic of Korea),
       q(North Korea),
+      q(Korea, North),
       ],
    q(0119) => [
       q(Korea, The Republic of),
@@ -465,6 +468,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(The Republic of Korea),
       q(Republic of Korea),
       q(South Korea),
+      q(Korea, South),
       ],
    q(0120) => [
       q(Kuwait),
@@ -477,6 +481,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(The Lao People's Democratic Republic),
       q(Lao People's Democratic Republic, The),
       q(Lao People's Democratic Republic (The)),
+      q(Laos),
       ],
    q(0123) => [
       q(Latvia),
@@ -573,6 +578,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(Moldova (Republic of)),
       q(The Republic of Moldova),
       q(Republic of Moldova),
+      q(Moldova),
       ],
    q(0147) => [
       q(Monaco),
@@ -706,6 +712,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(The Russian Federation),
       q(Russian Federation, The),
       q(Russian Federation (The)),
+      q(Russia),
       ],
    q(0184) => [
       q(Rwanda),
@@ -717,6 +724,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
    q(0186) => [
       q(Saint Helena, Ascension and Tristan da Cunha),
       q(Saint Helena),
+      q(Saint Helena, Ascension, and Tristan Da Cunha),
       ],
    q(0187) => [
       q(Saint Kitts and Nevis),
@@ -765,6 +773,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       ],
    q(0201) => [
       q(Sint Maarten (Dutch part)),
+      q(Sint Maarten),
       ],
    q(0202) => [
       q(Slovakia),
@@ -787,6 +796,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
    q(0207) => [
       q(South Georgia and the South Sandwich Islands),
       q(South Georgia and the Islands),
+      q(South Georgia and South Sandwich Islands),
       ],
    q(0208) => [
       q(South Sudan),
@@ -838,6 +848,7 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(Tanzania, United Republic of),
       q(Tanzania (United Republic of)),
       q(United Republic of Tanzania),
+      q(Tanzania),
       ],
    q(0221) => [
       q(Thailand),
@@ -986,11 +997,105 @@ $Locale::Codes::Data{'country'}{'id2names'} = {
       q(Republic of Zimbabwe, The),
       q(Republic of Zimbabwe (The)),
       ],
+   q(0250) => [
+      q(Sark),
+      ],
+   q(0251) => [
+      q(Akrotiri),
+      ],
+   q(0252) => [
+      q(Ashmore and Cartier Islands),
+      ],
+   q(0253) => [
+      q(Baker Island),
+      ],
+   q(0254) => [
+      q(Bassas Da India),
+      ],
+   q(0255) => [
+      q(Clipperton Island),
+      ],
+   q(0256) => [
+      q(Coral Sea Islands),
+      ],
+   q(0257) => [
+      q(Dhekelia),
+      ],
+   q(0258) => [
+      q(Diego Garcia),
+      ],
+   q(0259) => [
+      q(Europa Island),
+      ],
+   q(0260) => [
+      q(Gaza Strip),
+      ],
+   q(0261) => [
+      q(Glorioso Islands),
+      ],
+   q(0262) => [
+      q(Guantanamo Bay Naval Base),
+      ],
+   q(0263) => [
+      q(Howland Island),
+      ],
+   q(0264) => [
+      q(Jan Mayen),
+      ],
+   q(0265) => [
+      q(Jarvis Island),
+      ],
+   q(0266) => [
+      q(Johnston Atoll),
+      ],
+   q(0267) => [
+      q(Juan de Nova Island),
+      ],
+   q(0268) => [
+      q(Kingman Reef),
+      ],
+   q(0269) => [
+      q(Kosovo),
+      ],
+   q(0270) => [
+      q(Midway Islands),
+      ],
+   q(0271) => [
+      q(Navassa Island),
+      ],
+   q(0272) => [
+      q(Palmyra Atoll),
+      ],
+   q(0273) => [
+      q(Paracel Islands),
+      ],
+   q(0274) => [
+      q(Spratly Islands),
+      ],
+   q(0275) => [
+      q(Svalbard),
+      ],
+   q(0276) => [
+      q(Tromelin Island),
+      ],
+   q(0277) => [
+      q(Unknown),
+      ],
+   q(0278) => [
+      q(Wake Island),
+      ],
+   q(0279) => [
+      q(West Bank),
+      ],
 };
 
 $Locale::Codes::Data{'country'}{'alias2id'} = {
    q(afghanistan) => [
       q(0001),
+      q(0),
+      ],
+   q(akrotiri) => [
+      q(0251),
       q(0),
       ],
    q(aland islands) => [
@@ -1041,6 +1146,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0013),
       q(0),
       ],
+   q(ashmore and cartier islands) => [
+      q(0252),
+      q(0),
+      ],
    q(australia) => [
       q(0014),
       q(0),
@@ -1069,12 +1178,20 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0018),
       q(0),
       ],
+   q(baker island) => [
+      q(0253),
+      q(0),
+      ],
    q(bangladesh) => [
       q(0019),
       q(0),
       ],
    q(barbados) => [
       q(0020),
+      q(0),
+      ],
+   q(bassas da india) => [
+      q(0254),
       q(0),
       ],
    q(belarus) => [
@@ -1116,6 +1233,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
    q(bonaire, sint eustatius and saba) => [
       q(0028),
       q(0),
+      ],
+   q(bonaire, sint eustatius, and saba) => [
+      q(0028),
+      q(1),
       ],
    q(bosnia and herzegovina) => [
       q(0029),
@@ -1237,6 +1358,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0047),
       q(0),
       ],
+   q(clipperton island) => [
+      q(0255),
+      q(0),
+      ],
    q(cocos (keeling) islands) => [
       q(0048),
       q(0),
@@ -1329,6 +1454,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0053),
       q(2),
       ],
+   q(coral sea islands) => [
+      q(0256),
+      q(0),
+      ],
    q(costa rica) => [
       q(0054),
       q(0),
@@ -1355,15 +1484,19 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(czech republic) => [
       q(0060),
-      q(0),
+      q(1),
       ],
    q(czech republic (the)) => [
       q(0060),
-      q(3),
+      q(4),
       ],
    q(czech republic, the) => [
       q(0060),
-      q(2),
+      q(3),
+      ],
+   q(czechia) => [
+      q(0060),
+      q(0),
       ],
    q(democratic people's republic of korea) => [
       q(0118),
@@ -1379,6 +1512,14 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(denmark) => [
       q(0061),
+      q(0),
+      ],
+   q(dhekelia) => [
+      q(0257),
+      q(0),
+      ],
+   q(diego garcia) => [
+      q(0258),
       q(0),
       ],
    q(djibouti) => [
@@ -1431,6 +1572,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(ethiopia) => [
       q(0071),
+      q(0),
+      ],
+   q(europa island) => [
+      q(0259),
       q(0),
       ],
    q(faeroe islands) => [
@@ -1521,6 +1666,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0081),
       q(2),
       ],
+   q(gaza strip) => [
+      q(0260),
+      q(0),
+      ],
    q(georgia) => [
       q(0082),
       q(0),
@@ -1535,6 +1684,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(gibraltar) => [
       q(0085),
+      q(0),
+      ],
+   q(glorioso islands) => [
+      q(0261),
       q(0),
       ],
    q(great britain) => [
@@ -1559,6 +1712,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(guam) => [
       q(0090),
+      q(0),
+      ],
+   q(guantanamo bay naval base) => [
+      q(0262),
       q(0),
       ],
    q(guatemala) => [
@@ -1629,6 +1786,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0100),
       q(3),
       ],
+   q(howland island) => [
+      q(0263),
+      q(0),
+      ],
    q(hungary) => [
       q(0101),
       q(0),
@@ -1693,16 +1854,32 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0111),
       q(0),
       ],
+   q(jan mayen) => [
+      q(0264),
+      q(0),
+      ],
    q(japan) => [
       q(0112),
+      q(0),
+      ],
+   q(jarvis island) => [
+      q(0265),
       q(0),
       ],
    q(jersey) => [
       q(0113),
       q(0),
       ],
+   q(johnston atoll) => [
+      q(0266),
+      q(0),
+      ],
    q(jordan) => [
       q(0114),
+      q(0),
+      ],
+   q(juan de nova island) => [
+      q(0267),
       q(0),
       ],
    q(kazakhstan) => [
@@ -1719,6 +1896,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(kenya) => [
       q(0116),
+      q(0),
+      ],
+   q(kingman reef) => [
+      q(0268),
       q(0),
       ],
    q(kiribati) => [
@@ -1745,9 +1926,17 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0118),
       q(2),
       ],
+   q(korea, north) => [
+      q(0118),
+      q(7),
+      ],
    q(korea, republic of) => [
       q(0119),
       q(2),
+      ],
+   q(korea, south) => [
+      q(0119),
+      q(7),
       ],
    q(korea, the democratic people's republic of) => [
       q(0118),
@@ -1755,6 +1944,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(korea, the republic of) => [
       q(0119),
+      q(0),
+      ],
+   q(kosovo) => [
+      q(0269),
       q(0),
       ],
    q(kuwait) => [
@@ -1776,6 +1969,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
    q(lao people's democratic republic, the) => [
       q(0122),
       q(2),
+      ],
+   q(laos) => [
+      q(0122),
+      q(4),
       ],
    q(latvia) => [
       q(0123),
@@ -1921,6 +2118,14 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0145),
       q(4),
       ],
+   q(midway islands) => [
+      q(0270),
+      q(0),
+      ],
+   q(moldova) => [
+      q(0146),
+      q(6),
+      ],
    q(moldova (republic of)) => [
       q(0146),
       q(3),
@@ -1971,6 +2176,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(nauru) => [
       q(0155),
+      q(0),
+      ],
+   q(navassa island) => [
+      q(0271),
       q(0),
       ],
    q(nepal) => [
@@ -2065,12 +2274,20 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0170),
       q(0),
       ],
+   q(palmyra atoll) => [
+      q(0272),
+      q(0),
+      ],
    q(panama) => [
       q(0171),
       q(0),
       ],
    q(papua new guinea) => [
       q(0172),
+      q(0),
+      ],
+   q(paracel islands) => [
+      q(0273),
       q(0),
       ],
    q(paraguay) => [
@@ -2173,6 +2390,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0182),
       q(0),
       ],
+   q(russia) => [
+      q(0183),
+      q(4),
+      ],
    q(russian federation) => [
       q(0183),
       q(0),
@@ -2200,6 +2421,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
    q(saint helena, ascension and tristan da cunha) => [
       q(0186),
       q(0),
+      ],
+   q(saint helena, ascension, and tristan da cunha) => [
+      q(0186),
+      q(2),
       ],
    q(saint kitts and nevis) => [
       q(0187),
@@ -2249,6 +2474,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0194),
       q(0),
       ],
+   q(sark) => [
+      q(0250),
+      q(0),
+      ],
    q(saudi arabia) => [
       q(0195),
       q(0),
@@ -2272,6 +2501,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
    q(singapore) => [
       q(0200),
       q(0),
+      ],
+   q(sint maarten) => [
+      q(0201),
+      q(1),
       ],
    q(sint maarten (dutch part)) => [
       q(0201),
@@ -2305,6 +2538,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0206),
       q(0),
       ],
+   q(south georgia and south sandwich islands) => [
+      q(0207),
+      q(2),
+      ],
    q(south georgia and the islands) => [
       q(0207),
       q(1),
@@ -2323,6 +2560,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(spain) => [
       q(0209),
+      q(0),
+      ],
+   q(spratly islands) => [
+      q(0274),
       q(0),
       ],
    q(sri lanka) => [
@@ -2347,6 +2588,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(suriname) => [
       q(0212),
+      q(0),
+      ],
+   q(svalbard) => [
+      q(0275),
       q(0),
       ],
    q(svalbard and jan mayen) => [
@@ -2400,6 +2645,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
    q(tajikistan) => [
       q(0219),
       q(0),
+      ],
+   q(tanzania) => [
+      q(0220),
+      q(3),
       ],
    q(tanzania (united republic of)) => [
       q(0220),
@@ -2455,7 +2704,7 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       ],
    q(the czech republic) => [
       q(0060),
-      q(1),
+      q(2),
       ],
    q(the democratic people's republic of korea) => [
       q(0118),
@@ -2645,6 +2894,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0226),
       q(0),
       ],
+   q(tromelin island) => [
+      q(0276),
+      q(0),
+      ],
    q(tunisia) => [
       q(0227),
       q(0),
@@ -2765,6 +3018,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0237),
       q(6),
       ],
+   q(unknown) => [
+      q(0277),
+      q(0),
+      ],
    q(uruguay) => [
       q(0238),
       q(0),
@@ -2841,6 +3098,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
       q(0244),
       q(3),
       ],
+   q(wake island) => [
+      q(0278),
+      q(0),
+      ],
    q(wallis and futuna) => [
       q(0245),
       q(0),
@@ -2848,6 +3109,10 @@ $Locale::Codes::Data{'country'}{'alias2id'} = {
    q(wallis and futuna islands) => [
       q(0245),
       q(1),
+      ],
+   q(west bank) => [
+      q(0279),
+      q(0),
       ],
    q(western sahara) => [
       q(0246),
@@ -5874,6 +6139,3300 @@ $Locale::Codes::Data{'country'}{'code2id'} = {
          q(0),
          ],
       },
+   q(genc-alpha-2) => {
+      q(A1) => [
+         q(0277),
+         q(0),
+         ],
+      q(A2) => [
+         q(0262),
+         q(0),
+         ],
+      q(AD) => [
+         q(0006),
+         q(0),
+         ],
+      q(AE) => [
+         q(0234),
+         q(0),
+         ],
+      q(AF) => [
+         q(0001),
+         q(0),
+         ],
+      q(AG) => [
+         q(0010),
+         q(0),
+         ],
+      q(AI) => [
+         q(0008),
+         q(0),
+         ],
+      q(AL) => [
+         q(0003),
+         q(0),
+         ],
+      q(AM) => [
+         q(0012),
+         q(0),
+         ],
+      q(AO) => [
+         q(0007),
+         q(0),
+         ],
+      q(AQ) => [
+         q(0009),
+         q(0),
+         ],
+      q(AR) => [
+         q(0011),
+         q(0),
+         ],
+      q(AS) => [
+         q(0005),
+         q(0),
+         ],
+      q(AT) => [
+         q(0015),
+         q(0),
+         ],
+      q(AU) => [
+         q(0014),
+         q(0),
+         ],
+      q(AW) => [
+         q(0013),
+         q(0),
+         ],
+      q(AZ) => [
+         q(0016),
+         q(0),
+         ],
+      q(BA) => [
+         q(0029),
+         q(0),
+         ],
+      q(BB) => [
+         q(0020),
+         q(0),
+         ],
+      q(BD) => [
+         q(0019),
+         q(0),
+         ],
+      q(BE) => [
+         q(0022),
+         q(0),
+         ],
+      q(BF) => [
+         q(0036),
+         q(0),
+         ],
+      q(BG) => [
+         q(0035),
+         q(0),
+         ],
+      q(BH) => [
+         q(0018),
+         q(0),
+         ],
+      q(BI) => [
+         q(0037),
+         q(0),
+         ],
+      q(BJ) => [
+         q(0024),
+         q(0),
+         ],
+      q(BL) => [
+         q(0185),
+         q(0),
+         ],
+      q(BM) => [
+         q(0025),
+         q(0),
+         ],
+      q(BN) => [
+         q(0034),
+         q(0),
+         ],
+      q(BO) => [
+         q(0027),
+         q(0),
+         ],
+      q(BQ) => [
+         q(0028),
+         q(1),
+         ],
+      q(BR) => [
+         q(0032),
+         q(0),
+         ],
+      q(BS) => [
+         q(0017),
+         q(0),
+         ],
+      q(BT) => [
+         q(0026),
+         q(0),
+         ],
+      q(BV) => [
+         q(0031),
+         q(0),
+         ],
+      q(BW) => [
+         q(0030),
+         q(0),
+         ],
+      q(BY) => [
+         q(0021),
+         q(0),
+         ],
+      q(BZ) => [
+         q(0023),
+         q(0),
+         ],
+      q(CA) => [
+         q(0041),
+         q(0),
+         ],
+      q(CC) => [
+         q(0048),
+         q(0),
+         ],
+      q(CD) => [
+         q(0051),
+         q(0),
+         ],
+      q(CF) => [
+         q(0043),
+         q(0),
+         ],
+      q(CG) => [
+         q(0052),
+         q(0),
+         ],
+      q(CH) => [
+         q(0216),
+         q(0),
+         ],
+      q(CI) => [
+         q(0055),
+         q(0),
+         ],
+      q(CK) => [
+         q(0053),
+         q(0),
+         ],
+      q(CL) => [
+         q(0045),
+         q(0),
+         ],
+      q(CM) => [
+         q(0040),
+         q(0),
+         ],
+      q(CN) => [
+         q(0046),
+         q(0),
+         ],
+      q(CO) => [
+         q(0049),
+         q(0),
+         ],
+      q(CP) => [
+         q(0255),
+         q(0),
+         ],
+      q(CR) => [
+         q(0054),
+         q(0),
+         ],
+      q(CU) => [
+         q(0057),
+         q(0),
+         ],
+      q(CV) => [
+         q(0038),
+         q(0),
+         ],
+      q(CW) => [
+         q(0058),
+         q(0),
+         ],
+      q(CX) => [
+         q(0047),
+         q(0),
+         ],
+      q(CY) => [
+         q(0059),
+         q(0),
+         ],
+      q(CZ) => [
+         q(0060),
+         q(0),
+         ],
+      q(DE) => [
+         q(0083),
+         q(0),
+         ],
+      q(DG) => [
+         q(0258),
+         q(0),
+         ],
+      q(DJ) => [
+         q(0062),
+         q(0),
+         ],
+      q(DK) => [
+         q(0061),
+         q(0),
+         ],
+      q(DM) => [
+         q(0063),
+         q(0),
+         ],
+      q(DO) => [
+         q(0064),
+         q(0),
+         ],
+      q(DZ) => [
+         q(0004),
+         q(0),
+         ],
+      q(EC) => [
+         q(0065),
+         q(0),
+         ],
+      q(EE) => [
+         q(0070),
+         q(0),
+         ],
+      q(EG) => [
+         q(0066),
+         q(0),
+         ],
+      q(EH) => [
+         q(0246),
+         q(0),
+         ],
+      q(ER) => [
+         q(0069),
+         q(0),
+         ],
+      q(ES) => [
+         q(0209),
+         q(0),
+         ],
+      q(ET) => [
+         q(0071),
+         q(0),
+         ],
+      q(FI) => [
+         q(0075),
+         q(0),
+         ],
+      q(FJ) => [
+         q(0074),
+         q(0),
+         ],
+      q(FK) => [
+         q(0072),
+         q(0),
+         ],
+      q(FM) => [
+         q(0145),
+         q(0),
+         ],
+      q(FO) => [
+         q(0073),
+         q(0),
+         ],
+      q(FR) => [
+         q(0076),
+         q(0),
+         ],
+      q(GA) => [
+         q(0080),
+         q(0),
+         ],
+      q(GB) => [
+         q(0235),
+         q(0),
+         ],
+      q(GD) => [
+         q(0088),
+         q(0),
+         ],
+      q(GE) => [
+         q(0082),
+         q(0),
+         ],
+      q(GF) => [
+         q(0077),
+         q(0),
+         ],
+      q(GG) => [
+         q(0092),
+         q(0),
+         ],
+      q(GH) => [
+         q(0084),
+         q(0),
+         ],
+      q(GI) => [
+         q(0085),
+         q(0),
+         ],
+      q(GL) => [
+         q(0087),
+         q(0),
+         ],
+      q(GM) => [
+         q(0081),
+         q(0),
+         ],
+      q(GN) => [
+         q(0093),
+         q(0),
+         ],
+      q(GP) => [
+         q(0089),
+         q(0),
+         ],
+      q(GQ) => [
+         q(0068),
+         q(0),
+         ],
+      q(GR) => [
+         q(0086),
+         q(0),
+         ],
+      q(GS) => [
+         q(0207),
+         q(2),
+         ],
+      q(GT) => [
+         q(0091),
+         q(0),
+         ],
+      q(GU) => [
+         q(0090),
+         q(0),
+         ],
+      q(GW) => [
+         q(0094),
+         q(0),
+         ],
+      q(GY) => [
+         q(0095),
+         q(0),
+         ],
+      q(HK) => [
+         q(0100),
+         q(0),
+         ],
+      q(HM) => [
+         q(0097),
+         q(0),
+         ],
+      q(HN) => [
+         q(0099),
+         q(0),
+         ],
+      q(HR) => [
+         q(0056),
+         q(0),
+         ],
+      q(HT) => [
+         q(0096),
+         q(0),
+         ],
+      q(HU) => [
+         q(0101),
+         q(0),
+         ],
+      q(ID) => [
+         q(0104),
+         q(0),
+         ],
+      q(IE) => [
+         q(0107),
+         q(0),
+         ],
+      q(IL) => [
+         q(0109),
+         q(0),
+         ],
+      q(IM) => [
+         q(0108),
+         q(0),
+         ],
+      q(IN) => [
+         q(0103),
+         q(0),
+         ],
+      q(IO) => [
+         q(0033),
+         q(0),
+         ],
+      q(IQ) => [
+         q(0106),
+         q(0),
+         ],
+      q(IR) => [
+         q(0105),
+         q(0),
+         ],
+      q(IS) => [
+         q(0102),
+         q(0),
+         ],
+      q(IT) => [
+         q(0110),
+         q(0),
+         ],
+      q(JE) => [
+         q(0113),
+         q(0),
+         ],
+      q(JM) => [
+         q(0111),
+         q(0),
+         ],
+      q(JO) => [
+         q(0114),
+         q(0),
+         ],
+      q(JP) => [
+         q(0112),
+         q(0),
+         ],
+      q(KE) => [
+         q(0116),
+         q(0),
+         ],
+      q(KG) => [
+         q(0121),
+         q(0),
+         ],
+      q(KH) => [
+         q(0039),
+         q(0),
+         ],
+      q(KI) => [
+         q(0117),
+         q(0),
+         ],
+      q(KM) => [
+         q(0050),
+         q(0),
+         ],
+      q(KN) => [
+         q(0187),
+         q(0),
+         ],
+      q(KP) => [
+         q(0118),
+         q(7),
+         ],
+      q(KR) => [
+         q(0119),
+         q(7),
+         ],
+      q(KW) => [
+         q(0120),
+         q(0),
+         ],
+      q(KY) => [
+         q(0042),
+         q(0),
+         ],
+      q(KZ) => [
+         q(0115),
+         q(0),
+         ],
+      q(LA) => [
+         q(0122),
+         q(4),
+         ],
+      q(LB) => [
+         q(0124),
+         q(0),
+         ],
+      q(LC) => [
+         q(0188),
+         q(0),
+         ],
+      q(LI) => [
+         q(0128),
+         q(0),
+         ],
+      q(LK) => [
+         q(0210),
+         q(0),
+         ],
+      q(LR) => [
+         q(0126),
+         q(0),
+         ],
+      q(LS) => [
+         q(0125),
+         q(0),
+         ],
+      q(LT) => [
+         q(0129),
+         q(0),
+         ],
+      q(LU) => [
+         q(0130),
+         q(0),
+         ],
+      q(LV) => [
+         q(0123),
+         q(0),
+         ],
+      q(LY) => [
+         q(0127),
+         q(0),
+         ],
+      q(MA) => [
+         q(0151),
+         q(0),
+         ],
+      q(MC) => [
+         q(0147),
+         q(0),
+         ],
+      q(MD) => [
+         q(0146),
+         q(6),
+         ],
+      q(ME) => [
+         q(0149),
+         q(0),
+         ],
+      q(MF) => [
+         q(0189),
+         q(0),
+         ],
+      q(MG) => [
+         q(0133),
+         q(0),
+         ],
+      q(MH) => [
+         q(0139),
+         q(0),
+         ],
+      q(MK) => [
+         q(0132),
+         q(0),
+         ],
+      q(ML) => [
+         q(0137),
+         q(0),
+         ],
+      q(MM) => [
+         q(0153),
+         q(0),
+         ],
+      q(MN) => [
+         q(0148),
+         q(0),
+         ],
+      q(MO) => [
+         q(0131),
+         q(0),
+         ],
+      q(MP) => [
+         q(0165),
+         q(0),
+         ],
+      q(MQ) => [
+         q(0140),
+         q(0),
+         ],
+      q(MR) => [
+         q(0141),
+         q(0),
+         ],
+      q(MS) => [
+         q(0150),
+         q(0),
+         ],
+      q(MT) => [
+         q(0138),
+         q(0),
+         ],
+      q(MU) => [
+         q(0142),
+         q(0),
+         ],
+      q(MV) => [
+         q(0136),
+         q(0),
+         ],
+      q(MW) => [
+         q(0134),
+         q(0),
+         ],
+      q(MX) => [
+         q(0144),
+         q(0),
+         ],
+      q(MY) => [
+         q(0135),
+         q(0),
+         ],
+      q(MZ) => [
+         q(0152),
+         q(0),
+         ],
+      q(NA) => [
+         q(0154),
+         q(0),
+         ],
+      q(NC) => [
+         q(0158),
+         q(0),
+         ],
+      q(NE) => [
+         q(0161),
+         q(0),
+         ],
+      q(NF) => [
+         q(0164),
+         q(0),
+         ],
+      q(NG) => [
+         q(0162),
+         q(0),
+         ],
+      q(NI) => [
+         q(0160),
+         q(0),
+         ],
+      q(NL) => [
+         q(0157),
+         q(0),
+         ],
+      q(NO) => [
+         q(0166),
+         q(0),
+         ],
+      q(NP) => [
+         q(0156),
+         q(0),
+         ],
+      q(NR) => [
+         q(0155),
+         q(0),
+         ],
+      q(NU) => [
+         q(0163),
+         q(0),
+         ],
+      q(NZ) => [
+         q(0159),
+         q(0),
+         ],
+      q(OM) => [
+         q(0167),
+         q(0),
+         ],
+      q(PA) => [
+         q(0171),
+         q(0),
+         ],
+      q(PE) => [
+         q(0174),
+         q(0),
+         ],
+      q(PF) => [
+         q(0078),
+         q(0),
+         ],
+      q(PG) => [
+         q(0172),
+         q(0),
+         ],
+      q(PH) => [
+         q(0175),
+         q(0),
+         ],
+      q(PK) => [
+         q(0168),
+         q(0),
+         ],
+      q(PL) => [
+         q(0177),
+         q(0),
+         ],
+      q(PM) => [
+         q(0190),
+         q(0),
+         ],
+      q(PN) => [
+         q(0176),
+         q(0),
+         ],
+      q(PR) => [
+         q(0179),
+         q(0),
+         ],
+      q(PT) => [
+         q(0178),
+         q(0),
+         ],
+      q(PW) => [
+         q(0169),
+         q(0),
+         ],
+      q(PY) => [
+         q(0173),
+         q(0),
+         ],
+      q(QA) => [
+         q(0180),
+         q(0),
+         ],
+      q(QM) => [
+         q(0270),
+         q(0),
+         ],
+      q(QS) => [
+         q(0254),
+         q(0),
+         ],
+      q(QU) => [
+         q(0267),
+         q(0),
+         ],
+      q(QW) => [
+         q(0278),
+         q(0),
+         ],
+      q(QX) => [
+         q(0261),
+         q(0),
+         ],
+      q(QZ) => [
+         q(0251),
+         q(0),
+         ],
+      q(RE) => [
+         q(0181),
+         q(0),
+         ],
+      q(RO) => [
+         q(0182),
+         q(0),
+         ],
+      q(RS) => [
+         q(0197),
+         q(0),
+         ],
+      q(RU) => [
+         q(0183),
+         q(4),
+         ],
+      q(RW) => [
+         q(0184),
+         q(0),
+         ],
+      q(SA) => [
+         q(0195),
+         q(0),
+         ],
+      q(SB) => [
+         q(0204),
+         q(0),
+         ],
+      q(SC) => [
+         q(0198),
+         q(0),
+         ],
+      q(SD) => [
+         q(0211),
+         q(0),
+         ],
+      q(SE) => [
+         q(0215),
+         q(0),
+         ],
+      q(SG) => [
+         q(0200),
+         q(0),
+         ],
+      q(SH) => [
+         q(0186),
+         q(2),
+         ],
+      q(SI) => [
+         q(0203),
+         q(0),
+         ],
+      q(SK) => [
+         q(0202),
+         q(0),
+         ],
+      q(SL) => [
+         q(0199),
+         q(0),
+         ],
+      q(SM) => [
+         q(0193),
+         q(0),
+         ],
+      q(SN) => [
+         q(0196),
+         q(0),
+         ],
+      q(SO) => [
+         q(0205),
+         q(0),
+         ],
+      q(SR) => [
+         q(0212),
+         q(0),
+         ],
+      q(SS) => [
+         q(0208),
+         q(0),
+         ],
+      q(ST) => [
+         q(0194),
+         q(0),
+         ],
+      q(SV) => [
+         q(0067),
+         q(0),
+         ],
+      q(SX) => [
+         q(0201),
+         q(1),
+         ],
+      q(SY) => [
+         q(0217),
+         q(0),
+         ],
+      q(SZ) => [
+         q(0214),
+         q(0),
+         ],
+      q(TC) => [
+         q(0230),
+         q(0),
+         ],
+      q(TD) => [
+         q(0044),
+         q(0),
+         ],
+      q(TF) => [
+         q(0079),
+         q(0),
+         ],
+      q(TG) => [
+         q(0223),
+         q(0),
+         ],
+      q(TH) => [
+         q(0221),
+         q(0),
+         ],
+      q(TJ) => [
+         q(0219),
+         q(0),
+         ],
+      q(TK) => [
+         q(0224),
+         q(0),
+         ],
+      q(TL) => [
+         q(0222),
+         q(0),
+         ],
+      q(TM) => [
+         q(0229),
+         q(0),
+         ],
+      q(TN) => [
+         q(0227),
+         q(0),
+         ],
+      q(TO) => [
+         q(0225),
+         q(0),
+         ],
+      q(TR) => [
+         q(0228),
+         q(0),
+         ],
+      q(TT) => [
+         q(0226),
+         q(0),
+         ],
+      q(TV) => [
+         q(0231),
+         q(0),
+         ],
+      q(TW) => [
+         q(0218),
+         q(0),
+         ],
+      q(TZ) => [
+         q(0220),
+         q(3),
+         ],
+      q(UA) => [
+         q(0233),
+         q(0),
+         ],
+      q(UG) => [
+         q(0232),
+         q(0),
+         ],
+      q(US) => [
+         q(0237),
+         q(0),
+         ],
+      q(UY) => [
+         q(0238),
+         q(0),
+         ],
+      q(UZ) => [
+         q(0239),
+         q(0),
+         ],
+      q(VA) => [
+         q(0098),
+         q(0),
+         ],
+      q(VC) => [
+         q(0191),
+         q(0),
+         ],
+      q(VE) => [
+         q(0241),
+         q(0),
+         ],
+      q(VG) => [
+         q(0243),
+         q(0),
+         ],
+      q(VI) => [
+         q(0244),
+         q(0),
+         ],
+      q(VN) => [
+         q(0242),
+         q(0),
+         ],
+      q(VU) => [
+         q(0240),
+         q(0),
+         ],
+      q(WF) => [
+         q(0245),
+         q(0),
+         ],
+      q(WS) => [
+         q(0192),
+         q(0),
+         ],
+      q(XA) => [
+         q(0252),
+         q(0),
+         ],
+      q(XB) => [
+         q(0253),
+         q(0),
+         ],
+      q(XC) => [
+         q(0256),
+         q(0),
+         ],
+      q(XD) => [
+         q(0257),
+         q(0),
+         ],
+      q(XE) => [
+         q(0259),
+         q(0),
+         ],
+      q(XG) => [
+         q(0260),
+         q(0),
+         ],
+      q(XH) => [
+         q(0263),
+         q(0),
+         ],
+      q(XJ) => [
+         q(0264),
+         q(0),
+         ],
+      q(XK) => [
+         q(0269),
+         q(0),
+         ],
+      q(XL) => [
+         q(0272),
+         q(0),
+         ],
+      q(XM) => [
+         q(0268),
+         q(0),
+         ],
+      q(XP) => [
+         q(0273),
+         q(0),
+         ],
+      q(XQ) => [
+         q(0265),
+         q(0),
+         ],
+      q(XR) => [
+         q(0275),
+         q(0),
+         ],
+      q(XS) => [
+         q(0274),
+         q(0),
+         ],
+      q(XT) => [
+         q(0276),
+         q(0),
+         ],
+      q(XU) => [
+         q(0266),
+         q(0),
+         ],
+      q(XV) => [
+         q(0271),
+         q(0),
+         ],
+      q(XW) => [
+         q(0279),
+         q(0),
+         ],
+      q(YE) => [
+         q(0247),
+         q(0),
+         ],
+      q(YT) => [
+         q(0143),
+         q(0),
+         ],
+      q(ZA) => [
+         q(0206),
+         q(0),
+         ],
+      q(ZM) => [
+         q(0248),
+         q(0),
+         ],
+      q(ZW) => [
+         q(0249),
+         q(0),
+         ],
+      },
+   q(genc-alpha-3) => {
+      q(ABW) => [
+         q(0013),
+         q(0),
+         ],
+      q(AFG) => [
+         q(0001),
+         q(0),
+         ],
+      q(AGO) => [
+         q(0007),
+         q(0),
+         ],
+      q(AIA) => [
+         q(0008),
+         q(0),
+         ],
+      q(ALB) => [
+         q(0003),
+         q(0),
+         ],
+      q(AND) => [
+         q(0006),
+         q(0),
+         ],
+      q(ARE) => [
+         q(0234),
+         q(0),
+         ],
+      q(ARG) => [
+         q(0011),
+         q(0),
+         ],
+      q(ARM) => [
+         q(0012),
+         q(0),
+         ],
+      q(ASM) => [
+         q(0005),
+         q(0),
+         ],
+      q(ATA) => [
+         q(0009),
+         q(0),
+         ],
+      q(ATF) => [
+         q(0079),
+         q(0),
+         ],
+      q(ATG) => [
+         q(0010),
+         q(0),
+         ],
+      q(AUS) => [
+         q(0014),
+         q(0),
+         ],
+      q(AUT) => [
+         q(0015),
+         q(0),
+         ],
+      q(AX1) => [
+         q(0277),
+         q(0),
+         ],
+      q(AX2) => [
+         q(0262),
+         q(0),
+         ],
+      q(AZE) => [
+         q(0016),
+         q(0),
+         ],
+      q(BDI) => [
+         q(0037),
+         q(0),
+         ],
+      q(BEL) => [
+         q(0022),
+         q(0),
+         ],
+      q(BEN) => [
+         q(0024),
+         q(0),
+         ],
+      q(BES) => [
+         q(0028),
+         q(1),
+         ],
+      q(BFA) => [
+         q(0036),
+         q(0),
+         ],
+      q(BGD) => [
+         q(0019),
+         q(0),
+         ],
+      q(BGR) => [
+         q(0035),
+         q(0),
+         ],
+      q(BHR) => [
+         q(0018),
+         q(0),
+         ],
+      q(BHS) => [
+         q(0017),
+         q(0),
+         ],
+      q(BIH) => [
+         q(0029),
+         q(0),
+         ],
+      q(BLM) => [
+         q(0185),
+         q(0),
+         ],
+      q(BLR) => [
+         q(0021),
+         q(0),
+         ],
+      q(BLZ) => [
+         q(0023),
+         q(0),
+         ],
+      q(BMU) => [
+         q(0025),
+         q(0),
+         ],
+      q(BOL) => [
+         q(0027),
+         q(0),
+         ],
+      q(BRA) => [
+         q(0032),
+         q(0),
+         ],
+      q(BRB) => [
+         q(0020),
+         q(0),
+         ],
+      q(BRN) => [
+         q(0034),
+         q(0),
+         ],
+      q(BTN) => [
+         q(0026),
+         q(0),
+         ],
+      q(BVT) => [
+         q(0031),
+         q(0),
+         ],
+      q(BWA) => [
+         q(0030),
+         q(0),
+         ],
+      q(CAF) => [
+         q(0043),
+         q(0),
+         ],
+      q(CAN) => [
+         q(0041),
+         q(0),
+         ],
+      q(CCK) => [
+         q(0048),
+         q(0),
+         ],
+      q(CHE) => [
+         q(0216),
+         q(0),
+         ],
+      q(CHL) => [
+         q(0045),
+         q(0),
+         ],
+      q(CHN) => [
+         q(0046),
+         q(0),
+         ],
+      q(CIV) => [
+         q(0055),
+         q(0),
+         ],
+      q(CMR) => [
+         q(0040),
+         q(0),
+         ],
+      q(COD) => [
+         q(0051),
+         q(0),
+         ],
+      q(COG) => [
+         q(0052),
+         q(0),
+         ],
+      q(COK) => [
+         q(0053),
+         q(0),
+         ],
+      q(COL) => [
+         q(0049),
+         q(0),
+         ],
+      q(COM) => [
+         q(0050),
+         q(0),
+         ],
+      q(CPT) => [
+         q(0255),
+         q(0),
+         ],
+      q(CPV) => [
+         q(0038),
+         q(0),
+         ],
+      q(CRI) => [
+         q(0054),
+         q(0),
+         ],
+      q(CUB) => [
+         q(0057),
+         q(0),
+         ],
+      q(CUW) => [
+         q(0058),
+         q(0),
+         ],
+      q(CXR) => [
+         q(0047),
+         q(0),
+         ],
+      q(CYM) => [
+         q(0042),
+         q(0),
+         ],
+      q(CYP) => [
+         q(0059),
+         q(0),
+         ],
+      q(CZE) => [
+         q(0060),
+         q(0),
+         ],
+      q(DEU) => [
+         q(0083),
+         q(0),
+         ],
+      q(DGA) => [
+         q(0258),
+         q(0),
+         ],
+      q(DJI) => [
+         q(0062),
+         q(0),
+         ],
+      q(DMA) => [
+         q(0063),
+         q(0),
+         ],
+      q(DNK) => [
+         q(0061),
+         q(0),
+         ],
+      q(DOM) => [
+         q(0064),
+         q(0),
+         ],
+      q(DZA) => [
+         q(0004),
+         q(0),
+         ],
+      q(ECU) => [
+         q(0065),
+         q(0),
+         ],
+      q(EGY) => [
+         q(0066),
+         q(0),
+         ],
+      q(ERI) => [
+         q(0069),
+         q(0),
+         ],
+      q(ESH) => [
+         q(0246),
+         q(0),
+         ],
+      q(ESP) => [
+         q(0209),
+         q(0),
+         ],
+      q(EST) => [
+         q(0070),
+         q(0),
+         ],
+      q(ETH) => [
+         q(0071),
+         q(0),
+         ],
+      q(FIN) => [
+         q(0075),
+         q(0),
+         ],
+      q(FJI) => [
+         q(0074),
+         q(0),
+         ],
+      q(FLK) => [
+         q(0072),
+         q(0),
+         ],
+      q(FRA) => [
+         q(0076),
+         q(0),
+         ],
+      q(FRO) => [
+         q(0073),
+         q(0),
+         ],
+      q(FSM) => [
+         q(0145),
+         q(0),
+         ],
+      q(GAB) => [
+         q(0080),
+         q(0),
+         ],
+      q(GBR) => [
+         q(0235),
+         q(0),
+         ],
+      q(GEO) => [
+         q(0082),
+         q(0),
+         ],
+      q(GGY) => [
+         q(0092),
+         q(0),
+         ],
+      q(GHA) => [
+         q(0084),
+         q(0),
+         ],
+      q(GIB) => [
+         q(0085),
+         q(0),
+         ],
+      q(GIN) => [
+         q(0093),
+         q(0),
+         ],
+      q(GLP) => [
+         q(0089),
+         q(0),
+         ],
+      q(GMB) => [
+         q(0081),
+         q(0),
+         ],
+      q(GNB) => [
+         q(0094),
+         q(0),
+         ],
+      q(GNQ) => [
+         q(0068),
+         q(0),
+         ],
+      q(GRC) => [
+         q(0086),
+         q(0),
+         ],
+      q(GRD) => [
+         q(0088),
+         q(0),
+         ],
+      q(GRL) => [
+         q(0087),
+         q(0),
+         ],
+      q(GTM) => [
+         q(0091),
+         q(0),
+         ],
+      q(GUF) => [
+         q(0077),
+         q(0),
+         ],
+      q(GUM) => [
+         q(0090),
+         q(0),
+         ],
+      q(GUY) => [
+         q(0095),
+         q(0),
+         ],
+      q(HKG) => [
+         q(0100),
+         q(0),
+         ],
+      q(HMD) => [
+         q(0097),
+         q(0),
+         ],
+      q(HND) => [
+         q(0099),
+         q(0),
+         ],
+      q(HRV) => [
+         q(0056),
+         q(0),
+         ],
+      q(HTI) => [
+         q(0096),
+         q(0),
+         ],
+      q(HUN) => [
+         q(0101),
+         q(0),
+         ],
+      q(IDN) => [
+         q(0104),
+         q(0),
+         ],
+      q(IMN) => [
+         q(0108),
+         q(0),
+         ],
+      q(IND) => [
+         q(0103),
+         q(0),
+         ],
+      q(IOT) => [
+         q(0033),
+         q(0),
+         ],
+      q(IRL) => [
+         q(0107),
+         q(0),
+         ],
+      q(IRN) => [
+         q(0105),
+         q(0),
+         ],
+      q(IRQ) => [
+         q(0106),
+         q(0),
+         ],
+      q(ISL) => [
+         q(0102),
+         q(0),
+         ],
+      q(ISR) => [
+         q(0109),
+         q(0),
+         ],
+      q(ITA) => [
+         q(0110),
+         q(0),
+         ],
+      q(JAM) => [
+         q(0111),
+         q(0),
+         ],
+      q(JEY) => [
+         q(0113),
+         q(0),
+         ],
+      q(JOR) => [
+         q(0114),
+         q(0),
+         ],
+      q(JPN) => [
+         q(0112),
+         q(0),
+         ],
+      q(KAZ) => [
+         q(0115),
+         q(0),
+         ],
+      q(KEN) => [
+         q(0116),
+         q(0),
+         ],
+      q(KGZ) => [
+         q(0121),
+         q(0),
+         ],
+      q(KHM) => [
+         q(0039),
+         q(0),
+         ],
+      q(KIR) => [
+         q(0117),
+         q(0),
+         ],
+      q(KNA) => [
+         q(0187),
+         q(0),
+         ],
+      q(KOR) => [
+         q(0119),
+         q(7),
+         ],
+      q(KWT) => [
+         q(0120),
+         q(0),
+         ],
+      q(LAO) => [
+         q(0122),
+         q(4),
+         ],
+      q(LBN) => [
+         q(0124),
+         q(0),
+         ],
+      q(LBR) => [
+         q(0126),
+         q(0),
+         ],
+      q(LBY) => [
+         q(0127),
+         q(0),
+         ],
+      q(LCA) => [
+         q(0188),
+         q(0),
+         ],
+      q(LIE) => [
+         q(0128),
+         q(0),
+         ],
+      q(LKA) => [
+         q(0210),
+         q(0),
+         ],
+      q(LSO) => [
+         q(0125),
+         q(0),
+         ],
+      q(LTU) => [
+         q(0129),
+         q(0),
+         ],
+      q(LUX) => [
+         q(0130),
+         q(0),
+         ],
+      q(LVA) => [
+         q(0123),
+         q(0),
+         ],
+      q(MAC) => [
+         q(0131),
+         q(0),
+         ],
+      q(MAF) => [
+         q(0189),
+         q(0),
+         ],
+      q(MAR) => [
+         q(0151),
+         q(0),
+         ],
+      q(MCO) => [
+         q(0147),
+         q(0),
+         ],
+      q(MDA) => [
+         q(0146),
+         q(6),
+         ],
+      q(MDG) => [
+         q(0133),
+         q(0),
+         ],
+      q(MDV) => [
+         q(0136),
+         q(0),
+         ],
+      q(MEX) => [
+         q(0144),
+         q(0),
+         ],
+      q(MHL) => [
+         q(0139),
+         q(0),
+         ],
+      q(MKD) => [
+         q(0132),
+         q(0),
+         ],
+      q(MLI) => [
+         q(0137),
+         q(0),
+         ],
+      q(MLT) => [
+         q(0138),
+         q(0),
+         ],
+      q(MMR) => [
+         q(0153),
+         q(0),
+         ],
+      q(MNE) => [
+         q(0149),
+         q(0),
+         ],
+      q(MNG) => [
+         q(0148),
+         q(0),
+         ],
+      q(MNP) => [
+         q(0165),
+         q(0),
+         ],
+      q(MOZ) => [
+         q(0152),
+         q(0),
+         ],
+      q(MRT) => [
+         q(0141),
+         q(0),
+         ],
+      q(MSR) => [
+         q(0150),
+         q(0),
+         ],
+      q(MTQ) => [
+         q(0140),
+         q(0),
+         ],
+      q(MUS) => [
+         q(0142),
+         q(0),
+         ],
+      q(MWI) => [
+         q(0134),
+         q(0),
+         ],
+      q(MYS) => [
+         q(0135),
+         q(0),
+         ],
+      q(MYT) => [
+         q(0143),
+         q(0),
+         ],
+      q(NAM) => [
+         q(0154),
+         q(0),
+         ],
+      q(NCL) => [
+         q(0158),
+         q(0),
+         ],
+      q(NER) => [
+         q(0161),
+         q(0),
+         ],
+      q(NFK) => [
+         q(0164),
+         q(0),
+         ],
+      q(NGA) => [
+         q(0162),
+         q(0),
+         ],
+      q(NIC) => [
+         q(0160),
+         q(0),
+         ],
+      q(NIU) => [
+         q(0163),
+         q(0),
+         ],
+      q(NLD) => [
+         q(0157),
+         q(0),
+         ],
+      q(NOR) => [
+         q(0166),
+         q(0),
+         ],
+      q(NPL) => [
+         q(0156),
+         q(0),
+         ],
+      q(NRU) => [
+         q(0155),
+         q(0),
+         ],
+      q(NZL) => [
+         q(0159),
+         q(0),
+         ],
+      q(OMN) => [
+         q(0167),
+         q(0),
+         ],
+      q(PAK) => [
+         q(0168),
+         q(0),
+         ],
+      q(PAN) => [
+         q(0171),
+         q(0),
+         ],
+      q(PCN) => [
+         q(0176),
+         q(0),
+         ],
+      q(PER) => [
+         q(0174),
+         q(0),
+         ],
+      q(PHL) => [
+         q(0175),
+         q(0),
+         ],
+      q(PLW) => [
+         q(0169),
+         q(0),
+         ],
+      q(PNG) => [
+         q(0172),
+         q(0),
+         ],
+      q(POL) => [
+         q(0177),
+         q(0),
+         ],
+      q(PRI) => [
+         q(0179),
+         q(0),
+         ],
+      q(PRK) => [
+         q(0118),
+         q(7),
+         ],
+      q(PRT) => [
+         q(0178),
+         q(0),
+         ],
+      q(PRY) => [
+         q(0173),
+         q(0),
+         ],
+      q(PYF) => [
+         q(0078),
+         q(0),
+         ],
+      q(QAT) => [
+         q(0180),
+         q(0),
+         ],
+      q(REU) => [
+         q(0181),
+         q(0),
+         ],
+      q(ROU) => [
+         q(0182),
+         q(0),
+         ],
+      q(RUS) => [
+         q(0183),
+         q(4),
+         ],
+      q(RWA) => [
+         q(0184),
+         q(0),
+         ],
+      q(SAU) => [
+         q(0195),
+         q(0),
+         ],
+      q(SDN) => [
+         q(0211),
+         q(0),
+         ],
+      q(SEN) => [
+         q(0196),
+         q(0),
+         ],
+      q(SGP) => [
+         q(0200),
+         q(0),
+         ],
+      q(SGS) => [
+         q(0207),
+         q(2),
+         ],
+      q(SHN) => [
+         q(0186),
+         q(2),
+         ],
+      q(SLB) => [
+         q(0204),
+         q(0),
+         ],
+      q(SLE) => [
+         q(0199),
+         q(0),
+         ],
+      q(SLV) => [
+         q(0067),
+         q(0),
+         ],
+      q(SMR) => [
+         q(0193),
+         q(0),
+         ],
+      q(SOM) => [
+         q(0205),
+         q(0),
+         ],
+      q(SPM) => [
+         q(0190),
+         q(0),
+         ],
+      q(SRB) => [
+         q(0197),
+         q(0),
+         ],
+      q(SSD) => [
+         q(0208),
+         q(0),
+         ],
+      q(STP) => [
+         q(0194),
+         q(0),
+         ],
+      q(SUR) => [
+         q(0212),
+         q(0),
+         ],
+      q(SVK) => [
+         q(0202),
+         q(0),
+         ],
+      q(SVN) => [
+         q(0203),
+         q(0),
+         ],
+      q(SWE) => [
+         q(0215),
+         q(0),
+         ],
+      q(SWZ) => [
+         q(0214),
+         q(0),
+         ],
+      q(SXM) => [
+         q(0201),
+         q(1),
+         ],
+      q(SYC) => [
+         q(0198),
+         q(0),
+         ],
+      q(SYR) => [
+         q(0217),
+         q(0),
+         ],
+      q(TCA) => [
+         q(0230),
+         q(0),
+         ],
+      q(TCD) => [
+         q(0044),
+         q(0),
+         ],
+      q(TGO) => [
+         q(0223),
+         q(0),
+         ],
+      q(THA) => [
+         q(0221),
+         q(0),
+         ],
+      q(TJK) => [
+         q(0219),
+         q(0),
+         ],
+      q(TKL) => [
+         q(0224),
+         q(0),
+         ],
+      q(TKM) => [
+         q(0229),
+         q(0),
+         ],
+      q(TLS) => [
+         q(0222),
+         q(0),
+         ],
+      q(TON) => [
+         q(0225),
+         q(0),
+         ],
+      q(TTO) => [
+         q(0226),
+         q(0),
+         ],
+      q(TUN) => [
+         q(0227),
+         q(0),
+         ],
+      q(TUR) => [
+         q(0228),
+         q(0),
+         ],
+      q(TUV) => [
+         q(0231),
+         q(0),
+         ],
+      q(TWN) => [
+         q(0218),
+         q(0),
+         ],
+      q(TZA) => [
+         q(0220),
+         q(3),
+         ],
+      q(UGA) => [
+         q(0232),
+         q(0),
+         ],
+      q(UKR) => [
+         q(0233),
+         q(0),
+         ],
+      q(URY) => [
+         q(0238),
+         q(0),
+         ],
+      q(USA) => [
+         q(0237),
+         q(0),
+         ],
+      q(UZB) => [
+         q(0239),
+         q(0),
+         ],
+      q(VAT) => [
+         q(0098),
+         q(0),
+         ],
+      q(VCT) => [
+         q(0191),
+         q(0),
+         ],
+      q(VEN) => [
+         q(0241),
+         q(0),
+         ],
+      q(VGB) => [
+         q(0243),
+         q(0),
+         ],
+      q(VIR) => [
+         q(0244),
+         q(0),
+         ],
+      q(VNM) => [
+         q(0242),
+         q(0),
+         ],
+      q(VUT) => [
+         q(0240),
+         q(0),
+         ],
+      q(WLF) => [
+         q(0245),
+         q(0),
+         ],
+      q(WSM) => [
+         q(0192),
+         q(0),
+         ],
+      q(XAC) => [
+         q(0252),
+         q(0),
+         ],
+      q(XBI) => [
+         q(0254),
+         q(0),
+         ],
+      q(XBK) => [
+         q(0253),
+         q(0),
+         ],
+      q(XCS) => [
+         q(0256),
+         q(0),
+         ],
+      q(XEU) => [
+         q(0259),
+         q(0),
+         ],
+      q(XGL) => [
+         q(0261),
+         q(0),
+         ],
+      q(XGZ) => [
+         q(0260),
+         q(0),
+         ],
+      q(XHO) => [
+         q(0263),
+         q(0),
+         ],
+      q(XJA) => [
+         q(0266),
+         q(0),
+         ],
+      q(XJM) => [
+         q(0264),
+         q(0),
+         ],
+      q(XJN) => [
+         q(0267),
+         q(0),
+         ],
+      q(XJV) => [
+         q(0265),
+         q(0),
+         ],
+      q(XKR) => [
+         q(0268),
+         q(0),
+         ],
+      q(XKS) => [
+         q(0269),
+         q(0),
+         ],
+      q(XMW) => [
+         q(0270),
+         q(0),
+         ],
+      q(XNV) => [
+         q(0271),
+         q(0),
+         ],
+      q(XPL) => [
+         q(0272),
+         q(0),
+         ],
+      q(XPR) => [
+         q(0273),
+         q(0),
+         ],
+      q(XQZ) => [
+         q(0251),
+         q(0),
+         ],
+      q(XSP) => [
+         q(0274),
+         q(0),
+         ],
+      q(XSV) => [
+         q(0275),
+         q(0),
+         ],
+      q(XTR) => [
+         q(0276),
+         q(0),
+         ],
+      q(XWB) => [
+         q(0279),
+         q(0),
+         ],
+      q(XWK) => [
+         q(0278),
+         q(0),
+         ],
+      q(XXD) => [
+         q(0257),
+         q(0),
+         ],
+      q(YEM) => [
+         q(0247),
+         q(0),
+         ],
+      q(ZAF) => [
+         q(0206),
+         q(0),
+         ],
+      q(ZMB) => [
+         q(0248),
+         q(0),
+         ],
+      q(ZWE) => [
+         q(0249),
+         q(0),
+         ],
+      },
+   q(genc-numeric) => {
+      q(004) => [
+         q(0001),
+         q(0),
+         ],
+      q(008) => [
+         q(0003),
+         q(0),
+         ],
+      q(010) => [
+         q(0009),
+         q(0),
+         ],
+      q(012) => [
+         q(0004),
+         q(0),
+         ],
+      q(016) => [
+         q(0005),
+         q(0),
+         ],
+      q(020) => [
+         q(0006),
+         q(0),
+         ],
+      q(024) => [
+         q(0007),
+         q(0),
+         ],
+      q(028) => [
+         q(0010),
+         q(0),
+         ],
+      q(031) => [
+         q(0016),
+         q(0),
+         ],
+      q(032) => [
+         q(0011),
+         q(0),
+         ],
+      q(036) => [
+         q(0014),
+         q(0),
+         ],
+      q(040) => [
+         q(0015),
+         q(0),
+         ],
+      q(044) => [
+         q(0017),
+         q(0),
+         ],
+      q(048) => [
+         q(0018),
+         q(0),
+         ],
+      q(050) => [
+         q(0019),
+         q(0),
+         ],
+      q(051) => [
+         q(0012),
+         q(0),
+         ],
+      q(052) => [
+         q(0020),
+         q(0),
+         ],
+      q(056) => [
+         q(0022),
+         q(0),
+         ],
+      q(060) => [
+         q(0025),
+         q(0),
+         ],
+      q(064) => [
+         q(0026),
+         q(0),
+         ],
+      q(068) => [
+         q(0027),
+         q(0),
+         ],
+      q(070) => [
+         q(0029),
+         q(0),
+         ],
+      q(072) => [
+         q(0030),
+         q(0),
+         ],
+      q(074) => [
+         q(0031),
+         q(0),
+         ],
+      q(076) => [
+         q(0032),
+         q(0),
+         ],
+      q(084) => [
+         q(0023),
+         q(0),
+         ],
+      q(086) => [
+         q(0033),
+         q(0),
+         ],
+      q(090) => [
+         q(0204),
+         q(0),
+         ],
+      q(092) => [
+         q(0243),
+         q(0),
+         ],
+      q(096) => [
+         q(0034),
+         q(0),
+         ],
+      q(100) => [
+         q(0035),
+         q(0),
+         ],
+      q(104) => [
+         q(0153),
+         q(0),
+         ],
+      q(108) => [
+         q(0037),
+         q(0),
+         ],
+      q(112) => [
+         q(0021),
+         q(0),
+         ],
+      q(116) => [
+         q(0039),
+         q(0),
+         ],
+      q(120) => [
+         q(0040),
+         q(0),
+         ],
+      q(124) => [
+         q(0041),
+         q(0),
+         ],
+      q(132) => [
+         q(0038),
+         q(0),
+         ],
+      q(136) => [
+         q(0042),
+         q(0),
+         ],
+      q(140) => [
+         q(0043),
+         q(0),
+         ],
+      q(144) => [
+         q(0210),
+         q(0),
+         ],
+      q(148) => [
+         q(0044),
+         q(0),
+         ],
+      q(152) => [
+         q(0045),
+         q(0),
+         ],
+      q(156) => [
+         q(0046),
+         q(0),
+         ],
+      q(158) => [
+         q(0218),
+         q(0),
+         ],
+      q(162) => [
+         q(0047),
+         q(0),
+         ],
+      q(166) => [
+         q(0048),
+         q(0),
+         ],
+      q(170) => [
+         q(0049),
+         q(0),
+         ],
+      q(174) => [
+         q(0050),
+         q(0),
+         ],
+      q(175) => [
+         q(0143),
+         q(0),
+         ],
+      q(178) => [
+         q(0052),
+         q(0),
+         ],
+      q(180) => [
+         q(0051),
+         q(0),
+         ],
+      q(184) => [
+         q(0053),
+         q(0),
+         ],
+      q(188) => [
+         q(0054),
+         q(0),
+         ],
+      q(191) => [
+         q(0056),
+         q(0),
+         ],
+      q(192) => [
+         q(0057),
+         q(0),
+         ],
+      q(196) => [
+         q(0059),
+         q(0),
+         ],
+      q(203) => [
+         q(0060),
+         q(0),
+         ],
+      q(204) => [
+         q(0024),
+         q(0),
+         ],
+      q(208) => [
+         q(0061),
+         q(0),
+         ],
+      q(212) => [
+         q(0063),
+         q(0),
+         ],
+      q(214) => [
+         q(0064),
+         q(0),
+         ],
+      q(218) => [
+         q(0065),
+         q(0),
+         ],
+      q(222) => [
+         q(0067),
+         q(0),
+         ],
+      q(226) => [
+         q(0068),
+         q(0),
+         ],
+      q(231) => [
+         q(0071),
+         q(0),
+         ],
+      q(232) => [
+         q(0069),
+         q(0),
+         ],
+      q(233) => [
+         q(0070),
+         q(0),
+         ],
+      q(234) => [
+         q(0073),
+         q(0),
+         ],
+      q(238) => [
+         q(0072),
+         q(0),
+         ],
+      q(239) => [
+         q(0207),
+         q(2),
+         ],
+      q(242) => [
+         q(0074),
+         q(0),
+         ],
+      q(246) => [
+         q(0075),
+         q(0),
+         ],
+      q(250) => [
+         q(0076),
+         q(0),
+         ],
+      q(254) => [
+         q(0077),
+         q(0),
+         ],
+      q(258) => [
+         q(0078),
+         q(0),
+         ],
+      q(260) => [
+         q(0079),
+         q(0),
+         ],
+      q(262) => [
+         q(0062),
+         q(0),
+         ],
+      q(266) => [
+         q(0080),
+         q(0),
+         ],
+      q(268) => [
+         q(0082),
+         q(0),
+         ],
+      q(270) => [
+         q(0081),
+         q(0),
+         ],
+      q(276) => [
+         q(0083),
+         q(0),
+         ],
+      q(288) => [
+         q(0084),
+         q(0),
+         ],
+      q(292) => [
+         q(0085),
+         q(0),
+         ],
+      q(296) => [
+         q(0117),
+         q(0),
+         ],
+      q(300) => [
+         q(0086),
+         q(0),
+         ],
+      q(304) => [
+         q(0087),
+         q(0),
+         ],
+      q(308) => [
+         q(0088),
+         q(0),
+         ],
+      q(312) => [
+         q(0089),
+         q(0),
+         ],
+      q(316) => [
+         q(0090),
+         q(0),
+         ],
+      q(320) => [
+         q(0091),
+         q(0),
+         ],
+      q(324) => [
+         q(0093),
+         q(0),
+         ],
+      q(328) => [
+         q(0095),
+         q(0),
+         ],
+      q(332) => [
+         q(0096),
+         q(0),
+         ],
+      q(334) => [
+         q(0097),
+         q(0),
+         ],
+      q(336) => [
+         q(0098),
+         q(0),
+         ],
+      q(340) => [
+         q(0099),
+         q(0),
+         ],
+      q(344) => [
+         q(0100),
+         q(0),
+         ],
+      q(348) => [
+         q(0101),
+         q(0),
+         ],
+      q(352) => [
+         q(0102),
+         q(0),
+         ],
+      q(356) => [
+         q(0103),
+         q(0),
+         ],
+      q(360) => [
+         q(0104),
+         q(0),
+         ],
+      q(364) => [
+         q(0105),
+         q(0),
+         ],
+      q(368) => [
+         q(0106),
+         q(0),
+         ],
+      q(372) => [
+         q(0107),
+         q(0),
+         ],
+      q(376) => [
+         q(0109),
+         q(0),
+         ],
+      q(380) => [
+         q(0110),
+         q(0),
+         ],
+      q(384) => [
+         q(0055),
+         q(0),
+         ],
+      q(388) => [
+         q(0111),
+         q(0),
+         ],
+      q(392) => [
+         q(0112),
+         q(0),
+         ],
+      q(398) => [
+         q(0115),
+         q(0),
+         ],
+      q(400) => [
+         q(0114),
+         q(0),
+         ],
+      q(404) => [
+         q(0116),
+         q(0),
+         ],
+      q(408) => [
+         q(0118),
+         q(7),
+         ],
+      q(410) => [
+         q(0119),
+         q(7),
+         ],
+      q(414) => [
+         q(0120),
+         q(0),
+         ],
+      q(417) => [
+         q(0121),
+         q(0),
+         ],
+      q(418) => [
+         q(0122),
+         q(4),
+         ],
+      q(422) => [
+         q(0124),
+         q(0),
+         ],
+      q(426) => [
+         q(0125),
+         q(0),
+         ],
+      q(428) => [
+         q(0123),
+         q(0),
+         ],
+      q(430) => [
+         q(0126),
+         q(0),
+         ],
+      q(434) => [
+         q(0127),
+         q(0),
+         ],
+      q(438) => [
+         q(0128),
+         q(0),
+         ],
+      q(440) => [
+         q(0129),
+         q(0),
+         ],
+      q(442) => [
+         q(0130),
+         q(0),
+         ],
+      q(446) => [
+         q(0131),
+         q(0),
+         ],
+      q(450) => [
+         q(0133),
+         q(0),
+         ],
+      q(454) => [
+         q(0134),
+         q(0),
+         ],
+      q(458) => [
+         q(0135),
+         q(0),
+         ],
+      q(462) => [
+         q(0136),
+         q(0),
+         ],
+      q(466) => [
+         q(0137),
+         q(0),
+         ],
+      q(470) => [
+         q(0138),
+         q(0),
+         ],
+      q(474) => [
+         q(0140),
+         q(0),
+         ],
+      q(478) => [
+         q(0141),
+         q(0),
+         ],
+      q(480) => [
+         q(0142),
+         q(0),
+         ],
+      q(484) => [
+         q(0144),
+         q(0),
+         ],
+      q(492) => [
+         q(0147),
+         q(0),
+         ],
+      q(496) => [
+         q(0148),
+         q(0),
+         ],
+      q(498) => [
+         q(0146),
+         q(6),
+         ],
+      q(499) => [
+         q(0149),
+         q(0),
+         ],
+      q(500) => [
+         q(0150),
+         q(0),
+         ],
+      q(504) => [
+         q(0151),
+         q(0),
+         ],
+      q(508) => [
+         q(0152),
+         q(0),
+         ],
+      q(512) => [
+         q(0167),
+         q(0),
+         ],
+      q(516) => [
+         q(0154),
+         q(0),
+         ],
+      q(520) => [
+         q(0155),
+         q(0),
+         ],
+      q(524) => [
+         q(0156),
+         q(0),
+         ],
+      q(528) => [
+         q(0157),
+         q(0),
+         ],
+      q(531) => [
+         q(0058),
+         q(0),
+         ],
+      q(533) => [
+         q(0013),
+         q(0),
+         ],
+      q(534) => [
+         q(0201),
+         q(1),
+         ],
+      q(535) => [
+         q(0028),
+         q(1),
+         ],
+      q(540) => [
+         q(0158),
+         q(0),
+         ],
+      q(548) => [
+         q(0240),
+         q(0),
+         ],
+      q(554) => [
+         q(0159),
+         q(0),
+         ],
+      q(558) => [
+         q(0160),
+         q(0),
+         ],
+      q(562) => [
+         q(0161),
+         q(0),
+         ],
+      q(566) => [
+         q(0162),
+         q(0),
+         ],
+      q(570) => [
+         q(0163),
+         q(0),
+         ],
+      q(574) => [
+         q(0164),
+         q(0),
+         ],
+      q(578) => [
+         q(0166),
+         q(0),
+         ],
+      q(580) => [
+         q(0165),
+         q(0),
+         ],
+      q(583) => [
+         q(0145),
+         q(0),
+         ],
+      q(584) => [
+         q(0139),
+         q(0),
+         ],
+      q(585) => [
+         q(0169),
+         q(0),
+         ],
+      q(586) => [
+         q(0168),
+         q(0),
+         ],
+      q(591) => [
+         q(0171),
+         q(0),
+         ],
+      q(598) => [
+         q(0172),
+         q(0),
+         ],
+      q(600) => [
+         q(0173),
+         q(0),
+         ],
+      q(604) => [
+         q(0174),
+         q(0),
+         ],
+      q(608) => [
+         q(0175),
+         q(0),
+         ],
+      q(612) => [
+         q(0176),
+         q(0),
+         ],
+      q(616) => [
+         q(0177),
+         q(0),
+         ],
+      q(620) => [
+         q(0178),
+         q(0),
+         ],
+      q(624) => [
+         q(0094),
+         q(0),
+         ],
+      q(626) => [
+         q(0222),
+         q(0),
+         ],
+      q(630) => [
+         q(0179),
+         q(0),
+         ],
+      q(634) => [
+         q(0180),
+         q(0),
+         ],
+      q(638) => [
+         q(0181),
+         q(0),
+         ],
+      q(642) => [
+         q(0182),
+         q(0),
+         ],
+      q(643) => [
+         q(0183),
+         q(4),
+         ],
+      q(646) => [
+         q(0184),
+         q(0),
+         ],
+      q(652) => [
+         q(0185),
+         q(0),
+         ],
+      q(654) => [
+         q(0186),
+         q(2),
+         ],
+      q(659) => [
+         q(0187),
+         q(0),
+         ],
+      q(660) => [
+         q(0008),
+         q(0),
+         ],
+      q(662) => [
+         q(0188),
+         q(0),
+         ],
+      q(663) => [
+         q(0189),
+         q(0),
+         ],
+      q(666) => [
+         q(0190),
+         q(0),
+         ],
+      q(670) => [
+         q(0191),
+         q(0),
+         ],
+      q(674) => [
+         q(0193),
+         q(0),
+         ],
+      q(678) => [
+         q(0194),
+         q(0),
+         ],
+      q(682) => [
+         q(0195),
+         q(0),
+         ],
+      q(686) => [
+         q(0196),
+         q(0),
+         ],
+      q(688) => [
+         q(0197),
+         q(0),
+         ],
+      q(690) => [
+         q(0198),
+         q(0),
+         ],
+      q(694) => [
+         q(0199),
+         q(0),
+         ],
+      q(702) => [
+         q(0200),
+         q(0),
+         ],
+      q(703) => [
+         q(0202),
+         q(0),
+         ],
+      q(704) => [
+         q(0242),
+         q(0),
+         ],
+      q(705) => [
+         q(0203),
+         q(0),
+         ],
+      q(706) => [
+         q(0205),
+         q(0),
+         ],
+      q(710) => [
+         q(0206),
+         q(0),
+         ],
+      q(716) => [
+         q(0249),
+         q(0),
+         ],
+      q(724) => [
+         q(0209),
+         q(0),
+         ],
+      q(728) => [
+         q(0208),
+         q(0),
+         ],
+      q(729) => [
+         q(0211),
+         q(0),
+         ],
+      q(732) => [
+         q(0246),
+         q(0),
+         ],
+      q(740) => [
+         q(0212),
+         q(0),
+         ],
+      q(748) => [
+         q(0214),
+         q(0),
+         ],
+      q(752) => [
+         q(0215),
+         q(0),
+         ],
+      q(756) => [
+         q(0216),
+         q(0),
+         ],
+      q(760) => [
+         q(0217),
+         q(0),
+         ],
+      q(762) => [
+         q(0219),
+         q(0),
+         ],
+      q(764) => [
+         q(0221),
+         q(0),
+         ],
+      q(768) => [
+         q(0223),
+         q(0),
+         ],
+      q(772) => [
+         q(0224),
+         q(0),
+         ],
+      q(776) => [
+         q(0225),
+         q(0),
+         ],
+      q(780) => [
+         q(0226),
+         q(0),
+         ],
+      q(784) => [
+         q(0234),
+         q(0),
+         ],
+      q(788) => [
+         q(0227),
+         q(0),
+         ],
+      q(792) => [
+         q(0228),
+         q(0),
+         ],
+      q(795) => [
+         q(0229),
+         q(0),
+         ],
+      q(796) => [
+         q(0230),
+         q(0),
+         ],
+      q(798) => [
+         q(0231),
+         q(0),
+         ],
+      q(800) => [
+         q(0232),
+         q(0),
+         ],
+      q(804) => [
+         q(0233),
+         q(0),
+         ],
+      q(807) => [
+         q(0132),
+         q(0),
+         ],
+      q(818) => [
+         q(0066),
+         q(0),
+         ],
+      q(826) => [
+         q(0235),
+         q(0),
+         ],
+      q(831) => [
+         q(0092),
+         q(0),
+         ],
+      q(832) => [
+         q(0113),
+         q(0),
+         ],
+      q(833) => [
+         q(0108),
+         q(0),
+         ],
+      q(834) => [
+         q(0220),
+         q(3),
+         ],
+      q(840) => [
+         q(0237),
+         q(0),
+         ],
+      q(850) => [
+         q(0244),
+         q(0),
+         ],
+      q(854) => [
+         q(0036),
+         q(0),
+         ],
+      q(858) => [
+         q(0238),
+         q(0),
+         ],
+      q(860) => [
+         q(0239),
+         q(0),
+         ],
+      q(862) => [
+         q(0241),
+         q(0),
+         ],
+      q(876) => [
+         q(0245),
+         q(0),
+         ],
+      q(882) => [
+         q(0192),
+         q(0),
+         ],
+      q(887) => [
+         q(0247),
+         q(0),
+         ],
+      q(894) => [
+         q(0248),
+         q(0),
+         ],
+      q(900) => [
+         q(0251),
+         q(0),
+         ],
+      q(901) => [
+         q(0269),
+         q(0),
+         ],
+      q(902) => [
+         q(0252),
+         q(0),
+         ],
+      q(903) => [
+         q(0253),
+         q(0),
+         ],
+      q(904) => [
+         q(0254),
+         q(0),
+         ],
+      q(905) => [
+         q(0255),
+         q(0),
+         ],
+      q(906) => [
+         q(0256),
+         q(0),
+         ],
+      q(907) => [
+         q(0257),
+         q(0),
+         ],
+      q(908) => [
+         q(0258),
+         q(0),
+         ],
+      q(915) => [
+         q(0259),
+         q(0),
+         ],
+      q(916) => [
+         q(0260),
+         q(0),
+         ],
+      q(917) => [
+         q(0261),
+         q(0),
+         ],
+      q(918) => [
+         q(0262),
+         q(0),
+         ],
+      q(919) => [
+         q(0263),
+         q(0),
+         ],
+      q(920) => [
+         q(0264),
+         q(0),
+         ],
+      q(921) => [
+         q(0265),
+         q(0),
+         ],
+      q(922) => [
+         q(0266),
+         q(0),
+         ],
+      q(923) => [
+         q(0267),
+         q(0),
+         ],
+      q(924) => [
+         q(0268),
+         q(0),
+         ],
+      q(925) => [
+         q(0270),
+         q(0),
+         ],
+      q(926) => [
+         q(0271),
+         q(0),
+         ],
+      q(927) => [
+         q(0272),
+         q(0),
+         ],
+      q(928) => [
+         q(0273),
+         q(0),
+         ],
+      q(929) => [
+         q(0274),
+         q(0),
+         ],
+      q(930) => [
+         q(0275),
+         q(0),
+         ],
+      q(931) => [
+         q(0276),
+         q(0),
+         ],
+      q(932) => [
+         q(0277),
+         q(0),
+         ],
+      q(933) => [
+         q(0278),
+         q(0),
+         ],
+      q(934) => [
+         q(0279),
+         q(0),
+         ],
+      },
    q(numeric) => {
       q(004) => [
          q(0001),
@@ -6872,6 +10431,1998 @@ $Locale::Codes::Data{'country'}{'code2id'} = {
          q(0),
          ],
       },
+   q(un-alpha-3) => {
+      q(ABW) => [
+         q(0013),
+         q(0),
+         ],
+      q(AFG) => [
+         q(0001),
+         q(0),
+         ],
+      q(AGO) => [
+         q(0007),
+         q(0),
+         ],
+      q(AIA) => [
+         q(0008),
+         q(0),
+         ],
+      q(ALA) => [
+         q(0002),
+         q(0),
+         ],
+      q(ALB) => [
+         q(0003),
+         q(0),
+         ],
+      q(AND) => [
+         q(0006),
+         q(0),
+         ],
+      q(ARE) => [
+         q(0234),
+         q(0),
+         ],
+      q(ARG) => [
+         q(0011),
+         q(0),
+         ],
+      q(ARM) => [
+         q(0012),
+         q(0),
+         ],
+      q(ASM) => [
+         q(0005),
+         q(0),
+         ],
+      q(ATA) => [
+         q(0009),
+         q(0),
+         ],
+      q(ATF) => [
+         q(0079),
+         q(0),
+         ],
+      q(ATG) => [
+         q(0010),
+         q(0),
+         ],
+      q(AUS) => [
+         q(0014),
+         q(0),
+         ],
+      q(AUT) => [
+         q(0015),
+         q(0),
+         ],
+      q(AZE) => [
+         q(0016),
+         q(0),
+         ],
+      q(BDI) => [
+         q(0037),
+         q(0),
+         ],
+      q(BEL) => [
+         q(0022),
+         q(0),
+         ],
+      q(BEN) => [
+         q(0024),
+         q(0),
+         ],
+      q(BES) => [
+         q(0028),
+         q(0),
+         ],
+      q(BFA) => [
+         q(0036),
+         q(0),
+         ],
+      q(BGD) => [
+         q(0019),
+         q(0),
+         ],
+      q(BGR) => [
+         q(0035),
+         q(0),
+         ],
+      q(BHR) => [
+         q(0018),
+         q(0),
+         ],
+      q(BHS) => [
+         q(0017),
+         q(0),
+         ],
+      q(BIH) => [
+         q(0029),
+         q(0),
+         ],
+      q(BLM) => [
+         q(0185),
+         q(0),
+         ],
+      q(BLR) => [
+         q(0021),
+         q(0),
+         ],
+      q(BLZ) => [
+         q(0023),
+         q(0),
+         ],
+      q(BMU) => [
+         q(0025),
+         q(0),
+         ],
+      q(BOL) => [
+         q(0027),
+         q(0),
+         ],
+      q(BRA) => [
+         q(0032),
+         q(0),
+         ],
+      q(BRB) => [
+         q(0020),
+         q(0),
+         ],
+      q(BRN) => [
+         q(0034),
+         q(0),
+         ],
+      q(BTN) => [
+         q(0026),
+         q(0),
+         ],
+      q(BVT) => [
+         q(0031),
+         q(0),
+         ],
+      q(BWA) => [
+         q(0030),
+         q(0),
+         ],
+      q(CAF) => [
+         q(0043),
+         q(0),
+         ],
+      q(CAN) => [
+         q(0041),
+         q(0),
+         ],
+      q(CCK) => [
+         q(0048),
+         q(0),
+         ],
+      q(CHE) => [
+         q(0216),
+         q(0),
+         ],
+      q(CHL) => [
+         q(0045),
+         q(0),
+         ],
+      q(CHN) => [
+         q(0046),
+         q(0),
+         ],
+      q(CIV) => [
+         q(0055),
+         q(0),
+         ],
+      q(CMR) => [
+         q(0040),
+         q(0),
+         ],
+      q(COD) => [
+         q(0051),
+         q(0),
+         ],
+      q(COG) => [
+         q(0052),
+         q(0),
+         ],
+      q(COK) => [
+         q(0053),
+         q(0),
+         ],
+      q(COL) => [
+         q(0049),
+         q(0),
+         ],
+      q(COM) => [
+         q(0050),
+         q(0),
+         ],
+      q(CPV) => [
+         q(0038),
+         q(0),
+         ],
+      q(CRI) => [
+         q(0054),
+         q(0),
+         ],
+      q(CUB) => [
+         q(0057),
+         q(0),
+         ],
+      q(CUW) => [
+         q(0058),
+         q(0),
+         ],
+      q(CXR) => [
+         q(0047),
+         q(0),
+         ],
+      q(CYM) => [
+         q(0042),
+         q(0),
+         ],
+      q(CYP) => [
+         q(0059),
+         q(0),
+         ],
+      q(CZE) => [
+         q(0060),
+         q(0),
+         ],
+      q(DEU) => [
+         q(0083),
+         q(0),
+         ],
+      q(DJI) => [
+         q(0062),
+         q(0),
+         ],
+      q(DMA) => [
+         q(0063),
+         q(0),
+         ],
+      q(DNK) => [
+         q(0061),
+         q(0),
+         ],
+      q(DOM) => [
+         q(0064),
+         q(0),
+         ],
+      q(DZA) => [
+         q(0004),
+         q(0),
+         ],
+      q(ECU) => [
+         q(0065),
+         q(0),
+         ],
+      q(EGY) => [
+         q(0066),
+         q(0),
+         ],
+      q(ERI) => [
+         q(0069),
+         q(0),
+         ],
+      q(ESH) => [
+         q(0246),
+         q(0),
+         ],
+      q(ESP) => [
+         q(0209),
+         q(0),
+         ],
+      q(EST) => [
+         q(0070),
+         q(0),
+         ],
+      q(ETH) => [
+         q(0071),
+         q(0),
+         ],
+      q(FIN) => [
+         q(0075),
+         q(0),
+         ],
+      q(FJI) => [
+         q(0074),
+         q(0),
+         ],
+      q(FLK) => [
+         q(0072),
+         q(0),
+         ],
+      q(FRA) => [
+         q(0076),
+         q(0),
+         ],
+      q(FRO) => [
+         q(0073),
+         q(0),
+         ],
+      q(FSM) => [
+         q(0145),
+         q(0),
+         ],
+      q(GAB) => [
+         q(0080),
+         q(0),
+         ],
+      q(GBR) => [
+         q(0235),
+         q(0),
+         ],
+      q(GEO) => [
+         q(0082),
+         q(0),
+         ],
+      q(GGY) => [
+         q(0092),
+         q(0),
+         ],
+      q(GHA) => [
+         q(0084),
+         q(0),
+         ],
+      q(GIB) => [
+         q(0085),
+         q(0),
+         ],
+      q(GIN) => [
+         q(0093),
+         q(0),
+         ],
+      q(GLP) => [
+         q(0089),
+         q(0),
+         ],
+      q(GMB) => [
+         q(0081),
+         q(0),
+         ],
+      q(GNB) => [
+         q(0094),
+         q(0),
+         ],
+      q(GNQ) => [
+         q(0068),
+         q(0),
+         ],
+      q(GRC) => [
+         q(0086),
+         q(0),
+         ],
+      q(GRD) => [
+         q(0088),
+         q(0),
+         ],
+      q(GRL) => [
+         q(0087),
+         q(0),
+         ],
+      q(GTM) => [
+         q(0091),
+         q(0),
+         ],
+      q(GUF) => [
+         q(0077),
+         q(0),
+         ],
+      q(GUM) => [
+         q(0090),
+         q(0),
+         ],
+      q(GUY) => [
+         q(0095),
+         q(0),
+         ],
+      q(HKG) => [
+         q(0100),
+         q(0),
+         ],
+      q(HMD) => [
+         q(0097),
+         q(0),
+         ],
+      q(HND) => [
+         q(0099),
+         q(0),
+         ],
+      q(HRV) => [
+         q(0056),
+         q(0),
+         ],
+      q(HTI) => [
+         q(0096),
+         q(0),
+         ],
+      q(HUN) => [
+         q(0101),
+         q(0),
+         ],
+      q(IDN) => [
+         q(0104),
+         q(0),
+         ],
+      q(IMN) => [
+         q(0108),
+         q(0),
+         ],
+      q(IND) => [
+         q(0103),
+         q(0),
+         ],
+      q(IOT) => [
+         q(0033),
+         q(0),
+         ],
+      q(IRL) => [
+         q(0107),
+         q(0),
+         ],
+      q(IRN) => [
+         q(0105),
+         q(0),
+         ],
+      q(IRQ) => [
+         q(0106),
+         q(0),
+         ],
+      q(ISL) => [
+         q(0102),
+         q(0),
+         ],
+      q(ISR) => [
+         q(0109),
+         q(0),
+         ],
+      q(ITA) => [
+         q(0110),
+         q(0),
+         ],
+      q(JAM) => [
+         q(0111),
+         q(0),
+         ],
+      q(JEY) => [
+         q(0113),
+         q(0),
+         ],
+      q(JOR) => [
+         q(0114),
+         q(0),
+         ],
+      q(JPN) => [
+         q(0112),
+         q(0),
+         ],
+      q(KAZ) => [
+         q(0115),
+         q(0),
+         ],
+      q(KEN) => [
+         q(0116),
+         q(0),
+         ],
+      q(KGZ) => [
+         q(0121),
+         q(0),
+         ],
+      q(KHM) => [
+         q(0039),
+         q(0),
+         ],
+      q(KIR) => [
+         q(0117),
+         q(0),
+         ],
+      q(KNA) => [
+         q(0187),
+         q(0),
+         ],
+      q(KOR) => [
+         q(0119),
+         q(0),
+         ],
+      q(KWT) => [
+         q(0120),
+         q(0),
+         ],
+      q(LAO) => [
+         q(0122),
+         q(0),
+         ],
+      q(LBN) => [
+         q(0124),
+         q(0),
+         ],
+      q(LBR) => [
+         q(0126),
+         q(0),
+         ],
+      q(LBY) => [
+         q(0127),
+         q(0),
+         ],
+      q(LCA) => [
+         q(0188),
+         q(0),
+         ],
+      q(LIE) => [
+         q(0128),
+         q(0),
+         ],
+      q(LKA) => [
+         q(0210),
+         q(0),
+         ],
+      q(LSO) => [
+         q(0125),
+         q(0),
+         ],
+      q(LTU) => [
+         q(0129),
+         q(0),
+         ],
+      q(LUX) => [
+         q(0130),
+         q(0),
+         ],
+      q(LVA) => [
+         q(0123),
+         q(0),
+         ],
+      q(MAC) => [
+         q(0131),
+         q(0),
+         ],
+      q(MAF) => [
+         q(0189),
+         q(0),
+         ],
+      q(MAR) => [
+         q(0151),
+         q(0),
+         ],
+      q(MCO) => [
+         q(0147),
+         q(0),
+         ],
+      q(MDA) => [
+         q(0146),
+         q(0),
+         ],
+      q(MDG) => [
+         q(0133),
+         q(0),
+         ],
+      q(MDV) => [
+         q(0136),
+         q(0),
+         ],
+      q(MEX) => [
+         q(0144),
+         q(0),
+         ],
+      q(MHL) => [
+         q(0139),
+         q(0),
+         ],
+      q(MKD) => [
+         q(0132),
+         q(0),
+         ],
+      q(MLI) => [
+         q(0137),
+         q(0),
+         ],
+      q(MLT) => [
+         q(0138),
+         q(0),
+         ],
+      q(MMR) => [
+         q(0153),
+         q(0),
+         ],
+      q(MNE) => [
+         q(0149),
+         q(0),
+         ],
+      q(MNG) => [
+         q(0148),
+         q(0),
+         ],
+      q(MNP) => [
+         q(0165),
+         q(0),
+         ],
+      q(MOZ) => [
+         q(0152),
+         q(0),
+         ],
+      q(MRT) => [
+         q(0141),
+         q(0),
+         ],
+      q(MSR) => [
+         q(0150),
+         q(0),
+         ],
+      q(MTQ) => [
+         q(0140),
+         q(0),
+         ],
+      q(MUS) => [
+         q(0142),
+         q(0),
+         ],
+      q(MWI) => [
+         q(0134),
+         q(0),
+         ],
+      q(MYS) => [
+         q(0135),
+         q(0),
+         ],
+      q(MYT) => [
+         q(0143),
+         q(0),
+         ],
+      q(NAM) => [
+         q(0154),
+         q(0),
+         ],
+      q(NCL) => [
+         q(0158),
+         q(0),
+         ],
+      q(NER) => [
+         q(0161),
+         q(0),
+         ],
+      q(NFK) => [
+         q(0164),
+         q(0),
+         ],
+      q(NGA) => [
+         q(0162),
+         q(0),
+         ],
+      q(NIC) => [
+         q(0160),
+         q(0),
+         ],
+      q(NIU) => [
+         q(0163),
+         q(0),
+         ],
+      q(NLD) => [
+         q(0157),
+         q(0),
+         ],
+      q(NOR) => [
+         q(0166),
+         q(0),
+         ],
+      q(NPL) => [
+         q(0156),
+         q(0),
+         ],
+      q(NRU) => [
+         q(0155),
+         q(0),
+         ],
+      q(NZL) => [
+         q(0159),
+         q(0),
+         ],
+      q(OMN) => [
+         q(0167),
+         q(0),
+         ],
+      q(PAK) => [
+         q(0168),
+         q(0),
+         ],
+      q(PAN) => [
+         q(0171),
+         q(0),
+         ],
+      q(PCN) => [
+         q(0176),
+         q(0),
+         ],
+      q(PER) => [
+         q(0174),
+         q(0),
+         ],
+      q(PHL) => [
+         q(0175),
+         q(0),
+         ],
+      q(PLW) => [
+         q(0169),
+         q(0),
+         ],
+      q(PNG) => [
+         q(0172),
+         q(0),
+         ],
+      q(POL) => [
+         q(0177),
+         q(0),
+         ],
+      q(PRI) => [
+         q(0179),
+         q(0),
+         ],
+      q(PRK) => [
+         q(0118),
+         q(5),
+         ],
+      q(PRT) => [
+         q(0178),
+         q(0),
+         ],
+      q(PRY) => [
+         q(0173),
+         q(0),
+         ],
+      q(PSE) => [
+         q(0170),
+         q(0),
+         ],
+      q(PYF) => [
+         q(0078),
+         q(0),
+         ],
+      q(QAT) => [
+         q(0180),
+         q(0),
+         ],
+      q(REU) => [
+         q(0181),
+         q(0),
+         ],
+      q(ROU) => [
+         q(0182),
+         q(0),
+         ],
+      q(RUS) => [
+         q(0183),
+         q(0),
+         ],
+      q(RWA) => [
+         q(0184),
+         q(0),
+         ],
+      q(SAU) => [
+         q(0195),
+         q(0),
+         ],
+      q(SDN) => [
+         q(0211),
+         q(0),
+         ],
+      q(SEN) => [
+         q(0196),
+         q(0),
+         ],
+      q(SGP) => [
+         q(0200),
+         q(0),
+         ],
+      q(SGS) => [
+         q(0207),
+         q(0),
+         ],
+      q(SHN) => [
+         q(0186),
+         q(0),
+         ],
+      q(SJM) => [
+         q(0213),
+         q(0),
+         ],
+      q(SLB) => [
+         q(0204),
+         q(0),
+         ],
+      q(SLE) => [
+         q(0199),
+         q(0),
+         ],
+      q(SLV) => [
+         q(0067),
+         q(0),
+         ],
+      q(SMR) => [
+         q(0193),
+         q(0),
+         ],
+      q(SOM) => [
+         q(0205),
+         q(0),
+         ],
+      q(SPM) => [
+         q(0190),
+         q(0),
+         ],
+      q(SRB) => [
+         q(0197),
+         q(0),
+         ],
+      q(SSD) => [
+         q(0208),
+         q(0),
+         ],
+      q(STP) => [
+         q(0194),
+         q(0),
+         ],
+      q(SUR) => [
+         q(0212),
+         q(0),
+         ],
+      q(SVK) => [
+         q(0202),
+         q(0),
+         ],
+      q(SVN) => [
+         q(0203),
+         q(0),
+         ],
+      q(SWE) => [
+         q(0215),
+         q(0),
+         ],
+      q(SWZ) => [
+         q(0214),
+         q(0),
+         ],
+      q(SXM) => [
+         q(0201),
+         q(0),
+         ],
+      q(SYC) => [
+         q(0198),
+         q(0),
+         ],
+      q(SYR) => [
+         q(0217),
+         q(0),
+         ],
+      q(TCA) => [
+         q(0230),
+         q(0),
+         ],
+      q(TCD) => [
+         q(0044),
+         q(0),
+         ],
+      q(TGO) => [
+         q(0223),
+         q(0),
+         ],
+      q(THA) => [
+         q(0221),
+         q(0),
+         ],
+      q(TJK) => [
+         q(0219),
+         q(0),
+         ],
+      q(TKL) => [
+         q(0224),
+         q(0),
+         ],
+      q(TKM) => [
+         q(0229),
+         q(0),
+         ],
+      q(TLS) => [
+         q(0222),
+         q(0),
+         ],
+      q(TON) => [
+         q(0225),
+         q(0),
+         ],
+      q(TTO) => [
+         q(0226),
+         q(0),
+         ],
+      q(TUN) => [
+         q(0227),
+         q(0),
+         ],
+      q(TUR) => [
+         q(0228),
+         q(0),
+         ],
+      q(TUV) => [
+         q(0231),
+         q(0),
+         ],
+      q(TZA) => [
+         q(0220),
+         q(0),
+         ],
+      q(UGA) => [
+         q(0232),
+         q(0),
+         ],
+      q(UKR) => [
+         q(0233),
+         q(0),
+         ],
+      q(UMI) => [
+         q(0236),
+         q(0),
+         ],
+      q(URY) => [
+         q(0238),
+         q(0),
+         ],
+      q(USA) => [
+         q(0237),
+         q(0),
+         ],
+      q(UZB) => [
+         q(0239),
+         q(0),
+         ],
+      q(VAT) => [
+         q(0098),
+         q(0),
+         ],
+      q(VCT) => [
+         q(0191),
+         q(0),
+         ],
+      q(VEN) => [
+         q(0241),
+         q(0),
+         ],
+      q(VGB) => [
+         q(0243),
+         q(0),
+         ],
+      q(VIR) => [
+         q(0244),
+         q(0),
+         ],
+      q(VNM) => [
+         q(0242),
+         q(0),
+         ],
+      q(VUT) => [
+         q(0240),
+         q(0),
+         ],
+      q(WLF) => [
+         q(0245),
+         q(0),
+         ],
+      q(WSM) => [
+         q(0192),
+         q(0),
+         ],
+      q(YEM) => [
+         q(0247),
+         q(0),
+         ],
+      q(ZAF) => [
+         q(0206),
+         q(0),
+         ],
+      q(ZMB) => [
+         q(0248),
+         q(0),
+         ],
+      q(ZWE) => [
+         q(0249),
+         q(0),
+         ],
+      },
+   q(un-numeric) => {
+      q(004) => [
+         q(0001),
+         q(0),
+         ],
+      q(008) => [
+         q(0003),
+         q(0),
+         ],
+      q(010) => [
+         q(0009),
+         q(0),
+         ],
+      q(012) => [
+         q(0004),
+         q(0),
+         ],
+      q(016) => [
+         q(0005),
+         q(0),
+         ],
+      q(020) => [
+         q(0006),
+         q(0),
+         ],
+      q(024) => [
+         q(0007),
+         q(0),
+         ],
+      q(028) => [
+         q(0010),
+         q(0),
+         ],
+      q(031) => [
+         q(0016),
+         q(0),
+         ],
+      q(032) => [
+         q(0011),
+         q(0),
+         ],
+      q(036) => [
+         q(0014),
+         q(0),
+         ],
+      q(040) => [
+         q(0015),
+         q(0),
+         ],
+      q(044) => [
+         q(0017),
+         q(0),
+         ],
+      q(048) => [
+         q(0018),
+         q(0),
+         ],
+      q(050) => [
+         q(0019),
+         q(0),
+         ],
+      q(051) => [
+         q(0012),
+         q(0),
+         ],
+      q(052) => [
+         q(0020),
+         q(0),
+         ],
+      q(056) => [
+         q(0022),
+         q(0),
+         ],
+      q(060) => [
+         q(0025),
+         q(0),
+         ],
+      q(064) => [
+         q(0026),
+         q(0),
+         ],
+      q(068) => [
+         q(0027),
+         q(0),
+         ],
+      q(070) => [
+         q(0029),
+         q(0),
+         ],
+      q(072) => [
+         q(0030),
+         q(0),
+         ],
+      q(074) => [
+         q(0031),
+         q(0),
+         ],
+      q(076) => [
+         q(0032),
+         q(0),
+         ],
+      q(084) => [
+         q(0023),
+         q(0),
+         ],
+      q(086) => [
+         q(0033),
+         q(0),
+         ],
+      q(090) => [
+         q(0204),
+         q(0),
+         ],
+      q(092) => [
+         q(0243),
+         q(0),
+         ],
+      q(096) => [
+         q(0034),
+         q(0),
+         ],
+      q(100) => [
+         q(0035),
+         q(0),
+         ],
+      q(104) => [
+         q(0153),
+         q(0),
+         ],
+      q(108) => [
+         q(0037),
+         q(0),
+         ],
+      q(112) => [
+         q(0021),
+         q(0),
+         ],
+      q(116) => [
+         q(0039),
+         q(0),
+         ],
+      q(120) => [
+         q(0040),
+         q(0),
+         ],
+      q(124) => [
+         q(0041),
+         q(0),
+         ],
+      q(132) => [
+         q(0038),
+         q(0),
+         ],
+      q(136) => [
+         q(0042),
+         q(0),
+         ],
+      q(140) => [
+         q(0043),
+         q(0),
+         ],
+      q(144) => [
+         q(0210),
+         q(0),
+         ],
+      q(148) => [
+         q(0044),
+         q(0),
+         ],
+      q(152) => [
+         q(0045),
+         q(0),
+         ],
+      q(156) => [
+         q(0046),
+         q(0),
+         ],
+      q(162) => [
+         q(0047),
+         q(0),
+         ],
+      q(166) => [
+         q(0048),
+         q(0),
+         ],
+      q(170) => [
+         q(0049),
+         q(0),
+         ],
+      q(174) => [
+         q(0050),
+         q(0),
+         ],
+      q(175) => [
+         q(0143),
+         q(0),
+         ],
+      q(178) => [
+         q(0052),
+         q(0),
+         ],
+      q(180) => [
+         q(0051),
+         q(0),
+         ],
+      q(184) => [
+         q(0053),
+         q(0),
+         ],
+      q(188) => [
+         q(0054),
+         q(0),
+         ],
+      q(191) => [
+         q(0056),
+         q(0),
+         ],
+      q(192) => [
+         q(0057),
+         q(0),
+         ],
+      q(196) => [
+         q(0059),
+         q(0),
+         ],
+      q(203) => [
+         q(0060),
+         q(0),
+         ],
+      q(204) => [
+         q(0024),
+         q(0),
+         ],
+      q(208) => [
+         q(0061),
+         q(0),
+         ],
+      q(212) => [
+         q(0063),
+         q(0),
+         ],
+      q(214) => [
+         q(0064),
+         q(0),
+         ],
+      q(218) => [
+         q(0065),
+         q(0),
+         ],
+      q(222) => [
+         q(0067),
+         q(0),
+         ],
+      q(226) => [
+         q(0068),
+         q(0),
+         ],
+      q(231) => [
+         q(0071),
+         q(0),
+         ],
+      q(232) => [
+         q(0069),
+         q(0),
+         ],
+      q(233) => [
+         q(0070),
+         q(0),
+         ],
+      q(234) => [
+         q(0073),
+         q(0),
+         ],
+      q(238) => [
+         q(0072),
+         q(0),
+         ],
+      q(239) => [
+         q(0207),
+         q(0),
+         ],
+      q(242) => [
+         q(0074),
+         q(0),
+         ],
+      q(246) => [
+         q(0075),
+         q(0),
+         ],
+      q(248) => [
+         q(0002),
+         q(0),
+         ],
+      q(250) => [
+         q(0076),
+         q(0),
+         ],
+      q(254) => [
+         q(0077),
+         q(0),
+         ],
+      q(258) => [
+         q(0078),
+         q(0),
+         ],
+      q(260) => [
+         q(0079),
+         q(0),
+         ],
+      q(262) => [
+         q(0062),
+         q(0),
+         ],
+      q(266) => [
+         q(0080),
+         q(0),
+         ],
+      q(268) => [
+         q(0082),
+         q(0),
+         ],
+      q(270) => [
+         q(0081),
+         q(0),
+         ],
+      q(275) => [
+         q(0170),
+         q(0),
+         ],
+      q(276) => [
+         q(0083),
+         q(0),
+         ],
+      q(288) => [
+         q(0084),
+         q(0),
+         ],
+      q(292) => [
+         q(0085),
+         q(0),
+         ],
+      q(296) => [
+         q(0117),
+         q(0),
+         ],
+      q(300) => [
+         q(0086),
+         q(0),
+         ],
+      q(304) => [
+         q(0087),
+         q(0),
+         ],
+      q(308) => [
+         q(0088),
+         q(0),
+         ],
+      q(312) => [
+         q(0089),
+         q(0),
+         ],
+      q(316) => [
+         q(0090),
+         q(0),
+         ],
+      q(320) => [
+         q(0091),
+         q(0),
+         ],
+      q(324) => [
+         q(0093),
+         q(0),
+         ],
+      q(328) => [
+         q(0095),
+         q(0),
+         ],
+      q(332) => [
+         q(0096),
+         q(0),
+         ],
+      q(334) => [
+         q(0097),
+         q(0),
+         ],
+      q(336) => [
+         q(0098),
+         q(0),
+         ],
+      q(340) => [
+         q(0099),
+         q(0),
+         ],
+      q(344) => [
+         q(0100),
+         q(0),
+         ],
+      q(348) => [
+         q(0101),
+         q(0),
+         ],
+      q(352) => [
+         q(0102),
+         q(0),
+         ],
+      q(356) => [
+         q(0103),
+         q(0),
+         ],
+      q(360) => [
+         q(0104),
+         q(0),
+         ],
+      q(364) => [
+         q(0105),
+         q(0),
+         ],
+      q(368) => [
+         q(0106),
+         q(0),
+         ],
+      q(372) => [
+         q(0107),
+         q(0),
+         ],
+      q(376) => [
+         q(0109),
+         q(0),
+         ],
+      q(380) => [
+         q(0110),
+         q(0),
+         ],
+      q(384) => [
+         q(0055),
+         q(0),
+         ],
+      q(388) => [
+         q(0111),
+         q(0),
+         ],
+      q(392) => [
+         q(0112),
+         q(0),
+         ],
+      q(398) => [
+         q(0115),
+         q(0),
+         ],
+      q(400) => [
+         q(0114),
+         q(0),
+         ],
+      q(404) => [
+         q(0116),
+         q(0),
+         ],
+      q(408) => [
+         q(0118),
+         q(5),
+         ],
+      q(410) => [
+         q(0119),
+         q(0),
+         ],
+      q(414) => [
+         q(0120),
+         q(0),
+         ],
+      q(417) => [
+         q(0121),
+         q(0),
+         ],
+      q(418) => [
+         q(0122),
+         q(0),
+         ],
+      q(422) => [
+         q(0124),
+         q(0),
+         ],
+      q(426) => [
+         q(0125),
+         q(0),
+         ],
+      q(428) => [
+         q(0123),
+         q(0),
+         ],
+      q(430) => [
+         q(0126),
+         q(0),
+         ],
+      q(434) => [
+         q(0127),
+         q(0),
+         ],
+      q(438) => [
+         q(0128),
+         q(0),
+         ],
+      q(440) => [
+         q(0129),
+         q(0),
+         ],
+      q(442) => [
+         q(0130),
+         q(0),
+         ],
+      q(446) => [
+         q(0131),
+         q(0),
+         ],
+      q(450) => [
+         q(0133),
+         q(0),
+         ],
+      q(454) => [
+         q(0134),
+         q(0),
+         ],
+      q(458) => [
+         q(0135),
+         q(0),
+         ],
+      q(462) => [
+         q(0136),
+         q(0),
+         ],
+      q(466) => [
+         q(0137),
+         q(0),
+         ],
+      q(470) => [
+         q(0138),
+         q(0),
+         ],
+      q(474) => [
+         q(0140),
+         q(0),
+         ],
+      q(478) => [
+         q(0141),
+         q(0),
+         ],
+      q(480) => [
+         q(0142),
+         q(0),
+         ],
+      q(484) => [
+         q(0144),
+         q(0),
+         ],
+      q(492) => [
+         q(0147),
+         q(0),
+         ],
+      q(496) => [
+         q(0148),
+         q(0),
+         ],
+      q(498) => [
+         q(0146),
+         q(0),
+         ],
+      q(499) => [
+         q(0149),
+         q(0),
+         ],
+      q(500) => [
+         q(0150),
+         q(0),
+         ],
+      q(504) => [
+         q(0151),
+         q(0),
+         ],
+      q(508) => [
+         q(0152),
+         q(0),
+         ],
+      q(512) => [
+         q(0167),
+         q(0),
+         ],
+      q(516) => [
+         q(0154),
+         q(0),
+         ],
+      q(520) => [
+         q(0155),
+         q(0),
+         ],
+      q(524) => [
+         q(0156),
+         q(0),
+         ],
+      q(528) => [
+         q(0157),
+         q(0),
+         ],
+      q(531) => [
+         q(0058),
+         q(0),
+         ],
+      q(533) => [
+         q(0013),
+         q(0),
+         ],
+      q(534) => [
+         q(0201),
+         q(0),
+         ],
+      q(535) => [
+         q(0028),
+         q(0),
+         ],
+      q(540) => [
+         q(0158),
+         q(0),
+         ],
+      q(548) => [
+         q(0240),
+         q(0),
+         ],
+      q(554) => [
+         q(0159),
+         q(0),
+         ],
+      q(558) => [
+         q(0160),
+         q(0),
+         ],
+      q(562) => [
+         q(0161),
+         q(0),
+         ],
+      q(566) => [
+         q(0162),
+         q(0),
+         ],
+      q(570) => [
+         q(0163),
+         q(0),
+         ],
+      q(574) => [
+         q(0164),
+         q(0),
+         ],
+      q(578) => [
+         q(0166),
+         q(0),
+         ],
+      q(580) => [
+         q(0165),
+         q(0),
+         ],
+      q(581) => [
+         q(0236),
+         q(0),
+         ],
+      q(583) => [
+         q(0145),
+         q(0),
+         ],
+      q(584) => [
+         q(0139),
+         q(0),
+         ],
+      q(585) => [
+         q(0169),
+         q(0),
+         ],
+      q(586) => [
+         q(0168),
+         q(0),
+         ],
+      q(591) => [
+         q(0171),
+         q(0),
+         ],
+      q(598) => [
+         q(0172),
+         q(0),
+         ],
+      q(600) => [
+         q(0173),
+         q(0),
+         ],
+      q(604) => [
+         q(0174),
+         q(0),
+         ],
+      q(608) => [
+         q(0175),
+         q(0),
+         ],
+      q(612) => [
+         q(0176),
+         q(0),
+         ],
+      q(616) => [
+         q(0177),
+         q(0),
+         ],
+      q(620) => [
+         q(0178),
+         q(0),
+         ],
+      q(624) => [
+         q(0094),
+         q(0),
+         ],
+      q(626) => [
+         q(0222),
+         q(0),
+         ],
+      q(630) => [
+         q(0179),
+         q(0),
+         ],
+      q(634) => [
+         q(0180),
+         q(0),
+         ],
+      q(638) => [
+         q(0181),
+         q(0),
+         ],
+      q(642) => [
+         q(0182),
+         q(0),
+         ],
+      q(643) => [
+         q(0183),
+         q(0),
+         ],
+      q(646) => [
+         q(0184),
+         q(0),
+         ],
+      q(652) => [
+         q(0185),
+         q(0),
+         ],
+      q(654) => [
+         q(0186),
+         q(0),
+         ],
+      q(659) => [
+         q(0187),
+         q(0),
+         ],
+      q(660) => [
+         q(0008),
+         q(0),
+         ],
+      q(662) => [
+         q(0188),
+         q(0),
+         ],
+      q(663) => [
+         q(0189),
+         q(0),
+         ],
+      q(666) => [
+         q(0190),
+         q(0),
+         ],
+      q(670) => [
+         q(0191),
+         q(0),
+         ],
+      q(674) => [
+         q(0193),
+         q(0),
+         ],
+      q(678) => [
+         q(0194),
+         q(0),
+         ],
+      q(680) => [
+         q(0250),
+         q(0),
+         ],
+      q(682) => [
+         q(0195),
+         q(0),
+         ],
+      q(686) => [
+         q(0196),
+         q(0),
+         ],
+      q(688) => [
+         q(0197),
+         q(0),
+         ],
+      q(690) => [
+         q(0198),
+         q(0),
+         ],
+      q(694) => [
+         q(0199),
+         q(0),
+         ],
+      q(702) => [
+         q(0200),
+         q(0),
+         ],
+      q(703) => [
+         q(0202),
+         q(0),
+         ],
+      q(704) => [
+         q(0242),
+         q(0),
+         ],
+      q(705) => [
+         q(0203),
+         q(0),
+         ],
+      q(706) => [
+         q(0205),
+         q(0),
+         ],
+      q(710) => [
+         q(0206),
+         q(0),
+         ],
+      q(716) => [
+         q(0249),
+         q(0),
+         ],
+      q(724) => [
+         q(0209),
+         q(0),
+         ],
+      q(728) => [
+         q(0208),
+         q(0),
+         ],
+      q(729) => [
+         q(0211),
+         q(0),
+         ],
+      q(732) => [
+         q(0246),
+         q(0),
+         ],
+      q(740) => [
+         q(0212),
+         q(0),
+         ],
+      q(744) => [
+         q(0213),
+         q(0),
+         ],
+      q(748) => [
+         q(0214),
+         q(0),
+         ],
+      q(752) => [
+         q(0215),
+         q(0),
+         ],
+      q(756) => [
+         q(0216),
+         q(0),
+         ],
+      q(760) => [
+         q(0217),
+         q(0),
+         ],
+      q(762) => [
+         q(0219),
+         q(0),
+         ],
+      q(764) => [
+         q(0221),
+         q(0),
+         ],
+      q(768) => [
+         q(0223),
+         q(0),
+         ],
+      q(772) => [
+         q(0224),
+         q(0),
+         ],
+      q(776) => [
+         q(0225),
+         q(0),
+         ],
+      q(780) => [
+         q(0226),
+         q(0),
+         ],
+      q(784) => [
+         q(0234),
+         q(0),
+         ],
+      q(788) => [
+         q(0227),
+         q(0),
+         ],
+      q(792) => [
+         q(0228),
+         q(0),
+         ],
+      q(795) => [
+         q(0229),
+         q(0),
+         ],
+      q(796) => [
+         q(0230),
+         q(0),
+         ],
+      q(798) => [
+         q(0231),
+         q(0),
+         ],
+      q(800) => [
+         q(0232),
+         q(0),
+         ],
+      q(804) => [
+         q(0233),
+         q(0),
+         ],
+      q(807) => [
+         q(0132),
+         q(0),
+         ],
+      q(818) => [
+         q(0066),
+         q(0),
+         ],
+      q(826) => [
+         q(0235),
+         q(0),
+         ],
+      q(831) => [
+         q(0092),
+         q(0),
+         ],
+      q(832) => [
+         q(0113),
+         q(0),
+         ],
+      q(833) => [
+         q(0108),
+         q(0),
+         ],
+      q(834) => [
+         q(0220),
+         q(0),
+         ],
+      q(840) => [
+         q(0237),
+         q(0),
+         ],
+      q(850) => [
+         q(0244),
+         q(0),
+         ],
+      q(854) => [
+         q(0036),
+         q(0),
+         ],
+      q(858) => [
+         q(0238),
+         q(0),
+         ],
+      q(860) => [
+         q(0239),
+         q(0),
+         ],
+      q(862) => [
+         q(0241),
+         q(0),
+         ],
+      q(876) => [
+         q(0245),
+         q(0),
+         ],
+      q(882) => [
+         q(0192),
+         q(0),
+         ],
+      q(887) => [
+         q(0247),
+         q(0),
+         ],
+      q(894) => [
+         q(0248),
+         q(0),
+         ],
+      },
 };
 
 $Locale::Codes::Data{'country'}{'id2code'} = {
@@ -7628,6 +13179,834 @@ $Locale::Codes::Data{'country'}{'id2code'} = {
       q(0248) => q(zm),
       q(0249) => q(zw),
       },
+   q(genc-alpha-2) => {
+      q(0001) => q(AF),
+      q(0003) => q(AL),
+      q(0004) => q(DZ),
+      q(0005) => q(AS),
+      q(0006) => q(AD),
+      q(0007) => q(AO),
+      q(0008) => q(AI),
+      q(0009) => q(AQ),
+      q(0010) => q(AG),
+      q(0011) => q(AR),
+      q(0012) => q(AM),
+      q(0013) => q(AW),
+      q(0014) => q(AU),
+      q(0015) => q(AT),
+      q(0016) => q(AZ),
+      q(0017) => q(BS),
+      q(0018) => q(BH),
+      q(0019) => q(BD),
+      q(0020) => q(BB),
+      q(0021) => q(BY),
+      q(0022) => q(BE),
+      q(0023) => q(BZ),
+      q(0024) => q(BJ),
+      q(0025) => q(BM),
+      q(0026) => q(BT),
+      q(0027) => q(BO),
+      q(0028) => q(BQ),
+      q(0029) => q(BA),
+      q(0030) => q(BW),
+      q(0031) => q(BV),
+      q(0032) => q(BR),
+      q(0033) => q(IO),
+      q(0034) => q(BN),
+      q(0035) => q(BG),
+      q(0036) => q(BF),
+      q(0037) => q(BI),
+      q(0038) => q(CV),
+      q(0039) => q(KH),
+      q(0040) => q(CM),
+      q(0041) => q(CA),
+      q(0042) => q(KY),
+      q(0043) => q(CF),
+      q(0044) => q(TD),
+      q(0045) => q(CL),
+      q(0046) => q(CN),
+      q(0047) => q(CX),
+      q(0048) => q(CC),
+      q(0049) => q(CO),
+      q(0050) => q(KM),
+      q(0051) => q(CD),
+      q(0052) => q(CG),
+      q(0053) => q(CK),
+      q(0054) => q(CR),
+      q(0055) => q(CI),
+      q(0056) => q(HR),
+      q(0057) => q(CU),
+      q(0058) => q(CW),
+      q(0059) => q(CY),
+      q(0060) => q(CZ),
+      q(0061) => q(DK),
+      q(0062) => q(DJ),
+      q(0063) => q(DM),
+      q(0064) => q(DO),
+      q(0065) => q(EC),
+      q(0066) => q(EG),
+      q(0067) => q(SV),
+      q(0068) => q(GQ),
+      q(0069) => q(ER),
+      q(0070) => q(EE),
+      q(0071) => q(ET),
+      q(0072) => q(FK),
+      q(0073) => q(FO),
+      q(0074) => q(FJ),
+      q(0075) => q(FI),
+      q(0076) => q(FR),
+      q(0077) => q(GF),
+      q(0078) => q(PF),
+      q(0079) => q(TF),
+      q(0080) => q(GA),
+      q(0081) => q(GM),
+      q(0082) => q(GE),
+      q(0083) => q(DE),
+      q(0084) => q(GH),
+      q(0085) => q(GI),
+      q(0086) => q(GR),
+      q(0087) => q(GL),
+      q(0088) => q(GD),
+      q(0089) => q(GP),
+      q(0090) => q(GU),
+      q(0091) => q(GT),
+      q(0092) => q(GG),
+      q(0093) => q(GN),
+      q(0094) => q(GW),
+      q(0095) => q(GY),
+      q(0096) => q(HT),
+      q(0097) => q(HM),
+      q(0098) => q(VA),
+      q(0099) => q(HN),
+      q(0100) => q(HK),
+      q(0101) => q(HU),
+      q(0102) => q(IS),
+      q(0103) => q(IN),
+      q(0104) => q(ID),
+      q(0105) => q(IR),
+      q(0106) => q(IQ),
+      q(0107) => q(IE),
+      q(0108) => q(IM),
+      q(0109) => q(IL),
+      q(0110) => q(IT),
+      q(0111) => q(JM),
+      q(0112) => q(JP),
+      q(0113) => q(JE),
+      q(0114) => q(JO),
+      q(0115) => q(KZ),
+      q(0116) => q(KE),
+      q(0117) => q(KI),
+      q(0118) => q(KP),
+      q(0119) => q(KR),
+      q(0120) => q(KW),
+      q(0121) => q(KG),
+      q(0122) => q(LA),
+      q(0123) => q(LV),
+      q(0124) => q(LB),
+      q(0125) => q(LS),
+      q(0126) => q(LR),
+      q(0127) => q(LY),
+      q(0128) => q(LI),
+      q(0129) => q(LT),
+      q(0130) => q(LU),
+      q(0131) => q(MO),
+      q(0132) => q(MK),
+      q(0133) => q(MG),
+      q(0134) => q(MW),
+      q(0135) => q(MY),
+      q(0136) => q(MV),
+      q(0137) => q(ML),
+      q(0138) => q(MT),
+      q(0139) => q(MH),
+      q(0140) => q(MQ),
+      q(0141) => q(MR),
+      q(0142) => q(MU),
+      q(0143) => q(YT),
+      q(0144) => q(MX),
+      q(0145) => q(FM),
+      q(0146) => q(MD),
+      q(0147) => q(MC),
+      q(0148) => q(MN),
+      q(0149) => q(ME),
+      q(0150) => q(MS),
+      q(0151) => q(MA),
+      q(0152) => q(MZ),
+      q(0153) => q(MM),
+      q(0154) => q(NA),
+      q(0155) => q(NR),
+      q(0156) => q(NP),
+      q(0157) => q(NL),
+      q(0158) => q(NC),
+      q(0159) => q(NZ),
+      q(0160) => q(NI),
+      q(0161) => q(NE),
+      q(0162) => q(NG),
+      q(0163) => q(NU),
+      q(0164) => q(NF),
+      q(0165) => q(MP),
+      q(0166) => q(NO),
+      q(0167) => q(OM),
+      q(0168) => q(PK),
+      q(0169) => q(PW),
+      q(0171) => q(PA),
+      q(0172) => q(PG),
+      q(0173) => q(PY),
+      q(0174) => q(PE),
+      q(0175) => q(PH),
+      q(0176) => q(PN),
+      q(0177) => q(PL),
+      q(0178) => q(PT),
+      q(0179) => q(PR),
+      q(0180) => q(QA),
+      q(0181) => q(RE),
+      q(0182) => q(RO),
+      q(0183) => q(RU),
+      q(0184) => q(RW),
+      q(0185) => q(BL),
+      q(0186) => q(SH),
+      q(0187) => q(KN),
+      q(0188) => q(LC),
+      q(0189) => q(MF),
+      q(0190) => q(PM),
+      q(0191) => q(VC),
+      q(0192) => q(WS),
+      q(0193) => q(SM),
+      q(0194) => q(ST),
+      q(0195) => q(SA),
+      q(0196) => q(SN),
+      q(0197) => q(RS),
+      q(0198) => q(SC),
+      q(0199) => q(SL),
+      q(0200) => q(SG),
+      q(0201) => q(SX),
+      q(0202) => q(SK),
+      q(0203) => q(SI),
+      q(0204) => q(SB),
+      q(0205) => q(SO),
+      q(0206) => q(ZA),
+      q(0207) => q(GS),
+      q(0208) => q(SS),
+      q(0209) => q(ES),
+      q(0210) => q(LK),
+      q(0211) => q(SD),
+      q(0212) => q(SR),
+      q(0214) => q(SZ),
+      q(0215) => q(SE),
+      q(0216) => q(CH),
+      q(0217) => q(SY),
+      q(0218) => q(TW),
+      q(0219) => q(TJ),
+      q(0220) => q(TZ),
+      q(0221) => q(TH),
+      q(0222) => q(TL),
+      q(0223) => q(TG),
+      q(0224) => q(TK),
+      q(0225) => q(TO),
+      q(0226) => q(TT),
+      q(0227) => q(TN),
+      q(0228) => q(TR),
+      q(0229) => q(TM),
+      q(0230) => q(TC),
+      q(0231) => q(TV),
+      q(0232) => q(UG),
+      q(0233) => q(UA),
+      q(0234) => q(AE),
+      q(0235) => q(GB),
+      q(0237) => q(US),
+      q(0238) => q(UY),
+      q(0239) => q(UZ),
+      q(0240) => q(VU),
+      q(0241) => q(VE),
+      q(0242) => q(VN),
+      q(0243) => q(VG),
+      q(0244) => q(VI),
+      q(0245) => q(WF),
+      q(0246) => q(EH),
+      q(0247) => q(YE),
+      q(0248) => q(ZM),
+      q(0249) => q(ZW),
+      q(0251) => q(QZ),
+      q(0252) => q(XA),
+      q(0253) => q(XB),
+      q(0254) => q(QS),
+      q(0255) => q(CP),
+      q(0256) => q(XC),
+      q(0257) => q(XD),
+      q(0258) => q(DG),
+      q(0259) => q(XE),
+      q(0260) => q(XG),
+      q(0261) => q(QX),
+      q(0262) => q(A2),
+      q(0263) => q(XH),
+      q(0264) => q(XJ),
+      q(0265) => q(XQ),
+      q(0266) => q(XU),
+      q(0267) => q(QU),
+      q(0268) => q(XM),
+      q(0269) => q(XK),
+      q(0270) => q(QM),
+      q(0271) => q(XV),
+      q(0272) => q(XL),
+      q(0273) => q(XP),
+      q(0274) => q(XS),
+      q(0275) => q(XR),
+      q(0276) => q(XT),
+      q(0277) => q(A1),
+      q(0278) => q(QW),
+      q(0279) => q(XW),
+      },
+   q(genc-alpha-3) => {
+      q(0001) => q(AFG),
+      q(0003) => q(ALB),
+      q(0004) => q(DZA),
+      q(0005) => q(ASM),
+      q(0006) => q(AND),
+      q(0007) => q(AGO),
+      q(0008) => q(AIA),
+      q(0009) => q(ATA),
+      q(0010) => q(ATG),
+      q(0011) => q(ARG),
+      q(0012) => q(ARM),
+      q(0013) => q(ABW),
+      q(0014) => q(AUS),
+      q(0015) => q(AUT),
+      q(0016) => q(AZE),
+      q(0017) => q(BHS),
+      q(0018) => q(BHR),
+      q(0019) => q(BGD),
+      q(0020) => q(BRB),
+      q(0021) => q(BLR),
+      q(0022) => q(BEL),
+      q(0023) => q(BLZ),
+      q(0024) => q(BEN),
+      q(0025) => q(BMU),
+      q(0026) => q(BTN),
+      q(0027) => q(BOL),
+      q(0028) => q(BES),
+      q(0029) => q(BIH),
+      q(0030) => q(BWA),
+      q(0031) => q(BVT),
+      q(0032) => q(BRA),
+      q(0033) => q(IOT),
+      q(0034) => q(BRN),
+      q(0035) => q(BGR),
+      q(0036) => q(BFA),
+      q(0037) => q(BDI),
+      q(0038) => q(CPV),
+      q(0039) => q(KHM),
+      q(0040) => q(CMR),
+      q(0041) => q(CAN),
+      q(0042) => q(CYM),
+      q(0043) => q(CAF),
+      q(0044) => q(TCD),
+      q(0045) => q(CHL),
+      q(0046) => q(CHN),
+      q(0047) => q(CXR),
+      q(0048) => q(CCK),
+      q(0049) => q(COL),
+      q(0050) => q(COM),
+      q(0051) => q(COD),
+      q(0052) => q(COG),
+      q(0053) => q(COK),
+      q(0054) => q(CRI),
+      q(0055) => q(CIV),
+      q(0056) => q(HRV),
+      q(0057) => q(CUB),
+      q(0058) => q(CUW),
+      q(0059) => q(CYP),
+      q(0060) => q(CZE),
+      q(0061) => q(DNK),
+      q(0062) => q(DJI),
+      q(0063) => q(DMA),
+      q(0064) => q(DOM),
+      q(0065) => q(ECU),
+      q(0066) => q(EGY),
+      q(0067) => q(SLV),
+      q(0068) => q(GNQ),
+      q(0069) => q(ERI),
+      q(0070) => q(EST),
+      q(0071) => q(ETH),
+      q(0072) => q(FLK),
+      q(0073) => q(FRO),
+      q(0074) => q(FJI),
+      q(0075) => q(FIN),
+      q(0076) => q(FRA),
+      q(0077) => q(GUF),
+      q(0078) => q(PYF),
+      q(0079) => q(ATF),
+      q(0080) => q(GAB),
+      q(0081) => q(GMB),
+      q(0082) => q(GEO),
+      q(0083) => q(DEU),
+      q(0084) => q(GHA),
+      q(0085) => q(GIB),
+      q(0086) => q(GRC),
+      q(0087) => q(GRL),
+      q(0088) => q(GRD),
+      q(0089) => q(GLP),
+      q(0090) => q(GUM),
+      q(0091) => q(GTM),
+      q(0092) => q(GGY),
+      q(0093) => q(GIN),
+      q(0094) => q(GNB),
+      q(0095) => q(GUY),
+      q(0096) => q(HTI),
+      q(0097) => q(HMD),
+      q(0098) => q(VAT),
+      q(0099) => q(HND),
+      q(0100) => q(HKG),
+      q(0101) => q(HUN),
+      q(0102) => q(ISL),
+      q(0103) => q(IND),
+      q(0104) => q(IDN),
+      q(0105) => q(IRN),
+      q(0106) => q(IRQ),
+      q(0107) => q(IRL),
+      q(0108) => q(IMN),
+      q(0109) => q(ISR),
+      q(0110) => q(ITA),
+      q(0111) => q(JAM),
+      q(0112) => q(JPN),
+      q(0113) => q(JEY),
+      q(0114) => q(JOR),
+      q(0115) => q(KAZ),
+      q(0116) => q(KEN),
+      q(0117) => q(KIR),
+      q(0118) => q(PRK),
+      q(0119) => q(KOR),
+      q(0120) => q(KWT),
+      q(0121) => q(KGZ),
+      q(0122) => q(LAO),
+      q(0123) => q(LVA),
+      q(0124) => q(LBN),
+      q(0125) => q(LSO),
+      q(0126) => q(LBR),
+      q(0127) => q(LBY),
+      q(0128) => q(LIE),
+      q(0129) => q(LTU),
+      q(0130) => q(LUX),
+      q(0131) => q(MAC),
+      q(0132) => q(MKD),
+      q(0133) => q(MDG),
+      q(0134) => q(MWI),
+      q(0135) => q(MYS),
+      q(0136) => q(MDV),
+      q(0137) => q(MLI),
+      q(0138) => q(MLT),
+      q(0139) => q(MHL),
+      q(0140) => q(MTQ),
+      q(0141) => q(MRT),
+      q(0142) => q(MUS),
+      q(0143) => q(MYT),
+      q(0144) => q(MEX),
+      q(0145) => q(FSM),
+      q(0146) => q(MDA),
+      q(0147) => q(MCO),
+      q(0148) => q(MNG),
+      q(0149) => q(MNE),
+      q(0150) => q(MSR),
+      q(0151) => q(MAR),
+      q(0152) => q(MOZ),
+      q(0153) => q(MMR),
+      q(0154) => q(NAM),
+      q(0155) => q(NRU),
+      q(0156) => q(NPL),
+      q(0157) => q(NLD),
+      q(0158) => q(NCL),
+      q(0159) => q(NZL),
+      q(0160) => q(NIC),
+      q(0161) => q(NER),
+      q(0162) => q(NGA),
+      q(0163) => q(NIU),
+      q(0164) => q(NFK),
+      q(0165) => q(MNP),
+      q(0166) => q(NOR),
+      q(0167) => q(OMN),
+      q(0168) => q(PAK),
+      q(0169) => q(PLW),
+      q(0171) => q(PAN),
+      q(0172) => q(PNG),
+      q(0173) => q(PRY),
+      q(0174) => q(PER),
+      q(0175) => q(PHL),
+      q(0176) => q(PCN),
+      q(0177) => q(POL),
+      q(0178) => q(PRT),
+      q(0179) => q(PRI),
+      q(0180) => q(QAT),
+      q(0181) => q(REU),
+      q(0182) => q(ROU),
+      q(0183) => q(RUS),
+      q(0184) => q(RWA),
+      q(0185) => q(BLM),
+      q(0186) => q(SHN),
+      q(0187) => q(KNA),
+      q(0188) => q(LCA),
+      q(0189) => q(MAF),
+      q(0190) => q(SPM),
+      q(0191) => q(VCT),
+      q(0192) => q(WSM),
+      q(0193) => q(SMR),
+      q(0194) => q(STP),
+      q(0195) => q(SAU),
+      q(0196) => q(SEN),
+      q(0197) => q(SRB),
+      q(0198) => q(SYC),
+      q(0199) => q(SLE),
+      q(0200) => q(SGP),
+      q(0201) => q(SXM),
+      q(0202) => q(SVK),
+      q(0203) => q(SVN),
+      q(0204) => q(SLB),
+      q(0205) => q(SOM),
+      q(0206) => q(ZAF),
+      q(0207) => q(SGS),
+      q(0208) => q(SSD),
+      q(0209) => q(ESP),
+      q(0210) => q(LKA),
+      q(0211) => q(SDN),
+      q(0212) => q(SUR),
+      q(0214) => q(SWZ),
+      q(0215) => q(SWE),
+      q(0216) => q(CHE),
+      q(0217) => q(SYR),
+      q(0218) => q(TWN),
+      q(0219) => q(TJK),
+      q(0220) => q(TZA),
+      q(0221) => q(THA),
+      q(0222) => q(TLS),
+      q(0223) => q(TGO),
+      q(0224) => q(TKL),
+      q(0225) => q(TON),
+      q(0226) => q(TTO),
+      q(0227) => q(TUN),
+      q(0228) => q(TUR),
+      q(0229) => q(TKM),
+      q(0230) => q(TCA),
+      q(0231) => q(TUV),
+      q(0232) => q(UGA),
+      q(0233) => q(UKR),
+      q(0234) => q(ARE),
+      q(0235) => q(GBR),
+      q(0237) => q(USA),
+      q(0238) => q(URY),
+      q(0239) => q(UZB),
+      q(0240) => q(VUT),
+      q(0241) => q(VEN),
+      q(0242) => q(VNM),
+      q(0243) => q(VGB),
+      q(0244) => q(VIR),
+      q(0245) => q(WLF),
+      q(0246) => q(ESH),
+      q(0247) => q(YEM),
+      q(0248) => q(ZMB),
+      q(0249) => q(ZWE),
+      q(0251) => q(XQZ),
+      q(0252) => q(XAC),
+      q(0253) => q(XBK),
+      q(0254) => q(XBI),
+      q(0255) => q(CPT),
+      q(0256) => q(XCS),
+      q(0257) => q(XXD),
+      q(0258) => q(DGA),
+      q(0259) => q(XEU),
+      q(0260) => q(XGZ),
+      q(0261) => q(XGL),
+      q(0262) => q(AX2),
+      q(0263) => q(XHO),
+      q(0264) => q(XJM),
+      q(0265) => q(XJV),
+      q(0266) => q(XJA),
+      q(0267) => q(XJN),
+      q(0268) => q(XKR),
+      q(0269) => q(XKS),
+      q(0270) => q(XMW),
+      q(0271) => q(XNV),
+      q(0272) => q(XPL),
+      q(0273) => q(XPR),
+      q(0274) => q(XSP),
+      q(0275) => q(XSV),
+      q(0276) => q(XTR),
+      q(0277) => q(AX1),
+      q(0278) => q(XWK),
+      q(0279) => q(XWB),
+      },
+   q(genc-numeric) => {
+      q(0001) => q(004),
+      q(0003) => q(008),
+      q(0004) => q(012),
+      q(0005) => q(016),
+      q(0006) => q(020),
+      q(0007) => q(024),
+      q(0008) => q(660),
+      q(0009) => q(010),
+      q(0010) => q(028),
+      q(0011) => q(032),
+      q(0012) => q(051),
+      q(0013) => q(533),
+      q(0014) => q(036),
+      q(0015) => q(040),
+      q(0016) => q(031),
+      q(0017) => q(044),
+      q(0018) => q(048),
+      q(0019) => q(050),
+      q(0020) => q(052),
+      q(0021) => q(112),
+      q(0022) => q(056),
+      q(0023) => q(084),
+      q(0024) => q(204),
+      q(0025) => q(060),
+      q(0026) => q(064),
+      q(0027) => q(068),
+      q(0028) => q(535),
+      q(0029) => q(070),
+      q(0030) => q(072),
+      q(0031) => q(074),
+      q(0032) => q(076),
+      q(0033) => q(086),
+      q(0034) => q(096),
+      q(0035) => q(100),
+      q(0036) => q(854),
+      q(0037) => q(108),
+      q(0038) => q(132),
+      q(0039) => q(116),
+      q(0040) => q(120),
+      q(0041) => q(124),
+      q(0042) => q(136),
+      q(0043) => q(140),
+      q(0044) => q(148),
+      q(0045) => q(152),
+      q(0046) => q(156),
+      q(0047) => q(162),
+      q(0048) => q(166),
+      q(0049) => q(170),
+      q(0050) => q(174),
+      q(0051) => q(180),
+      q(0052) => q(178),
+      q(0053) => q(184),
+      q(0054) => q(188),
+      q(0055) => q(384),
+      q(0056) => q(191),
+      q(0057) => q(192),
+      q(0058) => q(531),
+      q(0059) => q(196),
+      q(0060) => q(203),
+      q(0061) => q(208),
+      q(0062) => q(262),
+      q(0063) => q(212),
+      q(0064) => q(214),
+      q(0065) => q(218),
+      q(0066) => q(818),
+      q(0067) => q(222),
+      q(0068) => q(226),
+      q(0069) => q(232),
+      q(0070) => q(233),
+      q(0071) => q(231),
+      q(0072) => q(238),
+      q(0073) => q(234),
+      q(0074) => q(242),
+      q(0075) => q(246),
+      q(0076) => q(250),
+      q(0077) => q(254),
+      q(0078) => q(258),
+      q(0079) => q(260),
+      q(0080) => q(266),
+      q(0081) => q(270),
+      q(0082) => q(268),
+      q(0083) => q(276),
+      q(0084) => q(288),
+      q(0085) => q(292),
+      q(0086) => q(300),
+      q(0087) => q(304),
+      q(0088) => q(308),
+      q(0089) => q(312),
+      q(0090) => q(316),
+      q(0091) => q(320),
+      q(0092) => q(831),
+      q(0093) => q(324),
+      q(0094) => q(624),
+      q(0095) => q(328),
+      q(0096) => q(332),
+      q(0097) => q(334),
+      q(0098) => q(336),
+      q(0099) => q(340),
+      q(0100) => q(344),
+      q(0101) => q(348),
+      q(0102) => q(352),
+      q(0103) => q(356),
+      q(0104) => q(360),
+      q(0105) => q(364),
+      q(0106) => q(368),
+      q(0107) => q(372),
+      q(0108) => q(833),
+      q(0109) => q(376),
+      q(0110) => q(380),
+      q(0111) => q(388),
+      q(0112) => q(392),
+      q(0113) => q(832),
+      q(0114) => q(400),
+      q(0115) => q(398),
+      q(0116) => q(404),
+      q(0117) => q(296),
+      q(0118) => q(408),
+      q(0119) => q(410),
+      q(0120) => q(414),
+      q(0121) => q(417),
+      q(0122) => q(418),
+      q(0123) => q(428),
+      q(0124) => q(422),
+      q(0125) => q(426),
+      q(0126) => q(430),
+      q(0127) => q(434),
+      q(0128) => q(438),
+      q(0129) => q(440),
+      q(0130) => q(442),
+      q(0131) => q(446),
+      q(0132) => q(807),
+      q(0133) => q(450),
+      q(0134) => q(454),
+      q(0135) => q(458),
+      q(0136) => q(462),
+      q(0137) => q(466),
+      q(0138) => q(470),
+      q(0139) => q(584),
+      q(0140) => q(474),
+      q(0141) => q(478),
+      q(0142) => q(480),
+      q(0143) => q(175),
+      q(0144) => q(484),
+      q(0145) => q(583),
+      q(0146) => q(498),
+      q(0147) => q(492),
+      q(0148) => q(496),
+      q(0149) => q(499),
+      q(0150) => q(500),
+      q(0151) => q(504),
+      q(0152) => q(508),
+      q(0153) => q(104),
+      q(0154) => q(516),
+      q(0155) => q(520),
+      q(0156) => q(524),
+      q(0157) => q(528),
+      q(0158) => q(540),
+      q(0159) => q(554),
+      q(0160) => q(558),
+      q(0161) => q(562),
+      q(0162) => q(566),
+      q(0163) => q(570),
+      q(0164) => q(574),
+      q(0165) => q(580),
+      q(0166) => q(578),
+      q(0167) => q(512),
+      q(0168) => q(586),
+      q(0169) => q(585),
+      q(0171) => q(591),
+      q(0172) => q(598),
+      q(0173) => q(600),
+      q(0174) => q(604),
+      q(0175) => q(608),
+      q(0176) => q(612),
+      q(0177) => q(616),
+      q(0178) => q(620),
+      q(0179) => q(630),
+      q(0180) => q(634),
+      q(0181) => q(638),
+      q(0182) => q(642),
+      q(0183) => q(643),
+      q(0184) => q(646),
+      q(0185) => q(652),
+      q(0186) => q(654),
+      q(0187) => q(659),
+      q(0188) => q(662),
+      q(0189) => q(663),
+      q(0190) => q(666),
+      q(0191) => q(670),
+      q(0192) => q(882),
+      q(0193) => q(674),
+      q(0194) => q(678),
+      q(0195) => q(682),
+      q(0196) => q(686),
+      q(0197) => q(688),
+      q(0198) => q(690),
+      q(0199) => q(694),
+      q(0200) => q(702),
+      q(0201) => q(534),
+      q(0202) => q(703),
+      q(0203) => q(705),
+      q(0204) => q(090),
+      q(0205) => q(706),
+      q(0206) => q(710),
+      q(0207) => q(239),
+      q(0208) => q(728),
+      q(0209) => q(724),
+      q(0210) => q(144),
+      q(0211) => q(729),
+      q(0212) => q(740),
+      q(0214) => q(748),
+      q(0215) => q(752),
+      q(0216) => q(756),
+      q(0217) => q(760),
+      q(0218) => q(158),
+      q(0219) => q(762),
+      q(0220) => q(834),
+      q(0221) => q(764),
+      q(0222) => q(626),
+      q(0223) => q(768),
+      q(0224) => q(772),
+      q(0225) => q(776),
+      q(0226) => q(780),
+      q(0227) => q(788),
+      q(0228) => q(792),
+      q(0229) => q(795),
+      q(0230) => q(796),
+      q(0231) => q(798),
+      q(0232) => q(800),
+      q(0233) => q(804),
+      q(0234) => q(784),
+      q(0235) => q(826),
+      q(0237) => q(840),
+      q(0238) => q(858),
+      q(0239) => q(860),
+      q(0240) => q(548),
+      q(0241) => q(862),
+      q(0242) => q(704),
+      q(0243) => q(092),
+      q(0244) => q(850),
+      q(0245) => q(876),
+      q(0246) => q(732),
+      q(0247) => q(887),
+      q(0248) => q(894),
+      q(0249) => q(716),
+      q(0251) => q(900),
+      q(0252) => q(902),
+      q(0253) => q(903),
+      q(0254) => q(904),
+      q(0255) => q(905),
+      q(0256) => q(906),
+      q(0257) => q(907),
+      q(0258) => q(908),
+      q(0259) => q(915),
+      q(0260) => q(916),
+      q(0261) => q(917),
+      q(0262) => q(918),
+      q(0263) => q(919),
+      q(0264) => q(920),
+      q(0265) => q(921),
+      q(0266) => q(922),
+      q(0267) => q(923),
+      q(0268) => q(924),
+      q(0269) => q(901),
+      q(0270) => q(925),
+      q(0271) => q(926),
+      q(0272) => q(927),
+      q(0273) => q(928),
+      q(0274) => q(929),
+      q(0275) => q(930),
+      q(0276) => q(931),
+      q(0277) => q(932),
+      q(0278) => q(933),
+      q(0279) => q(934),
+      },
    q(numeric) => {
       q(0001) => q(004),
       q(0002) => q(248),
@@ -7878,6 +14257,507 @@ $Locale::Codes::Data{'country'}{'id2code'} = {
       q(0247) => q(887),
       q(0248) => q(894),
       q(0249) => q(716),
+      },
+   q(un-alpha-3) => {
+      q(0001) => q(AFG),
+      q(0002) => q(ALA),
+      q(0003) => q(ALB),
+      q(0004) => q(DZA),
+      q(0005) => q(ASM),
+      q(0006) => q(AND),
+      q(0007) => q(AGO),
+      q(0008) => q(AIA),
+      q(0009) => q(ATA),
+      q(0010) => q(ATG),
+      q(0011) => q(ARG),
+      q(0012) => q(ARM),
+      q(0013) => q(ABW),
+      q(0014) => q(AUS),
+      q(0015) => q(AUT),
+      q(0016) => q(AZE),
+      q(0017) => q(BHS),
+      q(0018) => q(BHR),
+      q(0019) => q(BGD),
+      q(0020) => q(BRB),
+      q(0021) => q(BLR),
+      q(0022) => q(BEL),
+      q(0023) => q(BLZ),
+      q(0024) => q(BEN),
+      q(0025) => q(BMU),
+      q(0026) => q(BTN),
+      q(0027) => q(BOL),
+      q(0028) => q(BES),
+      q(0029) => q(BIH),
+      q(0030) => q(BWA),
+      q(0031) => q(BVT),
+      q(0032) => q(BRA),
+      q(0033) => q(IOT),
+      q(0034) => q(BRN),
+      q(0035) => q(BGR),
+      q(0036) => q(BFA),
+      q(0037) => q(BDI),
+      q(0038) => q(CPV),
+      q(0039) => q(KHM),
+      q(0040) => q(CMR),
+      q(0041) => q(CAN),
+      q(0042) => q(CYM),
+      q(0043) => q(CAF),
+      q(0044) => q(TCD),
+      q(0045) => q(CHL),
+      q(0046) => q(CHN),
+      q(0047) => q(CXR),
+      q(0048) => q(CCK),
+      q(0049) => q(COL),
+      q(0050) => q(COM),
+      q(0051) => q(COD),
+      q(0052) => q(COG),
+      q(0053) => q(COK),
+      q(0054) => q(CRI),
+      q(0055) => q(CIV),
+      q(0056) => q(HRV),
+      q(0057) => q(CUB),
+      q(0058) => q(CUW),
+      q(0059) => q(CYP),
+      q(0060) => q(CZE),
+      q(0061) => q(DNK),
+      q(0062) => q(DJI),
+      q(0063) => q(DMA),
+      q(0064) => q(DOM),
+      q(0065) => q(ECU),
+      q(0066) => q(EGY),
+      q(0067) => q(SLV),
+      q(0068) => q(GNQ),
+      q(0069) => q(ERI),
+      q(0070) => q(EST),
+      q(0071) => q(ETH),
+      q(0072) => q(FLK),
+      q(0073) => q(FRO),
+      q(0074) => q(FJI),
+      q(0075) => q(FIN),
+      q(0076) => q(FRA),
+      q(0077) => q(GUF),
+      q(0078) => q(PYF),
+      q(0079) => q(ATF),
+      q(0080) => q(GAB),
+      q(0081) => q(GMB),
+      q(0082) => q(GEO),
+      q(0083) => q(DEU),
+      q(0084) => q(GHA),
+      q(0085) => q(GIB),
+      q(0086) => q(GRC),
+      q(0087) => q(GRL),
+      q(0088) => q(GRD),
+      q(0089) => q(GLP),
+      q(0090) => q(GUM),
+      q(0091) => q(GTM),
+      q(0092) => q(GGY),
+      q(0093) => q(GIN),
+      q(0094) => q(GNB),
+      q(0095) => q(GUY),
+      q(0096) => q(HTI),
+      q(0097) => q(HMD),
+      q(0098) => q(VAT),
+      q(0099) => q(HND),
+      q(0100) => q(HKG),
+      q(0101) => q(HUN),
+      q(0102) => q(ISL),
+      q(0103) => q(IND),
+      q(0104) => q(IDN),
+      q(0105) => q(IRN),
+      q(0106) => q(IRQ),
+      q(0107) => q(IRL),
+      q(0108) => q(IMN),
+      q(0109) => q(ISR),
+      q(0110) => q(ITA),
+      q(0111) => q(JAM),
+      q(0112) => q(JPN),
+      q(0113) => q(JEY),
+      q(0114) => q(JOR),
+      q(0115) => q(KAZ),
+      q(0116) => q(KEN),
+      q(0117) => q(KIR),
+      q(0118) => q(PRK),
+      q(0119) => q(KOR),
+      q(0120) => q(KWT),
+      q(0121) => q(KGZ),
+      q(0122) => q(LAO),
+      q(0123) => q(LVA),
+      q(0124) => q(LBN),
+      q(0125) => q(LSO),
+      q(0126) => q(LBR),
+      q(0127) => q(LBY),
+      q(0128) => q(LIE),
+      q(0129) => q(LTU),
+      q(0130) => q(LUX),
+      q(0131) => q(MAC),
+      q(0132) => q(MKD),
+      q(0133) => q(MDG),
+      q(0134) => q(MWI),
+      q(0135) => q(MYS),
+      q(0136) => q(MDV),
+      q(0137) => q(MLI),
+      q(0138) => q(MLT),
+      q(0139) => q(MHL),
+      q(0140) => q(MTQ),
+      q(0141) => q(MRT),
+      q(0142) => q(MUS),
+      q(0143) => q(MYT),
+      q(0144) => q(MEX),
+      q(0145) => q(FSM),
+      q(0146) => q(MDA),
+      q(0147) => q(MCO),
+      q(0148) => q(MNG),
+      q(0149) => q(MNE),
+      q(0150) => q(MSR),
+      q(0151) => q(MAR),
+      q(0152) => q(MOZ),
+      q(0153) => q(MMR),
+      q(0154) => q(NAM),
+      q(0155) => q(NRU),
+      q(0156) => q(NPL),
+      q(0157) => q(NLD),
+      q(0158) => q(NCL),
+      q(0159) => q(NZL),
+      q(0160) => q(NIC),
+      q(0161) => q(NER),
+      q(0162) => q(NGA),
+      q(0163) => q(NIU),
+      q(0164) => q(NFK),
+      q(0165) => q(MNP),
+      q(0166) => q(NOR),
+      q(0167) => q(OMN),
+      q(0168) => q(PAK),
+      q(0169) => q(PLW),
+      q(0170) => q(PSE),
+      q(0171) => q(PAN),
+      q(0172) => q(PNG),
+      q(0173) => q(PRY),
+      q(0174) => q(PER),
+      q(0175) => q(PHL),
+      q(0176) => q(PCN),
+      q(0177) => q(POL),
+      q(0178) => q(PRT),
+      q(0179) => q(PRI),
+      q(0180) => q(QAT),
+      q(0181) => q(REU),
+      q(0182) => q(ROU),
+      q(0183) => q(RUS),
+      q(0184) => q(RWA),
+      q(0185) => q(BLM),
+      q(0186) => q(SHN),
+      q(0187) => q(KNA),
+      q(0188) => q(LCA),
+      q(0189) => q(MAF),
+      q(0190) => q(SPM),
+      q(0191) => q(VCT),
+      q(0192) => q(WSM),
+      q(0193) => q(SMR),
+      q(0194) => q(STP),
+      q(0195) => q(SAU),
+      q(0196) => q(SEN),
+      q(0197) => q(SRB),
+      q(0198) => q(SYC),
+      q(0199) => q(SLE),
+      q(0200) => q(SGP),
+      q(0201) => q(SXM),
+      q(0202) => q(SVK),
+      q(0203) => q(SVN),
+      q(0204) => q(SLB),
+      q(0205) => q(SOM),
+      q(0206) => q(ZAF),
+      q(0207) => q(SGS),
+      q(0208) => q(SSD),
+      q(0209) => q(ESP),
+      q(0210) => q(LKA),
+      q(0211) => q(SDN),
+      q(0212) => q(SUR),
+      q(0213) => q(SJM),
+      q(0214) => q(SWZ),
+      q(0215) => q(SWE),
+      q(0216) => q(CHE),
+      q(0217) => q(SYR),
+      q(0219) => q(TJK),
+      q(0220) => q(TZA),
+      q(0221) => q(THA),
+      q(0222) => q(TLS),
+      q(0223) => q(TGO),
+      q(0224) => q(TKL),
+      q(0225) => q(TON),
+      q(0226) => q(TTO),
+      q(0227) => q(TUN),
+      q(0228) => q(TUR),
+      q(0229) => q(TKM),
+      q(0230) => q(TCA),
+      q(0231) => q(TUV),
+      q(0232) => q(UGA),
+      q(0233) => q(UKR),
+      q(0234) => q(ARE),
+      q(0235) => q(GBR),
+      q(0236) => q(UMI),
+      q(0237) => q(USA),
+      q(0238) => q(URY),
+      q(0239) => q(UZB),
+      q(0240) => q(VUT),
+      q(0241) => q(VEN),
+      q(0242) => q(VNM),
+      q(0243) => q(VGB),
+      q(0244) => q(VIR),
+      q(0245) => q(WLF),
+      q(0246) => q(ESH),
+      q(0247) => q(YEM),
+      q(0248) => q(ZMB),
+      q(0249) => q(ZWE),
+      },
+   q(un-numeric) => {
+      q(0001) => q(004),
+      q(0002) => q(248),
+      q(0003) => q(008),
+      q(0004) => q(012),
+      q(0005) => q(016),
+      q(0006) => q(020),
+      q(0007) => q(024),
+      q(0008) => q(660),
+      q(0009) => q(010),
+      q(0010) => q(028),
+      q(0011) => q(032),
+      q(0012) => q(051),
+      q(0013) => q(533),
+      q(0014) => q(036),
+      q(0015) => q(040),
+      q(0016) => q(031),
+      q(0017) => q(044),
+      q(0018) => q(048),
+      q(0019) => q(050),
+      q(0020) => q(052),
+      q(0021) => q(112),
+      q(0022) => q(056),
+      q(0023) => q(084),
+      q(0024) => q(204),
+      q(0025) => q(060),
+      q(0026) => q(064),
+      q(0027) => q(068),
+      q(0028) => q(535),
+      q(0029) => q(070),
+      q(0030) => q(072),
+      q(0031) => q(074),
+      q(0032) => q(076),
+      q(0033) => q(086),
+      q(0034) => q(096),
+      q(0035) => q(100),
+      q(0036) => q(854),
+      q(0037) => q(108),
+      q(0038) => q(132),
+      q(0039) => q(116),
+      q(0040) => q(120),
+      q(0041) => q(124),
+      q(0042) => q(136),
+      q(0043) => q(140),
+      q(0044) => q(148),
+      q(0045) => q(152),
+      q(0046) => q(156),
+      q(0047) => q(162),
+      q(0048) => q(166),
+      q(0049) => q(170),
+      q(0050) => q(174),
+      q(0051) => q(180),
+      q(0052) => q(178),
+      q(0053) => q(184),
+      q(0054) => q(188),
+      q(0055) => q(384),
+      q(0056) => q(191),
+      q(0057) => q(192),
+      q(0058) => q(531),
+      q(0059) => q(196),
+      q(0060) => q(203),
+      q(0061) => q(208),
+      q(0062) => q(262),
+      q(0063) => q(212),
+      q(0064) => q(214),
+      q(0065) => q(218),
+      q(0066) => q(818),
+      q(0067) => q(222),
+      q(0068) => q(226),
+      q(0069) => q(232),
+      q(0070) => q(233),
+      q(0071) => q(231),
+      q(0072) => q(238),
+      q(0073) => q(234),
+      q(0074) => q(242),
+      q(0075) => q(246),
+      q(0076) => q(250),
+      q(0077) => q(254),
+      q(0078) => q(258),
+      q(0079) => q(260),
+      q(0080) => q(266),
+      q(0081) => q(270),
+      q(0082) => q(268),
+      q(0083) => q(276),
+      q(0084) => q(288),
+      q(0085) => q(292),
+      q(0086) => q(300),
+      q(0087) => q(304),
+      q(0088) => q(308),
+      q(0089) => q(312),
+      q(0090) => q(316),
+      q(0091) => q(320),
+      q(0092) => q(831),
+      q(0093) => q(324),
+      q(0094) => q(624),
+      q(0095) => q(328),
+      q(0096) => q(332),
+      q(0097) => q(334),
+      q(0098) => q(336),
+      q(0099) => q(340),
+      q(0100) => q(344),
+      q(0101) => q(348),
+      q(0102) => q(352),
+      q(0103) => q(356),
+      q(0104) => q(360),
+      q(0105) => q(364),
+      q(0106) => q(368),
+      q(0107) => q(372),
+      q(0108) => q(833),
+      q(0109) => q(376),
+      q(0110) => q(380),
+      q(0111) => q(388),
+      q(0112) => q(392),
+      q(0113) => q(832),
+      q(0114) => q(400),
+      q(0115) => q(398),
+      q(0116) => q(404),
+      q(0117) => q(296),
+      q(0118) => q(408),
+      q(0119) => q(410),
+      q(0120) => q(414),
+      q(0121) => q(417),
+      q(0122) => q(418),
+      q(0123) => q(428),
+      q(0124) => q(422),
+      q(0125) => q(426),
+      q(0126) => q(430),
+      q(0127) => q(434),
+      q(0128) => q(438),
+      q(0129) => q(440),
+      q(0130) => q(442),
+      q(0131) => q(446),
+      q(0132) => q(807),
+      q(0133) => q(450),
+      q(0134) => q(454),
+      q(0135) => q(458),
+      q(0136) => q(462),
+      q(0137) => q(466),
+      q(0138) => q(470),
+      q(0139) => q(584),
+      q(0140) => q(474),
+      q(0141) => q(478),
+      q(0142) => q(480),
+      q(0143) => q(175),
+      q(0144) => q(484),
+      q(0145) => q(583),
+      q(0146) => q(498),
+      q(0147) => q(492),
+      q(0148) => q(496),
+      q(0149) => q(499),
+      q(0150) => q(500),
+      q(0151) => q(504),
+      q(0152) => q(508),
+      q(0153) => q(104),
+      q(0154) => q(516),
+      q(0155) => q(520),
+      q(0156) => q(524),
+      q(0157) => q(528),
+      q(0158) => q(540),
+      q(0159) => q(554),
+      q(0160) => q(558),
+      q(0161) => q(562),
+      q(0162) => q(566),
+      q(0163) => q(570),
+      q(0164) => q(574),
+      q(0165) => q(580),
+      q(0166) => q(578),
+      q(0167) => q(512),
+      q(0168) => q(586),
+      q(0169) => q(585),
+      q(0170) => q(275),
+      q(0171) => q(591),
+      q(0172) => q(598),
+      q(0173) => q(600),
+      q(0174) => q(604),
+      q(0175) => q(608),
+      q(0176) => q(612),
+      q(0177) => q(616),
+      q(0178) => q(620),
+      q(0179) => q(630),
+      q(0180) => q(634),
+      q(0181) => q(638),
+      q(0182) => q(642),
+      q(0183) => q(643),
+      q(0184) => q(646),
+      q(0185) => q(652),
+      q(0186) => q(654),
+      q(0187) => q(659),
+      q(0188) => q(662),
+      q(0189) => q(663),
+      q(0190) => q(666),
+      q(0191) => q(670),
+      q(0192) => q(882),
+      q(0193) => q(674),
+      q(0194) => q(678),
+      q(0195) => q(682),
+      q(0196) => q(686),
+      q(0197) => q(688),
+      q(0198) => q(690),
+      q(0199) => q(694),
+      q(0200) => q(702),
+      q(0201) => q(534),
+      q(0202) => q(703),
+      q(0203) => q(705),
+      q(0204) => q(090),
+      q(0205) => q(706),
+      q(0206) => q(710),
+      q(0207) => q(239),
+      q(0208) => q(728),
+      q(0209) => q(724),
+      q(0210) => q(144),
+      q(0211) => q(729),
+      q(0212) => q(740),
+      q(0213) => q(744),
+      q(0214) => q(748),
+      q(0215) => q(752),
+      q(0216) => q(756),
+      q(0217) => q(760),
+      q(0219) => q(762),
+      q(0220) => q(834),
+      q(0221) => q(764),
+      q(0222) => q(626),
+      q(0223) => q(768),
+      q(0224) => q(772),
+      q(0225) => q(776),
+      q(0226) => q(780),
+      q(0227) => q(788),
+      q(0228) => q(792),
+      q(0229) => q(795),
+      q(0230) => q(796),
+      q(0231) => q(798),
+      q(0232) => q(800),
+      q(0233) => q(804),
+      q(0234) => q(784),
+      q(0235) => q(826),
+      q(0236) => q(581),
+      q(0237) => q(840),
+      q(0238) => q(858),
+      q(0239) => q(860),
+      q(0240) => q(548),
+      q(0241) => q(862),
+      q(0242) => q(704),
+      q(0243) => q(092),
+      q(0244) => q(850),
+      q(0245) => q(876),
+      q(0246) => q(732),
+      q(0247) => q(887),
+      q(0248) => q(894),
+      q(0249) => q(716),
+      q(0250) => q(680),
       },
 };
 

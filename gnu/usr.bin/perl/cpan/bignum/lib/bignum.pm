@@ -1,10 +1,10 @@
 package bignum;
 
-use 5.006;
+use 5.010;
 use strict;
 use warnings;
 
-our $VERSION = '0.42_01';
+our $VERSION = '0.49';
 
 use Exporter;
 our @ISA            = qw( bigint );
@@ -662,6 +662,46 @@ Some cool command line examples to impress the Python crowd ;)
         perl -Mbignum=a,65 -le 'print 2 ** 0.2'
         perl -Mbignum=a,65,l,GMP -le 'print 7 ** 7777'
 
+=head1 BUGS
+
+Please report any bugs or feature requests to
+C<bug-math-bigint at rt.cpan.org>, or through the web interface at
+L<https://rt.cpan.org/Ticket/Create.html?Queue=bignum> (requires login).
+We will be notified, and then you'll automatically be notified of
+progress on your bug as I make changes.
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc bignum
+
+You can also look for information at:
+
+=over 4
+
+=item * RT: CPAN's request tracker
+
+L<https://rt.cpan.org/Public/Dist/Display.html?Name=bignum>
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/bignum>
+
+=item * CPAN Ratings
+
+L<http://cpanratings.perl.org/dist/bignum>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/bignum/>
+
+=item * CPAN Testers Matrix
+
+L<http://matrix.cpantesters.org/?dist=bignum>
+
+=back
+
 =head1 LICENSE
 
 This program is free software; you may redistribute it and/or modify it under
@@ -669,13 +709,23 @@ the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-Especially L<bigrat> as in C<perl -Mbigrat -le 'print 1/3+1/4'>.
+L<bigint> and L<bigrat>.
 
-L<Math::BigFloat>, L<Math::BigInt>, L<Math::BigRat> and L<Math::Big> as well
-as L<Math::BigInt::Pari> and  L<Math::BigInt::GMP>.
+L<Math::BigInt>, L<Math::BigFloat>, L<Math::BigRat> and L<Math::Big> as well as
+L<Math::BigInt::FastCalc>, L<Math::BigInt::Pari> and L<Math::BigInt::GMP>.
 
 =head1 AUTHORS
 
+=over 4
+
+=item *
+
 (C) by Tels L<http://bloodgate.com/> in early 2002 - 2007.
+
+=item *
+
+Maintained by Peter John Acklam E<lt>pjacklam@gmail.com<gt>, 2014-.
+
+=back
 
 =cut

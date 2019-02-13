@@ -3,15 +3,19 @@ use strict;
 use warnings;
 use warnings::register;
 use Carp;
-use Exporter        qw< import >;
+use Config;
+use Exporter        ();
 use File::Basename;
 use POSIX           qw< strftime setlocale LC_TIME >;
 use Socket          qw< :all >;
 require 5.005;
 
 
+*import = \&Exporter::import;
+
+
 {   no strict 'vars';
-    $VERSION = '0.33_01';
+    $VERSION = '0.35';
 
     %EXPORT_TAGS = (
         standard => [qw(openlog syslog closelog setlogmask)],
@@ -71,6 +75,29 @@ require 5.005;
 }
 
 
+#
+# Constants
+#
+use constant HAVE_GETPROTOBYNAME     => $Config::Config{d_getpbyname};
+use constant HAVE_GETPROTOBYNUMBER   => $Config::Config{d_getpbynumber};
+use constant HAVE_SETLOCALE          => $Config::Config{d_setlocale};
+use constant HAVE_IPPROTO_TCP        => defined &Socket::IPPROTO_TCP ? 1 : 0;
+use constant HAVE_IPPROTO_UDP        => defined &Socket::IPPROTO_UDP ? 1 : 0;
+use constant HAVE_TCP_NODELAY        => defined &Socket::TCP_NODELAY ? 1 : 0;
+
+use constant SOCKET_IPPROTO_TCP =>
+      HAVE_IPPROTO_TCP      ? Socket::IPPROTO_TCP
+    : HAVE_GETPROTOBYNAME   ? scalar getprotobyname("tcp")
+    : 6;
+
+use constant SOCKET_IPPROTO_UDP =>
+      HAVE_IPPROTO_UDP      ? Socket::IPPROTO_UDP
+    : HAVE_GETPROTOBYNAME   ? scalar getprotobyname("udp")
+    : 17;
+
+use constant SOCKET_TCP_NODELAY => HAVE_TCP_NODELAY ? Socket::TCP_NODELAY : 1;
+
+
 # 
 # Public variables
 # 
@@ -117,9 +144,9 @@ if ($^O eq "freebsd" or $^O eq "linux") {
 # And on Win32 systems, we try to use the native mechanism for this 
 # platform, the events logger, available through Win32::EventLog.
 EVENTLOG: {
-    my $is_Win32 = $^O =~ /Win32/i;
+    my $verbose_if_Win32 = $^O =~ /Win32/i;
 
-    if (can_load("Sys::Syslog::Win32", $is_Win32)) {
+    if (can_load_sys_syslog_win32($verbose_if_Win32)) {
         unshift @connectMethods, 'eventlog';
     }
 }
@@ -209,7 +236,7 @@ my %mechanism = (
         check   => sub { 1 },
     },
     eventlog => {
-        check   => sub { return can_load("Win32::EventLog") },
+        check   => sub { return can_load_sys_syslog_win32() },
         err_msg => "no Win32 API available",
     },
     inet => {
@@ -241,7 +268,9 @@ my %mechanism = (
         check   => sub {
             return 1 if defined $sock_port;
 
-            if (getservbyname('syslog', 'tcp') || getservbyname('syslogng', 'tcp')) {
+            if (eval { local $SIG{__DIE__};
+                getservbyname('syslog','tcp') || getservbyname('syslogng','tcp')
+            }) {
                 $host = $syslog_path;
                 return 1
             }
@@ -255,7 +284,7 @@ my %mechanism = (
         check   => sub {
             return 1 if defined $sock_port;
 
-            if (getservbyname('syslog', 'udp')) {
+            if (eval { local $SIG{__DIE__}; getservbyname('syslog', 'udp') }) {
                 $host = $syslog_path;
                 return 1
             }
@@ -366,6 +395,7 @@ sub syslog {
     if ($priority =~ /^\d+$/) {
         $numpri = LOG_PRI($priority);
         $numfac = LOG_FAC($priority) << 3;
+        undef $numfac if $numfac == 0;  # no facility given => use default
     }
     elsif ($priority =~ /^\w+/) {
         # Allow "level" or "level|facility".
@@ -419,7 +449,8 @@ sub syslog {
         $mask =~ s/(?<!%)((?:%%)*)%m/$1$error/g;
     }
 
-    $mask .= "\n" unless $mask =~ /\n$/;
+    # add (or not) a newline
+    $mask .= "\n" if !$options{noeol} and rindex($mask, "\n") == -1;
     $message = @args ? sprintf($mask, @args) : $mask;
 
     if ($current_proto eq 'native') {
@@ -433,16 +464,26 @@ sub syslog {
         $whoami .= "[$$]" if $options{pid};
 
         $sum = $numpri + $numfac;
-        my $oldlocale = setlocale(LC_TIME);
-        setlocale(LC_TIME, 'C');
-        my $timestamp = strftime "%b %d %H:%M:%S", localtime;
-        setlocale(LC_TIME, $oldlocale);
+
+        my $oldlocale;
+        if (HAVE_SETLOCALE) {
+            $oldlocale = setlocale(LC_TIME);
+            setlocale(LC_TIME, 'C');
+        }
+
+        # %e format isn't available on all systems (Win32, cf. CPAN RT #69310)
+        my $day = strftime "%e", localtime;
+
+        if (index($day, "%") == 0) {
+            $day = strftime "%d", localtime;
+            $day =~ s/^0/ /;
+        }
+
+        my $timestamp = strftime "%b $day %H:%M:%S", localtime;
+        setlocale(LC_TIME, $oldlocale) if HAVE_SETLOCALE;
 
         # construct the stream that will be transmitted
         $buf = "<$sum>$timestamp $whoami: $message";
-
-        # add (or not) a newline
-        $buf .= "\n" if !$options{noeol} and rindex($buf, "\n") == -1;
 
         # add (or not) a NUL character
         $buf .= "\0" if !$options{nonul};
@@ -453,7 +494,8 @@ sub syslog {
     if ($options{perror} and $current_proto ne 'native') {
         my $whoami = $ident;
         $whoami .= "[$$]" if $options{pid};
-        print STDERR "$whoami: $message\n";
+        print STDERR "$whoami: $message";
+        print STDERR "\n" if rindex($message, "\n") == -1;
     }
 
     # it's possible that we'll get an error from sending
@@ -622,14 +664,9 @@ sub connect_log {
 sub connect_tcp {
     my ($errs) = @_;
 
-    my $proto = getprotobyname('tcp');
-    if (!defined $proto) {
-	push @$errs, "getprotobyname failed for tcp";
-	return 0;
-    }
-
-    my $port = $sock_port || getservbyname('syslog', 'tcp');
-    $port = getservbyname('syslogng', 'tcp') unless defined $port;
+    my $port = $sock_port
+            || eval { local $SIG{__DIE__}; getservbyname('syslog',   'tcp') }
+            || eval { local $SIG{__DIE__}; getservbyname('syslogng', 'tcp') };
     if (!defined $port) {
 	push @$errs, "getservbyname failed for syslog/tcp and syslogng/tcp";
 	return 0;
@@ -647,16 +684,14 @@ sub connect_tcp {
     }
     $addr = sockaddr_in($port, $addr);
 
-    if (!socket(SYSLOG, AF_INET, SOCK_STREAM, $proto)) {
+    if (!socket(SYSLOG, AF_INET, SOCK_STREAM, SOCKET_IPPROTO_TCP)) {
 	push @$errs, "tcp socket: $!";
 	return 0;
     }
 
     setsockopt(SYSLOG, SOL_SOCKET, SO_KEEPALIVE, 1);
-    if (silent_eval { IPPROTO_TCP() }) {
-        # These constants don't exist in 5.005. They were added in 1999
-        setsockopt(SYSLOG, IPPROTO_TCP(), TCP_NODELAY(), 1);
-    }
+    setsockopt(SYSLOG, SOCKET_IPPROTO_TCP, SOCKET_TCP_NODELAY, 1);
+
     if (!connect(SYSLOG, $addr)) {
 	push @$errs, "tcp connect: $!";
 	return 0;
@@ -670,13 +705,8 @@ sub connect_tcp {
 sub connect_udp {
     my ($errs) = @_;
 
-    my $proto = getprotobyname('udp');
-    if (!defined $proto) {
-	push @$errs, "getprotobyname failed for udp";
-	return 0;
-    }
-
-    my $port = $sock_port || getservbyname('syslog', 'udp');
+    my $port = $sock_port
+            || eval { local $SIG{__DIE__}; getservbyname('syslog', 'udp') };
     if (!defined $port) {
 	push @$errs, "getservbyname failed for syslog/udp";
 	return 0;
@@ -694,7 +724,7 @@ sub connect_udp {
     }
     $addr = sockaddr_in($port, $addr);
 
-    if (!socket(SYSLOG, AF_INET, SOCK_DGRAM, $proto)) {
+    if (!socket(SYSLOG, AF_INET, SOCK_DGRAM, SOCKET_IPPROTO_UDP)) {
 	push @$errs, "udp socket: $!";
 	return 0;
     }
@@ -874,23 +904,22 @@ sub disconnect_log {
 
 
 #
-# Wrappers around eval() that makes sure that nobody, and I say NOBODY, 
-# ever knows that I wanted to test if something was here or not. 
-# It is needed because some applications are trying to be too smart,
-# do it wrong, and it ends up in EPIC FAIL. 
-# Yes I'm speaking of YOU, SpamAssassin.
+# Wrappers around eval() that makes sure that nobody, ever knows that
+# we wanted to poke & test if something was here or not. This is needed
+# because some applications are trying to be too smart, install their
+# own __DIE__ handler, and mysteriously, things are starting to fail
+# when they shouldn't. SpamAssassin among them.
 #
 sub silent_eval (&) {
     local($SIG{__DIE__}, $SIG{__WARN__}, $@);
     return eval { $_[0]->() }
 }
 
-sub can_load {
-    my ($module, $verbose) = @_;
+sub can_load_sys_syslog_win32 {
+    my ($verbose) = @_;
     local($SIG{__DIE__}, $SIG{__WARN__}, $@);
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
-    my $loaded = eval "use $module; 1";
+    (my $module_path = __FILE__) =~ s:Syslog.pm$:Syslog/Win32.pm:;
+    my $loaded = eval { require $module_path } ? 1 : 0;
     warn $@ if not $loaded and $verbose;
     return $loaded
 }
@@ -906,7 +935,7 @@ Sys::Syslog - Perl interface to the UNIX syslog(3) calls
 
 =head1 VERSION
 
-This is the documentation of version 0.33
+This is the documentation of version 0.35
 
 =head1 SYNOPSIS
 
@@ -993,18 +1022,20 @@ opened when the first message is logged).
 =item *
 
 C<noeol> - When set to true, no end of line character (C<\n>) will be
-appended to the message. This can be useful for some buggy syslog daemons.
+appended to the message. This can be useful for some syslog daemons.
+Added in C<Sys::Syslog> 0.29.
 
 =item *
 
 C<nofatal> - When set to true, C<openlog()> and C<syslog()> will only 
 emit warnings instead of dying if the connection to the syslog can't 
-be established. 
+be established. Added in C<Sys::Syslog> 0.15.
 
 =item *
 
 C<nonul> - When set to true, no C<NUL> character (C<\0>) will be
-appended to the message. This can be useful for some buggy syslog daemons.
+appended to the message. This can be useful for some syslog daemons.
+Added in C<Sys::Syslog> 0.29.
 
 =item *
 
@@ -1015,7 +1046,7 @@ process, so this option has no effect on Linux.)
 =item *
 
 C<perror> - Write the message to standard error output as well to the
-system log (added in C<Sys::Syslog> 0.22).
+system log. Added in C<Sys::Syslog> 0.22.
 
 =item *
 
@@ -1557,8 +1588,11 @@ Perl and C<Sys::Syslog> versions.
        0.06         5.8.7
        0.13         5.8.8
        0.22         5.10.0
-       0.27         5.8.9, 5.10.1 ~ 5.14.2
-       0.29         5.16.0, 5.16.1
+       0.27         5.8.9, 5.10.1 ~ 5.14.*
+       0.29         5.16.*
+       0.32         5.18.*
+       0.33         5.20.*
+       0.33         5.22.*
 
 
 =head1 SEE ALSO
@@ -1575,31 +1609,34 @@ L<Log::Report> - Report a problem, with exceptions and language support
 
 L<syslog(3)>
 
-SUSv3 issue 6, IEEE Std 1003.1, 2004 edition, 
+SUSv3 issue 6, IEEE Std 1003.1, 2004 edition,
 L<http://www.opengroup.org/onlinepubs/000095399/basedefs/syslog.h.html>
 
-GNU C Library documentation on syslog, 
+GNU C Library documentation on syslog,
 L<http://www.gnu.org/software/libc/manual/html_node/Syslog.html>
 
-Solaris 10 documentation on syslog, 
-L<http://docs.sun.com/app/docs/doc/816-5168/syslog-3c?a=view>
+FreeBSD documentation on syslog,
+L<https://www.freebsd.org/cgi/man.cgi?query=syslog>
+
+Solaris 11 documentation on syslog,
+L<https://docs.oracle.com/cd/E53394_01/html/E54766/syslog-3c.html>
 
 Mac OS X documentation on syslog,
 L<http://developer.apple.com/documentation/Darwin/Reference/ManPages/man3/syslog.3.html>
 
-IRIX 6.5 documentation on syslog,
-L<http://techpubs.sgi.com/library/tpl/cgi-bin/getdoc.cgi?coll=0650&db=man&fname=3c+syslog>
+IRIX documentation on syslog,
+L<http://nixdoc.net/man-pages/IRIX/man3/syslog.3c.html>
 
-AIX 5L 5.3 documentation on syslog, 
+AIX 5L 5.3 documentation on syslog,
 L<http://publib.boulder.ibm.com/infocenter/pseries/v5r3/index.jsp?topic=/com.ibm.aix.basetechref/doc/basetrf2/syslog.htm>
 
-HP-UX 11i documentation on syslog, 
+HP-UX 11i documentation on syslog,
 L<http://docs.hp.com/en/B2355-60130/syslog.3C.html>
 
-Tru64 5.1 documentation on syslog, 
-L<http://h30097.www3.hp.com/docs/base_doc/DOCUMENTATION/V51_HTML/MAN/MAN3/0193____.HTM>
+Tru64 documentation on syslog,
+L<http://nixdoc.net/man-pages/Tru64/man3/syslog.3.html>
 
-Stratus VOS 15.1, 
+Stratus VOS 15.1,
 L<http://stratadoc.stratus.com/vos/15.1.1/r502-01/wwhelp/wwhimpl/js/html/wwhelp.htm?context=r502-01&file=ch5r502-01bi.html>
 
 =head2 RFCs
@@ -1667,7 +1704,19 @@ You can find documentation for this module with the perldoc command.
 
 You can also look for information at:
 
-=over 4
+=over
+
+=item * Perl Documentation
+
+L<http://perldoc.perl.org/Sys/Syslog.html>
+
+=item * MetaCPAN
+
+L<https://metacpan.org/module/Sys::Syslog>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/Sys-Syslog/>
 
 =item * AnnoCPAN: Annotated CPAN documentation
 
@@ -1681,19 +1730,10 @@ L<http://cpanratings.perl.org/d/Sys-Syslog>
 
 L<http://rt.cpan.org/Dist/Display.html?Queue=Sys-Syslog>
 
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/Sys-Syslog/>
-
-=item * MetaCPAN
-
-L<https://metacpan.org/module/Sys::Syslog>
-
-=item * Perl Documentation
-
-L<http://perldoc.perl.org/Sys/Syslog.html>
-
 =back
+
+The source code is available on Git Hub:
+L<https://github.com/maddingue/Sys-Syslog/>
 
 
 =head1 COPYRIGHT

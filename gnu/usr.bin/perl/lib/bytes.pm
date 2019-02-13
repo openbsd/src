@@ -1,6 +1,6 @@
 package bytes;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 $bytes::hint_bits = 0x00000008;
 
@@ -81,8 +81,6 @@ implict) encoding using the L<Encode> module:
 
 Or, if performance is needed and you are only interested in the UTF-8
 representation:
-
-    use utf8;
 
     utf8::encode(my $utf8_byte_string = $string);
 

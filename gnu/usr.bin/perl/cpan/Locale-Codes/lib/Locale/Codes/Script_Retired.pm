@@ -3,7 +3,7 @@ Locale::Codes::Script_Retired;
 
 # This file was automatically generated.  Any changes to this file will
 # be lost the next time 'deprecate_codes' is run.
-#    Generated on: Tue Dec  1 14:45:28 EST 2015
+#    Generated on: Fri Feb 23 12:58:17 EST 2018
 
 use strict;
 require 5.006;
@@ -11,7 +11,7 @@ use warnings;
 use utf8;
 
 our($VERSION);
-$VERSION='3.37';
+$VERSION='3.56';
 
 $Locale::Codes::Retired{'script'}{'alpha'}{'code'} = {
 };
@@ -24,6 +24,7 @@ $Locale::Codes::Retired{'script'}{'alpha'}{'name'} = {
    q((alias for hiragana + katakana)) => [ q(Hrkt), q((alias for Hiragana + Katakana)) ],
    q(ahom, tai ahom) => [ q(Ahom), q(Ahom, Tai Ahom) ],
    q(cuneiform, sumero-akkadian) => [ q(Xsux), q(Cuneiform, Sumero-Akkadian) ],
+   q(cypriot) => [ q(Cprt), q(Cypriot) ],
    q(deseret (mormon)) => [ q(Dsrt), q(Deseret (Mormon)) ],
    q(devanagari (nagari)) => [ q(Deva), q(Devanagari (Nagari)) ],
    q(duployan shorthand, duployan stenography) => [ q(Dupl), q(Duployan shorthand, Duployan stenography) ],
@@ -43,6 +44,7 @@ $Locale::Codes::Retired{'script'}{'alpha'}{'name'} = {
    q(moon (moon code, moon script, moon type)) => [ q(Moon), q(Moon (Moon code, Moon script, Moon type)) ],
    q(mro, mru) => [ q(Mroo), q(Mro, Mru) ],
    q(myanmar (burmese)) => [ q(Mymr), q(Myanmar (Burmese)) ],
+   q(nakhi geba) => [ q(Nkgb), q(Nakhi Geba) ],
    q(nakhi geba ('na-'khi ggo-baw, naxi geba)) => [ q(Nkgb), q(Nakhi Geba ('Na-'Khi Ggo-baw, Naxi Geba)) ],
    q(ol chiki (ol cemet, ol, santali)) => [ q(Olck), q(Ol Chiki (Ol Cemet, Ol, Santali)) ],
    q(old north arabian (ancient north arabian)) => [ q(Narb), q(Old North Arabian (Ancient North Arabian)) ],
@@ -62,7 +64,9 @@ $Locale::Codes::Retired{'script'}{'alpha'}{'name'} = {
 
 $Locale::Codes::Retired{'script'}{'num'}{'name'} = {
    q( multani) => [ q(323), q( Multani) ],
+   q(cypriot) => [ q(403), q(Cypriot) ],
    q(mende) => [ q(438), q(Mende) ],
+   q(nakhi geba ('na-'khi ggo-baw, naxi geba)) => [ q(420), q(Nakhi Geba ('Na-'Khi Ggo-baw, Naxi Geba)) ],
    q(old hungarian) => [ q(176), q(Old Hungarian) ],
    q(tiruta) => [ q(326), q(Tiruta) ],
 };

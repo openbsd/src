@@ -3,10 +3,13 @@ use warnings;
 use Test::More 0.88;
 
 use CPAN::Meta;
-
+use Storable qw(dclone);
 use Scalar::Util qw(blessed);
 
-delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
+delete $ENV{PERL_YAML_BACKEND};
+delete $ENV{PERL_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_DECODER};
 
 my $distmeta = {
   name     => 'Module-Build',
@@ -74,7 +77,7 @@ my $distmeta = {
   X_deep => { deep => 'structure' },
 };
 
-my $meta = CPAN::Meta->new($distmeta);
+my $meta = CPAN::Meta->new(dclone $distmeta);
 
 is(
   blessed($meta->as_struct),
@@ -238,6 +241,41 @@ is(@features, 1, "we got one feature");
 $chk_feature->($features[0]);
 
 $chk_feature->( $meta->feature('domination') );
+
+
+sub read_file {
+  my $filename = shift;
+  open my $fh, '<', $filename;
+  local $/;
+  my $string = <$fh>;
+  $string =~ s/\$VERSION/$CPAN::Meta::VERSION/g;
+  $string;
+}
+
+sub clean_backends {
+  my $string = shift;
+  $string =~ s{"?generated_by.*}{};
+  $string =~ s{"?x_serialization_backend.*}{};
+  return $string;
+}
+
+is(
+  clean_backends($meta->as_string()),
+  clean_backends(read_file('t/data-valid/META-2.json')),
+  'as_string with no arguments defaults to version 2 and JSON',
+);
+
+is(
+  clean_backends($meta->as_string({ version => 2 })),
+  clean_backends(read_file('t/data-valid/META-2.json')),
+  'as_string using version 2 defaults to JSON',
+);
+
+is(
+  clean_backends($meta->as_string({ version => 1.4 })),
+  clean_backends(read_file('t/data-valid/META-1_4.yml')),
+  'as_string using version 1.4 defaults to YAML',
+);
 
 done_testing;
 # vim: ts=2 sts=2 sw=2 et :

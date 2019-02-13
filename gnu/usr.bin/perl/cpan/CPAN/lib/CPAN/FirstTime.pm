@@ -10,7 +10,7 @@ use File::Path ();
 use File::Spec ();
 use CPAN::Mirrors ();
 use vars qw($VERSION $auto_config);
-$VERSION = "5.5307";
+$VERSION = "5.5311";
 
 =head1 NAME
 
@@ -123,6 +123,14 @@ checks will be performed at all.
 
 Always try to check and verify signatures if a SIGNATURE file is in
 the package and Module::Signature is installed (yes/no)?
+
+=item cleanup_after_install
+
+Users who install modules and do not intend to look back, can free
+occupied disk space quickly by letting CPAN.pm cleanup each build
+directory immediately after a successful install.
+
+Remove build directory after a successful install? (yes/no)?
 
 =item colorize_output
 
@@ -431,7 +439,7 @@ Randomize parameter
 generally be installed except in resource constrained environments.  When this
 policy is true, recommended modules will be included with required modules.
 
-Included recommended modules?
+Include recommended modules?
 
 =item scan_cache
 
@@ -481,7 +489,7 @@ Show all individual modules that have a $VERSION of zero?
 dependencies provide enhanced operation.  When this policy is true, suggested
 modules will be included with required modules.
 
-Included suggested modules?
+Include suggested modules?
 
 =item tar_verbosity
 
@@ -775,7 +783,7 @@ sub init {
         }
     } elsif (0 == length $matcher) {
     } elsif (0 && $matcher eq "~") { # extremely buggy, but a nice idea
-        my @unconfigured = grep { not exists $CPAN::Config->{$_}
+        my @unconfigured = sort grep { not exists $CPAN::Config->{$_}
                                       or not defined $CPAN::Config->{$_}
                                           or not length $CPAN::Config->{$_}
                                   } keys %$CPAN::Config;
@@ -881,6 +889,7 @@ sub init {
 
     my_dflt_prompt(index_expire => 1, $matcher);
     my_prompt_loop(scan_cache => 'atstart', $matcher, 'atstart|atexit|never');
+    my_yn_prompt(cleanup_after_install => 0, $matcher);
 
     #
     #= cache_metadata
@@ -1300,8 +1309,9 @@ sub init {
             $CPAN::Frontend->myprint("\nWriting $configpm for bootstrap...\n");
             delete $CPAN::Config->{install_help}; # temporary only
             CPAN::HandleConfig->commit;
-            my $dist;
-            if ( $dist = CPAN::Shell->expand('Module', 'local::lib')->distribution ) {
+            my($dist, $locallib);
+            $locallib = CPAN::Shell->expand('Module', 'local::lib');
+            if ( $locallib and $dist = $locallib->distribution ) {
                 # this is a hack to force bootstrapping
                 $dist->{prefs}{pl}{commandline} = "$^X Makefile.PL --bootstrap";
                 # Set @INC for this process so we find things as they bootstrap

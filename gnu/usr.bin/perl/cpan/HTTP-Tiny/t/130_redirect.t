@@ -5,7 +5,8 @@ use warnings;
 
 use File::Basename;
 use Test::More 0.88;
-use t::Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
+use lib 't';
+use Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
   hashify connect_args clear_socket_source set_socket_source sort_headers
   $CRLF $LF];
 
@@ -17,6 +18,7 @@ for my $file ( dir_list("corpus", qr/^redirect/ ) ) {
   my $data = do { local (@ARGV,$/) = $file; <> };
   my ($params, @case_pairs) = split /--+\n/, $data;
   my $case = parse_case($params);
+  my $number_of_requests = @case_pairs / 2;
 
   my $url = $case->{url}[0];
   my $method = $case->{method}[0] || 'GET';
@@ -49,9 +51,8 @@ for my $file ( dir_list("corpus", qr/^redirect/ ) ) {
 
   my $http = HTTP::Tiny->new(keep_alive => 0, %new_args);
   my $response  = $http->request(@$call_args);
-
-  my $calls = 0
-    + (defined($new_args{max_redirect}) ? $new_args{max_redirect} : 5);
+  my $max_redirects = defined($new_args{max_redirect}) ? $new_args{max_redirect} : 5;
+  my $calls = 0 + $max_redirects;
 
   for my $i ( 0 .. $calls ) {
     last unless @socket_pairs;
@@ -65,6 +66,12 @@ for my $file ( dir_list("corpus", qr/^redirect/ ) ) {
                   ? join("$CRLF", @{$case->{expected}}) : '';
 
   is ( $response->{content}, $exp_content, "$label content" );
+
+  my $number_of_redirects =
+    $max_redirects < $number_of_requests ? $max_redirects : $number_of_requests - 1;
+  is ( @{ $response->{redirects} || [] }, $number_of_redirects,
+      "$label redirects array size"
+  ) or diag explain $response->{redirects};
 
   if ( $case->{expected_url} ) {
     is ( $response->{url}, $case->{expected_url}[0], "$label response URL" );

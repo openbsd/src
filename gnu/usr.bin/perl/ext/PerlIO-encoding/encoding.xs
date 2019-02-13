@@ -203,7 +203,7 @@ PerlIOEncode_get_base(pTHX_ PerlIO * f)
 	e->base.bufsiz = 1024;
     if (!e->bufsv) {
 	e->bufsv = newSV(e->base.bufsiz);
-	sv_setpvn(e->bufsv, "", 0);
+	SvPVCLEAR(e->bufsv);
     }
     e->base.buf = (STDCHAR *) SvPVX(e->bufsv);
     if (!e->base.ptr)
@@ -307,42 +307,19 @@ PerlIOEncode_fill(pTHX_ PerlIO * f)
 		goto end_of_file;
 	    }
 	}
-	if (SvCUR(e->dataSV)) {
-	    /* something left over from last time - create a normal
-	       SV with new data appended
-	     */
-	    if (use + SvCUR(e->dataSV) > e->base.bufsiz) {
-		if (e->flags & NEEDS_LINES) {
-		    /* Have to grow buffer */
-		    e->base.bufsiz = use + SvCUR(e->dataSV);
-		    PerlIOEncode_get_base(aTHX_ f);
-		}
-		else {
-	       use = e->base.bufsiz - SvCUR(e->dataSV);
+	if (!SvCUR(e->dataSV))
+	    SvPVCLEAR(e->dataSV);
+	if (use + SvCUR(e->dataSV) > e->base.bufsiz) {
+	    if (e->flags & NEEDS_LINES) {
+		/* Have to grow buffer */
+		e->base.bufsiz = use + SvCUR(e->dataSV);
+		PerlIOEncode_get_base(aTHX_ f);
 	    }
+	    else {
+		use = e->base.bufsiz - SvCUR(e->dataSV);
 	    }
-	    sv_catpvn(e->dataSV,(char*)ptr,use);
 	}
-	else {
-	    /* Create a "dummy" SV to represent the available data from layer below */
-	    if (SvLEN(e->dataSV) && SvPVX_const(e->dataSV)) {
-		Safefree(SvPVX_mutable(e->dataSV));
-	    }
-	    if (use > (SSize_t)e->base.bufsiz) {
-		if (e->flags & NEEDS_LINES) {
-		    /* Have to grow buffer */
-		    e->base.bufsiz = use;
-		    PerlIOEncode_get_base(aTHX_ f);
-		}
-		else {
-	       use = e->base.bufsiz;
-	    }
-	    }
-	    SvPV_set(e->dataSV, (char *) ptr);
-	    SvLEN_set(e->dataSV, 0);  /* Hands off sv.c - it isn't yours */
-	    SvCUR_set(e->dataSV,use);
-	    SvPOK_only(e->dataSV);
-	}
+	sv_catpvn(e->dataSV,(char*)ptr,use);
 	SvUTF8_off(e->dataSV);
 	PUSHMARK(sp);
 	XPUSHs(e->enc);

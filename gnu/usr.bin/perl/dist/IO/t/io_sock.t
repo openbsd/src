@@ -24,7 +24,7 @@ BEGIN {
     }
 }
 
-my $has_perlio = $] >= 5.008 && find PerlIO::Layer 'perlio';
+my $has_perlio = find PerlIO::Layer 'perlio';
 
 $| = 1;
 print "1..26\n";
@@ -214,7 +214,7 @@ if ( $^O eq 'qnx' ) {
 ### the client. We'll use own source code ...
 #
 local @data;
-if( !open( SRC, "< $0")) {
+if( !open( SRC, '<', $0)) {
     print "not ok 15 - $!\n";
 } else {
     @data = <SRC>;

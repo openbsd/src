@@ -15,6 +15,18 @@ typedef struct {
     Off_t posn;
 } PerlIOScalar;
 
+IV
+PerlIOScalar_eof(pTHX_ PerlIO * f)
+{
+    if (PerlIOBase(f)->flags & PERLIO_F_CANREAD) {
+        PerlIOScalar *s = PerlIOSelf(f, PerlIOScalar);
+        STRLEN len;
+        (void)SvPV(s->var, len);
+        return len - (STRLEN)(s->posn) <= 0;
+    }
+    return 1;
+}
+
 static IV
 PerlIOScalar_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 		    PerlIO_funcs * tab)
@@ -31,7 +43,7 @@ PerlIOScalar_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg,
 	     && mode && *mode != 'r') {
 		if (ckWARN(WARN_LAYER))
 		    Perl_warner(aTHX_ packWARN(WARN_LAYER), "%s", PL_no_modify);
-		SETERRNO(EINVAL, SS_IVCHAN);
+		SETERRNO(EACCES, RMS_PRV);
 		return -1;
 	    }
 	    s->var = SvREFCNT_inc(SvRV(arg));
@@ -174,8 +186,8 @@ PerlIOScalar_read(pTHX_ PerlIO *f, void *vbuf, Size_t count)
          * seems safe) and that the size of the buffer in our SV is
          * always less than half the size of the address space
          */
-        assert(sizeof(Off_t) >= sizeof(len));
-        assert((Off_t)len >= 0);
+        STATIC_ASSERT_STMT(sizeof(Off_t) >= sizeof(len));
+        assert(len < ((~(STRLEN)0) >> 1));
         if ((Off_t)len <= s->posn)
 	    return 0;
 	got = len - (STRLEN)(s->posn);
@@ -406,7 +418,7 @@ static PERLIO_FUNCS_DECL(PerlIO_scalar) = {
     PerlIOScalar_close,
     PerlIOScalar_flush,
     PerlIOScalar_fill,
-    PerlIOBase_eof,
+    PerlIOScalar_eof,
     PerlIOBase_error,
     PerlIOBase_clearerr,
     PerlIOBase_setlinebuf,

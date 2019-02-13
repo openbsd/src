@@ -3,16 +3,14 @@
 use strict;
 use warnings;
 
-my $count;
+use Test::More;
 
-BEGIN {
-    $count = 128;
-}
+my $count = 128;
 
-use Test::More tests => $count * 4;
+plan(($^O eq 'os390') ? (skip_all => 'takes too long on os390')
+                      : (tests => $count*4));
 
-use Math::BigInt;
-my $class = 'Math::BigInt';
+use Math::BigInt only => 'Calc';
 
 my $length = 128;
 
@@ -26,8 +24,8 @@ srand($seed);
 my $_base_len;
 my @_base_len;
 
-#diag("     lib: ", Math::BigInt->config()->{lib});
-if (Math::BigInt->config()->{lib} =~ /::Calc/) {
+#diag("     lib: ", Math::BigInt->config('lib'));
+if (Math::BigInt->config('lib') =~ /::Calc/) {
     $_base_len = Math::BigInt::Calc->_base_len();
     @_base_len = Math::BigInt::Calc->_base_len();
     #diag("base len: $_base_len (scalar context)");
@@ -62,8 +60,8 @@ for (my $i = 0; $i < $count; $i++) {
     $B_str =~ s/^0+(?=\d)//;
     #diag("      As: $A_str");
     #diag("      Bs: $B_str");
-    $A = $class->new($A_str);
-    $B = $class->new($B_str);
+    $A = Math::BigInt->new($A_str);
+    $B = Math::BigInt->new($B_str);
     #diag("       A: $A");
     #diag("       B: $B");
 
@@ -83,7 +81,7 @@ for (my $i = 0; $i < $count; $i++) {
            "AdivB * B + 2 * AmodB - AmodB == A");
 
         if (is($AdivB * $B / $B, $AdivB, "AdivB * B / B == AdivB")) {
-            if (Math::BigInt->config()->{lib} =~ /::Calc/) {
+            if (Math::BigInt->config('lib') =~ /::Calc/) {
                 #diag("AdivB->[-1]: ", $AdivB->{value}->[-1]);
                 #diag("    B->[-1]: ", $B->{value}->[-1]);
             }

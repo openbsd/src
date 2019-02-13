@@ -4,7 +4,7 @@ use Test::More tests => 3;
 use Module::Metadata;
 
 BEGIN {
-  *fh_from_string = $] < 5.008
+  *fh_from_string = "$]" < 5.008
     ? require IO::Scalar && sub ($) {
       IO::Scalar->new(\$_[0]);
     }

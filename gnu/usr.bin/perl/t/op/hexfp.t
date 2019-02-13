@@ -2,15 +2,15 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
 
 use Config;
 
-plan(tests => 109);
+plan(tests => 123);
 
 # Test hexfloat literals.
 
@@ -163,84 +163,82 @@ sub get_warn() {
 # Test warnings.
 SKIP:
 {
-    if ($Config{nv_preserves_uv_bits} == 53) {
-        local $^W = 1;
+    skip "nv_preserves_uv_bits is $Config{nv_preserves_uv_bits} not 53", 26
+        unless $Config{nv_preserves_uv_bits} == 53;
 
-        eval '0x1_0000_0000_0000_0p0';
-        is(get_warn(), undef);
+    local $^W = 1;
 
-        eval '0x2_0000_0000_0000_0p0';
-        like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
+    eval '0x1_0000_0000_0000_0p0';
+    is(get_warn(), undef);
 
-        eval '0x1.0000_0000_0000_0p0';
-        is(get_warn(), undef);
+    eval '0x2_0000_0000_0000_0p0';
+    like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
 
-        eval '0x2.0000_0000_0000_0p0';
-        like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
+    eval '0x1.0000_0000_0000_0p0';
+    is(get_warn(), undef);
 
-        eval '0x.1p-1021';
-        is(get_warn(), undef);
+    eval '0x2.0000_0000_0000_0p0';
+    like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
 
-        eval '0x.1p-1023';
-        like(get_warn(), qr/^Hexadecimal float: exponent underflow/);
+    eval '0x.1p-1021';
+    is(get_warn(), undef);
 
-        eval '0x1.fffffffffffffp+1023';
-        is(get_warn(), undef);
+    eval '0x.1p-1023';
+    like(get_warn(), qr/^Hexadecimal float: exponent underflow/);
 
-        eval '0x1.fffffffffffffp+1024';
-        like(get_warn(), qr/^Hexadecimal float: exponent overflow/);
+    eval '0x1.fffffffffffffp+1023';
+    is(get_warn(), undef);
 
-        undef $a;
-        eval '$a = 0x111.0000000000000p+0'; # 12 zeros.
-        like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
-        is($a, 273);
+    eval '0x1.fffffffffffffp+1024';
+    like(get_warn(), qr/^Hexadecimal float: exponent overflow/);
 
-        # The 13 zeros would be enough to push the hi-order digits
-        # off the high-end.
+    undef $a;
+    eval '$a = 0x111.0000000000000p+0'; # 12 zeros.
+    like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
+    is($a, 273);
 
-        undef $a;
-        eval '$a = 0x111.0000000000000p+0'; # 13 zeros.
-        like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
-        is($a, 273);
+    # The 13 zeros would be enough to push the hi-order digits
+    # off the high-end.
 
-        undef $a;
-        eval '$a = 0x111.00000000000000p+0';  # 14 zeros.
-        like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
-        is($a, 273);
+    undef $a;
+    eval '$a = 0x111.0000000000000p+0'; # 13 zeros.
+    like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
+    is($a, 273);
 
-        undef $a;
-        eval '$a = 0xfffffffffffffp0';  # 52 bits.
-        is(get_warn(), undef);
-        is($a, 4.5035996273705e+15);
+    undef $a;
+    eval '$a = 0x111.00000000000000p+0'; # 14 zeros.
+    like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
+    is($a, 273);
 
-        undef $a;
-        eval '$a = 0xfffffffffffff.8p0';  # 53 bits.
-        is(get_warn(), undef);
-        is($a, 4.5035996273705e+15);
+    undef $a;
+    eval '$a = 0xfffffffffffffp0'; # 52 bits.
+    is(get_warn(), undef);
+    is($a, 4.5035996273705e+15);
 
-        undef $a;
-        eval '$a = 0xfffffffffffff.cp0';  # 54 bits.
-        like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
-        is($a, 4.5035996273705e+15);
+    undef $a;
+    eval '$a = 0xfffffffffffff.8p0'; # 53 bits.
+    is(get_warn(), undef);
+    is($a, 4.5035996273705e+15);
 
-        undef $a;
-        eval '$a = 0xf.ffffffffffffp0';  # 52 bits.
-        is(get_warn(), undef);
-        is($a, 16);
+    undef $a;
+    eval '$a = 0xfffffffffffff.cp0'; # 54 bits.
+    like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
+    is($a, 4.5035996273705e+15);
 
-        undef $a;
-        eval '$a = 0xf.ffffffffffff8p0';  # 53 bits.
-        is(get_warn(), undef);
-        is($a, 16);
+    undef $a;
+    eval '$a = 0xf.ffffffffffffp0'; # 52 bits.
+    is(get_warn(), undef);
+    is($a, 16);
 
-        undef $a;
-        eval '$a = 0xf.ffffffffffffcp0';  # 54 bits.
-        like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
-        is($a, 16);
-    } else {
-        print "# skipping warning tests\n";
-        skip "nv_preserves_uv_bits is $Config{nv_preserves_uv_bits} not 53", 26;
-    }
+    undef $a;
+    eval '$a = 0xf.ffffffffffff8p0'; # 53 bits.
+    is(get_warn(), undef);
+    is($a, 16);
+
+    undef $a;
+    eval '$a = 0xf.ffffffffffffcp0'; # 54 bits.
+    like(get_warn(), qr/^Hexadecimal float: mantissa overflow/);
+    is($a, 16);
 }
 
 # [perl #128919] limited exponent range in hex fp literal with long double
@@ -248,13 +246,36 @@ SKIP: {
     skip("non-80-bit-long-double", 4)
         unless ($Config{uselongdouble} &&
 		($Config{nvsize} == 16 || $Config{nvsize} == 12) &&
-		($Config{longdblkind} == 3 ||
-		 $Config{longdblkind} == 4));
+		($Config{long_double_style_ieee_extended}));
     is(0x1p-1074,  4.94065645841246544e-324);
     is(0x1p-1075,  2.47032822920623272e-324, '[perl #128919]');
     is(0x1p-1076,  1.23516411460311636e-324);
     is(0x1p-16445, 3.6451995318824746e-4951);
 }
+
+# [perl #131894] parsing long binaryish floating point literals used to
+# perform illegal bit shifts.  Need 64-bit ints to test.
+SKIP: {
+    skip("non-64-bit NVs or no 64-bit ints to test with", 3)
+      unless $Config{nvsize} == 8 && $Config{d_double_style_ieee} && $Config{use64bitint};
+    is sprintf("%a", eval("0x030000000000000.1p0")), "0x1.8p+53";
+    is sprintf("%a", eval("01400000000000000000.1p0")), "0x1.8p+54";
+    is sprintf("%a", eval("0b110000000000000000000000000000000000000000000000000000000.1p0")), "0x1.8p+56";
+}
+
+# the implementation also allow for octal and binary fp
+is(01p0, 1);
+is(01.0p0, 1);
+is(01.00p0, 1);
+is(010.1p0, 8.125);
+is(00.400p1, 1);
+is(00p0, 0);
+is(01.1p0, 1.125);
+
+is(0b0p0, 0);
+is(0b1p0, 1);
+is(0b10p0, 2);
+is(0b1.1p0, 1.5);
 
 # sprintf %a/%A testing is done in sprintf2.t,
 # trickier than necessary because of long doubles,

@@ -51,7 +51,7 @@ op_names_init(pTHX)
     int i;
     STRLEN len;
     char **op_names;
-    char *bitmap;
+    U8 *bitmap;
     dMY_CXT;
 
     op_named_bits = newHV();
@@ -65,10 +65,11 @@ op_names_init(pTHX)
     put_op_bitspec(aTHX_ STR_WITH_LEN(":none"), sv_2mortal(new_opset(aTHX_ Nullsv)));
 
     opset_all = new_opset(aTHX_ Nullsv);
-    bitmap = SvPV(opset_all, len);
+    bitmap = (U8*)SvPV(opset_all, len);
     memset(bitmap, 0xFF, len-1); /* deal with last byte specially, see below */
     /* Take care to set the right number of bits in the last byte */
-    bitmap[len-1] = (PL_maxo & 0x07) ? ~(0xFF << (PL_maxo & 0x07)) : 0xFF;
+    bitmap[len-1] = (PL_maxo & 0x07) ? ((~(0xFF << (PL_maxo & 0x07))) & 0xFF)
+                                     : 0xFF;
     put_op_bitspec(aTHX_ STR_WITH_LEN(":all"), opset_all); /* don't mortalise */
 }
 
@@ -254,7 +255,7 @@ PROTOTYPES: ENABLE
 BOOT:
 {
     MY_CXT_INIT;
-    assert(PL_maxo < OP_MASK_BUF_SIZE);
+    STATIC_ASSERT_STMT(PL_maxo < OP_MASK_BUF_SIZE);
     opset_len = (PL_maxo + 7) / 8;
     if (opcode_debug >= 1)
 	warn("opset_len %ld\n", (long)opset_len);
@@ -433,7 +434,7 @@ CODE:
 
     if (!SvROK(safe) || !SvOBJECT(SvRV(safe)) || SvTYPE(SvRV(safe))!=SVt_PVHV)
 	croak("Not a Safe object");
-    mask = *hv_fetch((HV*)SvRV(safe), "Mask",4, 1);
+    mask = *hv_fetchs((HV*)SvRV(safe), "Mask", 1);
     if (ONLY_THESE)	/* *_only = new mask, else edit current	*/
 	sv_setsv(mask, sv_2mortal(new_opset(aTHX_ PERMITING ? opset_all : Nullsv)));
     else

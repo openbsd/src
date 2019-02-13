@@ -9,7 +9,7 @@ use warnings;
 use strict;
 use Config;
 
-require 't/test.pl';
+require './t/test.pl';
 
 if ( $Config{usecrosscompile} ) {
   skip_all( "Not all files are available during cross-compilation" );
@@ -26,7 +26,7 @@ plan('no_plan');
 my $make_exceptions_list = ($ARGV[0]||'') eq '--make-exceptions-list'
   and shift;
 
-require 'regen/embed_lib.pl';
+require './regen/embed_lib.pl';
 
 # Look for functions that look like they could be diagnostic ones.
 my @functions;
@@ -49,7 +49,7 @@ my $source_msg_re =
    "(?<routine>\\bDIE\\b|$function_re)";
 my $text_re = '"(?<text>(?:\\\\"|[^"]|"\s*[A-Z_]+\s*")*)"';
 my $source_msg_call_re = qr/$source_msg_re(?:_nocontext)? \s*
-    \((?:aTHX_)? \s*
+    \( (?: \s* Perl_form \( )? (?:aTHX_)? \s*
     (?:packWARN\d*\((?<category>.*?)\),)? \s*
     $text_re /x;
 my $bad_version_re = qr{BADVERSION\([^"]*$text_re};
@@ -305,6 +305,8 @@ sub check_file {
       # Sometimes the regexp will pick up too much for the category
       # e.g., WARN_UNINITIALIZED), PL_warn_uninit_sv ... up to the next )
       $category && $category =~ s/\).*//s;
+      # Special-case yywarn
+      /yywarn/ and $category = 'syntax';
       if (/win32_croak_not_implemented\(/) {
         $name .= " not implemented!"
       }
@@ -685,7 +687,6 @@ Usage: VMS::Filespec::unixrealpath(spec)
 Usage: VMS::Filespec::vmsify(spec)
 Usage: VMS::Filespec::vmspath(spec)
 Usage: VMS::Filespec::vmsrealpath(spec)
-Use of inherited AUTOLOAD for non-method %s::%s() is deprecated
 utf8 "\x%X" does not map to Unicode
 Value of logical "%s" too long. Truncating to %i bytes
 waitpid: process %x is not a child of process %x

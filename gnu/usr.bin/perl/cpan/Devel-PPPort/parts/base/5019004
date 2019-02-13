@@ -1,4 +1,0 @@
-5.019004
-append_utf8_from_native_byte   # U
-is_safe_syscall                # U
-uvoffuni_to_utf8_flags         # U

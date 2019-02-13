@@ -2,7 +2,8 @@ package ExtUtils::MM_Win95;
 
 use strict;
 
-our $VERSION = '7.10_02';
+our $VERSION = '7.34';
+$VERSION = eval $VERSION;
 
 require ExtUtils::MM_Win32;
 our @ISA = qw(ExtUtils::MM_Win32);
@@ -26,57 +27,8 @@ to get MakeMaker playing nice with command.com and other Win9Xisms.
 =head2 Overridden methods
 
 Most of these make up for limitations in the Win9x/nmake command shell.
-Mostly its lack of &&.
 
 =over 4
-
-
-=item xs_c
-
-The && problem.
-
-=cut
-
-sub xs_c {
-    my($self) = shift;
-    return '' unless $self->needs_linking();
-    '
-.xs.c:
-	$(XSUBPPRUN) $(XSPROTOARG) $(XSUBPPARGS) $*.xs > $*.c
-	'
-}
-
-
-=item xs_cpp
-
-The && problem
-
-=cut
-
-sub xs_cpp {
-    my($self) = shift;
-    return '' unless $self->needs_linking();
-    '
-.xs.cpp:
-	$(XSUBPPRUN) $(XSPROTOARG) $(XSUBPPARGS) $*.xs > $*.cpp
-	';
-}
-
-=item xs_o
-
-The && problem.
-
-=cut
-
-sub xs_o {
-    my($self) = shift;
-    return '' unless $self->needs_linking();
-    '
-.xs$(OBJ_EXT):
-	$(XSUBPPRUN) $(XSPROTOARG) $(XSUBPPARGS) $*.xs > $*.c
-	$(CCCMD) $(CCCDLFLAGS) -I$(PERL_INC) $(DEFINE) $*.c
-	';
-}
 
 
 =item max_exec_len

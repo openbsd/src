@@ -2,13 +2,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
 use warnings;
-use vars qw($fh @fh %fh);
+our ($fh, @fh, %fh);
 
 eval 'opendir(NOSUCH, "no/such/directory");';
 skip_all($@) if $@;
@@ -71,6 +71,7 @@ SKIP:
 { # [perl #118651]
   # test that readdir doesn't modify errno on successfully reaching the end of the list
   # in scalar context, POSIX requires that readdir() not modify errno on end-of-directory
+
   my @s;
   ok(opendir(OP, "op"), "opendir op");
   $! = 0;

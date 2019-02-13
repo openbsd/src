@@ -1,7 +1,7 @@
 package Encode::JP::JIS7;
 use strict;
 use warnings;
-our $VERSION = do { my @r = ( q$Revision: 2.5 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
+our $VERSION = do { my @r = ( q$Revision: 2.8 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };
 
 use Encode qw(:fallbacks);
 
@@ -9,11 +9,12 @@ for my $name ( '7bit-jis', 'iso-2022-jp', 'iso-2022-jp-1' ) {
     my $h2z     = ( $name eq '7bit-jis' )    ? 0 : 1;
     my $jis0212 = ( $name eq 'iso-2022-jp' ) ? 0 : 1;
 
-    $Encode::Encoding{$name} = bless {
+    my $obj = bless {
         Name    => $name,
         h2z     => $h2z,
         jis0212 => $jis0212,
     } => __PACKAGE__;
+    Encode::define_encoding($obj, $name);
 }
 
 use parent qw(Encode::Encoding);
@@ -29,6 +30,7 @@ use Encode::CJKConstants qw(:all);
 
 sub decode($$;$) {
     my ( $obj, $str, $chk ) = @_;
+    return undef unless defined $str;
     my $residue = '';
     if ($chk) {
         $str =~ s/([^\x00-\x7f].*)$//so and $residue = $1;
@@ -45,11 +47,12 @@ sub decode($$;$) {
 sub encode($$;$) {
     require Encode::JP::H2Z;
     my ( $obj, $utf8, $chk ) = @_;
+    return undef unless defined $utf8;
 
     # empty the input string in the stack so perlio is ok
     $_[1] = '' if $chk;
     my ( $h2z, $jis0212 ) = @$obj{qw(h2z jis0212)};
-    my $octet = Encode::encode( 'euc-jp', $utf8, $chk );
+    my $octet = Encode::encode( 'euc-jp', $utf8, $chk || 0 );
     $h2z and &Encode::JP::H2Z::h2z( \$octet );
     euc_jis( \$octet, $jis0212 );
     return $octet;

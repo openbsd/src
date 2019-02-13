@@ -25,7 +25,7 @@ BEGIN {
       chdir '..';
     }
     @INC = qw(lib .); # Special @INC.
-    require 't/test.pl';
+    require './t/test.pl';
 }
 
 use strict;

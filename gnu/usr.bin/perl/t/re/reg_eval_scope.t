@@ -6,6 +6,10 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc(qw(lib ../lib));
+    if (is_miniperl()) {
+        eval 'require re';
+        if ($@) { skip_all("miniperl, no 're'") }
+    }
 }
 
 plan 48;

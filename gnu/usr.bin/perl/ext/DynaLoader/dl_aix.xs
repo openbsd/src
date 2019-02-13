@@ -226,7 +226,7 @@ void *dlopen(char *path, int mode)
 	 * Scan the list of modules if have the module already loaded.
 	 */
 	for (mp = dl_modList; mp; mp = mp->next)
-		if (strcmp(mp->name, path) == 0) {
+		if (strEQ(mp->name, path)) {
 			mp->refCnt++;
 			return mp;
 		}
@@ -364,7 +364,7 @@ void *dlsym(void *handle, const char *symbol)
 	 * the result to function pointers anyways.
 	 */
 	for (ep = mp->exports, i = mp->nExports; i; i--, ep++)
-		if (strcmp(ep->name, symbol) == 0)
+		if (strEQ(ep->name, symbol))
 			return ep->addr;
 	dl_errvalid++;
 	strcpy(dl_errbuf, "dlsym: undefined symbol ");

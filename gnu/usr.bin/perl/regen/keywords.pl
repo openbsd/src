@@ -11,7 +11,7 @@
 use strict;
 use Devel::Tokenizer::C 0.05;
 
-require 'regen/regen_lib.pl';
+require './regen/regen_lib.pl';
 
 my $h = open_new('keywords.h', '>',
 		 { by => 'regen/keywords.pl', from => 'its data',

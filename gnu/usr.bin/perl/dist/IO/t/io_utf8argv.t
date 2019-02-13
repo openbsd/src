@@ -1,11 +1,11 @@
 #!./perl
 
 BEGIN {
-    unless ($] >= 5.008 and find PerlIO::Layer 'perlio') {
+    unless (find PerlIO::Layer 'perlio') {
 	print "1..0 # Skip: not perlio\n";
 	exit 0;
     }
-    require($ENV{PERL_CORE} ? "../../t/test.pl" : "../t/test.pl");
+    require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
 }
 
 use utf8;
@@ -22,7 +22,7 @@ my $bytes =
             "\xcd\xbe\x0a";
 
 if ($::IS_EBCDIC) {
-    require($ENV{PERL_CORE} ? "../../t/charset_tools.pl" : "../t/charset_tools.pl");
+    require($ENV{PERL_CORE} ? "../../t/charset_tools.pl" : "./t/charset_tools.pl");
     $bytes = byte_utf8a_to_utf8n($bytes)
 }
 

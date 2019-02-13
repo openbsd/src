@@ -87,9 +87,7 @@ static char sscsid[]=  "$OpenBSD: glob.c,v 1.8.10.1 2001/04/10 jason Exp $";
 #  endif
 #endif
 
-#ifdef I_LIMITS
 #include <limits.h>
-#endif
 
 #ifndef ARG_MAX
 #  ifdef _SC_ARG_MAX
@@ -563,8 +561,12 @@ glob0(const Char *pattern, glob_t *pglob)
 			break;
 		case BG_STAR:
 			pglob->gl_flags |= GLOB_MAGCHAR;
-			/* collapse adjacent stars to one,
-			 * to avoid exponential behavior
+                        /* Collapse adjacent stars to one.
+                         * This is required to ensure that a pattern like
+                         * "a**" matches a name like "a", as without this
+                         * check when the first star matched everything it would
+                         * cause the second star to return a match fail.
+                         * As long ** is folded here this does not happen.
 			 */
 			if (bufnext == patbuf || bufnext[-1] != M_ALL)
 				*bufnext++ = M_ALL;
@@ -909,35 +911,56 @@ globextend(const Char *path, glob_t *pglob, size_t *limitp)
 
 
 /*
- * pattern matching function for filenames.  Each occurrence of the *
- * pattern causes a recursion level.
+ * pattern matching function for filenames using state machine to avoid
+ * recursion. We maintain a "nextp" and "nextn" to allow us to backtrack
+ * without additional callframes, and to do cleanly prune the backtracking
+ * state when multiple '*' (start) matches are included in the pattern.
+ *
+ * Thanks to Russ Cox for the improved state machine logic to avoid quadratic
+ * matching on failure.
+ *
+ * https://research.swtch.com/glob
+ *
+ * An example would be a pattern
+ *  ("a*" x 100) . "y"
+ * against a file name like
+ *  ("a" x 100) . "x"
+ *
  */
 static int
 match(Char *name, Char *pat, Char *patend, int nocase)
 {
 	int ok, negate_range;
 	Char c, k;
+	Char *nextp = NULL;
+	Char *nextn = NULL;
 
+    redo:
 	while (pat < patend) {
 		c = *pat++;
 		switch (c & M_MASK) {
 		case M_ALL:
 			if (pat == patend)
 				return(1);
-			do
-			    if (match(name, pat, patend, nocase))
-				    return(1);
-			while (*name++ != BG_EOS)
-				;
-			return(0);
+	                if (*name == BG_EOS)
+	                        return 0;
+			nextn = name + 1;
+	                nextp = pat - 1;
+			break;
 		case M_ONE:
+                        /* since * matches leftmost-shortest first   *
+                         * if we encounter the EOS then backtracking *
+                         * will not help, so we can exit early here. */
 			if (*name++ == BG_EOS)
-				return(0);
+                                return 0;
 			break;
 		case M_SET:
 			ok = 0;
+                        /* since * matches leftmost-shortest first   *
+                         * if we encounter the EOS then backtracking *
+                         * will not help, so we can exit early here. */
 			if ((k = *name++) == BG_EOS)
-				return(0);
+                                return 0;
 			if ((negate_range = ((*pat & M_MASK) == M_NOT)) != BG_EOS)
 				++pat;
 			while (((c = *pat++) & M_MASK) != M_END)
@@ -953,16 +976,25 @@ match(Char *name, Char *pat, Char *patend, int nocase)
 				} else if (nocase ? (tolower(c) == tolower(k)) : (c == k))
 					ok = 1;
 			if (ok == negate_range)
-				return(0);
+				goto fail;
 			break;
 		default:
 			k = *name++;
 			if (nocase ? (tolower(k) != tolower(c)) : (k != c))
-				return(0);
+				goto fail;
 			break;
 		}
 	}
-	return(*name == BG_EOS);
+	if (*name == BG_EOS)
+		return 1;
+
+    fail:
+	if (nextn) {
+		pat = nextp;
+		name = nextn;
+		goto redo;
+	}
+	return 0;
 }
 
 /* Free allocated data belonging to a glob_t structure. */

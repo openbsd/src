@@ -24,12 +24,6 @@ use File::Spec::Functions;
 # Exceptions that are found in dual-life bin dirs but aren't
 # installed by default; some occur only during testing:
 my $not_installed = qr{^(?:
-  \.\./cpan/Archive-Tar/bin/ptar.*
-   |
-  \.\./cpan/JSON-PP/bin/json_pp
-   |
-  \.\./cpan/IO-Compress/bin/zipdetails
-   |
   \.\./cpan/Encode/bin/u(?:cm(?:2table|lint|sort)|nidump)
    |
   \.\./cpan/Module-(?:Metadata|Build)
@@ -72,9 +66,11 @@ for my $f ( @programs ) {
   next if $f =~ $not_installed;
   my $bn = basename($f);
   if(grep { /\A(?i:$bn)\z/ } keys %dist_dir_exe) {
-    ok( -f "$dist_dir_exe{lc $bn}$ext", $f);
+    my $exe_file = "$dist_dir_exe{lc $bn}$ext";
+    ok( -f $exe_file, "Verify -f '$exe_file'");
   } else {
-    ok( -f catfile('..', 'utils', "$bn$ext"), $f );
+    my $utils_file = catfile('..', 'utils', "$bn$ext");
+    ok( -f $utils_file, "Verify -f '$utils_file'" );
   }
 }
 

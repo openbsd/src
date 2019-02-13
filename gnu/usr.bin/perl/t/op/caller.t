@@ -3,9 +3,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
-    plan( tests => 96 );
+    set_up_inc('../lib');
+    plan( tests => 97 ); # some tests are run in a BEGIN block
 }
 
 my @c;
@@ -27,7 +27,7 @@ sub { @c = caller(0) } -> ();
 is( $c[3], "main::__ANON__", "anonymous subroutine name" );
 ok( $c[4], "hasargs true with anon sub" );
 
-# Bug 20020517.003, used to dump core
+# Bug 20020517.003 (#9367), used to dump core
 sub foo { @c = caller(0) }
 my $fooref = delete $::{foo};
 $fooref -> ();
@@ -99,31 +99,13 @@ sub testwarn {
 
 {
     no warnings;
-    # Build the warnings mask dynamically
-    my ($default, $registered);
-    BEGIN {
-	for my $i (0..$warnings::LAST_BIT/2 - 1) {
-	    vec($default, $i, 2) = 1;
-	}
-	$registered = $default;
-	vec($registered, $warnings::LAST_BIT/2, 2) = 1;
-    }
-
     BEGIN { check_bits( ${^WARNING_BITS}, "\0" x $warnings::BYTES, 'all bits off via "no warnings"' ) }
     testwarn("\0" x $warnings::BYTES, 'no bits');
 
     use warnings;
-    BEGIN { check_bits( ${^WARNING_BITS}, $default,
+    BEGIN { check_bits( ${^WARNING_BITS}, "\x55" x $warnings::BYTES,
 			'default bits on via "use warnings"' ); }
-    BEGIN { testwarn($default, 'all'); }
-    # run-time :
-    # the warning mask has been extended by warnings::register
-    testwarn($registered, 'ahead of w::r');
-
-    use warnings::register;
-    BEGIN { check_bits( ${^WARNING_BITS}, $registered,
-			'warning bits on via "use warnings::register"' ) }
-    testwarn($registered, 'following w::r');
+    testwarn("\x55" x $warnings::BYTES, 'all');
 }
 
 
@@ -333,6 +315,36 @@ sub dbdie {
 END
     "caller should not SEGV for eval '' stack frames";
 
+TODO: {
+    local $::TODO = 'RT #7165: line number should be consistent for multiline subroutine calls';
+    fresh_perl_is(<<'EOP', "6\n9\n", {}, 'RT #7165: line number should be consistent for multiline subroutine calls');
+      sub tagCall {
+        my ($package, $file, $line) = caller;
+        print "$line\n";
+      }
+      
+      tagCall
+      "abc";
+      
+      tagCall
+      sub {};
+EOP
+}
+
 $::testing_caller = 1;
 
 do './op/caller.pl' or die $@;
+
+{
+    package RT129239;
+    BEGIN {
+        my ($pkg, $file, $line) = caller;
+        ::is $file, 'virtually/op/caller.t', "BEGIN block sees correct caller filename";
+        ::is $line, 12345,                   "BEGIN block sees correct caller line";
+        TODO: {
+            local $::TODO = "BEGIN blocks have wrong caller package [perl #129239]";
+            ::is $pkg, 'RT129239',               "BEGIN block sees correct caller package";
+        }
+#line 12345 "virtually/op/caller.t"
+    }
+}

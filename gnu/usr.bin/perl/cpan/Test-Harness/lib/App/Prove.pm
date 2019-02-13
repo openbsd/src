@@ -18,11 +18,11 @@ App::Prove - Implements the C<prove> command.
 
 =head1 VERSION
 
-Version 3.36
+Version 3.42
 
 =cut
 
-our $VERSION = '3.36_01';
+our $VERSION = '3.42';
 
 =head1 DESCRIPTION
 
@@ -59,6 +59,7 @@ BEGIN {
       verbose warnings_fail warnings_warn show_help show_man show_version
       state_class test_args state dry extensions ignore_exit rules state_manager
       normalize sources tapversion trap
+      statefile
     );
     __PACKAGE__->mk_methods(@ATTR);
 }
@@ -229,6 +230,7 @@ sub process_args {
             'M=s@'         => $self->{modules},
             'P=s@'         => $self->{plugins},
             'state=s@'     => $self->{state},
+            'statefile=s'  => \$self->{statefile},
             'directives'   => \$self->{directives},
             'h|help|?'     => \$self->{show_help},
             'H|man'        => \$self->{show_man},
@@ -279,7 +281,7 @@ sub _help {
 sub _color_default {
     my $self = shift;
 
-    return -t STDOUT && !$ENV{HARNESS_NOTTY} && !IS_WIN32;
+    return -t STDOUT && !$ENV{HARNESS_NOTTY};
 }
 
 sub _get_args {
@@ -479,7 +481,7 @@ sub run {
 
     unless ( $self->state_manager ) {
         $self->state_manager(
-            $self->state_class->new( { store => STATE_FILE } ) );
+            $self->state_class->new( { store => $self->statefile || STATE_FILE } ) );
     }
 
     if ( $self->show_help ) {

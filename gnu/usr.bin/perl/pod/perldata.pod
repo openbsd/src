@@ -25,7 +25,7 @@ be a chain of identifiers, separated by C<::> (or by the slightly
 archaic C<'>); all but the last are interpreted as names of packages,
 to locate the namespace in which to look up the final identifier
 (see L<perlmod/Packages> for details).  For a more in-depth discussion
-on identifiers, see L<Identifier parsing>.  It's possible to
+on identifiers, see L</Identifier parsing>.  It's possible to
 substitute for a simple identifier, an expression that produces a reference
 to the value at runtime.   This is described in more detail below
 and in L<perlref>.
@@ -212,12 +212,12 @@ example is C<${^GLOBAL_PHASE}>.
 
 =item 5.
 
-A sigil, followed by any single character in the range C<[\x80-\xFF]>
+A sigil, followed by any single character in the range C<[\xA1-\xAC\xAE-\xFF]>
 when not under C<S<"use utf8">>.  (Under C<S<"use utf8">>, the normal
 identifier rules given earlier in this section apply.)  Use of
 non-graphic characters (the C1 controls, the NO-BREAK SPACE, and the
-SOFT HYPHEN) is deprecated and will be forbidden in a future Perl
-version.  The use of the other characters is unwise, as these are all
+SOFT HYPHEN) has been disallowed since v5.26.0.
+The use of the other characters is unwise, as these are all
 reserved to have special meaning to Perl, and none of them currently
 do have special meaning, though this could change without notice.
 
@@ -236,9 +236,9 @@ where the first character is any one of the characters in the range
 C<[\x80-\xFF]> followed by ASCII word characters up to the trailing
 brace.
 
-The same caveats as the previous form apply:  The non-graphic characters
-are deprecated, it is unwise to use this form at all, and utf8ness makes
-a big difference.
+The same caveats as the previous form apply:  The non-graphic
+characters are no longer allowed with S<"use utf8">, it is unwise
+to use this form at all, and utf8ness makes a big difference.
 
 =back
 
@@ -320,12 +320,17 @@ are considered pretty much the same thing for nearly all purposes,
 references are strongly-typed, uncastable pointers with builtin
 reference-counting and destructor invocation.
 
+X<truth> X<falsehood> X<true> X<false> X<!> X<not> X<negation> X<0>
+X<boolean> X<bool>
 A scalar value is interpreted as FALSE in the Boolean sense
 if it is undefined, the null string or the number 0 (or its
 string equivalent, "0"), and TRUE if it is anything else.  The
 Boolean context is just a special kind of scalar context where no 
 conversion to a string or a number is ever performed.
-X<boolean> X<bool> X<true> X<false> X<truth>
+Negation of a true value by C<!> or C<not> returns a special false value.
+When evaluated as a string it is treated as C<"">, but as a number, it
+is treated as 0.  Most Perl operators
+that return true or false behave this way.
 
 There are actually two varieties of null strings (sometimes referred
 to as "empty" strings), a defined one and an undefined one.  The
@@ -399,18 +404,25 @@ leave nothing to doubt:
 
     $element_count = scalar(@whatever);
 
-If you evaluate a hash in scalar context, it returns false if the
-hash is empty.  If there are any key/value pairs, it returns true;
-more precisely, the value returned is a string consisting of the
+If you evaluate a hash in scalar context, it returns a false value if
+the hash is empty.  If there are any key/value pairs, it returns a
+true value.  A more precise definition is version dependent.
+
+Prior to Perl 5.25 the value returned was a string consisting of the
 number of used buckets and the number of allocated buckets, separated
 by a slash.  This is pretty much useful only to find out whether
 Perl's internal hashing algorithm is performing poorly on your data
 set.  For example, you stick 10,000 things in a hash, but evaluating
 %HASH in scalar context reveals C<"1/16">, which means only one out
 of sixteen buckets has been touched, and presumably contains all
-10,000 of your items.  This isn't supposed to happen.  If a tied hash
-is evaluated in scalar context, the C<SCALAR> method is called (with a
-fallback to C<FIRSTKEY>).
+10,000 of your items.  This isn't supposed to happen.
+
+As of Perl 5.25 the return was changed to be the count of keys in the
+hash. If you need access to the old behavior you can use
+C<Hash::Util::bucket_ratio()> instead.
+
+If a tied hash is evaluated in scalar context, the C<SCALAR> method is
+called (with a fallback to C<FIRSTKEY>).
 X<hash, scalar context> X<hash, bucket> X<bucket>
 
 You can preallocate space for a hash by assigning to the keys() function.
@@ -531,7 +543,7 @@ The infinity and not-a-number have their own special arithmetic rules.
 The general rule is that they are "contagious": C<Inf> plus one is
 C<Inf>, and C<NaN> plus one is C<NaN>.  Where things get interesting
 is when you combine infinities and not-a-numbers: C<Inf> minus C<Inf>
-and C<Inf> divided by C<INf> are C<NaN> (while C<Inf> plus C<Inf> is
+and C<Inf> divided by C<Inf> are C<NaN> (while C<Inf> plus C<Inf> is
 C<Inf> and C<Inf> times C<Inf> is C<Inf>).  C<NaN> is also curious
 in that it does not equal any number, I<including> itself:
 C<NaN> != C<NaN>.
@@ -606,6 +618,17 @@ compatibility with older scripts written before __DATA__ was
 introduced, __END__ behaves like __DATA__ in the top level script (but
 not in files loaded with C<require> or C<do>) and leaves the remaining
 contents of the file accessible via C<main::DATA>.
+
+The C<DATA> file handle by default has whatever PerlIO layers were
+in place when Perl read the file to parse the source.  Normally that
+means that the file is being read bytewise, as if it were encoded in
+Latin-1, but there are two major ways for it to be otherwise.  Firstly,
+if the C<__END__>/C<__DATA__> token is in the scope of a C<use utf8>
+pragma then the C<DATA> handle will be in UTF-8 mode.  And secondly,
+if the source is being read from perl's standard input then the C<DATA>
+file handle is actually aliased to the C<STDIN> file handle, and may
+be in UTF-8 mode because of the C<PERL_UNICODE> environment variable or
+perl's command-line switches.
 
 See L<SelfLoader> for more description of __DATA__, and
 an example of its use.  Note that you cannot read from the DATA
@@ -765,6 +788,53 @@ function:
 As of Perl 5.22, you can also use C<(undef)x2> instead of C<undef, undef>.
 (You can also do C<($x) x 2>, which is less useful, because it assigns to
 the same variable twice, clobbering the first value assigned.)
+
+When you assign a list of scalars to an array, all previous values in that
+array are wiped out and the number of elements in the array will now be equal to
+the number of elements in the right-hand list -- the list from which
+assignment was made.  The array will automatically resize itself to precisely
+accommodate each element in the right-hand list.
+
+    use warnings;
+    my (@xyz, $x, $y, $z);
+
+    @xyz = (1, 2, 3);
+    print "@xyz\n";                             # 1 2 3
+
+    @xyz = ('al', 'be', 'ga', 'de');
+    print "@xyz\n";                             # al be ga de
+
+    @xyz = (101, 102);
+    print "@xyz\n";                             # 101 102
+
+When, however, you assign a list of scalars to another list of scalars, the
+results differ according to whether the left-hand list -- the list being
+assigned to -- has the same, more or fewer elements than the right-hand list.
+
+    ($x, $y, $z) = (1, 2, 3);
+    print "$x $y $z\n";                         # 1 2 3
+
+    ($x, $y, $z) = ('al', 'be', 'ga', 'de');
+    print "$x $y $z\n";                         # al be ga
+
+    ($x, $y, $z) = (101, 102);
+    print "$x $y $z\n";                         # 101 102
+    # Use of uninitialized value $z in concatenation (.)
+    # or string at [program] line [line number].
+
+If the number of scalars in the left-hand list is less than that in the
+right-hand list, the "extra" scalars in the right-hand list will simply not be
+assigned.
+
+If the number of scalars in the left-hand list is greater than that in the
+left-hand list, the "missing" scalars will become undefined.
+
+    ($x, $y, $z) = (101, 102);
+    for my $el ($x, $y, $z) {
+        (defined $el) ? print "$el " : print "<undef>";
+    }
+    print "\n";
+                                                # 101 102 <undef>
 
 List assignment in scalar context returns the number of elements
 produced by the expression on the right side of the assignment:
@@ -1007,8 +1077,11 @@ returning a list of key/value pairs rather than just values:
     %h = (blonk => 2, foo => 3, squink => 5, bar => 8);
     %subset = %h{'foo', 'bar'}; # key/value hash slice
     # %subset is now (foo => 3, bar => 8)
+    %removed = delete %h{'foo', 'bar'};
+    # %removed is now (foo => 3, bar => 8)
+    # %h is now (blonk => 2, squink => 5)
 
-However, the result of such a slice cannot be localized, deleted or used
+However, the result of such a slice cannot be localized or used
 in assignment.  These are otherwise very much consistent with hash slices
 using the @ symbol.
 
@@ -1021,6 +1094,12 @@ of index/value pairs:
     @a = "a".."z";
     @list = %a[3,4,6];
     # @list is now (3, "d", 4, "e", 6, "g")
+    @removed = delete %a[3,4,6]
+    # @removed is now (3, "d", 4, "e", 6, "g")
+    # @list[3,4,6] are now undef
+
+Note that calling L<C<delete>|perlfunc/delete EXPR> on array values is
+strongly discouraged.
 
 =head2 Typeglobs and Filehandles
 X<typeglob> X<filehandle> X<*>

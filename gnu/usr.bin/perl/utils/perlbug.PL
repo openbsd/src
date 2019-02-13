@@ -20,7 +20,7 @@ chdir dirname($0);
 $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
-open OUT, ">$file" or die "Can't create $file: $!";
+open OUT, ">", $file or die "Can't create $file: $!";
 
 # get patchlevel.h timestamp
 
@@ -65,6 +65,8 @@ use File::Spec;		# keep perlbug Perl 5.005 compatible
 use Getopt::Std;
 use File::Basename 'basename';
 
+$Getopt::Std::STANDARD_HELP_VERSION = 1;
+
 sub paraprint;
 
 BEGIN {
@@ -77,9 +79,11 @@ BEGIN {
     $::HaveTemp = ($@ eq "");
     eval { require Module::CoreList; };
     $::HaveCoreList = ($@ eq "");
+    eval { require Text::Wrap; };
+    $::HaveWrap = ($@ eq "");
 };
 
-my $Version = "1.40";
+our $VERSION = "1.41";
 
 #TODO:
 #       make sure failure (transmission-wise) of Mail::Send is accounted for.
@@ -94,6 +98,8 @@ my( $file, $usefile, $cc, $address, $bugaddress, $testaddress, $thanksaddress,
     %opt, $have_attachment, $attachments, $has_patch, $mime_boundary
 );
 
+my $running_noninteractively = !-t STDIN;
+
 my $perl_version = $^V ? sprintf("%vd", $^V) : $];
 
 my $config_tag2 = "$perl_version - $Config{cf_time}";
@@ -102,7 +108,7 @@ Init();
 
 if ($opt{h}) { Help(); exit; }
 if ($opt{d}) { Dump(*STDOUT); exit; }
-if (!-t STDIN && !($ok and not $opt{n})) {
+if ($running_noninteractively && !$opt{t} && !($ok and not $opt{n})) {
     paraprint <<"EOF";
 Please use $progname interactively. If you want to
 include a file, you can use the -f switch.
@@ -181,6 +187,9 @@ EOF
     lc $alt;
 }
 
+sub HELP_MESSAGE { Help(); exit; }
+sub VERSION_MESSAGE { print "perlbug version $VERSION\n"; }
+
 sub Init {
     # -------- Setup --------
 
@@ -188,13 +197,6 @@ sub Init {
     $Is_VMS = $^O eq 'VMS';
     $Is_Linux = lc($^O) eq 'linux';
     $Is_OpenBSD = lc($^O) eq 'openbsd';
-
-    if (!getopts("Adhva:s:b:f:F:r:e:SCc:to:n:T:p:", \%opt)) { Help(); exit; };
-
-    # This comment is needed to notify metaconfig that we are
-    # using the $perladmin, $cf_by, and $cf_time definitions.
-
-    # -------- Configuration ---------
 
     # perlbug address
     $bugaddress = 'perlbug@perl.org';
@@ -204,6 +206,16 @@ sub Init {
 
     # Thanks address
     $thanksaddress = 'perl-thanks@perl.org';
+
+    # Defaults if getopts fails.
+    $address = (basename ($0) =~ /^perlthanks/i) ? $thanksaddress : $bugaddress;
+    $cc = $::Config{'perladmin'} || $::Config{'cf_email'} || $::Config{'cf_by'} || '';
+
+    HELP_MESSAGE() unless getopts("Adhva:s:b:f:F:r:e:SCc:to:n:T:p:", \%opt);
+
+    # This comment is needed to notify metaconfig that we are
+    # using the $perladmin, $cf_by, and $cf_time definitions.
+    # -------- Configuration ---------
 
     if (basename ($0) =~ /^perlthanks/i) {
 	# invoked as perlthanks
@@ -237,7 +249,7 @@ sub Init {
 
     # We have one or more attachments
     $have_attachment = ($opt{p} || 0);
-    $mime_boundary = ('-' x 12) . "$Version.perlbug" if $have_attachment;
+    $mime_boundary = ('-' x 12) . "$VERSION.perlbug" if $have_attachment;
 
     # Comma-separated list of attachments
     $attachments = $opt{p} || "";
@@ -346,14 +358,15 @@ sub Query {
 This program provides an easy way to send a thank-you message back to the
 authors and maintainers of perl.
 
-If you wish to submit a bug report, please run it without the -T flag.
+If you wish to submit a bug report, please run it without the -T flag
+(or run the program perlbug rather than perlthanks)
 EOF
 	} else {
 	    paraprint <<"EOF";
 This program provides an easy way to create a message reporting a
 bug in the core perl distribution (along with tests or patches)
 to the volunteers who maintain perl at $address.  To send a thank-you
-note to $thanksaddress instead of a bug report, please use the -T flag.
+note to $thanksaddress instead of a bug report, please run 'perlthanks'.
 
 Please do not use $0 to send test messages, test whether perl
 works, or to report bugs in perl modules from CPAN.
@@ -607,7 +620,7 @@ EOF
 
     print REP <<EOF;
 This is a $reptype report for perl from $from,
-generated with the help of perlbug $Version running under perl $perl_version.
+generated with the help of perlbug $VERSION running under perl $perl_version.
 
 EOF
 
@@ -751,7 +764,7 @@ sub Edit {
 	$ed = $entry unless $entry eq '';
     }
 
-    _edit_file($ed);
+    _edit_file($ed) unless $running_noninteractively;
 }
 
 sub _edit_file {
@@ -828,16 +841,14 @@ a few options. You can:
 EOF
       retry:
         print $menu;
-	    my $action =  _prompt('', "Action (Send/Display/Edit/Subject/Save to File)");;
+	    my $action =  _prompt('', "Action (Send/Display/Edit/Subject/Save to File)",
+	        $opt{t} ? 'q' : '');
         print "\n";
 	    if ($action =~ /^(f|sa)/i) { # <F>ile/<Sa>ve
             if ( SaveMessage() ) { exit }
 	    } elsif ($action =~ /^(d|l|sh)/i ) { # <D>isplay, <L>ist, <Sh>ow
 		# Display the message
-		open(REP, '<:raw', $filename) or die "Couldn't open file '$filename': $!\n";
-		binmode(REP, ':raw :crlf') if $Is_MSWin32;
-		while (<REP>) { print $_ }
-		close(REP) or die "Error closing report file '$filename': $!";
+		print _read_report($filename);
 		if ($have_attachment) {
 		    print "\n\n---\nAttachment(s):\n";
 		    for my $att (split /\s*,\s*/, $attachments) { print "    $att\n"; }
@@ -879,7 +890,7 @@ sub TrivialSubject {
     if ($subject =~
 	/^(y(es)?|no?|help|perl( (bug|problem))?|bug|problem)$/i ||
 	length($subject) < 4 ||
-	$subject !~ /\s/) {
+	($subject !~ /\s/ && ! $opt{t})) { # non-whitespace is accepted in test mode
 	print "\nThe subject you entered wasn't very descriptive. Please try again.\n\n";
         return 1;
     } else {
@@ -1014,6 +1025,7 @@ sub _prompt {
     }
     print $prompt. ($default ? " [$default]" :''). ": ";
 	my $result = scalar(<>);
+    return $default if !defined $result; # got eof
     chomp($result);
 	$result =~ s/^\s*(.*?)\s*$/$1/s;
     if ($default && $result eq '') {
@@ -1080,13 +1092,29 @@ ATTACHMENT
     return $attach;
 }
 
+sub _read_report {
+    my $fname = shift;
+    my $content;
+    open( REP, "<:raw", $fname ) or die "Couldn't open file '$fname': $!\n";
+    binmode(REP, ':raw :crlf') if $Is_MSWin32;
+    # wrap long lines to make sure the report gets delivered
+    local $Text::Wrap::columns = 900;
+    local $Text::Wrap::huge = 'overflow';
+    while (<REP>) {
+        if ($::HaveWrap && /\S/) { # wrap() would remove empty lines
+            $content .= Text::Wrap::wrap(undef, undef, $_);
+        } else {
+            $content .= $_;
+        }
+    }
+    close(REP) or die "Error closing report file '$fname': $!";
+    return $content;
+}
+
 sub build_complete_message {
     my $content = _build_header(%{_message_headers()}) . "\n\n";
     $content .= _add_body_start() if $have_attachment;
-    open( REP, "<:raw", $filename ) or die "Couldn't open file '$filename': $!\n";
-    binmode(REP, ':raw :crlf') if $Is_MSWin32;
-    while (<REP>) { $content .= $_; }
-    close(REP) or die "Error closing report file '$filename': $!";
+    $content .= _read_report($filename);
     $content .= _add_attachments() if $have_attachment;
     return $content;
 }
@@ -1094,6 +1122,10 @@ sub build_complete_message {
 sub save_message_to_disk {
     my $file = shift;
 
+        if (-e $file) {
+            my $response = _prompt( '', "Overwrite existing '$file'", 'n' );
+            return undef unless $response =~ / yes | y /xi;
+        }
         open OUTFILE, '>:raw', $file or do { warn  "Couldn't open '$file': $!\n"; return undef};
         binmode(OUTFILE, ':raw :crlf') if $Is_MSWin32;
 
@@ -1137,10 +1169,7 @@ sub _send_message_mailsend {
     $fh = $msg->open;
     binmode($fh, ':raw');
     print $fh _add_body_start() if $have_attachment;
-    open(REP, "<:raw", $filename) or die "Couldn't open '$filename': $!\n";
-    binmode(REP, ':raw :crlf') if $Is_MSWin32;
-    while (<REP>) { print $fh $_ }
-    close(REP) or die "Error closing $filename: $!";
+    print $fh _read_report($filename);
     print $fh _add_attachments() if $have_attachment;
     $fh->close or die "Error sending mail: $!";
 
@@ -1243,6 +1272,8 @@ S<[ B<-S> ]> S<[ B<-t> ]>  S<[ B<-d> ]>  S<[ B<-A> ]>  S<[ B<-h> ]> S<[ B<-T> ]>
 
 B<perlbug> S<[ B<-v> ]> S<[ B<-r> I<returnaddress> ]>
  S<[ B<-A> ]> S<[ B<-ok> | B<-okay> | B<-nok> | B<-nokay> ]>
+
+B<perlthanks>
 
 =head1 DESCRIPTION
 
@@ -1396,8 +1427,8 @@ description of what's wrong is fine.
 
 =item Can you use C<perlbug> to submit a thank-you note?
 
-Yes, you can do this by using the C<-T> option.
-Thank-you notes are good. It makes people
+Yes, you can do this by either using the C<-T> option, or by invoking
+the program as C<perlthanks>. Thank-you notes are good. It makes people
 smile. 
 
 =back
@@ -1524,6 +1555,8 @@ supply one on the command line.
 =item B<-t>
 
 Test mode.  The target address defaults to B<perlbug-test@perl.org>.
+Also makes it possible to command perlbug from a pipe or file, for
+testing purposes.
 
 =item B<-T>
 

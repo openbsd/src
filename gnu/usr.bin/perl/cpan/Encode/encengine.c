@@ -102,55 +102,55 @@ do_encode(const encpage_t * enc, const U8 * src, STRLEN * slen, U8 * dst,
     U8 *dend = d + dlen, *dlast = d;
     int code = 0;
     while (s < send) {
-    const encpage_t *e = enc;
-    U8 byte = *s;
-    while (byte > e->max)
-        e++;
-    if (byte >= e->min && e->slen && (approx || !(e->slen & 0x80))) {
-        const U8 *cend = s + (e->slen & 0x7f);
-        if (cend <= send) {
-        STRLEN n;
-        if ((n = e->dlen)) {
-            const U8 *out = e->seq + n * (byte - e->min);
-            U8 *oend = d + n;
-            if (dst) {
-            if (oend <= dend) {
-                while (d < oend)
-                *d++ = *out++;
+        const encpage_t *e = enc;
+        U8 byte = *s;
+        while (byte > e->max)
+            e++;
+        if (byte >= e->min && e->slen && (approx || !(e->slen & 0x80))) {
+            const U8 *cend = s + (e->slen & 0x7f);
+            if (cend <= send) {
+                STRLEN n;
+                if ((n = e->dlen)) {
+                    const U8 *out = e->seq + n * (byte - e->min);
+                    U8 *oend = d + n;
+                    if (dst) {
+                        if (oend <= dend) {
+                            while (d < oend)
+                                *d++ = *out++;
+                        }
+                        else {
+                            /* Out of space */
+                            code = ENCODE_NOSPACE;
+                            break;
+                        }
+                    }
+                    else
+                        d = oend;
+                }
+                enc = e->next;
+                s++;
+                if (s == cend) {
+                    if (approx && (e->slen & 0x80))
+                        code = ENCODE_FALLBACK;
+                    last = s;
+                    if (term && (STRLEN)(d-dlast) == tlen && memEQ(dlast, term, tlen)) {
+                        code = ENCODE_FOUND_TERM;
+                        break;
+                    }
+                    dlast = d;
+                }
             }
             else {
-                /* Out of space */
-                code = ENCODE_NOSPACE;
+                /* partial source character */
+                code = ENCODE_PARTIAL;
                 break;
             }
-            }
-            else
-            d = oend;
-        }
-        enc = e->next;
-        s++;
-        if (s == cend) {
-            if (approx && (e->slen & 0x80))
-            code = ENCODE_FALLBACK;
-            last = s;
-            if (term && (STRLEN)(d-dlast) == tlen && memEQ(dlast, term, tlen)) {
-              code = ENCODE_FOUND_TERM;
-              break;
-            }
-            dlast = d;
-        }
         }
         else {
-        /* partial source character */
-        code = ENCODE_PARTIAL;
-        break;
+            /* Cannot represent */
+            code = ENCODE_NOREP;
+            break;
         }
-    }
-    else {
-        /* Cannot represent */
-        code = ENCODE_NOREP;
-        break;
-    }
     }
     *slen = last - src;
     *dout = d - dst;

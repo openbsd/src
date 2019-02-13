@@ -431,7 +431,7 @@ OUTPUT:
 void
 CLONE(char* classname)
 CODE:
-    if (0 == strcmp(classname, "Hash::Util::FieldHash")) {
+    if (strEQ(classname, "Hash::Util::FieldHash")) {
         HUF_global(aTHX_ HUF_CLONE);
         HUF_fix_objects(aTHX);
     }

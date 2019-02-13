@@ -34,7 +34,7 @@ Specified line by line via B<-e> or B<-E> switches on the command line.
 
 Contained in the file specified by the first filename on the command line.
 (Note that systems supporting the C<#!> notation invoke interpreters this
-way. See L<Location of Perl>.)
+way. See L</Location of Perl>.)
 
 =item 3.
 
@@ -379,11 +379,14 @@ X<-D> X<DEBUGGING> X<-DDEBUGGING>
 
 =item B<-D>I<number>
 
-sets debugging flags.  To watch how it executes your program, use
-B<-Dtls>.  (This works only if debugging is compiled into your
-Perl.)  Another nice value is B<-Dx>, which lists your compiled
-syntax tree.  And B<-Dr> displays compiled regular expressions;
-the format of the output is explained in L<perldebguts>.
+sets debugging flags. This switch is enabled only if your perl binary has
+been built with debugging enabled: normal production perls won't have
+been.
+
+For example, to watch how perl executes your program, use B<-Dtls>.
+Another nice value is B<-Dx>, which lists your compiled syntax tree, and
+B<-Dr> displays compiled regular expressions; the format of the output is
+explained in L<perldebguts>.
 
 As an alternative, specify a number instead of list of letters (e.g.,
 B<-D14> is equivalent to B<-Dtls>):
@@ -403,7 +406,6 @@ B<-D14> is equivalent to B<-Dtls>):
       2048  u  Tainting checks
       4096  U  Unofficial, User hacking (reserved for private,
                unreleased use)
-      8192  H  Hash dump -- usurps values()
      16384  X  Scratchpad allocation
      32768  D  Cleaning up
      65536  S  Op slab allocation
@@ -429,8 +431,7 @@ All these flags require B<-DDEBUGGING> when you compile the Perl
 executable (but see C<:opd> in L<Devel::Peek> or L<re/'debug' mode>
 which may change this).
 See the F<INSTALL> file in the Perl source distribution
-for how to do this.  This flag is automatically set if you include B<-g>
-option when C<Configure> asks you about optimizer/debugger flags.
+for how to do this.
 
 If you're just trying to get a print out of each line of Perl code
 as it executes, the way that C<sh -x> provides for shell scripts,
@@ -499,7 +500,7 @@ X<-F>
 
 specifies the pattern to split on for B<-a>. The pattern may be
 surrounded by C<//>, C<"">, or C<''>, otherwise it will be put in single
-quotes. You can't use literal whitespace in the pattern.
+quotes. You can't use literal whitespace or NUL characters in the pattern.
 
 B<-F> implicitly sets both B<-a> and B<-n>.
 
@@ -662,14 +663,19 @@ X<-m> X<-M>
 =item B<-[mM]>[B<->]I<module=arg[,arg]...>
 
 B<-m>I<module> executes C<use> I<module> C<();> before executing your
-program.
+program.  This loads the module, but does not call its C<import> method,
+so does not import subroutines and does not give effect to a pragma.
 
 B<-M>I<module> executes C<use> I<module> C<;> before executing your
-program.  You can use quotes to add extra code after the module name,
+program.  This loads the module and calls its C<import> method, causing
+the module to have its default effect, typically importing subroutines
+or giving effect to a pragma.
+You can use quotes to add extra code after the module name,
 e.g., C<'-MI<MODULE> qw(foo bar)'>.
 
 If the first character after the B<-M> or B<-m> is a dash (B<->)
 then the 'use' is replaced with 'no'.
+This makes no difference for B<-m>.
 
 A little builtin syntactic sugar means you can also say
 B<-mI<MODULE>=foo,bar> or B<-MI<MODULE>=foo,bar> as a shortcut for
@@ -679,7 +685,8 @@ C<use module split(/,/,q{foo,bar})>.  Note that the C<=> form
 removes the distinction between B<-m> and B<-M>; that is,
 B<-mI<MODULE>=foo,bar> is the same as B<-MI<MODULE>=foo,bar>.
 
-A consequence of this is that B<-MI<MODULE>=number> never does a version check,
+A consequence of the C<split> formulation
+is that B<-MI<MODULE>=number> never does a version check,
 unless C<I<MODULE>::import()> itself is set up to do a version check, which
 could happen for example if I<MODULE> inherits from L<Exporter>.
 
@@ -993,9 +1000,9 @@ used.
 =item PERL5LIB
 X<PERL5LIB>
 
-A list of directories in which to look for Perl library
-files before looking in the standard library and the current
-directory.  Any architecture-specific and version-specific directories,
+A list of directories in which to look for Perl library files before
+looking in the standard library.
+Any architecture-specific and version-specific directories,
 such as F<version/archname/>, F<version/>, or F<archname/> under the
 specified locations are automatically included if they exist, with this
 lookup done at interpreter startup time.  In addition, any directories
@@ -1119,7 +1126,7 @@ A pseudolayer that enables a flag in the layer below to tell Perl
 that output should be in utf8 and that input should be regarded as
 already in valid utf8 form. B<WARNING: It does not check for validity and as such
 should be handled with extreme caution for input, because security violations
-can occur with non-shortest UTF-8 encodings, etc.> Generally C<:encoding(utf8)> is
+can occur with non-shortest UTF-8 encodings, etc.> Generally C<:encoding(UTF-8)> is
 the best option when reading UTF-8 encoded data.
 
 =item :win32
@@ -1176,7 +1183,7 @@ support.
 X<PERLLIB>
 
 A list of directories in which to look for Perl library
-files before looking in the standard library and the current directory.
+files before looking in the standard library.
 If PERL5LIB is defined, PERLLIB is not used.
 
 The PERLLIB environment variable is completely ignored when Perl
@@ -1377,10 +1384,31 @@ a boolean variable. Setting this to C<"1"> is not the right way to
 your shell before starting Perl).  See the description of the B<-C>
 switch for more information.
 
+=item PERL_USE_UNSAFE_INC
+X<PERL_USE_UNSAFE_INC>
+
+If perl has been configured to not have the current directory in
+L<C<@INC>|perlvar/@INC> by default, this variable can be set to C<"1">
+to reinstate it.  It's primarily intended for use while building and
+testing modules that have not been updated to deal with "." not being in
+C<@INC> and should not be set in the environment for day-to-day use.
+
 =item SYS$LOGIN (specific to the VMS port)
 X<SYS$LOGIN>
 
 Used if chdir has no argument and HOME and LOGDIR are not set.
+
+=item PERL_INTERNAL_RAND_SEED
+X<PERL_INTERNAL_RAND_SEED>
+
+Set to a non-negative integer to seed the random number generator used
+internally by perl for a variety of purposes.
+
+Ignored if perl is run setuid or setgid.  Used only for some limited
+startup randomization (hash keys) if C<-T> or C<-t> perl is started
+with tainting enabled.
+
+Perl may be built to ignore this variable.
 
 =back
 

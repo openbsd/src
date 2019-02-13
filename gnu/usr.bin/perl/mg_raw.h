@@ -78,6 +78,8 @@
       "/* utf8 'w' Cached UTF-8 information */" },
     { 'x', "want_vtbl_substr | PERL_MAGIC_VALUE_MAGIC",
       "/* substr 'x' substr() lvalue */" },
+    { 'Y', "want_vtbl_nonelem | PERL_MAGIC_VALUE_MAGIC",
+      "/* nonelem 'Y' Array element that does not exist */" },
     { 'y', "want_vtbl_defelem | PERL_MAGIC_VALUE_MAGIC",
       "/* defelem 'y' Shadow \"foreach\" iterator variable / smart parameter vivification */" },
     { '\\', "want_vtbl_lvref",

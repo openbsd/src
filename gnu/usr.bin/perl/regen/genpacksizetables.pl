@@ -3,7 +3,7 @@
 # it will generate EBCDIC too. (TODO)
 use strict;
 use Encode;
-require 'regen/regen_lib.pl';
+require './regen/regen_lib.pl';
 
 sub make_text {
     my ($chrmap, $letter, $unpredictable, $nocsum, $size, $condition) = @_;

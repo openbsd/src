@@ -6,6 +6,66 @@ Changes - public release history for Data::Dumper
 
 =over 8
 
+=item 2.167_02  (Aug  4 2017)
+
+Attempt to work around XS deparse issues on old perls.
+According to the few old perls at my disposure, this now repairs,
+for example 5.18, but 5.8.9 still barfs. My debugging hasn't
+really come up with much since all changes other than the deparse
+change look benign to me.
+Can someone who uses ancient perls please step up and take a look?
+--Steffen
+
+=item 2.167_01  (Jul 31 2017)
+
+CPAN dev release with the accumulated changes from core perl.
+
+=item 2.166 (Nov 29 2016)
+
+Reduce memory usage by not importing from Carp
+Reduce memory usage by removing unused overload require.
+
+=item 2.165 (Nov 20 2016)
+
+Remove impediment to compiling under C++11.
+
+=item 2.164 (Nov 12 2016)
+
+The XS implementation now handles the C<Deparse> option, so using it no
+longer forces use of the pure-Perl version.
+
+=item 2.161 (Jul 11 2016)
+
+Perl 5.12 fix/workaround until fixed PPPort release.
+
+Pre-5.12 fixes for test dependency.
+
+=item 2.160 (Jul 3 2016)
+
+Now handles huge inputs on 64bit perls.
+
+Add Trailingcomma option. This is as suggested in RT#126813.
+
+Significant refactoring of XS implementation.
+
+Pure Perl implementation fixes in corner cases ("\n" dumped raw").
+
+=item 2.154 (Sep 18 2014)
+
+Most notably, this release fixes CVE-2014-4330:
+
+  Don't recurse infinitely in Data::Dumper
+
+  Add a configuration variable/option to limit recursion when dumping
+  deep data structures.
+  [...]
+  This patch addresses CVE-2014-4330.  This bug was found and
+  reported by: LSE Leading Security Experts GmbH employee Markus
+  Vervier.
+
+On top of that, there are several minor big fixes and improvements,
+see "git log" if the core perl distribution for details.
+
 =item 2.151 (Mar 7 2014)
 
 A "useqq" implementation for the XS version of Data::Dumper.
@@ -328,7 +388,7 @@ C<require 5.002>.
 MLDBM example removed (as its own module, it has a separate CPAN 
 reality now).
 
-Fixed bugs in handling keys with weird characters.  Perl can be
+Fixed bugs in handling keys with wierd characters.  Perl can be
 tripped up in its implicit quoting of the word before '=>'.  The
 fix: C<Data::Dumper::Purity>, when set, always triggers quotes
 around hash keys.

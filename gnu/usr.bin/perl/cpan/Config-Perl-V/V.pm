@@ -8,8 +8,8 @@ use warnings;
 use Config;
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
-$VERSION     = "0.25";
-@ISA         = ("Exporter");
+$VERSION     = "0.29";
+@ISA         = qw( Exporter );
 @EXPORT_OK   = qw( plv2hash summary myconfig signature );
 %EXPORT_TAGS = (
     all => [ @EXPORT_OK  ],
@@ -54,6 +54,7 @@ my %BTD = map { $_ => 0 } qw(
     PERL_MEM_LOG_STDERR
     PERL_MEM_LOG_TIMESTAMP
     PERL_NEW_COPY_ON_WRITE
+    PERL_OP_PARENT
     PERL_PERTURB_KEYS_DETERMINISTIC
     PERL_PERTURB_KEYS_DISABLED
     PERL_PERTURB_KEYS_RANDOM
@@ -61,6 +62,7 @@ my %BTD = map { $_ => 0 } qw(
     PERL_RELOCATABLE_INCPUSH
     PERL_USE_DEVEL
     PERL_USE_SAFE_PUTENV
+    SILENT_NO_TAINT_SUPPORT
     UNLINK_ALL_VERSIONS
     USE_ATTRIBUTES_FOR_PERLIO
     USE_FAST_STDIO
@@ -159,7 +161,7 @@ my @config_vars = qw(
     useithreads usemultiplicity
     useperlio d_sfio uselargefiles usesocks
     use64bitint use64bitall uselongdouble
-    usemymalloc bincompat5005
+    usemymalloc default_inc_excludes_dot bincompat5005
 
     cc ccflags
     optimize
@@ -188,8 +190,7 @@ my %empty_build = (
     patches => [],
     );
 
-sub _make_derived
-{
+sub _make_derived {
     my $conf = shift;
 
     for ( [ lseektype		=> "Off_t"	],
@@ -228,11 +229,12 @@ sub _make_derived
 	$conf->{config}{git_describe} ||= $conf->{config}{perl_patchlevel};
 	}
 
+    $conf->{config}{$_} ||= "undef" for grep m/^(?:use|def)/ => @config_vars;
+
     $conf;
     } # _make_derived
 
-sub plv2hash
-{
+sub plv2hash {
     my %config;
 
     my $pv = join "\n" => @_;
@@ -251,6 +253,15 @@ sub plv2hash
     if ($pv =~ m/^\s+(Snapshot of:)\s+(\S+)/) {
 	$config{git_commit_id_title} = $1;
 	$config{git_commit_id}       = $2;
+	}
+
+    # these are always last on line and can have multiple quotation styles
+    for my $k (qw( ccflags ldflags lddlflags )) {
+	$pv =~ s{, \s* $k \s*=\s* (.*) \s*$}{}mx or next;
+	my $v = $1;
+	$v =~ s/\s*,\s*$//;
+	$v =~ s/^(['"])(.*)\1$/$2/;
+	$config{$k} = $v;
 	}
 
     if (my %kv = ($pv =~ m{\b
@@ -297,11 +308,13 @@ sub plv2hash
 	});
     } # plv2hash
 
-sub summary
-{
+sub summary {
     my $conf = shift || myconfig ();
-    ref $conf eq "HASH" &&
-	exists $conf->{config} && exists $conf->{build} or return;
+    ref $conf eq "HASH"
+    && exists $conf->{config}
+    && exists $conf->{build}
+    && ref $conf->{config} eq "HASH"
+    && ref $conf->{build}  eq "HASH" or return;
 
     my %info = map {
 	exists $conf->{config}{$_} ? ( $_ => $conf->{config}{$_} ) : () }
@@ -310,26 +323,30 @@ sub summary
 	    d_longdbl d_longlong use64bitall use64bitint useithreads
 	    uselongdouble usemultiplicity usemymalloc useperlio useshrplib 
 	    doublesize intsize ivsize nvsize longdblsize longlongsize lseeksize
+	    default_inc_excludes_dot
 	    );
     $info{$_}++ for grep { $conf->{build}{options}{$_} } keys %{$conf->{build}{options}};
 
     return \%info;
     } # summary
 
-sub signature
-{
-    eval { require Digest::MD5 };
-    $@ and return "00000000000000000000000000000000";
+sub signature {
+    my $no_md5 = "0" x 32;
+    my $conf = summary (shift) or return $no_md5;
 
-    my $conf = shift || summary ();
+    eval { require Digest::MD5 };
+    $@ and return $no_md5;
+
+    $conf->{cc} =~ s{.*\bccache\s+}{};
+    $conf->{cc} =~ s{.*[/\\]}{};
+
     delete $conf->{config_args};
     return Digest::MD5::md5_hex (join "\xFF" => map {
 	"$_=".(defined $conf->{$_} ? $conf->{$_} : "\xFE");
 	} sort keys %$conf);
     } # signature
 
-sub myconfig
-{
+sub myconfig {
     my $args = shift;
     my %args = ref $args eq "HASH"  ? %$args :
                ref $args eq "ARRAY" ? @$args : ();
@@ -537,7 +554,7 @@ H.Merijn Brand <h.m.brand@xs4all.nl>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009-2015 H.Merijn Brand
+Copyright (C) 2009-2017 H.Merijn Brand
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

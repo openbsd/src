@@ -35,15 +35,10 @@ esac
 # but that caused too much grief.
 # vendorlib="/System/Library/Perl/${version}"; # Apple-supplied modules
 
-# BSD paths
-case "$prefix" in
-'')	# Default install; use non-system directories
-	prefix='/usr/local';
-	siteprefix='/usr/local';
-	;;
-'/usr')	# We are building/replacing the built-in perl
-	prefix='/';
-	installprefix='/';
+case "$darwin_distribution" in
+$define) # We are building/replacing the built-in perl
+	prefix='/usr';
+	installprefix='/usr';
 	bin='/usr/bin';
 	siteprefix='/usr/local';
 	# We don't want /usr/bin/HEAD issues.
@@ -67,8 +62,6 @@ case "$prefix" in
 	# New style.
 	siteman1dir='/usr/local/share/man/man1';
 	siteman3dir='/usr/local/share/man/man3';
-	;;
-  *)	# Anything else; use non-system directories, use Configure defaults
 	;;
 esac
 
@@ -189,11 +182,13 @@ esac
 # From http://ftp.netbsd.org/pub/pkgsrc/current/pkgsrc/mk/platform/Darwin.mk
 # and https://trac.macports.org/wiki/XcodeVersionInfo
 # and https://trac.macports.org/wiki/UsingTheRightCompiler
+# and https://gist.github.com/yamaya/2924292
+# and http://opensource.apple.com/source/clang/
 #
-# OS, Kernel, Xcode Version
-# Note that Xcode gets updates on older systems sometimes.
-# pkgsrc generally expects that the most up-to-date xcode available for
-# an OS version is installed
+# Note that Xcode gets updates on older systems sometimes, and in
+# general that the OS levels and XCode levels are not synchronized
+# since new releases of XCode usually support both some new and some
+# old OS releases.
 #
 # Note that Apple hijacks the clang preprocessor symbols __clang_major__
 # and __clang_minor__ so they cannot be used (easily) to detect the
@@ -243,7 +238,8 @@ esac
 #                                 7.1   (clang 3.7 as 7.0/700.1.76)
 #                                 7.2   (clang 3.7 as 7.0.2/700.1.81)
 #                                 7.2.1 (clang 3.7 as 7.0.2/700.1.81)
-#                                 7.3   (clang 3.7 as 7.3.0/703.0.29)
+#                                 7.3   (clang 3.8 as 7.3.0/703.0.29)
+# Sierra          10.12.x 16.x.y  8.0.0 (clang 3.8 as 8.0/800.0.38)
 #
 
 # Processors Supported
@@ -294,7 +290,7 @@ case "$osvers" in  # Note: osvers is the kernel version, not the 10.x
 [7-9].*)   # OS X 10.3.x - 10.5.x
    lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
    case "$ld" in
-       *MACOSX_DEVELOPMENT_TARGET*) ;;
+       *MACOSX_DEPLOYMENT_TARGET*) ;;
        *) ld="env MACOSX_DEPLOYMENT_TARGET=10.3 ${ld}" ;;
    esac
    ;;
@@ -345,6 +341,14 @@ EOM
 EOM
       exit 1
     esac
+
+    # The X in 10.X
+    prodvers_minor=$(echo $prodvers|awk -F. '{print $2}')
+
+    # macOS (10.12) deprecated syscall().
+    if [ "$prodvers_minor" -ge 12 ]; then
+        d_syscall='undef'
+    fi
 
    lddlflags="${ldflags} -bundle -undefined dynamic_lookup"
    ;;
@@ -507,3 +511,20 @@ if test "$d_unsetenv" = "$define" -a \
         ccflags="$ccflags -DPERL_USE_SAFE_PUTENV"
 fi
 EOOVER
+
+# if you use a newer toolchain before OS X 10.9 these functions may be
+# incorrectly detected, so disable them
+# OS X 10.10.x corresponds to kernel 14.x
+case "$osvers" in
+    [1-9].*|1[0-3].*)
+	d_linkat=undef
+	d_openat=undef
+	d_renameat=undef
+	d_unlinkat=undef
+	d_fchmodat=undef
+	;;
+esac
+
+# mkostemp() was autodetected as present but found to not be linkable
+# on 15.6.0.  Unknown what other OS versions are affected.
+d_mkostemp=undef

@@ -19,7 +19,7 @@ my $caller = (caller)[1];
 die "Can't figure out which test to run from filename '$caller'"
     unless $caller =~ m!((?:op|re)/[-_a-z0-9A-Z]+)_thr\.t\z!;
 
-my $file = "$1.t";
+my $file = "./$1.t";
 
 $::running_as_thread = "running tests in a new thread";
 require $file;
@@ -34,9 +34,9 @@ note('running tests in a new thread');
 # Same on AIX
 my $curr = threads->create({
                             stack_size => $^O eq 'hpux'   ? 524288 :
-                                          $^O eq 'darwin' ? 1000000:
+                                          $^O eq 'darwin' ? 2000000:
                                           $^O eq 'VMS'    ? 150000 :
-                                          $^O eq 'aix'    ? 1000000 : 0,
+                                          $^O eq 'aix'    ? 1500000 : 0,
                            }, sub {
 			       run_tests();
 			       return defined &curr_test ? curr_test() : ()

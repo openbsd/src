@@ -1,13 +1,13 @@
 package File::Spec::OS2;
 
 use strict;
-use vars qw(@ISA $VERSION);
+use Cwd ();
 require File::Spec::Unix;
 
-$VERSION = '3.63_01';
+our $VERSION = '3.74';
 $VERSION =~ tr/_//d;
 
-@ISA = qw(File::Spec::Unix);
+our @ISA = qw(File::Spec::Unix);
 
 sub devnull {
     return "/dev/nul";
@@ -28,11 +28,6 @@ sub path {
     my @path = split(';',$path);
     foreach (@path) { $_ = '.' if $_ eq '' }
     return @path;
-}
-
-sub _cwd {
-    # In OS/2 the "require Cwd" is unnecessary bloat.
-    return Cwd::sys_cwd();
 }
 
 sub tmpdir {
@@ -148,7 +143,7 @@ sub abs2rel {
 
     # Figure out the effective $base and clean it up.
     if ( !defined( $base ) || $base eq '' ) {
-	$base = $self->_cwd();
+	$base = Cwd::getcwd();
     } elsif ( ! $self->file_name_is_absolute( $base ) ) {
         $base = $self->rel2abs( $base ) ;
     } else {
@@ -205,7 +200,7 @@ sub rel2abs {
     if ( ! $self->file_name_is_absolute( $path ) ) {
 
         if ( !defined( $base ) || $base eq '' ) {
-	    $base = $self->_cwd();
+	    $base = Cwd::getcwd();
         }
         elsif ( ! $self->file_name_is_absolute( $base ) ) {
             $base = $self->rel2abs( $base ) ;

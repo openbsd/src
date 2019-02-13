@@ -14,7 +14,7 @@ BEGIN {
 	$^W = 0;
 }
 
-use vars qw( $foo @bar %baz );
+our ( $foo, @bar, %baz );
 
 use Test::More tests => 88;
 
@@ -189,7 +189,7 @@ is( $out->read, "\%baz = (\n   'one' => 1, 'two' => 2\n)\n",
 	'dumped glob for %baz fine' );
 
 SKIP: {
-	skip( "Couldn't open $0 for reading", 1 ) unless open(FILE, $0);
+	skip( "Couldn't open $0 for reading", 1 ) unless open(FILE, '<', $0);
 	my $fileno = fileno(FILE);
 	$d->dumpglob( '', 0, 'FILE', *FILE );
 	is( $out->read, "FileHandle(FILE) => fileno($fileno)\n",

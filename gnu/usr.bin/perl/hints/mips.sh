@@ -1,5 +1,4 @@
 perl_cflags='optimize="-g"'
-d_volatile=undef
 d_castneg=undef
 cc=cc
 glibpth="/usr/lib/cmplrs/cc $glibpth"

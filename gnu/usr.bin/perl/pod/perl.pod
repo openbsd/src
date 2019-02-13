@@ -34,7 +34,7 @@ For ease of access, the Perl manual has been split up into several sections.
 
 # This section is parsed by Porting/pod_lib.pl for use by pod/buildtoc etc
 
-flag =g  perlmodlib perlapi perlintern
+flag =g  perluniprops perlmodlib perlapi perlintern
 flag =go perltoc
 flag =ro perlcn perljp perlko perltw
 flag =   perlvms
@@ -44,7 +44,7 @@ path perlglossary            cpan/perlfaq/lib/
 path perlxs(?:tut|typemap)?  dist/ExtUtils-ParseXS/lib/
 path perldoc                 cpan/Pod-Perldoc/
 
-aux c2ph h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
+aux h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
 
 =end buildtoc
 
@@ -98,6 +98,7 @@ aux c2ph h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
     perlpodspec 	Perl plain old documentation format specification
     perlpodstyle	Perl POD style guide
     perldiag		Perl diagnostic messages
+    perldeprecation     Perl deprecations
     perllexwarn 	Perl warnings and their control
     perldebug		Perl debugging
     perlvar		Perl predefined variables
@@ -180,6 +181,12 @@ aux c2ph h2ph h2xs perlbug pl2pm pod2html pod2man splain xsubpp
 
     perlhist		Perl history records
     perldelta		Perl changes since previous version
+    perl5280delta	Perl changes in version 5.28.0
+    perl5262delta	Perl changes in version 5.26.2
+    perl5261delta	Perl changes in version 5.26.1
+    perl5260delta	Perl changes in version 5.26.0
+    perl5244delta	Perl changes in version 5.24.4
+    perl5243delta	Perl changes in version 5.24.3
     perl5242delta	Perl changes in version 5.24.2
     perl5241delta	Perl changes in version 5.24.1
     perl5240delta	Perl changes in version 5.24.0

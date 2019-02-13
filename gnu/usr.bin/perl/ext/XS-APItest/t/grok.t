@@ -4,7 +4,6 @@ use strict;
 use Test::More;
 use Config;
 use XS::APItest;
-use feature 'switch';
 no warnings 'experimental::smartmatch';
 use constant TRUTH => '0 but true';
 
@@ -31,21 +30,15 @@ foreach my $leader ('', ' ', '  ') {
 
 	{
 	    my (@UV, @NV);
-	    given ($Config{ivsize}) {
-		when (4) {
-		    @UV = qw(429496729  4294967290 4294967294 4294967295);
-		    @NV = qw(4294967296 4294967297 4294967300 4294967304);
-		}
-		when (8) {
-		    @UV = qw(1844674407370955161  18446744073709551610
-			     18446744073709551614 18446744073709551615);
-		    @NV = qw(18446744073709551616 18446744073709551617
-			     18446744073709551620 18446744073709551624);
-		}
-		default {
-		    die "Unknown IV size $_";
-		}
-	    }
+	    if ($Config{ivsize} == 4) {
+		@UV = qw(429496729  4294967290 4294967294 4294967295);
+		@NV = qw(4294967296 4294967297 4294967300 4294967304);
+	    } elsif ($Config{ivsize} == 8) {
+		@UV = qw(1844674407370955161  18446744073709551610
+			 18446744073709551614 18446744073709551615);
+		@NV = qw(18446744073709551616 18446744073709551617
+			 18446744073709551620 18446744073709551624);
+	    } else { die "Unknown IV size $Config{ivsize}" }
 	    foreach (@UV) {
 		my $string = $leader . $_ . $trailer;
 		my ($flags, $value) = grok_number($string);
@@ -102,6 +95,14 @@ my @groks =
    [ "nanx", 0,                  undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT | IS_NUMBER_TRAILING ],
    [ "nanx", PERL_SCAN_TRAILING, undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT | IS_NUMBER_TRAILING ],
   );
+
+my $non_ieee_fp = ($Config{doublekind} == 9 ||
+                   $Config{doublekind} == 10 ||
+                   $Config{doublekind} == 11);
+
+if ($non_ieee_fp) {
+    @groks = grep { $_->[0] !~ /^(?:inf|nan)/i } @groks;
+}
 
 for my $grok (@groks) {
   my ($out_flags, $out_uv) = grok_number_flags($grok->[0], $grok->[1]);

@@ -2,18 +2,16 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
+    require './test.pl';
+    set_up_inc( qw(. ../lib) );
 }
 
 use strict;
 use warnings;
 
-BEGIN {
-    require './test.pl';
-    plan( tests => 12 );
-}
+plan( tests => 12 );
 
-use vars qw{ @warnings $sub $warn };
+our (@warnings, $sub, $warn);
 
 BEGIN {
     $warn = 'Illegal character in prototype';

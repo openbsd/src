@@ -2,10 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
-    plan( tests => 8 );
+    set_up_inc('../lib');
 }
+
+plan( tests => 8 );
 
 use strict;
 

@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
+    require "./test.pl";
+    set_up_inc( qw(. ../lib) );
 }
 
-require "./test.pl";
-plan( tests => 38 );
+plan( tests => 56 );
 
 # delete() on hash elements
 
@@ -15,6 +15,8 @@ $foo{2} = 'b';
 $foo{3} = 'c';
 $foo{4} = 'd';
 $foo{5} = 'e';
+$foo{6} = 'f';
+$foo{7} = 'g';
 
 $foo = delete $foo{2};
 
@@ -32,6 +34,18 @@ cmp_ok($foo[0],'eq','d','slice 1');
 cmp_ok($foo[1],'eq','e','slice 2');
 ok(!(exists $foo{4}),'d absent');
 ok(!(exists $foo{5}),'e absent');
+cmp_ok($foo{1},'eq','a','a still exists');
+cmp_ok($foo{3},'eq','c','c still exists');
+
+@foo = delete %foo{6,7};
+
+cmp_ok(scalar(@foo),'==',4,'deleted kvslice');
+cmp_ok($foo[0],'eq','6','slice k1');
+cmp_ok($foo[1],'eq','f','slice v1');
+cmp_ok($foo[2],'eq','7','slice k2');
+cmp_ok($foo[3],'eq','g','slice v2');
+ok(!(exists $foo{5}),'f absent');
+ok(!(exists $foo{6}),'g absent');
 cmp_ok($foo{1},'eq','a','a still exists');
 cmp_ok($foo{3},'eq','c','c still exists');
 
@@ -73,6 +87,8 @@ $foo[2] = 'b';
 $foo[3] = 'c';
 $foo[4] = 'd';
 $foo[5] = 'e';
+$foo[6] = 'f';
+$foo[7] = 'g';
 
 $foo = delete $foo[2];
 
@@ -92,6 +108,18 @@ ok(!(exists $foo[4]),'ary d absent');
 ok(!(exists $foo[5]),'ary e absent');
 cmp_ok($foo[1],'eq','a','ary a still exists');
 cmp_ok($foo[3],'eq','c','ary c still exists');
+
+@bar = delete %foo[6,7];
+
+cmp_ok(scalar(@bar),'==',4,'deleted kvslice');
+cmp_ok($bar[0],'eq','6','slice k1');
+cmp_ok($bar[1],'eq','f','slice v1');
+cmp_ok($bar[2],'eq','7','slice k2');
+cmp_ok($bar[3],'eq','g','slice v2');
+ok(!(exists $bar[5]),'f absent');
+ok(!(exists $bar[6]),'g absent');
+cmp_ok($foo[1],'eq','a','a still exists');
+cmp_ok($foo[3],'eq','c','c still exists');
 
 $foo = join('',@foo);
 cmp_ok($foo,'eq','ac','ary elems');

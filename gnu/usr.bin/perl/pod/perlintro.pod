@@ -675,7 +675,7 @@ in using third-party modules, which are documented below.
 =head2 Using Perl modules
 
 Perl modules provide a range of features to help you avoid reinventing
-the wheel, and can be downloaded from CPAN ( http://www.cpan.org/ ).  A
+the wheel, and can be downloaded from CPAN ( L<http://www.cpan.org/> ).  A
 number of popular modules are included with the Perl distribution
 itself.
 

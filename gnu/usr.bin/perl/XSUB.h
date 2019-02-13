@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef _INC_PERL_XSUB_H
-#define _INC_PERL_XSUB_H 1
+#ifndef PERL_XSUB_H_
+#define PERL_XSUB_H_ 1
 
 /* first, some documentation for xsubpp-generated items */
 
@@ -93,12 +93,7 @@ is a lexical C<$_> in scope.
 */
 
 #ifndef PERL_UNUSED_ARG
-#  if defined(lint) && defined(S_SPLINT_S) /* www.splint.org */
-#    include <note.h>
-#    define PERL_UNUSED_ARG(x) NOTE(ARGUNUSED(x))
-#  else
-#    define PERL_UNUSED_ARG(x) ((void)x)
-#  endif
+#  define PERL_UNUSED_ARG(x) ((void)x)
 #endif
 #ifndef PERL_UNUSED_VAR
 #  define PERL_UNUSED_VAR(x) ((void)x)
@@ -124,7 +119,7 @@ is a lexical C<$_> in scope.
  * "STATIC", ie. it exports XSUB symbols. You probably don't want that.
  */
 
-#define XSPROTO(name) void name(pTHX_ CV* cv)
+#define XSPROTO(name) void name(pTHX_ CV* cv __attribute__unused__)
 
 #undef XS
 #undef XS_EXTERNAL
@@ -132,24 +127,18 @@ is a lexical C<$_> in scope.
 #if defined(__CYGWIN__) && defined(USE_DYNAMIC_LOADING)
 #  define XS_EXTERNAL(name) __declspec(dllexport) XSPROTO(name)
 #  define XS_INTERNAL(name) STATIC XSPROTO(name)
-#endif
-#if defined(__SYMBIAN32__)
+#elif defined(__SYMBIAN32__)
 #  define XS_EXTERNAL(name) EXPORT_C XSPROTO(name)
 #  define XS_INTERNAL(name) EXPORT_C STATIC XSPROTO(name)
-#endif
-#ifndef XS_EXTERNAL
-#  if defined(HASATTRIBUTE_UNUSED) && !defined(__cplusplus)
-#    define XS_EXTERNAL(name) void name(pTHX_ CV* cv __attribute__unused__)
-#    define XS_INTERNAL(name) STATIC void name(pTHX_ CV* cv __attribute__unused__)
-#  else
-#    ifdef __cplusplus
-#      define XS_EXTERNAL(name) extern "C" XSPROTO(name)
-#      define XS_INTERNAL(name) static XSPROTO(name)
-#    else
-#      define XS_EXTERNAL(name) XSPROTO(name)
-#      define XS_INTERNAL(name) STATIC XSPROTO(name)
-#    endif
-#  endif
+#elif defined(__cplusplus)
+#  define XS_EXTERNAL(name) extern "C" XSPROTO(name)
+#  define XS_INTERNAL(name) static XSPROTO(name)
+#elif defined(HASATTRIBUTE_UNUSED)
+#  define XS_EXTERNAL(name) void name(pTHX_ CV* cv __attribute__unused__)
+#  define XS_INTERNAL(name) STATIC void name(pTHX_ CV* cv __attribute__unused__)
+#else
+#  define XS_EXTERNAL(name) XSPROTO(name)
+#  define XS_INTERNAL(name) STATIC XSPROTO(name)
 #endif
 
 /* We do export xsub symbols by default for the public XS macro.
@@ -164,12 +153,7 @@ is a lexical C<$_> in scope.
 
 #define dITEMS I32 items = (I32)(SP - MARK)
 
-#if defined(lint) && defined(S_SPLINT_S) /* www.splint.org */
-#  define dXSARGS \
-	NOTE(ARGUNUSED(cv)) \
-	dSP; dAXMARK; dITEMS
-#else
-#  define dXSARGS \
+#define dXSARGS \
 	dSP; dAXMARK; dITEMS
 /* These 3 macros are replacements for dXSARGS macro only in bootstrap.
    They factor out common code in every BOOT XSUB. Computation of vars mark
@@ -177,19 +161,18 @@ is a lexical C<$_> in scope.
    optimized away since BOOT must return &PL_sv_yes by default from xsubpp.
    Note these macros are not drop in replacements for dXSARGS since they set
    PL_xsubfilename. */
-#  define dXSBOOTARGSXSAPIVERCHK  \
+#define dXSBOOTARGSXSAPIVERCHK  \
 	I32 ax = XS_BOTHVERSION_SETXSUBFN_POPMARK_BOOTCHECK;	\
 	SV **mark = PL_stack_base + ax; dSP; dITEMS
-#  define dXSBOOTARGSAPIVERCHK  \
+#define dXSBOOTARGSAPIVERCHK  \
 	I32 ax = XS_APIVERSION_SETXSUBFN_POPMARK_BOOTCHECK;	\
 	SV **mark = PL_stack_base + ax; dSP; dITEMS
 /* dXSBOOTARGSNOVERCHK has no API in xsubpp to choose it so do
 #undef dXSBOOTARGSXSAPIVERCHK
 #define dXSBOOTARGSXSAPIVERCHK dXSBOOTARGSNOVERCHK */
-#  define dXSBOOTARGSNOVERCHK  \
+#define dXSBOOTARGSNOVERCHK  \
 	I32 ax = XS_SETXSUBFN_POPMARK;  \
 	SV **mark = PL_stack_base + ax; dSP; dITEMS
-#endif
 
 #define dXSTARG SV * const targ = ((PL_op->op_private & OPpENTERSUB_HASTARG) \
 			     ? PAD_SV(PL_op->op_targ) : sv_newmortal())
@@ -714,7 +697,7 @@ Rethrows a previously caught exception.  See L<perlguts/"Exception Handling">.
 #  endif  /* NO_XSLOCKS */
 #endif  /* PERL_IMPLICIT_SYS && !PERL_CORE */
 
-#endif /* _INC_PERL_XSUB_H */		/* include guard */
+#endif /* PERL_XSUB_H_ */		/* include guard */
 
 /*
  * ex: set ts=8 sts=4 sw=4 et:

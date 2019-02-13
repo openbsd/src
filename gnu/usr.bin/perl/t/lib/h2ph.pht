@@ -90,6 +90,10 @@ unless(defined(&_H2PH_H_)) {
     }
     eval("sub flim () { 0; }") unless defined(&flim);
     eval("sub flam () { 1; }") unless defined(&flam);
+    eval 'sub blli_in_use {
+        my($blli) = @_;
+	    eval q({  ($blli->{l2_proto}) ||  ($blli->{l3_proto}); });
+    }' unless defined(&blli_in_use);
     eval 'sub multiline () {"multilinestring";}' unless defined(&multiline);
 }
 1;

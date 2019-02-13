@@ -61,6 +61,7 @@ mv extracted/DerivedJoiningType.txt extracted/DJoinType.txt
 mv extracted/DerivedLineBreak.txt extracted/DLineBreak.txt
 mv extracted/DerivedNumericType.txt extracted/DNumType.txt
 mv extracted/DerivedNumericValues.txt extracted/DNumValues.txt
+mv extracted/DerivedName.txt extracted/DName.txt
 rmdir extracted 2>/dev/null     # Will fail if non-empty, but if it is empty
                                 # was an early release that didn't have it.
 

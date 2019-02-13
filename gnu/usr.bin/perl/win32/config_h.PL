@@ -26,7 +26,7 @@ $opt{CORE_DIR} ||= '../lib/CORE';
 
 warn "Writing $opt{CONFIG_H}\n";
 
-open(SH,"<$name") || die "Cannot open $name:$!";
+open(SH, "<", $name) || die "Cannot open $name:$!";
 while (<SH>)
  {
   last if /^\s*sed/;
@@ -50,7 +50,7 @@ eval $str;
 
 die "$str:$@" if $@;
 
-open(H,">$file.new") || die "Cannot open $file.new:$!";
+open(H, ">", "$file.new") || die "Cannot open $file.new:$!";
 binmode(H);
 while (<SH>)
  {

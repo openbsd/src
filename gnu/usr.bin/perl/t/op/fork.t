@@ -4,8 +4,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
     require Config;
     skip_all('no fork')
 	unless ($Config::Config{d_fork} or $Config::Config{d_pseudofork});
@@ -22,7 +22,7 @@ SKIP: {
     skip "This test can only be run under bash or zsh"
         unless $shell =~ m{/(?:ba|z)sh$};
     my $probe = qx{
-        $shell -c 'ulimit -u 1 2>&1 && echo good'
+        $shell -c 'ulimit -u 1 2>/dev/null && echo good'
     };
     chomp $probe;
     skip "Can't set ulimit -u on this system: $probe"

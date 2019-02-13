@@ -5,7 +5,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan(18);
+plan(19);
 
 @array = (1, 2, 3);
 
@@ -68,3 +68,12 @@ is(join(' ',@alpha), 's t u v w x y z', 'void unshift array');
 unshift (@alpha, @bet, @gimel);
 is(join(' ',@alpha), 'q r s t u v w x y z', 'void unshift arrays');
 
+# See RT#131000
+{
+    local $@;
+    my @readonly_array = 10..11;
+    Internals::SvREADONLY(@readonly_array, 1);
+    eval { unshift @readonly_array, () };
+    like $@, qr/^Modification of a read-only value/,
+        "croak when unshifting onto readonly array";
+}

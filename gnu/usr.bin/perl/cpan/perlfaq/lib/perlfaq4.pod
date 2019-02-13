@@ -4,7 +4,7 @@ perlfaq4 - Data Manipulation
 
 =head1 VERSION
 
-version 5.021010
+version 5.021011
 
 =head1 DESCRIPTION
 
@@ -2556,24 +2556,23 @@ some gotchas. See the section on Regular Expressions.
 =head2 How do I determine whether a scalar is a number/whole/integer/float?
 
 Assuming that you don't care about IEEE notations like "NaN" or
-"Infinity", you probably just want to use a regular expression:
+"Infinity", you probably just want to use a regular expression (see also
+L<perlretut> and L<perlre>):
 
     use 5.010;
 
-    given( $number ) {
-        when( /\D/ )
-            { say "\thas nondigits"; continue }
-        when( /^\d+\z/ )
-            { say "\tis a whole number"; continue }
-        when( /^-?\d+\z/ )
-            { say "\tis an integer"; continue }
-        when( /^[+-]?\d+\z/ )
-            { say "\tis a +/- integer"; continue }
-        when( /^-?(?:\d+\.?|\.\d)\d*\z/ )
-            { say "\tis a real number"; continue }
-        when( /^[+-]?(?=\.?\d)\d*\.?\d*(?:e[+-]?\d+)?\z/i)
-            { say "\tis a C float" }
-    }
+    if ( /\D/ )
+        { say "\thas nondigits"; }
+    if ( /^\d+\z/ )
+        { say "\tis a whole number"; }
+    if ( /^-?\d+\z/ )
+        { say "\tis an integer"; }
+    if ( /^[+-]?\d+\z/ )
+        { say "\tis a +/- integer"; }
+    if ( /^-?(?:\d+\.?|\.\d)\d*\z/ )
+        { say "\tis a real number"; }
+    if ( /^[+-]?(?=\.?\d)\d*\.?\d*(?:e[+-]?\d+)?\z/i )
+        { say "\tis a C float" }
 
 There are also some commonly used modules for the task.
 L<Scalar::Util> (distributed with 5.8) provides access to perl's

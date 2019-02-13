@@ -128,6 +128,15 @@
 #  include "shared.h"
 #endif
 
+#ifndef CLANG_DIAG_IGNORE
+# define CLANG_DIAG_IGNORE(x)
+# define CLANG_DIAG_RESTORE
+#endif
+#ifndef CLANG_DIAG_IGNORE_STMT
+# define CLANG_DIAG_IGNORE_STMT(x) CLANG_DIAG_IGNORE(x) NOOP
+# define CLANG_DIAG_RESTORE_STMT CLANG_DIAG_RESTORE NOOP
+#endif
+
 #ifdef USE_ITHREADS
 
 /* Magic signature(s) for mg_private to make PERL_MAGIC_ext magic safer */
@@ -656,7 +665,11 @@ Perl_sharedsv_cond_timedwait(perl_cond *cond, perl_mutex *mut, double abs)
     abs -= (NV)ts.tv_sec;
     ts.tv_nsec = (long)(abs * 1000000000.0);
 
+    CLANG_DIAG_IGNORE_STMT(-Wthread-safety);
+    /* warning: calling function 'pthread_cond_timedwait' requires holding mutex 'mut' exclusively [-Wthread-safety-analysis] */
     switch (pthread_cond_timedwait(cond, mut, &ts)) {
+	CLANG_DIAG_RESTORE_STMT;
+
         case 0:         got_it = 1; break;
         case ETIMEDOUT:             break;
 #ifdef OEMVS
@@ -1094,8 +1107,9 @@ sharedsv_array_mg_CLEAR(pTHX_ SV *sv, MAGIC *mg)
                 if (!sv) continue;
                 if ( (SvOBJECT(sv) || (SvROK(sv) && (sv = SvRV(sv))))
                   && SvREFCNT(sv) == 1 ) {
-                    SV *tmp = Perl_sv_newmortal(caller_perl);
+                    SV *tmp;
                     PERL_SET_CONTEXT((aTHX = caller_perl));
+                    tmp = sv_newmortal();
                     sv_upgrade(tmp, SVt_RV);
                     get_RV(tmp, sv);
                     PERL_SET_CONTEXT((aTHX = PL_sharedsv_space));
@@ -1374,8 +1388,9 @@ STORESIZE(SV *obj,IV count)
                 if (   (SvOBJECT(sv) || (SvROK(sv) && (sv = SvRV(sv))))
                     && SvREFCNT(sv) == 1 )
                 {
-                    SV *tmp = Perl_sv_newmortal(caller_perl);
+                    SV *tmp;
                     PERL_SET_CONTEXT((aTHX = caller_perl));
+                    tmp = sv_newmortal();
                     sv_upgrade(tmp, SVt_RV);
                     get_RV(tmp, sv);
                     PERL_SET_CONTEXT((aTHX = PL_sharedsv_space));

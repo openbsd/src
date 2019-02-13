@@ -3,6 +3,7 @@
 package CPAN::FTP;
 use strict;
 
+use Errno ();
 use Fcntl qw(:flock);
 use File::Basename qw(dirname);
 use File::Path qw(mkpath);
@@ -14,7 +15,20 @@ use vars qw($connect_to_internet_ok $Ua $Thesite $ThesiteURL $Themethod);
 use vars qw(
             $VERSION
 );
-$VERSION = "5.5006";
+$VERSION = "5.5011";
+
+sub _plus_append_open {
+    my($fh, $file) = @_;
+    my $parent_dir = dirname $file;
+    mkpath $parent_dir;
+    my($cnt);
+    until (open $fh, "+>>$file") {
+        next if $! == Errno::EAGAIN; # don't increment on EAGAIN
+        $CPAN::Frontend->mydie("Could not open '$file' after 10000 tries: $!") if ++$cnt > 100000;
+        sleep 0.0001;
+        mkpath $parent_dir;
+    }
+}
 
 #-> sub CPAN::FTP::ftp_statistics
 # if they want to rewrite, they need to pass in a filehandle
@@ -28,20 +42,23 @@ sub _ftp_statistics {
 
     $fh ||= FileHandle->new;
     my $file = File::Spec->catfile($CPAN::Config->{cpan_home},"FTPstats.yml");
-    mkpath dirname $file;
-    open $fh, "+>>$file" or $CPAN::Frontend->mydie("Could not open '$file': $!");
+    _plus_append_open($fh,$file);
     my $sleep = 1;
     my $waitstart;
     while (!CPAN::_flock($fh, $locktype|LOCK_NB)) {
         $waitstart ||= localtime();
         if ($sleep>3) {
-            $CPAN::Frontend->mywarn("Waiting for a read lock on '$file' (since $waitstart)\n");
+            my $now = localtime();
+            $CPAN::Frontend->mywarn("$now: waiting for read lock on '$file' (since $waitstart)\n");
         }
-        $CPAN::Frontend->mysleep($sleep);
-        if ($sleep <= 3) {
-            $sleep+=0.33;
-        } elsif ($sleep <=6) {
-            $sleep+=0.11;
+        sleep($sleep); # this sleep must not be overridden;
+                       # Frontend->mysleep with AUTOMATED_TESTING has
+                       # provoked complete lock contention on my NFS
+        if ($sleep <= 6) {
+            $sleep+=0.5;
+        } else {
+            # retry to get a fresh handle. If it is NFS and the handle is stale, we will never get an flock
+            _plus_append_open($fh, $file);
         }
     }
     my $stats = eval { CPAN->_yaml_loadfile($file); };
@@ -54,8 +71,11 @@ sub _ftp_statistics {
             } elsif (ref $@ eq "CPAN::Exception::yaml_process_error") {
                 my $time = time;
                 my $to = "$file.$time";
-                $CPAN::Frontend->myprint("Error reading '$file': $@\nStashing away as '$to' to prevent further interruptions. You may want to remove that file later.\n");
-                rename $file, $to or $CPAN::Frontend->mydie("Could not rename: $!");
+                $CPAN::Frontend->mywarn("Error reading '$file': $@
+  Trying to stash it away as '$to' to prevent further interruptions.
+  You may want to remove that file later.\n");
+                # may fail because somebody else has moved it away in the meantime:
+                rename $file, $to or $CPAN::Frontend->mywarn("Could not rename '$file' to '$to': $!\n");
                 return;
             }
         } else {
@@ -133,7 +153,7 @@ sub _add_to_statistics {
         unlink($sfile) if ($^O eq 'MSWin32' or $^O eq 'os2');
 	_copy_stat($sfile, "$sfile.$$") if -e $sfile;
         rename "$sfile.$$", $sfile
-            or $CPAN::Frontend->mydie("Could not rename '$sfile.$$' to '$sfile': $!\n");
+            or $CPAN::Frontend->mywarn("Could not rename '$sfile.$$' to '$sfile': $!\nGiving up\n");
     }
 }
 
@@ -549,7 +569,7 @@ sub hostdleasy { #called from hostdlxxx
     my($ro_url);
   HOSTEASY: for $ro_url (@$host_seq) {
         $self->_set_attempt($stats,"dleasy",$ro_url);
-        my $url .= "$ro_url$file";
+        my $url = "$ro_url$file";
         $self->debug("localizing perlish[$url]") if $CPAN::DEBUG;
         if ($url =~ /^file:/) {
             my $l;
@@ -659,7 +679,7 @@ sub hostdleasy { #called from hostdlxxx
                 # Net::FTP can still succeed where LWP fails. So we do not
                 # skip Net::FTP anymore when LWP is available.
             }
-        } elsif ($url =~ /^http:/ && $CPAN::META->has_usable('HTTP::Tiny')) {
+        } elsif ($url =~ /^http:/i && $CPAN::META->has_usable('HTTP::Tiny')) {
             require CPAN::HTTP::Client;
             my $chc = CPAN::HTTP::Client->new(
                 proxy => $CPAN::Config->{http_proxy} || $ENV{http_proxy},

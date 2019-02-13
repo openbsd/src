@@ -10,16 +10,17 @@
 package Data::Dumper;
 
 BEGIN {
-    $VERSION = '2.160'; # Don't forget to set version and release
+    $VERSION = '2.170'; # Don't forget to set version and release
 }               # date in POD below!
 
 #$| = 1;
 
 use 5.006_001;
 require Exporter;
-require overload;
 
-use Carp;
+use constant IS_PRE_520_PERL => $] < 5.020;
+
+use Carp ();
 
 BEGIN {
     @ISA = qw(Exporter);
@@ -70,7 +71,7 @@ $Maxrecurse = 1000      unless defined $Maxrecurse;
 sub new {
   my($c, $v, $n) = @_;
 
-  croak "Usage:  PACKAGE->new(ARRAYREF, [ARRAYREF])"
+  Carp::croak("Usage:  PACKAGE->new(ARRAYREF, [ARRAYREF])")
     unless (defined($v) && (ref($v) eq 'ARRAY'));
   $n = [] unless (defined($n) && (ref($n) eq 'ARRAY'));
 
@@ -170,11 +171,11 @@ sub Seen {
           $s->{seen}{$id} = [$k, $v];
         }
         else {
-          carp "Only refs supported, ignoring non-ref item \$$k";
+          Carp::carp("Only refs supported, ignoring non-ref item \$$k");
         }
       }
       else {
-        carp "Value of ref must be defined; ignoring undefined item \$$k";
+        Carp::carp("Value of ref must be defined; ignoring undefined item \$$k");
       }
     }
     return $s;
@@ -195,7 +196,7 @@ sub Values {
       return $s;
     }
     else {
-      croak "Argument to Values, if provided, must be array ref";
+      Carp::croak("Argument to Values, if provided, must be array ref");
     }
   }
   else {
@@ -214,7 +215,7 @@ sub Names {
       return $s;
     }
     else {
-      croak "Argument to Names, if provided, must be array ref";
+      Carp::croak("Argument to Names, if provided, must be array ref");
     }
   }
   else {
@@ -225,13 +226,19 @@ sub Names {
 sub DESTROY {}
 
 sub Dump {
-    return &Dumpxs
-    unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl})
-        || $Data::Dumper::Deparse || (ref($_[0]) && $_[0]->{deparse})
+  # On old versions of perl, the xs-deparse support can fail
+  # mysteriously. Barring copious spare time, it's best to revert
+  # to the previously standard behavior of using the pure perl dumper
+  # for deparsing on old perls. --Steffen
+  if (IS_PRE_520_PERL and ($Data::Dumper::Deparse or (ref($_[0]) && $_[0]->{deparse}))) {
+    return &Dumpperl;
+  }
 
+  return &Dumpxs
+    unless $Data::Dumper::Useperl || (ref($_[0]) && $_[0]->{useperl})
             # Use pure perl version on earlier releases on EBCDIC platforms
         || (! $IS_ASCII && $] lt 5.021_010);
-    return &Dumpperl;
+  return &Dumpperl;
 }
 
 #
@@ -439,7 +446,7 @@ sub _dump {
         if (ref($s->{sortkeys}) eq 'CODE') {
           $keys = $s->{sortkeys}($val);
           unless (ref($keys) eq 'ARRAY') {
-            carp "Sortkeys subroutine did not return ARRAYREF";
+            Carp::carp("Sortkeys subroutine did not return ARRAYREF");
             $keys = [];
           }
         }
@@ -487,16 +494,16 @@ sub _dump {
         require B::Deparse;
         my $sub =  'sub ' . (B::Deparse->new)->coderef2text($val);
         $pad    =  $s->{sep} . $s->{pad} . $s->{apad} . $s->{xpad} x ($s->{level} - 1);
-        $sub    =~ s/\n/$pad/gse;
+        $sub    =~ s/\n/$pad/gs;
         $out   .=  $sub;
       }
       else {
         $out .= 'sub { "DUMMY" }';
-        carp "Encountered CODE ref, using dummy placeholder" if $s->{purity};
+        Carp::carp("Encountered CODE ref, using dummy placeholder") if $s->{purity};
       }
     }
     else {
-      croak "Can't handle '$realtype' type";
+      Carp::croak("Can't handle '$realtype' type");
     }
 
     if ($realpack and !$no_bless) { # we have a blessed ref
@@ -529,8 +536,8 @@ sub _dump {
     $ref = \$val;
     if (ref($ref) eq 'GLOB') {  # glob
       my $name = substr($val, 1);
-      if ($name =~ /^[A-Za-z_][\w:]*$/ && $name ne 'main::') {
-        $name =~ s/^main::/::/;
+      $name =~ s/^main::(?!\z)/::/;
+      if ($name =~ /\A(?:[A-Z_a-z][0-9A-Z_a-z]*)?::(?:[0-9A-Z_a-z]+::)*[0-9A-Z_a-z]*\z/ && $name ne 'main::') {
         $sname = $name;
       }
       else {
@@ -620,7 +627,7 @@ sub Reset {
 
 sub Indent {
   my($s, $v) = @_;
-  if (defined($v)) {
+  if (@_ >= 2) {
     if ($v == 0) {
       $s->{xpad} = "";
       $s->{sep} = "";
@@ -639,92 +646,92 @@ sub Indent {
 
 sub Trailingcomma {
   my($s, $v) = @_;
-  defined($v) ? (($s->{trailingcomma} = $v), return $s) : $s->{trailingcomma};
+  @_ >= 2 ? (($s->{trailingcomma} = $v), return $s) : $s->{trailingcomma};
 }
 
 sub Pair {
     my($s, $v) = @_;
-    defined($v) ? (($s->{pair} = $v), return $s) : $s->{pair};
+    @_ >= 2 ? (($s->{pair} = $v), return $s) : $s->{pair};
 }
 
 sub Pad {
   my($s, $v) = @_;
-  defined($v) ? (($s->{pad} = $v), return $s) : $s->{pad};
+  @_ >= 2 ? (($s->{pad} = $v), return $s) : $s->{pad};
 }
 
 sub Varname {
   my($s, $v) = @_;
-  defined($v) ? (($s->{varname} = $v), return $s) : $s->{varname};
+  @_ >= 2 ? (($s->{varname} = $v), return $s) : $s->{varname};
 }
 
 sub Purity {
   my($s, $v) = @_;
-  defined($v) ? (($s->{purity} = $v), return $s) : $s->{purity};
+  @_ >= 2 ? (($s->{purity} = $v), return $s) : $s->{purity};
 }
 
 sub Useqq {
   my($s, $v) = @_;
-  defined($v) ? (($s->{useqq} = $v), return $s) : $s->{useqq};
+  @_ >= 2 ? (($s->{useqq} = $v), return $s) : $s->{useqq};
 }
 
 sub Terse {
   my($s, $v) = @_;
-  defined($v) ? (($s->{terse} = $v), return $s) : $s->{terse};
+  @_ >= 2 ? (($s->{terse} = $v), return $s) : $s->{terse};
 }
 
 sub Freezer {
   my($s, $v) = @_;
-  defined($v) ? (($s->{freezer} = $v), return $s) : $s->{freezer};
+  @_ >= 2 ? (($s->{freezer} = $v), return $s) : $s->{freezer};
 }
 
 sub Toaster {
   my($s, $v) = @_;
-  defined($v) ? (($s->{toaster} = $v), return $s) : $s->{toaster};
+  @_ >= 2 ? (($s->{toaster} = $v), return $s) : $s->{toaster};
 }
 
 sub Deepcopy {
   my($s, $v) = @_;
-  defined($v) ? (($s->{deepcopy} = $v), return $s) : $s->{deepcopy};
+  @_ >= 2 ? (($s->{deepcopy} = $v), return $s) : $s->{deepcopy};
 }
 
 sub Quotekeys {
   my($s, $v) = @_;
-  defined($v) ? (($s->{quotekeys} = $v), return $s) : $s->{quotekeys};
+  @_ >= 2 ? (($s->{quotekeys} = $v), return $s) : $s->{quotekeys};
 }
 
 sub Bless {
   my($s, $v) = @_;
-  defined($v) ? (($s->{'bless'} = $v), return $s) : $s->{'bless'};
+  @_ >= 2 ? (($s->{'bless'} = $v), return $s) : $s->{'bless'};
 }
 
 sub Maxdepth {
   my($s, $v) = @_;
-  defined($v) ? (($s->{'maxdepth'} = $v), return $s) : $s->{'maxdepth'};
+  @_ >= 2 ? (($s->{'maxdepth'} = $v), return $s) : $s->{'maxdepth'};
 }
 
 sub Maxrecurse {
   my($s, $v) = @_;
-  defined($v) ? (($s->{'maxrecurse'} = $v), return $s) : $s->{'maxrecurse'};
+  @_ >= 2 ? (($s->{'maxrecurse'} = $v), return $s) : $s->{'maxrecurse'};
 }
 
 sub Useperl {
   my($s, $v) = @_;
-  defined($v) ? (($s->{'useperl'} = $v), return $s) : $s->{'useperl'};
+  @_ >= 2 ? (($s->{'useperl'} = $v), return $s) : $s->{'useperl'};
 }
 
 sub Sortkeys {
   my($s, $v) = @_;
-  defined($v) ? (($s->{'sortkeys'} = $v), return $s) : $s->{'sortkeys'};
+  @_ >= 2 ? (($s->{'sortkeys'} = $v), return $s) : $s->{'sortkeys'};
 }
 
 sub Deparse {
   my($s, $v) = @_;
-  defined($v) ? (($s->{'deparse'} = $v), return $s) : $s->{'deparse'};
+  @_ >= 2 ? (($s->{'deparse'} = $v), return $s) : $s->{'deparse'};
 }
 
 sub Sparseseen {
   my($s, $v) = @_;
-  defined($v) ? (($s->{'noseen'} = $v), return $s) : $s->{'noseen'};
+  @_ >= 2 ? (($s->{'noseen'} = $v), return $s) : $s->{'noseen'};
 }
 
 # used by qquote below
@@ -1212,9 +1219,10 @@ $Data::Dumper::Deparse  I<or>  $I<OBJ>->Deparse(I<[NEWVAL]>)
 
 Can be set to a boolean value to control whether code references are
 turned into perl source code. If set to a true value, C<B::Deparse>
-will be used to get the source of the code reference. Using this option
-will force using the Perl implementation of the dumper, since the fast
-XSUB implementation doesn't support it.
+will be used to get the source of the code reference. In older versions,
+using this option imposed a significant performance penalty when dumping
+parts of a data structure other than code references, but that is no
+longer the case.
 
 Caution : use this option only if you know that your coderefs will be
 properly reconstructed by C<B::Deparse>.
@@ -1435,15 +1443,9 @@ the C<Deparse> flag), an anonymous subroutine that
 contains the string '"DUMMY"' will be inserted in its place, and a warning
 will be printed if C<Purity> is set.  You can C<eval> the result, but bear
 in mind that the anonymous sub that gets created is just a placeholder.
-Someday, perl will have a switch to cache-on-demand the string
-representation of a compiled piece of code, I hope.  If you have prior
-knowledge of all the code refs that your data structures are likely
-to have, you can use the C<Seen> method to pre-seed the internal reference
-table and make the dumped output point to them, instead.  See L</EXAMPLES>
-above.
-
-The C<Deparse> flag makes Dump() run slower, since the XSUB
-implementation does not support it.
+Even using the C<Deparse> flag will in some cases produce results that
+behave differently after being passed to C<eval>; see the documentation
+for L<B::Deparse>.
 
 SCALAR objects have the weirdest looking C<bless> workaround.
 
@@ -1466,13 +1468,13 @@ be to use the C<Sortkeys> filter of Data::Dumper.
 
 Gurusamy Sarathy        gsar@activestate.com
 
-Copyright (c) 1996-2014 Gurusamy Sarathy. All rights reserved.
+Copyright (c) 1996-2017 Gurusamy Sarathy. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =head1 VERSION
 
-Version 2.160  (January 12 2016)
+Version 2.170
 
 =head1 SEE ALSO
 

@@ -36,7 +36,7 @@ GetOptions (
 
 $default and $default =~ s/^'(.*)'$/$1/; # Will be quoted on generation
 
-require 'regen/regen_lib.pl' if $opt_r;
+require './regen/regen_lib.pl' if $opt_r;
 
 my $MASTER_CFG = "config_h.SH";
 # Inclusive bounds on the main part of the file, $section == 1 below:
@@ -48,6 +48,7 @@ my @CFG = (
 	   # We can't base our check on $], because that's the version of the
 	   # perl that we are running, not the version of the source tree.
 	   "Cross/config.sh-arm-linux",
+	   "Cross/config.sh-arm-linux-n770",
 	   "NetWare/config.wc",
 	   "symbian/config.sh",
 	   "uconfig.sh",

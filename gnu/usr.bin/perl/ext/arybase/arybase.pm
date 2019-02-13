@@ -1,6 +1,6 @@
 package arybase;
 
-our $VERSION = "0.11";
+our $VERSION = "0.15";
 
 require XSLoader;
 XSLoader::load(); # This returns true, which makes require happy.

@@ -22,7 +22,7 @@ use integer; # vroom!
 use strict;
 use Carp ();
 use vars qw($VERSION );
-$VERSION = '3.32';
+$VERSION = '3.35';
 #use constant DEBUG => 7;
 BEGIN {
   require Pod::Simple;
@@ -198,7 +198,12 @@ sub parse_lines {             # Usage: $parser->parse_lines(@lines)
 
           # On Perls that have this function, we can see if the sequence is
           # valid UTF-8 or not.
-          if (! utf8::decode($non_ascii_seq)) {
+          my $is_utf8;
+          {
+            no warnings 'utf8';
+            $is_utf8 = utf8::decode($non_ascii_seq);
+          }
+          if (! $is_utf8) {
             $encoding = 'CP1252';
             goto guessed;
           }

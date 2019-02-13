@@ -3,8 +3,6 @@
   No such signal: SIG%s
     $SIG{FRED} = sub {}
 
-  Setting $/ to a reference to zero as a form of slurp is deprecated, treating as undef
-
   SIG%s handler \"%s\" not defined.
     $SIG{"INT"} = "ok3"; kill "INT",$$;
 
@@ -20,24 +18,6 @@ no warnings 'signal' ;
 $SIG{FRED} = sub {};
 EXPECT
 
-########
--w
-# warnable code, warnings enabled via command line switch
-$/ = \0;
-EXPECT
-Setting $/ to a reference to zero as a form of slurp is deprecated, treating as undef at - line 3.
-########
--w
-# warnable code, warnings enabled via command line switch
-$/ = \-1;
-EXPECT
-Setting $/ to a reference to a negative integer as a form of slurp is deprecated, treating as undef at - line 3.
-########
-$/ = \-1;
-no warnings 'deprecated';
-$/ = \-1;
-EXPECT
-Setting $/ to a reference to a negative integer as a form of slurp is deprecated, treating as undef at - line 1.
 ########
 # mg.c
 use warnings 'signal' ;
@@ -99,16 +79,3 @@ Use of uninitialized value $3 in oct at - line 3.
 use warnings 'uninitialized';
 $ENV{FOO} = undef; # should not warn
 EXPECT
-########
-${^ENCODING} = 42;
-{ local ${^ENCODING}; }
-${^ENCODING} = undef;
-{ local ${^ENCODING} = 37; }
-no warnings 'deprecated';
-${^ENCODING} = 42;
-{ local ${^ENCODING}; }
-${^ENCODING} = undef;
-{ local ${^ENCODING} = 37; }
-EXPECT
-Setting ${^ENCODING} is deprecated at - line 1.
-Setting ${^ENCODING} is deprecated at - line 4.

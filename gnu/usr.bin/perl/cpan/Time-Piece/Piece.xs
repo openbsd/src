@@ -10,30 +10,6 @@ extern "C" {
 }
 #endif
 
-/* XXX struct tm on some systems (SunOS4/BSD) contains extra (non POSIX)
- * fields for which we don't have Configure support prior to Perl 5.8.0:
- *   char *tm_zone;   -- abbreviation of timezone name
- *   long tm_gmtoff;  -- offset from GMT in seconds
- * To workaround core dumps from the uninitialised tm_zone we get the
- * system to give us a reasonable struct to copy.  This fix means that
- * strftime uses the tm_zone and tm_gmtoff values returned by
- * localtime(time()). That should give the desired result most of the
- * time. But probably not always!
- *
- * This is a vestigial workaround for Perls prior to 5.8.0.  We now
- * rely on the initialization (still likely a workaround) in util.c.
- */
-#if !defined(PERL_VERSION) || PERL_VERSION < 8
-
-#if defined(HAS_GNULIBC)
-# ifndef STRUCT_TM_HASZONE
-#    define STRUCT_TM_HASZONE
-# else
-#    define USE_TM_GMTOFF
-# endif
-#endif
-
-#endif /* end of pre-5.8 */
 
 #define    DAYS_PER_YEAR    365
 #define    DAYS_PER_QYEAR    (4*DAYS_PER_YEAR+1)
@@ -48,26 +24,7 @@ extern "C" {
 #define    YEAR_ADJUST    (4*MONTH_TO_DAYS+1)
 /* as used here, the algorithm leaves Sunday as day 1 unless we adjust it */
 #define    WEEKDAY_BIAS    6    /* (1+6)%7 makes Sunday 0 again */
-
-#if !defined(PERL_VERSION) || PERL_VERSION < 8
-
-#ifdef STRUCT_TM_HASZONE
-static void
-my_init_tm(struct tm *ptm)        /* see mktime, strftime and asctime    */
-{
-    Time_t now;
-    (void)time(&now);
-    Copy(localtime(&now), ptm, 1, struct tm);
-}
-
-#else
-# define my_init_tm(ptm)
-#endif
-
-#else
-/* use core version from util.c in 5.8.0 and later */
-# define my_init_tm init_tm
-#endif
+#define    TP_BUF_SIZE     160
 
 #ifdef WIN32
 
@@ -154,7 +111,7 @@ fix_win32_tzenv(void)
         crt_tz_env = "";
     if (strcmp(perl_tz_env, crt_tz_env) != 0) {
         STRLEN perl_tz_env_len = strlen(perl_tz_env);
-        newenv = (char*)malloc((perl_tz_env_len + 4) * sizeof(char));
+        newenv = (char*)malloc(perl_tz_env_len + 4);
         if (newenv != NULL) {
 /* putenv with old MS CRTs will cause a double free internally if you delete
    an env var with the CRT env that doesn't exist in Win32 env (perl %ENV only
@@ -369,81 +326,19 @@ static char * _strptime(pTHX_ const char *, const char *, struct tm *,
 #define asizeof(a)	(sizeof (a) / sizeof ((a)[0]))
 
 struct lc_time_T {
-    const char *    mon[12];
-    const char *    month[12];
-    const char *    wday[7];
-    const char *    weekday[7];
-    const char *    X_fmt;
-    const char *    x_fmt;
-    const char *    c_fmt;
-    const char *    am;
-    const char *    pm;
-    const char *    date_fmt;
-    const char *    alt_month[12];
-    const char *    Ef_fmt;
-    const char *    EF_fmt;
+    char *  mon[12];
+    char *  month[12];
+    char *  wday[7];
+    char *  weekday[7];
+    char *  am;
+    char *  pm;
+    char *  AM;
+    char *  PM;
+    char *  alt_month[12];
 };
 
-struct lc_time_T _time_localebuf;
-int _time_using_locale;
 
-const struct lc_time_T	_C_time_locale = {
-	{
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-	}, {
-		"January", "February", "March", "April", "May", "June",
-		"July", "August", "September", "October", "November", "December"
-	}, {
-		"Sun", "Mon", "Tue", "Wed",
-		"Thu", "Fri", "Sat"
-	}, {
-		"Sunday", "Monday", "Tuesday", "Wednesday",
-		"Thursday", "Friday", "Saturday"
-	},
-
-	/* X_fmt */
-	"%H:%M:%S",
-
-	/*
-	** x_fmt
-	** Since the C language standard calls for
-	** "date, using locale's date format," anything goes.
-	** Using just numbers (as here) makes Quakers happier;
-	** it's also compatible with SVR4.
-	*/
-	"%m/%d/%y",
-
-	/*
-	** c_fmt (ctime-compatible)
-	** Not used, just compatibility placeholder.
-	*/
-	NULL,
-
-	/* am */
-	"AM",
-
-	/* pm */
-	"PM",
-
-	/* date_fmt */
-	"%a %Ef %X %Z %Y",
-	
-	{
-		"January", "February", "March", "April", "May", "June",
-		"July", "August", "September", "October", "November", "December"
-	},
-
-	/* Ef_fmt
-	** To determine short months / day order
-	*/
-	"%b %e",
-
-	/* EF_fmt
-	** To determine long months / day order
-	*/
-	"%B %e"
-};
+static struct lc_time_T _C_time_locale;
 
 #define Locale (&_C_time_locale)
 
@@ -452,8 +347,8 @@ _strptime(pTHX_ const char *buf, const char *fmt, struct tm *tm, int *got_GMT)
 {
 	char c;
 	const char *ptr;
-	int i,
-		len;
+	int i;
+	size_t len;
 	int Ealternative, Oalternative;
 
     /* There seems to be a slightly improved version at
@@ -488,7 +383,7 @@ label:
 			break;
 
 		case '+':
-			buf = _strptime(aTHX_ buf, Locale->date_fmt, tm, got_GMT);
+			buf = _strptime(aTHX_ buf, "%c", tm, got_GMT);
 			if (buf == 0)
 				return 0;
 			break;
@@ -512,7 +407,8 @@ label:
 
 		case 'c':
 			/* NOTE: c_fmt is intentionally ignored */
-                        buf = _strptime(aTHX_ buf, "%a %Ef %T %Y", tm, got_GMT);
+
+			buf = _strptime(aTHX_ buf, "%a %d %b %Y %I:%M:%S %p %Z", tm, got_GMT);
 			if (buf == 0)
 				return 0;
 			break;
@@ -536,10 +432,7 @@ label:
 			goto label;
 
 		case 'F':
-		case 'f':
-			if (!Ealternative)
-				break;
-			buf = _strptime(aTHX_ buf, (c == 'f') ? Locale->Ef_fmt : Locale->EF_fmt, tm, got_GMT);
+			buf = _strptime(aTHX_ buf, "%Y-%m-%d", tm, got_GMT);
 			if (buf == 0)
 				return 0;
 			break;
@@ -571,13 +464,13 @@ label:
 			break;
 
 		case 'X':
-			buf = _strptime(aTHX_ buf, Locale->X_fmt, tm, got_GMT);
+			buf = _strptime(aTHX_ buf, "%I:%M:%S %p", tm, got_GMT);
 			if (buf == 0)
 				return 0;
 			break;
 
 		case 'x':
-			buf = _strptime(aTHX_ buf, Locale->x_fmt, tm, got_GMT);
+			buf = _strptime(aTHX_ buf, "%a %d %b %Y", tm, got_GMT);
 			if (buf == 0)
 				return 0;
 			break;
@@ -664,12 +557,14 @@ label:
 			break;
 
 		case 'p':
+		case 'P':
 			/*
 			 * XXX This is bogus if parsed before hour-related
 			 * specifiers.
 			 */
             len = strlen(Locale->am);
-			if (strncasecmp(buf, Locale->am, len) == 0) {
+			if (strncasecmp(buf, Locale->am, len) == 0 ||
+					strncasecmp(buf, Locale->AM, len) == 0) {
 				if (tm->tm_hour > 12)
 					return 0;
 				if (tm->tm_hour == 12)
@@ -679,7 +574,8 @@ label:
 			}
 
 			len = strlen(Locale->pm);
-			if (strncasecmp(buf, Locale->pm, len) == 0) {
+			if (strncasecmp(buf, Locale->pm, len) == 0 ||
+					strncasecmp(buf, Locale->PM, len) == 0) {
 				if (tm->tm_hour > 12)
 					return 0;
 				if (tm->tm_hour != 12)
@@ -715,6 +611,7 @@ label:
 			break;
 
 		case 'U':
+		case 'V':
 		case 'W':
 			/*
 			 * XXX This is bogus, as we can not assume any valid
@@ -739,16 +636,20 @@ label:
 					ptr++;
 			break;
 
+		case 'u':
 		case 'w':
 			if (!isdigit((unsigned char)*buf))
 				return 0;
 
 			i = *buf - '0';
-			if (i > 6)
+			if (i > 6 + (c == 'u'))
 				return 0;
+			if (i == 7)
+				i = 0;
 
 			tm->tm_wday = i;
 
+			buf++;
 			if (*buf != 0 && isspace((unsigned char)*buf))
 				while (*ptr != 0 && !isspace((unsigned char)*ptr))
 					ptr++;
@@ -856,8 +757,12 @@ label:
 			errno = sverrno;
 			buf = cp;
             memset(&mytm, 0, sizeof(mytm));
-            my_init_tm(&mytm);    /* XXX workaround - see my_init_tm() above */
-            mytm = *gmtime(&t);
+
+            if(*got_GMT == 1)
+                mytm = *localtime(&t);
+            else
+                mytm = *gmtime(&t);
+
             tm->tm_sec    = mytm.tm_sec;
             tm->tm_min    = mytm.tm_min;
             tm->tm_hour   = mytm.tm_hour;
@@ -906,12 +811,12 @@ label:
 			for (cp = buf; *cp && isupper((unsigned char)*cp); ++cp)
                             {/*empty*/}
 			if (cp - buf) {
-				zonestr = (char *)malloc(cp - buf + 1);
+				zonestr = (char *)malloc((size_t) (cp - buf + 1));
 				if (!zonestr) {
 				    errno = ENOMEM;
 				    return 0;
 				}
-				strncpy(zonestr, buf, cp - buf);
+				strncpy(zonestr, buf,(size_t) (cp - buf));
 				zonestr[cp - buf] = '\0';
 				my_tzset(aTHX);
 				if (0 == strcmp(zonestr, "GMT")) {
@@ -966,7 +871,7 @@ label:
    !!!! You must mortalize whatever push_common_tm put on stack yourself to
         avoid leaking !!!!
 */
-SV **
+static SV **
 push_common_tm(pTHX_ SV ** SP, struct tm *mytm)
 {
 	PUSHs(newSViv(mytm->tm_sec));
@@ -988,12 +893,12 @@ push_common_tm(pTHX_ SV ** SP, struct tm *mytm)
   return   -- none, after calling return_11part_tm, you must call "return;"
               no exceptions
 */
-void
+static void
 return_11part_tm(pTHX_ SV ** SP, struct tm *mytm)
 {
        my_mini_mktime(mytm);
 
-  /* warn("tm: %d-%d-%d %d:%d:%d\n", mytm.tm_year, mytm.tm_mon, mytm.tm_mday, mytm.tm_hour, mytm.tm_min, mytm.tm_sec); */
+  /* warn("tm: %d-%d-%d %d:%d:%d\n", mytm->tm_year, mytm->tm_mon, mytm->tm_mday, mytm->tm_hour, mytm->tm_min, mytm->tm_sec); */
        EXTEND(SP, 11);
        SP = push_common_tm(aTHX_ SP, mytm);
        /* epoch */
@@ -1013,6 +918,36 @@ return_11part_tm(pTHX_ SV ** SP, struct tm *mytm)
        return;
 }
 
+
+static void _populate_C_time_locale(pTHX_ HV* locales )
+{
+    AV* alt_names   = (AV *) SvRV( *hv_fetch(locales, "alt_month", 9, 0) );
+    AV* long_names  = (AV *) SvRV( *hv_fetch(locales, "month", 5, 0) );
+    AV* short_names = (AV *) SvRV( *hv_fetch(locales, "mon", 3, 0) );
+    int i;
+
+    for (i = 0; i < 1 + (int) av_len( long_names ); i++) {
+        Locale->alt_month[i] = SvPV_nolen( (SV *) *av_fetch(alt_names, i, 0) );
+        Locale->month[i]     = SvPV_nolen( (SV *) *av_fetch(long_names, i, 0) );
+        Locale->mon[i]       = SvPV_nolen( (SV *) *av_fetch(short_names, i, 0) );
+    }
+
+    long_names = (AV *) SvRV( *hv_fetch(locales, "weekday", 7, 0) );
+    short_names = (AV *) SvRV( *hv_fetch(locales, "wday", 4, 0) );
+
+    for (i = 0; i < 1 + (int) av_len( long_names ); i++) {
+        Locale->wday[i]    = SvPV_nolen( (SV *) *av_fetch(short_names, i, 0) );
+        Locale->weekday[i] = SvPV_nolen( (SV *) *av_fetch(long_names, i, 0) );
+    }
+
+    Locale->am = SvPV_nolen( (SV *) *hv_fetch(locales, "am", 2, 0) );
+    Locale->pm = SvPV_nolen( (SV *) *hv_fetch(locales, "pm", 2, 0) );
+    Locale->AM = SvPV_nolen( (SV *) *hv_fetch(locales, "AM", 2, 0) );
+    Locale->PM = SvPV_nolen( (SV *) *hv_fetch(locales, "PM", 2, 0) );
+
+    return;
+}
+
 MODULE = Time::Piece     PACKAGE = Time::Piece
 
 PROTOTYPES: ENABLE
@@ -1024,7 +959,7 @@ _strftime(fmt, epoch, islocal = 1)
     int         islocal
     CODE:
     {
-        char tmpbuf[128];
+        char tmpbuf[TP_BUF_SIZE];
         struct tm mytm;
         size_t len;
 
@@ -1033,7 +968,7 @@ _strftime(fmt, epoch, islocal = 1)
         else
             mytm = *gmtime(&epoch);
 
-        len = strftime(tmpbuf, sizeof tmpbuf, fmt, &mytm);
+        len = strftime(tmpbuf, TP_BUF_SIZE, fmt, &mytm);
         /*
         ** The following is needed to handle to the situation where
         ** tmpbuf overflows.  Basically we want to allocate a buffer
@@ -1048,14 +983,14 @@ _strftime(fmt, epoch, islocal = 1)
         ** If there is a better way to make it portable, go ahead by
         ** all means.
         */
-        if ((len > 0 && len < sizeof(tmpbuf)) || (len == 0 && *fmt == '\0'))
+        if ((len > 0 && len < TP_BUF_SIZE) || (len == 0 && *fmt == '\0'))
         ST(0) = sv_2mortal(newSVpv(tmpbuf, len));
         else {
         /* Possibly buf overflowed - try again with a bigger buf */
-        int     fmtlen = strlen(fmt);
-        int    bufsize = fmtlen + sizeof(tmpbuf);
+        size_t fmtlen = strlen(fmt);
+        size_t bufsize = fmtlen + TP_BUF_SIZE;
         char*     buf;
-        int    buflen;
+        size_t    buflen;
 
         New(0, buf, bufsize, char);
         while (buf) {
@@ -1088,26 +1023,40 @@ _tzset()
     return; /* skip XSUBPP's PUTBACK */
 
 void
-_strptime ( string, format )
+_strptime ( string, format, got_GMT, SV* localization )
 	char * string
 	char * format
+	int    got_GMT
   PREINIT:
        struct tm mytm;
-       time_t t;
        char * remainder;
-       int got_GMT;
+       HV   * locales;
   PPCODE:
-       t = 0;
-       mytm = *gmtime(&t);
+       memset(&mytm, 0, sizeof(mytm));
+
+       /* sensible defaults. */
+       mytm.tm_mday = 1;
+       mytm.tm_year = 70;
+       mytm.tm_wday = 4;
        mytm.tm_isdst = -1; /* -1 means we don't know */
-       got_GMT = 0;
+
+       if( SvTYPE(SvRV( localization )) == SVt_PVHV ){
+           locales = (HV *)SvRV(localization);
+       }
+       else{
+            croak("_strptime requires a Hash Reference of locales");
+       }
+
+       /* populate our locale data struct (used for %[AaBbPp] flags) */
+       _populate_C_time_locale(aTHX_ locales );
 
        remainder = (char *)_strptime(aTHX_ string, format, &mytm, &got_GMT);
        if (remainder == NULL) {
            croak("Error parsing time");
        }
        if (*remainder != '\0') {
-           warn("garbage at end of string in strptime: %s", remainder);
+           warn("Garbage at end of string in strptime: %s", remainder);
+           warn("Perhaps a format flag did not match the actual input?");
        }
 
        return_11part_tm(aTHX_ SP, &mytm);
@@ -1143,13 +1092,13 @@ _crt_localtime(time_t sec)
         else mytm = *localtime(&sec);
         /* Need to get: $s,$n,$h,$d,$m,$y */
 
-        EXTEND(SP, 9);
+        EXTEND(SP, 10);
         SP = push_common_tm(aTHX_ SP, &mytm);
         PUSHs(newSViv(mytm.tm_isdst));
         PUTBACK;
         {
             SV ** endsp = SP; /* the SV * under SP needs to be mortaled */
-            SP -= (9 - 1); /* subtract 0 based count of SVs to mortal */
+            SP -= (10 - 1); /* subtract 0 based count of SVs to mortal */
 /* mortal target of SP, then increment before function call
    so SP is already calculated before next comparison to not stall CPU */
             do {
@@ -1157,3 +1106,61 @@ _crt_localtime(time_t sec)
             } while(SP <= endsp);
         }
         return;
+
+SV*
+_get_localization()
+    INIT:
+        HV* locales = newHV();
+        AV* wdays = newAV();
+        AV* weekdays = newAV();
+        AV* mons = newAV();
+        AV* months = newAV();
+        SV** tmp;
+        size_t len;
+        char buf[TP_BUF_SIZE];
+        size_t i;
+        time_t t = 1325386800; /*1325386800 = Sun, 01 Jan 2012 03:00:00 GMT*/
+        struct tm mytm = *gmtime(&t);
+     CODE:
+
+        for(i = 0; i < 7; ++i){
+
+            len = strftime(buf, TP_BUF_SIZE, "%a", &mytm);
+            av_push(wdays, (SV *) newSVpvn(buf, len));
+
+            len = strftime(buf, TP_BUF_SIZE, "%A", &mytm);
+            av_push(weekdays, (SV *) newSVpvn(buf, len));
+
+            ++mytm.tm_wday;
+        }
+
+        for(i = 0; i < 12; ++i){
+
+            len = strftime(buf, TP_BUF_SIZE, "%b", &mytm);
+            av_push(mons, (SV *) newSVpvn(buf, len));
+
+            len = strftime(buf, TP_BUF_SIZE, "%B", &mytm);
+            av_push(months, (SV *) newSVpvn(buf, len));
+
+            ++mytm.tm_mon;
+        }
+
+        tmp = hv_store(locales, "wday", 4, newRV_noinc((SV *) wdays), 0);
+        tmp = hv_store(locales, "weekday", 7, newRV_noinc((SV *) weekdays), 0);
+        tmp = hv_store(locales, "mon", 3, newRV_noinc((SV *) mons), 0);
+        tmp = hv_store(locales, "month", 5, newRV_noinc((SV *) months), 0);
+        tmp = hv_store(locales, "alt_month", 9, newRV((SV *) months), 0);
+
+        len = strftime(buf, TP_BUF_SIZE, "%p", &mytm);
+        tmp = hv_store(locales, "AM", 2, newSVpvn(buf,len), 0);
+        mytm.tm_hour = 18;
+        len = strftime(buf, TP_BUF_SIZE, "%p", &mytm);
+        tmp = hv_store(locales, "PM", 2, newSVpvn(buf,len), 0);
+
+        if(tmp == NULL || !SvOK( (SV *) *tmp)){
+            croak("Failed to get localization.");
+        }
+
+        RETVAL = newRV_noinc((SV *)locales);
+    OUTPUT:
+        RETVAL

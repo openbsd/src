@@ -15,6 +15,7 @@
 
 __END__
 # utf8.c [utf8_to_uvchr_buf] -W
+# NAME Malformed under 'use utf8' in double-quoted string
 BEGIN {
     if (ord('A') == 193) {
         print "SKIPPED\n# ebcdic platforms generates different Malformed UTF-8 warnings.";
@@ -22,16 +23,25 @@ BEGIN {
     }
 }
 use utf8 ;
+no warnings;    # Malformed is a fatal error, so gets output anyway.
 my $a = "snøstorm" ;
-{
-    no warnings 'utf8' ;
-    my $a = "snøstorm";
-    use warnings 'utf8' ;
-    my $a = "snøstorm";
-}
 EXPECT
-Malformed UTF-8 character (unexpected non-continuation byte 0x73, immediately after start byte 0xf8) at - line 9.
-Malformed UTF-8 character (unexpected non-continuation byte 0x73, immediately after start byte 0xf8) at - line 14.
+Malformed UTF-8 character: \xf8\x73\x74\x6f\x72 (unexpected non-continuation byte 0x73, immediately after start byte 0xf8; need 5 bytes, got 1) at - line 10.
+Malformed UTF-8 character (fatal) at - line 10.
+########
+# NAME Malformed under 'use utf8' in single-quoted string
+BEGIN {
+    if (ord('A') == 193) {
+        print "SKIPPED\n# ebcdic platforms generates different Malformed UTF-8 warnings.";
+        exit 0;
+    }
+}
+use utf8 ;
+no warnings;    # Malformed is a fatal error, so gets output anyway.
+my $a = 'snøstorm' ;
+EXPECT
+Malformed UTF-8 character: \xf8\x73\x74\x6f\x72 (unexpected non-continuation byte 0x73, immediately after start byte 0xf8; need 5 bytes, got 1) at - line 9.
+Malformed UTF-8 character (fatal) at - line 9.
 ########
 use warnings 'utf8';
 my $d7ff  = uc(chr(0xD7FF));
@@ -89,12 +99,11 @@ Operation "uc" returns its argument for non-Unicode code point 0x110000 at - lin
 Operation "uc" returns its argument for UTF-16 surrogate U+D800 at - line 5.
 ########
 use warnings 'utf8';
-no warnings 'deprecated'; # This is above IV_MAX on 32 bit machines
-my $big_nonUnicode = uc(chr(0x8000_0000));
+my $big_nonUnicode = uc(chr(0x7FFF_FFFF));
 no warnings 'non_unicode';
-my $big_nonUnicode = uc(chr(0x8000_0000));
+my $big_nonUnicode = uc(chr(0x7FFF_FFFF));
 EXPECT
-Operation "uc" returns its argument for non-Unicode code point 0x80000000 at - line 3.
+Operation "uc" returns its argument for non-Unicode code point 0x7FFFFFFF at - line 2.
 ########
 use warnings 'utf8';
 my $d7ff  = lc pack("U", 0xD7FF);
@@ -726,37 +735,25 @@ $a = uc("\x{103}");
 $a = ucfirst("\x{104}");
 EXPECT
 ########
-# NAME Deprecation of too-large code points
+# NAME Fatality of too-large code points, but IV_MAX works, warns
 require "../test.pl";
 use warnings 'non_unicode';
 my $max_cp = ~0 >> 1;
 my $max_char = chr $max_cp;
-my $to_warn_cp = $max_cp + 1;
-my $to_warn_char = chr $to_warn_cp;
-$max_char =~ /[\x{110000}\P{Unassigned}]/;
-$to_warn_char =~ /[\x{110000}\P{Unassigned}]/;
 my $temp = qr/$max_char/;
-$temp = qr/$to_warn_char/;
 $temp = uc($max_char);
-$temp = uc($to_warn_char);
+$max_char =~ /[\x{110000}\P{Unassigned}]/;
 my $file = tempfile();
 open(my $fh, "+>:utf8", $file);
 print $fh $max_char, "\n";
-print $fh $to_warn_char, "\n";
 close $fh;
+my $error_cp = $max_cp + 1;
+my $error_char = chr $error_cp;
 EXPECT
-OPTION regex
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ at - line \d+.
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in pattern match \(m//\) at - line \d+.
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in regexp compilation at - line \d+.
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in regexp compilation at - line \d+.
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ at - line \d+.
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in regexp compilation at - line \d+.
+OPTIONS fatal regex
 Operation "uc" returns its argument for non-Unicode code point 0x7F+ at - line \d+.
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ at - line \d+.
-Operation "uc" returns its argument for non-Unicode code point 0x80+ at - line \d+.
-Code point 0x7F+ is not Unicode, may not be portable in print at - line \d+.
-Use of code point 0x80+ is deprecated; the permissible max is 0x7F+ in print at - line \d+.
+Code point 0x7F+ is not Unicode, (may not be|requires a Perl extension, and so is not) portable in print at - line \d+.
+Use of code point 0x80+ is not allowed; the permissible max is 0x7F+\ at - line \d+.
 ########
 # NAME  [perl #127262]
 BEGIN{
@@ -764,6 +761,25 @@ BEGIN{
         print "SKIPPED\n# ebcdic platforms generates different Malformed UTF-8 warnings.";
         exit 0;
     }
-{};$^H=2**400}Â
+    use Config;
+    unless ($Double{double_style_ieee}) {
+        print "SKIPPED\n# non-IEEE fp range.";
+        exit 0;
+    }
+{};$^H=eval'2**400'}Â
 EXPECT
-Malformed UTF-8 character (unexpected non-continuation byte 0x0a, immediately after start byte 0xc2) at - line 6.
+Malformed UTF-8 character: \xc2\x0a (unexpected non-continuation byte 0x0a, immediately after start byte 0xc2; need 2 bytes, got 1) at - line 11.
+########
+# NAME  [perl #131646]
+BEGIN{
+    if (ord('A') == 193) {
+        print "SKIPPED\n# ebcdic platforms generates different Malformed UTF-8 warnings.";
+        exit 0;
+    }
+}
+no warnings;
+use warnings 'utf8';
+for(uc 0..t){0~~pack"UXc",exp}
+EXPECT
+OPTIONS regex
+Malformed UTF-8 character: \\x([[:xdigit:]]{2})\\x([[:xdigit:]]{2}) \(unexpected non-continuation byte 0x\2, immediately after start byte 0x\1; need 2 bytes, got 1\)  in smart match at - line 9.

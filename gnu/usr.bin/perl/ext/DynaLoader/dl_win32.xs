@@ -82,7 +82,7 @@ dl_static_linked(char *filename)
         return 0;
 
     /* change all the '\\' to '/' */
-    strcpy(szBuffer, filename);
+    my_strlcpy(szBuffer, filename, sizeof(szBuffer));
     for(ptr = szBuffer; ptr = strchr(ptr, '\\'); ++ptr)
 	*ptr = '/';
 
@@ -102,7 +102,7 @@ dl_static_linked(char *filename)
 	if (hptr = strstr(ptr, *p)) {
 	    /* found substring, need more detailed check if module name match */
 	    if (hptr==ptr) {
-		return strcmp(ptr, *p)==0;
+		return strEQ(ptr, *p);
 	    }
 	    if (hptr[strlen(*p)] == 0)
 		return hptr[-1]=='/';

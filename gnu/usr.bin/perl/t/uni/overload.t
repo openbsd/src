@@ -2,14 +2,14 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require Config; import Config;
     require './test.pl';
     require './charset_tools.pl';
     require './loc_tools.pl';
+    set_up_inc( '../lib' );
 }
 
-plan(tests => 215);
+plan(tests => 217);
 
 package UTF8Toggle;
 use strict;
@@ -286,4 +286,27 @@ foreach my $value ("\243", UTF8Toggle->new("\243")) {
     my $text = bless { data => "\x{3075}" }, 'RT69422';
     my $p = substr $text, 0, 1;
     is ($p, "\x{3075}");
+}
+
+TODO: {
+    local $::TODO = 'RT #3054: Recursive operator overloading overflows the C stack';
+    # XXX this test is expected to SEGV, and can produce
+    #    sh: line 1:  5106 Segmentation fault
+    # on STDERR. So just completely disable for now
+    todo_skip($::TODO);
+    fresh_perl_is(<<'EOP', "ok\n", {}, 'RT #3054: Recursive operator overloading should not crash the interpreter');
+    use overload '""' => sub { "$_[0]" };
+    print bless {}, __PACKAGE__;
+    print "ok\n";
+EOP
+}
+
+TODO: {
+    local $::TODO = 'RT #3270: Overloaded operators can not be treated as lvalues';
+    fresh_perl_is(<<'EOP', '', {stderr => 1}, 'RT #3270: Overloaded operator that returns an lvalue can be used as an lvalue');
+    use overload '.' => \&dot;
+    sub dot : lvalue {my ($obj, $method) = @_; $obj -> {$method};}
+    my $o  = bless {} => "main";
+    $o.foo = "bar";
+EOP
 }

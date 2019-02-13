@@ -22,7 +22,7 @@ BEGIN {
 use TestInit qw(T); # T is chdir to the top level
 use strict;
 
-require 't/test.pl';
+require './t/test.pl';
 
 # It turns out that, since the default @INC will include your old 5.x libs, if
 # you have them, the Porting utils might load a library that no longer compiles

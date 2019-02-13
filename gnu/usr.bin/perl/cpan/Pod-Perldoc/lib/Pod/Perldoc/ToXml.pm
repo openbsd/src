@@ -6,7 +6,7 @@ use vars qw($VERSION);
 use parent qw( Pod::Simple::XMLOutStream );
 
 use vars qw($VERSION);
-$VERSION = '3.25';
+$VERSION = '3.28';
 
 sub is_pageable        { 0 }
 sub write_with_binmode { 0 }

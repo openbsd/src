@@ -10,7 +10,7 @@ BEGIN {
 use TestInit qw(T); # T is chdir to the top level
 use strict;
 use warnings;
-require 't/test.pl';
+require './t/test.pl';
 
 my @porting_files;
 open my $man, "MANIFEST" or die "Can't open MANIFEST: $!";

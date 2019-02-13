@@ -23,19 +23,21 @@ L<Synology FAQ|http://forum.synology.com/wiki/index.php/What_kind_of_CPU_does_my
 Since it is based on Linux, the NAS can run many popular Linux
 software packages, including Perl. In fact, Synology provides a
 ready-to-install package for Perl, depending on the version of DSM
-the installed perl ranges from 5.8.6 on DSM-4.3 to 5.18.4 on DSM-5.1.
+the installed perl ranges from 5.8.6 on DSM-4.3 to 5.24.0 on DSM-6.1.
 
 There is an active user community that provides many software packages
 for the Synology DSM systems; at the time of writing this document
-they provide Perl version 5.18.4.
+they provide Perl version 5.24.1.
 
 This document describes various features of Synology DSM operating
 system that will affect how Perl 5 (hereafter just Perl) is
 configured, compiled and/or runs. It has been compiled and verified by
 Johan Vromans for the Synology DS413 (QorIQ), with feedback from
-H.Merijn Brand (DS213, ARMv5tel).
+H.Merijn Brand (DS213, ARMv5tel and RS815, Intel Atom x64).
 
 =head2 Setting up the build environment
+
+=head3 DSM 5
 
 As DSM is a trimmed-down Linux system, it lacks many of the tools and
 libraries commonly found on Linux. The basic tools like sh, cp, rm,
@@ -128,6 +130,21 @@ Execute the following commands:
 
 B<WARNING:> When you perform a system software upgrade, these links
 will disappear and need to be re-established.
+
+=head3 DSM 6
+
+Using iPkg has been deprecated on DSM 6, but an alternative is available
+for DSM 6: entware/opkg. For instructions on how to use that, please read
+L<Install Entware-ng on Synology NAS|https://github.com/Entware-ng/Entware-ng/wiki/Install-on-Synology-NAS>
+
+That sadly does not (yet) work on QorIQ. At the moment of writing, the
+supported architectures are armv5, armv7, mipsel, wl500g, x86_32, and x86_64.
+Check L<here|http://pkg.entware.net/binaries/> for supported platforms.
+
+Entware-ng comes with a precompiled 5.24.1 (June 2017) that allowes
+building shared XS code. Note that this installation does B<not> use
+a site_perl folder. The available C<cpan> works. If all required
+development packages are installed too, also for XS.
 
 =head2 Compiling Perl 5
 
@@ -250,7 +267,7 @@ the programs are run.
 
 =head1 REVISION
 
-March 2015, for Synology DSM 5.1.5022.
+June 2017, for Synology DSM 5.1.5022 and DSM 6.1-15101-4.
 
 =head1 AUTHOR
 

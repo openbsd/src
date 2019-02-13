@@ -20,7 +20,7 @@ BEGIN {
   #require AutoLoader;
 
   our @ISA = qw(Exporter);
-  our $VERSION = "1.11";
+  our $VERSION = "1.12";
   XSLoader::load('OS2::Process', $VERSION);
 }
 
@@ -756,7 +756,7 @@ sub __term_mirror {
   close IN if defined $out;
   $pid > 0 or die "Cannot start a grandkid";
 
-  open STDIN, '</dev/con' or warn "reopen stdin: $!";
+  open STDIN, '<', '/dev/con' or warn "reopen stdin: $!";
   select OUT;    $| = 1;  binmode OUT;	# need binmode: sysread() may be bin
   $SIG{PIPE} = sub { die "writing to a closed pipe" };
   $SIG{HUP} = $SIG{BREAK} = $SIG{INT} = $SIG{TERM};
@@ -1044,7 +1044,7 @@ gets a buffer with characters and attributes of the screen.
 restores the screen given the result of screen().  E.g., if the file
 C<$file> contains the screen contents, then
 
-  open IN, $file or die;
+  open IN, '<', $file or die;
   binmode IN;
   read IN, $in, -s IN;
   $s = screen;

@@ -33,4 +33,33 @@ use Scalar::Util 'weaken';
 eval { sv_magic(\!0, $foo) };
 is $@, "", 'PERL_MAGIC_ext is permitted on read-only things';
 
+# assigning to an array/hash with only set magic should call that magic
+
+{
+    my (@a, %h, $i);
+
+    sv_magic_myset(\@a, $i);
+    sv_magic_myset(\%h, $i);
+
+    $i = 0;
+    @a = (1,2);
+    is($i, 2, "array with set magic");
+
+    $i = 0;
+    @a = ();
+    is($i, 0, "array () with set magic");
+
+    {
+        local $TODO = "HVs don't call set magic - not sure if should";
+
+        $i = 0;
+        %h = qw(a 1 b 2);
+        is($i, 4, "hash with set magic");
+    }
+
+    $i = 0;
+    %h = qw();
+    is($i, 0, "hash () with set magic");
+}
+
 done_testing;

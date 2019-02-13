@@ -7,27 +7,312 @@ perlre - Perl regular expressions
 
 This page describes the syntax of regular expressions in Perl.
 
-If you haven't used regular expressions before, a quick-start
-introduction is available in L<perlrequick>, and a longer tutorial
-introduction is available in L<perlretut>.
+If you haven't used regular expressions before, a tutorial introduction
+is available in L<perlretut>.  If you know just a little about them,
+a quick-start introduction is available in L<perlrequick>.
 
-For reference on how regular expressions are used in matching
-operations, plus various examples of the same, see discussions of
-C<m//>, C<s///>, C<qr//> and C<"??"> in L<perlop/"Regexp Quote-Like
-Operators">.
+Except for L</The Basics> section, this page assumes you are familiar
+with regular expression basics, like what is a "pattern", what does it
+look like, and how it is basically used.  For a reference on how they
+are used, plus various examples of the same, see discussions of C<m//>,
+C<s///>, C<qr//> and C<"??"> in L<perlop/"Regexp Quote-Like Operators">.
 
 New in v5.22, L<C<use re 'strict'>|re/'strict' mode> applies stricter
 rules than otherwise when compiling regular expression patterns.  It can
 find things that, while legal, may not be what you intended.
 
+=head2 The Basics
+X<regular expression, version 8> X<regex, version 8> X<regexp, version 8>
+
+Regular expressions are strings with the very particular syntax and
+meaning described in this document and auxiliary documents referred to
+by this one.  The strings are called "patterns".  Patterns are used to
+determine if some other string, called the "target", has (or doesn't
+have) the characteristics specified by the pattern.  We call this
+"matching" the target string against the pattern.  Usually the match is
+done by having the target be the first operand, and the pattern be the
+second operand, of one of the two binary operators C<=~> and C<!~>,
+listed in L<perlop/Binding Operators>; and the pattern will have been
+converted from an ordinary string by one of the operators in
+L<perlop/"Regexp Quote-Like Operators">, like so:
+
+ $foo =~ m/abc/
+
+This evaluates to true if and only if the string in the variable C<$foo>
+contains somewhere in it, the sequence of characters "a", "b", then "c".
+(The C<=~ m>, or match operator, is described in
+L<perlop/m/PATTERN/msixpodualngc>.)
+
+Patterns that aren't already stored in some variable must be delimitted,
+at both ends, by delimitter characters.  These are often, as in the
+example above, forward slashes, and the typical way a pattern is written
+in documentation is with those slashes.  In most cases, the delimitter
+is the same character, fore and aft, but there are a few cases where a
+character looks like it has a mirror-image mate, where the opening
+version is the beginning delimiter, and the closing one is the ending
+delimiter, like
+
+ $foo =~ m<abc>
+
+Most times, the pattern is evaluated in double-quotish context, but it
+is possible to choose delimiters to force single-quotish, like
+
+ $foo =~ m'abc'
+
+If the pattern contains its delimiter within it, that delimiter must be
+escaped.  Prefixing it with a backslash (I<e.g.>, C<"/foo\/bar/">)
+serves this purpose.
+
+Any single character in a pattern matches that same character in the
+target string, unless the character is a I<metacharacter> with a special
+meaning described in this document.  A sequence of non-metacharacters
+matches the same sequence in the target string, as we saw above with
+C<m/abc/>.
+
+Only a few characters (all of them being ASCII punctuation characters)
+are metacharacters.  The most commonly used one is a dot C<".">, which
+normally matches almost any character (including a dot itself).
+
+You can cause characters that normally function as metacharacters to be
+interpreted literally by prefixing them with a C<"\">, just like the
+pattern's delimiter must be escaped if it also occurs within the
+pattern.  Thus, C<"\."> matches just a literal dot, C<"."> instead of
+its normal meaning.  This means that the backslash is also a
+metacharacter, so C<"\\"> matches a single C<"\">.  And a sequence that
+contains an escaped metacharacter matches the same sequence (but without
+the escape) in the target string.  So, the pattern C</blur\\fl/> would
+match any target string that contains the sequence C<"blur\fl">.
+
+The metacharacter C<"|"> is used to match one thing or another.  Thus
+
+ $foo =~ m/this|that/
+
+is TRUE if and only if C<$foo> contains either the sequence C<"this"> or
+the sequence C<"that">.  Like all metacharacters, prefixing the C<"|">
+with a backslash makes it match the plain punctuation character; in its
+case, the VERTICAL LINE.
+
+ $foo =~ m/this\|that/
+
+is TRUE if and only if C<$foo> contains the sequence C<"this|that">.
+
+You aren't limited to just a single C<"|">.
+
+ $foo =~ m/fee|fie|foe|fum/
+
+is TRUE if and only if C<$foo> contains any of those 4 sequences from
+the children's story "Jack and the Beanstalk".
+
+As you can see, the C<"|"> binds less tightly than a sequence of
+ordinary characters.  We can override this by using the grouping
+metacharacters, the parentheses C<"("> and C<")">.
+
+ $foo =~ m/th(is|at) thing/
+
+is TRUE if and only if C<$foo> contains either the sequence S<C<"this
+thing">> or the sequence S<C<"that thing">>.  The portions of the string
+that match the portions of the pattern enclosed in parentheses are
+normally made available separately for use later in the pattern,
+substitution, or program.  This is called "capturing", and it can get
+complicated.  See L</Capture groups>.
+
+The first alternative includes everything from the last pattern
+delimiter (C<"(">, C<"(?:"> (described later), I<etc>. or the beginning
+of the pattern) up to the first C<"|">, and the last alternative
+contains everything from the last C<"|"> to the next closing pattern
+delimiter.  That's why it's common practice to include alternatives in
+parentheses: to minimize confusion about where they start and end.
+
+Alternatives are tried from left to right, so the first
+alternative found for which the entire expression matches, is the one that
+is chosen. This means that alternatives are not necessarily greedy. For
+example: when matching C<foo|foot> against C<"barefoot">, only the C<"foo">
+part will match, as that is the first alternative tried, and it successfully
+matches the target string. (This might not seem important, but it is
+important when you are capturing matched text using parentheses.)
+
+Besides taking away the special meaning of a metacharacter, a prefixed
+backslash changes some letter and digit characters away from matching
+just themselves to instead have special meaning.  These are called
+"escape sequences", and all such are described in L<perlrebackslash>.  A
+backslash sequence (of a letter or digit) that doesn't currently have
+special meaning to Perl will raise a warning if warnings are enabled,
+as those are reserved for potential future use.
+
+One such sequence is C<\b>, which matches a boundary of some sort.
+C<\b{wb}> and a few others give specialized types of boundaries.
+(They are all described in detail starting at
+L<perlrebackslash/\b{}, \b, \B{}, \B>.)  Note that these don't match
+characters, but the zero-width spaces between characters.  They are an
+example of a L<zero-width assertion|/Assertions>.  Consider again,
+
+ $foo =~ m/fee|fie|foe|fum/
+
+It evaluates to TRUE if, besides those 4 words, any of the sequences
+"feed", "field", "Defoe", "fume", and many others are in C<$foo>.  By
+judicious use of C<\b> (or better (because it is designed to handle
+natural language) C<\b{wb}>), we can make sure that only the Giant's
+words are matched:
+
+ $foo =~ m/\b(fee|fie|foe|fum)\b/
+ $foo =~ m/\b{wb}(fee|fie|foe|fum)\b{wb}/
+
+The final example shows that the characters C<"{"> and C<"}"> are
+metacharacters.
+
+Another use for escape sequences is to specify characters that cannot
+(or which you prefer not to) be written literally.  These are described
+in detail in L<perlrebackslash/Character Escapes>, but the next three
+paragraphs briefly describe some of them.
+
+Various control characters can be written in C language style: C<"\n">
+matches a newline, C<"\t"> a tab, C<"\r"> a carriage return, C<"\f"> a
+form feed, I<etc>.
+
+More generally, C<\I<nnn>>, where I<nnn> is a string of three octal
+digits, matches the character whose native code point is I<nnn>.  You
+can easily run into trouble if you don't have exactly three digits.  So
+always use three, or since Perl 5.14, you can use C<\o{...}> to specify
+any number of octal digits.
+
+Similarly, C<\xI<nn>>, where I<nn> are hexadecimal digits, matches the
+character whose native ordinal is I<nn>.  Again, not using exactly two
+digits is a recipe for disaster, but you can use C<\x{...}> to specify
+any number of hex digits.
+
+Besides being a metacharacter, the C<"."> is an example of a "character
+class", something that can match any single character of a given set of
+them.  In its case, the set is just about all possible characters.  Perl
+predefines several character classes besides the C<".">; there is a
+separate reference page about just these, L<perlrecharclass>.
+
+You can define your own custom character classes, by putting into your
+pattern in the appropriate place(s), a list of all the characters you
+want in the set.  You do this by enclosing the list within C<[]> bracket
+characters.  These are called "bracketed character classes" when we are
+being precise, but often the word "bracketed" is dropped.  (Dropping it
+usually doesn't cause confusion.)  This means that the C<"["> character
+is another metacharacter.  It doesn't match anything just by itself; it
+is used only to tell Perl that what follows it is a bracketed character
+class.  If you want to match a literal left square bracket, you must
+escape it, like C<"\[">.  The matching C<"]"> is also a metacharacter;
+again it doesn't match anything by itself, but just marks the end of
+your custom class to Perl.  It is an example of a "sometimes
+metacharacter".  It isn't a metacharacter if there is no corresponding
+C<"[">, and matches its literal self:
+
+ print "]" =~ /]/;  # prints 1
+
+The list of characters within the character class gives the set of
+characters matched by the class.  C<"[abc]"> matches a single "a" or "b"
+or "c".  But if the first character after the C<"["> is C<"^">, the
+class instead matches any character not in the list.  Within a list, the
+C<"-"> character specifies a range of characters, so that C<a-z>
+represents all characters between "a" and "z", inclusive.  If you want
+either C<"-"> or C<"]"> itself to be a member of a class, put it at the
+start of the list (possibly after a C<"^">), or escape it with a
+backslash.  C<"-"> is also taken literally when it is at the end of the
+list, just before the closing C<"]">.  (The following all specify the
+same class of three characters: C<[-az]>, C<[az-]>, and C<[a\-z]>.  All
+are different from C<[a-z]>, which specifies a class containing
+twenty-six characters, even on EBCDIC-based character sets.)
+
+There is lots more to bracketed character classes; full details are in
+L<perlrecharclass/Bracketed Character Classes>.
+
+=head3 Metacharacters
+X<metacharacter>
+X<\> X<^> X<.> X<$> X<|> X<(> X<()> X<[> X<[]>
+
+L</The Basics> introduced some of the metacharacters.  This section
+gives them all.  Most of them have the same meaning as in the I<egrep>
+command.
+
+Only the C<"\"> is always a metacharacter.  The others are metacharacters
+just sometimes.  The following tables lists all of them, summarizes
+their use, and gives the contexts where they are metacharacters.
+Outside those contexts or if prefixed by a C<"\">, they match their
+corresponding punctuation character.  In some cases, their meaning
+varies depending on various pattern modifiers that alter the default
+behaviors.  See L</Modifiers>.
+
+
+            PURPOSE                                  WHERE
+ \   Escape the next character                    Always, except when
+                                                  escaped by another \
+ ^   Match the beginning of the string            Not in []
+       (or line, if /m is used)
+ ^   Complement the [] class                      At the beginning of []
+ .   Match any single character except newline    Not in []
+       (under /s, includes newline)
+ $   Match the end of the string                  Not in [], but can
+       (or before newline at the end of the       mean interpolate a
+       string; or before any newline if /m is     scalar
+       used)
+ |   Alternation                                  Not in []
+ ()  Grouping                                     Not in []
+ [   Start Bracketed Character class              Not in []
+ ]   End Bracketed Character class                Only in [], and
+                                                    not first
+ *   Matches the preceding element 0 or more      Not in []
+       times
+ +   Matches the preceding element 1 or more      Not in []
+       times
+ ?   Matches the preceding element 0 or 1         Not in []
+       times
+ {   Starts a sequence that gives number(s)       Not in []
+       of times the preceding element can be
+       matched
+ {   when following certain escape sequences
+       starts a modifier to the meaning of the
+       sequence
+ }   End sequence started by {
+ -   Indicates a range                            Only in [] interior
+ #   Beginning of comment, extends to line end    Only with /x modifier
+
+Notice that most of the metacharacters lose their special meaning when
+they occur in a bracketed character class, except C<"^"> has a different
+meaning when it is at the beginning of such a class.  And C<"-"> and C<"]">
+are metacharacters only at restricted positions within bracketed
+character classes; while C<"}"> is a metacharacter only when closing a
+special construct started by C<"{">.
+
+In double-quotish context, as is usually the case,  you need to be
+careful about C<"$"> and the non-metacharacter C<"@">.  Those could
+interpolate variables, which may or may not be what you intended.
+
+These rules were designed for compactness of expression, rather than
+legibility and maintainability.  The L</E<sol>x and E<sol>xx> pattern
+modifiers allow you to insert white space to improve readability.  And
+use of S<C<L<re 'strict'|re/'strict' mode>>> adds extra checking to
+catch some typos that might silently compile into something unintended.
+
+By default, the C<"^"> character is guaranteed to match only the
+beginning of the string, the C<"$"> character only the end (or before the
+newline at the end), and Perl does certain optimizations with the
+assumption that the string contains only one line.  Embedded newlines
+will not be matched by C<"^"> or C<"$">.  You may, however, wish to treat a
+string as a multi-line buffer, such that the C<"^"> will match after any
+newline within the string (except if the newline is the last character in
+the string), and C<"$"> will match before any newline.  At the
+cost of a little more overhead, you can do this by using the
+L</C<E<sol>m>> modifier on the pattern match operator.  (Older programs
+did this by setting C<$*>, but this option was removed in perl 5.10.)
+X<^> X<$> X</m>
+
+To simplify multi-line substitutions, the C<"."> character never matches a
+newline unless you use the L<C<E<sol>s>|/s> modifier, which in effect tells
+Perl to pretend the string is a single line--even if it isn't.
+X<.> X</s>
+
 =head2 Modifiers
 
 =head3 Overview
 
-Matching operations can have various modifiers.  Modifiers
-that relate to the interpretation of the regular expression inside
-are listed below.  Modifiers that alter the way a regular expression
-is used by Perl are detailed in L<perlop/"Regexp Quote-Like Operators"> and
+The default behavior for matching can be changed, using various
+modifiers.  Modifiers that relate to the interpretation of the pattern
+are listed just below.  Modifiers that alter the way a pattern is used
+by Perl are detailed in L<perlop/"Regexp Quote-Like Operators"> and
 L<perlop/"Gory details of parsing quoted constructs">.
 
 =over 4
@@ -35,7 +320,7 @@ L<perlop/"Gory details of parsing quoted constructs">.
 =item B<C<m>>
 X</m> X<regex, multiline> X<regexp, multiline> X<regular expression, multiline>
 
-Treat the string as multiple lines.  That is, change C<"^"> and C<"$"> from matching
+Treat the string being matched against as multiple lines.  That is, change C<"^"> and C<"$"> from matching
 the start of the string's first line and the end of its last line to
 matching the start and end of each line within the string.
 
@@ -85,11 +370,11 @@ inverted, which otherwise could be highly confusing.  See
 L<perlrecharclass/Bracketed Character Classes>, and
 L<perlrecharclass/Negation>.
 
-=item B<C<x>>
+=item B<C<x>> and B<C<xx>>
 X</x>
 
 Extend your pattern's legibility by permitting whitespace and comments.
-Details in L</"/x">
+Details in L</E<sol>x and  E<sol>xx>
 
 =item B<C<p>>
 X</p> X<regex, preserve> X<regexp, preserve>
@@ -105,7 +390,7 @@ after the match regardless of the modifier.
 X</a> X</d> X</l> X</u>
 
 These modifiers, all new in 5.14, affect which character-set rules
-(Unicode, etc.) are used, as described below in
+(Unicode, I<etc>.) are used, as described below in
 L</Character set modifiers>.
 
 =item B<C<n>>
@@ -113,7 +398,7 @@ X</n> X<regex, non-capture> X<regexp, non-capture>
 X<regular expression, non-capture>
 
 Prevent the grouping metacharacters C<()> from capturing. This modifier,
-new in 5.22, will stop C<$1>, C<$2>, etc... from being filled in.
+new in 5.22, will stop C<$1>, C<$2>, I<etc>... from being filled in.
 
   "hello" =~ /(hi|hello)/;   # $1 is "hello"
   "hello" =~ /(hi|hello)/n;  # $1 is undef
@@ -143,7 +428,6 @@ L<perlretut/"Using regular expressions in Perl"> are:
   g  - globally match the pattern repeatedly in the string
 
 Substitution-specific modifiers described in
-
 L<perlop/"s/PATTERN/REPLACEMENT/msixpodualngcer"> are:
 
   e  - evaluate the right-hand side as an expression
@@ -154,7 +438,7 @@ L<perlop/"s/PATTERN/REPLACEMENT/msixpodualngcer"> are:
 =back
 
 Regular expression modifiers are usually written in documentation
-as e.g., "the C</x> modifier", even though the delimiter
+as I<e.g.>, "the C</x> modifier", even though the delimiter
 in question might not really be a slash.  The modifiers C</imnsxadlup>
 may also be embedded within the regular expression itself using
 the C<(?...)> construct, see L</Extended Patterns> below.
@@ -164,12 +448,12 @@ the C<(?...)> construct, see L</Extended Patterns> below.
 Some of the modifiers require more explanation than given in the
 L</Overview> above.
 
-=head4 /x
+=head4 C</x> and  C</xx>
 
-C</x> tells
+A single C</x> tells
 the regular expression parser to ignore most whitespace that is neither
 backslashed nor within a bracketed character class.  You can use this to
-break up your regular expression into (slightly) more readable parts.
+break up your regular expression into more readable parts.
 Also, the C<"#"> character is treated as a metacharacter introducing a
 comment that runs up to the pattern's closing delimiter, or to the end
 of the current line if the pattern extends onto the next line.  Hence,
@@ -189,6 +473,24 @@ You can use L</(?#text)> to create a comment that ends earlier than the
 end of the current line, but C<text> also can't contain the closing
 delimiter unless escaped with a backslash.
 
+A common pitfall is to forget that C<"#"> characters begin a comment under
+C</x> and are not matched literally.  Just keep that in mind when trying
+to puzzle out why a particular C</x> pattern isn't working as expected.
+
+Starting in Perl v5.26, if the modifier has a second C<"x"> within it,
+it does everything that a single C</x> does, but additionally
+non-backslashed SPACE and TAB characters within bracketed character
+classes are also generally ignored, and hence can be added to make the
+classes more readable.
+
+    / [d-e g-i 3-7]/xx
+    /[ ! @ " # $ % ^ & * () = ? <> ' ]/xx
+
+may be easier to grasp than the squashed equivalents
+
+    /[d-eg-i3-7]/
+    /[!@"#$%^&*()=?<>']/
+
 Taken together, these features go a long way towards
 making Perl's regular expressions more readable.  Here's an example:
 
@@ -204,7 +506,7 @@ a C<\Q...\E> stays unaffected by C</x>.  And note that C</x> doesn't affect
 space interpretation within a single multi-character construct.  For
 example in C<\x{...}>, regardless of the C</x> modifier, there can be no
 spaces.  Same for a L<quantifier|/Quantifiers> such as C<{3}> or
-C<{5,}>.  Similarly, C<(?:...)> can't have a space between the C<"{">,
+C<{5,}>.  Similarly, C<(?:...)> can't have a space between the C<"(">,
 C<"?">, and C<":">.  Within any delimiters for such a
 construct, allowed spaces are not affected by C</x>, and depend on the
 construct.  For example, C<\x{...}> can't have spaces because hexadecimal
@@ -404,6 +706,10 @@ the pattern uses a Unicode break (C<\b{...}> or C<\B{...}>); or
 
 the pattern uses L</C<(?[ ])>>
 
+=item 8
+
+the pattern uses L<C<(*script_run: ...)>|/Script Runs>
+
 =back
 
 Another mnemonic for this modifier is "Depends", as the rules actually
@@ -433,8 +739,8 @@ compatibilities.
 
 =head4 /a (and /aa)
 
-This modifier stands for ASCII-restrict (or ASCII-safe).  This modifier,
-unlike the others, may be doubled-up to increase its effect.
+This modifier stands for ASCII-restrict (or ASCII-safe).  This modifier
+may be doubled-up to increase its effect.
 
 When it appears singly, it causes the sequences C<\d>, C<\s>, C<\w>, and
 the Posix character classes to match only in the ASCII range.  They thus
@@ -473,7 +779,7 @@ comes to case-insensitive matching.
 
 To forbid ASCII/non-ASCII matches (like "k" with C<\N{KELVIN SIGN}>),
 specify the C<"a"> twice, for example C</aai> or C</aia>.  (The first
-occurrence of C<"a"> restricts the C<\d>, etc., and the second occurrence
+occurrence of C<"a"> restricts the C<\d>, I<etc>., and the second occurrence
 adds the C</i> restrictions.)  But, note that code points outside the
 ASCII range will use Unicode rules for C</i> matching, so the modifier
 doesn't really restrict things to just ASCII; it just forbids the
@@ -520,7 +826,7 @@ sets the default to C</u>, overriding any plain C<use locale>.)
 Unlike the mechanisms mentioned above, these
 affect operations besides regular expressions pattern matching, and so
 give more consistent results with other operators, including using
-C<\U>, C<\l>, etc. in substitution replacements.
+C<\U>, C<\l>, I<etc>. in substitution replacements.
 
 If none of the above apply, for backwards compatibility reasons, the
 C</d> modifier is the one in effect by default.  As this can lead to
@@ -540,50 +846,12 @@ Unicode rules, and neither did all occurrences of C<\N{}>, until 5.12.
 
 =head2 Regular Expressions
 
-=head3 Metacharacters
-
-The patterns used in Perl pattern matching evolved from those supplied in
-the Version 8 regex routines.  (The routines are derived
-(distantly) from Henry Spencer's freely redistributable reimplementation
-of the V8 routines.)  See L<Version 8 Regular Expressions> for
-details.
-
-In particular the following metacharacters have their standard I<egrep>-ish
-meanings:
-X<metacharacter>
-X<\> X<^> X<.> X<$> X<|> X<(> X<()> X<[> X<[]>
-
-
-    \        Quote the next metacharacter
-    ^        Match the beginning of the line
-    .        Match any character (except newline)
-    $        Match the end of the string (or before newline at the end
-             of the string)
-    |        Alternation
-    ()       Grouping
-    []       Bracketed Character class
-
-By default, the C<"^"> character is guaranteed to match only the
-beginning of the string, the C<"$"> character only the end (or before the
-newline at the end), and Perl does certain optimizations with the
-assumption that the string contains only one line.  Embedded newlines
-will not be matched by C<"^"> or C<"$">.  You may, however, wish to treat a
-string as a multi-line buffer, such that the C<"^"> will match after any
-newline within the string (except if the newline is the last character in
-the string), and C<"$"> will match before any newline.  At the
-cost of a little more overhead, you can do this by using the /m modifier
-on the pattern match operator.  (Older programs did this by setting C<$*>,
-but this option was removed in perl 5.10.)
-X<^> X<$> X</m>
-
-To simplify multi-line substitutions, the C<"."> character never matches a
-newline unless you use the C</s> modifier, which in effect tells Perl to pretend
-the string is a single line--even if it isn't.
-X<.> X</s>
-
 =head3 Quantifiers
 
-The following standard quantifiers are recognized:
+Quantifiers are used when a particular portion of a pattern needs to
+match a certain number (or numbers) of times.  If there isn't a
+quantifier the number of times to match is exactly one.  The following
+standard quantifiers are recognized:
 X<metacharacter> X<quantifier> X<*> X<+> X<?> X<{n}> X<{n,}> X<{n,m}>
 
     *           Match 0 or more times
@@ -593,15 +861,15 @@ X<metacharacter> X<quantifier> X<*> X<+> X<?> X<{n}> X<{n,}> X<{n,m}>
     {n,}        Match at least n times
     {n,m}       Match at least n but not more than m times
 
-(If a curly bracket occurs in a context other than one of the
-quantifiers listed above, where it does not form part of a backslashed
-sequence like C<\x{...}>, it is treated as a regular character.
-However, a deprecation warning is raised for these
-occurrences, and in Perl v5.26, literal uses of a curly bracket will be
-required to be escaped, say by preceding them with a backslash (C<"\{">)
-or enclosing them within square brackets  (C<"[{]">).  This change will
-allow for future syntax extensions (like making the lower bound of a
-quantifier optional), and better error checking of quantifiers.)
+(If a non-escaped curly bracket occurs in a context other than one of
+the quantifiers listed above, where it does not form part of a
+backslashed sequence like C<\x{...}>, it is either a fatal syntax error,
+or treated as a regular character, generally with a deprecation warning
+raised.  To escape it, you can precede it with a backslash (C<"\{">) or
+enclose it within square brackets  (C<"[{]">).
+This change will allow for future syntax extensions (like making the
+lower bound of a quantifier optional), and better error checking of
+quantifiers).
 
 The C<"*"> quantifier is equivalent to C<{0,}>, the C<"+">
 quantifier to C<{1,}>, and the C<"?"> quantifier to C<{0,1}>.  I<n> and I<m> are limited
@@ -642,7 +910,7 @@ For instance,
 
    'aaaa' =~ /a++a/
 
-will never match, as the C<a++> will gobble up all the C<a>'s in the
+will never match, as the C<a++> will gobble up all the C<"a">'s in the
 string and won't leave any for the remaining part of the pattern. This
 feature can be extremely useful to give perl hints about where it
 shouldn't backtrack. For instance, the typical "match a double-quoted
@@ -775,20 +1043,21 @@ See L<perlrecharclass/Extended Bracketed Character Classes> for details.
 
 =head3 Assertions
 
-Perl defines the following zero-width assertions:
+Besides L<C<"^"> and C<"$">|/Metacharacters>, Perl defines the following
+zero-width assertions:
 X<zero-width assertion> X<assertion> X<regex, zero-width assertion>
 X<regexp, zero-width assertion>
 X<regular expression, zero-width assertion>
 X<\b> X<\B> X<\A> X<\Z> X<\z> X<\G>
 
-    \b{} Match at Unicode boundary of specified type
-    \B{} Match where corresponding \b{} doesn't match
-    \b  Match a word boundary
-    \B  Match except at a word boundary
-    \A  Match only at beginning of string
-    \Z  Match only at end of string, or before newline at the end
-    \z  Match only at end of string
-    \G  Match only at pos() (e.g. at the end-of-match position
+ \b{}   Match at Unicode boundary of specified type
+ \B{}   Match where corresponding \b{} doesn't match
+ \b     Match a \w\W or \W\w boundary
+ \B     Match except at a \w\W or \W\w boundary
+ \A     Match only at beginning of string
+ \Z     Match only at end of string, or before newline at the end
+ \z     Match only at end of string
+ \G     Match only at pos() (e.g. at the end-of-match position
         of prior m//g)
 
 A Unicode boundary (C<\b{}>), available starting in v5.22, is a spot
@@ -849,7 +1118,7 @@ string:
 
 =head3 Capture groups
 
-The bracketing construct C<( ... )> creates capture groups (also referred to as
+The grouping construct C<( ... )> creates capture groups (also referred to as
 capture buffers). To refer to the current contents of a group later on, within
 the same pattern, use C<\g1> (or C<\g{1}>) for the first, C<\g2> (or C<\g{2}>)
 for the second, and so on.
@@ -863,11 +1132,11 @@ X<named capture buffer> X<regular expression, named capture buffer>
 X<named capture group> X<regular expression, named capture group>
 X<%+> X<$+{name}> X<< \k<name> >>
 There is no limit to the number of captured substrings that you may use.
-Groups are numbered with the leftmost open parenthesis being number 1, etc.  If
+Groups are numbered with the leftmost open parenthesis being number 1, I<etc>.  If
 a group did not match, the associated backreference won't match either. (This
 can happen if the group is optional, or in a different branch of an
 alternation.)
-You can omit the C<"g">, and write C<"\1">, etc, but there are some issues with
+You can omit the C<"g">, and write C<"\1">, I<etc>, but there are some issues with
 this form, described below.
 
 You can also refer to capture groups relatively, by using a negative number, so
@@ -904,7 +1173,7 @@ Capture group contents are dynamically scoped and available to you outside the
 pattern until the end of the enclosing block or until the next successful
 match, whichever comes first.  (See L<perlsyn/"Compound Statements">.)
 You can refer to them by absolute number (using C<"$1"> instead of C<"\g1">,
-etc); or by name via the C<%+> hash, using C<"$+{I<name>}">.
+I<etc>); or by name via the C<%+> hash, using C<"$+{I<name>}">.
 
 Braces are required in referring to named capture groups, but are optional for
 absolute or relative numbered ones.  Braces are safer when creating a regex by
@@ -915,7 +1184,7 @@ is probably not what you intended.
 The C<\g> and C<\k> notations were introduced in Perl 5.10.0.  Prior to that
 there were no named nor relative numbered capture groups.  Absolute numbered
 groups were referred to using C<\1>,
-C<\2>, etc., and this notation is still
+C<\2>, I<etc>., and this notation is still
 accepted (and likely always will be).  But it leads to some ambiguities if
 there are more than 9 capture groups, as C<\10> could mean either the tenth
 capture group, or the character whose ordinal in octal is 010 (a backspace in
@@ -977,7 +1246,7 @@ variable.
 X<$+> X<$^N> X<$&> X<$`> X<$'>
 
 These special variables, like the C<%+> hash and the numbered match variables
-(C<$1>, C<$2>, C<$3>, etc.) are dynamically scoped
+(C<$1>, C<$2>, C<$3>, I<etc>.) are dynamically scoped
 until the end of the enclosing block or until the next successful
 match, whichever comes first.  (See L<perlsyn/"Compound Statements">.)
 X<$+> X<$^N> X<$&> X<$`> X<$'>
@@ -992,7 +1261,7 @@ beware that once Perl sees that you need one of C<$&>, C<$`>, or
 C<$'> anywhere in the program, it has to provide them for every
 pattern match.  This may substantially slow your program.
 
-Perl uses the same mechanism to produce C<$1>, C<$2>, etc, so you also
+Perl uses the same mechanism to produce C<$1>, C<$2>, I<etc>, so you also
 pay a price for each pattern that contains capturing parentheses.
 (To avoid this cost while retaining the grouping behaviour, use the
 extended regular expression C<(?: ... )> instead.)  But if you never
@@ -1056,12 +1325,6 @@ pair of parentheses with a question mark as the first thing within
 the parentheses.  The character after the question mark indicates
 the extension.
 
-The stability of these extensions varies widely.  Some have been
-part of the core language for many years.  Others are experimental
-and may change without warning or be completely removed.  Check
-the documentation on an individual feature to verify its current
-status.
-
 A question mark was chosen for this and for the minimal-matching
 construct because 1) question marks are rare in older regular
 expressions, and 2) whenever you see one, you should stop and
@@ -1080,16 +1343,38 @@ a backslash if it appears in the comment.
 
 See L</E<sol>x> for another way to have comments in patterns.
 
+Note that a comment can go just about anywhere, except in the middle of
+an escape sequence.   Examples:
+
+ qr/foo(?#comment)bar/'  # Matches 'foobar'
+
+ # The pattern below matches 'abcd', 'abccd', or 'abcccd'
+ qr/abc(?#comment between literal and its quantifier){1,3}d/
+
+ # The pattern below generates a syntax error, because the '\p' must
+ # be followed immediately by a '{'.
+ qr/\p(?#comment between \p and its property name){Any}/
+
+ # The pattern below generates a syntax error, because the initial
+ # '\(' is a literal opening parenthesis, and so there is nothing
+ # for the  closing ')' to match
+ qr/\(?#the backslash means this isn't a comment)p{Any}/
+
+ # Comments can be used to fold long patterns into multiple lines
+ qr/First part of a long regex(?#
+   )remaining part/
+
 =item C<(?adlupimnsx-imnsx)>
 
 =item C<(?^alupimnsx)>
 X<(?)> X<(?^)>
 
 One or more embedded pattern-match modifiers, to be turned on (or
-turned off, if preceded by C<"-">) for the remainder of the pattern or
+turned off if preceded by C<"-">) for the remainder of the pattern or
 the remainder of the enclosing pattern group (if any).
 
-This is particularly useful for dynamic patterns, such as those read in from a
+This is particularly useful for dynamically-generated patterns,
+such as those read in from a
 configuration file, taken from an argument, or specified in a table
 somewhere.  Consider the case where some patterns want to be
 case-sensitive and some do not:  The case-insensitive ones merely need to
@@ -1115,6 +1400,29 @@ These modifiers do not carry over into named subpatterns called in the
 enclosing group. In other words, a pattern such as C<((?i)(?&NAME))> does not
 change the case-sensitivity of the C<"NAME"> pattern.
 
+A modifier is overridden by later occurrences of this construct in the
+same scope containing the same modifier, so that
+
+    /((?im)foo(?-m)bar)/
+
+matches all of C<foobar> case insensitively, but uses C</m> rules for
+only the C<foo> portion.  The C<"a"> flag overrides C<aa> as well;
+likewise C<aa> overrides C<"a">.  The same goes for C<"x"> and C<xx>.
+Hence, in
+
+    /(?-x)foo/xx
+
+both C</x> and C</xx> are turned off during matching C<foo>.  And in
+
+    /(?x)foo/x
+
+C</x> but NOT C</xx> is turned on for matching C<foo>.  (One might
+mistakenly think that since the inner C<(?x)> is already in the scope of
+C</x>, that the result would effectively be the sum of them, yielding
+C</xx>.  It doesn't work that way.)  Similarly, doing something like
+C<(?xx-x)foo> turns off all C<"x"> behavior for matching C<foo>, it is not
+that you subtract 1 C<"x"> from 2 to get 1 C<"x"> remaining.
+
 Any of these modifiers can be set to apply globally to all regular
 expressions compiled within the scope of a C<use re>.  See
 L<re/"'/flags' mode">.
@@ -1124,15 +1432,15 @@ after the C<"?"> is a shorthand equivalent to C<d-imnsx>.  Flags (except
 C<"d">) may follow the caret to override it.
 But a minus sign is not legal with it.
 
-Note that the C<a>, C<d>, C<l>, C<p>, and C<u> modifiers are special in
-that they can only be enabled, not disabled, and the C<a>, C<d>, C<l>, and
-C<u> modifiers are mutually exclusive: specifying one de-specifies the
-others, and a maximum of one (or two C<a>'s) may appear in the
+Note that the C<"a">, C<"d">, C<"l">, C<"p">, and C<"u"> modifiers are special in
+that they can only be enabled, not disabled, and the C<"a">, C<"d">, C<"l">, and
+C<"u"> modifiers are mutually exclusive: specifying one de-specifies the
+others, and a maximum of one (or two C<"a">'s) may appear in the
 construct.  Thus, for
 example, C<(?-p)> will warn when compiled under C<use warnings>;
 C<(?-d:...)> and C<(?dl:...)> are fatal errors.
 
-Note also that the C<p> modifier is special in that its presence
+Note also that the C<"p"> modifier is special in that its presence
 anywhere in a pattern has a global effect.
 
 =item C<(?:pattern)>
@@ -1148,11 +1456,13 @@ C<"()">, but doesn't make backreferences as C<"()"> does.  So
 
     @fields = split(/\b(?:a|b|c)\b/)
 
-is like
+matches the same field delimiters as
 
     @fields = split(/\b(a|b|c)\b/)
 
-but doesn't spit out extra fields.  It's also cheaper not to capture
+but doesn't spit out the delimiters themselves as extra fields (even though
+that's the behaviour of L<perlfunc/split> when its pattern contains capturing
+groups).  It's also cheaper not to capture
 characters if you don't need to.
 
 Any letters between C<"?"> and C<":"> act as flags modifiers as with
@@ -1166,6 +1476,11 @@ is equivalent to the more verbose
 
 Note that any C<()> constructs enclosed within this one will still
 capture unless the C</n> modifier is in effect.
+
+Like the L</(?adlupimnsx-imnsx)> construct, C<aa> and C<"a"> override each
+other, as do C<xx> and C<"x">.  They are not additive.  So, doing
+something like C<(?xx-x:foo)> turns off all C<"x"> behavior for matching
+C<foo>.
 
 Starting in Perl 5.14, a C<"^"> (caret or circumflex accent) immediately
 after the C<"?"> is a shorthand equivalent to C<d-imnsx>.  Any positive
@@ -1220,12 +1535,12 @@ Consider the following pattern.  The numbers underneath show in
 which group the captured content will be stored.
 
 
-    # before  ---------------branch-reset----------- after        
+    # before  ---------------branch-reset----------- after
     / ( a )  (?| x ( y ) z | (p (q) r) | (t) u (v) ) ( z ) /x
-    # 1            2         2  3        2     3     4  
+    # 1            2         2  3        2     3     4
 
-Be careful when using the branch reset pattern in combination with 
-named captures. Named captures are implemented as being aliases to 
+Be careful when using the branch reset pattern in combination with
+named captures. Named captures are implemented as being aliases to
 numbered groups holding the captures, and that interferes with the
 implementation of the branch reset pattern. If you are using named
 captures in a branch reset pattern, it's best to use the same names,
@@ -1237,8 +1552,8 @@ in the same order, in each of the alternations:
 Not doing so may lead to surprises:
 
   "12" =~ /(?| (?<a> \d+ ) | (?<b> \D+))/x;
-  say $+ {a};   # Prints '12'
-  say $+ {b};   # *Also* prints '12'.
+  say $+{a};    # Prints '12'
+  say $+{b};    # *Also* prints '12'.
 
 The problem here is that both the group named C<< a >> and the group
 named C<< b >> are aliases for the group belonging to C<< $1 >>.
@@ -1255,13 +1570,30 @@ lookahead matches text following the current match position.
 =over 4
 
 =item C<(?=pattern)>
-X<(?=)> X<look-ahead, positive> X<lookahead, positive>
+
+=item C<(*pla:pattern)>
+
+=item C<(*positive_lookahead:pattern)>
+X<(?=)>
+X<(*pla>
+X<(*positive_lookahead>
+X<look-ahead, positive> X<lookahead, positive>
 
 A zero-width positive lookahead assertion.  For example, C</\w+(?=\t)/>
 matches a word followed by a tab, without including the tab in C<$&>.
 
+The alphabetic forms are experimental; using them yields a warning in the
+C<experimental::alpha_assertions> category.
+
 =item C<(?!pattern)>
-X<(?!)> X<look-ahead, negative> X<lookahead, negative>
+
+=item C<(*nla:pattern)>
+
+=item C<(*negative_lookahead:pattern)>
+X<(?!)>
+X<(*nla>
+X<(*negative_lookahead>
+X<look-ahead, negative> X<lookahead, negative>
 
 A zero-width negative lookahead assertion.  For example C</foo(?!bar)/>
 matches any occurrence of "foo" that isn't followed by "bar".  Note
@@ -1273,8 +1605,20 @@ will not do what you want.  That's because the C<(?!foo)> is just saying that
 the next thing cannot be "foo"--and it's not, it's a "bar", so "foobar" will
 match.  Use lookbehind instead (see below).
 
-=item C<(?<=pattern)> C<\K>
-X<(?<=)> X<look-behind, positive> X<lookbehind, positive> X<\K>
+The alphabetic forms are experimental; using them yields a warning in the
+C<experimental::alpha_assertions> category.
+
+=item C<(?<=pattern)>
+
+=item C<\K>
+
+=item C<(*plb:pattern)>
+
+=item C<(*positive_lookbehind:pattern)>
+X<(?<=)>
+X<(*plb>
+X<(*positive_lookbehind>
+X<look-behind, positive> X<lookbehind, positive> X<\K>
 
 A zero-width positive lookbehind assertion.  For example, C</(?<=\t)\w+/>
 matches a word that follows a tab, without including the tab in C<$&>.
@@ -1298,18 +1642,31 @@ can be rewritten as the much more efficient
 
   s/foo\Kbar//g;
 
+The alphabetic forms (not including C<\K> are experimental; using them
+yields a warning in the C<experimental::alpha_assertions> category.
+
 =item C<(?<!pattern)>
-X<(?<!)> X<look-behind, negative> X<lookbehind, negative>
+
+=item C<(*nlb:pattern)>
+
+=item C<(*negative_lookbehind:pattern)>
+X<(?<!)>
+X<(*nlb>
+X<(*negative_lookbehind>
+X<look-behind, negative> X<lookbehind, negative>
 
 A zero-width negative lookbehind assertion.  For example C</(?<!bar)foo/>
 matches any occurrence of "foo" that does not follow "bar".  Works
 only for fixed-width lookbehind.
 
+The alphabetic forms are experimental; using them yields a warning in the
+C<experimental::alpha_assertions> category.
+
 =back
 
-=item C<(?'NAME'pattern)>
-
 =item C<< (?<NAME>pattern) >>
+
+=item C<(?'NAME'pattern)>
 X<< (?<NAME>) >> X<(?'NAME')> X<named capture> X<capture>
 
 A named capture group. Identical in every respect to normal capturing
@@ -1319,7 +1676,7 @@ constructs (like C<\g{NAME}>) and can be accessed by name
 after a successful match via C<%+> or C<%->. See L<perlvar>
 for more details on the C<%+> and C<%-> hashes.
 
-If multiple distinct capture groups have the same name then the
+If multiple distinct capture groups have the same name, then
 C<$+{NAME}> will refer to the leftmost defined group in the match.
 
 The forms C<(?'NAME'pattern)> and C<< (?<NAME>pattern) >> are equivalent.
@@ -1440,7 +1797,7 @@ similar localizing behaviours. So later code blocks within the same
 pattern will still see the values which were localized in earlier blocks.
 These accumulated localizations are undone either at the end of a
 successful match, or if the assertion is backtracked (compare
-L<"Backtracking">). For example,
+L</"Backtracking">). For example,
 
   $_ = 'a' x 8;
   m<
@@ -1473,7 +1830,7 @@ regular expression.
 
 The assignment to C<$^R> above is properly localized, so the old
 value of C<$^R> is restored if the assertion is backtracked; compare
-L<"Backtracking">.
+L</"Backtracking">.
 
 Note that the special variable C<$^N>  is particularly useful with code
 blocks to capture the results of submatches in variables without having to
@@ -1512,7 +1869,7 @@ pattern captures "A";
 
 Note that this means that  there is no way for the inner pattern to refer
 to a capture group defined outside.  (The code block itself can use C<$1>,
-etc., to refer to the enclosing pattern's capture groups.)  Thus, although
+I<etc>., to refer to the enclosing pattern's capture groups.)  Thus, although
 
     ('a' x 100)=~/(??{'(.)' x 100})/
 
@@ -1535,9 +1892,10 @@ L<C<(?I<PARNO>)>|/(?PARNO) (?-PARNO) (?+PARNO) (?R) (?0)>
 for a different, more efficient way to accomplish
 the same task.
 
-Executing a postponed regular expression 50 times without consuming any
-input string will result in a fatal error.  The maximum depth is compiled
-into perl, so changing it requires a custom build.
+Executing a postponed regular expression too many times without
+consuming any input string will also result in a fatal error.  The depth
+at which that happens is compiled into perl, so it can be changed with a
+custom build.
 
 =item C<(?I<PARNO>)> C<(?-I<PARNO>)> C<(?+I<PARNO>)> C<(?R)> C<(?0)>
 X<(?PARNO)> X<(?1)> X<(?R)> X<(?0)> X<(?-1)> X<(?+1)> X<(?-PARNO)> X<(?+PARNO)>
@@ -1602,9 +1960,9 @@ the output produced should be the following:
     $3 = bar(baz)+baz(bop)
 
 If there is no corresponding capture group defined, then it is a
-fatal error.  Recursing deeper than 50 times without consuming any input
-string will also result in a fatal error.  The maximum depth is compiled
-into perl, so changing it requires a custom build.
+fatal error.  Recursing deeply without consuming any input string will
+also result in a fatal error.  The depth at which that happens is
+compiled into perl, so it can be changed with a custom build.
 
 The following shows how using negative indexing can make it
 easier to embed recursive patterns inside of a C<qr//> construct
@@ -1663,7 +2021,7 @@ matched);
 =item the special symbol C<(R)>
 
 (true when evaluated inside of recursion or eval).  Additionally the
-C<R> may be
+C<"R"> may be
 followed by a number, (which will be true when evaluated when recursing
 inside of the appropriate group), or by C<&NAME>, in which case it will
 be true only when evaluated during recursion in the named group.
@@ -1677,23 +2035,28 @@ Here's a summary of the possible predicates:
 =item C<(1)> C<(2)> ...
 
 Checks if the numbered capturing group has matched something.
+Full syntax: C<< (?(1)then|else) >>
 
 =item C<(E<lt>I<NAME>E<gt>)> C<('I<NAME>')>
 
 Checks if a group with the given name has matched something.
+Full syntax: C<< (?(<name>)then|else) >>
 
 =item C<(?=...)> C<(?!...)> C<(?<=...)> C<(?<!...)>
 
 Checks whether the pattern matches (or does not match, for the C<"!">
 variants).
+Full syntax: C<< (?(?=lookahead)then|else) >>
 
 =item C<(?{ I<CODE> })>
 
 Treats the return value of the code block as the condition.
+Full syntax: C<< (?(?{ code })then|else) >>
 
 =item C<(R)>
 
 Checks if the expression has been evaluated inside of recursion.
+Full syntax: C<< (?(R)then|else) >>
 
 =item C<(R1)> C<(R2)> ...
 
@@ -1704,18 +2067,22 @@ inside of the n-th capture group. This check is the regex equivalent of
 
 In other words, it does not check the full recursion stack.
 
+Full syntax: C<< (?(R1)then|else) >>
+
 =item C<(R&I<NAME>)>
 
 Similar to C<(R1)>, this predicate checks to see if we're executing
 directly inside of the leftmost group with a given name (this is the same
 logic used by C<(?&I<NAME>)> to disambiguate). It does not check the full
 stack, but only the name of the innermost active recursion.
+Full syntax: C<< (?(R&name)then|else) >>
 
 =item C<(DEFINE)>
 
 In this case, the yes-pattern is never directly executed, and no
 no-pattern is allowed. Similar in spirit to C<(?{0})> but more efficient.
 See below for details.
+Full syntax: C<< (?(DEFINE)definitions...) >>
 
 =back
 
@@ -1769,22 +2136,26 @@ compile the definitions with the C<qr//> operator, and later
 interpolate them in another pattern.
 
 =item C<< (?>pattern) >>
+
+=item C<< (*atomic:pattern) >>
+X<(?E<gt>pattern)>
+X<(*atomic>
 X<backtrack> X<backtracking> X<atomic> X<possessive>
 
 An "independent" subexpression, one which matches the substring
 that a I<standalone> C<pattern> would match if anchored at the given
 position, and it matches I<nothing other than this substring>.  This
 construct is useful for optimizations of what would otherwise be
-"eternal" matches, because it will not backtrack (see L<"Backtracking">).
+"eternal" matches, because it will not backtrack (see L</"Backtracking">).
 It may also be useful in places where the "grab all you can, and do not
 give anything back" semantic is desirable.
 
 For example: C<< ^(?>a*)ab >> will never match, since C<< (?>a*) >>
 (anchored at the beginning of string, as above) will match I<all>
-characters C<a> at the beginning of string, leaving no C<a> for
+characters C<"a"> at the beginning of string, leaving no C<"a"> for
 C<ab> to match.  In contrast, C<a*ab> will match the same as C<a+b>,
 since the match of the subgroup C<a*> is influenced by the following
-group C<ab> (see L<"Backtracking">).  In particular, C<a*> inside
+group C<ab> (see L</"Backtracking">).  In particular, C<a*> inside
 C<a*ab> will match fewer characters than a standalone C<a*>, since
 this makes the tail match.
 
@@ -1833,7 +2204,7 @@ hung.  However, a tiny change to this pattern
 
 which uses C<< (?>...) >> matches exactly when the one above does (verifying
 this yourself would be a productive exercise), but finishes in a fourth
-the time when used on a similar string with 1000000 C<a>s.  Be aware,
+the time when used on a similar string with 1000000 C<"a">s.  Be aware,
 however, that, when this construct is followed by a
 quantifier, it currently triggers a warning message under
 the C<use warnings> pragma or B<-w> switch saying it
@@ -1841,7 +2212,7 @@ C<"matches null string many times in regex">.
 
 On simple groups, such as the pattern C<< (?> [^()]+ ) >>, a comparable
 effect may be achieved by negative lookahead, as in C<[^()]+ (?! [^()] )>.
-This was only 4 times slower on a string with 1000000 C<a>s.
+This was only 4 times slower on a string with 1000000 C<"a">s.
 
 The "grab all you can, and do not give anything back" semantic is desirable
 in many situations where on the first sight a simple C<()*> looks like
@@ -1877,255 +2248,27 @@ to inside of one of these constructs. The following equivalences apply:
     PAT?+               (?>PAT?)
     PAT{min,max}+       (?>PAT{min,max})
 
+Nested C<(?E<gt>...)> constructs are not no-ops, even if at first glance
+they might seem to be.  This is because the nested C<(?E<gt>...)> can
+restrict internal backtracking that otherwise might occur.  For example,
+
+ "abc" =~ /(?>a[bc]*c)/
+
+matches, but
+
+ "abc" =~ /(?>a(?>[bc]*)c)/
+
+does not.
+
+The alphabetic form (C<(*atomic:...)>) is experimental; using it
+yields a warning in the C<experimental::alpha_assertions> category.
+
 =item C<(?[ ])>
 
 See L<perlrecharclass/Extended Bracketed Character Classes>.
 
-=back
-
-=head2 Special Backtracking Control Verbs
-
-These special patterns are generally of the form C<(*I<VERB>:I<ARG>)>. Unless
-otherwise stated the I<ARG> argument is optional; in some cases, it is
-mandatory.
-
-Any pattern containing a special backtracking verb that allows an argument
-has the special behaviour that when executed it sets the current package's
-C<$REGERROR> and C<$REGMARK> variables. When doing so the following
-rules apply:
-
-On failure, the C<$REGERROR> variable will be set to the I<ARG> value of the
-verb pattern, if the verb was involved in the failure of the match. If the
-I<ARG> part of the pattern was omitted, then C<$REGERROR> will be set to the
-name of the last C<(*MARK:NAME)> pattern executed, or to TRUE if there was
-none. Also, the C<$REGMARK> variable will be set to FALSE.
-
-On a successful match, the C<$REGERROR> variable will be set to FALSE, and
-the C<$REGMARK> variable will be set to the name of the last
-C<(*MARK:NAME)> pattern executed.  See the explanation for the
-C<(*MARK:NAME)> verb below for more details.
-
-B<NOTE:> C<$REGERROR> and C<$REGMARK> are not magic variables like C<$1>
-and most other regex-related variables. They are not local to a scope, nor
-readonly, but instead are volatile package variables similar to C<$AUTOLOAD>.
-Use C<local> to localize changes to them to a specific scope if necessary.
-
-If a pattern does not contain a special backtracking verb that allows an
-argument, then C<$REGERROR> and C<$REGMARK> are not touched at all.
-
-=over 3
-
-=item Verbs
-
-=over 4
-
-=item C<(*PRUNE)> C<(*PRUNE:NAME)>
-X<(*PRUNE)> X<(*PRUNE:NAME)>
-
-This zero-width pattern prunes the backtracking tree at the current point
-when backtracked into on failure. Consider the pattern C<I<A> (*PRUNE) I<B>>,
-where I<A> and I<B> are complex patterns. Until the C<(*PRUNE)> verb is reached,
-I<A> may backtrack as necessary to match. Once it is reached, matching
-continues in I<B>, which may also backtrack as necessary; however, should B
-not match, then no further backtracking will take place, and the pattern
-will fail outright at the current starting position.
-
-The following example counts all the possible matching strings in a
-pattern (without actually matching any of them).
-
-    'aaab' =~ /a+b?(?{print "$&\n"; $count++})(*FAIL)/;
-    print "Count=$count\n";
-
-which produces:
-
-    aaab
-    aaa
-    aa
-    a
-    aab
-    aa
-    a
-    ab
-    a
-    Count=9
-
-If we add a C<(*PRUNE)> before the count like the following
-
-    'aaab' =~ /a+b?(*PRUNE)(?{print "$&\n"; $count++})(*FAIL)/;
-    print "Count=$count\n";
-
-we prevent backtracking and find the count of the longest matching string
-at each matching starting point like so:
-
-    aaab
-    aab
-    ab
-    Count=3
-
-Any number of C<(*PRUNE)> assertions may be used in a pattern.
-
-See also C<< (?>pattern) >> and possessive quantifiers for other ways to
-control backtracking. In some cases, the use of C<(*PRUNE)> can be
-replaced with a C<< (?>pattern) >> with no functional difference; however,
-C<(*PRUNE)> can be used to handle cases that cannot be expressed using a
-C<< (?>pattern) >> alone.
-
-=item C<(*SKIP)> C<(*SKIP:NAME)>
-X<(*SKIP)>
-
-This zero-width pattern is similar to C<(*PRUNE)>, except that on
-failure it also signifies that whatever text that was matched leading up
-to the C<(*SKIP)> pattern being executed cannot be part of I<any> match
-of this pattern. This effectively means that the regex engine "skips" forward
-to this position on failure and tries to match again, (assuming that
-there is sufficient room to match).
-
-The name of the C<(*SKIP:NAME)> pattern has special significance. If a
-C<(*MARK:NAME)> was encountered while matching, then it is that position
-which is used as the "skip point". If no C<(*MARK)> of that name was
-encountered, then the C<(*SKIP)> operator has no effect. When used
-without a name the "skip point" is where the match point was when
-executing the C<(*SKIP)> pattern.
-
-Compare the following to the examples in C<(*PRUNE)>; note the string
-is twice as long:
-
- 'aaabaaab' =~ /a+b?(*SKIP)(?{print "$&\n"; $count++})(*FAIL)/;
- print "Count=$count\n";
-
-outputs
-
-    aaab
-    aaab
-    Count=2
-
-Once the 'aaab' at the start of the string has matched, and the C<(*SKIP)>
-executed, the next starting point will be where the cursor was when the
-C<(*SKIP)> was executed.
-
-=item C<(*MARK:NAME)> C<(*:NAME)>
-X<(*MARK)> X<(*MARK:NAME)> X<(*:NAME)>
-
-This zero-width pattern can be used to mark the point reached in a string
-when a certain part of the pattern has been successfully matched. This
-mark may be given a name. A later C<(*SKIP)> pattern will then skip
-forward to that point if backtracked into on failure. Any number of
-C<(*MARK)> patterns are allowed, and the I<NAME> portion may be duplicated.
-
-In addition to interacting with the C<(*SKIP)> pattern, C<(*MARK:NAME)>
-can be used to "label" a pattern branch, so that after matching, the
-program can determine which branches of the pattern were involved in the
-match.
-
-When a match is successful, the C<$REGMARK> variable will be set to the
-name of the most recently executed C<(*MARK:NAME)> that was involved
-in the match.
-
-This can be used to determine which branch of a pattern was matched
-without using a separate capture group for each branch, which in turn
-can result in a performance improvement, as perl cannot optimize
-C</(?:(x)|(y)|(z))/> as efficiently as something like
-C</(?:x(*MARK:x)|y(*MARK:y)|z(*MARK:z))/>.
-
-When a match has failed, and unless another verb has been involved in
-failing the match and has provided its own name to use, the C<$REGERROR>
-variable will be set to the name of the most recently executed
-C<(*MARK:NAME)>.
-
-See L</(*SKIP)> for more details.
-
-As a shortcut C<(*MARK:NAME)> can be written C<(*:NAME)>.
-
-=item C<(*THEN)> C<(*THEN:NAME)>
-
-This is similar to the "cut group" operator C<::> from Perl 6.  Like
-C<(*PRUNE)>, this verb always matches, and when backtracked into on
-failure, it causes the regex engine to try the next alternation in the
-innermost enclosing group (capturing or otherwise) that has alternations.
-The two branches of a C<(?(condition)yes-pattern|no-pattern)> do not
-count as an alternation, as far as C<(*THEN)> is concerned.
-
-Its name comes from the observation that this operation combined with the
-alternation operator (C<"|">) can be used to create what is essentially a
-pattern-based if/then/else block:
-
-  ( COND (*THEN) FOO | COND2 (*THEN) BAR | COND3 (*THEN) BAZ )
-
-Note that if this operator is used and NOT inside of an alternation then
-it acts exactly like the C<(*PRUNE)> operator.
-
-  / A (*PRUNE) B /
-
-is the same as
-
-  / A (*THEN) B /
-
-but
-
-  / ( A (*THEN) B | C ) /
-
-is not the same as
-
-  / ( A (*PRUNE) B | C ) /
-
-as after matching the I<A> but failing on the I<B> the C<(*THEN)> verb will
-backtrack and try I<C>; but the C<(*PRUNE)> verb will simply fail.
-
-=item C<(*COMMIT)> C<(*COMMIT:args)>
-X<(*COMMIT)>
-
-This is the Perl 6 "commit pattern" C<< <commit> >> or C<:::>. It's a
-zero-width pattern similar to C<(*SKIP)>, except that when backtracked
-into on failure it causes the match to fail outright. No further attempts
-to find a valid match by advancing the start pointer will occur again.
-For example,
-
- 'aaabaaab' =~ /a+b?(*COMMIT)(?{print "$&\n"; $count++})(*FAIL)/;
- print "Count=$count\n";
-
-outputs
-
-    aaab
-    Count=1
-
-In other words, once the C<(*COMMIT)> has been entered, and if the pattern
-does not match, the regex engine will not try any further matching on the
-rest of the string.
-
-=item C<(*FAIL)> C<(*F)> C<(*FAIL:arg)>
-X<(*FAIL)> X<(*F)>
-
-This pattern matches nothing and always fails. It can be used to force the
-engine to backtrack. It is equivalent to C<(?!)>, but easier to read. In
-fact, C<(?!)> gets optimised into C<(*FAIL)> internally. You can provide
-an argument so that if the match fails because of this C<FAIL> directive
-the argument can be obtained from C<$REGERROR>.
-
-It is probably useful only when combined with C<(?{})> or C<(??{})>.
-
-=item C<(*ACCEPT)> C<(*ACCEPT:arg)>
-X<(*ACCEPT)>
-
-This pattern matches nothing and causes the end of successful matching at
-the point at which the C<(*ACCEPT)> pattern was encountered, regardless of
-whether there is actually more to match in the string. When inside of a
-nested pattern, such as recursion, or in a subpattern dynamically generated
-via C<(??{})>, only the innermost pattern is ended immediately.
-
-If the C<(*ACCEPT)> is inside of capturing groups then the groups are
-marked as ended at the point at which the C<(*ACCEPT)> was encountered.
-For instance:
-
-  'AB' =~ /(A (A|B(*ACCEPT)|C) D)(E)/x;
-
-will match, and C<$1> will be C<AB> and C<$2> will be C<B>, C<$3> will not
-be set. If another branch in the inner parentheses was matched, such as in the
-string 'ACDE', then the C<D> and C<E> would have to be matched as well.
-
-You can provide an argument, which will be available in the var
-C<$REGMARK> after the match completes.
-
-=back
+Note that this feature is currently L<experimental|perlpolicy/experimental>;
+using it yields a warning in the C<experimental::regex_sets> category.
 
 =back
 
@@ -2135,12 +2278,12 @@ X<backtrack> X<backtracking>
 NOTE: This section presents an abstract approximation of regular
 expression behavior.  For a more rigorous (and complicated) view of
 the rules involved in selecting a match among possible alternatives,
-see L<Combining RE Pieces>.
+see L</Combining RE Pieces>.
 
 A fundamental feature of regular expression matching involves the
 notion called I<backtracking>, which is currently used (when needed)
-by all regular non-possessive expression quantifiers, namely C<"*">, C<"*?">, C<"+">,
-C<"+?">, C<{n,m}>, and C<{n,m}?>.  Backtracking is often optimized
+by all regular non-possessive expression quantifiers, namely C<"*">, C<*?>, C<"+">,
+C<+?>, C<{n,m}>, and C<{n,m}?>.  Backtracking is often optimized
 internally, but the general principle outlined here is valid.
 
 For a regular expression to match, the I<entire> regular expression must
@@ -2336,100 +2479,351 @@ whether they match is considered relevant.  For an example
 where side-effects of lookahead I<might> have influenced the
 following match, see L</C<< (?>pattern) >>>.
 
-=head2 Version 8 Regular Expressions
-X<regular expression, version 8> X<regex, version 8> X<regexp, version 8>
+=head2 Script Runs
+X<(*script_run:...)> X<(sr:...)>
+X<(*atomic_script_run:...)> X<(asr:...)>
 
-In case you're not familiar with the "regular" Version 8 regex
-routines, here are the pattern-matching rules not described above.
+A script run is basically a sequence of characters, all from the same
+Unicode script (see L<perlunicode/Scripts>), such as Latin or Greek.  In
+most places a single word would never be written in multiple scripts,
+unless it is a spoofing attack.  An infamous example, is
 
-Any single character matches itself, unless it is a I<metacharacter>
-with a special meaning described here or above.  You can cause
-characters that normally function as metacharacters to be interpreted
-literally by prefixing them with a C<"\"> (e.g., C<"\."> matches a C<".">, not any
-character; "\\" matches a C<"\">). This escape mechanism is also required
-for the character used as the pattern delimiter.
+ paypal.com
 
-A series of characters matches that series of characters in the target
-string, so the pattern C<blurfl> would match "blurfl" in the target
-string.
+Those letters could all be Latin (as in the example just above), or they
+could be all Cyrillic (except for the dot), or they could be a mixture
+of the two.  In the case of an internet address the C<.com> would be in
+Latin, And any Cyrillic ones would cause it to be a mixture, not a
+script run.  Someone clicking on such a link would not be directed to
+the real Paypal website, but an attacker would craft a look-alike one to
+attempt to gather sensitive information from the person.
 
-You can specify a character class, by enclosing a list of characters
-in C<[]>, which will match any character from the list.  If the
-first character after the C<"["> is C<"^">, the class matches any character not
-in the list.  Within a list, the C<"-"> character specifies a
-range, so that C<a-z> represents all characters between "a" and "z",
-inclusive.  If you want either C<"-"> or C<"]"> itself to be a member of a
-class, put it at the start of the list (possibly after a C<"^">), or
-escape it with a backslash.  C<"-"> is also taken literally when it is
-at the end of the list, just before the closing C<"]">.  (The
-following all specify the same class of three characters: C<[-az]>,
-C<[az-]>, and C<[a\-z]>.  All are different from C<[a-z]>, which
-specifies a class containing twenty-six characters, even on EBCDIC-based
-character sets.)  Also, if you try to use the character
-classes C<\w>, C<\W>, C<\s>, C<\S>, C<\d>, or C<\D> as endpoints of
-a range, the C<"-"> is understood literally.
+Starting in Perl 5.28, it is now easy to detect strings that aren't
+script runs.  Simply enclose just about any pattern like either of
+these:
 
-Note also that the whole range idea is rather unportable between
-character sets, except for four situations that Perl handles specially.
-Any subset of the ranges C<[A-Z]>, C<[a-z]>, and C<[0-9]> are guaranteed
-to match the expected subset of ASCII characters, no matter what
-character set the platform is running.  The fourth portable way to
-specify ranges is to use the C<\N{...}> syntax to specify either end
-point of the range.  For example, C<[\N{U+04}-\N{U+07}]> means to match
-the Unicode code points C<\N{U+04}>, C<\N{U+05}>, C<\N{U+06}>, and
-C<\N{U+07}>, whatever their native values may be on the platform.  Under
-L<use re 'strict'|re/'strict' mode> or within a L</C<(?[ ])>>, a warning
-is raised, if enabled, and the other end point of a range which has a
-C<\N{...}> endpoint is not portably specified.  For example,
+ (*script_run:pattern)
+ (*sr:pattern)
 
- [\N{U+00}-\x06]    # Warning under "use re 'strict'".
+What happens is that after I<pattern> succeeds in matching, it is
+subjected to the additional criterion that every character in it must be
+from the same script (see exceptions below).  If this isn't true,
+backtracking occurs until something all in the same script is found that
+matches, or all possibilities are exhausted.  This can cause a lot of
+backtracking, but generally, only malicious input will result in this,
+though the slow down could cause a denial of service attack.  If your
+needs permit, it is best to make the pattern atomic.  This is so likely
+to be what you want, that instead of writing this:
 
-It is hard to understand without digging what exactly matches ranges
-other than subsets of C<[A-Z]>, C<[a-z]>, and C<[0-9]>.  A sound
-principle is to use only ranges that begin from and end at either
-alphabetics of equal case ([a-e], [A-E]), or digits ([0-9]).  Anything
-else is unsafe or unclear.  If in doubt, spell out the range in full.
+ (*script_run:(?>pattern))
 
-Characters may be specified using a metacharacter syntax much like that
-used in C: "\n" matches a newline, "\t" a tab, "\r" a carriage return,
-"\f" a form feed, etc.  More generally, \I<nnn>, where I<nnn> is a string
-of three octal digits, matches the character whose coded character set value
-is I<nnn>.  Similarly, \xI<nn>, where I<nn> are hexadecimal digits,
-matches the character whose ordinal is I<nn>. The expression \cI<x>
-matches the character control-I<x>.  Finally, the C<"."> metacharacter
-matches any character except "\n" (unless you use C</s>).
+you can write either of these:
 
-You can specify a series of alternatives for a pattern using C<"|"> to
-separate them, so that C<fee|fie|foe> will match any of "fee", "fie",
-or "foe" in the target string (as would C<f(e|i|o)e>).  The
-first alternative includes everything from the last pattern delimiter
-(C<"(">, "(?:", etc. or the beginning of the pattern) up to the first C<"|">, and
-the last alternative contains everything from the last C<"|"> to the next
-closing pattern delimiter.  That's why it's common practice to include
-alternatives in parentheses: to minimize confusion about where they
-start and end.
+ (*atomic_script_run:pattern)
+ (*asr:pattern)
 
-Alternatives are tried from left to right, so the first
-alternative found for which the entire expression matches, is the one that
-is chosen. This means that alternatives are not necessarily greedy. For
-example: when matching C<foo|foot> against "barefoot", only the "foo"
-part will match, as that is the first alternative tried, and it successfully
-matches the target string. (This might not seem important, but it is
-important when you are capturing matched text using parentheses.)
+(See L</C<(?E<gt>pattern)>>.)
 
-Also remember that C<"|"> is interpreted as a literal within square brackets,
-so if you write C<[fee|fie|foe]> you're really only matching C<[feio|]>.
+In Taiwan, Japan, and Korea, it is common for text to have a mixture of
+characters from their native scripts and base Chinese.  Perl follows
+Unicode's UTS 39 (L<http://unicode.org/reports/tr39/>) Unicode Security
+Mechanisms in allowing such mixtures.
 
-Within a pattern, you may designate subpatterns for later reference
-by enclosing them in parentheses, and you may refer back to the
-I<n>th subpattern later in the pattern using the metacharacter
-\I<n> or \gI<n>.  Subpatterns are numbered based on the left to right order
-of their opening parenthesis.  A backreference matches whatever
-actually matched the subpattern in the string being examined, not
-the rules for that subpattern.  Therefore, C<(0|0x)\d*\s\g1\d*> will
-match "0x1234 0x4321", but not "0x1234 01234", because subpattern
-1 matched "0x", even though the rule C<0|0x> could potentially match
-the leading 0 in the second number.
+The rules used for matching decimal digits are somewhat different.  Many
+scripts have their own sets of digits equivalent to the Western C<0>
+through C<9> ones.  A few, such as Arabic, have more than one set.  For
+a string to be considered a script run, all digits in it must come from
+the same set, as determined by the first digit encountered. The ASCII
+C<[0-9]> are accepted as being in any script, even those that have their
+own set.  This is because these are often used in commerce even in such
+scripts.  But any mixing of the ASCII and other digits will cause the
+sequence to not be a script run, failing the match.  As an example,
+
+ qr/(*script_run: \d+ \b )/x
+
+guarantees that the digits matched will all be from the same set of 10.
+You won't get a look-alike digit from a different script that has a
+different value than what it appears to be.
+
+Unicode has three pseudo scripts that are handled specially.
+
+"Unknown" is applied to code points whose meaning has yet to be
+determined.  Perl currently will match as a script run, any single
+character string consisting of one of these code points.  But any string
+longer than one code point containing one of these will not be
+considered a script run.
+
+"Inherited" is applied to characters that modify another, such as an
+accent of some type.  These are considered to be in the script of the
+master character, and so never cause a script run to not match.
+
+The other one is "Common".  This consists of mostly punctuation, emoji,
+and characters used in mathematics and music, and the ASCII digits C<0>
+through C<9>.  These characters can appear intermixed in text in many of
+the world's scripts.  These also don't cause a script run to not match,
+except any ASCII digits encountered have to obey the decimal digit rules
+described above.
+
+This construct is non-capturing.  You can add parentheses to I<pattern>
+to capture, if desired.  You will have to do this if you plan to use
+L</(*ACCEPT) (*ACCEPT:arg)> and not have it bypass the script run
+checking.
+
+This feature is experimental, and the exact syntax and details of
+operation are subject to change; using it yields a warning in the
+C<experimental::script_run> category.
+
+The C<Script_Extensions> property is used as the basis for this feature.
+
+=head2 Special Backtracking Control Verbs
+
+These special patterns are generally of the form C<(*I<VERB>:I<ARG>)>. Unless
+otherwise stated the I<ARG> argument is optional; in some cases, it is
+mandatory.
+
+Any pattern containing a special backtracking verb that allows an argument
+has the special behaviour that when executed it sets the current package's
+C<$REGERROR> and C<$REGMARK> variables. When doing so the following
+rules apply:
+
+On failure, the C<$REGERROR> variable will be set to the I<ARG> value of the
+verb pattern, if the verb was involved in the failure of the match. If the
+I<ARG> part of the pattern was omitted, then C<$REGERROR> will be set to the
+name of the last C<(*MARK:NAME)> pattern executed, or to TRUE if there was
+none. Also, the C<$REGMARK> variable will be set to FALSE.
+
+On a successful match, the C<$REGERROR> variable will be set to FALSE, and
+the C<$REGMARK> variable will be set to the name of the last
+C<(*MARK:NAME)> pattern executed.  See the explanation for the
+C<(*MARK:NAME)> verb below for more details.
+
+B<NOTE:> C<$REGERROR> and C<$REGMARK> are not magic variables like C<$1>
+and most other regex-related variables. They are not local to a scope, nor
+readonly, but instead are volatile package variables similar to C<$AUTOLOAD>.
+They are set in the package containing the code that I<executed> the regex
+(rather than the one that compiled it, where those differ).  If necessary, you
+can use C<local> to localize changes to these variables to a specific scope
+before executing a regex.
+
+If a pattern does not contain a special backtracking verb that allows an
+argument, then C<$REGERROR> and C<$REGMARK> are not touched at all.
+
+=over 3
+
+=item Verbs
+
+=over 4
+
+=item C<(*PRUNE)> C<(*PRUNE:NAME)>
+X<(*PRUNE)> X<(*PRUNE:NAME)>
+
+This zero-width pattern prunes the backtracking tree at the current point
+when backtracked into on failure. Consider the pattern C</I<A> (*PRUNE) I<B>/>,
+where I<A> and I<B> are complex patterns. Until the C<(*PRUNE)> verb is reached,
+I<A> may backtrack as necessary to match. Once it is reached, matching
+continues in I<B>, which may also backtrack as necessary; however, should B
+not match, then no further backtracking will take place, and the pattern
+will fail outright at the current starting position.
+
+The following example counts all the possible matching strings in a
+pattern (without actually matching any of them).
+
+    'aaab' =~ /a+b?(?{print "$&\n"; $count++})(*FAIL)/;
+    print "Count=$count\n";
+
+which produces:
+
+    aaab
+    aaa
+    aa
+    a
+    aab
+    aa
+    a
+    ab
+    a
+    Count=9
+
+If we add a C<(*PRUNE)> before the count like the following
+
+    'aaab' =~ /a+b?(*PRUNE)(?{print "$&\n"; $count++})(*FAIL)/;
+    print "Count=$count\n";
+
+we prevent backtracking and find the count of the longest matching string
+at each matching starting point like so:
+
+    aaab
+    aab
+    ab
+    Count=3
+
+Any number of C<(*PRUNE)> assertions may be used in a pattern.
+
+See also C<<< L<< /(?>pattern) >> >>> and possessive quantifiers for
+other ways to
+control backtracking. In some cases, the use of C<(*PRUNE)> can be
+replaced with a C<< (?>pattern) >> with no functional difference; however,
+C<(*PRUNE)> can be used to handle cases that cannot be expressed using a
+C<< (?>pattern) >> alone.
+
+=item C<(*SKIP)> C<(*SKIP:NAME)>
+X<(*SKIP)>
+
+This zero-width pattern is similar to C<(*PRUNE)>, except that on
+failure it also signifies that whatever text that was matched leading up
+to the C<(*SKIP)> pattern being executed cannot be part of I<any> match
+of this pattern. This effectively means that the regex engine "skips" forward
+to this position on failure and tries to match again, (assuming that
+there is sufficient room to match).
+
+The name of the C<(*SKIP:NAME)> pattern has special significance. If a
+C<(*MARK:NAME)> was encountered while matching, then it is that position
+which is used as the "skip point". If no C<(*MARK)> of that name was
+encountered, then the C<(*SKIP)> operator has no effect. When used
+without a name the "skip point" is where the match point was when
+executing the C<(*SKIP)> pattern.
+
+Compare the following to the examples in C<(*PRUNE)>; note the string
+is twice as long:
+
+ 'aaabaaab' =~ /a+b?(*SKIP)(?{print "$&\n"; $count++})(*FAIL)/;
+ print "Count=$count\n";
+
+outputs
+
+    aaab
+    aaab
+    Count=2
+
+Once the 'aaab' at the start of the string has matched, and the C<(*SKIP)>
+executed, the next starting point will be where the cursor was when the
+C<(*SKIP)> was executed.
+
+=item C<(*MARK:NAME)> C<(*:NAME)>
+X<(*MARK)> X<(*MARK:NAME)> X<(*:NAME)>
+
+This zero-width pattern can be used to mark the point reached in a string
+when a certain part of the pattern has been successfully matched. This
+mark may be given a name. A later C<(*SKIP)> pattern will then skip
+forward to that point if backtracked into on failure. Any number of
+C<(*MARK)> patterns are allowed, and the I<NAME> portion may be duplicated.
+
+In addition to interacting with the C<(*SKIP)> pattern, C<(*MARK:NAME)>
+can be used to "label" a pattern branch, so that after matching, the
+program can determine which branches of the pattern were involved in the
+match.
+
+When a match is successful, the C<$REGMARK> variable will be set to the
+name of the most recently executed C<(*MARK:NAME)> that was involved
+in the match.
+
+This can be used to determine which branch of a pattern was matched
+without using a separate capture group for each branch, which in turn
+can result in a performance improvement, as perl cannot optimize
+C</(?:(x)|(y)|(z))/> as efficiently as something like
+C</(?:x(*MARK:x)|y(*MARK:y)|z(*MARK:z))/>.
+
+When a match has failed, and unless another verb has been involved in
+failing the match and has provided its own name to use, the C<$REGERROR>
+variable will be set to the name of the most recently executed
+C<(*MARK:NAME)>.
+
+See L</(*SKIP)> for more details.
+
+As a shortcut C<(*MARK:NAME)> can be written C<(*:NAME)>.
+
+=item C<(*THEN)> C<(*THEN:NAME)>
+
+This is similar to the "cut group" operator C<::> from Perl 6.  Like
+C<(*PRUNE)>, this verb always matches, and when backtracked into on
+failure, it causes the regex engine to try the next alternation in the
+innermost enclosing group (capturing or otherwise) that has alternations.
+The two branches of a C<(?(condition)yes-pattern|no-pattern)> do not
+count as an alternation, as far as C<(*THEN)> is concerned.
+
+Its name comes from the observation that this operation combined with the
+alternation operator (C<"|">) can be used to create what is essentially a
+pattern-based if/then/else block:
+
+  ( COND (*THEN) FOO | COND2 (*THEN) BAR | COND3 (*THEN) BAZ )
+
+Note that if this operator is used and NOT inside of an alternation then
+it acts exactly like the C<(*PRUNE)> operator.
+
+  / A (*PRUNE) B /
+
+is the same as
+
+  / A (*THEN) B /
+
+but
+
+  / ( A (*THEN) B | C ) /
+
+is not the same as
+
+  / ( A (*PRUNE) B | C ) /
+
+as after matching the I<A> but failing on the I<B> the C<(*THEN)> verb will
+backtrack and try I<C>; but the C<(*PRUNE)> verb will simply fail.
+
+=item C<(*COMMIT)> C<(*COMMIT:args)>
+X<(*COMMIT)>
+
+This is the Perl 6 "commit pattern" C<< <commit> >> or C<:::>. It's a
+zero-width pattern similar to C<(*SKIP)>, except that when backtracked
+into on failure it causes the match to fail outright. No further attempts
+to find a valid match by advancing the start pointer will occur again.
+For example,
+
+ 'aaabaaab' =~ /a+b?(*COMMIT)(?{print "$&\n"; $count++})(*FAIL)/;
+ print "Count=$count\n";
+
+outputs
+
+    aaab
+    Count=1
+
+In other words, once the C<(*COMMIT)> has been entered, and if the pattern
+does not match, the regex engine will not try any further matching on the
+rest of the string.
+
+=item C<(*FAIL)> C<(*F)> C<(*FAIL:arg)>
+X<(*FAIL)> X<(*F)>
+
+This pattern matches nothing and always fails. It can be used to force the
+engine to backtrack. It is equivalent to C<(?!)>, but easier to read. In
+fact, C<(?!)> gets optimised into C<(*FAIL)> internally. You can provide
+an argument so that if the match fails because of this C<FAIL> directive
+the argument can be obtained from C<$REGERROR>.
+
+It is probably useful only when combined with C<(?{})> or C<(??{})>.
+
+=item C<(*ACCEPT)> C<(*ACCEPT:arg)>
+X<(*ACCEPT)>
+
+This pattern matches nothing and causes the end of successful matching at
+the point at which the C<(*ACCEPT)> pattern was encountered, regardless of
+whether there is actually more to match in the string. When inside of a
+nested pattern, such as recursion, or in a subpattern dynamically generated
+via C<(??{})>, only the innermost pattern is ended immediately.
+
+If the C<(*ACCEPT)> is inside of capturing groups then the groups are
+marked as ended at the point at which the C<(*ACCEPT)> was encountered.
+For instance:
+
+  'AB' =~ /(A (A|B(*ACCEPT)|C) D)(E)/x;
+
+will match, and C<$1> will be C<AB> and C<$2> will be C<"B">, C<$3> will not
+be set. If another branch in the inner parentheses was matched, such as in the
+string 'ACDE', then the C<"D"> and C<"E"> would have to be matched as well.
+
+You can provide an argument, which will be available in the var
+C<$REGMARK> after the match completes.
+
+=back
+
+=back
 
 =head2 Warning on C<\1> Instead of C<$1>
 
@@ -2470,10 +2864,10 @@ loops using regular expressions, with something as innocuous as:
 
     'foo' =~ m{ ( o? )* }x;
 
-The C<o?> matches at the beginning of C<'foo'>, and since the position
+The C<o?> matches at the beginning of "C<foo>", and since the position
 in the string is not moved by the match, C<o?> would match again and again
 because of the C<"*"> quantifier.  Another common way to create a similar cycle
-is with the looping modifier C<//g>:
+is with the looping modifier C</g>:
 
     @matches = ( 'foo' =~ m{ o? }xg );
 
@@ -2533,7 +2927,7 @@ the C<"*">.
 The higher-level loops preserve an additional state between iterations:
 whether the last match was zero-length.  To break the loop, the following
 match after a zero-length match is prohibited to have a length of zero.
-This prohibition interacts with backtracking (see L<"Backtracking">),
+This prohibition interacts with backtracking (see L</"Backtracking">),
 and so the I<second best> match is chosen if the I<best> match is of
 zero length.
 
@@ -2561,13 +2955,13 @@ Each of the elementary pieces of regular expressions which were described
 before (such as C<ab> or C<\Z>) could match at most one substring
 at the given position of the input string.  However, in a typical regular
 expression these elementary pieces are combined into more complicated
-patterns using combining operators C<ST>, C<S|T>, C<S*> etc.
-(in these examples C<S> and C<T> are regular subexpressions).
+patterns using combining operators C<ST>, C<S|T>, C<S*> I<etc>.
+(in these examples C<"S"> and C<"T"> are regular subexpressions).
 
 Such combinations can include alternatives, leading to a problem of choice:
 if we match a regular expression C<a|ab> against C<"abc">, will it match
 substring C<"a"> or C<"ab">?  One way to describe which substring is
-actually matched is the concept of backtracking (see L<"Backtracking">).
+actually matched is the concept of backtracking (see L</"Backtracking">).
 However, this description is too low-level and makes you think
 in terms of a particular implementation.
 
@@ -2580,28 +2974,28 @@ by the question of "which matches are better, and which are worse?".
 Again, for elementary pieces there is no such question, since at most
 one match at a given position is possible.  This section describes the
 notion of better/worse for combining operators.  In the description
-below C<S> and C<T> are regular subexpressions.
+below C<"S"> and C<"T"> are regular subexpressions.
 
 =over 4
 
 =item C<ST>
 
-Consider two possible matches, C<AB> and C<A'B'>, C<A> and C<A'> are
-substrings which can be matched by C<S>, C<B> and C<B'> are substrings
-which can be matched by C<T>.
+Consider two possible matches, C<AB> and C<A'B'>, C<"A"> and C<A'> are
+substrings which can be matched by C<"S">, C<"B"> and C<B'> are substrings
+which can be matched by C<"T">.
 
-If C<A> is a better match for C<S> than C<A'>, C<AB> is a better
+If C<"A"> is a better match for C<"S"> than C<A'>, C<AB> is a better
 match than C<A'B'>.
 
-If C<A> and C<A'> coincide: C<AB> is a better match than C<AB'> if
-C<B> is a better match for C<T> than C<B'>.
+If C<"A"> and C<A'> coincide: C<AB> is a better match than C<AB'> if
+C<"B"> is a better match for C<"T"> than C<B'>.
 
 =item C<S|T>
 
-When C<S> can match, it is a better match than when only C<T> can match.
+When C<"S"> can match, it is a better match than when only C<"T"> can match.
 
-Ordering of two matches for C<S> is the same as for C<S>.  Similar for
-two matches for C<T>.
+Ordering of two matches for C<"S"> is the same as for C<"S">.  Similar for
+two matches for C<"T">.
 
 =item C<S{REPEAT_COUNT}>
 
@@ -2625,18 +3019,18 @@ Same as C<S{0,1}?>, C<S{0,BIG_NUMBER}?>, C<S{1,BIG_NUMBER}?> respectively.
 
 =item C<< (?>S) >>
 
-Matches the best match for C<S> and only that.
+Matches the best match for C<"S"> and only that.
 
 =item C<(?=S)>, C<(?<=S)>
 
-Only the best match for C<S> is considered.  (This is important only if
-C<S> has capturing parentheses, and backreferences are used somewhere
+Only the best match for C<"S"> is considered.  (This is important only if
+C<"S"> has capturing parentheses, and backreferences are used somewhere
 else in the whole regular expression.)
 
 =item C<(?!S)>, C<(?<!S)>
 
 For this grouping operator there is no need to describe the ordering, since
-only whether or not C<S> can match is important.
+only whether or not C<"S"> can match is important.
 
 =item C<(??{ EXPR })>, C<(?I<PARNO>)>
 
@@ -2698,7 +3092,7 @@ this:
     }
 
 Now C<use customre> enables the new escape in constant regular
-expressions, i.e., those without any runtime variable interpolations.
+expressions, I<i.e.>, those without any runtime variable interpolations.
 As documented in L<overload>, this conversion will work only over
 literal parts of regular expressions.  For C<\Y|$re\Y|> the variable
 part of this regular expression needs to be converted explicitly
@@ -2712,7 +3106,7 @@ part of this regular expression needs to be converted explicitly
 
 =head2 Embedded Code Execution Frequency
 
-The exact rules for how often (??{}) and (?{}) are executed in a pattern
+The exact rules for how often C<(??{})> and C<(?{})> are executed in a pattern
 are unspecified.  In the case of a successful match you can assume that
 they DWIM and will be executed in left to right order the appropriate
 number of times in the accepting path of the pattern as would any other
@@ -2770,7 +3164,7 @@ Subroutine call to a named capture group. Equivalent to C<< (?&NAME) >>.
 =head1 BUGS
 
 There are a number of issues with regard to case-insensitive matching
-in Unicode rules.  See C<i> under L</Modifiers> above.
+in Unicode rules.  See C<"i"> under L</Modifiers> above.
 
 This document varies from difficult to understand to completely
 and utterly opaque.  The wandering prose riddled with jargon is
@@ -2780,6 +3174,11 @@ This document needs a rewrite that separates the tutorial content
 from the reference content.
 
 =head1 SEE ALSO
+
+The syntax of patterns used in Perl pattern matching evolved from those
+supplied in the Bell Labs Research Unix 8th Edition (Version 8) regex
+routines.  (The code is actually derived (distantly) from Henry
+Spencer's freely redistributable reimplementation of those V8 routines.)
 
 L<perlrequick>.
 

@@ -2,7 +2,7 @@ require 5;
 package Pod::Simple::Debug;
 use strict;
 use vars qw($VERSION );
-$VERSION = '3.32';
+$VERSION = '3.35';
 
 sub import {
   my($value,$variable);

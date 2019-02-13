@@ -69,8 +69,8 @@ as C<Not in [].>
  \b{}, \b          Boundary. (\b is a backspace in []).
  \B{}, \B          Not a boundary.  Not in [].
  \cX               Control-X.
- \d                Character class for digits.
- \D                Character class for non-digits.
+ \d                Match any digit character.
+ \D                Match any character that isn't a digit.
  \e                Escape character.
  \E                Turn off \Q, \L and \U processing.  Not in [].
  \f                Form feed.
@@ -78,31 +78,31 @@ as C<Not in [].>
  \g{}, \g1         Named, absolute or relative backreference.
                    Not in [].
  \G                Pos assertion.  Not in [].
- \h                Character class for horizontal whitespace.
- \H                Character class for non horizontal whitespace.
+ \h                Match any horizontal whitespace character.
+ \H                Match any character that isn't horizontal whitespace.
  \k{}, \k<>, \k''  Named backreference.  Not in [].
  \K                Keep the stuff left of \K.  Not in [].
  \l                Lowercase next character.  Not in [].
  \L                Lowercase till \E.  Not in [].
  \n                (Logical) newline character.
- \N                Any character but newline.  Not in [].
+ \N                Match any character but newline.  Not in [].
  \N{}              Named or numbered (Unicode) character or sequence.
  \o{}              Octal escape sequence.
- \p{}, \pP         Character with the given Unicode property.
- \P{}, \PP         Character without the given Unicode property.
+ \p{}, \pP         Match any character with the given Unicode property.
+ \P{}, \PP         Match any character without the given property.
  \Q                Quote (disable) pattern metacharacters till \E.  Not
                    in [].
  \r                Return character.
  \R                Generic new line.  Not in [].
- \s                Character class for whitespace.
- \S                Character class for non whitespace.
+ \s                Match any whitespace character.
+ \S                Match any character that isn't a whitespace.
  \t                Tab character.
  \u                Titlecase next character.  Not in [].
  \U                Uppercase till \E.  Not in [].
- \v                Character class for vertical whitespace.
- \V                Character class for non vertical whitespace.
- \w                Character class for word characters.
- \W                Character class for non-word characters.
+ \v                Match any vertical whitespace character.
+ \V                Match any character that isn't vertical whitespace
+ \w                Match any word character.
+ \W                Match any character that isn't a word character.
  \x{}, \x00        Hexadecimal escape sequence.
  \X                Unicode "extended grapheme cluster".  Not in [].
  \z                End of string.  Not in [].
@@ -596,7 +596,7 @@ sentence boundary.  C<\b{sb}> works with text designed for
 word-processors which wrap lines
 automatically for display, but hard-coded line boundaries are considered
 to be essentially the ends of text blocks (paragraphs really), and hence
-the ends of sententces.  C<\b{sb}> doesn't do well with text containing
+the ends of sentences.  C<\b{sb}> doesn't do well with text containing
 embedded newlines, like the source text of the document you are reading.
 Such text needs to be preprocessed to get rid of the line separators
 before looking for sentence boundaries.  Some people view this as a bug
@@ -622,8 +622,8 @@ space is immediately followed by something like U+0303, COMBINING TILDE.
 If the final space character in the span is a horizontal white space, it
 is broken out so that it attaches instead to the combining character.
 To be precise, if a span of white space that ends in a horizontal space
-has the character immediately following it have either of the Word
-Boundary property values "Extend" or "Format", the boundary between the
+has the character immediately following it have any of the Word
+Boundary property values "Extend", "Format" or "ZWJ", the boundary between the
 final horizontal space character and the rest of the span matches
 C<\b{wb}>.  In all other cases the boundary between two white space
 characters matches C<\B{wb}>.)
@@ -650,8 +650,8 @@ rule.
 It is also important to realize that these are default boundary
 definitions, and that implementations may wish to tailor the results for
 particular purposes and locales.  For example, some languages, such as
-Japanese and Thai, require dictionary lookup to determine word
-boundaries.
+Japanese and Thai, require dictionary lookup to accurately determine
+word boundaries.
 
 Mnemonic: I<b>oundary.
 

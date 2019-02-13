@@ -232,8 +232,8 @@ from C<File>. An C<File::MP3> B<is-a> I<more specific> type of C<File>.
 All mp3 files are files, but not all files are mp3 files.
 
 We often refer to inheritance relationships as B<parent-child> or
-C<superclass>/C<subclass> relationships. Sometimes we say that the child
-has an B<is-a> relationship with its parent class.
+C<superclass>/C<subclass> relationships. Sometimes we say that the
+child has an B<is-a> relationship with its parent class.
 
 C<File> is a B<superclass> of C<File::MP3>, and C<File::MP3> is a
 B<subclass> of C<File>.
@@ -505,7 +505,7 @@ new C<File>.
 
 C<Moose> lets you define roles the same way you define classes:
 
-  package HasOnOfSwitch;
+  package HasOnOffSwitch;
   use Moose::Role;
 
   has is_on => (
@@ -650,8 +650,8 @@ constructor for your class.
 
 Finally, we have L<Class::Tiny>. This module truly lives up to its
 name. It has an incredibly minimal API and absolutely no dependencies
-on any recent Perl. Still, we think it's a lot easier to use than writing
-your own OO code from scratch.
+on any recent Perl. Still, we think it's a lot easier to use than
+writing your own OO code from scratch.
 
 Here's our C<File> class once more:
 
@@ -715,9 +715,9 @@ to worry about details.
 
 =item * L<Role::Tiny>
 
-Use C<Role::Tiny> with C<Class::Accessor> or C<Class::Tiny> if you
-find yourself considering multiple inheritance. If you go with
-C<Moose>, it comes with its own role implementation.
+Use C<Role::Tiny> with C<Class::Accessor> or C<Class::Tiny> if you find
+yourself considering multiple inheritance. If you go with C<Moose>, it
+comes with its own role implementation.
 
 =back
 
@@ -743,9 +743,11 @@ For small systems, L<Class::Tiny> and L<Class::Accessor> both provide
 minimal object systems that take care of basic boilerplate for you.
 
 For bigger projects, L<Moose> provides a rich set of features that will
-let you focus on implementing your business logic.
+let you focus on implementing your business logic. L<Moo> provides a
+nice alternative to L<Moose> when you want a lot of features but need
+faster compile time or to avoid XS.
 
-We encourage you to play with and evaluate L<Moose>,
+We encourage you to play with and evaluate L<Moose>, L<Moo>,
 L<Class::Accessor>, and L<Class::Tiny> to see which OO system is right
 for you.
 

@@ -136,7 +136,7 @@ dtrace_like(<< 'PERL_SCRIPT',
     BEGIN {@INC = '../lib'}
     use strict;
     require HTTP::Tiny;
-    do "run/dtrace.pl";
+    do "./run/dtrace.pl";
 PERL_SCRIPT
     << 'D_SCRIPT',
     loading-file { printf("loading-file <%s>\n", copyinstr(arg0)) }

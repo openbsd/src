@@ -76,7 +76,7 @@ my %keyandmore = map { $_ => 0 } @keyandmore;
 my %fooormore = map { $_ => 0 } @fooormore;
 
 # Load and run the tests
-plan tests => 349+2;
+plan tests => 349+4;
 
 while (<DATA>) {
   SKIP: {
@@ -181,6 +181,25 @@ sub NOT_DEF() { undef }
     is($bad, -1, "RT 123860: stack realloc");
 }
 
+
+{
+    # [perl #130705]
+    # Perl_ck_smartmatch would turn the match in:
+    # 0 =~ qr/1/ ~~ 0  # parsed as (0 =~ qr/1/) ~~ 0
+    # into a qr, leaving the initial 0 on the stack after execution
+    #
+    # Similarly for: 0 ~~ (0 =~ qr/1/)
+    #
+    # Either caused an assertion failure in the context of warn (or print)
+    # if there was some other operator's arguments left on the stack, as with
+    # the test cases.
+    fresh_perl_is('print(0->[0 =~ qr/1/ ~~ 0])', '',
+                  { switches => [ "-M-warnings=experimental::smartmatch" ] },
+                  "don't qr-ify left-side match against a stacked argument");
+    fresh_perl_is('print(0->[0 ~~ (0 =~ qr/1/)])', '',
+                  { switches => [ "-M-warnings=experimental::smartmatch" ] },
+                  "don't qr-ify right-side match against a stacked argument");
+}
 
 # Prefix character :
 #   - expected to match

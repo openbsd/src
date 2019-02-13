@@ -4,7 +4,7 @@ perlfaq1 - General Questions About Perl
 
 =head1 VERSION
 
-version 5.021010
+version 5.021011
 
 =head1 DESCRIPTION
 
@@ -109,12 +109,6 @@ as its whitewashed bones have fractured or eroded.
 
 =item *
 
-The current leading implementation of Perl 6, Rakudo, released a "useful,
-usable, 'early adopter'" distribution of Perl 6 (called Rakudo Star) in July of
-2010. Please see L<http://rakudo.org/> for more information.
-
-=item *
-
 There are really two tracks of perl development: a maintenance version
 and an experimental version. The maintenance versions are stable, and
 have an even number as the minor release (i.e. perl5.18.x, where 18 is the
@@ -148,21 +142,21 @@ See L<perlhist> for a history of Perl revisions.
 
 =head2 What is Perl 6?
 
-Perl 6 was I<originally> described as the community's rewrite of Perl 5.
-Development started in 2002; syntax and design work continue to this day.
-As the language has evolved, it has become clear that it is a separate
-language, incompatible with Perl 5 but in the same language family.
+Perl 6 was I<originally> described as the community's rewrite of Perl 5,
+however as the language evolved, it became clear that it is a separate
+language, but in the same language family as Perl 5.
+
+Perl 6 is not intended primarily as a replacement for Perl 5, but as its
+own thing - and libraries exist to allow you to call Perl 5 code from Perl
+6 programs and vice versa.
 
 Contrary to popular belief, Perl 6 and Perl 5 peacefully coexist with one
 another. Perl 6 has proven to be a fascinating source of ideas for those
 using Perl 5 (the L<Moose> object system is a well-known example). There is
 overlap in the communities, and this overlap fosters the tradition of sharing
-and borrowing that have been instrumental to Perl's success. The current
-leading implementation of Perl 6 is Rakudo, and you can learn more about
-it at L<http://rakudo.org>.
+and borrowing that have been instrumental to Perl's success.
 
-If you want to learn more about Perl 6, or have a desire to help in
-the crusade to make Perl a better place then read the Perl 6 developers
+If you want to learn more about Perl 6 read the Perl 6 developers
 page at L<http://www.perl6.org/> and get involved.
 
 "We're really serious about reinventing everything that needs reinventing."

@@ -7,17 +7,17 @@ use warnings;
 use Exporter;
 use Math::BigRat;
 use Math::BigFloat;
-our ($VERSION, @ISA, $accuracy, $precision, $round_mode, $div_scale);
 
-@ISA = qw(Math::BigRat Exporter);
-$VERSION = 0.04;
+our @ISA = qw(Math::BigRat Exporter);
+our $VERSION = '0.04';
 
 use overload; 		# inherit overload from BigRat
 
 # Globals
-$accuracy = $precision = undef;
-$round_mode = 'even';
-$div_scale = 40;
+our $accuracy   = undef;
+our $precision  = undef;
+our $round_mode = 'even';
+our $div_scale  = 40;
 
 my $class = 'Math::BigRat::Test';
 

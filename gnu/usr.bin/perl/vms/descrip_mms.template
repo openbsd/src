@@ -281,7 +281,7 @@ unidatadirs = lib/unicore/To lib/unicore/lib
 # Modules which must be installed before we can build extensions
 LIBPREREQ = $(ARCHDIR)Config.pm $(ARCHDIR)Config_heavy.pl $(ARCHDIR)vmspipe.com
 
-utils1 = [.utils]perldoc.com [.utils]c2ph.com [.utils]h2ph.com 
+utils1 = [.utils]perldoc.com [.utils]h2ph.com 
 utils2 = [.utils]h2xs.com [.utils]libnetcfg.com [.lib]perlbug.com [.utils]json_pp.com
 utils3 = [.utils]perlivp.com [.lib]splain.com [.utils]pl2pm.com [.utils]xsubpp.com [.utils]pod2html.com [.utils]instmodsh.com
 utils4 = [.utils]enc2xs.com [.utils]piconv.com [.utils]cpan.com [.utils]prove.com [.utils]ptar.com [.utils]ptardiff.com [.utils]shasum.com
@@ -307,7 +307,7 @@ utils : $(utils1) $(utils2) $(utils3) $(utils4) $(utils5)
 extra.pods : miniperl
 	@ @extra_pods.com
 
-PERLDELTA_CURRENT = [.pod]perl5243delta.pod
+PERLDELTA_CURRENT = [.pod]perl5281delta.pod
 
 $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(PERLDELTA_CURRENT)
@@ -461,9 +461,6 @@ nonxsext : $(LIBPREREQ) preplibrary $(MINIPERL_EXE) [.pod]perlfunc.pod
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
 [.utils]corelist.com : [.utils]corelist.PL $(ARCHDIR)Config.pm
-	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
-
-[.utils]c2ph.com : [.utils]c2ph.PL $(ARCHDIR)Config.pm
 	$(MINIPERL) -"I[-.lib]" $(MMS$SOURCE)
 
 [.utils]json_pp.com : [.utils]json_pp.PL $(ARCHDIR)Config.pm

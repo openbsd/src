@@ -4,7 +4,7 @@ perlfaq5 - Files and Formats
 
 =head1 VERSION
 
-version 5.021010
+version 5.021011
 
 =head1 DESCRIPTION
 
@@ -1278,7 +1278,7 @@ comes with Perl tries to convert C include files to Perl code, which
 can be C<require>d. FIONREAD ends up defined as a function in the
 I<sys/ioctl.ph> file:
 
-    require 'sys/ioctl.ph';
+    require './sys/ioctl.ph';
 
     $size = pack("L", 0);
     ioctl(FH, FIONREAD(), $size)    or die "Couldn't call ioctl: $!\n";
@@ -1378,7 +1378,7 @@ used for things that Perl opened itself, even if it was a dup of a
 numeric descriptor as with C<MHCONTEXT> above. But if you really have
 to, you may be able to do this:
 
-    require 'sys/syscall.ph';
+    require './sys/syscall.ph';
     my $rc = syscall(SYS_close(), $fd + 0);  # must force numeric
     die "can't sysclose $fd: $!" unless $rc == -1;
 

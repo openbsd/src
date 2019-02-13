@@ -26,9 +26,7 @@ STATIC perl_mutex ab_op_map_mutex;
 STATIC const ab_op_info *ab_map_fetch(const OP *o, ab_op_info *oi) {
  const ab_op_info *val;
 
-#ifdef USE_ITHREADS
  MUTEX_LOCK(&ab_op_map_mutex);
-#endif
 
  val = (ab_op_info *)ptable_fetch(ab_op_map, o);
  if (val) {
@@ -36,9 +34,7 @@ STATIC const ab_op_info *ab_map_fetch(const OP *o, ab_op_info *oi) {
   val = oi;
  }
 
-#ifdef USE_ITHREADS
  MUTEX_UNLOCK(&ab_op_map_mutex);
-#endif
 
  return val;
 }
@@ -65,28 +61,20 @@ STATIC void ab_map_store(
 {
 #define ab_map_store(O, PP, B) ab_map_store(aPTBLMS_ (O),(PP),(B))
 
-#ifdef USE_ITHREADS
  MUTEX_LOCK(&ab_op_map_mutex);
-#endif
 
  ab_map_store_locked(o, old_pp, base);
 
-#ifdef USE_ITHREADS
  MUTEX_UNLOCK(&ab_op_map_mutex);
-#endif
 }
 
 STATIC void ab_map_delete(pTHX_ const OP *o) {
 #define ab_map_delete(O) ab_map_delete(aTHX_ (O))
-#ifdef USE_ITHREADS
  MUTEX_LOCK(&ab_op_map_mutex);
-#endif
 
  ptable_map_store(ab_op_map, o, NULL);
 
-#ifdef USE_ITHREADS
  MUTEX_UNLOCK(&ab_op_map_mutex);
-#endif
 }
 
 /* ... $[ Implementation .............................................. */
@@ -165,11 +153,15 @@ STATIC void ab_process_assignment(pTHX_ OP *left, OP *right) {
 #define ab_process_assignment(l, r) \
     ab_process_assignment(aTHX_ (l), (r))
  if (ab_op_is_dollar_bracket(left) && right->op_type == OP_CONST) {
-  set_arybase_to(SvIV(cSVOPx_sv(right)));
+  IV base = SvIV(cSVOPx_sv(right));
+  set_arybase_to(base);
   ab_neuter_dollar_bracket(left);
-  Perl_ck_warner_d(aTHX_
-   packWARN(WARN_DEPRECATED), "Use of assignment to $[ is deprecated"
-  );
+  if (base) {
+    Perl_ck_warner_d(aTHX_
+     packWARN(WARN_DEPRECATED), "Use of assignment to $[ is deprecated"
+                                ", and will be fatal in Perl 5.30"
+    );
+  }
  }
 }
 
@@ -410,15 +402,9 @@ PROTOTYPES: DISABLE
 
 BOOT:
 {
-    GV *const gv = gv_fetchpvn("[", 1, GV_ADDMULTI|GV_NOTQUAL, SVt_PV);
-    sv_unmagic(GvSV(gv), PERL_MAGIC_sv); /* This is *our* scalar now! */
-    tie(aTHX_ GvSV(gv), NULL, GvSTASH(CvGV(cv)));
-
     if (!ab_initialized++) {
 	ab_op_map = ptable_new();
-#ifdef USE_ITHREADS
 	MUTEX_INIT(&ab_op_map_mutex);
-#endif
 #define check(uc,lc,ck) \
 		wrap_op_checker(OP_##uc, ab_ck_##ck, &ab_old_ck_##lc)
 	check(SASSIGN,  sassign,  sassign);
@@ -436,6 +422,16 @@ BOOT:
 	check(POS,      pos,      base);
     }
 }
+
+void
+_tie_it(SV *sv)
+    INIT:
+	GV * const gv = (GV *)sv;
+    CODE:
+	if (GvSV(gv))
+	    /* This is *our* scalar now!  */
+	    sv_unmagic(GvSV(gv), PERL_MAGIC_sv);
+	tie(aTHX_ GvSVn(gv), NULL, GvSTASH(CvGV(cv)));
 
 void
 FETCH(...)

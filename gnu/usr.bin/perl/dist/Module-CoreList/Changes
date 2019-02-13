@@ -1,3 +1,56 @@
+5.20181129_28
+  - Updated for v5.28.1
+
+5.20181020
+  - Updated for v5.29.4
+
+5.20180920
+  - Updated for v5.29.3
+
+5.20180820
+  - Updated for v5.29.2
+
+5.20180720
+  - Updated for v5.29.1
+
+5.20180624
+  - Updated for v5.29.0
+
+5.20180622
+  - Updated for v5.28.0
+
+5.20180420
+  - Updated for v5.27.11
+
+5.20180414_26
+  - Updated for v5.26.2
+
+5.20180414_24
+  - Updated for v5.24.4
+
+5.20180221
+  - Updated for v5.27.10
+
+5.20180220
+  - Improve handling of broken versions in is_core()
+  - Removed Module::CoreList::TieHashDelta
+  - Updated for v5.27.9
+
+5.20180120
+  - Updated for v5.27.8
+
+5.20171220
+  - Updated for v5.27.7
+
+5.20171120
+  - Updated for v5.27.6
+
+5.20171020
+  - Updated for v5.27.5
+
+5.20170922_26
+  - Updated for v5.26.1
+
 5.20170922_24
   - Updated for v5.24.3
 

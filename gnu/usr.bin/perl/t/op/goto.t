@@ -4,13 +4,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
     require "./test.pl"; require './charset_tools.pl';
+    set_up_inc( qw(. ../lib) );
 }
 
 use warnings;
 use strict;
-plan tests => 98;
+plan tests => 124;
 our $TODO;
 
 my $deprecated = 0;
@@ -97,7 +97,7 @@ for (1) {
 is($count, 2, 'end of loop');
 
 # Does goto work correctly within a for(;;) loop?
-#  (BUG ID 20010309.004)
+#  (BUG ID 20010309.004 (#5998))
 
 for(my $i=0;!$i++;) {
   my $x=1;
@@ -280,7 +280,7 @@ YYY: print "OK\n";
 EOT
 close $f;
 
-$r = runperl(prog => 'use Op_goto01; print qq[DONE\n]');
+$r = runperl(prog => 'BEGIN { unshift @INC, q[.] } use Op_goto01; print qq[DONE\n]');
 is($r, "OK\nDONE\n", "goto within use-d file"); 
 unlink_all "Op_goto01.pm";
 
@@ -774,3 +774,113 @@ sub FETCH     { $_[0][0] }
 tie my $t, "", sub { "cluck up porridge" };
 is eval { sub { goto $t }->() }//$@, 'cluck up porridge',
   'tied arg returning sub ref';
+
+TODO: {
+  local $::TODO = 'RT #45091: goto in CORE::GLOBAL::exit unsupported';
+  fresh_perl_is(<<'EOC', "before\ndie handler\n", {stderr => 1}, 'RT #45091: goto in CORE::GLOBAL::EXIT');
+  BEGIN {
+    *CORE::GLOBAL::exit = sub {
+      goto FASTCGI_NEXT_REQUEST;
+    };
+  }
+  while (1) {
+    eval { that_cgi_script() };
+    FASTCGI_NEXT_REQUEST:
+    last;
+  }
+  
+  sub that_cgi_script {
+    local $SIG{__DIE__} = sub { print "die handler\n"; exit; print "exit failed?\n"; };
+    print "before\n";
+    eval { buggy_code() };
+    print "after\n";
+  }
+  sub buggy_code {
+    die "error!";
+    print "after die\n";
+  }
+EOC
+}
+
+sub revnumcmp ($$) {
+  goto FOO;
+  die;
+  FOO:
+  return $_[1] <=> $_[0];
+}
+is eval { join(":", sort revnumcmp (9,5,1,3,7)) }, "9:7:5:3:1",
+  "can goto at top level of multicalled sub";
+
+# A bit strange, but goingto these constructs should not cause any stack
+# problems.  Let’s test them to make sure that is the case.
+no warnings 'deprecated';
+is \sub :lvalue { goto d; ${*{scalar(do { d: \*foo })}} }->(), \$foo,
+   'goto into rv2sv, rv2gv and scalar';
+is sub { goto e; $#{; do { e: \@_ } } }->(1..7), 6,
+   'goto into $#{...}';
+is sub { goto f; prototype \&{; do { f: sub ($) {} } } }->(), '$',
+   'goto into srefgen, prototype and rv2cv';
+is sub { goto g; ref do { g: [] } }->(), 'ARRAY',
+   'goto into ref';
+is sub { goto j; defined undef ${; do { j: \(my $foo = "foo") } } }->(),'',
+   'goto into defined and undef';
+is sub { goto k; study ++${; do { k: \(my $foo = "foo") } } }->(),'1',
+   'goto into study and preincrement';
+is sub { goto l; ~-!${; do { l: \(my $foo = 0) } }++ }->(),~-1,
+   'goto into complement, not, negation and postincrement';
+like sub { goto n; sin cos exp log sqrt do { n: 1 } }->(),qr/^0\.51439/,
+   'goto into sin, cos, exp, log, and sqrt';
+ok sub { goto o; srand do { o: 0 } }->(),
+   'goto into srand';
+cmp_ok sub { goto p; rand do { p: 1 } }->(), '<', 1,
+   'goto into rand';
+is sub { goto r; chr ord length int hex oct abs do { r: -15.5 } }->(), 2,
+   'goto into chr, ord, length, int, hex, oct and abs';
+is sub { goto t; ucfirst lcfirst uc lc do { t: "q" } }->(), 'Q',
+   'goto into ucfirst, lcfirst, uc and lc';
+{ no strict;
+  is sub { goto u; \@{; quotemeta do { u: "." } } }->(), \@{'\.'},
+   'goto into rv2av and quotemeta';
+}
+is join(" ",sub { goto v; %{; do { v: +{1..2} } } }->()), '1 2',
+   'goto into rv2hv';
+is join(" ",sub { goto w; $_ || do { w: "w" } }->()), 'w',
+   'goto into rhs of or';
+is join(" ",sub { goto x; $_ && do { x: "w" } }->()), 'w',
+   'goto into rhs of and';
+is join(" ",sub { goto z; $_ ? do { z: "w" } : 0 }->()), 'w',
+   'goto into first leg of ?:';
+is join(" ",sub { goto z; $_ ? 0 : do { z: "w" } }->()), 'w',
+   'goto into second leg of ?:';
+is sub { goto z; caller do { z: 0 } }->(), 'main',
+   'goto into caller';
+is sub { goto z; exit do { z: return "foo" } }->(), 'foo',
+   'goto into exit';
+is sub { goto z; eval do { z: "'foo'" } }->(), 'foo',
+   'goto into eval';
+TODO: {
+    local $TODO = "glob() does not currently return a list on VMS" if $^O eq 'VMS';
+    is join(",",sub { goto z; glob do { z: "foo bar" } }->()), 'foo,bar',
+       'goto into glob';
+}
+# [perl #132799]
+# Erroneous inward goto warning, followed by crash.
+# The eval must be in an assignment.
+sub _routine {
+    my $e = eval {
+        goto L2;
+      L2:
+    }
+}
+_routine();
+pass("bug 132799");
+
+# [perl #132854]
+# Goto the *first* parameter of a binary expression, which is harmless.
+eval {
+    goto __GEN_2;
+    my $sent = do {
+        __GEN_2:
+    };
+};
+is $@,'', 'goto the first parameter of a binary expression [perl #132854]';

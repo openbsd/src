@@ -1,16 +1,13 @@
 #!./perl
 
 BEGIN {
-    unless (-d 'blib') {
-        chdir 't' if -d 't';
-        @INC = '../lib';
-    }
+    chdir 't' if -d 't';
+    require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
 use warnings;
-
-require './test.pl';
 
 plan(skip_all => "Your system has no SIGALRM") if !exists $SIG{ALRM};
 plan(tests => 8);

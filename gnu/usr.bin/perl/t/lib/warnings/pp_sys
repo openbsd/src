@@ -761,65 +761,6 @@ chdir() on closed filehandle BAR at - line 21.
 chdir() on unopened filehandle $dh at - line 22.
 chdir() on closed filehandle $fh at - line 23.
 ########
-# pp_sys.c [pp_open]
-use warnings;
-opendir FOO, ".";
-opendir my $foo, ".";
-open FOO, "../harness";
-open $foo, "../harness";
-no warnings qw(io deprecated);
-open FOO, "../harness";
-open $foo, "../harness";
-EXPECT
-Opening dirhandle FOO also as a file at - line 5.
-Opening dirhandle $foo also as a file at - line 6.
-########
-
-# pp_sys.c [pp_open]
-use utf8;
-use open qw( :utf8 :std );
-use warnings;
-opendir ＦＯＯ, ".";
-opendir $ｆｏｏ, ".";
-open ＦＯＯ, "../harness";
-open $ｆｏｏ, "../harness";
-no warnings qw(io deprecated);
-open ＦＯＯ, "../harness";
-open $ｆｏｏ, "../harness";
-EXPECT
-Opening dirhandle ＦＯＯ also as a file at - line 8.
-Opening dirhandle $ｆｏｏ also as a file at - line 9.
-########
-# pp_sys.c [pp_open_dir]
-use warnings;
-open FOO, "../harness";
-open my $foo, "../harness";
-opendir FOO, ".";
-opendir $foo, ".";
-no warnings qw(io deprecated);
-opendir FOO, ".";
-opendir $foo, ".";
-EXPECT
-Opening filehandle FOO also as a directory at - line 5.
-Opening filehandle $foo also as a directory at - line 6.
-########
-
-# pp_sys.c [pp_open_dir]
-use utf8;
-use open qw( :utf8 :std );
-use warnings;
-use warnings;
-open ＦＯＯ, "../harness";
-open $ｆｏｏ, "../harness";
-opendir ＦＯＯ, ".";
-opendir $ｆｏｏ, ".";
-no warnings qw(io deprecated);
-opendir ＦＯＯ, ".";
-opendir $ｆｏｏ, ".";
-EXPECT
-Opening filehandle ＦＯＯ also as a directory at - line 9.
-Opening filehandle $ｆｏｏ also as a directory at - line 10.
-########
 # pp_sys.c [pp_*dir]
 use Config ;
 BEGIN {
@@ -911,6 +852,14 @@ closedir() attempted on invalid dirhandle $ｆｏｏ at - line 23.
 ########
 
 # pp_sys.c [pp_gmtime]
+use Config;
+unless ($Config{d_double_has_nan}) {
+    print <<EOM ;
+SKIPPED
+# No nan support
+EOM
+    exit ;
+}
 gmtime("NaN");
 localtime("NaN");
 use warnings "overflow";
@@ -918,10 +867,10 @@ gmtime("NaN");
 localtime("NaN");
 
 EXPECT
-gmtime(NaN) too large at - line 6.
-gmtime(NaN) failed at - line 6.
-localtime(NaN) too large at - line 7.
-localtime(NaN) failed at - line 7.
+gmtime(NaN) too large at - line 14.
+gmtime(NaN) failed at - line 14.
+localtime(NaN) too large at - line 15.
+localtime(NaN) failed at - line 15.
 
 ########
 # pp_sys.c [pp_alarm]
@@ -942,23 +891,39 @@ EXPECT
 sleep() with negative argument at - line 2.
 ########
 # NAME sysread() deprecated on :utf8
-use warnings 'deprecated';
 open my $fh, "<:raw", "../harness" or die "# $!";
 my $buf;
 sysread $fh, $buf, 10;
 binmode $fh, ':utf8';
 sysread $fh, $buf, 10;
+no warnings 'deprecated';
+sysread $fh, $buf, 10;
 EXPECT
-sysread() is deprecated on :utf8 handles at - line 6.
+sysread() is deprecated on :utf8 handles. This will be a fatal error in Perl 5.30 at - line 5.
 ########
 # NAME syswrite() deprecated on :utf8
 my $file = "syswwarn.tmp";
-use warnings 'deprecated';
 open my $fh, ">:raw", $file or die "# $!";
 syswrite $fh, 'ABC';
 binmode $fh, ':utf8';
 syswrite $fh, 'ABC';
+no warnings 'deprecated';
+syswrite $fh, 'ABC';
 close $fh;
 unlink $file;
 EXPECT
-syswrite() is deprecated on :utf8 handles at - line 6.
+syswrite() is deprecated on :utf8 handles. This will be a fatal error in Perl 5.30 at - line 5.
+########
+# NAME stat on name with \0
+use warnings;
+my @x = stat("./\0-");
+my @y = lstat("./\0-");
+-T ".\0-";
+-x ".\0-";
+-l ".\0-";
+EXPECT
+Invalid \0 character in pathname for stat: ./\0- at - line 2.
+Invalid \0 character in pathname for lstat: ./\0- at - line 3.
+Invalid \0 character in pathname for fttext: .\0- at - line 4.
+Invalid \0 character in pathname for fteexec: .\0- at - line 5.
+Invalid \0 character in pathname for ftlink: .\0- at - line 6.

@@ -12,7 +12,9 @@ use Math::BigInt::FastCalc;
 
 #############################################################################
 package Math::BigInt::FastCalc::LeakCheck;
-use parent qw(Math::BigInt::FastCalc);
+
+use Math::BigInt::FastCalc;
+our @ISA = qw< Math::BigInt::FastCalc >;
 
 my $destroyed = 0;
 sub DESTROY { $destroyed++; }
@@ -76,4 +78,3 @@ sub _test_acmp
   my $n_2 = Math::BigInt::FastCalc->_str($n2);
   is ($destroyed, 1, "_acmp($n_1,$n_2) does not leak memory");
   }
-

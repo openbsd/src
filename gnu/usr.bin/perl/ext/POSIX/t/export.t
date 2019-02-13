@@ -45,11 +45,13 @@ my %expect = (
             FLT_ROUNDS F_DUPFD F_GETFD F_GETFL F_GETLK F_OK F_RDLCK
             F_SETFD F_SETFL F_SETLK F_SETLKW F_UNLCK F_WRLCK HUGE_VAL
             HUPCL ICANON ICRNL IEXTEN IGNBRK IGNCR IGNPAR INLCR INPCK
-            INT_MAX INT_MIN ISIG ISTRIP IXOFF IXON LC_ALL LC_COLLATE
-            LC_CTYPE LC_MESSAGES LC_MONETARY LC_NUMERIC LC_TIME LDBL_DIG
+            INT_MAX INT_MIN ISIG ISTRIP IXOFF IXON
+            LC_ADDRESS LC_ALL LC_COLLATE LC_CTYPE LC_IDENTIFICATION
+            LC_MEASUREMENT LC_MESSAGES LC_MONETARY LC_NUMERIC LC_PAPER
+            LC_TELEPHONE LC_TIME LDBL_DIG
             LDBL_EPSILON LDBL_MANT_DIG LDBL_MAX LDBL_MAX_10_EXP
             LDBL_MAX_EXP LDBL_MIN LDBL_MIN_10_EXP LDBL_MIN_EXP LINK_MAX
-            LONG_MAX LONG_MIN L_ctermid L_cuserid L_tmpname MAX_CANON
+            LONG_MAX LONG_MIN L_ctermid L_cuserid MAX_CANON
             MAX_INPUT MB_CUR_MAX MB_LEN_MAX NAME_MAX NCCS NDEBUG
             NGROUPS_MAX NOFLSH NULL OPEN_MAX OPOST O_ACCMODE O_APPEND
             O_CREAT O_EXCL O_NOCTTY O_NONBLOCK O_RDONLY O_RDWR O_TRUNC
@@ -90,8 +92,7 @@ my %expect = (
             fgets floor fmod fopen fpathconf fprintf fputc fputs fread
             free freopen frexp fscanf fseek fsetpos fstat fsync ftell
             fwrite getchar getcwd getegid getenv geteuid getgid getgroups
-            getpid gets getuid isalnum isalpha isatty iscntrl isdigit
-            isgraph islower isprint ispunct isspace isupper isxdigit labs
+            getpid gets getuid isatty labs
             ldexp ldiv localeconv log10 longjmp lseek malloc mblen
             mbstowcs mbtowc memchr memcmp memcpy memmove memset mkfifo
             mktime modf offsetof pathconf pause perror pow putc putchar
@@ -103,7 +104,7 @@ my %expect = (
             strncpy strpbrk strrchr strspn strstr strtod strtok strtol
             strtoul strxfrm sysconf tan tanh tcdrain tcflow tcflush
             tcgetattr tcgetpgrp tcsendbreak tcsetattr tcsetpgrp tmpfile
-            tmpnam tolower toupper ttyname tzname tzset uname ungetc
+            tmpnam ttyname tzname tzset uname ungetc
             vfprintf vprintf vsprintf wcstombs wctomb
         ),
         # this stuff was added in 5.21
@@ -130,6 +131,16 @@ my %expect = (
         # it is OK to add new constants, but new functions may only go in EXPORT_OK
     ],
     EXPORT_OK => [sort
+        # this stuff was added in 5.9, but not exported until 5.25
+        qw(
+            MSG_CTRUNC MSG_DONTROUTE MSG_EOR MSG_OOB MSG_PEEK
+            MSG_TRUNC MSG_WAITALL
+        ),
+        # this stuff was added in 5.11, but not exported until 5.25
+        qw(
+            EAI_AGAIN EAI_BADFLAGS EAI_FAIL EAI_FAMILY EAI_MEMORY
+            EAI_NONAME EAI_OVERFLOW EAI_SERVICE EAI_SOCKTYPE EAI_SYSTEM
+        ),
         # this stuff was in 5.20.2
         qw(
             abs alarm atan2 chdir chmod chown close closedir cos exit
@@ -138,9 +149,12 @@ my %expect = (
             localtime log mkdir nice open opendir pipe printf rand
             read readdir rename rewinddir rmdir sin sleep sprintf sqrt
             srand stat system time times umask unlink utime wait
-            waitpid write
+            waitpid write L_tmpnam
         ),
         # this stuff was added in 5.21
+        # (though an oversight meant that lround wasn't listed here
+        # initially; it was added to @EXPORT_OK in 5.23, and to the
+        # :math_h_c99 tag in 5.25)
         qw(
             FE_DOWNWARD FE_TONEAREST FE_TOWARDZERO FE_UPWARD
             fegetround fesetround
@@ -148,7 +162,7 @@ my %expect = (
             acosh asinh atanh cbrt copysign erf erfc exp2 expm1 fdim
             fma fmax fmin fpclassify hypot ilogb isfinite isgreater
             isgreaterequal isinf isless islessequal islessgreater isnan
-            isnormal isunordered j0 j1 jn lgamma log1p log2 logb lrint nan
+            isnormal isunordered j0 j1 jn lgamma log1p log2 logb lrint lround nan
             nearbyint nextafter nexttoward remainder remquo rint round scalbn
             signbit tgamma trunc y0 y1 yn strtold
         ),
@@ -166,18 +180,38 @@ my %expect = (
             POLL_IN POLL_OUT POLL_MSG POLL_ERR POLL_PRI POLL_HUP
             SI_USER SI_QUEUE SI_TIMER SI_ASYNCIO SI_MESGQ
         ),
-        # this was implemented in 5.21, but not exported; it was added to
-        # @EXPORT_OK late in 5.23, and will be added to :math_h_c99 tag early
-        # in 5.25
-        qw( lround ),
+        # added in 5.27
+        qw(
+            PRIO_PROCESS PRIO_PGRP PRIO_USER
+        ),
     ],
 );
 
-plan (tests => 2 * keys %expect);
+plan (tests => 2 * keys(%expect) + keys(%POSIX::));
 
 while (my ($var, $expect) = each %expect) {
     my $have = *{$POSIX::{$var}}{ARRAY};
     cmp_ok(@$have, '==', @$expect,
 	   "Correct number of entries for \@POSIX::$var");
     is_deeply([sort @$have], $expect, "Correct entries for \@POSIX::$var");
+}
+
+my %no_export_needed = map +($_ => 1),
+    qw(AUTOLOAD bootstrap constant croak import load_imports
+       unimplemented_message usage);
+
+my %exported = map +($_ => 1),
+    (@POSIX::EXPORT, @POSIX::EXPORT_OK, map @$_, values %POSIX::EXPORT_TAGS);
+
+for my $name (sort keys %POSIX::) {
+    my $code = do { no strict 'refs'; \&{"POSIX::$name"} };
+    if (!defined &$code) {
+        pass("$name need not be exported as it does not name a subroutine");
+    }
+    elsif ($no_export_needed{$name}) {
+        pass("$name need not be exported as it is part of the internals");
+    }
+    else {
+        ok($exported{$name}, "subroutine POSIX::$name is exported somehow");
+    }
 }

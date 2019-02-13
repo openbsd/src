@@ -9,7 +9,7 @@ perlhurd - Perl version 5 on Hurd
 =head1 DESCRIPTION
 
 If you want to use Perl on the Hurd, I recommend using the Debian
-GNU/Hurd distribution ( see http://www.debian.org/ ), even if an
+GNU/Hurd distribution ( see L<http://www.debian.org/> ), even if an
 official, stable release has not yet been made.  The old "gnu-0.2"
 binary distribution will most certainly have additional problems.
 

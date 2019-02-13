@@ -98,7 +98,7 @@ for my $tref ( @NumTests ){
 my $bas_tests = 21;
 
 # number of tests in section 3
-my $bug_tests = 66 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 4 + 2 + 3 + 96 + 11 + 3;
+my $bug_tests = 66 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 6 + 2 + 3 + 96 + 11 + 14;
 
 # number of tests in section 4
 my $hmb_tests = 37;
@@ -111,7 +111,7 @@ plan $tests;
 ## Section 1
 ############
 
-use vars qw($fox $multiline $foo $good);
+our ($fox, $multiline, $foo, $good);
 
 format OUT =
 the quick brown @<<
@@ -251,7 +251,7 @@ $right = <<EOT;
 EOT
 
 my $was1 = my $was2 = '';
-use vars '$format2';
+our $format2;
 for (0..10) {           
   # lexical picture
   $^A = '';
@@ -327,6 +327,7 @@ close  OUT4a or die "Could not close: $!";
 is cat('Op_write.tmp'), "Nasdaq dropping\n", 'skipspace inside "${...}"'
     and unlink_all "Op_write.tmp";
 
+our $test1;
 eval <<'EOFORMAT';
 format OUT10 =
 @####.## @0###.##
@@ -336,7 +337,6 @@ EOFORMAT
 
 open(OUT10, '>Op_write.tmp') || die "Can't create Op_write.tmp";
 
-use vars '$test1';
 $test1 = 12.95;
 write(OUT10);
 close OUT10 or die "Could not close: $!";
@@ -1562,6 +1562,35 @@ ok  defined *{$::{CmT}}{FORMAT}, "glob assign";
     formline $format, $orig, 12345;
     is $^A, ("x" x 100) . " 12345\n", "\@* doesn't overflow";
 
+    # ...nor this (RT #130703).
+    # Under 'use bytes', the two bytes (c2, 80) making up each \x80 char
+    # each get expanded to two bytes (so four in total per \x80 char); the
+    # buffer growth wasn't accounting for this doubling in size
+
+    {
+        local $^A = '';
+        my $format = "X\n\x{100}" . ("\x80" x 200);
+        my $expected = $format;
+        utf8::encode($expected);
+        use bytes;
+        formline($format);
+        is $^A, $expected, "RT #130703";
+    }
+
+    # further buffer overflows with RT #130703
+
+    {
+        local $^A = '';
+        my $n = 200;
+        my $long = 'x' x 300;
+        my $numf = ('@###' x $n);
+        my $expected = $long . "\n" . ("   1" x $n);
+        formline("@*\n$numf", $long, ('1') x $n);
+
+        is $^A, $expected, "RT #130703 part 2";
+    }
+
+
     # make sure it can cope with formats > 64k
 
     $format = 'x' x 65537;
@@ -1636,6 +1665,23 @@ formline $zamm;
 printf ">%s<\n", ref $zamm;
 print "$zamm->[0]\n";
 EOP
+
+# [perl #129125] - detected by -fsanitize=address or valgrind
+# the compiled format would be freed when the format string was modified
+# by the chop operator
+fresh_perl_is(<<'EOP', "^", { stderr => 1 }, '#129125 - chop on format');
+my $x = '^@';
+formline$x=>$x;
+print $^A;
+EOP
+
+fresh_perl_is(<<'EOP', '<^< xx AA><xx ^<><>', { stderr => 1 }, '#129125 - chop on format, later values');
+my $x = '^< xx ^<';
+my $y = 'AA';
+formline $x => $x, $y;
+print "<$^A><$x><$y>";
+EOP
+
 
 # [perl #73690]
 
@@ -1971,6 +2017,30 @@ EOP
 a    x
 EXPECT
 	      { stderr => 1 }, '#123538 crash in FF_MORE');
+
+{
+    $^A = "";
+    my $a = *globcopy;
+    my $r = eval { formline "^<<", $a };
+    is $@, "";
+    ok $r, "^ format with glob copy";
+    is $^A, "*ma", "^ format with glob copy";
+    is $a, "in::globcopy", "^ format with glob copy";
+}
+
+{
+    $^A = "";
+    my $r = eval { formline "^<<", *realglob };
+    like $@, qr/\AModification of a read-only value attempted /;
+    is $r, undef, "^ format with real glob";
+    is $^A, "*ma", "^ format with real glob";
+    is ref(\*realglob), "GLOB";
+}
+
+$^A = "";
+
+# [perl #130722] assertion failure
+fresh_perl_is('for(1..2){formline*0}', '', { stderr => 1 } , "#130722 - assertion failure");
 
 #############################
 ## Section 4

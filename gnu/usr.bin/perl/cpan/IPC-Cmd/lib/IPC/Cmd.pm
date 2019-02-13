@@ -18,7 +18,7 @@ BEGIN {
                         $HAVE_MONOTONIC
                     ];
 
-    $VERSION        = '0.92_01';
+    $VERSION        = '1.00';
     $VERBOSE        = 0;
     $DEBUG          = 0;
     $WARN           = 1;
@@ -59,6 +59,8 @@ use Params::Check               qw[check];
 use Text::ParseWords            ();             # import ONLY if needed!
 use Module::Load::Conditional   qw[can_load];
 use Locale::Maketext::Simple    Style => 'gettext';
+
+local $Module::Load::Conditional::FORCE_SAFE_INC = 1;
 
 =pod
 
@@ -142,8 +144,6 @@ sub can_use_ipc_run     {
     return if IS_WIN98;
 
     ### if we don't have ipc::run, we obviously can't use it.
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
     return unless can_load(
                         modules => { 'IPC::Run' => '0.55' },
                         verbose => ($WARN && $verbose),
@@ -171,8 +171,6 @@ sub can_use_ipc_open3   {
 
     ### IPC::Open3 works on every non-VMS platform, but it can't
     ### capture buffers on win32 :(
-    local @INC = @INC;
-    pop @INC if $INC[-1] eq '.';
     return unless can_load(
         modules => { map {$_ => '0.0'} qw|IPC::Open3 IO::Select Symbol| },
         verbose => ($WARN && $verbose),
@@ -244,7 +242,7 @@ sub can_run {
     } else {
         for my $dir (
             File::Spec->path,
-            File::Spec->curdir
+            ( IS_WIN32 ? File::Spec->curdir : () )
         ) {
             next if ! $dir || ! -d $dir;
             my $abs = File::Spec->catfile( IS_WIN32 ? Win32::GetShortPathName( $dir ) : $dir, $command);
@@ -403,6 +401,14 @@ sub adjust_monotonic_start_time {
     }
 }
 
+sub uninstall_signals {
+		return unless defined($IPC::Cmd::{'__old_signals'});
+
+		foreach my $sig_name (keys %{$IPC::Cmd::{'__old_signals'}}) {
+				$SIG{$sig_name} = $IPC::Cmd::{'__old_signals'}->{$sig_name};
+		}
+}
+
 # incompatible with POSIX::SigAction
 #
 sub install_layered_signal {
@@ -414,6 +420,10 @@ sub install_layered_signal {
     unless defined($available_signals{$s});
   Carp::confess("install_layered_signal expects coderef")
     if !ref($handler_code) || ref($handler_code) ne 'CODE';
+
+  $IPC::Cmd::{'__old_signals'} = {}
+  		unless defined($IPC::Cmd::{'__old_signals'});
+	$IPC::Cmd::{'__old_signals'}->{$s} = $SIG{$s};
 
   my $previous_handler = $SIG{$s};
 
@@ -521,6 +531,7 @@ sub open3_run {
     $child_err->autoflush(1);
 
     my $pid = open3($child_in, $child_out, $child_err, $cmd);
+    Time::HiRes::usleep(1);
 
     # push my child's pid to our parent
     # so in case i am killed parent
@@ -572,7 +583,8 @@ sub open3_run {
     # it will terminate only after child
     # has terminated (except for SIGKILL,
     # which is specially handled)
-    foreach my $s (keys %SIG) {
+    SIGNAL: foreach my $s (keys %SIG) {
+        next SIGNAL if $s eq '__WARN__' or $s eq '__DIE__'; # Skip and don't clobber __DIE__ & __WARN__
         my $sig_handler;
         $sig_handler = sub {
             kill("$s", $pid);
@@ -731,6 +743,29 @@ STDOUT from the executing program.
 Coderef of a subroutine to call when a portion of data is received on
 STDERR from the executing program.
 
+=item C<wait_loop_callback>
+
+Coderef of a subroutine to call inside of the main waiting loop
+(while C<run_forked> waits for the external to finish or fail).
+It is useful to stop running external process before it ends
+by itself, e.g.
+
+  my $r = run_forked("some external command", {
+	  'wait_loop_callback' => sub {
+          if (condition) {
+              kill(1, $$);
+          }
+	  },
+	  'terminate_on_signal' => 'HUP',
+	  });
+
+Combined with C<stdout_handler> and C<stderr_handler> allows terminating
+external command based on its output. Could also be used as a timer
+without engaging with L<alarm> (signals).
+
+Remember that this code could be called every millisecond (depending
+on the output which external command generates), so try to make it
+as lightweight as possible.
 
 =item C<discard_output>
 
@@ -848,18 +883,15 @@ sub run_forked {
 
       # prepare sockets to read from child
 
-      $flags = 0;
-      fcntl($child_stdout_socket, POSIX::F_GETFL, $flags) || Carp::confess "can't fnctl F_GETFL: $!";
+      $flags = fcntl($child_stdout_socket, POSIX::F_GETFL, 0) || Carp::confess "can't fnctl F_GETFL: $!";
       $flags |= POSIX::O_NONBLOCK;
       fcntl($child_stdout_socket, POSIX::F_SETFL, $flags) || Carp::confess "can't fnctl F_SETFL: $!";
 
-      $flags = 0;
-      fcntl($child_stderr_socket, POSIX::F_GETFL, $flags) || Carp::confess "can't fnctl F_GETFL: $!";
+      $flags = fcntl($child_stderr_socket, POSIX::F_GETFL, 0) || Carp::confess "can't fnctl F_GETFL: $!";
       $flags |= POSIX::O_NONBLOCK;
       fcntl($child_stderr_socket, POSIX::F_SETFL, $flags) || Carp::confess "can't fnctl F_SETFL: $!";
 
-      $flags = 0;
-      fcntl($child_info_socket, POSIX::F_GETFL, $flags) || Carp::confess "can't fnctl F_GETFL: $!";
+      $flags = fcntl($child_info_socket, POSIX::F_GETFL, 0) || Carp::confess "can't fnctl F_GETFL: $!";
       $flags |= POSIX::O_NONBLOCK;
       fcntl($child_info_socket, POSIX::F_SETFL, $flags) || Carp::confess "can't fnctl F_SETFL: $!";
 
@@ -1067,6 +1099,10 @@ sub run_forked {
           push @{$ready_fds}, $select->can_read(1/100) if $child_finished;
         }
 
+        if ($opts->{'wait_loop_callback'} && ref($opts->{'wait_loop_callback'}) eq 'CODE') {
+          $opts->{'wait_loop_callback'}->();
+        }
+
         Time::HiRes::usleep(1);
       }
 
@@ -1148,6 +1184,8 @@ sub run_forked {
       else {
         delete($SIG{'CHLD'});
       }
+
+      uninstall_signals();
 
       return $o;
     }
@@ -1937,6 +1975,8 @@ sub _pp_child_error {
 
 1;
 
+__END__
+
 =head2 $q = QUOTE
 
 Returns the character used for quoting strings on this platform. This is
@@ -1950,8 +1990,6 @@ You can use it as follows:
 
 This makes sure that C<foo bar> is treated as a string, rather than two
 separate arguments to the C<echo> function.
-
-__END__
 
 =head1 HOW IT WORKS
 

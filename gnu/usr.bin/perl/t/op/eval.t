@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan(tests => 134);
+plan(tests => 140);
 
 eval 'pass();';
 
@@ -221,7 +221,7 @@ is(do {
 }
 
 # Check that eval catches bad goto calls
-#   (BUG ID 20010305.003)
+#   (BUG ID 20010305.003 (#5963))
 {
     eval {
 	eval { goto foo; };
@@ -248,7 +248,7 @@ is(do {
 {
     $@ = 5;
     eval q{};
-    cmp_ok(length $@, '==', 0, '[ID 20020623.002] eval "" doesn\'t clear $@');
+    cmp_ok(length $@, '==', 0, '[ID 20020623.002 (#9721)] eval "" doesn\'t clear $@');
 }
 
 # DAPM Nov-2002. Perl should now capture the full lexical context during
@@ -664,4 +664,36 @@ pass("eval in freed package does not crash");
     my $s;
     sub { $s; DB::f127786}->();
     pass("RT #127786");
+}
+
+# Late calling of destructors overwriting $@.
+# When leaving an eval scope (either by falling off the end or dying),
+# we must ensure that any temps are freed before the end of the eval
+# leave: in particular before $@ is set (to either "" or the error),
+# because otherwise the tmps freeing may call a destructor which
+# will change $@ (e.g. due to a successful eval) *after* its been set.
+# Some extra nested scopes are included in the tests to ensure they don't
+# affect the tmps freeing.
+
+{
+    package TMPS;
+    sub DESTROY { eval { die "died in DESTROY"; } } # alters $@
+
+    eval { { 1; { 1; bless []; } } };
+    ::is ($@, "", "FREETMPS: normal try exit");
+
+    eval q{ { 1; { 1; bless []; } } };
+    ::is ($@, "", "FREETMPS: normal string eval exit");
+
+    eval { { 1; { 1; return bless []; } } };
+    ::is ($@, "", "FREETMPS: return try exit");
+
+    eval q{ { 1; { 1; return bless []; } } };
+    ::is ($@, "", "FREETMPS: return string eval exit");
+
+    eval { { 1; { 1; my $x = bless []; die $x = 0, "die in eval"; } } };
+    ::like ($@, qr/die in eval/, "FREETMPS: die try exit");
+
+    eval q{ { 1; { 1; my $x = bless []; die $x = 0, "die in eval"; } } };
+    ::like ($@, qr/die in eval/, "FREETMPS: die eval string exit");
 }

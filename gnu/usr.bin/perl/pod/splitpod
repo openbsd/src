@@ -46,7 +46,7 @@ for $f ( keys %syn ) {
     my $has_back = $body =~ /^=back/;
     $body =~ s/^=over\s*//m if $has_over and !$has_back;
     $body =~ s/^=back\s*//m if $has_back and !$has_over;
-    open (POD, "> $name.pod") || die "can't open $name.pod: $!";
+    open (POD, '>', "$name.pod") || die "can't open $name.pod: $!";
     print POD <<EOF;
 \=head1 NAME
 

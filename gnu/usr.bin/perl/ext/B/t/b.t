@@ -21,7 +21,7 @@ BEGIN { use_ok( 'B' ); }
 
 
 package Testing::Symtable;
-use vars qw($This @That %wibble $moo %moo);
+our ($This, @That, %wibble, $moo, %moo);
 my $not_a_sym = 'moo';
 
 sub moo { 42 }
@@ -35,7 +35,7 @@ package Testing::Symtable::Bar;
 sub hock { "yarrow" }
 
 package main;
-use vars qw(%Subs);
+our %Subs;
 local %Subs = ();
 B::walksymtable(\%Testing::Symtable::, 'find_syms', sub { $_[0] =~ /Foo/ },
                 'Testing::Symtable::');
@@ -46,8 +46,7 @@ sub B::GV::find_syms {
     $main::Subs{$symbol->STASH->NAME . '::' . $symbol->NAME}++;
 }
 
-my @syms = map { 'Testing::Symtable::'.$_ } qw(This That wibble moo car
-                                               BEGIN);
+my @syms = map { 'Testing::Symtable::'.$_ } qw(This That wibble moo car);
 push @syms, "Testing::Symtable::Foo::yarrow";
 
 # Make sure we hit all the expected symbols.
@@ -55,6 +54,21 @@ ok( join('', sort @syms) eq join('', sort keys %Subs), 'all symbols found' );
 
 # Make sure we only hit them each once.
 ok( (!grep $_ != 1, values %Subs), '...and found once' );
+
+
+# Make sure method caches are not present when walking the sym tab
+@Testing::Method::Caches::Foo::ISA='Testing::Method::Caches::Bar';
+sub Testing::Method::Caches::Bar::foo{}
+Testing::Method::Caches::Foo->foo; # caches the sub in the *foo glob
+
+my $have_cv;
+sub B::GV::method_cache_test { ${shift->CV} and ++$have_cv }
+
+B::walksymtable(\%Testing::Method::Caches::, 'method_cache_test',
+                 sub { 1 }, 'Testing::Method::Caches::');
+# $have_cv should only have been incremented for ::Bar::foo
+is $have_cv, 1, 'walksymtable clears cached methods';
+
 
 # Tests for MAGIC / MOREMAGIC
 ok( B::svref_2object(\$.)->MAGIC->TYPE eq "\0", '$. has \0 magic' );
@@ -107,8 +121,7 @@ ok( B::svref_2object(\$.)->MAGIC->TYPE eq "\0", '$. has \0 magic' );
 }
 
 my $r = qr/foo/;
-my $obj = B::svref_2object($r);
-my $regexp =  ($] < 5.011) ? $obj->MAGIC : $obj;
+my $regexp = B::svref_2object($r);
 ok($regexp->precomp() eq 'foo', 'Get string from qr//');
 like($regexp->REGEX(), qr/\d+/, "REGEX() returns numeric value");
 like($regexp->compflags, qr/^\d+\z/, "compflags returns numeric value");
@@ -179,25 +192,21 @@ my $null_ret = $nv_ref->object_2svref();
 is(ref $null_ret, "SCALAR", "Test object_2svref() return is SCALAR");
 is($$null_ret, $nv, "Test object_2svref()");
 
-my $RV_class = $] >= 5.011 ? 'B::IV' : 'B::RV';
 my $cv = sub{ 1; };
 my $cv_ref = B::svref_2object(\$cv);
-is($cv_ref->REFCNT, 1, "Test $RV_class->REFCNT");
-is(ref $cv_ref, "$RV_class",
-   "Test $RV_class return from svref_2object - code");
+is($cv_ref->REFCNT, 1, "Test B::IV->REFCNT");
+is(ref $cv_ref, "B::IV", "Test B::IV return from svref_2object - code");
 my $cv_ret = $cv_ref->object_2svref();
 is(ref $cv_ret, "REF", "Test object_2svref() return is REF");
 is($$cv_ret, $cv, "Test object_2svref()");
 
 my $av = [];
 my $av_ref = B::svref_2object(\$av);
-is(ref $av_ref, "$RV_class",
-   "Test $RV_class return from svref_2object - array");
+is(ref $av_ref, "B::IV", "Test B::IV return from svref_2object - array");
 
 my $hv = [];
 my $hv_ref = B::svref_2object(\$hv);
-is(ref $hv_ref, "$RV_class",
-   "Test $RV_class return from svref_2object - hash");
+is(ref $hv_ref, "B::IV", "Test B::IV return from svref_2object - hash");
 
 local *gv = *STDOUT;
 my $gv_ref = B::svref_2object(\*gv);
@@ -298,8 +307,7 @@ is(B::opnumber("pp_null"), 0, "Testing opnumber with opname (pp_null)");
 
 is(B::class(bless {}, "Wibble::Bibble"), "Bibble", "Testing B::class()");
 is(B::cast_I32(3.14), 3, "Testing B::cast_I32()");
-is(B::opnumber("chop"), $] >= 5.015 ? 39 : 38,
-			    "Testing opnumber with opname (chop)");
+is(B::opnumber("chop"), 38, "Testing opnumber with opname (chop)");
 
 {
     no warnings 'once';
@@ -313,9 +321,8 @@ like( B::amagic_generation, qr/^\d+\z/, "amagic_generation" );
 is(B::svref_2object(sub {})->ROOT->ppaddr, 'PL_ppaddr[OP_LEAVESUB]',
    'OP->ppaddr');
 
-# This one crashes from perl 5.8.9 to B 1.24 (perl 5.13.6):
 B::svref_2object(sub{y/\x{100}//})->ROOT->first->first->sibling->sv;
-ok 1, 'B knows that UTF trans is a padop in 5.8.9, not an svop';
+ok 1, 'B knows that UTF trans is a padop, not an svop';
 
 {
     my $o = B::svref_2object(sub{0;0})->ROOT->first->first;
@@ -346,13 +353,10 @@ my $bobby = B::svref_2object($sub2)->ROOT->first->first;
 is $cop->stash->object_2svref, \%main::, 'COP->stash';
 is $cop->stashpv, 'main', 'COP->stashpv';
 
-SKIP: {
-    skip "no nulls in packages before 5.17", 1 if $] < 5.017;
-    is $bobby->stashpv, "Pe\0e\x{142}", 'COP->stashpv with utf8 and nulls';
-}
+is $bobby->stashpv, "Pe\0e\x{142}", 'COP->stashpv with utf8 and nulls';
 
 SKIP: {
-    skip "no stashoff", 2 if $] < 5.017 || !$Config::Config{useithreads};
+    skip "no stashoff", 2 unless $Config::Config{useithreads};
     like $cop->stashoff, qr/^[1-9]\d*\z/a, 'COP->stashoff';
     isnt $cop->stashoff, $bobby->stashoff,
 	'different COP->stashoff for different stashes';
@@ -429,17 +433,9 @@ is $regexp->precomp, 'fit', 'pmregexp returns the right regexp';
 	ok($gv, "we get a GV from a GV on a normal sub");
 	isa_ok($gv, "B::GV");
 	is($gv->NAME, "foo", "check the GV name");
-      SKIP:
-	{ # do we need these version checks?
-	    skip "no HEK before 5.18", 1 if $] < 5.018;
-	    is($cv->NAME_HEK, undef, "no hek for a global sub");
-	}
+	is($cv->NAME_HEK, undef, "no hek for a global sub");
     }
 
-SKIP:
-    {
-        skip "no HEK before 5.18", 4 if $] < 5.018;
-        eval <<'EOS'
     {
         use feature 'lexical_subs';
         no warnings 'experimental::lexical_subs';
@@ -451,10 +447,6 @@ SKIP:
         is($hek, "bar", "check the NAME_HEK");
         my $gv = $cv->GV;
         isa_ok($gv, "B::GV", "GV on a lexical sub");
-    }
-    1;
-EOS
-	  or die "lexical_subs test failed to compile: $@";
     }
 }
 

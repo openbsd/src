@@ -1,10 +1,11 @@
-# DerivedDecompositionType-8.0.0.txt
-# Date: 2015-02-13, 13:47:11 GMT [MD]
+# DerivedDecompositionType-10.0.0.txt
+# Date: 2017-02-14, 04:26:05 GMT
+# © 2017 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see http://www.unicode.org/reports/tr44/
+#   For documentation, see http://www.unicode.org/reports/tr44/
 
 # ================================================
 
@@ -999,9 +1000,9 @@ FE6A..FE6B    ; Small # Po   [2] SMALL PERCENT SIGN..SMALL COMMERCIAL AT
 1F130..1F14F  ; Square # So  [32] SQUARED LATIN CAPITAL LETTER A..SQUARED WC
 1F190         ; Square # So       SQUARE DJ
 1F200..1F202  ; Square # So   [3] SQUARE HIRAGANA HOKA..SQUARED KATAKANA SA
-1F210..1F23A  ; Square # So  [43] SQUARED CJK UNIFIED IDEOGRAPH-624B..SQUARED CJK UNIFIED IDEOGRAPH-55B6
+1F210..1F23B  ; Square # So  [44] SQUARED CJK UNIFIED IDEOGRAPH-624B..SQUARED CJK UNIFIED IDEOGRAPH-914D
 
-# Total code points: 284
+# Total code points: 285
 
 # ================================================
 

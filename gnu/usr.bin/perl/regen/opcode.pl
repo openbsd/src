@@ -20,7 +20,7 @@ use strict;
 
 BEGIN {
     # Get function prototypes
-    require 'regen/regen_lib.pl';
+    require './regen/regen_lib.pl';
 }
 
 my $oc = open_new('opcode.h', '>',
@@ -45,7 +45,7 @@ my $oprivpm = open_new('lib/B/Op_private.pm', '>',
 my %seen;
 my (@ops, %desc, %check, %ckname, %flags, %args, %opnum);
 
-open OPS, 'regen/opcodes' or die $!;
+open OPS, '<', 'regen/opcodes' or die $!;
 
 while (<OPS>) {
     chop;
@@ -55,7 +55,7 @@ while (<OPS>) {
     $args = '' unless defined $args;
 
     warn qq[Description "$desc" duplicates $seen{$desc}\n]
-     if $seen{$desc} and $key !~ "transr|(?:intro|clone)cv|lvref";
+     if $seen{$desc} and $key !~ "concat|transr|(?:intro|clone)cv|lvref";
     die qq[Opcode "$key" duplicates $seen{$key}\n] if $seen{$key};
     die qq[Opcode "freed" is reserved for the slab allocator\n]
 	if $key eq 'freed';
@@ -71,9 +71,9 @@ while (<OPS>) {
     $args{$key} = $args;
 }
 
-# Set up aliases
+# Set up aliases, and alternative funcs
 
-my %alias;
+my (%alias, %alts);
 
 # Format is "this function" => "does these op names"
 my @raw_alias = (
@@ -139,16 +139,25 @@ my @raw_alias = (
 		 Perl_pp_shostent => [qw(snetent sprotoent sservent)],
 		 Perl_pp_aelemfast => ['aelemfast_lex'],
 		 Perl_pp_grepstart => ['mapstart'],
+
+		 # 2 i_modulo mappings: 2nd is alt, needs 1st (explicit default) to not override the default
+		 Perl_pp_i_modulo  => ['i_modulo'],
+		 Perl_pp_i_modulo_glibc_bugfix => {
+                     'i_modulo' =>
+                         '#if defined(__GLIBC__) && IVSIZE == 8 '.
+                         ' && ( __GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 8))' },
 		);
 
 while (my ($func, $names) = splice @raw_alias, 0, 2) {
     if (ref $names eq 'ARRAY') {
 	foreach (@$names) {
-	    $alias{$_} = [$func, ''];
+            defined $alias{$_}
+            ? $alts{$_} : $alias{$_} = [$func, ''];
 	}
     } else {
 	while (my ($opname, $cond) = each %$names) {
-	    $alias{$opname} = [$func, $cond];
+            defined $alias{$opname}
+            ? $alts{$opname} : $alias{$opname} = [$func, $cond];
 	}
     }
 }
@@ -238,7 +247,7 @@ sub ::addbits {
             my $flag_name   = shift @args;
             my $flag_label  = shift @args;
             add_label($flag_name, $flag_label);
-            croak "addbits(): bit $bits of $op already specified"
+            croak "addbits(): bit $bits of $op already specified ($FLAGS{$op}{$bits})"
                 if defined $FLAGS{$op}{$bits};
             $FLAGS{$op}{$bits} = $flag_name;
             add_define($flag_name, (1 << $bits));
@@ -335,7 +344,7 @@ sub ::addbits {
             }
 
             for my $bit ($bitmin..$bitmax) {
-                croak "addbits(): bit $bit of $op already specified"
+                croak "addbits(): bit $bit of $op already specified ($FLAGS{$op}{$bit})"
                     if defined $FLAGS{$op}{$bit};
                 $FLAGS{$op}{$bit} = $BITFIELDS{$id};
             }
@@ -915,7 +924,7 @@ package main;
 # which define what bits in op_private have what meanings for each op.
 # It populates %LABELS, %DEFINES, %FLAGS, %BITFIELDS.
 
-require 'regen/op_private';
+require './regen/op_private';
 
 #use Data::Dumper;
 #print Dumper \%LABELS, \%DEFINES, \%FLAGS, \%BITFIELDS;
@@ -1025,11 +1034,9 @@ START_EXTERN_C
 #ifdef PERL_GLOBAL_STRUCT_INIT
 #  define PERL_PPADDR_INITED
 static const Perl_ppaddr_t Gppaddr[]
-#else
-#  ifndef PERL_GLOBAL_STRUCT
-#    define PERL_PPADDR_INITED
+#elif !defined(PERL_GLOBAL_STRUCT)
+#  define PERL_PPADDR_INITED
 EXT Perl_ppaddr_t PL_ppaddr[] /* or perlvars.h */
-#  endif
 #endif /* PERL_GLOBAL_STRUCT */
 #if (defined(DOINIT) && !defined(PERL_GLOBAL_STRUCT)) || defined(PERL_GLOBAL_STRUCT_INIT)
 #  define PERL_PPADDR_INITED
@@ -1057,11 +1064,9 @@ print $oc <<'END';
 #ifdef PERL_GLOBAL_STRUCT_INIT
 #  define PERL_CHECK_INITED
 static const Perl_check_t Gcheck[]
-#else
-#  ifndef PERL_GLOBAL_STRUCT
-#    define PERL_CHECK_INITED
+#elif !defined(PERL_GLOBAL_STRUCT)
+#  define PERL_CHECK_INITED
 EXT Perl_check_t PL_check[] /* or perlvars.h */
-#  endif
 #endif
 #if (defined(DOINIT) && !defined(PERL_GLOBAL_STRUCT)) || defined(PERL_GLOBAL_STRUCT_INIT)
 #  define PERL_CHECK_INITED
@@ -1251,6 +1256,14 @@ my $pp = open_new('pp_proto.h', '>',
 	++$funcs{$name};
     }
     print $pp "PERL_CALLCONV OP *$_(pTHX);\n" foreach sort keys %funcs;
+
+    print $pp "\n/* alternative functions */\n" if keys %alts;
+    for my $fn (sort keys %alts) {
+        my ($x, $cond) = @{$alts{$fn}};
+        print $pp "$cond\n" if $cond;
+        print $pp "PERL_CALLCONV OP *$x(pTHX);\n";
+        print $pp "#endif\n" if $cond;
+    }
 }
 
 print $oc "\n\n";

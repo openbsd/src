@@ -180,7 +180,7 @@ Since OS/2 port of perl uses a remarkable EMX environment, it can
 run (and build extensions, and - possibly - be built itself) under any
 environment which can run EMX. The current list is DOS,
 DOS-inside-OS/2, Win0.3*, Win0.95 and WinNT. Out of many perl flavors,
-only one works, see L<"perl_.exe">.
+only one works, see L</"F<perl_.exe>">.
 
 Note that not all features of Perl are available under these
 environments. This depends on the features the I<extender> - most
@@ -224,7 +224,7 @@ will work as well.)
 
 To run Perl on DPMI platforms one needs RSX runtime. This is
 needed under DOS-inside-OS/2, Win0.3*, Win0.95 and WinNT (see 
-L<"Other OSes">). RSX would not work with VCPI
+L</"Other OSes">). RSX would not work with VCPI
 only, as EMX would, it requires DMPI.
 
 Having RSX and the latest F<sh.exe> one gets a fully functional
@@ -261,7 +261,7 @@ To start external programs with complicated command lines (like with
 pipes in between, and/or quoting of arguments), Perl uses an external
 shell. With EMX port such shell should be named F<sh.exe>, and located
 either in the wired-in-during-compile locations (usually F<F:/bin>),
-or in configurable location (see L<"PERL_SH_DIR">).
+or in configurable location (see L</"C<PERL_SH_DIR>">).
 
 For best results use EMX pdksh. The standard binary (5.2.14 or later) runs
 under DOS (with L</RSX>) as well, see
@@ -328,9 +328,9 @@ are for. (Avoid exec() (see L<perlfunc/exec>) unless you know what you
 do).
 
 Note however that to use some of these operators you need to have a
-sh-syntax shell installed (see L<"Pdksh">, 
-L<"Frequently asked questions">), and perl should be able to find it
-(see L<"PERL_SH_DIR">).
+sh-syntax shell installed (see L</"Pdksh">, 
+L</"Frequently asked questions">), and perl should be able to find it
+(see L</"C<PERL_SH_DIR>">).
 
 The cases when the shell is used are:
 
@@ -475,12 +475,12 @@ should be done "correctly".
 
 =head2 C<``> and pipe-C<open> do not work under DOS.
 
-This may a variant of just L<"I cannot run external programs">, or a
+This may a variant of just L</"I cannot run external programs">, or a
 deeper problem. Basically: you I<need> RSX (see L</Prerequisites>)
 for these commands to work, and you may need a port of F<sh.exe> which
 understands command arguments. One of such ports is listed in
 L</Prerequisites> under RSX. Do not forget to set variable
-C<L<"PERL_SH_DIR">> as well.
+L</"C<PERL_SH_DIR>"> as well.
 
 DPMI is required for RSX.
 
@@ -535,11 +535,11 @@ B<Things not taken care of by automatic binary installation:>
 =item C<PERL_BADLANG>
 
 may be needed if you change your codepage I<after> perl installation,
-and the new value is not supported by EMX. See L<"PERL_BADLANG">.
+and the new value is not supported by EMX. See L</"C<PERL_BADLANG>">.
 
 =item C<PERL_BADFREE>
 
-see L<"PERL_BADFREE">.
+see L</"C<PERL_BADFREE>">.
 
 =item F<Config.pm>
 
@@ -558,7 +558,7 @@ of this file.
 
 B<NOTE>. Because of a typo the binary installer of 5.00305
 would install a variable C<PERL_SHPATH> into F<Config.sys>. Please
-remove this variable and put C<L</PERL_SH_DIR>> instead.
+remove this variable and put L</C<PERL_SH_DIR>> instead.
 
 =head2 Manual binary installation
 
@@ -615,11 +615,11 @@ If this directory is exactly the same as the prefix which was compiled
 into F<perl.exe>, you do not need to change
 anything. However, for perl to find the library if you use a different
 path, you need to
-C<set PERLLIB_PREFIX> in F<Config.sys>, see L<"PERLLIB_PREFIX">.
+C<set PERLLIB_PREFIX> in F<Config.sys>, see L</"C<PERLLIB_PREFIX>">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.24.3/
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.28.1/
 
 Same remark as above applies.  Additionally, if this directory is not
 one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
@@ -675,7 +675,7 @@ This is used by perl to run external commands which explicitly
 require shell, like the commands using I<redirection> and I<shell
 metacharacters>. It is also used instead of explicit F</bin/sh>.
 
-Set C<PERL_SH_DIR> (see L<"PERL_SH_DIR">) if you move F<sh.exe> from
+Set C<PERL_SH_DIR> (see L</"C<PERL_SH_DIR>">) if you move F<sh.exe> from
 the above location.
 
 B<Note.> It may be possible to use some other sh-compatible shell (untested).
@@ -696,7 +696,7 @@ currently start with C<f:/>).
 
 The automatic and manual perl installation leave precompiled paths
 inside perl executables. While these paths are overwriteable (see
-L<"PERLLIB_PREFIX">, L<"PERL_SH_DIR">), some people may prefer
+L</"C<PERLLIB_PREFIX>">, L</"C<PERL_SH_DIR>">), some people may prefer
 binary editing of paths inside the executables/DLLs.
 
 =head1 Accessing documentation
@@ -714,7 +714,7 @@ Most probably the most convenient form. Under OS/2 view it as
   view perl ExtUtils::MakeMaker
 
 (currently the last two may hit a wrong location, but this may improve
-soon). Under Win* see L<"SYNOPSIS">.
+soon). Under Win* see L</"SYNOPSIS">.
 
 If you want to build the docs yourself, and have I<OS/2 toolkit>, run
 
@@ -948,7 +948,7 @@ wrong you find there. I do not expect it is needed anywhere.
 
 C<prefix> means: where to install the resulting perl library. Giving
 correct prefix you may avoid the need to specify C<PERLLIB_PREFIX>,
-see L<"PERLLIB_PREFIX">.
+see L</"C<PERLLIB_PREFIX>">.
 
 I<Ignore the message about missing C<ln>, and about C<-c> option to
 tr>. The latter is most probably already fixed, if you see it and can trace
@@ -982,7 +982,7 @@ Some tests may generate extra messages similar to
 =item A lot of C<bad free>
 
 in database tests related to Berkeley DB. I<This should be fixed already.>
-If it persists, you may disable this warnings, see L<"PERL_BADFREE">.
+If it persists, you may disable this warnings, see L</"C<PERL_BADFREE>">.
 
 =item Process terminated by SIGTERM/SIGINT
 
@@ -1073,7 +1073,7 @@ making steps.)
 
 =head2 C<a.out>-style build
 
-Proceed as above, but make F<perl_.exe> (see L<"perl_.exe">) by
+Proceed as above, but make F<perl_.exe> (see L</"F<perl_.exe>">) by
 
   make perl_
 
@@ -1195,7 +1195,7 @@ via C<CPAN.pm> is going to be painfully slow, since it statically links
 a new executable per XS extension.
 
 Here is a possible workaround: create a toplevel F<Makefile.PL> in
-F<$CPANHOME/.cpan/build/> with contents being (compare with L<Making
+F<$CPANHOME/.cpan/build/> with contents being (compare with L</Making
 executables with a custom collection of statically loaded extensions>)
 
   use ExtUtils::MakeMaker;
@@ -1367,7 +1367,7 @@ to find Perl DLL relatively to the location of the EXE file; or one may want
 to ignore the environment when setting the Perl-library search patch, etc.
 
 If you fill comfortable with I<embedding> interface (see L<perlembed>), such
-things are easy to do repeating the steps outlined in L<Making
+things are easy to do repeating the steps outlined in L/<Making
 executables with a custom collection of statically loaded extensions>, and
 doing more comprehensive edits to main() of F<perlmain.c>.  The people with
 little desire to understand Perl can just rename main(), and do necessary
@@ -1619,7 +1619,7 @@ translated to
   system qw(C:/emx.add/bin/bash.exe -x -c C:/emx/bin/foo.cmd bar baz)
 
 One additional translation is performed: instead of F</bin/sh> Perl uses
-the hardwired-or-customized shell (see C<L<"PERL_SH_DIR">>).
+the hardwired-or-customized shell (see L</"C<PERL_SH_DIR>">).
 
 The above search for "interpreter" is recursive: if F<bash> executable is not
 found, but F<bash.btm> is found, Perl will investigate its first line etc.
@@ -1764,7 +1764,7 @@ Transforms the current application into a PM application and back.
 The argument true means that a real message loop is going to be served.
 OS2::MorphPM() returns the PM message queue handle as an integer.
 
-See L<"Centralized management of resources"> for additional details.
+See L</"Centralized management of resources"> for additional details.
 
 =item C<OS2::Serve_Messages(force)>
 
@@ -1801,7 +1801,7 @@ The variant of OS2::_control87() with default values good for
 handling exception mask: if no C<mask>, uses exception mask part of C<new>
 only.  If no C<new>, disables all the floating point exceptions.
 
-See L<"Misfeatures"> for details.
+See L</"Misfeatures"> for details.
 
 =item C<OS2::DLLname([how [, \&xsub]])>
 
@@ -1899,7 +1899,7 @@ Note that C<kill -9> does not work with the current version of EMX.
 
 =item *
 
-See L<"Text-mode filehandles">.
+See L</"Text-mode filehandles">.
 
 =item *
 
@@ -1958,7 +1958,7 @@ Perl modifies some standard C library calls in the following ways:
 
 =item C<popen>
 
-C<my_popen> uses F<sh.exe> if shell is required, cf. L<"PERL_SH_DIR">.
+C<my_popen> uses F<sh.exe> if shell is required, cf. L</"C<PERL_SH_DIR>">.
 
 =item C<tmpnam>
 
@@ -2194,7 +2194,7 @@ application.
 I<This is the only executable with does not require OS/2.> The
 friends locked into C<M$> world would appreciate the fact that this
 executable runs under DOS, Win0.3*, Win0.95 and WinNT with an
-appropriate extender. See L<"Other OSes">.
+appropriate extender. See L</"Other OSes">.
 
 =head2 F<perl__.exe>
 
@@ -2620,7 +2620,7 @@ with C<-Zmt -Zcrtdll>.
 Due to a popular demand the perl external program calling has been
 changed wrt Andreas Kaiser's port.  I<If> perl needs to call an
 external program I<via shell>, the F<f:/bin/sh.exe> will be called, or
-whatever is the override, see L<"PERL_SH_DIR">.
+whatever is the override, see L</"C<PERL_SH_DIR>">.
 
 Thus means that you need to get some copy of a F<sh.exe> as well (I
 use one from pdksh). The path F<F:/bin> above is set up automatically during
@@ -2743,7 +2743,7 @@ files - and maybe some other extensions at the time you read it.
 
 Note that OS2 perl defines 2 pseudo-extension functions
 OS2::Copy::copy and DynaLoader::mod2fname (many more now, see
-L<Prebuilt methods>).
+L</Prebuilt methods>).
 
 The -R switch of older perl is deprecated. If you need to call a REXX code
 which needs access to variables, include the call into a REXX compartment

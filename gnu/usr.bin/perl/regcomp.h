@@ -107,8 +107,7 @@
                                    Used to make it easier to clone and free arbitrary
                                    data that the regops need. Often the ARG field of
                                    a regop is an index into this structure */
-	struct reg_code_block *code_blocks;/* positions of literal (?{}) */
-	int num_code_blocks;	/* size of code_blocks[] */
+	struct reg_code_blocks *code_blocks;/* positions of literal (?{}) */
 	regnode program[1];	/* Unwarranted chumminess with compiler. */
 } regexp_internal;
 
@@ -522,7 +521,7 @@ struct regnode_ssc {
                |ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD))   \
              == ANYOFL_SHARED_UTF8_LOCALE_fold_HAS_MATCHES_nonfold_REQD)
 
-/* Spare:                                       0x10 */
+/* Spare: Be sure to change ANYOF_FLAGS_ALL if this gets used  0x10 */
 
 /* If set, the node matches every code point NUM_ANYOF_CODE_POINTS and above.
  * Can be in an SSC */
@@ -1054,7 +1053,7 @@ re.pm, especially to the documentation.
 /* get_sv() can return NULL during global destruction. */
 #define GET_RE_DEBUG_FLAGS DEBUG_r({ \
         SV * re_debug_flags_sv = NULL; \
-        re_debug_flags_sv = PL_curcop ? get_sv(RE_DEBUG_FLAGS, 1) : NULL; \
+        re_debug_flags_sv = PL_curcop ? get_sv(RE_DEBUG_FLAGS, GV_ADD) : NULL; \
         if (re_debug_flags_sv) { \
             if (!SvIOK(re_debug_flags_sv)) \
                 sv_setuv(re_debug_flags_sv, RE_DEBUG_COMPILE_DUMP | RE_DEBUG_EXECUTE_MASK ); \
@@ -1064,29 +1063,27 @@ re.pm, especially to the documentation.
 
 #ifdef DEBUGGING
 
-#define GET_RE_DEBUG_FLAGS_DECL VOL IV re_debug_flags  = 0; \
+#define GET_RE_DEBUG_FLAGS_DECL volatile IV re_debug_flags = 0; \
         PERL_UNUSED_VAR(re_debug_flags); GET_RE_DEBUG_FLAGS;
 
-#define RE_PV_COLOR_DECL(rpv,rlen,isuni,dsv,pv,l,m,c1,c2) \
-    const char * const rpv =                                 \
-        pv_pretty((dsv), (pv), (l),                          \
-            (PL_dump_re_max_len) ? PL_dump_re_max_len : (m), \
-            PL_colors[(c1)],PL_colors[(c2)],                 \
+#define RE_PV_COLOR_DECL(rpv,rlen,isuni,dsv,pv,l,m,c1,c2)   \
+    const char * const rpv =                                \
+        pv_pretty((dsv), (pv), (l), (m),                    \
+            PL_colors[(c1)],PL_colors[(c2)],                \
             PERL_PV_ESCAPE_RE|PERL_PV_ESCAPE_NONASCII |((isuni) ? PERL_PV_ESCAPE_UNI : 0) );         \
     const int rlen = SvCUR(dsv)
 
-#define RE_SV_ESCAPE(rpv,isuni,dsv,sv,m)                        \
-    const char * const rpv =                                    \
-        pv_pretty((dsv), (SvPV_nolen_const(sv)), (SvCUR(sv)),   \
-            (PL_dump_re_max_len) ? PL_dump_re_max_len : (m),    \
-            PL_colors[(c1)],PL_colors[(c2)],                    \
+/* This is currently unsed in the core */
+#define RE_SV_ESCAPE(rpv,isuni,dsv,sv,m)                            \
+    const char * const rpv =                                        \
+        pv_pretty((dsv), (SvPV_nolen_const(sv)), (SvCUR(sv)), (m),  \
+            PL_colors[(c1)],PL_colors[(c2)],                        \
             PERL_PV_ESCAPE_RE|PERL_PV_ESCAPE_NONASCII |((isuni) ? PERL_PV_ESCAPE_UNI : 0) )
 
-#define RE_PV_QUOTED_DECL(rpv,isuni,dsv,pv,l,m)                    \
-    const char * const rpv =                                       \
-        pv_pretty((dsv), (pv), (l),                                \
-            (PL_dump_re_max_len) ? PL_dump_re_max_len : (m),       \
-            PL_colors[0], PL_colors[1],                            \
+#define RE_PV_QUOTED_DECL(rpv,isuni,dsv,pv,l,m)                     \
+    const char * const rpv =                                        \
+        pv_pretty((dsv), (pv), (l), (m),                            \
+            PL_colors[0], PL_colors[1],                             \
             ( PERL_PV_PRETTY_QUOTE | PERL_PV_ESCAPE_RE | PERL_PV_ESCAPE_NONASCII | PERL_PV_PRETTY_ELLIPSES | \
               ((isuni) ? PERL_PV_ESCAPE_UNI : 0))                  \
         )
@@ -1104,6 +1101,8 @@ re.pm, especially to the documentation.
 #define RE_SV_TAIL(ItEm)
 
 #endif /* DEBUG RELATED DEFINES */
+
+#define FIRST_NON_ASCII_DECIMAL_DIGIT 0x660  /* ARABIC_INDIC_DIGIT_ZERO */
 
 typedef enum {
 	TRADITIONAL_BOUND = _CC_WORDCHAR,

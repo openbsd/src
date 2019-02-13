@@ -1,10 +1,11 @@
-# DerivedNumericValues-8.0.0.txt
-# Date: 2015-02-13, 13:47:13 GMT [MD]
+# DerivedNumericValues-10.0.0.txt
+# Date: 2017-02-14, 04:26:10 GMT
+# © 2017 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# Copyright (c) 1991-2015 Unicode, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
-# For documentation, see http://www.unicode.org/reports/tr44/
+#   For documentation, see http://www.unicode.org/reports/tr44/
 
 # ================================================
 
@@ -93,11 +94,14 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 11136         ; 0.0 ; ; 0 # Nd       CHAKMA DIGIT ZERO
 111D0         ; 0.0 ; ; 0 # Nd       SHARADA DIGIT ZERO
 112F0         ; 0.0 ; ; 0 # Nd       KHUDAWADI DIGIT ZERO
+11450         ; 0.0 ; ; 0 # Nd       NEWA DIGIT ZERO
 114D0         ; 0.0 ; ; 0 # Nd       TIRHUTA DIGIT ZERO
 11650         ; 0.0 ; ; 0 # Nd       MODI DIGIT ZERO
 116C0         ; 0.0 ; ; 0 # Nd       TAKRI DIGIT ZERO
 11730         ; 0.0 ; ; 0 # Nd       AHOM DIGIT ZERO
 118E0         ; 0.0 ; ; 0 # Nd       WARANG CITI DIGIT ZERO
+11C50         ; 0.0 ; ; 0 # Nd       BHAIKSUKI DIGIT ZERO
+11D50         ; 0.0 ; ; 0 # Nd       MASARAM GONDI DIGIT ZERO
 16A60         ; 0.0 ; ; 0 # Nd       MRO DIGIT ZERO
 16B50         ; 0.0 ; ; 0 # Nd       PAHAWH HMONG DIGIT ZERO
 1D7CE         ; 0.0 ; ; 0 # Nd       MATHEMATICAL BOLD DIGIT ZERO
@@ -105,18 +109,44 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 1D7E2         ; 0.0 ; ; 0 # Nd       MATHEMATICAL SANS-SERIF DIGIT ZERO
 1D7EC         ; 0.0 ; ; 0 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT ZERO
 1D7F6         ; 0.0 ; ; 0 # Nd       MATHEMATICAL MONOSPACE DIGIT ZERO
+1E950         ; 0.0 ; ; 0 # Nd       ADLAM DIGIT ZERO
 1F100..1F101  ; 0.0 ; ; 0 # No   [2] DIGIT ZERO FULL STOP..DIGIT ZERO COMMA
 1F10B..1F10C  ; 0.0 ; ; 0 # No   [2] DINGBAT CIRCLED SANS-SERIF DIGIT ZERO..DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ZERO
 
-# Total code points: 71
+# Total code points: 75
+
+# ================================================
+
+0D58          ; 0.00625 ; ; 1/160 # No       MALAYALAM FRACTION ONE ONE-HUNDRED-AND-SIXTIETH
+
+# Total code points: 1
+
+# ================================================
+
+0D59          ; 0.025 ; ; 1/40 # No       MALAYALAM FRACTION ONE FORTIETH
+
+# Total code points: 1
+
+# ================================================
+
+0D5A          ; 0.0375 ; ; 3/80 # No       MALAYALAM FRACTION THREE EIGHTIETHS
+
+# Total code points: 1
+
+# ================================================
+
+0D5B          ; 0.05 ; ; 1/20 # No       MALAYALAM FRACTION ONE TWENTIETH
+
+# Total code points: 1
 
 # ================================================
 
 09F4          ; 0.0625 ; ; 1/16 # No       BENGALI CURRENCY NUMERATOR ONE
 0B75          ; 0.0625 ; ; 1/16 # No       ORIYA FRACTION ONE SIXTEENTH
+0D76          ; 0.0625 ; ; 1/16 # No       MALAYALAM FRACTION ONE SIXTEENTH
 A833          ; 0.0625 ; ; 1/16 # No       NORTH INDIC FRACTION ONE SIXTEENTH
 
-# Total code points: 3
+# Total code points: 4
 
 # ================================================
 
@@ -126,9 +156,10 @@ A833          ; 0.0625 ; ; 1/16 # No       NORTH INDIC FRACTION ONE SIXTEENTH
 
 # ================================================
 
+0D5C          ; 0.1 ; ; 1/10 # No       MALAYALAM FRACTION ONE TENTH
 2152          ; 0.1 ; ; 1/10 # No       VULGAR FRACTION ONE TENTH
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
@@ -140,15 +171,22 @@ A833          ; 0.0625 ; ; 1/16 # No       NORTH INDIC FRACTION ONE SIXTEENTH
 
 09F5          ; 0.125 ; ; 1/8 # No       BENGALI CURRENCY NUMERATOR TWO
 0B76          ; 0.125 ; ; 1/8 # No       ORIYA FRACTION ONE EIGHTH
+0D77          ; 0.125 ; ; 1/8 # No       MALAYALAM FRACTION ONE EIGHTH
 215B          ; 0.125 ; ; 1/8 # No       VULGAR FRACTION ONE EIGHTH
 A834          ; 0.125 ; ; 1/8 # No       NORTH INDIC FRACTION ONE EIGHTH
 1245F         ; 0.125 ; ; 1/8 # Nl       CUNEIFORM NUMERIC SIGN ONE EIGHTH ASH
 
-# Total code points: 5
+# Total code points: 6
 
 # ================================================
 
 2150          ; 0.14285714 ; ; 1/7 # No       VULGAR FRACTION ONE SEVENTH
+
+# Total code points: 1
+
+# ================================================
+
+0D5D          ; 0.15 ; ; 3/20 # No       MALAYALAM FRACTION THREE TWENTIETHS
 
 # Total code points: 1
 
@@ -164,15 +202,17 @@ A834          ; 0.125 ; ; 1/8 # No       NORTH INDIC FRACTION ONE EIGHTH
 
 09F6          ; 0.1875 ; ; 3/16 # No       BENGALI CURRENCY NUMERATOR THREE
 0B77          ; 0.1875 ; ; 3/16 # No       ORIYA FRACTION THREE SIXTEENTHS
+0D78          ; 0.1875 ; ; 3/16 # No       MALAYALAM FRACTION THREE SIXTEENTHS
 A835          ; 0.1875 ; ; 3/16 # No       NORTH INDIC FRACTION THREE SIXTEENTHS
 
-# Total code points: 3
+# Total code points: 4
 
 # ================================================
 
+0D5E          ; 0.2 ; ; 1/5 # No       MALAYALAM FRACTION ONE FIFTH
 2155          ; 0.2 ; ; 1/5 # No       VULGAR FRACTION ONE FIFTH
 
-# Total code points: 1
+# Total code points: 2
 
 # ================================================
 
@@ -399,11 +439,15 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 111D1         ; 1.0 ; ; 1 # Nd       SHARADA DIGIT ONE
 111E1         ; 1.0 ; ; 1 # No       SINHALA ARCHAIC DIGIT ONE
 112F1         ; 1.0 ; ; 1 # Nd       KHUDAWADI DIGIT ONE
+11451         ; 1.0 ; ; 1 # Nd       NEWA DIGIT ONE
 114D1         ; 1.0 ; ; 1 # Nd       TIRHUTA DIGIT ONE
 11651         ; 1.0 ; ; 1 # Nd       MODI DIGIT ONE
 116C1         ; 1.0 ; ; 1 # Nd       TAKRI DIGIT ONE
 11731         ; 1.0 ; ; 1 # Nd       AHOM DIGIT ONE
 118E1         ; 1.0 ; ; 1 # Nd       WARANG CITI DIGIT ONE
+11C51         ; 1.0 ; ; 1 # Nd       BHAIKSUKI DIGIT ONE
+11C5A         ; 1.0 ; ; 1 # No       BHAIKSUKI NUMBER ONE
+11D51         ; 1.0 ; ; 1 # Nd       MASARAM GONDI DIGIT ONE
 12415         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE GESH2
 1241E         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE GESHU
 1242C         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE SHARU
@@ -419,10 +463,11 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 1D7ED         ; 1.0 ; ; 1 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT ONE
 1D7F7         ; 1.0 ; ; 1 # Nd       MATHEMATICAL MONOSPACE DIGIT ONE
 1E8C7         ; 1.0 ; ; 1 # No       MENDE KIKAKUI DIGIT ONE
+1E951         ; 1.0 ; ; 1 # Nd       ADLAM DIGIT ONE
 1F102         ; 1.0 ; ; 1 # No       DIGIT ONE COMMA
 2092A         ; 1.0 ; ; 1 # Lo       CJK UNIFIED IDEOGRAPH-2092A
 
-# Total code points: 117
+# Total code points: 122
 
 # ================================================
 
@@ -520,11 +565,15 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 111D2         ; 2.0 ; ; 2 # Nd       SHARADA DIGIT TWO
 111E2         ; 2.0 ; ; 2 # No       SINHALA ARCHAIC DIGIT TWO
 112F2         ; 2.0 ; ; 2 # Nd       KHUDAWADI DIGIT TWO
+11452         ; 2.0 ; ; 2 # Nd       NEWA DIGIT TWO
 114D2         ; 2.0 ; ; 2 # Nd       TIRHUTA DIGIT TWO
 11652         ; 2.0 ; ; 2 # Nd       MODI DIGIT TWO
 116C2         ; 2.0 ; ; 2 # Nd       TAKRI DIGIT TWO
 11732         ; 2.0 ; ; 2 # Nd       AHOM DIGIT TWO
 118E2         ; 2.0 ; ; 2 # Nd       WARANG CITI DIGIT TWO
+11C52         ; 2.0 ; ; 2 # Nd       BHAIKSUKI DIGIT TWO
+11C5B         ; 2.0 ; ; 2 # No       BHAIKSUKI NUMBER TWO
+11D52         ; 2.0 ; ; 2 # Nd       MASARAM GONDI DIGIT TWO
 12400         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO ASH
 12416         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO GESH2
 1241F         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO GESHU
@@ -544,10 +593,11 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 1D7EE         ; 2.0 ; ; 2 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT TWO
 1D7F8         ; 2.0 ; ; 2 # Nd       MATHEMATICAL MONOSPACE DIGIT TWO
 1E8C8         ; 2.0 ; ; 2 # No       MENDE KIKAKUI DIGIT TWO
+1E952         ; 2.0 ; ; 2 # Nd       ADLAM DIGIT TWO
 1F103         ; 2.0 ; ; 2 # No       DIGIT TWO COMMA
 22390         ; 2.0 ; ; 2 # Lo       CJK UNIFIED IDEOGRAPH-22390
 
-# Total code points: 117
+# Total code points: 122
 
 # ================================================
 
@@ -639,11 +689,15 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 111D3         ; 3.0 ; ; 3 # Nd       SHARADA DIGIT THREE
 111E3         ; 3.0 ; ; 3 # No       SINHALA ARCHAIC DIGIT THREE
 112F3         ; 3.0 ; ; 3 # Nd       KHUDAWADI DIGIT THREE
+11453         ; 3.0 ; ; 3 # Nd       NEWA DIGIT THREE
 114D3         ; 3.0 ; ; 3 # Nd       TIRHUTA DIGIT THREE
 11653         ; 3.0 ; ; 3 # Nd       MODI DIGIT THREE
 116C3         ; 3.0 ; ; 3 # Nd       TAKRI DIGIT THREE
 11733         ; 3.0 ; ; 3 # Nd       AHOM DIGIT THREE
 118E3         ; 3.0 ; ; 3 # Nd       WARANG CITI DIGIT THREE
+11C53         ; 3.0 ; ; 3 # Nd       BHAIKSUKI DIGIT THREE
+11C5C         ; 3.0 ; ; 3 # No       BHAIKSUKI NUMBER THREE
+11D53         ; 3.0 ; ; 3 # Nd       MASARAM GONDI DIGIT THREE
 12401         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE ASH
 12408         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE DISH
 12417         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE GESH2
@@ -664,13 +718,14 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 1D7EF         ; 3.0 ; ; 3 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT THREE
 1D7F9         ; 3.0 ; ; 3 # Nd       MATHEMATICAL MONOSPACE DIGIT THREE
 1E8C9         ; 3.0 ; ; 3 # No       MENDE KIKAKUI DIGIT THREE
+1E953         ; 3.0 ; ; 3 # Nd       ADLAM DIGIT THREE
 1F104         ; 3.0 ; ; 3 # No       DIGIT THREE COMMA
 20AFD         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-20AFD
 20B19         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-20B19
 22998         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-22998
 23B1B         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-23B1B
 
-# Total code points: 119
+# Total code points: 124
 
 # ================================================
 
@@ -756,11 +811,15 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 111D4         ; 4.0 ; ; 4 # Nd       SHARADA DIGIT FOUR
 111E4         ; 4.0 ; ; 4 # No       SINHALA ARCHAIC DIGIT FOUR
 112F4         ; 4.0 ; ; 4 # Nd       KHUDAWADI DIGIT FOUR
+11454         ; 4.0 ; ; 4 # Nd       NEWA DIGIT FOUR
 114D4         ; 4.0 ; ; 4 # Nd       TIRHUTA DIGIT FOUR
 11654         ; 4.0 ; ; 4 # Nd       MODI DIGIT FOUR
 116C4         ; 4.0 ; ; 4 # Nd       TAKRI DIGIT FOUR
 11734         ; 4.0 ; ; 4 # Nd       AHOM DIGIT FOUR
 118E4         ; 4.0 ; ; 4 # Nd       WARANG CITI DIGIT FOUR
+11C54         ; 4.0 ; ; 4 # Nd       BHAIKSUKI DIGIT FOUR
+11C5D         ; 4.0 ; ; 4 # No       BHAIKSUKI NUMBER FOUR
+11D54         ; 4.0 ; ; 4 # Nd       MASARAM GONDI DIGIT FOUR
 12402         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR ASH
 12409         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR DISH
 1240F         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR U
@@ -782,12 +841,13 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 1D7F0         ; 4.0 ; ; 4 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT FOUR
 1D7FA         ; 4.0 ; ; 4 # Nd       MATHEMATICAL MONOSPACE DIGIT FOUR
 1E8CA         ; 4.0 ; ; 4 # No       MENDE KIKAKUI DIGIT FOUR
+1E954         ; 4.0 ; ; 4 # Nd       ADLAM DIGIT FOUR
 1F105         ; 4.0 ; ; 4 # No       DIGIT FOUR COMMA
 20064         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-20064
 200E2         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-200E2
 2626D         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-2626D
 
-# Total code points: 111
+# Total code points: 116
 
 # ================================================
 
@@ -878,11 +938,15 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 111D5         ; 5.0 ; ; 5 # Nd       SHARADA DIGIT FIVE
 111E5         ; 5.0 ; ; 5 # No       SINHALA ARCHAIC DIGIT FIVE
 112F5         ; 5.0 ; ; 5 # Nd       KHUDAWADI DIGIT FIVE
+11455         ; 5.0 ; ; 5 # Nd       NEWA DIGIT FIVE
 114D5         ; 5.0 ; ; 5 # Nd       TIRHUTA DIGIT FIVE
 11655         ; 5.0 ; ; 5 # Nd       MODI DIGIT FIVE
 116C5         ; 5.0 ; ; 5 # Nd       TAKRI DIGIT FIVE
 11735         ; 5.0 ; ; 5 # Nd       AHOM DIGIT FIVE
 118E5         ; 5.0 ; ; 5 # Nd       WARANG CITI DIGIT FIVE
+11C55         ; 5.0 ; ; 5 # Nd       BHAIKSUKI DIGIT FIVE
+11C5E         ; 5.0 ; ; 5 # No       BHAIKSUKI NUMBER FIVE
+11D55         ; 5.0 ; ; 5 # Nd       MASARAM GONDI DIGIT FIVE
 12403         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE ASH
 1240A         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE DISH
 12410         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE U
@@ -903,10 +967,11 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 1D7F1         ; 5.0 ; ; 5 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT FIVE
 1D7FB         ; 5.0 ; ; 5 # Nd       MATHEMATICAL MONOSPACE DIGIT FIVE
 1E8CB         ; 5.0 ; ; 5 # No       MENDE KIKAKUI DIGIT FIVE
+1E955         ; 5.0 ; ; 5 # Nd       ADLAM DIGIT FIVE
 1F106         ; 5.0 ; ; 5 # No       DIGIT FIVE COMMA
 20121         ; 5.0 ; ; 5 # Lo       CJK UNIFIED IDEOGRAPH-20121
 
-# Total code points: 109
+# Total code points: 114
 
 # ================================================
 
@@ -988,11 +1053,15 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 111D6         ; 6.0 ; ; 6 # Nd       SHARADA DIGIT SIX
 111E6         ; 6.0 ; ; 6 # No       SINHALA ARCHAIC DIGIT SIX
 112F6         ; 6.0 ; ; 6 # Nd       KHUDAWADI DIGIT SIX
+11456         ; 6.0 ; ; 6 # Nd       NEWA DIGIT SIX
 114D6         ; 6.0 ; ; 6 # Nd       TIRHUTA DIGIT SIX
 11656         ; 6.0 ; ; 6 # Nd       MODI DIGIT SIX
 116C6         ; 6.0 ; ; 6 # Nd       TAKRI DIGIT SIX
 11736         ; 6.0 ; ; 6 # Nd       AHOM DIGIT SIX
 118E6         ; 6.0 ; ; 6 # Nd       WARANG CITI DIGIT SIX
+11C56         ; 6.0 ; ; 6 # Nd       BHAIKSUKI DIGIT SIX
+11C5F         ; 6.0 ; ; 6 # No       BHAIKSUKI NUMBER SIX
+11D56         ; 6.0 ; ; 6 # Nd       MASARAM GONDI DIGIT SIX
 12404         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX ASH
 1240B         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX DISH
 12411         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX U
@@ -1010,10 +1079,11 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 1D7F2         ; 6.0 ; ; 6 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT SIX
 1D7FC         ; 6.0 ; ; 6 # Nd       MATHEMATICAL MONOSPACE DIGIT SIX
 1E8CC         ; 6.0 ; ; 6 # No       MENDE KIKAKUI DIGIT SIX
+1E956         ; 6.0 ; ; 6 # Nd       ADLAM DIGIT SIX
 1F107         ; 6.0 ; ; 6 # No       DIGIT SIX COMMA
 20AEA         ; 6.0 ; ; 6 # Lo       CJK UNIFIED IDEOGRAPH-20AEA
 
-# Total code points: 96
+# Total code points: 101
 
 # ================================================
 
@@ -1093,11 +1163,15 @@ FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 111D7         ; 7.0 ; ; 7 # Nd       SHARADA DIGIT SEVEN
 111E7         ; 7.0 ; ; 7 # No       SINHALA ARCHAIC DIGIT SEVEN
 112F7         ; 7.0 ; ; 7 # Nd       KHUDAWADI DIGIT SEVEN
+11457         ; 7.0 ; ; 7 # Nd       NEWA DIGIT SEVEN
 114D7         ; 7.0 ; ; 7 # Nd       TIRHUTA DIGIT SEVEN
 11657         ; 7.0 ; ; 7 # Nd       MODI DIGIT SEVEN
 116C7         ; 7.0 ; ; 7 # Nd       TAKRI DIGIT SEVEN
 11737         ; 7.0 ; ; 7 # Nd       AHOM DIGIT SEVEN
 118E7         ; 7.0 ; ; 7 # Nd       WARANG CITI DIGIT SEVEN
+11C57         ; 7.0 ; ; 7 # Nd       BHAIKSUKI DIGIT SEVEN
+11C60         ; 7.0 ; ; 7 # No       BHAIKSUKI NUMBER SEVEN
+11D57         ; 7.0 ; ; 7 # Nd       MASARAM GONDI DIGIT SEVEN
 12405         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN ASH
 1240C         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN DISH
 12412         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN U
@@ -1114,10 +1188,11 @@ FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 1D7F3         ; 7.0 ; ; 7 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT SEVEN
 1D7FD         ; 7.0 ; ; 7 # Nd       MATHEMATICAL MONOSPACE DIGIT SEVEN
 1E8CD         ; 7.0 ; ; 7 # No       MENDE KIKAKUI DIGIT SEVEN
+1E957         ; 7.0 ; ; 7 # Nd       ADLAM DIGIT SEVEN
 1F108         ; 7.0 ; ; 7 # No       DIGIT SEVEN COMMA
 20001         ; 7.0 ; ; 7 # Lo       CJK UNIFIED IDEOGRAPH-20001
 
-# Total code points: 95
+# Total code points: 100
 
 # ================================================
 
@@ -1195,11 +1270,15 @@ FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 111D8         ; 8.0 ; ; 8 # Nd       SHARADA DIGIT EIGHT
 111E8         ; 8.0 ; ; 8 # No       SINHALA ARCHAIC DIGIT EIGHT
 112F8         ; 8.0 ; ; 8 # Nd       KHUDAWADI DIGIT EIGHT
+11458         ; 8.0 ; ; 8 # Nd       NEWA DIGIT EIGHT
 114D8         ; 8.0 ; ; 8 # Nd       TIRHUTA DIGIT EIGHT
 11658         ; 8.0 ; ; 8 # Nd       MODI DIGIT EIGHT
 116C8         ; 8.0 ; ; 8 # Nd       TAKRI DIGIT EIGHT
 11738         ; 8.0 ; ; 8 # Nd       AHOM DIGIT EIGHT
 118E8         ; 8.0 ; ; 8 # Nd       WARANG CITI DIGIT EIGHT
+11C58         ; 8.0 ; ; 8 # Nd       BHAIKSUKI DIGIT EIGHT
+11C61         ; 8.0 ; ; 8 # No       BHAIKSUKI NUMBER EIGHT
+11D58         ; 8.0 ; ; 8 # Nd       MASARAM GONDI DIGIT EIGHT
 12406         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT ASH
 1240D         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT DISH
 12413         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT U
@@ -1216,9 +1295,10 @@ FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 1D7F4         ; 8.0 ; ; 8 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT EIGHT
 1D7FE         ; 8.0 ; ; 8 # Nd       MATHEMATICAL MONOSPACE DIGIT EIGHT
 1E8CE         ; 8.0 ; ; 8 # No       MENDE KIKAKUI DIGIT EIGHT
+1E958         ; 8.0 ; ; 8 # Nd       ADLAM DIGIT EIGHT
 1F109         ; 8.0 ; ; 8 # No       DIGIT EIGHT COMMA
 
-# Total code points: 91
+# Total code points: 96
 
 # ================================================
 
@@ -1297,11 +1377,15 @@ FF19          ; 9.0 ; ; 9 # Nd       FULLWIDTH DIGIT NINE
 111D9         ; 9.0 ; ; 9 # Nd       SHARADA DIGIT NINE
 111E9         ; 9.0 ; ; 9 # No       SINHALA ARCHAIC DIGIT NINE
 112F9         ; 9.0 ; ; 9 # Nd       KHUDAWADI DIGIT NINE
+11459         ; 9.0 ; ; 9 # Nd       NEWA DIGIT NINE
 114D9         ; 9.0 ; ; 9 # Nd       TIRHUTA DIGIT NINE
 11659         ; 9.0 ; ; 9 # Nd       MODI DIGIT NINE
 116C9         ; 9.0 ; ; 9 # Nd       TAKRI DIGIT NINE
 11739         ; 9.0 ; ; 9 # Nd       AHOM DIGIT NINE
 118E9         ; 9.0 ; ; 9 # Nd       WARANG CITI DIGIT NINE
+11C59         ; 9.0 ; ; 9 # Nd       BHAIKSUKI DIGIT NINE
+11C62         ; 9.0 ; ; 9 # No       BHAIKSUKI NUMBER NINE
+11D59         ; 9.0 ; ; 9 # Nd       MASARAM GONDI DIGIT NINE
 12407         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE ASH
 1240E         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE DISH
 12414         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE U
@@ -1318,10 +1402,11 @@ FF19          ; 9.0 ; ; 9 # Nd       FULLWIDTH DIGIT NINE
 1D7F5         ; 9.0 ; ; 9 # Nd       MATHEMATICAL SANS-SERIF BOLD DIGIT NINE
 1D7FF         ; 9.0 ; ; 9 # Nd       MATHEMATICAL MONOSPACE DIGIT NINE
 1E8CF         ; 9.0 ; ; 9 # No       MENDE KIKAKUI DIGIT NINE
+1E959         ; 9.0 ; ; 9 # Nd       ADLAM DIGIT NINE
 1F10A         ; 9.0 ; ; 9 # No       DIGIT NINE COMMA
 2F890         ; 9.0 ; ; 9 # Lo       CJK COMPATIBILITY IDEOGRAPH-2F890
 
-# Total code points: 95
+# Total code points: 100
 
 # ================================================
 
@@ -1372,10 +1457,11 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 111EA         ; 10.0 ; ; 10 # No       SINHALA ARCHAIC NUMBER TEN
 1173A         ; 10.0 ; ; 10 # No       AHOM NUMBER TEN
 118EA         ; 10.0 ; ; 10 # No       WARANG CITI NUMBER TEN
+11C63         ; 10.0 ; ; 10 # No       BHAIKSUKI NUMBER TEN
 16B5B         ; 10.0 ; ; 10 # No       PAHAWH HMONG NUMBER TENS
 1D369         ; 10.0 ; ; 10 # No       COUNTING ROD TENS DIGIT ONE
 
-# Total code points: 53
+# Total code points: 54
 
 # ================================================
 
@@ -1497,9 +1583,10 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 111EB         ; 20.0 ; ; 20 # No       SINHALA ARCHAIC NUMBER TWENTY
 1173B         ; 20.0 ; ; 20 # No       AHOM NUMBER TWENTY
 118EB         ; 20.0 ; ; 20 # No       WARANG CITI NUMBER TWENTY
+11C64         ; 20.0 ; ; 20 # No       BHAIKSUKI NUMBER TWENTY
 1D36A         ; 20.0 ; ; 20 # No       COUNTING ROD TENS DIGIT TWO
 
-# Total code points: 30
+# Total code points: 31
 
 # ================================================
 
@@ -1570,10 +1657,11 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1105D         ; 30.0 ; ; 30 # No       BRAHMI NUMBER THIRTY
 111EC         ; 30.0 ; ; 30 # No       SINHALA ARCHAIC NUMBER THIRTY
 118EC         ; 30.0 ; ; 30 # No       WARANG CITI NUMBER THIRTY
+11C65         ; 30.0 ; ; 30 # No       BHAIKSUKI NUMBER THIRTY
 1D36B         ; 30.0 ; ; 30 # No       COUNTING ROD TENS DIGIT THREE
 20983         ; 30.0 ; ; 30 # Lo       CJK UNIFIED IDEOGRAPH-20983
 
-# Total code points: 15
+# Total code points: 16
 
 # ================================================
 
@@ -1642,12 +1730,13 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1105E         ; 40.0 ; ; 40 # No       BRAHMI NUMBER FORTY
 111ED         ; 40.0 ; ; 40 # No       SINHALA ARCHAIC NUMBER FORTY
 118ED         ; 40.0 ; ; 40 # No       WARANG CITI NUMBER FORTY
+11C66         ; 40.0 ; ; 40 # No       BHAIKSUKI NUMBER FORTY
 12467         ; 40.0 ; ; 40 # Nl       CUNEIFORM NUMERIC SIGN ELAMITE FORTY
 1D36C         ; 40.0 ; ; 40 # No       COUNTING ROD TENS DIGIT FOUR
 2098C         ; 40.0 ; ; 40 # Lo       CJK UNIFIED IDEOGRAPH-2098C
 2099C         ; 40.0 ; ; 40 # Lo       CJK UNIFIED IDEOGRAPH-2099C
 
-# Total code points: 15
+# Total code points: 16
 
 # ================================================
 
@@ -1726,10 +1815,11 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 1105F         ; 50.0 ; ; 50 # No       BRAHMI NUMBER FIFTY
 111EE         ; 50.0 ; ; 50 # No       SINHALA ARCHAIC NUMBER FIFTY
 118EE         ; 50.0 ; ; 50 # No       WARANG CITI NUMBER FIFTY
+11C67         ; 50.0 ; ; 50 # No       BHAIKSUKI NUMBER FIFTY
 12468         ; 50.0 ; ; 50 # Nl       CUNEIFORM NUMERIC SIGN ELAMITE FIFTY
 1D36D         ; 50.0 ; ; 50 # No       COUNTING ROD TENS DIGIT FIVE
 
-# Total code points: 26
+# Total code points: 27
 
 # ================================================
 
@@ -1742,9 +1832,10 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 11060         ; 60.0 ; ; 60 # No       BRAHMI NUMBER SIXTY
 111EF         ; 60.0 ; ; 60 # No       SINHALA ARCHAIC NUMBER SIXTY
 118EF         ; 60.0 ; ; 60 # No       WARANG CITI NUMBER SIXTY
+11C68         ; 60.0 ; ; 60 # No       BHAIKSUKI NUMBER SIXTY
 1D36E         ; 60.0 ; ; 60 # No       COUNTING ROD TENS DIGIT SIX
 
-# Total code points: 10
+# Total code points: 11
 
 # ================================================
 
@@ -1757,9 +1848,10 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 11061         ; 70.0 ; ; 70 # No       BRAHMI NUMBER SEVENTY
 111F0         ; 70.0 ; ; 70 # No       SINHALA ARCHAIC NUMBER SEVENTY
 118F0         ; 70.0 ; ; 70 # No       WARANG CITI NUMBER SEVENTY
+11C69         ; 70.0 ; ; 70 # No       BHAIKSUKI NUMBER SEVENTY
 1D36F         ; 70.0 ; ; 70 # No       COUNTING ROD TENS DIGIT SEVEN
 
-# Total code points: 10
+# Total code points: 11
 
 # ================================================
 
@@ -1771,9 +1863,10 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 11062         ; 80.0 ; ; 80 # No       BRAHMI NUMBER EIGHTY
 111F1         ; 80.0 ; ; 80 # No       SINHALA ARCHAIC NUMBER EIGHTY
 118F1         ; 80.0 ; ; 80 # No       WARANG CITI NUMBER EIGHTY
+11C6A         ; 80.0 ; ; 80 # No       BHAIKSUKI NUMBER EIGHTY
 1D370         ; 80.0 ; ; 80 # No       COUNTING ROD TENS DIGIT EIGHT
 
-# Total code points: 9
+# Total code points: 10
 
 # ================================================
 
@@ -1785,9 +1878,10 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 11063         ; 90.0 ; ; 90 # No       BRAHMI NUMBER NINETY
 111F2         ; 90.0 ; ; 90 # No       SINHALA ARCHAIC NUMBER NINETY
 118F2         ; 90.0 ; ; 90 # No       WARANG CITI NUMBER NINETY
+11C6B         ; 90.0 ; ; 90 # No       BHAIKSUKI NUMBER NINETY
 1D371         ; 90.0 ; ; 90 # No       COUNTING ROD TENS DIGIT NINE
 
-# Total code points: 9
+# Total code points: 10
 
 # ================================================
 
@@ -1819,9 +1913,10 @@ F9FD          ; 10.0 ; ; 10 # Lo       CJK COMPATIBILITY IDEOGRAPH-F9FD
 10E72         ; 100.0 ; ; 100 # No       RUMI NUMBER ONE HUNDRED
 11064         ; 100.0 ; ; 100 # No       BRAHMI NUMBER ONE HUNDRED
 111F3         ; 100.0 ; ; 100 # No       SINHALA ARCHAIC NUMBER ONE HUNDRED
+11C6C         ; 100.0 ; ; 100 # No       BHAIKSUKI HUNDREDS UNIT MARK
 16B5C         ; 100.0 ; ; 100 # No       PAHAWH HMONG NUMBER HUNDREDS
 
-# Total code points: 29
+# Total code points: 30
 
 # ================================================
 

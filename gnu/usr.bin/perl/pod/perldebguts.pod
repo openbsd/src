@@ -94,9 +94,13 @@ unless C<< $^D & (1<<30) >> is true.
 =item *
 
 When execution of the program reaches a subroutine call, a call to
-C<&DB::sub>(I<args>) is made instead, with C<$DB::sub> holding the
-name of the called subroutine. (This doesn't happen if the subroutine
-was compiled in the C<DB> package.)
+C<&DB::sub>(I<args>) is made instead, with C<$DB::sub> set to identify
+the called subroutine.  (This doesn't happen if the calling subroutine
+was compiled in the C<DB> package.)  C<$DB::sub> normally holds the name
+of the called subroutine, if it has a name by which it can be looked up.
+Failing that, C<$DB::sub> will hold a reference to the called subroutine.
+Either way, the C<&DB::sub> subroutine can use C<$DB::sub> as a reference
+by which to call the called subroutine, which it will normally want to do.
 
 X<&DB::lsub>If the call is to an lvalue subroutine, and C<&DB::lsub>
 is defined C<&DB::lsub>(I<args>) is called instead, otherwise falling
@@ -104,10 +108,15 @@ back to C<&DB::sub>(I<args>).
 
 =item *
 
-When execution of the program uses C<goto> to enter a non-XS
-subroutine and the 0x80 bit is set in C<$^P>, a call to C<&DB::goto>
-is made, with C<$DB::sub> holding the name of the subroutine being
-entered.
+When execution of the program uses C<goto> to enter a non-XS subroutine
+and the 0x80 bit is set in C<$^P>, a call to C<&DB::goto> is made, with
+C<$DB::sub> set to identify the subroutine being entered.  The call to
+C<&DB::goto> does not replace the C<goto>; the requested subroutine will
+still be entered once C<&DB::goto> has returned.  C<$DB::sub> normally
+holds the name of the subroutine being entered, if it has one.  Failing
+that, C<$DB::sub> will hold a reference to the subroutine being entered.
+Unlike when C<&DB::sub> is called, it is not guaranteed that C<$DB::sub>
+can be used as a reference to operate on the subroutine being entered.
 
 =back
 
@@ -556,62 +565,68 @@ will be lost.
 
  # Exit points
 
- END             no         End of program.
- SUCCEED         no         Return from a subroutine, basically.
+ END              no         End of program.
+ SUCCEED          no         Return from a subroutine, basically.
 
  # Line Start Anchors:
- SBOL            no         Match "" at beginning of line: /^/, /\A/
- MBOL            no         Same, assuming multiline: /^/m
+ SBOL             no         Match "" at beginning of line: /^/, /\A/
+ MBOL             no         Same, assuming multiline: /^/m
 
  # Line End Anchors:
- SEOL            no         Match "" at end of line: /$/
- MEOL            no         Same, assuming multiline: /$/m
- EOS             no         Match "" at end of string: /\z/
+ SEOL             no         Match "" at end of line: /$/
+ MEOL             no         Same, assuming multiline: /$/m
+ EOS              no         Match "" at end of string: /\z/
 
  # Match Start Anchors:
- GPOS            no         Matches where last m//g left off.
+ GPOS             no         Matches where last m//g left off.
 
  # Word Boundary Opcodes:
- BOUND           no         Like BOUNDA for non-utf8, otherwise match ""
-                            between any Unicode \w\W or \W\w
- BOUNDL          no         Like BOUND/BOUNDU, but \w and \W are defined
-                            by current locale
- BOUNDU          no         Match "" at any boundary of a given type
-                            using Unicode rules
- BOUNDA          no         Match "" at any boundary between \w\W or
-                            \W\w, where \w is [_a-zA-Z0-9]
- NBOUND          no         Like NBOUNDA for non-utf8, otherwise match
-                            "" between any Unicode \w\w or \W\W
- NBOUNDL         no         Like NBOUND/NBOUNDU, but \w and \W are
-                            defined by current locale
- NBOUNDU         no         Match "" at any non-boundary of a given type
-                            using using Unicode rules
- NBOUNDA         no         Match "" betweeen any \w\w or \W\W, where \w
-                            is [_a-zA-Z0-9]
+ BOUND            no         Like BOUNDA for non-utf8, otherwise match
+                             "" between any Unicode \w\W or \W\w
+ BOUNDL           no         Like BOUND/BOUNDU, but \w and \W are
+                             defined by current locale
+ BOUNDU           no         Match "" at any boundary of a given type
+                             using Unicode rules
+ BOUNDA           no         Match "" at any boundary between \w\W or
+                             \W\w, where \w is [_a-zA-Z0-9]
+ NBOUND           no         Like NBOUNDA for non-utf8, otherwise match
+                             "" between any Unicode \w\w or \W\W
+ NBOUNDL          no         Like NBOUND/NBOUNDU, but \w and \W are
+                             defined by current locale
+ NBOUNDU          no         Match "" at any non-boundary of a given
+                             type using using Unicode rules
+ NBOUNDA          no         Match "" betweeen any \w\w or \W\W, where
+                             \w is [_a-zA-Z0-9]
 
  # [Special] alternatives:
- REG_ANY         no         Match any one character (except newline).
- SANY            no         Match any one character.
- ANYOF           sv 1       Match character in (or not in) this class,
-                            single char match only
- ANYOFD          sv 1       Like ANYOF, but /d is in effect
- ANYOFL          sv 1       Like ANYOF, but /l is in effect
+ REG_ANY          no         Match any one character (except newline).
+ SANY             no         Match any one character.
+ ANYOF            sv 1       Match character in (or not in) this class,
+                             single char match only
+ ANYOFD           sv 1       Like ANYOF, but /d is in effect
+ ANYOFL           sv 1       Like ANYOF, but /l is in effect
+ ANYOFM           byte 1     Like ANYOF, but matches an invariant byte
+                             as determined by the mask and arg
 
  # POSIX Character Classes:
- POSIXD          none       Some [[:class:]] under /d; the FLAGS field
-                            gives which one
- POSIXL          none       Some [[:class:]] under /l; the FLAGS field
-                            gives which one
- POSIXU          none       Some [[:class:]] under /u; the FLAGS field
-                            gives which one
- POSIXA          none       Some [[:class:]] under /a; the FLAGS field
-                            gives which one
- NPOSIXD         none       complement of POSIXD, [[:^class:]]
- NPOSIXL         none       complement of POSIXL, [[:^class:]]
- NPOSIXU         none       complement of POSIXU, [[:^class:]]
- NPOSIXA         none       complement of POSIXA, [[:^class:]]
+ POSIXD           none       Some [[:class:]] under /d; the FLAGS field
+                             gives which one
+ POSIXL           none       Some [[:class:]] under /l; the FLAGS field
+                             gives which one
+ POSIXU           none       Some [[:class:]] under /u; the FLAGS field
+                             gives which one
+ POSIXA           none       Some [[:class:]] under /a; the FLAGS field
+                             gives which one
+ NPOSIXD          none       complement of POSIXD, [[:^class:]]
+ NPOSIXL          none       complement of POSIXL, [[:^class:]]
+ NPOSIXU          none       complement of POSIXU, [[:^class:]]
+ NPOSIXA          none       complement of POSIXA, [[:^class:]]
 
- CLUMP           no         Match any extended grapheme cluster sequence
+ ASCII            none       [[:ascii:]]
+ NASCII           none       [[:^ascii:]]
+
+ CLUMP            no         Match any extended grapheme cluster
+                             sequence
 
  # Alternation
 
@@ -624,39 +639,40 @@ will be lost.
  #               pointer of each individual branch points; each branch
  #               starts with the operand node of a BRANCH node.
  #
- BRANCH          node       Match this alternative, or the next...
+ BRANCH           node       Match this alternative, or the next...
 
  # Literals
 
- EXACT           str        Match this string (preceded by length).
- EXACTL          str        Like EXACT, but /l is in effect (used so
-                            locale-related warnings can be checked for).
- EXACTF          str        Match this non-UTF-8 string (not guaranteed
-                            to be folded) using /id rules (w/len).
- EXACTFL         str        Match this string (not guaranteed to be
-                            folded) using /il rules (w/len).
- EXACTFU         str        Match this string (folded iff in UTF-8,
-                            length in folding doesn't change if not in
-                            UTF-8) using /iu rules (w/len).
- EXACTFA         str        Match this string (not guaranteed to be
-                            folded) using /iaa rules (w/len).
+ EXACT            str        Match this string (preceded by length).
+ EXACTL           str        Like EXACT, but /l is in effect (used so
+                             locale-related warnings can be checked
+                             for).
+ EXACTF           str        Match this non-UTF-8 string (not guaranteed
+                             to be folded) using /id rules (w/len).
+ EXACTFL          str        Match this string (not guaranteed to be
+                             folded) using /il rules (w/len).
+ EXACTFU          str        Match this string (folded iff in UTF-8,
+                             length in folding doesn't change if not in
+                             UTF-8) using /iu rules (w/len).
+ EXACTFAA         str        Match this string (not guaranteed to be
+                             folded) using /iaa rules (w/len).
 
- EXACTFU_SS      str        Match this string (folded iff in UTF-8,
-                            length in folding may change even if not in
-                            UTF-8) using /iu rules (w/len).
- EXACTFLU8       str        Rare cirucmstances: like EXACTFU, but is
-                            under /l, UTF-8, folded, and everything in
-                            it is above 255.
- EXACTFA_NO_TRIE str        Match this string (which is not trie-able;
-                            not guaranteed to be folded) using /iaa
-                            rules (w/len).
+ EXACTFU_SS       str        Match this string (folded iff in UTF-8,
+                             length in folding may change even if not in
+                             UTF-8) using /iu rules (w/len).
+ EXACTFLU8        str        Rare circumstances: like EXACTFU, but is
+                             under /l, UTF-8, folded, and everything in
+                             it is above 255.
+ EXACTFAA_NO_TRIE str        Match this string (which is not trie-able;
+                             not guaranteed to be folded) using /iaa
+                             rules (w/len).
 
  # Do nothing types
 
- NOTHING         no         Match empty string.
+ NOTHING          no         Match empty string.
  # A variant of above which delimits a group, thus stops optimizations
- TAIL            no         Match empty string. Can jump here from
-                            outside.
+ TAIL             no         Match empty string. Can jump here from
+                             outside.
 
  # Loops
 
@@ -665,69 +681,74 @@ will be lost.
  #               (one character per match) are implemented with STAR
  #               and PLUS for speed and to minimize recursive plunges.
  #
- STAR            node       Match this (simple) thing 0 or more times.
- PLUS            node       Match this (simple) thing 1 or more times.
+ STAR             node       Match this (simple) thing 0 or more times.
+ PLUS             node       Match this (simple) thing 1 or more times.
 
- CURLY           sv 2       Match this simple thing {n,m} times.
- CURLYN          no 2       Capture next-after-this simple thing
- CURLYM          no 2       Capture this medium-complex thing {n,m}
-                            times.
- CURLYX          sv 2       Match this complex thing {n,m} times.
+ CURLY            sv 2       Match this simple thing {n,m} times.
+ CURLYN           no 2       Capture next-after-this simple thing
+ CURLYM           no 2       Capture this medium-complex thing {n,m}
+                             times.
+ CURLYX           sv 2       Match this complex thing {n,m} times.
 
  # This terminator creates a loop structure for CURLYX
- WHILEM          no         Do curly processing and see if rest matches.
+ WHILEM           no         Do curly processing and see if rest
+                             matches.
 
  # Buffer related
 
  # OPEN,CLOSE,GROUPP     ...are numbered at compile time.
- OPEN            num 1      Mark this point in input as start of #n.
- CLOSE           num 1      Analogous to OPEN.
+ OPEN             num 1      Mark this point in input as start of #n.
+ CLOSE            num 1      Close corresponding OPEN of #n.
+ SROPEN           none       Same as OPEN, but for script run
+ SRCLOSE          none       Close preceding SROPEN
 
- REF             num 1      Match some already matched string
- REFF            num 1      Match already matched string, folded using
-                            native charset rules for non-utf8
- REFFL           num 1      Match already matched string, folded in loc.
- REFFU           num 1      Match already matched string, folded using
-                            unicode rules for non-utf8
- REFFA           num 1      Match already matched string, folded using
-                            unicode rules for non-utf8, no mixing ASCII,
-                            non-ASCII
+ REF              num 1      Match some already matched string
+ REFF             num 1      Match already matched string, folded using
+                             native charset rules for non-utf8
+ REFFL            num 1      Match already matched string, folded in
+                             loc.
+ REFFU            num 1      Match already matched string, folded using
+                             unicode rules for non-utf8
+ REFFA            num 1      Match already matched string, folded using
+                             unicode rules for non-utf8, no mixing
+                             ASCII, non-ASCII
 
  # Named references.  Code in regcomp.c assumes that these all are after
  # the numbered references
- NREF            no-sv 1    Match some already matched string
- NREFF           no-sv 1    Match already matched string, folded using
-                            native charset rules for non-utf8
- NREFFL          no-sv 1    Match already matched string, folded in loc.
- NREFFU          num 1      Match already matched string, folded using
-                            unicode rules for non-utf8
- NREFFA          num 1      Match already matched string, folded using
-                            unicode rules for non-utf8, no mixing ASCII,
-                            non-ASCII
+ NREF             no-sv 1    Match some already matched string
+ NREFF            no-sv 1    Match already matched string, folded using
+                             native charset rules for non-utf8
+ NREFFL           no-sv 1    Match already matched string, folded in
+                             loc.
+ NREFFU           num 1      Match already matched string, folded using
+                             unicode rules for non-utf8
+ NREFFA           num 1      Match already matched string, folded using
+                             unicode rules for non-utf8, no mixing
+                             ASCII, non-ASCII
 
  # Support for long RE
- LONGJMP         off 1 1    Jump far away.
- BRANCHJ         off 1 1    BRANCH with long offset.
+ LONGJMP          off 1 1    Jump far away.
+ BRANCHJ          off 1 1    BRANCH with long offset.
 
  # Special Case Regops
- IFMATCH         off 1 2    Succeeds if the following matches.
- UNLESSM         off 1 2    Fails if the following matches.
- SUSPEND         off 1 1    "Independent" sub-RE.
- IFTHEN          off 1 1    Switch, should be preceded by switcher.
- GROUPP          num 1      Whether the group matched.
+ IFMATCH          off 1 2    Succeeds if the following matches.
+ UNLESSM          off 1 2    Fails if the following matches.
+ SUSPEND          off 1 1    "Independent" sub-RE.
+ IFTHEN           off 1 1    Switch, should be preceded by switcher.
+ GROUPP           num 1      Whether the group matched.
 
  # The heavy worker
 
- EVAL            evl/flags  Execute some Perl code.
-                 2L
+ EVAL             evl/flags  Execute some Perl code.
+                  2L
 
  # Modifiers
 
- MINMOD          no         Next operator is not greedy.
- LOGICAL         no         Next opcode should set the flag only.
+ MINMOD           no         Next operator is not greedy.
+ LOGICAL          no         Next opcode should set the flag only.
 
  # This is not used yet
- RENUM           off 1 1    Group with independently numbered parens.
+ RENUM            off 1 1    Group with independently numbered parens.
 
  # Trie Related
 
@@ -735,60 +756,60 @@ will be lost.
  # have inline charclass data (ascii only), the 'C' store it in the
  # structure.
 
- TRIE            trie 1     Match many EXACT(F[ALU]?)? at once.
-                            flags==type
- TRIEC           trie       Same as TRIE, but with embedded charclass
-                 charclass  data
+ TRIE             trie 1     Match many EXACT(F[ALU]?)? at once.
+                             flags==type
+ TRIEC            trie       Same as TRIE, but with embedded charclass
+                  charclass  data
 
- AHOCORASICK     trie 1     Aho Corasick stclass. flags==type
- AHOCORASICKC    trie       Same as AHOCORASICK, but with embedded
-                 charclass  charclass data
+ AHOCORASICK      trie 1     Aho Corasick stclass. flags==type
+ AHOCORASICKC     trie       Same as AHOCORASICK, but with embedded
+                  charclass  charclass data
 
  # Regex Subroutines
- GOSUB           num/ofs 2L recurse to paren arg1 at (signed) ofs arg2
+ GOSUB            num/ofs 2L recurse to paren arg1 at (signed) ofs arg2
 
  # Special conditionals
- NGROUPP         no-sv 1    Whether the group matched.
- INSUBP          num 1      Whether we are in a specific recurse.
- DEFINEP         none 1     Never execute directly.
+ NGROUPP          no-sv 1    Whether the group matched.
+ INSUBP           num 1      Whether we are in a specific recurse.
+ DEFINEP          none 1     Never execute directly.
 
  # Backtracking Verbs
- ENDLIKE         none       Used only for the type field of verbs
- OPFAIL          no-sv 1    Same as (?!), but with verb arg
- ACCEPT          no-sv/num  Accepts the current matched string, with
-                 2L         verbar
+ ENDLIKE          none       Used only for the type field of verbs
+ OPFAIL           no-sv 1    Same as (?!), but with verb arg
+ ACCEPT           no-sv/num  Accepts the current matched string, with
+                  2L         verbar
 
  # Verbs With Arguments
- VERB            no-sv 1    Used only for the type field of verbs
- PRUNE           no-sv 1    Pattern fails at this startpoint if no-
-                            backtracking through this
- MARKPOINT       no-sv 1    Push the current location for rollback by
-                            cut.
- SKIP            no-sv 1    On failure skip forward (to the mark) before
-                            retrying
- COMMIT          no-sv 1    Pattern fails outright if backtracking
-                            through this
- CUTGROUP        no-sv 1    On failure go to the next alternation in the
-                            group
+ VERB             no-sv 1    Used only for the type field of verbs
+ PRUNE            no-sv 1    Pattern fails at this startpoint if no-
+                             backtracking through this
+ MARKPOINT        no-sv 1    Push the current location for rollback by
+                             cut.
+ SKIP             no-sv 1    On failure skip forward (to the mark)
+                             before retrying
+ COMMIT           no-sv 1    Pattern fails outright if backtracking
+                             through this
+ CUTGROUP         no-sv 1    On failure go to the next alternation in
+                             the group
 
  # Control what to keep in $&.
- KEEPS           no         $& begins here.
+ KEEPS            no         $& begins here.
 
  # New charclass like patterns
- LNBREAK         none       generic newline pattern
+ LNBREAK          none       generic newline pattern
 
  # SPECIAL  REGOPS
 
  # This is not really a node, but an optimized away piece of a "long"
  # node.  To simplify debugging output, we mark it as if it were a node
- OPTIMIZED       off        Placeholder for dump.
+ OPTIMIZED        off        Placeholder for dump.
 
  # Special opcode with the property that no opcode in a compiled program
  # will ever be of this type. Thus it can be used as a flag value that
  # no other opcode has been seen. END is used similarly, in that an END
  # node cant be optimized. So END implies "unoptimizable" and PSEUDO
  # mean "not seen anything to optimize yet".
- PSEUDO          off        Pseudo opcode for internal use.
+ PSEUDO           off        Pseudo opcode for internal use.
 
 =for regcomp.pl end
 

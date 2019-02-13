@@ -1,5 +1,18 @@
 Revision history for Perl suite Locale::Maketext
 
+2016-07-25
+    * Release of 1.28 to CPAN
+    * Fix optional runtime load for CVE-2016-1238
+
+2016-06-22
+    * Release of 1.27 to CPAN
+
+2016-04-20
+    * perl #127923: note priority between the white and blacklist
+
+2016-03-17
+    * Add blacklist and whitelist support to Locale::Maketext.
+
 2014-06-17
     * Correct two subtle typos in Locale::Maketext POD.
 

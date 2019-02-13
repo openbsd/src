@@ -3,7 +3,7 @@
 
 use strict;
 
-use Test::More tests => 167;
+use Test::More tests => 165;
 use Config;
 use Fcntl ':mode';
 use lib './t';
@@ -758,7 +758,7 @@ is(
     # remove_tree(): Permit re-use of options hash without issuing a warning
 
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| a b c | );
+        create_3_level_subdirs( qw| ZoYhvc6RmGnl S2CrQ0lju0o7 lvOqVYWpfhcP | );
     my @created;
     @created = File::Path::make_path($deepest, { mode => 0711 });
     is(scalar(@created), 3, "Created 3 subdirectories");
@@ -816,20 +816,20 @@ is(
 }
 
 SKIP: {
-    my $skip_count = 5;
+    my $skip_count = 3;
     skip "Windows will not set this error condition", $skip_count
         if $^O eq 'MSWin32';
 
     # mkpath() with hashref:  case of phony user
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| d e f | );
+        create_3_level_subdirs( qw| Hhu1KpF4EVAV vUj5k37bih8v Vkdw02POXJxj | );
     my (@created, $error);
     my $user = join('_' => 'foobar', $$);
     @created = mkpath($deepest, { mode => 0711, user => $user, error => \$error });
-    TODO: {
-        local $TODO = "Notwithstanding the phony 'user', mkpath will actually create subdirectories; should it?";
-        is(scalar(@created), 0, "No subdirectories created");
-    }
+#    TODO: {
+#        local $TODO = "Notwithstanding the phony 'user', mkpath will actually create subdirectories; should it?";
+#        is(scalar(@created), 0, "No subdirectories created");
+#    }
     is(scalar(@$error), 1, "caught error condition" );
     my ($file, $message) = each %{$error->[0]};
     like($message,
@@ -843,7 +843,7 @@ SKIP: {
 {
     # mkpath() with hashref:  case of valid uid
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| j k l | );
+        create_3_level_subdirs( qw| b5wj8CJcc7gl XTJe2C3WGLg5 VZ_y2T0XfKu3 | );
     my (@created, $error);
     @created = mkpath($deepest, { mode => 0711, uid => $>, error => \$error });
     is(scalar(@created), 3, "Provide valid 'uid' argument: 3 subdirectories created");
@@ -858,7 +858,7 @@ SKIP: {
 
     # mkpath() with hashref:  case of valid owner
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| m n o | );
+        create_3_level_subdirs( qw| aiJEDKaAEH25 nqhXsBM_7_bv qfRj4cur4Jrs | );
     my (@created, $error);
     my $name = getpwuid($>);
     @created = mkpath($deepest, { mode => 0711, owner => $name, error => \$error });
@@ -874,14 +874,14 @@ SKIP: {
 
     # mkpath() with hashref:  case of phony group
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| p q r | );
+        create_3_level_subdirs( qw| nOR4lGRMdLvz NnwkEHEVL5li _3f1Kv6q77yA | );
     my (@created, $error);
     my $bad_group = join('_' => 'foobarbaz', $$);
     @created = mkpath($deepest, { mode => 0711, group => $bad_group, error => \$error });
-    TODO: {
-        local $TODO = "Notwithstanding the phony 'group', mkpath will actually create subdirectories; should it?";
-        is(scalar(@created), 0, "No subdirectories created");
-    }
+#    TODO: {
+#        local $TODO = "Notwithstanding the phony 'group', mkpath will actually create subdirectories; should it?";
+#        is(scalar(@created), 0, "No subdirectories created");
+#    }
     is(scalar(@$error), 1, "caught error condition" );
     my ($file, $message) = each %{$error->[0]};
     like($message,
@@ -895,7 +895,7 @@ SKIP: {
 {
     # mkpath() with hashref:  case of valid group
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| s t u | );
+        create_3_level_subdirs( qw| BEcigvaBNisY rd4lJ1iZRyeS OyQnDPIBxP2K | );
     my (@created, $error);
     @created = mkpath($deepest, { mode => 0711, group => $(, error => \$error });
     is(scalar(@created), 3, "Provide valid 'group' argument: 3 subdirectories created");
@@ -910,7 +910,7 @@ SKIP: {
 
     # mkpath() with hashref:  case of valid group
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| v w x | );
+        create_3_level_subdirs( qw| IayhWFDvys8X gTd6gaeuFzmV VVI6UWLJCOEC | );
     my (@created, $error);
     my $group_name = (getgrgid($())[0];
     @created = mkpath($deepest, { mode => 0711, group => $group_name, error => \$error });
@@ -926,7 +926,7 @@ SKIP: {
 
     # mkpath() with hashref:  case of valid owner and group
     my ($least_deep, $next_deepest, $deepest) =
-        create_3_level_subdirs( qw| delta epsilon zeta | );
+        create_3_level_subdirs( qw| xsmOvlnxOqJc olsGlBSoVUpp tDuRilkD35rd | );
     my (@created, $error);
     my $name = getpwuid($>);
     my $group_name = (getgrgid($())[0];

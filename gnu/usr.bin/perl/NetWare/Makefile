@@ -86,7 +86,7 @@ NLM_VERSION    = 3,20,0
 
 
 # Here comes the CW tools - TO BE FILLED TO BUILD WITH CW -
-MODULE_DESC     = "Perl 5.24.3 for NetWare"
+MODULE_DESC     = "Perl 5.28.1 for NetWare"
 CCTYPE          = CodeWarrior
 C_COMPILER		= mwccnlm -c
 CPP_COMPILER	= mwccnlm
@@ -462,7 +462,7 @@ INST_NW_TOP2 = $(INST_NW_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-INST_VER	= \5.24.3
+INST_VER	= \5.28.1
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -661,7 +661,6 @@ UTILS		=			\
 		..\utils\splain		\
 		..\utils\perlbug	\
 		..\utils\pl2pm 		\
-		..\utils\c2ph		\
 		..\utils\h2xs		\
 		..\utils\perldoc	\
 		..\pod\pod2html		\
@@ -1349,7 +1348,7 @@ distclean: clean nwclean
 	-del /f /q $(PODDIR)\*.html
 	-del /f /q $(PODDIR)\*.bat
 	cd ..\utils
-	-del /f /q h2ph splain perlbug pl2pm c2ph h2xs perldoc
+	-del /f /q h2ph splain perlbug pl2pm h2xs perldoc
 	-del /f /q *.bat
 	cd ..\netware
 	-del /f /q ..\config.sh ..\splittree.pl dlutils.c config.h.new

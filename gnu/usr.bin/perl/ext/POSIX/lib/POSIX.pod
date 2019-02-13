@@ -24,7 +24,7 @@ interfaces.
 This document gives a condensed list of the features available in the POSIX
 module.  Consult your operating system's manpages for general information on
 most features.  Consult L<perlfunc> for functions which are noted as being
-identical to Perl's builtin functions.
+identical or almost identical to Perl's builtin functions.
 
 The first section describes POSIX functions from the 1003.1 specification.
 The second section describes some classes for signal objects, TTY objects,
@@ -81,8 +81,13 @@ if the handler does not return normally (it e.g.  does a C<longjmp>).
 
 =item C<abs>
 
-This is identical to Perl's builtin C<abs()> function, returning
-the absolute value of its numerical argument.
+This is identical to Perl's builtin C<abs()> function, returning the absolute
+value of its numerical argument (except that C<POSIX::abs()> must be provided
+an explicit value (rather than relying on an implicit C<$_>):
+
+    $absolute_value = POSIX::abs(42);   # good
+
+    $absolute_value = POSIX::abs();     # throws exception
 
 =item C<access>
 
@@ -110,8 +115,13 @@ L<Math::Trig>.
 
 =item C<alarm>
 
-This is identical to Perl's builtin C<alarm()> function,
-either for arming or disarming the C<SIGARLM> timer.
+This is identical to Perl's builtin C<alarm()> function, either for arming or
+disarming the C<SIGARLM> timer, except that C<POSIX::alarm()> must be provided
+an explicit value (rather than relying on an implicit C<$_>):
+
+    POSIX::alarm(3)     # good
+
+    POSIX::alarm()      # throws exception
 
 =item C<asctime>
 
@@ -203,13 +213,27 @@ integer value greater than or equal to the given numerical argument.
 
 =item C<chdir>
 
-This is identical to Perl's builtin C<chdir()> function, allowing
-one to change the working (default) directory, see L<perlfunc/chdir>.
+This is identical to Perl's builtin C<chdir()> function, allowing one to
+change the working (default) directory -- see L<perlfunc/chdir> -- with the
+exception that C<POSIX::chdir()> must be provided an explicit value (rather
+than relying on an implicit C<$_>):
+
+    $rv = POSIX::chdir('path/to/dir');      # good
+
+    $rv = POSIX::chdir();                   # throws exception
 
 =item C<chmod>
 
 This is identical to Perl's builtin C<chmod()> function, allowing
-one to change file and directory permissions, see L<perlfunc/chmod>.
+one to change file and directory permissions -- see L<perlfunc/chmod> -- with
+the exception that C<POSIX::chmod()> can only change one file at a time
+(rather than a list of files):
+
+    $c = chmod 0664, $file1, $file2;          # good
+
+    $c = POSIX::chmod 0664, $file1;           # throws exception
+
+    $c = POSIX::chmod 0664, $file1, $file2;   # throws exception
 
 =item C<chown>
 
@@ -915,6 +939,14 @@ containing the current underlying locale's formatting values.  Users of this fun
 should also read L<perllocale>, which provides a comprehensive
 discussion of Perl locale handling, including
 L<a section devoted to this function|perllocale/The localeconv function>.
+Prior to Perl 5.28, or when operating in a non thread-safe environment,
+it should not be used in a threaded application unless it's certain that
+the underlying locale is C or POSIX.  This is because it otherwise
+changes the locale, which globally affects all threads simultaneously.
+Windows platforms starting with Visual Studio 2005 are mostly
+thread-safe, but use of this function in those prior to Visual Studio
+2015 can interefere with a thread that has called
+L<perlapi/switch_to_global_locale>.
 
 Here is how to query the database for the B<de> (Deutsch or German) locale.
 
@@ -958,7 +990,15 @@ POSIX.1-2008 and are only available on systems that support them.
 =item C<localtime>
 
 This is identical to Perl's builtin C<localtime()> function for
-converting seconds since the epoch to a date see L<perlfunc/localtime>.
+converting seconds since the epoch to a date see L<perlfunc/localtime> except
+that C<POSIX::localtime()> must be provided an explicit value (rather than
+relying on an implicit C<$_>):
+
+    @localtime = POSIX::localtime(time);    # good
+
+    @localtime = localtime();               # good
+
+    @localtime = POSIX::localtime();        # throws exception
 
 =item C<log>
 
@@ -1013,7 +1053,7 @@ See also L</ceil>, L</floor>, L</trunc>.
 
 Owing to an oversight, this is not currently exported by default, or as part of
 the C<:math_h_c99> export tag; importing it must therefore be done by explicit
-name. This will be changed in Perl 5.26.
+name.
 
 =item C<malloc>
 
@@ -1671,6 +1711,10 @@ for collating (comparing) strings transformed using
 the C<strxfrm()> function.  Not really needed since
 Perl can do this transparently, see L<perllocale>.
 
+Beware that in a UTF-8 locale, anything you pass to this function must
+be in UTF-8; and when not in a UTF-8 locale, anything passed must not be
+UTF-8 encoded.
+
 =item C<strcpy>
 
 Not implemented.  C<strcpy()> is C-specific, use C<=> instead, see L<perlop>.
@@ -1768,7 +1812,10 @@ may not check for overflow, and therefore will never set C<$!>.
 
 C<strtod> respects any POSIX C<setlocale()> C<LC_TIME> settings,
 regardless of whether or not it is called from Perl code that is within
-the scope of S<C<use locale>>.
+the scope of S<C<use locale>>.  This means it should not be used in a
+threaded application unless it's certain that the underlying locale is C
+or POSIX.  This is because it otherwise changes the locale, which
+globally affects all threads simultaneously.
 
 To parse a string C<$str> as a floating point number use
 
@@ -1842,6 +1889,10 @@ Used in conjunction with the C<strcoll()> function, see L</strcoll>.
 
 Not really needed since Perl can do this transparently, see
 L<perllocale>.
+
+Beware that in a UTF-8 locale, anything you pass to this function must
+be in UTF-8; and when not in a UTF-8 locale, anything passed must not be
+UTF-8 encoded.
 
 =item C<sysconf>
 
@@ -1941,13 +1992,9 @@ Not implemented.  Use method C<IO::File::new_tmpfile()> instead, or see L<File::
 
 =item C<tmpnam>
 
-Returns a name for a temporary file.
-
-	$tmpfile = POSIX::tmpnam();
-
 For security reasons, which are probably detailed in your system's
 documentation for the C library C<tmpnam()> function, this interface
-should not be used; instead see L<File::Temp>.
+is no longer available; instead use L<File::Temp>.
 
 =item C<tolower>
 
@@ -2429,6 +2476,18 @@ C<_POSIX_TZNAME_MAX> C<_POSIX_VDISABLE> C<_POSIX_VERSION>
 
 =back
 
+=head1 RESOURCE CONSTANTS
+
+Imported with the C<:sys_resource_h> tag.
+
+=over 8
+
+=item Constants
+
+C<PRIO_PROCESS> C<PRIO_PGRP> C<PRIO_USER>
+
+=back
+
 =head1 SYSTEM CONFIGURATION
 
 =over 8
@@ -2589,7 +2648,7 @@ C<EXIT_FAILURE> C<EXIT_SUCCESS> C<MB_CUR_MAX> C<RAND_MAX>
 
 =item Constants
 
-C<BUFSIZ> C<EOF> C<FILENAME_MAX> C<L_ctermid> C<L_cuserid> C<L_tmpname> C<TMP_MAX>
+C<BUFSIZ> C<EOF> C<FILENAME_MAX> C<L_ctermid> C<L_cuserid> C<TMP_MAX>
 
 =back
 

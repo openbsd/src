@@ -1,5 +1,7 @@
 package ExtUtils::CBuilder::Platform::Windows::BCC;
-$ExtUtils::CBuilder::Platform::Windows::BCC::VERSION = '0.280225';
+
+our $VERSION = '0.280230'; # VERSION
+
 use strict;
 use warnings;
 

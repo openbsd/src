@@ -5,7 +5,7 @@ use strict;
 use vars qw( $VERSION $HTML_RENDER_CLASS $HTML_EXTENSION
  $CSS $JAVASCRIPT $SLEEPY $SEARCH_CLASS @ISA
 );
-$VERSION = '3.32';
+$VERSION = '3.35';
 @ISA = ();  # Yup, we're NOT a subclass of Pod::Simple::HTML!
 
 # TODO: nocontents stylesheets. Strike some of the color variations?

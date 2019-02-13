@@ -5,7 +5,7 @@
 
 package feature;
 
-our $VERSION = '1.42';
+our $VERSION = '1.52';
 
 our %feature = (
     fc              => 'feature_fc',
@@ -14,14 +14,13 @@ our %feature = (
     switch          => 'feature_switch',
     bitwise         => 'feature_bitwise',
     evalbytes       => 'feature_evalbytes',
-    postderef       => 'feature_postderef',
     array_base      => 'feature_arybase',
     signatures      => 'feature_signatures',
     current_sub     => 'feature___SUB__',
     refaliasing     => 'feature_refaliasing',
-    lexical_subs    => 'feature_lexsubs',
     postderef_qq    => 'feature_postderef_qq',
     unicode_eval    => 'feature_unieval',
+    declared_refs   => 'feature_myref',
     unicode_strings => 'feature_unicode',
 );
 
@@ -30,7 +29,8 @@ our %feature_bundle = (
     "5.11"    => [qw(array_base say state switch unicode_strings)],
     "5.15"    => [qw(current_sub evalbytes fc say state switch unicode_eval unicode_strings)],
     "5.23"    => [qw(current_sub evalbytes fc postderef_qq say state switch unicode_eval unicode_strings)],
-    "all"     => [qw(array_base bitwise current_sub evalbytes fc lexical_subs postderef postderef_qq refaliasing say signatures state switch unicode_eval unicode_strings)],
+    "5.27"    => [qw(bitwise current_sub evalbytes fc postderef_qq say state switch unicode_eval unicode_strings)],
+    "all"     => [qw(array_base bitwise current_sub declared_refs evalbytes fc postderef_qq refaliasing say signatures state switch unicode_eval unicode_strings)],
     "default" => [qw(array_base)],
 );
 
@@ -45,11 +45,18 @@ $feature_bundle{"5.20"} = $feature_bundle{"5.15"};
 $feature_bundle{"5.21"} = $feature_bundle{"5.15"};
 $feature_bundle{"5.22"} = $feature_bundle{"5.15"};
 $feature_bundle{"5.24"} = $feature_bundle{"5.23"};
+$feature_bundle{"5.25"} = $feature_bundle{"5.23"};
+$feature_bundle{"5.26"} = $feature_bundle{"5.23"};
+$feature_bundle{"5.28"} = $feature_bundle{"5.27"};
 $feature_bundle{"5.9.5"} = $feature_bundle{"5.10"};
+my %noops = (
+    postderef => 1,
+    lexical_subs => 1,
+);
 
 our $hint_shift   = 26;
 our $hint_mask    = 0x1c000000;
-our @hint_bundles = qw( default 5.10 5.11 5.15 5.23 );
+our @hint_bundles = qw( default 5.10 5.11 5.15 5.23 5.27 );
 
 # This gets set (for now) in $^H as well as in %^H,
 # for runtime speed of the uc/lc/ucfirst/lcfirst functions.
@@ -169,54 +176,29 @@ potentially using Unicode in your program, the
 C<use feature 'unicode_strings'> subpragma is B<strongly> recommended.
 
 This feature is available starting with Perl 5.12; was almost fully
-implemented in Perl 5.14; and extended in Perl 5.16 to cover C<quotemeta>.
+implemented in Perl 5.14; and extended in Perl 5.16 to cover C<quotemeta>;
+was extended further in Perl 5.26 to cover L<the range
+operator|perlop/Range Operators>; and was extended again in Perl 5.28 to
+cover L<special-cased whitespace splitting|perlfunc/split>.
 
 =head2 The 'unicode_eval' and 'evalbytes' features
 
-Under the C<unicode_eval> feature, Perl's C<eval> function, when passed a
-string, will evaluate it as a string of characters, ignoring any
-C<use utf8> declarations.  C<use utf8> exists to declare the encoding of
-the script, which only makes sense for a stream of bytes, not a string of
-characters.  Source filters are forbidden, as they also really only make
-sense on strings of bytes.  Any attempt to activate a source filter will
-result in an error.
+Together, these two features are intended to replace the legacy string
+C<eval> function, which behaves problematically in some instances.  They are
+available starting with Perl 5.16, and are enabled by default by a
+S<C<use 5.16>> or higher declaration.
 
-The C<evalbytes> feature enables the C<evalbytes> keyword, which evaluates
-the argument passed to it as a string of bytes.  It dies if the string
-contains any characters outside the 8-bit range.  Source filters work
-within C<evalbytes>: they apply to the contents of the string being
-evaluated.
+C<unicode_eval> changes the behavior of plain string C<eval> to work more
+consistently, especially in the Unicode world.  Certain (mis)behaviors
+couldn't be changed without breaking some things that had come to rely on
+them, so the feature can be enabled and disabled.  Details are at
+L<perlfunc/Under the "unicode_eval" feature>.
 
-Together, these two features are intended to replace the historical C<eval>
-function, which has (at least) two bugs in it, that cannot easily be fixed
-without breaking existing programs:
-
-=over
-
-=item *
-
-C<eval> behaves differently depending on the internal encoding of the
-string, sometimes treating its argument as a string of bytes, and sometimes
-as a string of characters.
-
-=item *
-
-Source filters activated within C<eval> leak out into whichever I<file>
-scope is currently being compiled.  To give an example with the CPAN module
-L<Semi::Semicolons>:
-
-    BEGIN { eval "use Semi::Semicolons;  # not filtered here " }
-    # filtered here!
-
-C<evalbytes> fixes that to work the way one would expect:
-
-    use feature "evalbytes";
-    BEGIN { evalbytes "use Semi::Semicolons;  # filtered " }
-    # not filtered
-
-=back
-
-These two features are available starting with Perl 5.16.
+C<evalbytes> is like string C<eval>, but operating on a byte stream that is
+not UTF-8 encoded.  Details are at L<perlfunc/evalbytes EXPR>.  Without a
+S<C<use feature 'evalbytes'>> nor a S<C<use v5.16>> (or higher) declaration in
+the current scope, you can still access it by instead writing
+C<CORE::evalbytes>.
 
 =head2 The 'current_sub' feature
 
@@ -246,17 +228,21 @@ This feature is available from Perl 5.16 onwards.
 
 =head2 The 'lexical_subs' feature
 
-B<WARNING>: This feature is still experimental and the implementation may
-change in future versions of Perl.  For this reason, Perl will
-warn when you use the feature, unless you have explicitly disabled the
-warning:
-
-    no warnings "experimental::lexical_subs";
-
-This enables declaration of subroutines via C<my sub foo>, C<state sub foo>
+In Perl versions prior to 5.26, this feature enabled
+declaration of subroutines via C<my sub foo>, C<state sub foo>
 and C<our sub foo> syntax.  See L<perlsub/Lexical Subroutines> for details.
 
-This feature is available from Perl 5.18 onwards.
+This feature is available from Perl 5.18 onwards.  From Perl 5.18 to 5.24,
+it was classed as experimental, and Perl emitted a warning for its
+usage, except when explicitly disabled:
+
+  no warnings "experimental::lexical_subs";
+
+As of Perl 5.26, use of this feature no longer triggers a warning, though
+the C<experimental::lexical_subs> warning category still exists (for
+compatibility with code that disables it).  In addition, this syntax is
+not only no longer experimental, but it is enabled for all Perl code,
+regardless of what feature declarations are in scope.
 
 =head2 The 'postderef' and 'postderef_qq' features
 
@@ -330,13 +316,6 @@ This feature is available from Perl 5.22 onwards.
 
 =head2 The 'bitwise' feature
 
-B<WARNING>: This feature is still experimental and the implementation may
-change in future versions of Perl.  For this reason, Perl will
-warn when you use the feature, unless you have explicitly disabled the
-warning:
-
-    no warnings "experimental::bitwise";
-
 This makes the four standard bitwise operators (C<& | ^ ~>) treat their
 operands consistently as numbers, and introduces four new dotted operators
 (C<&. |. ^. ~.>) that treat their operands consistently as strings.  The
@@ -344,7 +323,26 @@ same applies to the assignment variants (C<&= |= ^= &.= |.= ^.=>).
 
 See L<perlop/Bitwise String Operators> for details.
 
-This feature is available from Perl 5.22 onwards.
+This feature is available from Perl 5.22 onwards.  Starting in Perl 5.28,
+C<use v5.28> will enable the feature.  Before 5.28, it was still
+experimental and would emit a warning in the "experimental::bitwise"
+category.
+
+=head2 The 'declared_refs' feature
+
+B<WARNING>: This feature is still experimental and the implementation may
+change in future versions of Perl.  For this reason, Perl will
+warn when you use the feature, unless you have explicitly disabled the
+warning:
+
+    no warnings "experimental::declared_refs";
+
+This allows a reference to a variable to be declared with C<my>, C<state>,
+our C<our>, or localized with C<local>.  It is intended mainly for use in
+conjunction with the "refaliasing" feature.  See L<perlref/Declaring a
+Reference to a Variable> for examples.
+
+This feature is available from Perl 5.26 onwards.
 
 =head1 FEATURE BUNDLES
 
@@ -381,6 +379,14 @@ The following feature bundles are available:
   :5.24     say state switch unicode_strings
             unicode_eval evalbytes current_sub fc
             postderef_qq
+
+  :5.26     say state switch unicode_strings
+            unicode_eval evalbytes current_sub fc
+            postderef_qq
+
+  :5.28     say state switch unicode_strings
+            unicode_eval evalbytes current_sub fc
+            postderef_qq bitwise
 
 The C<:default> bundle represents the feature set that is enabled before
 any C<use feature> or C<no feature> declaration.
@@ -430,6 +436,9 @@ with the same effect.
 
 If the required version is older than Perl 5.10, the ":default" feature
 bundle is automatically loaded instead.
+
+Unlike C<use feature ":5.12">, saying C<use v5.12> (or any higher version)
+also does the equivalent of C<use strict>; see L<perlfunc/use> for details.
 
 =back
 
@@ -487,6 +496,9 @@ sub __common {
             next;
         }
         if (!exists $feature{$name}) {
+            if (exists $noops{$name}) {
+                next;
+            }
             unknown_feature($name);
         }
 	if ($import) {

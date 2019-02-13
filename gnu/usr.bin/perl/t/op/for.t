@@ -548,20 +548,13 @@ for my $i (reverse (map {$_} @array, 1)) {
 }
 is ($r, '1CBA', 'Reverse for array and value via map with var');
 
-TODO: {
-    if (do {17; foreach (1, 2) { 1; } } != 17) {
-        #print "not ";
-	todo_skip("RT #1085: what should be output of perl -we 'print do { foreach (1, 2) { 1; } }'");
-     }
-}
+is do {17; foreach (1, 2) { 1; } }, '', "RT #1085: what should be output of perl -we 'print do { foreach (1, 2) { 1; } }'";
 
 TODO: {
     local $TODO = "RT #2166: foreach spuriously autovivifies";
     my %h;
     foreach (@h{a, b}) {}
-    if(keys(%h)) {
-        todo_skip("RT #2166: foreach spuriously autovivifies");
-    }
+    is keys(%h), 0, 'RT #2166: foreach spuriously autovivifies';
 }
 
 sub {

@@ -18,7 +18,7 @@ sub BEGIN {
 
 
 use Storable qw(freeze thaw dclone);
-use vars qw($debugging $verbose);
+our ($debugging, $verbose);
 
 use Test::More tests => 8;
 
@@ -34,7 +34,7 @@ $maxarraysize = 100;
 
 eval { require Digest::MD5; };
 $gotmd5 = !$@;
-note "Will use Digest::MD5" if $gotmd5;
+diag "Will use Digest::MD5" if $gotmd5;
 
 # Use Data::Dumper if debugging and it is available to create an ASCII dump
 

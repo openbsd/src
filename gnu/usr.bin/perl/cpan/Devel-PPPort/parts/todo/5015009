@@ -1,5 +1,0 @@
-5.015009
-utf8_to_uvchr_buf              # U
-utf8_to_uvuni_buf              # U
-valid_utf8_to_uvchr            # U
-valid_utf8_to_uvuni            # U

@@ -2,7 +2,7 @@ package utf8;
 
 $utf8::hint_bits = 0x00800000;
 
-our $VERSION = '1.19';
+our $VERSION = '1.21';
 
 sub import {
     $^H |= $utf8::hint_bits;
@@ -109,11 +109,26 @@ you should not say that unless you really want to have UTF-8 source code.
 Converts in-place the internal representation of the string from an octet
 sequence in the native encoding (Latin-1 or EBCDIC) to UTF-8. The
 logical character sequence itself is unchanged.  If I<$string> is already
-stored as UTF-8, then this is a no-op. Returns the
-number of octets necessary to represent the string as UTF-8.  Can be
-used to make sure that the UTF-8 flag is on, so that C<\w> or C<lc()>
-work as Unicode on strings containing non-ASCII characters whose code points
-are below 256.
+upgraded, then this is a no-op. Returns the
+number of octets necessary to represent the string as UTF-8.
+
+If your code needs to be compatible with versions of perl without
+C<use feature 'unicode_strings';>, you can force Unicode semantics on
+a given string:
+
+  # force unicode semantics for $string without the
+  # "unicode_strings" feature
+  utf8::upgrade($string);
+
+For example:
+
+  # without explicit or implicit use feature 'unicode_strings'
+  my $x = "\xDF";    # LATIN SMALL LETTER SHARP S
+  $x =~ /ss/i;       # won't match
+  my $y = uc($x);    # won't convert
+  utf8::upgrade($x);
+  $x =~ /ss/i;       # matches
+  my $z = uc($x);    # converts to "SS"
 
 B<Note that this function does not handle arbitrary encodings>;
 use L<Encode> instead.
@@ -121,20 +136,27 @@ use L<Encode> instead.
 =item * C<$success = utf8::downgrade($string[, $fail_ok])>
 
 (Since Perl v5.8.0)
-Converts in-place the internal representation of the string from
-UTF-8 to the equivalent octet sequence in the native encoding (Latin-1
-or EBCDIC). The logical character sequence itself is unchanged. If
-I<$string> is already stored as native 8 bit, then this is a no-op.  Can
-be used to
-make sure that the UTF-8 flag is off, e.g. when you want to make sure
-that the substr() or length() function works with the usually faster
-byte algorithm.
+Converts in-place the internal representation of the string from UTF-8 to the
+equivalent octet sequence in the native encoding (Latin-1 or EBCDIC). The
+logical character sequence itself is unchanged. If I<$string> is already
+stored as native 8 bit, then this is a no-op.  Can be used to make sure that
+the UTF-8 flag is off, e.g. when you want to make sure that the substr() or
+length() function works with the usually faster byte algorithm.
 
 Fails if the original UTF-8 sequence cannot be represented in the
 native 8 bit encoding. On failure dies or, if the value of I<$fail_ok> is
 true, returns false. 
 
 Returns true on success.
+
+If your code expects an octet sequence this can be used to validate
+that you've received one:
+
+  # throw an exception if not representable as octets
+  utf8::downgrade($string)
+
+  # or do your own error handling
+  utf8::downgrade($string, 1) or die "string must be octets";
 
 B<Note that this function does not handle arbitrary encodings>;
 use L<Encode> instead.
@@ -143,15 +165,20 @@ use L<Encode> instead.
 
 (Since Perl v5.8.0)
 Converts in-place the character sequence to the corresponding octet
-sequence in UTF-8. That is, every (possibly wide) character gets
-replaced with a sequence of one or more characters that represent the
+sequence in Perl's extended UTF-8. That is, every (possibly wide) character
+gets replaced with a sequence of one or more characters that represent the
 individual UTF-8 bytes of the character.  The UTF8 flag is turned off.
 Returns nothing.
 
- my $a = "\x{100}"; # $a contains one character, with ord 0x100
- utf8::encode($a);  # $a contains two characters, with ords (on
+ my $x = "\x{100}"; # $x contains one character, with ord 0x100
+ utf8::encode($x);  # $x contains two characters, with ords (on
                     # ASCII platforms) 0xc4 and 0x80.  On EBCDIC
                     # 1047, this would instead be 0x8C and 0x41.
+
+Similar to:
+
+  use Encode;
+  $x = Encode::encode("utf8", $x);
 
 B<Note that this function does not handle arbitrary encodings>;
 use L<Encode> instead.
@@ -159,19 +186,19 @@ use L<Encode> instead.
 =item * C<$success = utf8::decode($string)>
 
 (Since Perl v5.8.0)
-Attempts to convert in-place the octet sequence encoded as UTF-8 to the
-corresponding character sequence. That is, it replaces each sequence of
-characters in the string whose ords represent a valid UTF-8 byte
-sequence, with the corresponding single character.  The UTF-8 flag is
-turned on only if the source string contains multiple-byte UTF-8
-characters.  If I<$string> is invalid as UTF-8, returns false;
+Attempts to convert in-place the octet sequence encoded in Perl's extended
+UTF-8 to the corresponding character sequence. That is, it replaces each
+sequence of characters in the string whose ords represent a valid (extended)
+UTF-8 byte sequence, with the corresponding single character.  The UTF-8 flag
+is turned on only if the source string contains multiple-byte UTF-8
+characters.  If I<$string> is invalid as extended UTF-8, returns false;
 otherwise returns true.
 
- my $a = "\xc4\x80"; # $a contains two characters, with ords
+ my $x = "\xc4\x80"; # $x contains two characters, with ords
                      # 0xc4 and 0x80
- utf8::decode($a);   # On ASCII platforms, $a contains one char,
+ utf8::decode($x);   # On ASCII platforms, $x contains one char,
                      # with ord 0x100.   Since these bytes aren't
-                     # legal UTF-EBCDIC, on EBCDIC platforms, $a is
+                     # legal UTF-EBCDIC, on EBCDIC platforms, $x is
                      # unchanged and the function returns FALSE.
 
 B<Note that this function does not handle arbitrary encodings>;
@@ -208,16 +235,31 @@ platforms, so there is no performance hit in using it there.
 =item * C<$flag = utf8::is_utf8($string)>
 
 (Since Perl 5.8.1)  Test whether I<$string> is marked internally as encoded in
-UTF-8.  Functionally the same as C<Encode::is_utf8()>.
+UTF-8.  Functionally the same as C<Encode::is_utf8($string)>.
+
+Typically only necessary for debugging and testing, if you need to
+dump the internals of an SV, L<Devel::Peek's|Devel::Peek> Dump()
+provides more detail in a compact form.
+
+If you still think you need this outside of debugging, testing or
+dealing with filenames, you should probably read L<perlunitut> and
+L<perlunifaq/What is "the UTF8 flag"?>.
+
+Don't use this flag as a marker to distinguish character and binary
+data: that should be decided for each variable when you write your
+code.
+
+To force unicode semantics in code portable to perl 5.8 and 5.10, call
+C<utf8::upgrade($string)> unconditionally.
 
 =item * C<$flag = utf8::valid($string)>
 
 [INTERNAL] Test whether I<$string> is in a consistent state regarding
-UTF-8.  Will return true if it is well-formed UTF-8 and has the UTF-8 flag
+UTF-8.  Will return true if it is well-formed Perl extended UTF-8 and has the
+UTF-8 flag
 on B<or> if I<$string> is held as bytes (both these states are 'consistent').
-Main reason for this routine is to allow Perl's test suite to check
-that operations have left strings in a consistent state.  You most
-probably want to use C<utf8::is_utf8()> instead.
+The main reason for this routine is to allow Perl's test suite to check
+that operations have left strings in a consistent state.
 
 =back
 

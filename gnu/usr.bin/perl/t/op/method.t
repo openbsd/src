@@ -6,17 +6,45 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib lib ../dist/base/lib);
     require "./test.pl";
+    set_up_inc( qw(. ../lib lib ../dist/base/lib) );
 }
 
 use strict;
 no warnings 'once';
 
-plan(tests => 151);
+plan(tests => 162);
 
-@A::ISA = 'B';
-@B::ISA = 'C';
+{
+    # RT #126042 &{1==1} * &{1==1} would crash
+    # There are two issues here.  Method lookup yields a fake method for
+    # ->import or ->unimport if there's no actual method, for historical
+    # reasons so that "use" doesn't barf if there's no import method.
+    # The first bug, the one which caused the crash, is that the fake
+    # method was broken in scalar context, messing up the stack.  We test
+    # for that on its own.
+    foreach my $meth (qw(import unimport)) {
+	is join(",", map { $_ // "u" } "a", "b", "Unknown"->$meth, "c", "d"), "a,b,c,d", "Unknown->$meth in list context";
+	is join(",", map { $_ // "u" } "a", "b", scalar("Unknown"->$meth), "c", "d"), "a,b,u,c,d", "Unknown->$meth in scalar context";
+    }
+    # The second issue is that the fake method wasn't actually a CV or
+    # anything referencing a CV, but was &PL_sv_yes being used as a magic
+    # placeholder.  That's inconsistent with &PL_sv_yes being a string,
+    # which we'd expect to serve as a symbolic CV ref.  This test must
+    # come before AUTOLOAD gets set up below.
+    foreach my $one (1, !!1) {
+	my @res = eval { no strict "refs"; &$one() };
+	like $@, qr/\AUndefined subroutine \&main::1 called at /;
+	@res = eval { no strict "refs"; local *1 = sub { 123 }; &$one() };
+	is $@, "";
+	is "@res", "123";
+	@res = eval { &$one() };
+	like $@, qr/\ACan't use string \("1"\) as a subroutine ref while "strict refs" in use at /;
+    }
+}
+
+@A::ISA = 'BB';
+@BB::ISA = 'C';
 
 sub C::d {"C::d"}
 sub D::d {"D::d"}
@@ -55,7 +83,7 @@ is(method $obj, "method");
 
 is( A->d, "C::d");		# Update hash table;
 
-*B::d = \&D::d;			# Import now.
+*BB::d = \&D::d;			# Import now.
 is(A->d, "D::d");		# Update hash table;
 
 {
@@ -67,42 +95,42 @@ is(A->d, "D::d");		# Update hash table;
 is(A->d, "D::d");
 
 {
-    local *B::d;
-    eval 'sub B::d {"B::d1"}';	# Import now.
-    is(A->d, "B::d1");	# Update hash table;
-    undef &B::d;
+    local *BB::d;
+    eval 'sub BB::d {"BB::d1"}';	# Import now.
+    is(A->d, "BB::d1");	# Update hash table;
+    undef &BB::d;
     is((eval { A->d }, ($@ =~ /Undefined subroutine/)), 1);
 }
 
 is(A->d, "D::d");		# Back to previous state
 
-eval 'no warnings "redefine"; sub B::d {"B::d2"}';	# Import now.
-is(A->d, "B::d2");		# Update hash table;
+eval 'no warnings "redefine"; sub BB::d {"BB::d2"}';	# Import now.
+is(A->d, "BB::d2");		# Update hash table;
 
 # What follows is hardly guarantied to work, since the names in scripts
-# are already linked to "pruned" globs. Say, 'undef &B::d' if it were
-# after 'delete $B::{d}; sub B::d {}' would reach an old subroutine.
+# are already linked to "pruned" globs. Say, 'undef &BB::d' if it were
+# after 'delete $BB::{d}; sub BB::d {}' would reach an old subroutine.
 
-undef &B::d;
-delete $B::{d};
+undef &BB::d;
+delete $BB::{d};
 is(A->d, "C::d");
 
-eval 'sub B::d {"B::d2.5"}';
+eval 'sub BB::d {"BB::d2.5"}';
 A->d;				# Update hash table;
-my $glob = \delete $B::{d};	# non-void context; hang on to the glob
+my $glob = \delete $BB::{d};	# non-void context; hang on to the glob
 is(A->d, "C::d");		# Update hash table;
 
-eval 'sub B::d {"B::d3"}';	# Import now.
-is(A->d, "B::d3");		# Update hash table;
+eval 'sub BB::d {"BB::d3"}';	# Import now.
+is(A->d, "BB::d3");		# Update hash table;
 
-delete $B::{d};
+delete $BB::{d};
 *dummy::dummy = sub {};		# Mark as updated
 is(A->d, "C::d");
 
-eval 'sub B::d {"B::d4"}';	# Import now.
-is(A->d, "B::d4");		# Update hash table;
+eval 'sub BB::d {"BB::d4"}';	# Import now.
+is(A->d, "BB::d4");		# Update hash table;
 
-delete $B::{d};			# Should work without any help too
+delete $BB::{d};			# Should work without any help too
 is(A->d, "C::d");
 
 {
@@ -119,23 +147,23 @@ my $counter;
 
 eval <<'EOF';
 sub C::e;
-BEGIN { *B::e = \&C::e }	# Shouldn't prevent AUTOLOAD in original pkg
+BEGIN { *BB::e = \&C::e }	# Shouldn't prevent AUTOLOAD in original pkg
 sub Y::f;
 $counter = 0;
 
 @X::ISA = 'Y';
-@Y::ISA = 'B';
+@Y::ISA = 'BB';
 
-sub B::AUTOLOAD {
+sub BB::AUTOLOAD {
   my $c = ++$counter;
-  my $method = $B::AUTOLOAD; 
+  my $method = $BB::AUTOLOAD;
   my $msg = "B: In $method, $c";
   eval "sub $method { \$msg }";
   goto &$method;
 }
 sub C::AUTOLOAD {
   my $c = ++$counter;
-  my $method = $C::AUTOLOAD; 
+  my $method = $C::AUTOLOAD;
   my $msg = "C: In $method, $c";
   eval "sub $method { \$msg }";
   goto &$method;
@@ -157,10 +185,10 @@ is(Y->f(), "B: In Y::f, 3");	# Which sticks
 
 {
 no warnings 'redefine';
-*B::AUTOLOAD = sub {
+*BB::AUTOLOAD = sub {
   use warnings;
   my $c = ++$counter;
-  my $method = $::AUTOLOAD; 
+  my $method = $::AUTOLOAD;
   no strict 'refs';
   *$::AUTOLOAD = sub { "new B: In $method, $c" };
   goto &$::AUTOLOAD;
@@ -198,7 +226,7 @@ my $e;
 
 eval '$e = bless {}, "E::A"; E::A->foo()';
 like ($@, qr/^\QCan't locate object method "foo" via package "E::A" at/);
-eval '$e = bless {}, "E::B"; $e->foo()';  
+eval '$e = bless {}, "E::B"; $e->foo()';
 like ($@, qr/^\QCan't locate object method "foo" via package "E::B" at/);
 eval 'E::C->foo()';
 like ($@, qr/^\QCan't locate object method "foo" via package "E::C" (perhaps /);
@@ -233,7 +261,7 @@ sub OtherSouper::method { "Isidore Ropen, Draft Manager" }
    @ret = OtherSaab->SUPER::method;
    ::is $ret[0], 'OtherSaab',
       "->SUPER::method uses current package, not invocant";
-}  
+}
 () = *SUPER::;
 {
    local our @ISA = "Souper";
@@ -311,7 +339,7 @@ is( Foo->boogie(), "yes, sir!");
 eval 'sub AUTOLOAD { "ok ", shift, "\n"; }';
 ok(1);
 
-# Bug ID 20010902.002
+# Bug ID 20010902.002 (#7609)
 is(
     eval q[
 	my $x = 'x'; # Lexical or package variable, 5.6.1 panics.
@@ -336,7 +364,7 @@ is(
     is($w, '');
 }
 
-# [ID 20020305.025] PACKAGE::SUPER doesn't work anymore
+# [ID 20020305.025 (#8788)] PACKAGE::SUPER doesn't work anymore
 
 package main;
 our @X;
@@ -543,7 +571,7 @@ like $@,
      qr/^Can't call method "squeak" on unblessed reference/,
     'method call on \*typeglob';
 *stdout2 = *STDOUT;  # stdout2 now stringifies as *main::STDOUT
-sub IO::Handle::self { $_[0] }
+ sub IO::Handle::self { $_[0] }
 # This used to stringify the glob:
 is *stdout2->self, (\*stdout2)->self,
   '*glob->method is equiv to (\*glob)->method';
@@ -687,26 +715,12 @@ SKIP: {
     like ($@, qr/Modification of a read-only value attempted/, 'RT #123619');
 }
 
-{
-    # RT #126042 &{1==1} * &{1==1} would crash
-
-    # pp_entersub and pp_method_named cooperate to prevent calls to an
-    # undefined import() or unimport() method from croaking.
-    # If pp_method_named can't find the method it pushes &PL_sv_yes, and
-    # pp_entersub checks for that specific SV to avoid croaking.
-    # Ideally they wouldn't use that hack but...
-    # Unfortunately pp_entersub's handling of that case is broken in scalar context.
-
-    # Rather than using the test case from the ticket, since &{1==1}
-    # isn't documented (and may not be supported in future perls) test
-    # calls to undefined import method, which also crashes.
-    fresh_perl_is('Unknown->import() * Unknown->unimport(); print "ok\n"', "ok\n", {},
-                  "check unknown import() methods don't corrupt the stack");
-}
-
-like runperl(prog => 'sub ub(){0} ub ub', stderr=>1), qr/Bareword found/,
- '[perl #126482] Assert failure when mentioning a constant twice in a row';
-
+# RT#130496: assertion failure when looking for a method of undefined name
+# on an unblessed reference
+fresh_perl_is('eval { {}->$x }; print $@;',
+              "Can't call method \"\" on unblessed reference at - line 1.",
+              {},
+              "no crash with undef method name on unblessed ref");
 
 __END__
 #FF9900

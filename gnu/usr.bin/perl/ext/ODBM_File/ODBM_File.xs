@@ -175,6 +175,7 @@ odbm_STORE(db, key, value, flags = DBM_REPLACE)
 	    croak("odbm store returned %d, errno %d, key \"%s\"",
 			RETVAL,errno,key.dptr);
 	}
+        PERL_UNUSED_VAR(flags);
 
 int
 odbm_DELETE(db, key)

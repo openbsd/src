@@ -52,10 +52,13 @@
 
 #define CJK_UidIni    (0x4E00)
 #define CJK_UidFin    (0x9FA5)
-#define CJK_UidF41    (0x9FBB)
-#define CJK_UidF51    (0x9FC3)
-#define CJK_UidF52    (0x9FCB)
-#define CJK_UidF61    (0x9FCC)
+#define CJK_UidF41    (0x9FBB) /* Unicode 4.1 */
+#define CJK_UidF51    (0x9FC3) /* Unicode 5.1 */
+#define CJK_UidF52    (0x9FCB) /* Unicode 5.2 */
+#define CJK_UidF61    (0x9FCC) /* Unicode 6.1 */
+#define CJK_UidF80    (0x9FD5) /* Unicode 8.0 */
+#define CJK_UidF100   (0x9FEA) /* Unicode 10.0 */
+
 #define CJK_ExtAIni   (0x3400) /* Unicode 3.0 */
 #define CJK_ExtAFin   (0x4DB5) /* Unicode 3.0 */
 #define CJK_ExtBIni  (0x20000) /* Unicode 3.1 */
@@ -64,12 +67,23 @@
 #define CJK_ExtCFin  (0x2B734) /* Unicode 5.2 */
 #define CJK_ExtDIni  (0x2B740) /* Unicode 6.0 */
 #define CJK_ExtDFin  (0x2B81D) /* Unicode 6.0 */
+#define CJK_ExtEIni  (0x2B820) /* Unicode 8.0 */
+#define CJK_ExtEFin  (0x2CEA1) /* Unicode 8.0 */
+#define CJK_ExtFIni  (0x2CEB0) /* Unicode 10.0 */
+#define CJK_ExtFFin  (0x2EBE0) /* Unicode 10.0 */
 
 #define CJK_CompIni  (0xFA0E)
 #define CJK_CompFin  (0xFA29)
 static const STDCHAR UnifiedCompat[] = {
       1,1,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,0,0,1,1,1
 }; /* E F 0 1 2 3 4 5 6 7 8 9 A B C D E F 0 1 2 3 4 5 6 7 8 9 */
+
+#define TangIdeoIni  (0x17000) /* Unicode 9.0 */
+#define TangIdeoFin  (0x187EC) /* Unicode 9.0 */
+#define TangCompIni  (0x18800) /* Unicode 9.0 */
+#define TangCompFin  (0x18AF2) /* Unicode 9.0 */
+#define NushuIni     (0x1B170) /* Unicode 10.0 */
+#define NushuFin     (0x1B2FB) /* Unicode 10.0 */
 
 #define codeRange(bcode, ecode)	((bcode) <= code && code <= (ecode))
 
@@ -266,23 +280,38 @@ _derivCE_9 (code)
     _derivCE_20 = 3
     _derivCE_22 = 4
     _derivCE_24 = 5
+    _derivCE_32 = 6
+    _derivCE_34 = 7
+    _derivCE_36 = 8
   PREINIT:
     UV base, aaaa, bbbb;
     U8 a[VCE_Length + 1] = "\x00\x00\x00\x00\x00\x00\x00\x00\x00";
     U8 b[VCE_Length + 1] = "\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-    bool basic_unified = 0;
+    bool basic_unified = 0, tangut = 0, nushu = 0;
   PPCODE:
-    if (CJK_UidIni <= code) {
+    if (codeRange(CJK_UidIni, CJK_CompFin)) {
 	if (codeRange(CJK_CompIni, CJK_CompFin))
 	    basic_unified = (bool)UnifiedCompat[code - CJK_CompIni];
 	else
-	    basic_unified = (ix >= 5 ? (code <= CJK_UidF61) :
+	    basic_unified = (ix >= 8 ? (code <= CJK_UidF100) :
+			     ix >= 6 ? (code <= CJK_UidF80) :
+			     ix == 5 ? (code <= CJK_UidF61) :
 			     ix >= 3 ? (code <= CJK_UidF52) :
 			     ix == 2 ? (code <= CJK_UidF51) :
 			     ix == 1 ? (code <= CJK_UidF41) :
 				       (code <= CJK_UidFin));
+    } else {
+	if (ix >= 7)
+	    tangut = (codeRange(TangIdeoIni, TangIdeoFin) ||
+		      codeRange(TangCompIni, TangCompFin));
+	if (ix >= 8)
+	    nushu = (codeRange(NushuIni, NushuFin));
     }
-    base = (basic_unified)
+    base = tangut
+	    ? 0xFB00 :
+	   nushu
+	    ? 0xFB01 :
+	   basic_unified
 	    ? 0xFB40 : /* CJK */
 	   ((codeRange(CJK_ExtAIni, CJK_ExtAFin))
 		||
@@ -290,11 +319,16 @@ _derivCE_9 (code)
 		||
 	    (ix >= 3 && codeRange(CJK_ExtCIni, CJK_ExtCFin))
 		||
-	    (ix >= 4 && codeRange(CJK_ExtDIni, CJK_ExtDFin)))
+	    (ix >= 4 && codeRange(CJK_ExtDIni, CJK_ExtDFin))
+		||
+	    (ix >= 6 && codeRange(CJK_ExtEIni, CJK_ExtEFin))
+		||
+	    (ix >= 8 && codeRange(CJK_ExtFIni, CJK_ExtFFin)))
 	    ? 0xFB80   /* CJK ext. */
 	    : 0xFBC0;  /* others */
-    aaaa =  base + (code >> 15);
-    bbbb = (code & 0x7FFF) | 0x8000;
+    aaaa = tangut || nushu ? base : base + (code >> 15);
+    bbbb = (tangut ? (code - TangIdeoIni) :
+	    nushu  ? (code - NushuIni) : (code & 0x7FFF)) | 0x8000;
     a[1] = (U8)(aaaa >> 8);
     a[2] = (U8)(aaaa & 0xFF);
     b[1] = (U8)(bbbb >> 8);
@@ -355,7 +389,9 @@ _isUIdeo (code, uca_vers)
 	if (codeRange(CJK_CompIni, CJK_CompFin))
 	    basic_unified = (bool)UnifiedCompat[code - CJK_CompIni];
 	else
-	    basic_unified = (uca_vers >= 24 ? (code <= CJK_UidF61) :
+	    basic_unified = (uca_vers >= 36 ? (code <= CJK_UidF100) :
+			     uca_vers >= 32 ? (code <= CJK_UidF80) :
+			     uca_vers >= 24 ? (code <= CJK_UidF61) :
 			     uca_vers >= 20 ? (code <= CJK_UidF52) :
 			     uca_vers >= 18 ? (code <= CJK_UidF51) :
 			     uca_vers >= 14 ? (code <= CJK_UidF41) :
@@ -371,6 +407,10 @@ _isUIdeo (code, uca_vers)
 	(uca_vers >= 20 && codeRange(CJK_ExtCIni, CJK_ExtCFin))
 		||
 	(uca_vers >= 22 && codeRange(CJK_ExtDIni, CJK_ExtDFin))
+		||
+	(uca_vers >= 32 && codeRange(CJK_ExtEIni, CJK_ExtEFin))
+		||
+	(uca_vers >= 36 && codeRange(CJK_ExtFIni, CJK_ExtFFin))
     );
 OUTPUT:
     RETVAL
@@ -539,6 +579,7 @@ varCE (self, vce)
     U8 *a, *v, *d;
     STRLEN alen, vlen;
     bool ig_l2;
+    IV uca_vers;
     UV totwt;
   CODE:
     if (SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVHV)
@@ -583,8 +624,18 @@ varCE (self, vce)
 		    d[7] = d[1]; /* wt level 1 to 4 */
 		    d[8] = d[2];
 		} else {
-		    d[7] = (U8)(Shift4Wt >> 8);
-		    d[8] = (U8)(Shift4Wt & 0xFF);
+		    svp = hv_fetch(selfHV, "UCA_Version", 11, FALSE);
+		    if (!svp)
+			croak("Panic: no $self->{UCA_Version} in varCE");
+		    uca_vers = SvIV(*svp);
+
+		    /* completely ignorable or the second derived CE */
+		    if (uca_vers >= 36 && d[3] + d[4] + d[5] + d[6] == 0) {
+			d[7] = d[8] = '\0';
+		    } else {
+			d[7] = (U8)(Shift4Wt >> 8);
+			d[8] = (U8)(Shift4Wt & 0xFF);
+		    }
 		}
 	    } else { /* shift-trimmed or completely ignorable */
 		d[7] = d[8] = '\0';

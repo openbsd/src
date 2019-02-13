@@ -13,7 +13,7 @@ use strict;
 use Getopt::Long;
 use ExtUtils::Packlist;
 use Pod::Man;
-use vars qw(%opts $packlist);
+our ( %opts, $packlist );
 
 require './Porting/pod_lib.pl';
 my %man1 = (map {($_->[0], $_->[1])} @{get_pod_metadata()->{master}});
@@ -54,6 +54,12 @@ foreach my $pre (qw(man1 man3)) {
 }
 $opts{verbose} ||= $opts{notify};
 
+# Explicitly disabled installation of man pages
+if ($opts{man1dir} eq '' && $opts{man3dir} eq '') {
+    warn "Manual page installation was disabled by Configure\n";
+    exit 0;
+}
+
 #Sanity checks
 
 -x  "./perl$Config{exe_ext}"
@@ -70,35 +76,37 @@ $packlist = ExtUtils::Packlist->new("$opts{destdir}$Config{installarchlib}/.pack
 pod2man(\%man1, $opts{man1dir}, $opts{man1ext}, 'pod');
 
 # Install the pods for library modules.
-{
+if ($opts{man3dir} ne '') {
     my $found = pods_to_install();
     pod2man($found->{$_}, $opts{man3dir}, $opts{man3ext}, 'lib')
         foreach qw(MODULE PRAGMA);
 }
 
 # Install the pods embedded in the installed scripts
-my $has_man1dir = $opts{man1dir} ne '' && -d $opts{man1dir};
-my $fh = open_or_die('utils.lst');
-while (<$fh>) {
-    next if /^#/;
-    chomp;
-    my ($path, $leaf) = m|^(\S*/(\S+))|;
-    # Have we already installed the manpage for this? (eg perldoc)
-    next if $man1{$leaf};
-    pod2man({$leaf, $path}, $opts{man1dir}, $opts{man1ext});
-    if ($has_man1dir) {
-        if (my ($link) = m|#.*link\s*=\s*\S+/(\S+)|) {
-            my $old = "$opts{man1dir}/$leaf.$opts{man1ext}";
-            my $new = "$opts{man1dir}/$link.$opts{man1ext}";
-	    unlink($new);
-	    link($old, $new);
-            $old =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
-            $new =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
-            $packlist->{$new} = { from => $old, type => 'link' };
+if ($opts{man1dir} ne '') {
+    my $has_man1dir = -d $opts{man1dir};
+    my $fh = open_or_die('utils.lst');
+    while (<$fh>) {
+	next if /^#/;
+	chomp;
+	my ($path, $leaf) = m|^(\S*/(\S+))|;
+	# Have we already installed the manpage for this? (eg perldoc)
+	next if $man1{$leaf};
+	pod2man({$leaf, $path}, $opts{man1dir}, $opts{man1ext});
+	if ($has_man1dir) {
+	    if (my ($link) = m|#.*link\s*=\s*\S+/(\S+)|) {
+		my $old = "$opts{man1dir}/$leaf.$opts{man1ext}";
+		my $new = "$opts{man1dir}/$link.$opts{man1ext}";
+		unlink($new);
+		link($old, $new);
+		$old =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
+		$new =~ s/^\Q$opts{destdir}\E// if $opts{destdir};
+		$packlist->{$new} = { from => $old, type => 'link' };
+	    }
 	}
     }
+    close $fh or my_die("close 'utils.lst': $!");
 }
-close $fh or my_die("close 'utils.lst': $!");
 
 sub pod2man {
     my($modpods, $mandir, $manext, $where) = @_;
@@ -161,6 +169,9 @@ sub pod2man {
         print "  $xmanpage\n" unless $opts{silent};
         if (!$opts{notify} && $parser->parse_from_file($mod, $tmp)) {
             if (-s $tmp) {
+                # We've already emitted a progress message for this file, if
+                # needed, so ensure safe_rename() doesn't emit another one.
+                local $opts{silent} = 1;
                 if (safe_rename($tmp, $manpage)) {
                     $packlist->{$xmanpage} = { type => 'file' };
                     next;

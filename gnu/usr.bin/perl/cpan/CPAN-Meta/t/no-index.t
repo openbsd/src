@@ -4,7 +4,10 @@ use Test::More 0.88;
 
 use CPAN::Meta;
 
-delete $ENV{$_} for qw/PERL_JSON_BACKEND PERL_YAML_BACKEND/; # use defaults
+delete $ENV{PERL_YAML_BACKEND};
+delete $ENV{PERL_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_BACKEND};
+delete $ENV{CPAN_META_JSON_DECODER};
 
 my %distmeta = (
   name     => 'Module-Billed',

@@ -6,10 +6,9 @@ use strict;
 use warnings;
 use lib 't';
 
-my $VERSION = '1.999715';       # adjust manually to match latest release
-$VERSION = eval $VERSION;
+my $VERSION = '1.999811';       # adjust manually to match latest release
 
-use Test::More tests => 161;
+use Test::More tests => 5;
 
 ##############################################################################
 
@@ -24,7 +23,7 @@ use overload;
 package Math::BigFloat::Test;
 
 use Math::BigFloat;
-our @ISA = qw/Math::BigFloat/;          # subclass of MBI
+our @ISA = qw/Math::BigFloat/;          # subclass of MBF
 use overload;
 
 ##############################################################################
@@ -34,42 +33,9 @@ package main;
 use Math::BigInt try => 'Calc';
 use Math::BigFloat;
 
-my ($x, $y, $z, $u);
-
-###############################################################################
-# check whether op's accept normal strings, even when inherited by subclasses
-
-# do one positive and one negative test to avoid false positives by "accident"
-
-my ($method, $expected);
-while (<DATA>) {
-    s/#.*$//;                   # remove comments
-    s/\s+$//;                   # remove trailing whitespace
-    next unless length;         # skip empty lines
-
-    if (s/^&//) {
-        $method = $_;
-        next;
-    }
-
-    my @args = split /:/, $_, 99;
-    $expected = pop @args;
-    foreach my $class (qw/
-                             Math::BigInt Math::BigFloat
-                             Math::BigInt::Test Math::BigFloat::Test
-                         /)
-    {
-        my $arg = $args[0] =~ /"/ || $args[0] eq "" ? $args[0]
-                                                    : qq|"$args[0]"|;
-        my $try = "$class\->$method($arg);";
-        my $got = eval $try;
-        is($got, $expected, $try);
-    }
-}
+my ($x, $expected, $try);
 
 my $class = 'Math::BigInt';
-
-my $try;
 
 # test whether use Math::BigInt qw/VERSION/ works
 $try = "use $class (" . ($VERSION . '1') .");";
@@ -81,7 +47,7 @@ like($@, qr/ ^ Math::BigInt \s+ ( version \s+ )? \S+ \s+ required--this \s+
 
 # test whether fallback to calc works
 $try = qq|use $class ($VERSION, "try", "foo, bar, ");|
-     . qq| $class\->config()->{lib};|;
+     . qq| $class\->config('lib');|;
 $expected = eval $try;
 like($expected, qr/^Math::BigInt::(Fast)?Calc\z/, $try);
 
@@ -102,60 +68,3 @@ $try = qq|use $class ($VERSION, "lib", "$class\::Scalar");|
      . q| $x = 2**10; $x = "$x";|;
 $expected = eval $try;
 is($expected, "1024", $try);
-
-# all done
-
-__END__
-&is_zero
-1:0
-0:1
-&is_one
-1:1
-0:0
-&is_positive
-1:1
--1:0
-&is_negative
-1:0
--1:1
-&is_nan
-abc:1
-1:0
-&is_inf
-inf:1
-0:0
-&bstr
-5:5
-10:10
--10:-10
-abc:NaN
-"+inf":inf
-"-inf":-inf
-&bsstr
-1:1e+0
-0:0e+0
-2:2e+0
-200:2e+2
--5:-5e+0
--100:-1e+2
-abc:NaN
-"+inf":inf
-&babs
--1:1
-1:1
-&bnot
--2:1
-1:-2
-&bzero
-:0
-&bnan
-:NaN
-abc:NaN
-&bone
-:1
-"+":1
-"-":-1
-&binf
-:inf
-"+":inf
-"-":-inf

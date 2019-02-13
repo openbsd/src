@@ -47,10 +47,12 @@ Porting/corecpan.pl
 Porting/corelist-perldelta.pl
 Porting/corelist.pl
 Porting/expand-macro.pl
+Porting/harness-timer-report.pl
 Porting/findrfuncs
 Porting/makerel
 Porting/make_dot_patch.pl
 Porting/make_snapshot.pl
+Porting/mksample
 Porting/newtests-perldelta.pl
 Porting/perlhist_calculate.pl
 Porting/sort_perldiag.pl

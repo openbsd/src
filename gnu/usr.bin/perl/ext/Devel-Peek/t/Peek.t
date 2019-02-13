@@ -37,7 +37,7 @@ sub do_test {
     my $repeat_todo = $_[4];
     my $pattern = $_[2];
     my $do_eval = $_[5];
-    if (open(OUT,">peek$$")) {
+    if (open(OUT,'>', "peek$$")) {
 	open(STDERR, ">&OUT") or die "Can't dup OUT: $!";
         if ($do_eval) {
             my $sub = eval "sub { Dump $_[1] }";
@@ -56,7 +56,7 @@ sub do_test {
         }
 	open(STDERR, ">&SAVERR") or die "Can't restore STDERR: $!";
 	close(OUT);
-	if (open(IN, "peek$$")) {
+	if (open(IN, '<', "peek$$")) {
 	    local $/;
 	    $pattern =~ s/\$ADDR/0x[[:xdigit:]]+/g;
 	    $pattern =~ s/\$FLOAT/(?:\\d*\\.\\d+(?:e[-+]\\d+)?|\\d+)/g;
@@ -77,7 +77,7 @@ sub do_test {
 	    # Could do this is in a s///mge but seems clearer like this:
 	    $pattern = join '', map {
 		# If we identify the version condition, take *it* out whatever
-		s/\s*# (\$].*)$//
+		s/\s*# (\$\].*)$//
 		    ? (eval $1 ? $_ : '')
 		    : $_ # Didn't match, so this line is in
 	    } split /^/, $pattern;
@@ -262,7 +262,6 @@ do_test('reference to array',
     ARRAY = $ADDR
     FILL = 1
     MAX = 1
-    ARYLEN = 0x0
     FLAGS = \\(REAL\\)
     Elt No. 0
     SV = IV\\($ADDR\\) at $ADDR
@@ -360,11 +359,10 @@ do_test('reference to regexp',
   RV = $ADDR
   SV = REGEXP\\($ADDR\\) at $ADDR
     REFCNT = 1
-    FLAGS = \\(OBJECT,POK,FAKE,pPOK\\)		# $] < 5.017006
-    FLAGS = \\(OBJECT,FAKE\\)			# $] >= 5.017006
+    FLAGS = \\(OBJECT,POK,FAKE,pPOK\\)
     PV = $ADDR "\\(\\?\\^:tic\\)"
     CUR = 8
-    LEN = 0					# $] < 5.017006
+    LEN = 0
     STASH = $ADDR\\t"Regexp"'
 . ($] < 5.013 ? '' :
 '
@@ -388,9 +386,10 @@ do_test('reference to regexp',
 . ($] < 5.019003 ? '' : '
     SV = REGEXP\($ADDR\) at $ADDR
       REFCNT = 2
-      FLAGS = \(\)
+      FLAGS = \(POK,pPOK\)
       PV = $ADDR "\(\?\^:tic\)"
       CUR = 8
+      LEN = \d+
       COMPFLAGS = 0x0 \(\)
       EXTFLAGS = 0x680000 \(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\)
 (?:      ENGINE = $ADDR \(STANDARD\)
@@ -783,7 +782,7 @@ do_test('ENAME on a stash',
     AUX_FLAGS = 0                               # $] > 5.019008
     ARRAY = $ADDR
     KEYS = 0
-    FILL = 0 \(cached = 0\)
+    FILL = 0
     MAX = 7
     RITER = -1
     EITER = 0x0
@@ -806,7 +805,7 @@ do_test('ENAMEs on a stash',
     AUX_FLAGS = 0                               # $] > 5.019008
     ARRAY = $ADDR
     KEYS = 0
-    FILL = 0 \(cached = 0\)
+    FILL = 0
     MAX = 7
     RITER = -1
     EITER = 0x0
@@ -832,7 +831,7 @@ do_test('ENAMEs on a stash with no NAME',
     AUX_FLAGS = 0                               # $] > 5.019008
     ARRAY = $ADDR
     KEYS = 0
-    FILL = 0 \(cached = 0\)
+    FILL = 0
     MAX = 7
     RITER = -1
     EITER = 0x0
@@ -882,7 +881,7 @@ do_test('small hash after keys',
     ARRAY = $ADDR  \\(0:[67],.*\\)
     hash quality = [0-9.]+%
     KEYS = 2
-    FILL = [12] \\(cached = 0\\)
+    FILL = [12]
     MAX = 7
     RITER = -1
     EITER = 0x0
@@ -912,7 +911,7 @@ do_test('small hash after keys and scalar',
     ARRAY = $ADDR  \\(0:[67],.*\\)
     hash quality = [0-9.]+%
     KEYS = 2
-    FILL = ([12]) \\(cached = \1\\)
+    FILL = ([12])
     MAX = 7
     RITER = -1
     EITER = 0x0
@@ -927,30 +926,6 @@ do_test('small hash after keys and scalar',
       COW_REFCNT = 1
 ){2}');
 
-# This should immediately start with the FILL cached correctly.
-my %large = (0..1999);
-$b = %large;
-do_test('large hash',
-        \%large,
-'SV = $RV\\($ADDR\\) at $ADDR
-  REFCNT = 1
-  FLAGS = \\(ROK\\)
-  RV = $ADDR
-  SV = PVHV\\($ADDR\\) at $ADDR
-    REFCNT = 2
-    FLAGS = \\($PADMY,OOK,SHAREKEYS\\)
-    AUX_FLAGS = 0                               # $] > 5.019008
-    ARRAY = $ADDR  \\(0:\d+,.*\\)
-    hash quality = \d+\\.\d+%
-    KEYS = 1000
-    FILL = (\d+) \\(cached = \1\\)
-    MAX = 1023
-    RITER = -1
-    EITER = 0x0
-    RAND = $ADDR
-    Elt .*
-');
-
 # Dump with arrays, hashes, and operator return values
 @array = 1..3;
 do_test('Dump @array', '@array', <<'ARRAY', '', '', 1);
@@ -960,7 +935,6 @@ SV = PVAV\($ADDR\) at $ADDR
   ARRAY = $ADDR
   FILL = 2
   MAX = 3
-  ARYLEN = 0x0
   FLAGS = \(REAL\)
   Elt No. 0
   SV = IV\($ADDR\) at $ADDR
@@ -986,7 +960,6 @@ SV = PVAV\($ADDR\) at $ADDR
   ARRAY = $ADDR
   FILL = 2
   MAX = 3
-  ARYLEN = 0x0
   FLAGS = \(REAL\)
   Elt No. 0
   SV = IV\($ADDR\) at $ADDR
@@ -1072,14 +1045,10 @@ unless ($Config{useithreads}) {
 
     eval 'index "", perl';
 
-    # FIXME - really this shouldn't say EVALED. It's a false posistive on
-    # 0x40000000 being used for several things, not a flag for "I'm in a string
-    # eval"
-
     do_test('string constant now an FBM', perl,
 'SV = PVMG\\($ADDR\\) at $ADDR
   REFCNT = 5
-  FLAGS = \\($PADMY,SMG,POK,(?:IsCOW,)?READONLY,(?:IsCOW,)?pPOK,VALID,EVALED\\)
+  FLAGS = \\($PADMY,SMG,POK,(?:IsCOW,)?READONLY,(?:IsCOW,)?pPOK\\)
   PV = $ADDR "rule"\\\0
   CUR = 4
   LEN = \d+
@@ -1099,7 +1068,7 @@ unless ($Config{useithreads}) {
     do_test('string constant still an FBM', perl,
 'SV = PVMG\\($ADDR\\) at $ADDR
   REFCNT = 5
-  FLAGS = \\($PADMY,SMG,POK,(?:IsCOW,)?READONLY,(?:IsCOW,)?pPOK,VALID,EVALED\\)
+  FLAGS = \\($PADMY,SMG,POK,(?:IsCOW,)?READONLY,(?:IsCOW,)?pPOK\\)
   PV = $ADDR "rule"\\\0
   CUR = 4
   LEN = \d+
@@ -1139,7 +1108,7 @@ unless ($Config{useithreads}) {
 
     my $want = 'SV = PVMG\\($ADDR\\) at $ADDR
   REFCNT = 6
-  FLAGS = \\($PADMY,SMG,POK,(?:IsCOW,)?READONLY,(?:IsCOW,)?pPOK,VALID,EVALED\\)
+  FLAGS = \\($PADMY,SMG,POK,(?:IsCOW,)?READONLY,(?:IsCOW,)?pPOK\\)
   PV = $ADDR "foam"\\\0
   CUR = 4
   LEN = \d+
@@ -1177,7 +1146,7 @@ unless ($Config{useithreads}) {
 # (One block of study tests removed when study was made a no-op.)
 
 {
-    open(OUT,">peek$$") or die "Failed to open peek $$: $!";
+    open(OUT, '>', "peek$$") or die "Failed to open peek $$: $!";
     open(STDERR, ">&OUT") or die "Can't dup OUT: $!";
     DeadCode();
     open(STDERR, ">&SAVERR") or die "Can't restore STDERR: $!";
@@ -1193,9 +1162,10 @@ do_test('UTF-8 in a regular expression',
   RV = $ADDR
   SV = REGEXP\($ADDR\) at $ADDR
     REFCNT = 1
-    FLAGS = \(OBJECT,FAKE,UTF8\)
+    FLAGS = \(OBJECT,POK,FAKE,pPOK,UTF8\)
     PV = $ADDR "\(\?\^u:\\\\\\\\x\{100\}\)" \[UTF8 "\(\?\^u:\\\\\\\\x\{100\}\)"\]
     CUR = 13
+    LEN = 0
     STASH = $ADDR	"Regexp"
     COMPFLAGS = 0x0 \(\)
     EXTFLAGS = $ADDR \(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\)
@@ -1217,9 +1187,10 @@ do_test('UTF-8 in a regular expression',
 . ($] < 5.019003 ? '' : '
     SV = REGEXP\($ADDR\) at $ADDR
       REFCNT = 2
-      FLAGS = \(UTF8\)
+      FLAGS = \(POK,pPOK,UTF8\)
       PV = $ADDR "\(\?\^u:\\\\\\\\x\{100\}\)" \[UTF8 "\(\?\^u:\\\\\\\\x\{100\}\)"\]
       CUR = 13
+      LEN = \d+
       COMPFLAGS = 0x0 \(\)
       EXTFLAGS = $ADDR \(CHECK_ALL,USE_INTUIT_NOML,USE_INTUIT_ML\)
 (?:      ENGINE = $ADDR \(STANDARD\)
@@ -1263,12 +1234,12 @@ do_test('UTF-8 in a regular expression',
 use utf8;
 
 sub _dump {
-   open(OUT,">peek$$") or die $!;
+   open(OUT, '>', "peek$$") or die $!;
    open(STDERR, ">&OUT") or die "Can't dup OUT: $!";
    Dump($_[0]);
    open(STDERR, ">&SAVERR") or die "Can't restore STDERR: $!";
    close(OUT);
-   open(IN, "peek$$") or die $!;
+   open(IN, '<', "peek$$") or die $!;
    my $dump = do { local $/; <IN> };
    close(IN);
    1 while unlink "peek$$";
@@ -1486,58 +1457,51 @@ for my $test (
     local $TODO = 'This gets mangled by the current pipe implementation' if $^O eq 'VMS';
     my $e = <<'EODUMP';
 dumpindent is 4 at -e line 1.
-{
-1   TYPE = leave  ===> NULL
-    TARG = 1
-    FLAGS = (VOID,KIDS,PARENS,SLABBED)
-    PRIVATE = (REFC)
-    REFCNT = 1
-    {
-2       TYPE = enter  ===> 3
-        FLAGS = (UNKNOWN,SLABBED,MORESIB)
-    }
-    {
-3       TYPE = nextstate  ===> 4
-        FLAGS = (VOID,SLABBED,MORESIB)
-        LINE = 1
-        PACKAGE = "t"
-    }
-    {
-5       TYPE = entersub  ===> 1
-        TARG = 1
-        FLAGS = (VOID,KIDS,STACKED,SLABBED)
-        PRIVATE = (TARG)
-        {
-6           TYPE = null  ===> (5)
-              (was list)
-            FLAGS = (UNKNOWN,KIDS,SLABBED)
-            {
-4               TYPE = pushmark  ===> 7
-                FLAGS = (SCALAR,SLABBED,MORESIB)
-            }
-            {
-8               TYPE = null  ===> (6)
-                  (was rv2cv)
-                FLAGS = (SCALAR,KIDS,SLABBED)
-                PRIVATE = (0x1)
-                {
-7                   TYPE = gv  ===> 5
-                    FLAGS = (SCALAR,SLABBED)
-                    GV_OR_PADIX
-                }
-            }
-        }
-    }
-}
+     
+1    leave LISTOP(0xNNN) ===> [0x0]
+     PARENT ===> [0x0]
+     TARG = 1
+     FLAGS = (VOID,KIDS,PARENS,SLABBED)
+     PRIVATE = (REFC)
+     REFCNT = 1
+     |   
+2    +--enter OP(0xNNN) ===> 3 [nextstate 0xNNN]
+     |   FLAGS = (UNKNOWN,SLABBED,MORESIB)
+     |   
+3    +--nextstate COP(0xNNN) ===> 4 [pushmark 0xNNN]
+     |   FLAGS = (VOID,SLABBED,MORESIB)
+     |   LINE = 1
+     |   PACKAGE = "t"
+     |     |   
+5    +--entersub UNOP(0xNNN) ===> 1 [leave 0xNNN]
+         TARG = 1
+         FLAGS = (VOID,KIDS,STACKED,SLABBED)
+         PRIVATE = (TARG)
+         |   
+6        +--null (ex-list) UNOP(0xNNN) ===> 5 [entersub 0xNNN]
+             FLAGS = (UNKNOWN,KIDS,SLABBED)
+             |   
+4            +--pushmark OP(0xNNN) ===> 7 [gv 0xNNN]
+             |   FLAGS = (SCALAR,SLABBED,MORESIB)
+             |   
+8            +--null (ex-rv2cv) UNOP(0xNNN) ===> 6 [null 0xNNN]
+                 FLAGS = (SCALAR,KIDS,SLABBED)
+                 PRIVATE = (0x1)
+                 |   
+7                +--gv SVOP(0xNNN) ===> 5 [entersub 0xNNN]
+                     FLAGS = (SCALAR,SLABBED)
+                     GV_OR_PADIX
 EODUMP
 
-    $e =~ s/GV_OR_PADIX/$threads ? "PADIX = 2" : "GV = t::DumpProg"/e;
-    $e =~ s/.*PRIVATE = \(0x1\).*\n// if $] < 5.021004;
+    $e =~ s/GV_OR_PADIX/$threads ? "PADIX = 2" : "GV = t::DumpProg (0xNNN)"/e;
+    $e =~ s/SVOP/PADOP/g if $threads;
     my $out = t::runperl
                  switches => ['-Ilib'],
                  prog => 'package t; use Devel::Peek q-DumpProg-; DumpProg();',
                  stderr=>1;
     $out =~ s/ *SEQ = .*\n//;
+    $out =~ s/0x[0-9a-f]{2,}\]/${1}0xNNN]/g;
+    $out =~ s/\(0x[0-9a-f]{3,}\)/(0xNNN)/g;
     is $out, $e, "DumpProg() has no 'Attempt to free X prematurely' warning";
 }
 done_testing();

@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2409            # tests in require'd file
+use Test::More tests => 2482            # tests in require'd file
                          + 6;           # tests in this file
 
 use lib 't';
@@ -12,7 +12,7 @@ use Math::BigFloat::Subclass;
 
 our ($CLASS, $CALC);
 $CLASS = "Math::BigFloat::Subclass";
-$CALC  = Math::BigFloat->config()->{lib};       # backend
+$CALC  = Math::BigFloat->config('lib');         # backend library
 
 require 't/bigfltpm.inc';	# perform same tests as bigfltpm
 

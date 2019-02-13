@@ -20,7 +20,7 @@ my $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
 # Create output file.
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT, ">", $file or die "Can't create $file: $!";
 
 print "Extracting $file (with variable substitutions)\n";
 
@@ -231,7 +231,7 @@ if (defined($Config{'extensions'})) {
         next if $_ eq 'XS/APItest';
         next if $_ eq 'XS/Typemap';
            # VMS$ perl  -e "eval ""require \""Devel/DProf.pm\"";"" print $@"
-           # \NT> perl  -e "eval \"require 'Devel/DProf.pm'\"; print $@"
+           # \NT> perl  -e "eval \"require './Devel/DProf.pm'\"; print $@"
            # DProf: run perl with -d to use DProf.
            # Compilation failed in require at (eval 1) line 1.
         eval " require \"$_.pm\"; ";

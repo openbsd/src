@@ -1,4 +1,4 @@
-/*    fakestdio.h
+/*    fakesdio.h
  *
  *    Copyright (C) 2000, by Larry Wall and others
  *

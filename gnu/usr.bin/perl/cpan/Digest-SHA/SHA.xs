@@ -401,6 +401,6 @@ PPCODE:
 	}
 	if (cr) {
 		in[0] = '\012';
-		shawrite(in, 1 << 3, state);
+		shawrite(in, 1UL << 3, state);
 	}
 	XSRETURN(1);
