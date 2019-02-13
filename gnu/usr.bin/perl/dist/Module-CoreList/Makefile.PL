@@ -25,13 +25,6 @@ WriteMakefile
     'INSTALLDIRS' => ($] < 5.011 ? 'perl' : 'site'),
     'PL_FILES' => {},
     LICENSE => 'perl',
-    META_MERGE => {
-        resources => {
-            repository => 'git://perl5.git.perl.org/perl.git',
-            bugtracker => 'https://rt.perl.org/rt3/',
-            homepage   => "http://dev.perl.org/",
-        },
-    },
     @extra,
 )
 ;

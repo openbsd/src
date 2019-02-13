@@ -3,7 +3,6 @@ use warnings;
 # vim:ts=8:sw=2:et:sta:sts=2
 
 use Test::More 0.82;
-use Data::Dumper;
 use Module::Metadata;
 
 use lib 't/lib';
@@ -602,6 +601,16 @@ $Foo::Bar::VERSION = '1.23';
   vers => undef,
   all_versions => { 'Foo::Bar' => '1.23' },
 },
+{
+  name => 'package statement that does not quite match the filename',
+  filename => 'Simple.pm',
+  code => <<'---',
+package ThisIsNotSimple;
+our $VERSION = '1.23';
+---
+  vers => $undef,
+  all_versions => { 'ThisIsNotSimple' => '1.23' },
+},
 );
 
 my $test_num = 0;
@@ -617,14 +626,14 @@ foreach my $test_case (@modules) {
 
   SKIP: {
     skip( "No our() support until perl 5.6", (defined $expected_version ? 3 : 2) )
-        if $] < 5.006 && $code =~ /\bour\b/;
+        if "$]" < 5.006 && $code =~ /\bour\b/;
     skip( "No package NAME VERSION support until perl 5.11.1", (defined $expected_version ? 3 : 2) )
-        if $] < 5.011001 && $code =~ /package\s+[\w\:\']+\s+v?[0-9._]+/;
+        if "$]" < 5.011001 && $code =~ /package\s+[\w\:\']+\s+v?[0-9._]+/;
 
     my $warnings = '';
     local $SIG{__WARN__} = sub { $warnings .= $_ for @_ };
 
-    my $pm_info = Module::Metadata->new_from_file(generate_file(File::Spec->catdir($tmpdir, "Simple${test_num}"), 'Simple.pm', $code));
+    my $pm_info = Module::Metadata->new_from_file(generate_file(File::Spec->catfile($tmpdir, "Simple${test_num}"), 'Simple.pm', $code));
 
     # whenever we drop support for 5.6, we can do this:
     # open my $fh, '<', \(encode('UTF-8', $code, Encode::FB_CROAK))
@@ -639,8 +648,8 @@ foreach my $test_case (@modules) {
     # We want to ensure we preserve the original, as long as it's legal, so we
     # explicitly check the stringified form.
     {
-      local $TODO = $test_case->{TODO_got_version};
-      isa_ok($got, 'version') if defined $expected_version;
+      local $TODO = !defined($got) && ($test_case->{TODO_code_sub} || $test_case->{TODO_scalar});
+      isa_ok($got, 'version') or $errs++ if defined $expected_version;
     }
 
     if (ref($expected_version) eq 'CODE') {
@@ -669,19 +678,19 @@ foreach my $test_case (@modules) {
         ok(
           $test_case->{all_versions}->($pm_info->{versions}),
           "case '$test_case->{name}': all extracted versions passes match sub"
-        );
+        ) or $errs++;
       }
       else {
         is_deeply(
           $pm_info->{versions},
           $test_case->{all_versions},
           'correctly found all $VERSIONs',
-        );
+        ) or $errs++;
       }
     }
 
     is( $warnings, '', "case '$test_case->{name}': no warnings from parsing" ) or $errs++;
-    diag 'extracted versions: ', explain({ got => $pm_info->{versions}, module_contents => $code }) if !$ENV{PERL_CORE} && $errs;
+    diag 'parsed module: ', explain($pm_info) if !$ENV{PERL_CORE} && $errs;
   }
 }
 continue {

@@ -23,7 +23,7 @@ unless (@ARGV == 1 || defined $subsys{$ARGV[1]}) {
 }
 
 my ($record,$magic,$signature,$offset,$size);
-open EXE, "+< $ARGV[0]" or die "Cannot open $ARGV[0]: $!\n";
+open EXE, '+<', $ARGV[0] or die "Cannot open $ARGV[0]: $!\n";
 binmode EXE;
 
 # read IMAGE_DOS_HEADER structure

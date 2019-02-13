@@ -530,7 +530,7 @@ C<File::Spec> upgraded to version 3.12
 
 =item *
 
-C<File::Spec->rootdir()> now returns C<\> on Win32, instead of C</>
+C<< File::Spec->rootdir() >> now returns C<\> on Win32, instead of C</>
 
 =item *
 
@@ -1243,7 +1243,7 @@ Now implements UCA Revision 14 (based on Unicode 4.1.0).
 
 =item *
 
-C<Unicode::Collate->new> method no longer overwrites user's C<$_>
+C<< Unicode::Collate->new >> method no longer overwrites user's C<$_>
 
 =item *
 
@@ -1535,7 +1535,7 @@ This is a new warning, produced in situations such as this:
 
 =head2 Non-string passed as bitmask
 
-This is a new warning, produced when number has been passed as a argument to
+This is a new warning, produced when number has been passed as an argument to
 select(), instead of a bitmask.
 
     # Wrong, will now warn

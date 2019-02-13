@@ -14,7 +14,7 @@ while (<>) {
 	if (name($desc) ne $myname) {
 	    $myname = name($desc);
 	    print $myname, "\n";
-	    open(MAN, "> $myname.3pl");
+	    open(MAN, '>', "$myname.3pl");
 	    print MAN <<EOALL;
 $header
 .TH $myname 3PL "\\*(RP"

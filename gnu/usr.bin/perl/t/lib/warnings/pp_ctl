@@ -251,3 +251,16 @@ EXPECT
 use warnings;
 eval 'use 5.006; use 5.10.0';
 EXPECT
+########
+# SKIP ? !$Config{default_inc_includes_dot}
+# NAME check warning for do with no . in @INC
+open my $fh, ">", "dounknown";
+close $fh;
+do "dounknown";
+do "./dounknown";
+no warnings 'deprecated';
+do "dounknown";
+do "./dounknown";
+unlink "dounknown";
+EXPECT
+do "dounknown" failed, '.' is no longer in @INC; did you mean do "./dounknown" at - line 3.

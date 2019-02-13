@@ -9,14 +9,12 @@ BEGIN {
 
 {
     package Whunk::L10N;
-    use vars qw(@ISA);
-    @ISA =  'Locale::Maketext';
+    our @ISA =  'Locale::Maketext';
 }
 
 {
     package Whunk::L10N::en;
-    use vars qw(@ISA);
-    @ISA = 'Whunk::L10N';
+    our @ISA = 'Whunk::L10N';
 }
 
 my $lh = Whunk::L10N->get_handle('en');

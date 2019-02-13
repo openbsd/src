@@ -35,7 +35,7 @@ public:
 	int PerlCreate(PerlInterpreter *my_perl);
 	int PerlParse(PerlInterpreter *my_perl, int argc, char** argv, char** env);
 	int PerlRun(PerlInterpreter *my_perl);
-	void PerlDestroy(PerlInterpreter *my_perl);
+	int PerlDestroy(PerlInterpreter *my_perl);
 	void PerlFree(PerlInterpreter *my_perl);
 
 	//bool RegisterWithThreadTable(void);

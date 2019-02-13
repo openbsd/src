@@ -9,14 +9,13 @@ BEGIN {
 package TieTest;
 
 use Tie::Scalar;
-use vars qw( @ISA );
-@ISA = qw( Tie::Scalar );
+our @ISA = qw( Tie::Scalar );
 
 sub new { 'Fooled you.' }
 
 package main;
 
-use vars qw( $flag );
+our $flag;
 use Test::More tests => 16;
 
 use_ok( 'Tie::Scalar' );

@@ -15,7 +15,7 @@ $f = 'tst';
 
 unlink("afile") if -f "afile";
 
-ok(open($f,"+>afile"), "open +>afile");
+ok(open($f, "+>", "afile"), "open +>, afile");
 ok(open($f, "+<", "afile"), "open +<, afile");
 ok(binmode($f), "binmode")
     or diag("binmode: $!\n");

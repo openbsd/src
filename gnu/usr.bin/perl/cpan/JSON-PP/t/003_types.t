@@ -1,8 +1,8 @@
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 use strict;
 use Test::More;
 
-BEGIN { plan tests => 76 };
+BEGIN { plan tests => 78 };
 
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
@@ -21,6 +21,8 @@ ok ($false == !$true);
 ok (JSON::PP::is_bool $false);
 ok (++$false == 1);
 ok (!JSON::PP::is_bool $false);
+ok (!JSON::PP::is_bool "JSON::PP::Boolean");
+ok (!JSON::PP::is_bool {}); # GH-34
 
 ok (JSON::PP->new->allow_nonref (1)->decode ('5') == 5);
 ok (JSON::PP->new->allow_nonref (1)->decode ('-5') == -5);

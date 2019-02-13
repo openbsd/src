@@ -15,7 +15,7 @@ use strict;
 use warnings;
 
 my ($cSH, $ch, @ch, %ch) = ("config_h.SH");
-open $ch, "<$cSH" or die "Cannot open $cSH: $!\n";
+open $ch, '<', $cSH or die "Cannot open $cSH: $!\n";
 {   local $/ = "\n\n";
     @ch = <$ch>;
     close  $ch;
@@ -68,7 +68,7 @@ for (grep m{echo .Extracting \$CONFIG_H} => @ch) {
 push @ch, ";;\nesac\n";
 
 
-open  $ch, "> $cSH" or die "Cannot write $cSH: $!\n";
+open  $ch, '>', $cSH or die "Cannot write $cSH: $!\n";
 print $ch <<EOW;
 #!/bin/sh
 #

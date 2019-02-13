@@ -3,6 +3,9 @@
 # Use B to test that optimisations are not inadvertently removed,
 # by examining particular nodes in the optree.
 
+use warnings;
+use strict;
+
 BEGIN {
     chdir 't';
     require './test.pl';
@@ -10,14 +13,34 @@ BEGIN {
     @INC = '../lib';
 }
 
-plan 54;
+plan 2285;
 
 use v5.10; # state
 use B qw(svref_2object
          OPpASSIGN_COMMON_SCALAR
          OPpASSIGN_COMMON_RC1
          OPpASSIGN_COMMON_AGG
+         OPpTRUEBOOL
+         OPpMAYBE_TRUEBOOL
+         OPpASSIGN_TRUEBOOL
       );
+
+# for debugging etc. Basic dump of an optree
+
+sub dump_optree {
+    my ($o, $depth) = @_;
+
+    return '' unless $$o;
+    # use Devel::Peek; Dump $o;
+    my $s = ("  " x $depth) . $o->name . "\n";
+    my $n = eval { $o->first };
+    while ($n && $$n) {
+        $s .= dump_optree($n, $depth+1);
+        $n = $n->sibling;
+    }
+    $s;
+}
+
 
 
 # Test that OP_AASSIGN gets the appropriate
@@ -74,12 +97,24 @@ for my $test (
     [ "---", '(undef,$x) = f()', 'single scalar on LHS' ],
     [ "---", '($x,$y) = ($x)', 'single scalar on RHS, no AGG' ],
     [ "--A", '($x,@b) = ($x)', 'single scalar on RHS' ],
+    [ "--A", 'my @a; @a = (@a = split())',      'split a/a'   ],
+    [ "--A", 'my (@a,@b); @a = (@b = split())', 'split a/b'   ],
+    [ "---", 'my @a; @a = (split(), 1)',        '(split(),1)' ],
+    [ "---", '@a = (split(//, @a), 1)',         'split(@a)'   ],
+    [ "--A", 'my @a; my $ar = @a; @a = (@$ar = split())', 'a/ar split'  ],
 ) {
+
     my ($exp, $code, $desc) = @$test;
-    my $sub = eval "sub { $code }"
-        or die
-            "aassign eval('$code') failed: this test needs to be rewritten:\n"
-            . $@;
+    my $sub;
+    {
+        # package vars used in code snippets
+        our (@a, %a, @b, %b, $c, $p, $q, $x, $y, @y, @z);
+
+        $sub = eval "sub { $code }"
+            or die
+                "aassign eval('$code') failed: this test needs"
+                . "to be rewritten:\n$@"
+    }
 
     my $last_expr = svref_2object($sub)->ROOT->first->last;
     if ($last_expr->name ne 'aassign') {
@@ -178,3 +213,241 @@ for(['@pkgary'      , '@_'       ],
 # stringify with join kid --> join
 is svref_2object(sub { "@_" })->ROOT->first->last->name, 'join',
   'qq"@_" optimised from stringify(join(...)) to join(...)';
+
+
+# Check that certain ops, when in boolean context, have the
+# right private "is boolean" or "maybe boolean" flags set.
+#
+# A maybe flag is set when the context at the end of a chain of and/or/dor
+# ops isn't known till runtime, e.g.
+#   sub f { ....; ((%h || $x) || $y)) }
+# If f() is called in void context, then %h can return a boolean value;
+# if in scalar context, %h must return a key count.
+
+for my $ops (
+    #  op          code        op_path flag               maybe_flag
+    #  ---------   ----------  ------- -----------------  ----------------
+    [ 'aassign',  '(@pkg = @lex)',[],  OPpASSIGN_TRUEBOOL,0,                ],
+    [ 'grepwhile','grep($_,1)',   [],  OPpTRUEBOOL,       0,                ],
+    [ 'length',   'length($x)',   [],  OPpTRUEBOOL,       0,                ],
+    [ 'padav',    '@lex',         [],  OPpTRUEBOOL,       0,                ],
+    [ 'padav',    'scalar @lex',  [0], OPpTRUEBOOL,       0,                ],
+    [ 'padhv',    '%lex',         [],  OPpTRUEBOOL,       OPpMAYBE_TRUEBOOL ],
+    [ 'padhv',    'scalar(%lex)', [0], OPpTRUEBOOL,       OPpMAYBE_TRUEBOOL ],
+    [ 'pos',      'pos($x)',      [],  OPpTRUEBOOL,       0,                ],
+    [ 'ref',      'ref($x)',      [],  OPpTRUEBOOL,       OPpMAYBE_TRUEBOOL ],
+    [ 'rv2av',    '@pkg',         [],  OPpTRUEBOOL,       0,                ],
+    [ 'rv2av',    'scalar(@pkg)', [0], OPpTRUEBOOL,       0,                ],
+    [ 'rv2hv',    '%pkg',         [],  OPpTRUEBOOL,       OPpMAYBE_TRUEBOOL ],
+    [ 'rv2hv',    'scalar(%pkg)', [0], OPpTRUEBOOL,       OPpMAYBE_TRUEBOOL ],
+    [ 'subst',    's/a/b/',       [],  OPpTRUEBOOL,       0,                ],
+) {
+    my ($op_name, $op_code, $post_op_path, $bool_flag, $maybe_flag) = @$ops;
+
+    for my $test (
+        # 1st column: what to expect for each $context (void, scalar, unknown),
+        #                0: expect no flag
+        #                1: expect bool flag
+        #                2: expect maybe bool flag
+        #                9: skip test
+        #  2nd column: path though the op subtree to the flagged op:
+        #                0 is first child, 1 is second child etc.
+        #                Will have @$post_op_path from above appended.
+        #  3rd column: code to execute: %s holds the code for the op
+        #
+        # [V S U]  PATH        CODE
+
+        # INNER PLAIN
+
+        [ [0,0,0], [],        '%s'                               ],
+        [ [1,9,1], [0,0],     'if (%s) {$x}'                     ],
+        [ [1,9,1], [0,0],     'if (%s) {$x} else {$y}'           ],
+        [ [1,9,2], [0,0],     'unless (%s) {$x}'                 ],
+
+        # INNER NOT
+
+        [ [1,1,1], [0],       '!%s'                              ],
+        [ [1,9,1], [0,0,0],   'if (!%s) {$x}'                    ],
+        [ [1,9,1], [0,0,0],   'if (!%s) {$x} else {$y}'          ],
+        [ [1,9,1], [0,0,0],   'unless (!%s) {$x}'                ],
+
+        # INNER COND
+
+        [ [1,1,1], [0,0,],    '%s ? $p : $q'                     ],
+        [ [1,9,1], [0,0,0,0], 'if (%s ? $p : $q) {$x}'           ],
+        [ [1,9,1], [0,0,0,0], 'if (%s ? $p : $q) {$x} else {$y}' ],
+        [ [1,9,1], [0,0,0,0], 'unless (%s ? $p : $q) {$x}'       ],
+
+
+        # INNER OR LHS
+
+        [ [1,0,2], [0,0],     '%s || $x'                         ],
+        [ [1,1,1], [0,0,0],   '!(%s || $x)'                      ],
+        [ [1,0,2], [0,1,0,0], '$y && (%s || $x)'                 ],
+        [ [1,9,1], [0,0,0,0], 'if (%s || $x) {$x}'               ],
+        [ [1,9,1], [0,0,0,0], 'if (%s || $x) {$x} else {$y}'     ],
+        [ [1,9,2], [0,0,0,0], 'unless (%s || $x) {$x}'           ],
+
+        # INNER OR RHS
+
+        [ [0,0,0], [0,1],     '$x || %s'                         ],
+        [ [1,1,1], [0,0,1],   '!($x || %s)'                      ],
+        [ [0,0,0], [0,1,0,1], '$y && ($x || %s)'                 ],
+        [ [1,9,1], [0,0,0,1], 'if ($x || %s) {$x}'               ],
+        [ [1,9,1], [0,0,0,1], 'if ($x || %s) {$x} else {$y}'     ],
+        [ [1,9,2], [0,0,0,1], 'unless ($x || %s) {$x}'           ],
+
+        # INNER DOR LHS
+
+        [ [1,0,2], [0,0],     '%s // $x'                         ],
+        [ [1,1,1], [0,0,0],   '!(%s // $x)'                      ],
+        [ [1,0,2], [0,1,0,0], '$y && (%s // $x)'                 ],
+        [ [1,9,1], [0,0,0,0], 'if (%s // $x) {$x}'               ],
+        [ [1,9,1], [0,0,0,0], 'if (%s // $x) {$x} else {$y}'     ],
+        [ [1,9,2], [0,0,0,0], 'unless (%s // $x) {$x}'           ],
+
+        # INNER DOR RHS
+
+        [ [0,0,0], [0,1],     '$x // %s'                         ],
+        [ [1,1,1], [0,0,1],   '!($x // %s)'                      ],
+        [ [0,0,0], [0,1,0,1], '$y && ($x // %s)'                 ],
+        [ [1,9,1], [0,0,0,1], 'if ($x // %s) {$x}'               ],
+        [ [1,9,1], [0,0,0,1], 'if ($x // %s) {$x} else {$y}'     ],
+        [ [1,9,2], [0,0,0,1], 'unless ($x // %s) {$x}'           ],
+
+        # INNER AND LHS
+
+        [ [1,1,1], [0,0],     '%s && $x'                         ],
+        [ [1,1,1], [0,0,0],   '!(%s && $x)'                      ],
+        [ [1,1,1], [0,1,0,0], '$y || (%s && $x)'                 ],
+        [ [1,9,1], [0,0,0,0], 'if (%s && $x) {$x}'               ],
+        [ [1,9,1], [0,0,0,0], 'if (%s && $x) {$x} else {$y}'     ],
+        [ [1,9,1], [0,0,0,0], 'unless (%s && $x) {$x}'           ],
+
+        # INNER AND RHS
+
+        [ [0,0,0], [0,1],     '$x && %s'                         ],
+        [ [1,1,1], [0,0,1],   '!($x && %s)'                      ],
+        [ [0,0,0], [0,1,0,1], '$y || ($x && %s)'                 ],
+        [ [1,9,1], [0,0,0,1], 'if ($x && %s) {$x}'               ],
+        [ [1,9,1], [0,0,0,1], 'if ($x && %s) {$x} else {$y}'     ],
+        [ [1,9,2], [0,0,0,1], 'unless ($x && %s) {$x}'           ],
+
+        # INNER XOR LHS
+
+            # LHS of XOR is currently too hard to detect as
+            # being in boolean context
+
+        # INNER XOR RHS
+
+        [ [1,1,1], [1],       '($x xor %s)'                      ],
+        [ [1,1,1], [0,1],     '!($x xor %s)'                     ],
+        [ [1,1,1], [0,1,1],   '$y || ($x xor %s)'                ],
+        [ [1,9,1], [0,0,1],   'if ($x xor %s) {$x}'              ],
+        [ [1,9,1], [0,0,1],   'if ($x xor %s) {$x} else {$y}'    ],
+        [ [1,9,1], [0,0,1],   'unless ($x xor %s) {$x}'          ],
+
+        # GREP
+
+        [ [1,1,1], [0,1,0],    'grep(%s,1,2)'                    ],
+        [ [1,1,1], [0,1,0,0],  'grep(!%s,1,2)'                   ],
+        [ [1,1,1], [0,1,0,0,1],'grep($y || %s,1,2)'              ],
+
+        # FLIP
+
+        [ [1,1,1], [0,0,0,0],      '%s..$x'                      ],
+        [ [1,1,1], [0,0,0,0,0],    '!%s..$x'                     ],
+        [ [1,1,1], [0,0,0,0,0,1],  '($y || %s)..$x'              ],
+
+        # FLOP
+
+        [ [1,1,1], [0,0,0,1],      '$x..%s'                      ],
+        [ [1,1,1], [0,0,0,1,0],    '$x..!%s'                     ],
+        [ [1,1,1], [0,0,0,1,0,1],  '$x..($y || %s)'              ],
+
+    ) {
+        my ($expects, $op_path, $code_fmt) = @$test;
+
+        for my $context (0,1,2) {
+            # 0: void
+            # 1: scalar
+            # 2: unknown
+            # 9: skip test (principally if() can't be in scalar context)
+
+            next if $expects->[$context] == 9;
+
+            my $base_code = sprintf $code_fmt, $op_code;
+            my $code = $base_code;
+            my @op_path = @$op_path;
+            push @op_path, @$post_op_path;
+
+            # where to find the expression in the top-level lineseq
+            my $seq_offset = -1;
+
+            if ($context == 0) {
+                $seq_offset -= 2;
+                $code .= "; 1";
+            }
+            elsif ($context == 1) {
+                $code = "\$pkg_result = ($code)";
+                unshift @op_path, 0;
+            }
+
+
+            my $sub;
+            {
+                # don't use 'my' for $pkg_result to avoid the assignment in
+                # '$result = foo()' being optimised away with OPpTARGET_MY
+                our (@pkg, %pkg, $pkg_result);
+                my  (@lex, %lex, $p, $q, $x, $y);
+
+                no warnings 'void';
+                $sub = eval "sub { $code }"
+                    or die
+                        "eval'$code' failed: this test needs to be rewritten;\n"
+                        . "Errors were:\n$@";
+            }
+
+            # find the expression subtree in the main lineseq of the sub
+            my $expr = svref_2object($sub)->ROOT->first;
+            my $orig_expr = $expr;
+            my @ops;
+            my $next = $expr->first;
+            while ($$next) {
+                push @ops, $next;
+                $next = $next->sibling;
+            }
+            $expr = $ops[$seq_offset];
+
+            # search through the expr subtree looking for the named op -
+            # this assumes that for all the code examples above, the
+            # op is always in the LH branch
+            my @orig_op_path = @op_path;
+            while (defined (my $p = shift @op_path)) {
+                eval {
+                    $expr = $expr->first;
+                    $expr = $expr->sibling while $p--;
+                }
+            }
+
+            if (!$expr || !$$expr || $expr->name ne $op_name) {
+                my $optree = dump_optree($orig_expr,2);
+                print STDERR "Can't find $op_name op in optree for '$code'.\n";
+                print STDERR "This test needs to be rewritten\n";
+                print STDERR "seq_offset=$seq_offset op_path=(@orig_op_path)\n";
+                print STDERR "optree=\n$optree";
+                exit 1;
+            }
+
+            my $exp = $expects->[$context];
+            $exp =   $exp == 0 ? 0
+                   : $exp == 1 ? $bool_flag
+                   :             $maybe_flag;
+
+            my $got = ($expr->private & ($bool_flag | $maybe_flag));
+            my $cxt_name = ('void   ', 'scalar ', 'unknown')[$context];
+            is $got, $exp,  "boolean: $op_name $cxt_name '$base_code'";
+        }
+    }
+}
+

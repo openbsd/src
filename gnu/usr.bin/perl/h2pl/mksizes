@@ -2,7 +2,7 @@
 
 ($iam = $0) =~ s%.*/%%;
 $tmp = "$iam.$$";
-open (CODE,">$tmp.c") || die "$iam: cannot create $tmp.c: $!\n";
+open (CODE, '>', "$tmp.c") || die "$iam: cannot create $tmp.c: $!\n";
 
 $mask = q/printf ("$sizeof{'%s'} = %d;\n"/; 
 

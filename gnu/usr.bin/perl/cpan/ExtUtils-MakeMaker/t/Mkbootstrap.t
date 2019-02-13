@@ -75,7 +75,7 @@ SKIP: {
 	chmod 0444, 'dasboot.bs';
 
 	SKIP: {
-	    skip("cannot write readonly files", 1) if -w 'dasboot.bs';
+	    skip("cannot write readonly files", 1) if -w 'dasboot.bs' || $^O eq 'cygwin';
 
 	    eval{ Mkbootstrap('dasboot', 1) };
 	    like( $@, qr/Unable to open dasboot\.bs/, 'should die given bad filename' );

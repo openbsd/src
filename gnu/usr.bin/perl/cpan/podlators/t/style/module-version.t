@@ -144,6 +144,6 @@ SOFTWARE.
 =head1 SEE ALSO
 
 This module is maintained in the rra-c-util package.  The current version
-is available from L<http://www.eyrie.org/~eagle/software/rra-c-util/>.
+is available from L<https://www.eyrie.org/~eagle/software/rra-c-util/>.
 
 =cut

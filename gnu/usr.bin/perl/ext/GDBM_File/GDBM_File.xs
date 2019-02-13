@@ -23,8 +23,6 @@ typedef datum datum_key ;
 typedef datum datum_value ;
 typedef datum datum_key_copy;
 
-#define GDBM_BLOCKSIZE 0 /* gdbm defaults to stat blocksize */
-
 #if defined(GDBM_VERSION_MAJOR) && defined(GDBM_VERSION_MINOR) \
     && GDBM_VERSION_MAJOR > 1 || \
     (GDBM_VERSION_MAJOR == 1 && GDBM_VERSION_MINOR >= 9)
@@ -81,17 +79,28 @@ gdbm_TIEHASH(dbtype, name, read_write, mode)
 	char *		name
 	int		read_write
 	int		mode
+	PREINIT:
+	GDBM_FILE dbp;
 	CODE:
-	{
-	    GDBM_FILE  	dbp ;
-
-	    RETVAL = NULL ;
-	    if ((dbp =  gdbm_open(name, GDBM_BLOCKSIZE, read_write, mode,
-	       	     	          (FATALFUNC) croak_string))) {
-	        RETVAL = (GDBM_File)safecalloc(1, sizeof(GDBM_File_type)) ;
-		RETVAL->dbp = dbp ;
-	    }
-	    
+	dbp = gdbm_open(name, 0, read_write, mode, (FATALFUNC)croak_string);
+	if (!dbp && gdbm_errno == GDBM_BLOCK_SIZE_ERROR) {
+	    /*
+	     * By specifying a block size of 0 above, we asked gdbm to
+	     * default to the filesystem's block size.	That's usually the
+	     * right size to choose.  But some versions of gdbm require
+	     * a power-of-two block size, and some unusual filesystems
+	     * or devices have a non-power-of-two size that cause this
+	     * defaulting to fail.  In that case, force an acceptable
+	     * block size.
+	     */
+	    dbp = gdbm_open(name, 4096, read_write, mode,
+		    (FATALFUNC)croak_string);
+	}
+	if (dbp) {
+	    RETVAL = (GDBM_File)safecalloc(1, sizeof(GDBM_File_type));
+	    RETVAL->dbp = dbp;
+	} else {
+	    RETVAL = NULL;
 	}
 	OUTPUT:
 	  RETVAL

@@ -4,9 +4,9 @@ BEGIN {
     $ENV{PERL_UNICODE} = 0;
     unless (-d 'blib') {
         chdir 't' if -d 't';
-        @INC = '../lib';
     }
     require q(./test.pl);
+    set_up_inc('../lib');
 }
 
 use strict;

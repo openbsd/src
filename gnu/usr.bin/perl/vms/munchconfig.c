@@ -34,7 +34,7 @@
 /* The biggest line we can read in from a file */
 #define LINEBUFFERSIZE 1024
 #define NUMTILDESUBS 30
-#define NUMCONFIGSUBS 1000
+#define NUMCONFIGSUBS 1500
 #define TOKENBUFFERSIZE 80
 
 typedef struct {

@@ -23,13 +23,7 @@
 # include <sys/file.h>
 #endif
 
-#ifdef I_STRING
-# ifndef __ultrix__
-#  include <string.h>
-# endif
-#else
-# include <strings.h>
-#endif
+#include <string.h>
 
 /*
  * externals
@@ -41,8 +35,8 @@
 extern "C" {
 #endif
 
-extern Malloc_t malloc proto((MEM_SIZE));
-extern Free_t free proto((Malloc_t));
+extern Malloc_t malloc(MEM_SIZE);
+extern Free_t free(Malloc_t);
 
 #ifdef __cplusplus
 }
@@ -53,11 +47,11 @@ const datum nullitem = {0, 0};
 /*
  * forward
  */
-static int getdbit proto((DBM *, long));
-static int setdbit proto((DBM *, long));
-static int getpage proto((DBM *, long));
-static datum getnext proto((DBM *));
-static int makroom proto((DBM *, long, int));
+static int getdbit(DBM *, long);
+static int setdbit(DBM *, long);
+static int getpage(DBM *, long);
+static datum getnext(DBM *);
+static int makroom(DBM *, long, int);
 
 /*
  * useful macros

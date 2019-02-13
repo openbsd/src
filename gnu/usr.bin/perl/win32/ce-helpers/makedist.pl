@@ -101,7 +101,7 @@ for (@efiles) {
 my ($dynaloader_pm);
 if ($opts{adaptation}) {
   # let's copy our Dynaloader.pm (make this optional?)
-  open my $fhdyna, ">$opts{distdir}/lib/Dynaloader.pm";
+  open my $fhdyna, '>', "$opts{distdir}/lib/Dynaloader.pm";
   print $fhdyna $dynaloader_pm;
   close $fhdyna;
 }
@@ -138,7 +138,7 @@ for (@afiles) {
 
 sub copy($$) {
   my ($fnfrom, $fnto) = @_;
-  open my $fh, "<$fnfrom" or die "can not open $fnfrom: $!";
+  open my $fh, '<', $fnfrom or die "can not open $fnfrom: $!";
   binmode $fh;
   local $/;
   my $ffrom = <$fh>;
@@ -153,7 +153,7 @@ sub copy($$) {
     }
   }
   mkpath $1 if $fnto=~/^(.*)\/([^\/]+)$/;
-  open my $fhout, ">$fnto";
+  open my $fhout, '>', $fnto;
   binmode $fhout;
   print $fhout $ffrom;
   if ($opts{'verbose'} >=2) {
@@ -237,6 +237,7 @@ sub bootstrap {
     my $bs = $file;
     $bs =~ s/(\.\w+)?(;\d*)?$/\.bs/;
     if (-s $bs) { # only read file if it's not empty
+        local @INC = ('.');
         do $bs;
         warn "$bs: $@\n" if $@;
     }

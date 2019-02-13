@@ -36,7 +36,7 @@ ok(1);
 my $objSw = Unicode::Collate::Locale->
     new(locale => 'SW', normalization => undef);
 
-ok($objSw->getlocale, "default"); # no tailoring since 0.74
+ok($objSw->getlocale, 'default'); # no tailoring since 0.74
 
 $objSw->change(level => 1);
 

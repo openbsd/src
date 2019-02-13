@@ -34,16 +34,16 @@ BEGIN {
     # This version should match the corresponding rra-c-util release, but with
     # two digits for the minor version, including a leading zero if necessary,
     # so that it will sort properly.
-    $VERSION = '5.09';
+    $VERSION = '6.03';
 }
 
-# If BUILD or SOURCE are set in the environment, look for data/perl.conf under
-# those paths for a C Automake package.  Otherwise, look in t/data/perl.conf
-# for a standalone Perl module or tests/data/perl.conf for Perl tests embedded
-# in a larger distribution.  Don't use Test::RRA::Automake since it may not
-# exist.
+# If C_TAP_BUILD or C_TAP_SOURCE are set in the environment, look for
+# data/perl.conf under those paths for a C Automake package.  Otherwise, look
+# in t/data/perl.conf for a standalone Perl module or tests/data/perl.conf for
+# Perl tests embedded in a larger distribution.  Don't use Test::RRA::Automake
+# since it may not exist.
 our $PATH;
-for my $base ($ENV{BUILD}, $ENV{SOURCE}, 't', 'tests') {
+for my $base ($ENV{C_TAP_BUILD}, $ENV{C_TAP_SOURCE}, './t', './tests') {
     next if !defined($base);
     my $path = "$base/data/perl.conf";
     if (-r $path) {
@@ -70,7 +70,7 @@ our @STRICT_PREREQ;
 # Load the configuration.
 if (!do($PATH)) {
     my $error = $@ || $! || 'loading file did not return true';
-    BAIL_OUT("cannot load data/perl.conf: $error");
+    BAIL_OUT("cannot load $PATH: $error");
 }
 
 1;
@@ -98,10 +98,10 @@ for both C Automake packages and stand-alone Perl modules.
 
 Test::RRA::Config looks for a file named F<data/perl.conf> relative to the
 root of the test directory.  That root is taken from the environment variables
-BUILD or SOURCE (in that order) if set, which will be the case for C Automake
-packages using C TAP Harness.  If neither is set, it expects the root of the
-test directory to be a directory named F<t> relative to the current directory,
-which will be the case for stand-alone Perl modules.
+C_TAP_BUILD or C_TAP_SOURCE (in that order) if set, which will be the case for
+C Automake packages using C TAP Harness.  If neither is set, it expects the
+root of the test directory to be a directory named F<t> relative to the
+current directory, which will be the case for stand-alone Perl modules.
 
 The following variables are supported:
 
@@ -185,6 +185,8 @@ Russ Allbery <eagle@eyrie.org>
 
 =head1 COPYRIGHT AND LICENSE
 
+Copyright 2015, 2016 Russ Allbery <eagle@eyrie.org>
+
 Copyright 2013, 2014 The Board of Trustees of the Leland Stanford Junior
 University
 
@@ -212,9 +214,9 @@ perlcritic(1), Test::MinimumVersion(3), Test::RRA(3), Test::RRA::Automake(3),
 Test::Strict(3)
 
 This module is maintained in the rra-c-util package.  The current version is
-available from L<http://www.eyrie.org/~eagle/software/rra-c-util/>.
+available from L<https://www.eyrie.org/~eagle/software/rra-c-util/>.
 
 The C TAP Harness test driver and libraries for TAP-based C testing are
-available from L<http://www.eyrie.org/~eagle/software/c-tap-harness/>.
+available from L<https://www.eyrie.org/~eagle/software/c-tap-harness/>.
 
 =cut

@@ -5,8 +5,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(. ../lib);
     require "./test.pl";
+    set_up_inc(qw(. ../lib));
 }
 
 BEGIN { $| = 1 }

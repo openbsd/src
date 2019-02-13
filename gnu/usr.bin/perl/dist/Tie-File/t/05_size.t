@@ -16,7 +16,7 @@ use Tie::File;
 print "ok $N\n"; $N++;
 
 # 2-3 FETCHSIZE 0-length file
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 binmode F;
 close F;
 $o = tie @a, 'Tie::File', $file;
@@ -34,7 +34,7 @@ undef $o;
 untie @a;
 
 my $data = "rec0$:rec1$:rec2$:";
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 binmode F;
 print F $data;
 close F;

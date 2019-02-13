@@ -15,8 +15,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib')
 }
 
 use warnings;
@@ -272,7 +272,7 @@ sub sh {
 SKIP: {
     use Config;
     # debugging builds will detect this failure and panic
-    skip "DEBUGGING build" if $::Config{ccflags} =~ /DEBUGGING/
+    skip "DEBUGGING build" if $::Config{ccflags} =~ /(?<!\S)-DDEBUGGING(?!\S)/
                               or $^O eq 'VMS' && $::Config{usedebugging_perl} eq 'Y';
     local $::TODO = 'cheat and optimise my (....) = @_';
     local @_ = 1..3;
@@ -303,6 +303,9 @@ SKIP: {
 #    (...) = (f())[0,0]
 # the same TEMP RHS element may be used more than once, so when copying
 # it, we mustn't steal its buffer.
+# DAPM 10/2016 - but in that case the SvTEMP flag is sometimes getting
+# cleared: using split() instead as a source of temps seems more reliable,
+# so I've added splut variants too.
 
 {
     # a string long enough for COW and buffer stealing to be enabled
@@ -311,28 +314,81 @@ SKIP: {
     # a sub that is intended to return a TEMP string that isn't COW
     # the concat returns a non-COW PADTMP; pp_leavesub sees a long
     # stealable string, so creates a TEMP with the stolen buffer from the
-    # PADTMP - hence it returns a non-COW string
+    # PADTMP - hence it returns a non-COW string. It also returns a couple
+    # of key strings for the hash tests
     sub f18 {
         my $x = "abc";
-        $x . $long;
+        ($x . $long, "key1", "key2");
     }
 
-    my @a;
+    my (@a, %h);
 
     # with @a initially empty,the code path creates a new copy of each
     # RHS element to store in the array
 
     @a = (f18())[0,0];
-    is (substr($a[0], 0, 7), "abcdefx", 'NOSTEAL empty $a[0]');
-    is (substr($a[1], 0, 7), "abcdefx", 'NOSTEAL empty $a[1]');
+    is (substr($a[0], 0, 7), "abcdefx", 'NOSTEAL f18 empty $a[0]');
+    is (substr($a[1], 0, 7), "abcdefx", 'NOSTEAL f18 empty $a[1]');
+    @a = (split /-/, "abc-def")[0,0];
+    is ($a[0], "abc", 'NOSTEAL split empty $a[0]');
+    is ($a[1], "abc", 'NOSTEAL split empty $a[1]');
 
     # with @a initially non-empty, it takes a different code path that
     # makes a mortal copy of each RHS element
     @a = 1..3;
     @a = (f18())[0,0];
-    is (substr($a[0], 0, 7), "abcdefx", 'NOSTEAL non-empty $a[0]');
-    is (substr($a[1], 0, 7), "abcdefx", 'NOSTEAL non-empty $a[1]');
+    is (substr($a[0], 0, 7), "abcdefx", 'NOSTEAL f18 non-empty $a[0]');
+    is (substr($a[1], 0, 7), "abcdefx", 'NOSTEAL f18 non-empty $a[1]');
+    @a = 1..3;
+    @a = (split /-/, "abc-def")[0,0];
+    is ($a[0], "abc", 'NOSTEAL split non-empty $a[0]');
+    is ($a[1], "abc", 'NOSTEAL split non-empty $a[1]');
 
+    # similarly with PADTMPs
+
+    @a = ();
+    @a = ($long . "x")[0,0];
+    is (substr($a[0], 0, 4), "defx", 'NOSTEAL PADTMP empty $a[0]');
+    is (substr($a[1], 0, 4), "defx", 'NOSTEAL PADTMP empty $a[1]');
+
+    @a = 1..3;
+    @a = ($long . "x")[0,0];
+    is (substr($a[0], 0, 4), "defx", 'NOSTEAL PADTMP non-empty $a[0]');
+    is (substr($a[1], 0, 4), "defx", 'NOSTEAL PADTMP non-empty $a[1]');
+
+    #  as above, but assigning to a hash
+
+    %h = (f18())[1,0,2,0];
+    is (substr($h{key1}, 0, 7), "abcdefx", 'NOSTEAL f18 empty $h{key1}');
+    is (substr($h{key2}, 0, 7), "abcdefx", 'NOSTEAL f18 empty $h{key2}');
+    %h = (split /-/, "key1-val-key2")[0,1,2,1];
+    is ($h{key1}, "val", 'NOSTEAL split empty $h{key1}');
+    is ($h{key2}, "val", 'NOSTEAL split empty $h{key2}');
+
+    %h = qw(key1 foo key2 bar key3 baz);
+    %h = (f18())[1,0,2,0];
+    is (substr($h{key1}, 0, 7), "abcdefx", 'NOSTEAL f18 non-empty $h{key1}');
+    is (substr($h{key2}, 0, 7), "abcdefx", 'NOSTEAL f18 non-empty $h{key2}');
+    %h = qw(key1 foo key2 bar key3 baz);
+    %h = (split /-/, "key1-val-key2")[0,1,2,1];
+    is ($h{key1}, "val", 'NOSTEAL split non-empty $h{key1}');
+    is ($h{key2}, "val", 'NOSTEAL split non-empty $h{key2}');
+
+    %h = ();
+    %h = ($long . "x", "key1", "key2")[1,0,2,0];
+    is (substr($h{key1}, 0, 4), "defx", 'NOSTEAL PADTMP empty $h{key1}');
+    is (substr($h{key2}, 0, 4), "defx", 'NOSTEAL PADTMP empty $h{key2}');
+
+    %h = qw(key1 foo key2 bar key3 baz);
+    %h = ($long . "x", "key1", "key2")[1,0,2,0];
+    is (substr($h{key1}, 0, 4), "defx", 'NOSTEAL PADTMP non-empty $h{key1}');
+    is (substr($h{key2}, 0, 4), "defx", 'NOSTEAL PADTMP non-empty $h{key2}');
+
+    # both keys and values stealable
+    @a = (%h = (split /-/, "abc-def")[0,1,0,1]);
+    is (join(':', keys   %h), "abc",     "NOSTEAL split G_ARRAY keys");
+    is (join(':', values %h), "def",     "NOSTEAL split G_ARRAY values");
+    is (join(':', @a),        "abc:def", "NOSTEAL split G_ARRAY result");
 }
 
 {
@@ -393,6 +449,149 @@ SKIP: {
       is($x, 2, "check swap for \$x");
       is($y, 1, "check swap for \$y");
     }
+}
+
+{
+    # check that a second aggregate is empted but doesn't suck up
+    # anything random
+
+    my (@a, @b) = qw(x y);
+    is(+@a, 2, "double array A len");
+    is(+@b, 0, "double array B len");
+    is("@a", "x y", "double array A contents");
+
+    @a = 1..10;
+    @b = 100..200;
+    (@a, @b) = qw(x y);
+    is(+@a, 2, "double array non-empty A len");
+    is(+@b, 0, "double array non-empty B len");
+    is("@a", "x y", "double array non-empty A contents");
+
+    my (%a, %b) = qw(k1 v1 k2 v2);
+    is(+(keys %a), 2, "double hash A len");
+    is(+(keys %b), 0, "double hash B len");
+    is(join(' ', sort keys   %a), "k1 k2", "double hash A keys");
+    is(join(' ', sort values %a), "v1 v2", "double hash A values");
+
+    %a = 1..10;
+    %b = 101..200;
+    (%a, %b) = qw(k1 v1 k2 v2);
+    is(+(keys %a), 2, "double hash non-empty A len");
+    is(+(keys %b), 0, "double hash non-empty B len");
+    is(join(' ', sort keys   %a), "k1 k2", "double hash non-empty A keys");
+    is(join(' ', sort values %a), "v1 v2", "double hash non-empty A values");
+}
+
+#  list and lval context: filling of missing elements, returning correct
+#  lvalues.
+#  ( Note that these partially duplicate some tests in hashassign.t which
+#  I didn't spot at first - DAPM)
+
+{
+    my ($x, $y, $z);
+    my (@a, %h);
+
+    sub lval {
+        my $n    = shift;
+        my $desc = shift;
+        is($x, $n >= 1 ? "assign1" : undef, "lval: X pre $n $desc");
+        is($y, $n >= 2 ? "assign2" : undef, "lval: Y pre $n $desc");
+        is($z,                       undef, "lval: Z pre $n $desc");
+
+        my $i = 0;
+        for (@_) {
+            $_ = "lval$i";
+            $i++;
+        }
+        is($x, "lval0", "lval: a post $n $desc");
+        is($y, "lval1", "lval: b post $n $desc");
+        is($z, "lval2", "lval: c post $n $desc");
+    }
+    lval(0, "XYZ", (($x,$y,$z) = ()));
+    lval(1, "XYZ", (($x,$y,$z) = (qw(assign1))));
+    lval(2, "XYZ", (($x,$y,$z) = (qw(assign1 assign2))));
+
+    lval(0, "XYZA", (($x,$y,$z,@a) = ()));
+    lval(1, "XYZA", (($x,$y,$z,@a) = (qw(assign1))));
+    lval(2, "XYZA", (($x,$y,$z,@a) = (qw(assign1 assign2))));
+
+    lval(0, "XYAZ", (($x,$y,@a,$z) = ()));
+    lval(1, "XYAZ", (($x,$y,@a,$z) = (qw(assign1))));
+    lval(2, "XYAZ", (($x,$y,@a,$z) = (qw(assign1 assign2))));
+
+    lval(0, "XYZH", (($x,$y,$z,%h) = ()));
+    lval(1, "XYZH", (($x,$y,$z,%h) = (qw(assign1))));
+    lval(2, "XYZH", (($x,$y,$z,%h) = (qw(assign1 assign2))));
+
+    lval(0, "XYHZ", (($x,$y,%h,$z) = ()));
+    lval(1, "XYHZ", (($x,$y,%h,$z) = (qw(assign1))));
+    lval(2, "XYHZ", (($x,$y,%h,$z) = (qw(assign1 assign2))));
+
+    # odd number of hash elements
+
+    {
+        no warnings 'misc';
+        @a = ((%h) = qw(X));
+        is (join(":", map $_ // "u", @a), "X:u",      "lval odd singleton");
+        @a = (($x, $y, %h) = qw(X Y K));
+        is (join(":", map $_ // "u", @a), "X:Y:K:u",   "lval odd");
+        @a = (($x, $y, %h, $z) = qw(X Y K));
+        is (join(":", map $_ // "u", @a), "X:Y:K:u:u", "lval odd with z");
+    }
+
+    # undef on LHS uses RHS as lvalue instead
+    # Note this this just codifies existing behaviour - it may not be
+    # correct. See http://nntp.perl.org/group/perl.perl5.porters/240358.
+
+    {
+        ($x, $y, $z)  = (0, 10, 20);
+        $_++ for ((undef, $x) = ($y, $z));
+        is "$x:$y:$z", "21:11:20", "undef as lvalue";
+    }
+
+}
+
+{
+    # [perl #129991] assert failure in S_aassign_copy_common
+    # the LHS of a list assign can be aliased to an immortal SV;
+    # we used to assert that this couldn't happen
+    eval { ($_,$0)=(1,0) for 0 gt 0 };
+    like($@, qr//, "RT #129991");
+}
+
+{
+    # [perl #130132]
+    # lexical refs on LHS, dereffed on the RHS
+
+    my $fill;
+
+    my $sref = do { my $tmp = 2; \$tmp };
+    ($sref, $fill) = (1, $$sref);
+    is ($sref, 1, "RT #130132 scalar 1");
+    is ($fill, 2, "RT #130132 scalar 2");
+
+    my $x = 1;
+    $sref = \$x;
+    ($sref, $$sref) = (2, 3);
+    is ($sref, 2, "RT #130132 scalar derefffed 1");
+    is ($x,    3, "RT #130132 scalar derefffed 2");
+
+    $x = 1;
+    $sref = \$x;
+    ($sref, $$sref) = (2);
+    is ($sref, 2,     "RT #130132 scalar undef 1");
+    is ($x,    undef, "RT #130132 scalar undef 2");
+
+    my @a;
+    $sref = do { my $tmp = 2; \$tmp };
+    @a = (($sref) = (1, $$sref));
+    is ($sref, 1,     "RT #130132 scalar list cxt 1");
+    is ($a[0], 1,     "RT #130132 scalar list cxt a[0]");
+
+    my $aref = [ 1, 2 ];
+    ($aref, $fill) = @$aref;
+    is ($aref, 1, "RT #130132 array 1");
+    is ($fill, 2, "RT #130132 array 2");
 }
 
 done_testing();

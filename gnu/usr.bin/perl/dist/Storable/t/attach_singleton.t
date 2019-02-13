@@ -19,7 +19,7 @@ sub BEGIN {
     }
 }
 
-use Test::More tests => 11;
+use Test::More tests => 16;
 use Storable ();
 
 # Get the singleton
@@ -52,6 +52,11 @@ is( "$struct->[1]", "$thawed->[1]", 'Singleton thaws correctly' );
 # We can also test this empirically
 $struct->[1]->{value} = 'Goodbye cruel world!';
 is_deeply( $struct, $thawed, 'Empiric testing confirms correct behaviour' );
+
+$struct = [ $object, $object ];
+$frozen = Storable::freeze($struct);
+$thawed = Storable::thaw($frozen);
+is("$thawed->[0]", "$thawed->[1]", "Multiple Singletons thaw correctly");
 
 # End Tests
 ###########

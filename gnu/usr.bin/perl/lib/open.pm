@@ -1,7 +1,7 @@
 package open;
 use warnings;
 
-our $VERSION = '1.10';
+our $VERSION = '1.11';
 
 require 5.008001; # for PerlIO::get_layers()
 
@@ -153,7 +153,7 @@ open - perl pragma to set default PerlIO layers for input and output
 
     use open IO  => ':locale';
 
-    use open ':encoding(utf8)';
+    use open ':encoding(UTF-8)';
     use open ':locale';
     use open ':encoding(iso-8859-7)';
 
@@ -195,8 +195,8 @@ For example:
 
 These are equivalent
 
-    use open ':encoding(utf8)';
-    use open IO => ':encoding(utf8)';
+    use open ':encoding(UTF-8)';
+    use open IO => ':encoding(UTF-8)';
 
 as are these
 
@@ -221,8 +221,8 @@ The C<:std> subpragma on its own has no effect, but if combined with
 the C<:utf8> or C<:encoding> subpragmas, it converts the standard
 filehandles (STDIN, STDOUT, STDERR) to comply with encoding selected
 for input/output handles.  For example, if both input and out are
-chosen to be C<:encoding(utf8)>, a C<:std> will mean that STDIN, STDOUT,
-and STDERR are also in C<:encoding(utf8)>.  On the other hand, if only
+chosen to be C<:encoding(UTF-8)>, a C<:std> will mean that STDIN, STDOUT,
+and STDERR are also in C<:encoding(UTF-8)>.  On the other hand, if only
 output is chosen to be in C<< :encoding(koi8r) >>, a C<:std> will cause
 only the STDOUT and STDERR to be in C<koi8r>.  The C<:locale> subpragma
 implicitly turns on C<:std>.

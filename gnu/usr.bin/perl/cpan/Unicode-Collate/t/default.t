@@ -165,10 +165,10 @@ my $Tailored = Unicode::Collate->new(
 );
 
 # Ka vs Kje
-ok($Collator->gt("\x{45C}", "\x{43A}"));
-ok($Collator->gt("\x{40C}", "\x{41A}"));
-ok($Tailored->gt("\x{45C}", "\x{43A}"));
-ok($Tailored->gt("\x{40C}", "\x{41A}"));
+ok($Collator->eq("\x{45C}", "\x{43A}"));
+ok($Collator->eq("\x{40C}", "\x{41A}"));
+ok($Tailored->eq("\x{45C}", "\x{43A}"));
+ok($Tailored->eq("\x{40C}", "\x{41A}"));
 
 # 60
 

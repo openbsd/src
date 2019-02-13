@@ -76,6 +76,7 @@ bool
 T_BOOL_2(in)
         bool in
     CODE:
+	PERL_UNUSED_VAR(RETVAL);
     OUTPUT: in
 
 void

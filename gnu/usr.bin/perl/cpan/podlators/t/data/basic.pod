@@ -93,8 +93,6 @@ L<foo/I<Italic> text>
 
 L<fooE<verbar>barZ<>/Section C<with> I<B<other> markup>>
 
-L<Nested L<http://www.perl.org/>|fooE<sol>bar>
-
 =head1 OVER AND ITEMS
 
 Taken from Pod::Parser tests, this is a test to ensure that multiline
@@ -270,12 +268,12 @@ Of course I should still be able to do all this I<with> escape sequences
 too: C<$self-E<gt>method()> and C<$self-E<gt>{FIELDNAME}> and
 C<{FOO=E<gt>BAR}>.
 
-Dont forget C<$self-E<gt>method()-E<gt>{FIELDNAME} = {FOO=E<gt>BAR}>.
+Don't forget C<$self-E<gt>method()-E<gt>{FIELDNAME} = {FOO=E<gt>BAR}>.
 
 And make sure that C<0> works too!
 
 Now, if I use << or >> as my delimiters, then I have to use whitespace.
-So things like C<<$self->method()>> and C<<$self->{FIELDNAME}>> wont end
+So things like C<<$self->method()>> and C<<$self->{FIELDNAME}>> won't end
 up doing what you might expect since the first > will still terminate
 the first < seen.
 

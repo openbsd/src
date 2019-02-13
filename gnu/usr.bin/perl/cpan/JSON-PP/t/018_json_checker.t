@@ -1,9 +1,7 @@
-#! perl
-
-# use the testsuite from http://www.json.org/JSON::PP_checker/
+# use the testsuite from http://www.json.org/JSON_checker/
 # except for fail18.json, as we do not support a depth of 20 (but 16 and 32).
 
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 
 use strict;
 #no warnings;
@@ -16,6 +14,8 @@ use JSON::PP;
 
 my $json = JSON::PP->new->utf8->max_depth(32)->canonical;
 
+my $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
+
 binmode DATA;
 my $num = 1;
 for (;;) {
@@ -25,6 +25,9 @@ for (;;) {
       or last;
    $/ = "\n";
    my $name = <DATA>;
+   if ($vax_float && $name =~ /pass1.json/) {
+       $test =~ s/\b23456789012E66\b/23456789012E20/;
+   }
    if (my $perl = eval { $json->decode ($test) }) {
       ok ($name =~ /^pass/, $name);
 #print $json->encode ($perl), "\n";

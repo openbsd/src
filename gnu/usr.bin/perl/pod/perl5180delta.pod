@@ -540,7 +540,7 @@ inherited by child processes.
 In this release, when assigning to C<%ENV>, values are immediately stringified,
 and converted to be only a byte string.
 
-First, it is forced to be a only a string.  Then if the string is utf8 and the
+First, it is forced to be only a string.  Then if the string is utf8 and the
 equivalent of C<utf8::downgrade()> works, that result is used; otherwise, the
 equivalent of C<utf8::encode()> is used, and a warning is issued about wide
 characters (L</Diagnostics>).
@@ -2759,7 +2759,7 @@ The use of C<PL_stashcache>, the stash name lookup cache for method calls, has
 been restored,
 
 Commit da6b625f78f5f133 in August 2011 inadvertently broke the code that looks
-up values in C<PL_stashcache>. As it's a only cache, quite correctly everything
+up values in C<PL_stashcache>. As it's only a cache, quite correctly everything
 carried on working without it.
 
 =item *

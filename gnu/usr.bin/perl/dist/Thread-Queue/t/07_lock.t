@@ -29,7 +29,7 @@ ok($q, 'New queue');
 my $sm = Thread::Semaphore->new(0);
 my $st = Thread::Semaphore->new(0);
 
-threads->create(sub {
+my $thr = threads->create(sub {
     {
         lock($q);
         $sm->up();
@@ -39,13 +39,14 @@ threads->create(sub {
         my @x = $q->extract(5,2);
         is_deeply(\@x, [6,7], 'Thread dequeues under lock');
     }
-})->detach();
+});
 
 $sm->down();
 $st->up();
 my @x = $q->dequeue_nb(100);
 is_deeply(\@x, [1..5,8..10], 'Main dequeues');
-threads::yield();
+
+$thr->join();
 
 exit(0);
 

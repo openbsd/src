@@ -2,13 +2,13 @@
 # このファイルのエンコーディングはUTF-8
 #
 
-# copied over from JSON::PP::PC and modified to use JSON::PP
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::PC and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 
 use Test::More;
 use strict;
 
-BEGIN { plan tests => 17 };
+BEGIN { plan tests => 18 };
 
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
@@ -90,4 +90,8 @@ is($obj->{id},"abc\\ndef",q|{"id":"abc\\\ndef"}|);
 
 $obj = $pc->decode(q|{"id":"abc\\\\\ndef"}|);
 is($obj->{id},"abc\\\ndef",q|{"id":"abc\\\\\ndef"}|);
+
+$obj = {test => "\'I said\', \"She said\""};
+$str = $pc->encode($obj);
+is($str,q|{"test":"'I said', \"She said\""}|);
 

@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require "./test.pl";
+    set_up_inc('../lib');
 }
 
-print "1..5\n";
+print "1..6\n";
 
 my $j = 1;
 for $i ( 1,2,5,4,3 ) {
@@ -42,6 +42,28 @@ while (<>) {
     }
     show();
 }
+
+# test setuid is preserved (and hopefully setgid)
+#
+# With nested in-place editing PL_oldname and PL_filemode would
+# be overwritten by the values for the last file in the nested
+# loop.  This is now all stored as magic in *ARGVOUT{IO}
+$^I = "";
+@ARGV = mkfiles(1..3);
+my $sidfile = $ARGV[1];
+chmod(04600, $sidfile);
+my $mode = (stat $ARGV[1])[2];
+$n = 0;
+while (<>) {
+    print STDOUT "#final \@ARGV: [@ARGV]\n";
+    if ($n++ == 1) {
+	other();
+    }
+    print;
+}
+my $newmode = (stat $sidfile)[2];
+printf "# before %#o after %#o\n", $mode, $newmode;
+print +($mode == $newmode ? "" : "not "). "ok 6 # check setuid mode preserved\n";
 
 sub show {
     #warn "$ARGV: $_";

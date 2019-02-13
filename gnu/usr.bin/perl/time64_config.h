@@ -1,5 +1,5 @@
-#ifndef TIME64_CONFIG_H
-#    define TIME64_CONFIG_H
+#ifndef PERL_TIME64_CONFIG_H_
+#    define PERL_TIME64_CONFIG_H_
 
 /* Configuration
    -------------
@@ -82,4 +82,4 @@
 #define SYSTEM_GMTIME_MAX       CAT2(GMTIME_MAX,.0)
 #define SYSTEM_GMTIME_MIN       CAT2(GMTIME_MIN,.0)
 
-#endif /* TIME64_CONFIG_H */
+#endif /* PERL_TIME64_CONFIG_H_ */

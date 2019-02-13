@@ -1,4 +1,4 @@
-BEGIN { print "1..26\n"; }
+BEGIN { print "1..27\n"; }
 
 use NEXT;
 
@@ -16,13 +16,13 @@ sub B::AUTOLOAD { return ( 9, $_[0]->NEXT::AUTOLOAD() )
 sub B::DESTROY  { $_[0]->NEXT::DESTROY() }
 
 package C;
-sub C::DESTROY  { print "ok 24\n"; $_[0]->NEXT::DESTROY() }
+sub C::DESTROY  { print "ok 25\n"; $_[0]->NEXT::DESTROY() }
 
 package D;
 @D::ISA = qw( B C E );
 sub D::method   { return ( 2, $_[0]->NEXT::method() ) }
 sub D::AUTOLOAD { return ( 8, $_[0]->NEXT::AUTOLOAD() ) }
-sub D::DESTROY  { print "ok 23\n"; $_[0]->NEXT::DESTROY() }
+sub D::DESTROY  { print "ok 24\n"; $_[0]->NEXT::DESTROY() }
 sub D::oops     { $_[0]->NEXT::method() }
 sub D::secondary { return ( 17, 18, map { $_+10 } $_[0]->NEXT::secondary() ) }
 
@@ -31,12 +31,12 @@ package E;
 sub E::method   { return ( 4,  $_[0]->NEXT::method(), $_[0]->NEXT::method() ) }
 sub E::AUTOLOAD { return ( 10, $_[0]->NEXT::AUTOLOAD() ) 
 			if $AUTOLOAD =~ /.*(missing_method|secondary)/ }
-sub E::DESTROY  { print "ok 25\n"; $_[0]->NEXT::DESTROY() }
+sub E::DESTROY  { print "ok 26\n"; $_[0]->NEXT::DESTROY() }
 
 package F;
 sub F::method   { return ( 5  ) }
 sub F::AUTOLOAD { return ( 11 ) if $AUTOLOAD =~ /.*(missing_method|secondary)/ }
-sub F::DESTROY  { print "ok 26\n" }
+sub F::DESTROY  { print "ok 27\n" }
 
 package G;
 sub G::method   { return ( 6 ) }
@@ -104,4 +104,15 @@ eval {
 };
 print "ok 22\n";
 
-# CAN REDISPATCH DESTRUCTORS (ok 23..26)
+# TEST WITH CONSTANTS (23)
+
+package Hay;
+@ISA = 'Bee';
+sub foo { return shift->NEXT::foo }
+package Bee;
+use constant foo => 3;
+package main;
+print "not " unless Hay->foo eq '3';
+print "ok 23\n";
+
+# CAN REDISPATCH DESTRUCTORS (ok 24..27)

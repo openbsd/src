@@ -1,8 +1,11 @@
 use v5.16.0;
 use strict;
 use warnings;
-require 'regen/regen_lib.pl';
-require 'regen/charset_translations.pl';
+
+BEGIN { unshift @INC, '.' }
+
+require './regen/regen_lib.pl';
+require './regen/charset_translations.pl';
 
 # Generates the EBCDIC translation tables that were formerly hard-coded into
 # utfebcdic.h
@@ -43,8 +46,8 @@ sub output_table ($$;$) {
 
 print $out_fh <<END;
 
-#ifndef H_EBCDIC_TABLES   /* Guard against nested #includes */
-#define H_EBCDIC_TABLES   1
+#ifndef PERL_EBCDIC_TABLES_H_   /* Guard against nested #includes */
+#define PERL_EBCDIC_TABLES_H_   1
 
 /* This file contains definitions for various tables used in EBCDIC handling.
  * More info is in utfebcdic.h */
@@ -219,6 +222,6 @@ END
     print $out_fh get_conditional_compile_line_end();
 }
 
-print $out_fh "\n#endif /* H_EBCDIC_TABLES */\n";
+print $out_fh "\n#endif /* PERL_EBCDIC_TABLES_H_ */\n";
 
 read_only_bottom_close_and_rename($out_fh);

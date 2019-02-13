@@ -23,18 +23,18 @@ foreach $i (0..$#poddata) {
     $heads{anchorify($1)} = 1 if $poddata[$i] =~ /=head[1-6]\s+(.*)/;
 }
 my %expected = map { $_ => 1 } qw(
-    name
-    description
-    subroutine
-    error
-    method
-    has_a_wordspace
-    hastrailingwordspace
-    hasleadingwordspace
-    has_extra_internalwordspace
-    hasquotes
-    hasquestionmark
-    has_hyphen_and_space
+    NAME
+    DESCRIPTION
+    Subroutine
+    Error
+    Method
+    Has_A_Wordspace
+    HasTrailingWordspace
+    HasLeadingWordspace
+    Has_Extra_InternalWordspace
+    Has_Quotes
+    Has_QuestionMark
+    Has_Hyphen_And_Space
 );
 is_deeply(
     \%heads,

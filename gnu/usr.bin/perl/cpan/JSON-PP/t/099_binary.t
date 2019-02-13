@@ -1,4 +1,4 @@
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 
 use Test::More;
 use strict;
@@ -40,7 +40,7 @@ sub test($) {
    ok ($_[0] eq JSON::PP->new->shrink->decode ($js)->[0]);
 }
 
-srand 0; # doesn't help too much, but its at leats more deterministic
+srand 0; # doesn't help too much, but its at least more deterministic
 
 #for (1..768) {
 for (1..64, 125..129, 255..257, 512, 704, 736, 768) {

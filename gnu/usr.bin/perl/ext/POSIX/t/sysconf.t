@@ -110,7 +110,7 @@ SKIP: {
 
     -c $TTY
 	or skip("$TTY not a character file", $n);
-    open(TTY, $TTY)
+    open(TTY, '<', $TTY)
 	or skip("failed to open $TTY: $!", $n);
     -t TTY
 	or skip("TTY ($TTY) not a terminal file", $n);

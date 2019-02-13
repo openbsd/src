@@ -4,16 +4,18 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = qw(../lib);
     require './test.pl';
+    set_up_inc( qw(../lib) );
+    skip_all_if_miniperl(
+	"no dynamic loading on miniperl, no threads/attributes"
+    );
 }
 
 use strict;
 use Config;
 
-BEGIN {
+{
     skip_all_without_config(qw(useithreads d_getppid));
-    skip_all_if_miniperl("no dynamic loading on miniperl, no threads");
     eval 'use threads; use threads::shared';
     plan tests => 3;
     if ($@) {

@@ -47,6 +47,20 @@ $0; # and
 $123; # numbers
 $_;    # and
 $_foo;  # underscores (none of which should warn)
+@DB::args
+EXPECT
+########
+-w
+# perl.c
+print # avoid void warning
+$\, # test a few
+$:, # punct vars
+$0, # and
+$123, # numbers
+$_,    # and
+$_foo,  # underscores (none of which should warn)
+@DB::args
+if 0;
 EXPECT
 ########
 -W

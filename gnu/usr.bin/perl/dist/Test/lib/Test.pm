@@ -5,10 +5,9 @@ package Test;
 use strict;
 
 use Carp;
-use vars (qw($VERSION @ISA @EXPORT @EXPORT_OK $ntest $TestLevel), #public-ish
-          qw($TESTOUT $TESTERR %Program_Lines $told_about_diff
-             $ONFAIL %todo %history $planned @FAILDETAIL) #private-ish
-         );
+our ($VERSION, @ISA, @EXPORT, @EXPORT_OK, $ntest, $TestLevel); #public-is
+our ($TESTOUT, $TESTERR, %Program_Lines, $told_about_diff,
+             $ONFAIL, %todo, %history, $planned, @FAILDETAIL); #private-ish
 
 # In case a test is run in a persistent environment.
 sub _reset_globals {
@@ -20,7 +19,7 @@ sub _reset_globals {
     $planned    = 0;
 }
 
-$VERSION = '1.28_01';
+$VERSION = '1.31';
 require Exporter;
 @ISA=('Exporter');
 
@@ -199,7 +198,7 @@ sub _read_program {
   my($file) = shift;
   return unless defined $file and length $file
     and -e $file and -f _ and -r _;
-  open(SOURCEFILE, "<$file") || return;
+  open(SOURCEFILE, '<', $file) || return;
   $Program_Lines{$file} = [<SOURCEFILE>];
   close(SOURCEFILE);
 
@@ -346,7 +345,7 @@ If either (or both!) is a subroutine reference, it is run and used
 as the value for comparing.  For example:
 
     ok sub {
-        open(OUT, ">x.dat") || die $!;
+        open(OUT, '>', 'x.dat') || die $!;
         print OUT "\x{e000}";
         close OUT;
         my $bytecount = -s 'x.dat';
@@ -540,7 +539,7 @@ sub _diff_complain_external {
     if (close($got_fh) && close($exp_fh)) {
         my $diff_cmd = "$diff $exp_filename $got_filename";
         print $TESTERR "#\n# $prefix $diff_cmd\n";
-        if (open(DIFF, "$diff_cmd |")) {
+        if (open(DIFF, '-|', $diff_cmd)) {
             local $_;
             while (<DIFF>) {
                 print $TESTERR "# $prefix $_";

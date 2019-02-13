@@ -1,6 +1,6 @@
 package FileCache;
 
-our $VERSION = '1.09';
+our $VERSION = '1.10';
 
 =head1 NAME
 
@@ -91,8 +91,8 @@ no strict 'refs';
 # These are not C<my> for legacy reasons.
 # Previous versions requested the user set $cacheout_maxopen by hand.
 # Some authors fiddled with %saw to overcome the clobber on initial open.
-use vars qw(%saw $cacheout_maxopen);
-$cacheout_maxopen = 16;
+our %saw;
+our $cacheout_maxopen = 16;
 
 use parent 'Exporter';
 our @EXPORT = qw[cacheout cacheout_close];

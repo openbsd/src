@@ -73,7 +73,7 @@ eval {
   {
     local $/; #slurp
     my $fh;
-    open($fh,$README);
+    open($fh,'<',$README);
     binmode($fh);
     my $data = <$fh>;
     print $tfh $data;

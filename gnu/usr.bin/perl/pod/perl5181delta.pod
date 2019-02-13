@@ -48,7 +48,7 @@ Module::CoreList has been upgraded from 2.89 to 2.96.
 
 =item AIX
 
-A rarely-encounted configuration bug in the AIX hints file has been corrected.
+A rarely-encountered configuration bug in the AIX hints file has been corrected.
 
 =item MidnightBSD
 

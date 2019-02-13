@@ -19,7 +19,6 @@
 BUILD_ZLIB      = True
 INCLUDE         = ./zlib-src
 LIB             = ./zlib-src
-
 OLD_ZLIB        = False
 GZIP_OS_CODE    = AUTO_DETECT
 

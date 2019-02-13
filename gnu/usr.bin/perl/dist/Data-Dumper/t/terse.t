@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Test::More tests => 6;
+use Test::More tests => 10;
 use lib qw( ./t/lib );
 use Testing qw( _dumptostr );
 
@@ -23,39 +23,26 @@ for my $useperl (0..1) {
 WANT
 }
 
-my (%dumpstr);
 my $dumper;
 
 $dumper = Data::Dumper->new([$hash]);
-$dumpstr{noterse} = _dumptostr($dumper);
-# $VAR1 = {
-#           'foo' => 42
-#         };
+my $dumpstr_noterse = _dumptostr($dumper);
 
 $dumper = Data::Dumper->new([$hash]);
 $dumper->Terse();
-$dumpstr{terse_no_arg} = _dumptostr($dumper);
+is _dumptostr($dumper), $dumpstr_noterse;
 
 $dumper = Data::Dumper->new([$hash]);
 $dumper->Terse(0);
-$dumpstr{terse_0} = _dumptostr($dumper);
+is _dumptostr($dumper), $dumpstr_noterse;
 
 $dumper = Data::Dumper->new([$hash]);
 $dumper->Terse(1);
-$dumpstr{terse_1} = _dumptostr($dumper);
-# {
-#   'foo' => 42
-# }
+isnt _dumptostr($dumper), $dumpstr_noterse;
 
 $dumper = Data::Dumper->new([$hash]);
-$dumper->Terse(undef);
-$dumpstr{terse_undef} = _dumptostr($dumper);
-
-is($dumpstr{noterse}, $dumpstr{terse_no_arg},
-    "absence of Terse is same as Terse()");
-is($dumpstr{noterse}, $dumpstr{terse_0},
-    "absence of Terse is same as Terse(0)");
-isnt($dumpstr{noterse}, $dumpstr{terse_1},
-    "absence of Terse is different from Terse(1)");
-is($dumpstr{noterse}, $dumpstr{terse_undef},
-    "absence of Terse is same as Terse(undef)");
+is $dumper->Terse(1), $dumper;
+is $dumper->Terse, 1;
+is $dumper->Terse(undef), $dumper;
+is $dumper->Terse, undef;
+is _dumptostr($dumper), $dumpstr_noterse;

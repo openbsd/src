@@ -6,20 +6,35 @@ BEGIN {
 chdir 't';
 
 use strict;
-use Test::More tests => 6;
+use Test::More tests => 5;
 use ExtUtils::MM;
-use MakeMaker::Test::Setup::Problem;
+use MakeMaker::Test::Utils;
+use File::Path;
 use TieOut;
 
 my $MM = bless { DIR => ['subdir'] }, 'MM';
+my $DIRNAME = 'Problem-Module';
+my %FILES = (
+    'Makefile.PL'   => <<'END',
+use ExtUtils::MakeMaker;
+WriteMakefile(NAME    => 'Problem::Module');
+END
 
-ok( setup_recurs(), 'setup' );
+    'subdir/Makefile.PL'    => <<'END',
+printf "\@INC %s .\n", (grep { $_ eq '.' } @INC) ? "has" : "doesn't have";
+warn "I think I'm going to be sick\n";
+die "YYYAaaaakkk\n";
+END
+
+);
+
+hash2files($DIRNAME, \%FILES);
 END {
-    ok( chdir File::Spec->updir );
-    ok( teardown_recurs(), 'teardown' );
+    ok( chdir File::Spec->updir, 'chdir ..' );
+    ok( rmtree($DIRNAME), 'teardown' );
 }
 
-ok( chdir 'Problem-Module', "chdir'd to Problem-Module" ) ||
+ok( chdir $DIRNAME, "chdir'd to Problem-Module" ) ||
   diag("chdir failed: $!");
 
 

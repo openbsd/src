@@ -1,0 +1,65 @@
+__END__
+# NAME \N{U+too large} on 64-bit machine
+# SKIP ? use Config; $Config{uvsize} < 8 && "Not 64 bit"
+qr/\N{U+7FFFFFFFFFFFFFFF}/;
+qr/\N{U+1_0000_0000_0000_0000}/;
+EXPECT
+Use of code point 0x1_0000_0000_0000_0000 is not allowed; the permissible max is 0x7fffffffffffffff in regex; marked by <-- HERE in m/\N{U+1_0000_0000_0000_0000 <-- HERE }/ at - line 2.
+########
+# NAME \N{U+too large} on 32-bit machine
+# SKIP ? use Config; $Config{uvsize} > 4 && "Not 32 bit"
+qr/\N{U+7FFFFFFF}/;
+qr/\N{U+1_0000_0000}/;
+EXPECT
+Use of code point 0x1_0000_0000 is not allowed; the permissible max is 0x7fffffff in regex; marked by <-- HERE in m/\N{U+1_0000_0000 <-- HERE }/ at - line 2.
+########
+# NAME \N{U+100.too large} on 64-bit machine
+# SKIP ? use Config; $Config{uvsize} < 8 && "Not 64 bit"
+qr/\N{U+100.7FFFFFFFFFFFFFFF}/;
+qr/\N{U+100.1_0000_0000_0000_0000}/;
+EXPECT
+Use of code point 0x1_0000_0000_0000_0000 is not allowed; the permissible max is 0x7fffffffffffffff in regex; marked by <-- HERE in m/\N{U+100.1_0000_0000_0000_0000 <-- HERE }/ at - line 2.
+########
+# NAME \N{U+100.too large} on 32-bit machine
+# SKIP ? use Config; $Config{uvsize} > 4 && "Not 32 bit"
+qr/\N{U+100.7FFFFFFF}/;
+qr/\N{U+100.1_0000_0000}/;
+EXPECT
+Use of code point 0x1_0000_0000 is not allowed; the permissible max is 0x7fffffff in regex; marked by <-- HERE in m/\N{U+100.1_0000_0000 <-- HERE }/ at - line 2.
+########
+# NAME \N{U+.}
+my $p00="\\N{U+.}"; qr/$p00/;
+EXPECT
+Invalid hexadecimal number in \N{U+...} in regex; marked by <-- HERE in m/\N{U+. <-- HERE }/ at - line 1.
+########
+# NAME \N{U+100.}
+my $p00="\\N{U+100.}"; qr/$p00/;
+EXPECT
+Invalid hexadecimal number in \N{U+...} in regex; marked by <-- HERE in m/\N{U+100. <-- HERE }/ at - line 1.
+########
+# NAME \N{U+_100}
+my $p00="\\N{U+_100}"; qr/$p00/;
+EXPECT
+Invalid hexadecimal number in \N{U+...} in regex; marked by <-- HERE in m/\N{U+_ <-- HERE 100}/ at - line 1.
+########
+# NAME \N{U+100_}
+my $p00="\\N{U+100_}"; qr/$p00/;
+EXPECT
+Invalid hexadecimal number in \N{U+...} in regex; marked by <-- HERE in m/\N{U+100_ <-- HERE }/ at - line 1.
+########
+# NAME [\xDF\N{U+.}]
+# SKIP ? ord("A") != 65 && "Test valid only on ASCII machines"
+my $p00="[\\xDF\\N{U+.}]"; qr/$p00/ui;
+# The sharp s under /i recodes the parse, and this was causing a segfault when
+# the error message referred to the original pattern
+EXPECT
+Invalid hexadecimal number in \N{U+...} in regex; marked by <-- HERE in m/[\xDF\N{U+. <-- HERE }]/ at - line 1.
+########
+# NAME [\x59\N{U+.}]
+# SKIP ? ord("A") == 65 && "Test valid only on EBCDIC machines"
+my $p00="[\\x59\\N{U+.}]"; qr/$p00/ui;
+# The sharp s under /i recodes the parse, and this was causing a segfault when
+# the error message referred to the original pattern
+EXPECT
+Invalid hexadecimal number in \N{U+...} in regex; marked by <-- HERE in m/[\x59\N{U+. <-- HERE }]/ at - line 1.
+########

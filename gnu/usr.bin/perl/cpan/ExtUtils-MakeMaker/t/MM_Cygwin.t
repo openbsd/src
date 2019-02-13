@@ -74,7 +74,7 @@ unlike( $MM->manifypods(), qr/foo/,
 
 $MM->{MAN3PODS} = { foo => 'foo.1' };
 my $res = $MM->manifypods();
-like( $res, qr/pure_all.*foo.*foo.1/s, '... should add MAN3PODS targets' );
+like( $res, qr/manifypods.*foo.*foo.1/s, '... should add MAN3PODS targets' );
 
 
 # init_linker

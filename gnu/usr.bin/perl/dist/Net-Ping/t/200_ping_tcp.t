@@ -28,7 +28,7 @@ BEGIN {
 #
 # $ PERL_CORE=1 make test
 
-use Test::More tests => 13;
+use Test::More tests => 12;
 BEGIN {use_ok('Net::Ping');}
 
 my $p = new Net::Ping "tcp",9;
@@ -50,8 +50,13 @@ is($p->ping("172.29.249.249"), 0, "Can't reach 172.29.249.249");
 # Test a few remote servers
 # Hopefully they are up when the tests are run.
 
-foreach (qw(www.geocities.com www.wisc.edu
-	    www.freeservers.com ftp.freeservers.com
-	    yahoo.com www.yahoo.com www.about.com)) {
+if ($p->ping('google.com')) { # check for firewall
+  foreach (qw(google.com www.google.com www.wisc.edu
+              yahoo.com www.yahoo.com www.about.com)) {
     isnt($p->ping($_), 0, "Can ping $_");
+  }
+} else {
+ SKIP: {
+    skip "Cannot ping google.com: no TCP connection or firewall", 6;
+  }
 }

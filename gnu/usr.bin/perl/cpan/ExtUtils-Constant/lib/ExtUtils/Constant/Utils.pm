@@ -6,7 +6,7 @@ use Carp;
 
 @ISA = 'Exporter';
 @EXPORT_OK = qw(C_stringify perl_stringify);
-$VERSION = '0.03';
+$VERSION = '0.04';
 
 use constant is_perl55 => ($] < 5.005_50);
 use constant is_perl56 => ($] < 5.007 && $] > 5.005_50);
@@ -46,7 +46,7 @@ sub C_stringify {
   # grr 5.6.1
   confess "Wide character in '$_' intended as a C identifier"
     if tr/\0-\377// != length;
-  # grr 5.6.1 moreso because its regexps will break on data that happens to
+  # grr 5.6.1 more so because its regexps will break on data that happens to
   # be utf8, which includes my 8 bit test cases.
   $_ = pack 'C*', unpack 'U*', $_ . pack 'U*' if is_perl56;
   s/\\/\\\\/g;

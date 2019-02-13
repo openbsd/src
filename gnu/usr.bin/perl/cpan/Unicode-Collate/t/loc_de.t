@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..32\n"; }
+BEGIN { $| = 1; print "1..50\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -74,17 +74,29 @@ ok($objDe->gt("O\x{308}", "O"));
 ok($objDe->gt("u\x{308}", "u"));
 ok($objDe->gt("U\x{308}", "U"));
 
+# 20
+
 ok($objDe->eq("a\x{308}", "A\x{308}"));
 ok($objDe->eq("o\x{308}", "O\x{308}"));
 ok($objDe->eq("u\x{308}", "U\x{308}"));
 
-# 23
+ok($objDe->eq($auml, $Auml));
+ok($objDe->eq($ouml, $Ouml));
+ok($objDe->eq($uuml, $Uuml));
+
+# 26
 
 $objDe->change(level => 3);
 
 ok($objDe->lt("a\x{308}", "A\x{308}"));
 ok($objDe->lt("o\x{308}", "O\x{308}"));
 ok($objDe->lt("u\x{308}", "U\x{308}"));
+
+ok($objDe->lt($auml, $Auml));
+ok($objDe->lt($ouml, $Ouml));
+ok($objDe->lt($uuml, $Uuml));
+
+# 32
 
 ok($objDe->eq("a\x{308}", $auml));
 ok($objDe->eq("A\x{308}", $Auml));
@@ -93,4 +105,19 @@ ok($objDe->eq("O\x{308}", $Ouml));
 ok($objDe->eq("u\x{308}", $uuml));
 ok($objDe->eq("U\x{308}", $Uuml));
 
-# 32
+# 38
+
+ok($objDe->eq("a\x{308}\x{304}", "\x{1DF}"));
+ok($objDe->eq("A\x{308}\x{304}", "\x{1DE}"));
+ok($objDe->eq("o\x{308}\x{304}", "\x{22B}"));
+ok($objDe->eq("O\x{308}\x{304}", "\x{22A}"));
+ok($objDe->eq("u\x{308}\x{300}", "\x{1DC}"));
+ok($objDe->eq("U\x{308}\x{300}", "\x{1DB}"));
+ok($objDe->eq("u\x{308}\x{301}", "\x{1D8}"));
+ok($objDe->eq("U\x{308}\x{301}", "\x{1D7}"));
+ok($objDe->eq("u\x{308}\x{304}", "\x{1D6}"));
+ok($objDe->eq("U\x{308}\x{304}", "\x{1D5}"));
+ok($objDe->eq("u\x{308}\x{30C}", "\x{1DA}"));
+ok($objDe->eq("U\x{308}\x{30C}", "\x{1D9}"));
+
+# 50

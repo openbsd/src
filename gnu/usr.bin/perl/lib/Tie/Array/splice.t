@@ -6,7 +6,7 @@ BEGIN {
     push @INC, '../lib';
 }
 
-# bug id 20001020.002
+# bug id 20001020.002 (#4480)
 # -dlc 20001021
 
 use Tie::Array;

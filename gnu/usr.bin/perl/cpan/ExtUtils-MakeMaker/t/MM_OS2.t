@@ -268,6 +268,6 @@ is( $mm->{EXPORT_LIST}, '$(BASEEXT).def',
 
 END {
 	use File::Path;
-	rmtree('tmp_imp');
+	rmtree('tmp_imp') if -e 'tmp_imp';
 	unlink 'tmpimp.imp';
 }

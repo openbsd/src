@@ -35,7 +35,7 @@ is($json->decode(q|"\u3042"|), $str);
 
 my $utf8 = $json->decode(q|"\ud808\udf45"|); # chr 12345
 
-utf8::encode($utf8); # UTf-8 flaged off
+utf8::encode($utf8); # UTF-8 flagged off
 
 is($utf8, "\xf0\x92\x8d\x85");
 

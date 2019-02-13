@@ -89,7 +89,7 @@ struct protoent* getprotobynumber(int number) {
 struct protoent* getprotobyname(const char* name) {
     int i;
     for (i = 0; i < sizeof(protocols)/sizeof(struct protoent); i++)
-        if (strcmp(name, protocols[i].p_name) == 0)
+        if (strEQ(name, protocols[i].p_name))
             return (struct protoent*)(&(protocols[i]));
     return 0;
 }
@@ -97,7 +97,7 @@ struct protoent* getprotobyname(const char* name) {
 struct servent* getservbyname(const char* name, const char* proto) {
     int i;
     for (i = 0; i < sizeof(services)/sizeof(struct servent); i++)
-        if (strcmp(name, services[i].s_name) == 0)
+        if (strEQ(name, services[i].s_name))
             return (struct servent*)(&(services[i]));
     return 0;
 }

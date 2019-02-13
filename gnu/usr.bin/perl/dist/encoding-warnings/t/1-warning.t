@@ -14,9 +14,25 @@ BEGIN {
 }
 
 use Test;
-BEGIN { plan tests => 2 }
-
 use strict;
+
+BEGIN {
+    if ("$]" >= 5.025) {
+	# Test the new almost-noop behaviour in new perls.
+	plan tests => 3;
+	my $w;
+	$SIG{__WARN__} = sub { $w .= shift };
+	require encoding::warnings;
+	ok $w, undef, 'no warning from requiring encoding::warnings';
+	ok(encoding::warnings->VERSION);
+	encoding::warnings->import;
+	ok $w, qr/^encoding::warnings is not supported /, 'import warning';
+	exit;
+    }
+    # else continue with your usual scheduled testing...
+    plan tests => 2;
+}
+
 use encoding::warnings;
 ok(encoding::warnings->VERSION);
 

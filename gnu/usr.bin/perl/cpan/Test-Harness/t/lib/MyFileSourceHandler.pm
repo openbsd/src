@@ -20,7 +20,7 @@ sub can_handle {
     my $class = shift;
     $class->SUPER::can_handle(@_);
     $CAN_HANDLE++;
-    return $class;
+    return 1;
 }
 
 sub make_iterator {

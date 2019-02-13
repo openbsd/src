@@ -44,7 +44,7 @@ if ($config eq "") {
 	die("Please run me as generate_config_sh path/to/original/config.sh");
 }
 
-open(FILE, "$config") || die("Unable to open $config");
+open(FILE, '<', $config) || die("Unable to open $config");
 
 my $line_in;
 while ($line_in = <FILE>) {

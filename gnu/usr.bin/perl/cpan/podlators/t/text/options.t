@@ -71,7 +71,7 @@ while (<DATA>) {
         last if $_ eq "###\n";
         $expected .= $_;
     }
-    is ($output, $expected, "Ouput correct for test $n");
+    is ($output, $expected, "Output correct for test $n");
     open (ERR, "out$$.err") or die "Cannot open out$$.err: $!\n";
     my $errors;
     {

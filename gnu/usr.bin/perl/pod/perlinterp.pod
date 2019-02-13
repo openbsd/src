@@ -70,8 +70,7 @@ needs, the stacks, and so on.
 
 Now we pass Perl the command line options, and tell it to go:
 
- exitstatus = perl_parse(my_perl, xs_init, argc, argv, (char **)NULL);
- if (!exitstatus)
+ if (!perl_parse(my_perl, xs_init, argc, argv, (char **)NULL))
      perl_run(my_perl);
 
  exitstatus = perl_destruct(my_perl);
@@ -473,11 +472,11 @@ Originally, the tree would have looked like this:
     11              SVOP (0x816dcf0) gv  GV (0x80fa460) *a
 
 That is, fetch the C<a> entry from the main symbol table, and then look
-at the scalar component of it: C<gvsv> (C<pp_gvsv> into F<pp_hot.c>)
+at the scalar component of it: C<gvsv> (C<pp_gvsv> in F<pp_hot.c>)
 happens to do both these things.
 
 The right hand side, starting at line 5 is similar to what we've just
-seen: we have the C<add> op (C<pp_add> also in F<pp_hot.c>) add
+seen: we have the C<add> op (C<pp_add>, also in F<pp_hot.c>) add
 together two C<gvsv>s.
 
 Now, what's this about?
@@ -531,8 +530,45 @@ statement. Get the values of C<$b> and C<$c>, and add them together.
 Find C<$a>, and assign one to the other. Then leave.
 
 The way Perl builds up these op trees in the parsing process can be
-unravelled by examining F<perly.y>, the YACC grammar. Let's take the
-piece we need to construct the tree for C<$a = $b + $c>
+unravelled by examining F<toke.c>, the lexer, and F<perly.y>, the YACC
+grammar. Let's look at the code that constructs the tree for C<$a = $b +
+$c>.
+
+First, we'll look at the C<Perl_yylex> function in the lexer. We want to
+look for C<case 'x'>, where x is the first character of the operator.
+(Incidentally, when looking for the code that handles a keyword, you'll
+want to search for C<KEY_foo> where "foo" is the keyword.) Here is the code
+that handles assignment (there are quite a few operators beginning with
+C<=>, so most of it is omitted for brevity):
+
+     1    case '=':
+     2        s++;
+              ... code that handles == => etc. and pod ...
+     3        pl_yylval.ival = 0;
+     4        OPERATOR(ASSIGNOP);
+
+We can see on line 4 that our token type is C<ASSIGNOP> (C<OPERATOR> is a
+macro, defined in F<toke.c>, that returns the token type, among other
+things). And C<+>:
+
+     1     case '+':
+     2         {
+     3             const char tmp = *s++;
+                   ... code for ++ ...
+     4             if (PL_expect == XOPERATOR) {
+                       ...
+     5                 Aop(OP_ADD);
+     6             }
+                   ...
+     7         }
+
+Line 4 checks what type of token we are expecting. C<Aop> returns a token.
+If you search for C<Aop> elsewhere in F<toke.c>, you will see that it
+returns an C<ADDOP> token.
+
+Now that we know the two token types we want to look for in the parser,
+let's take the piece of F<perly.y> we need to construct the tree for
+C<$a = $b + $c>
 
     1 term    :   term ASSIGNOP term
     2                { $$ = newASSIGNOP(OPf_STACKED, $1, $2, $3); }
@@ -541,9 +577,8 @@ piece we need to construct the tree for C<$a = $b + $c>
 
 If you're not used to reading BNF grammars, this is how it works:
 You're fed certain things by the tokeniser, which generally end up in
-upper case. Here, C<ADDOP>, is provided when the tokeniser sees C<+> in
-your code. C<ASSIGNOP> is provided when C<=> is used for assigning.
-These are "terminal symbols", because you can't get any simpler than
+upper case. C<ADDOP> and C<ASSIGNOP> are examples of "terminal symbols",
+because you can't get any simpler than
 them.
 
 The grammar, lines one and three of the snippet above, tells you how to
@@ -579,6 +614,49 @@ directly, but it's right there as the second token in the input, so we
 use C<$2>. The second parameter is the op's flags: 0 means "nothing
 special". Then the things to add: the left and right hand side of our
 expression, in scalar context.
+
+The functions that create ops, which have names like C<newUNOP> and
+C<newBINOP>, call a "check" function associated with each op type, before
+returning the op. The check functions can mangle the op as they see fit,
+and even replace it with an entirely new one. These functions are defined
+in F<op.c>, and have a C<Perl_ck_> prefix. You can find out which
+check function is used for a particular op type by looking in
+F<regen/opcodes>.  Take C<OP_ADD>, for example. (C<OP_ADD> is the token
+value from the C<Aop(OP_ADD)> in F<toke.c> which the parser passes to
+C<newBINOP> as its first argument.) Here is the relevant line:
+
+    add             addition (+)            ck_null         IfsT2   S S
+
+The check function in this case is C<Perl_ck_null>, which does nothing.
+Let's look at a more interesting case:
+
+    readline        <HANDLE>                ck_readline     t%      F?
+
+And here is the function from F<op.c>:
+
+     1 OP *
+     2 Perl_ck_readline(pTHX_ OP *o)
+     3 {
+     4     PERL_ARGS_ASSERT_CK_READLINE;
+     5 
+     6     if (o->op_flags & OPf_KIDS) {
+     7          OP *kid = cLISTOPo->op_first;
+     8          if (kid->op_type == OP_RV2GV)
+     9              kid->op_private |= OPpALLOW_FAKE;
+    10     }
+    11     else {
+    12         OP * const newop
+    13             = newUNOP(OP_READLINE, 0, newGVOP(OP_GV, 0,
+    14                                               PL_argvgv));
+    15         op_free(o);
+    16         return newop;
+    17     }
+    18     return o;
+    19 }
+
+One particularly interesting aspect is that if the op has no kids (i.e.,
+C<readline()> or C<< <> >>) the op is freed and replaced with an entirely
+new one that references C<*ARGV> (lines 12-16).
 
 =head1 STACKS
 

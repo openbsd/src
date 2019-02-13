@@ -3,6 +3,7 @@
 use strict ;
 require 5.006 ;
 
+use lib '.';
 use private::MakeUtil;
 use ExtUtils::MakeMaker 5.16 ;
 

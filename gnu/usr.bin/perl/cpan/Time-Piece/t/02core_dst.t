@@ -1,4 +1,4 @@
-use Test::More tests => 60;
+use Test::More tests => 56;
 
 my $is_win32 = ($^O =~ /Win32/);
 my $is_qnx = ($^O eq 'qnx');
@@ -25,9 +25,6 @@ is($t->mday,               9);
 is($t->day_of_month,       9);
 is($t->mon,                7);
 is($t->_mon,               6);
-is($t->monname,        'Jul');
-is($t->month,          'Jul');
-is($t->fullmonth,     'July');
 is($t->year,            2013);
 is($t->_year,            113);
 is($t->yy,              '13');
@@ -35,9 +32,6 @@ is($t->yy,              '13');
 cmp_ok($t->wday,        '==',         3);
 cmp_ok($t->_wday,       '==',         2);
 cmp_ok($t->day_of_week, '==',         2);
-cmp_ok($t->wdayname,    'eq',     'Tue');
-cmp_ok($t->day,         'eq',     'Tue');
-cmp_ok($t->fullday,     'eq', 'Tuesday');
 cmp_ok($t->yday,        '==',        189);
 cmp_ok($t->day_of_year, '==',        189);
 
@@ -125,7 +119,7 @@ cmp_ok($t->month_last_day, '==', 31); # test more
 
 
 SKIP: {
-	skip "Extra tests for Linux, BSD only.", 6 unless $is_linux or $is_mac or $is_bsd;
+	skip "Extra tests for Linux, BSD only.", 8 unless $is_linux or $is_mac or $is_bsd;
 
     local $ENV{TZ} = "EST5EDT4";
     Time::Piece::_tzset();
@@ -133,14 +127,13 @@ SKIP: {
     cmp_ok(scalar($lt->tzoffset), 'eq', '-14400');
     cmp_ok($lt->strftime("%Y-%m-%d %H:%M:%S %Z"), 'eq', '2013-07-09 08:07:11 EDT');
     like  ($lt->strftime("%z"), qr/-0400|EDT/); #windows: %Z and %z are the same
+    is    ($lt->strftime("%s"), 1373371631, 'Epoch output is the same with EDT');
 
     $lt = localtime(1357733231); #2013-01-09T12:07:11
     cmp_ok(scalar($lt->tzoffset), 'eq', '-18000');
     cmp_ok($lt->strftime("%Y-%m-%d %H:%M:%S %Z"), 'eq', '2013-01-09 07:07:11 EST');
     like  ($lt->strftime("%z"), qr/-0500|EST/);
+    is    ($lt->strftime("%s"), 1357733231, 'Epoch output is the same with EST');
 }
-
-
-
 
 

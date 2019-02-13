@@ -21,7 +21,12 @@ Various spelling corrections
 =item *
 
 Include list of valid licenses from L<Module::Build> 0.2807 rather than
-linking to the module.
+linking to the module, with minor updates to text and links to reflect
+versions at the time of publication.
+
+=item *
+
+Fixed some dead links to point to active resources.
 
 =back
 
@@ -84,35 +89,6 @@ and the latest development version (which may include things that
 won't make it into the stable version) can always be found at
 L<http://module-build.sourceforge.net/META-spec-blead.html>.>
 
-=begin MAINTAINER
-
-The master source for the META spec is META-spec.pod.  META-spec.html
-is built (manually) from META-spec.pod whenever there are changes, and
-the two files should generally be checked in together.  Ideally it
-would happen through a trigger or something, but it doesn't.
-
-Ken has a cron job that copies the latest bleeding-edge version of the
-spec (HTML version) to Sourceforge whenever his laptop is turned on:
-
-  21 * * * * svn cat http://svn.perl.org/modules/Module-Build/trunk/website/META-spec.html \
-       | ssh kwilliams@shell.sourceforge.net \
-       'cat > /home/groups/m/mo/module-build/htdocs/META-spec-blead.html'
-
-The numbered revisions of the spec at
-L<"http://module-build.sourceforge.net/"> are captures of the spec at
-opportune moments.  A couple of symlinks also exist for convenience:
-
- -rw-r--r--  1 kwilliams 24585 Oct 10 17:21 META-spec-blead.html
- lrwxrwxrwx  1 kwilliams    19 Jan 19  2007 META-spec-current.html -> META-spec-v1.3.html
- lrwxrwxrwx  1 kwilliams    22 Jan 19  2007 META-spec.html -> META-spec-current.html
- -rw-r--r--  1 kwilliams  5830 Jul 25  2005 META-spec-v1.0.html
- -rw-r--r--  1 kwilliams  7847 Jul 25  2005 META-spec-v1.1.html
- -rw-r--r--  1 kwilliams 22635 Aug 23  2005 META-spec-v1.2.html
- -rw-r--r--  1 kwilliams 24086 Nov  4  2006 META-spec-v1.3.html
-
-=end MAINTAINER
-
-
 =head1 FORMAT
 
 F<META.yml> files are written in the YAML format (see
@@ -123,17 +99,17 @@ XML or Data::Dumper:
 
 =over 4
 
-=item Module::Build design plans
+=item *
 
-L<http://nntp.x.perl.org/group/perl.makemaker/406>
+L<Module::Build design plans|http://www.nntp.perl.org/group/perl.makemaker/2002/04/msg407.html>
 
-=item Not keen on YAML
+=item *
 
-L<http://nntp.x.perl.org/group/perl.module-authors/1353>
+L<Not keen on YAML|http://www.nntp.perl.org/group/perl.module-authors/2003/11/msg1353.html>
 
-=item META Concerns
+=item *
 
-L<http://nntp.x.perl.org/group/perl.module-authors/1385>
+L<META Concerns|http://www.nntp.perl.org/group/perl.module-authors/2003/11/msg1385.html>
 
 =back
 
@@ -235,39 +211,40 @@ Must be one of the following licenses:
 
 =item apache
 
-The distribution is licensed under the Apache Software License
-(L<http://opensource.org/licenses/apachepl.php>).
+The distribution is licensed under the Apache Software License version 1.1
+(L<http://opensource.org/licenses/Apache-1.1>).
 
 =item artistic
 
-The distribution is licensed under the Artistic License, as specified by the
-Artistic file in the standard perl distribution.
+The distribution is licensed under the Artistic License version 1, as specified
+by the Artistic file in the standard perl distribution
+(L<http://opensource.org/licenses/Artistic-Perl-1.0>).
 
 =item bsd
 
-The distribution is licensed under the BSD License
-(L<http://www.opensource.org/licenses/bsd-license.php>).
+The distribution is licensed under the BSD 3-Clause License
+(L<http://opensource.org/licenses/BSD-3-Clause>).
 
 =item gpl
 
-The distribution is licensed under the terms of the Gnu General Public License
-(L<http://www.opensource.org/licenses/gpl-license.php>).
+The distribution is distributed under the terms of the GNU General Public
+License version 2 (L<http://opensource.org/licenses/GPL-2.0>).
 
 =item lgpl
 
-The distribution is licensed under the terms of the Gnu Lesser General Public
-License (L<http://www.opensource.org/licenses/lgpl-license.php>).
+The distribution is distributed under the terms of the GNU Lesser General
+Public License version 2 (L<http://opensource.org/licenses/LGPL-2.1>).
 
 =item mit
 
 The distribution is licensed under the MIT License
-(L<http://opensource.org/licenses/mit-license.php>).
+(L<http://opensource.org/licenses/MIT>).
 
 =item mozilla
 
 The distribution is licensed under the Mozilla Public License.
-(L<http://opensource.org/licenses/mozilla1.0.php> or
-L<http://opensource.org/licenses/mozilla1.1.php>)
+(L<http://opensource.org/licenses/MPL-1.0> or
+L<http://opensource.org/licenses/MPL-1.1>)
 
 =item open_source
 
@@ -355,8 +332,8 @@ Example:
 
 I<(Spec 1.1) [optional] {map} A YAML mapping of names for optional features
 which are made available when its requirements are met. For each
-feature a description is provided along with any of L<"requires">,
-L<"build_requires">, and L<"conflicts">, which have the same meaning in
+feature a description is provided along with any of L</requires>,
+L</build_requires>, and L</conflicts>, which have the same meaning in
 this subcontext as described elsewhere in this document.>
 
 =head2 build_requires
@@ -371,7 +348,7 @@ Example:
 prerequisites required for building and/or testing of this
 distribution.  The keys are the names of the prerequisites (module
 names or 'perl'), and the values are version specifications as
-described in L<VERSION SPECIFICATIONS>.  These dependencies are not
+described in L</"VERSION SPECIFICATIONS">.  These dependencies are not
 required after the distribution is installed.
 
 =head2 configure_requires
@@ -385,9 +362,9 @@ Example:
 
 (Spec 1.4) [optional] {map} A YAML mapping indicating the Perl prerequisites
 required before configuring this distribution.  The keys are the
-names of the prerequisites (module names or 'perl'), and the values are version specifications as described
-in L<VERSION SPECIFICATIONS>.  These dependencies are not required
-after the distribution is installed.
+names of the prerequisites (module names or 'perl'), and the values are version
+specifications as described in L</"VERSION SPECIFICATIONS">.  These
+dependencies are not required after the distribution is installed.
 
 =head2 conflicts
 
@@ -401,7 +378,7 @@ Example:
 cannot be installed while this distribution is installed.  This is a
 pretty uncommon situation.  The keys for C<conflicts> are the item
 names (module names or 'perl'), and the values are version
-specifications as described in L<VERSION SPECIFICATIONS>.
+specifications as described in L</"VERSION SPECIFICATIONS">.
 
 
 =head2 dynamic_config
@@ -428,7 +405,7 @@ If this field is omitted, it defaults to 1 (true).
 =head2 private
 
 I<(Deprecated)> (Spec 1.0) [optional] {map} This field has been renamed to
-L</"no_index">.  See below.
+L</no_index>.  See below.
 
 =head2 provides
 
@@ -450,7 +427,7 @@ cases, is) used by distribution and automation mechanisms like PAUSE,
 CPAN, and search.cpan.org to build indexes saying in which
 distribution various packages can be found.
 
-When using tools like C<Module::Build> that can generate the
+When using tools like L<Module::Build> that can generate the
 C<provides> mapping for your distribution automatically, make sure you
 examine what it generates to make sure it makes sense - indexers will
 usually trust the C<provides> field if it's present, rather than
@@ -480,7 +457,7 @@ directories, packages, and namespaces that are private
 and indexing tools.  This is useful when no C<provides> field is
 present.
 
-For example, C<search.cpan.org> excludes items listed in C<no_index>
+For example, L<http://search.cpan.org/> excludes items listed in C<no_index>
 when searching for POD, meaning files in these directories will not
 converted to HTML and made public - which is useful if you have
 example or test PODs that you don't want the search engine to go
@@ -577,8 +554,8 @@ tool. RWS]
 
 =head1 VERSION SPECIFICATIONS
 
-Some fields require a version specification (ex. L<"requires">,
-L<"recommends">, L<"build_requires">, etc.) to indicate the particular
+Some fields require a version specification (ex. L</requires>,
+L</recommends>, L</build_requires>, etc.) to indicate the particular
 versionZ<>(s) of some other module that may be required as a
 prerequisite.  This section details the version specification formats
 that are currently supported.
@@ -602,23 +579,23 @@ together using commas.  The specification C<E<gt>= 1.2, != 1.5, E<lt>
 
 =head1 SEE ALSO
 
-CPAN, L<http://www.cpan.org/>
+L<CPAN|http://www.cpan.org/>
 
-CPAN.pm, L<http://search.cpan.org/dist/CPAN/>
+L<CPAN.pm|CPAN>
 
-CPANPLUS, L<http://search.cpan.org/dist/CPANPLUS/>
+L<CPANPLUS>
 
-Data::Dumper, L<http://search.cpan.org/dist/Data-Dumper/>
+L<Data::Dumper>
 
-ExtUtils::MakeMaker, L<http://search.cpan.org/dist/ExtUtils-MakeMaker/>
+L<ExtUtils::MakeMaker>
 
-Module::Build, L<http://search.cpan.org/dist/Module-Build/>
+L<Module::Build>
 
-Module::Install, L<http://search.cpan.org/dist/Module-Install/>
+L<Module::Install>
 
-XML, L<http://www.w3.org/XML/>
+L<XML|http://www.w3.org/XML/>
 
-YAML, L<http://www.yaml.org/>
+L<YAML|http://www.yaml.org/>
 
 =head1 HISTORY
 
@@ -640,7 +617,7 @@ Created version 1.0 of this document.
 
 =item *
 
-Added the L</"dynamic_config"> field, which was missing from the initial
+Added the L</dynamic_config> field, which was missing from the initial
 version.
 
 =back
@@ -660,12 +637,12 @@ L<http://nntp.x.perl.org/group/> site.
 
 =item *
 
-Added and deprecated the L<"private"> field.
+Added and deprecated the L</private> field.
 
 =item *
 
-Added L<"abstract">, L<"configure">, L<"requires_packages">,
-L<"requires_os">, L<"excludes_os">, and L<"no_index"> fields.
+Added L</abstract>, C<configure>, C<requires_packages>,
+C<requires_os>, C<excludes_os>, and L</no_index> fields.
 
 =item *
 
@@ -679,15 +656,15 @@ Bumped version.
 
 =item *
 
-Added L<"generation">, L<"authored_by"> fields.
+Added C<generation>, C<authored_by> fields.
 
 =item *
 
-Add alternative proposal to the L<"recommends"> field.
+Add alternative proposal to the L</recommends> field.
 
 =item *
 
-Add proposal for a L<"requires_build_tools"> field.
+Add proposal for a C<requires_build_tools> field.
 
 =back
 
@@ -701,7 +678,7 @@ Added link to latest version of this specification on CPAN.
 
 =item *
 
-Added section L<"VERSION SPECIFICATIONS">.
+Added section L</"VERSION SPECIFICATIONS">.
 
 =item *
 
@@ -709,7 +686,7 @@ Chang name from Module::Build::META-spec to CPAN::META::Specification.
 
 =item *
 
-Add proposal for L<"auto_regenerate"> field.
+Add proposal for C<auto_regenerate> field.
 
 =back
 
@@ -719,15 +696,15 @@ Add proposal for L<"auto_regenerate"> field.
 
 =item *
 
-Add L<"index"> field as a compliment to L<"no_index">
+Add C<index> field as a compliment to L</no_index>
 
 =item *
 
-Add L<"keywords"> field as a means to aid searching distributions.
+Add L</keywords> field as a means to aid searching distributions.
 
 =item *
 
-Add L<"TERMINOLOGY"> section to explain certain terms that may be
+Add L</TERMINOLOGY> section to explain certain terms that may be
 ambiguous.
 
 =back
@@ -745,7 +722,7 @@ more like records of brainstorming.
 
 =item *
 
-Changed C<authored_by> to C<author>, since that's always been what
+Changed C<authored_by> to L</author>, since that's always been what
 it's actually called in actual F<META.yml> files.
 
 =item *
@@ -755,12 +732,12 @@ operators.
 
 =item *
 
-Noted that the C<distribution_type> field is basically meaningless,
+Noted that the L</distribution_type> field is basically meaningless,
 and shouldn't really be used.
 
 =item *
 
-Clarified C<dynamic_config> a bit.
+Clarified L</dynamic_config> a bit.
 
 =back
 
@@ -781,7 +758,7 @@ module that doesn't actually exist.
 
 =item *
 
-Added C<configure_requires>.
+Added L</configure_requires>.
 
 =back
 

@@ -10,12 +10,13 @@
 
 package ExtUtils::MakeMaker::version;
 
-use 5.006002;
+use 5.006001;
 use strict;
 
 use vars qw(@ISA $VERSION $CLASS $STRICT $LAX *declare *qv);
 
-$VERSION = '7.10_01';
+$VERSION = '7.34';
+$VERSION = eval $VERSION;
 $CLASS = 'version';
 
 {

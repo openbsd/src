@@ -3,6 +3,10 @@
 # $Revision: #4 $ $Change: 1626 $ $DateTime: 2004-03-14T16:53:19.351256Z $
 
 BEGIN {
+    if ("$]" >= 5.025) {
+      print "1..0 # Skip: encoding::warnings not supported on perl 5.26\n";
+      exit 0;
+    }
     if (ord("A") != 65) {
       print "1..0 # Skip: Encode not working on EBCDIC\n";
       exit 0;

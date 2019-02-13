@@ -96,7 +96,7 @@ platform.
 
 Previously perl would redirect to another interpreter if it found a
 hashbang path unless the path contains "perl" (see L<perlrun>). To improve
-compatability with Perl 6 this behavior has been extended to also redirect
+compatibility with Perl 6 this behavior has been extended to also redirect
 if "perl" is followed by "6".
 
 =head1 Security
@@ -525,10 +525,6 @@ L<fields> has been upgraded from version 2.17 to 2.23.
 
 =item *
 
-L<File::Copy> has been upgraded from version 2.30 to 2.31.
-
-=item *
-
 L<File::Find> has been upgraded from version 1.29 to 1.34.
 
 =item *
@@ -613,7 +609,7 @@ L<Math::BigRat> has been upgraded from version 0.2608 to 0.260802.
 
 =item *
 
-L<Module::CoreList> has been upgraded from version 5.20150520 to 5.20160506.
+L<Module::CoreList> has been upgraded from version 5.20150520 to 5.20160320.
 
 =item *
 
@@ -662,10 +658,6 @@ L<PerlIO::scalar> has been upgraded from version 0.22 to 0.24.
 =item *
 
 L<PerlIO::via> has been upgraded from version 0.15 to 0.16.
-
-=item *
-
-podlators has been upgraded from version 2.28 to 4.07.
 
 =item *
 
@@ -729,15 +721,15 @@ L<Test::Harness> has been upgraded from version 3.35 to 3.36.
 
 =item *
 
-L<Thread::Queue> has been upgraded from version 3.05 to 3.09.
+L<Thread::Queue> has been upgraded from version 3.05 to 3.08.
 
 =item *
 
-L<threads> has been upgraded from version 2.01 to 2.07.
+L<threads> has been upgraded from version 2.01 to 2.06.
 
 =item *
 
-L<threads::shared> has been upgraded from version 1.48 to 1.51.
+L<threads::shared> has been upgraded from version 1.48 to 1.50.
 
 =item *
 
@@ -749,7 +741,7 @@ L<Tie::Scalar> has been upgraded from version 1.03 to 1.04.
 
 =item *
 
-L<Time::HiRes> has been upgraded from version 1.9726 to 1.9733.
+L<Time::HiRes> has been upgraded from version 1.9726 to 1.9732.
 
 =item *
 
@@ -2135,56 +2127,10 @@ not always detected, giving incorrect results.  This is now fixed.
 
 =back
 
-=head1 Known Problems
-
-=over 4
-
-=item *
-
-Some modules have been broken by the L<context stack rework|/Internal Changes>.
-These modules were relying on non-guaranteed implementation details in perl.
-Their maintainers have been informed, and should contact perl5-porters for
-advice if needed.  Below is a subset of these modules:
-
-=over 4
-
-=item L<Algorithm::Permute>
-
-=item L<Coro>
-
-L<Coro> and perl v5.22.0 were already incompatible due to a change in the perl,
-and the reworking on the perl context stack creates a further incompatibility.
-perl5-porters has L<discussed the issue on the mailing
-list|http://www.nntp.perl.org/group/perl.perl5.porters/2016/05/msg236174.html>.
-
-=item L<Data::Alias>
-
-=item L<RPerl>
-
-=item L<Scope::Upper>
-
-=item L<TryCatch>
-
-=back
-
-=item *
-
-The module L<lexical::underscore> no longer works on perl v5.24.0, because perl
-no longer has a lexical C<$_>!
-
-=item *
-
-C<mod_perl> has been patched for compatibility for v5.22.0 and later but no
-release has been made.  The relevant patch (and other changes) can be found in
-their source code repository, L<mirrored at
-GitHub|https://github.com/apache/mod_perl/commit/82827132efd3c2e25cc413c85af61bb63375da6e>.
-
-=back
-
 =head1 Acknowledgements
 
-Perl 5.24.0 represents approximately 11 months of development since Perl 5.22.0
-and contains approximately 360,000 lines of changes across 1,800 files from 77
+Perl 5.24.0 represents approximately 11 months of development since Perl 5.24.0
+and contains approximately 360,000 lines of changes across 1,800 files from 75
 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
@@ -2198,18 +2144,17 @@ Aaron Crane, Aaron Priven, Abigail, Achim Gratz, Alexander D'Archangel, Alex
 Vandiver, Andreas König, Andy Broad, Andy Dougherty, Aristotle Pagaltzis,
 Chase Whitener, Chas. Owens, Chris 'BinGOs' Williams, Craig A. Berry, Dagfinn
 Ilmari Mannsåker, Dan Collins, Daniel Dragan, David Golden, David Mitchell,
-Dominic Hargreaves, Doug Bell, Dr.Ruud, Ed Avis, Ed J, Father Chrysostomos,
-Herbert Breunung, H.Merijn Brand, Hugo van der Sanden, Ivan Pozdeev, James E
-Keenan, Jan Dubois, Jarkko Hietaniemi, Jerry D. Hedden, Jim Cromie, John
-Peacock, John SJ Anderson, Karen Etheridge, Karl Williamson, kmx, Leon
-Timmermans, Ludovic E. R. Tolhurst-Cleaver, Lukas Mai, Martijn Lievaart,
-Matthew Horsfall, Mattia Barbon, Max Maischein, Mohammed El-Afifi, Nicholas
-Clark, Nicolas R., Niko Tyni, Peter John Acklam, Peter Martini, Peter
-Rabbitson, Pip Cet, Rafael Garcia-Suarez, Reini Urban, Renee Baecker, Ricardo
-Signes, Sawyer X, Shlomi Fish, Sisyphus, Stanislaw Pusep, Steffen Müller,
-Stevan Little, Steve Hay, Sullivan Beck, Thomas Sibley, Todd Rinaldo, Tom
-Hukins, Tony Cook, Unicode Consortium, Victor Adam, Vincent Pit, Vladimir
-Timofeev, Yves Orton, Zachary Storer, Zefram.
+Doug Bell, Dr.Ruud, Ed Avis, Ed J, Father Chrysostomos, Herbert Breunung,
+H.Merijn Brand, Hugo van der Sanden, Ivan Pozdeev, James E Keenan, Jan Dubois,
+Jarkko Hietaniemi, Jerry D. Hedden, Jim Cromie, John Peacock, John SJ Anderson,
+Karen Etheridge, Karl Williamson, kmx, Leon Timmermans, Ludovic E. R.
+Tolhurst-Cleaver, Lukas Mai, Martijn Lievaart, Matthew Horsfall, Mattia Barbon,
+Max Maischein, Mohammed El-Afifi, Nicholas Clark, Nicolas R., Niko Tyni, Peter
+John Acklam, Peter Martini, Peter Rabbitson, Pip Cet, Rafael Garcia-Suarez,
+Reini Urban, Ricardo Signes, Sawyer X, Shlomi Fish, Sisyphus, Stanislaw Pusep,
+Steffen Müller, Stevan Little, Steve Hay, Sullivan Beck, Thomas Sibley, Todd
+Rinaldo, Tom Hukins, Tony Cook, Unicode Consortium, Victor Adam, Vincent Pit,
+Vladimir Timofeev, Yves Orton, Zachary Storer, Zefram.
 
 The list above is almost certainly incomplete as it is automatically generated
 from version control history. In particular, it does not include the names of

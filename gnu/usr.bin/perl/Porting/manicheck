@@ -8,7 +8,7 @@ use strict;
 use warnings;
 use File::Find;
 
-open my $fh, 'MANIFEST' or die "Can't read MANIFEST: $!\n";
+open my $fh, '<', 'MANIFEST' or die "Can't read MANIFEST: $!\n";
 my @files = map { (split)[0] } <$fh>;
 close $fh;
 for (@files) {

@@ -5,7 +5,7 @@ perldoc - Look up Perl documentation in Pod format.
 
 =head1 SYNOPSIS
 
-    perldoc [-h] [-D] [-t] [-u] [-m] [-l] [-F]
+    perldoc [-h] [-D] [-t] [-u] [-m] [-l] [-U] [-F]
         [-i] [-V] [-T] [-r]
         [-d destination_file]
         [-o formatname]
@@ -34,11 +34,10 @@ See below for more description of the switches.
 
 =head1 DESCRIPTION
 
-B<perldoc> looks up a piece of documentation in .pod format that is
-embedded in the perl installation tree or in a perl script, and displays
-it via C<groff -man | $PAGER>. (In addition, if running under HP-UX,
-C<col -x> will be used.) This is primarily used for the documentation for
-the perl library modules.
+B<perldoc> looks up documentation in .pod format that is embedded in the perl
+installation tree or in a perl script, and displays it using a variety of
+formatters.  This is primarily used for the documentation for the perl library
+modules.
 
 Your system may also have man pages installed for those modules, in
 which case you can probably just use the man(1) command.
@@ -78,9 +77,17 @@ the file for you and simply hand it off for display.
 
 Display onB<l>y the file name of the module found.
 
+=item B<-U>
+
+When running as the superuser, don't attempt drop privileges for security.
+This option is implied with B<-F>.
+
+B<NOTE>: Please see the heading SECURITY below for more information.
+
 =item B<-F>
 
 Consider arguments as file names; no search in directories will be performed.
+Implies B<-U> if run as the superuser.
 
 =item B<-f> I<perlfunc>
 
@@ -228,6 +235,13 @@ have security issues, when run as the superuser it will attempt to
 drop privileges by setting the effective and real IDs to nobody's
 or nouser's account, or -2 if unavailable.  If it cannot relinquish
 its privileges, it will not run.
+
+See the C<-U> option if you do not want this behavior but B<beware>
+that there are significant security risks if you choose to use C<-U>.
+
+Since 3.26, using C<-F> as the superuser also implies C<-U> as opening
+most files and traversing directories requires privileges that are
+above the nobody/nogroup level.
 
 =head1 ENVIRONMENT
 

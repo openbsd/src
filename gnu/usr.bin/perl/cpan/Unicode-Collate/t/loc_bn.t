@@ -42,8 +42,7 @@ $objBn->change(level => 1);
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : "";
-    $objBn->change(highestFFFF => 1) if $h;
+    my $t = $h ? pack('U', 0xFFFF) : 'z';
 
     ok($objBn->lt("\x{993}$t", "\x{994}"));
     ok($objBn->lt("\x{994}$t", "\x{982}"));
@@ -51,3 +50,5 @@ for my $h (0, 1) {
     ok($objBn->lt("\x{983}$t", "\x{981}"));
     ok($objBn->lt("\x{981}$t", "\x{995}"));
 }
+
+# 12

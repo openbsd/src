@@ -1,5 +1,3 @@
-#!/usr/bin/perl -w
-
 use strict;
 
 use Test::More;
@@ -42,7 +40,7 @@ my $fh;
 open( $fh, '>hoge.txt' ) or die $!;
 
 eval q| $json->encode( [ $fh ] ) |;
-ok( $@ =~ /encountered GLOB/, $@ );
+ok( $@ =~ /encountered GLOB|cannot encode reference to scalar/, $@ );
 
 $json->allow_unknown(1);
 

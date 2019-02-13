@@ -98,7 +98,7 @@ try($FLEN-20000, 200, undef);
 
 sub try {
   my ($src, $dst, $len) = @_;
-  open F, "> $file" or die "Couldn't open file $file: $!";
+  open F, '>', $file or die "Couldn't open file $file: $!";
   binmode F;
 
   # The record has exactly 17 characters.  This will help ensure that
@@ -141,7 +141,7 @@ sub try {
     }
   }
 
-  open F, "< $file" or die "Couldn't open file $file: $!";
+  open F, '<', $file or die "Couldn't open file $file: $!";
   binmode F;
   my $actual;
   { local $/;
@@ -165,7 +165,7 @@ sub check_contents {
   my $x = join $:, @c, '';
   local *FH = $o->{fh};
   seek FH, 0, SEEK_SET;
-#  my $open = open FH, "< $file";
+#  my $open = open FH, '<', $file;
   my $a;
   { local $/; $a = <FH> }
   $a = "" unless defined $a;

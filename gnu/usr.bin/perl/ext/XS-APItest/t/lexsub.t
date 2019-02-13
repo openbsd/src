@@ -1,4 +1,4 @@
-use Test::More tests => 4;
+use Test::More tests => 5;
 use XS::APItest;
 
 
@@ -16,4 +16,15 @@ is fribbler(15), 30, 'XS-allocated lexical subs falling out of scope';
     use feature 'lexical_subs';
     our sub fribbler;
     is fribbler(15), 30, 'our sub overrides XS-registered lexical sub';
+}
+
+# With ‘use’ rather than explicit BEGIN:
+package Lexical::Exporter {
+    sub import { shift; ::lexical_import @_; return }
+}
+BEGIN { ++$INC{"Lexical/Exporter.pm"} }
+
+{
+    use Lexical::Exporter fribbler => sub { shift() . "foo" };
+    is fribbler("bar"), "barfoo";
 }

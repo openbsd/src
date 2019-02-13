@@ -80,8 +80,6 @@ LLIINNKKSS
 
     "Section "with" _o_t_h_e_r_ _m_a_r_k_u_p" in foo|bar
 
-    Nested <http://www.perl.org/>
-
 OOVVEERR  AANNDD  IITTEEMMSS
     Taken from Pod::Parser tests, this is a test to ensure that multiline
     =item paragraphs get indented appropriately.
@@ -175,12 +173,12 @@ FFOORRMMAATTTTIINNGG  CCOODDEESS
     Of course I should still be able to do all this _w_i_t_h escape sequences
     too: "$self->method()" and "$self->{FIELDNAME}" and "{FOO=>BAR}".
 
-    Dont forget "$self->method()->{FIELDNAME} = {FOO=>BAR}".
+    Don't forget "$self->method()->{FIELDNAME} = {FOO=>BAR}".
 
     And make sure that 0 works too!
 
     Now, if I use << or >> as my delimiters, then I have to use whitespace.
-    So things like "<$self-"method()>> and "<$self-"{FIELDNAME}>> wont end
+    So things like "<$self-"method()>> and "<$self-"{FIELDNAME}>> won't end
     up doing what you might expect since the first > will still terminate
     the first < seen.
 

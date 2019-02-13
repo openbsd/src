@@ -198,7 +198,7 @@ sub mkrand {
 sub try {
   push @TRIES, [@_] if @_ == 3;
 
-  open F, "> $file" or die "Couldn't open file $file: $!";
+  open F, '>', $file or die "Couldn't open file $file: $!";
   binmode F;
   print F $oldfile;
   close F;
@@ -220,7 +220,7 @@ sub try {
   my $actual_return = $o->_mtwrite(@mt_args);
   undef $o; untie @lines;
 
-  open F, "< $file" or die "Couldn't open file $file: $!";
+  open F, '<', $file or die "Couldn't open file $file: $!";
   binmode F;
   my $actual;
   { local $/;

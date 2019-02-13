@@ -18,7 +18,7 @@ chdir dirname($0);
 my $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT, ">", $file or die "Can't create $file: $!";
 
 print "Extracting $file (with variable substitutions)\n";
 
@@ -38,7 +38,7 @@ my $xsubpp = File::Spec->catfile(File::Spec->catdir(File::Spec->updir,
 						       lib ExtUtils)),
 				 'xsubpp');
 
-if (open(XSUBPP, $xsubpp)) {
+if (open(XSUBPP, '<', $xsubpp)) {
     print OUT <XSUBPP>;
     close XSUBPP;
 } else {

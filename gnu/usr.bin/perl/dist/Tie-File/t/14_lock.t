@@ -29,7 +29,7 @@ use Tie::File;
 print "ok $N\n"; $N++;
 
 # 2-4  Who the heck knows?
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 close F;
 $o = tie @a, 'Tie::File', $file, recsep => 'blah';
 print $o ? "ok $N\n" : "not ok $N\n";

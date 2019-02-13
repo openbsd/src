@@ -1,4 +1,4 @@
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 
 BEGIN { $| = 1; print "1..4\n"; }
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }

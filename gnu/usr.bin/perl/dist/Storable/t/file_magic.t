@@ -441,7 +441,7 @@ nstore({}, $file);
 
 for my $test (@tests) {
     my($data, $expected) = @$test;
-    open(FH, ">$file") || die "Can't create $file: $!";
+    open(FH, '>', $file) || die "Can't create $file: $!";
     binmode(FH);
     print FH $data;
     close(FH) || die "Can't write $file: $!";

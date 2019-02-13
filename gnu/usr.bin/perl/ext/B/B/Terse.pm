@@ -1,6 +1,6 @@
 package B::Terse;
 
-our $VERSION = '1.06';
+our $VERSION = '1.08';
 
 use strict;
 use B qw(class @specialsv_name);
@@ -30,12 +30,6 @@ sub indent {
     return "    " x $level;
 }
 
-# Don't use this, at least on OPs in subroutines: it has no way of
-# getting to the pad, and will give wrong answers or crash.
-sub B::OP::terse {
-    carp "B::OP::terse is deprecated; use B::Concise instead";
-    B::Concise::b_terse(@_);
-}
 
 sub B::SV::terse {
     my($sv, $level) = (@_, 0);

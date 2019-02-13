@@ -18,7 +18,7 @@ chdir dirname($0);
 my $file = basename($0, '.PL');
 $file .= '.com' if $^O eq 'VMS';
 
-open OUT,">$file" or die "Can't create $file: $!";
+open OUT, ">", $file or die "Can't create $file: $!";
 
 print "Extracting $file (with variable substitutions)\n";
 
@@ -38,7 +38,7 @@ my $script = File::Spec->catfile(
                 File::Spec->updir, qw[cpan Archive-Tar bin]
             ), "ptardiff");
 
-if (open(IN, $script)) {
+if (open(IN, '<', $script)) {
     print OUT <IN>;
     close IN;
 } else {

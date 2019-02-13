@@ -1,9 +1,7 @@
 # Net::FTP.pm
 #
-# Versions up to 2.77_2 Copyright (c) 1995-2004 Graham Barr <gbarr@pobox.com>.
-# All rights reserved.
-# Changes in Version 2.77_3 onwards Copyright (C) 2013-2015 Steve Hay.  All
-# rights reserved.
+# Copyright (C) 1995-2004 Graham Barr.  All rights reserved.
+# Copyright (C) 2013-2017 Steve Hay.  All rights reserved.
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
 # Public License or the Artistic License, as specified in the F<LICENCE> file.
@@ -25,7 +23,7 @@ use Net::Config;
 use Socket;
 use Time::Local;
 
-our $VERSION = '3.08_01';
+our $VERSION = '3.11';
 
 our $IOCLASS;
 my $family_key;
@@ -45,7 +43,7 @@ BEGIN {
   my $inet6_class = eval {
     require IO::Socket::IP;
     no warnings 'numeric';
-    IO::Socket::IP->VERSION(0.20);
+    IO::Socket::IP->VERSION(0.25);
   } && 'IO::Socket::IP' || eval {
     require IO::Socket::INET6;
     no warnings 'numeric';
@@ -670,7 +668,7 @@ sub rmdir {
 
   # Try to delete the contents
   # Get a list of all the files in the directory, excluding the current and parent directories
-  my @filelist = map { /^(?:\S+;)+ (.+)$/ ? ($1) : () } grep { !/^(?:\S+;)*type=[cp]dir;/ } $ftp->_list_cmd("MLSD", $dir);
+  my @filelist = map { /^(?:\S+;)+ (.+)$/ ? ($1) : () } grep { !/^(?:\S+;)*type=[cp]dir;/i } $ftp->_list_cmd("MLSD", $dir);
 
   # Fallback to using the less well-defined NLST command if MLSD fails
   @filelist = grep { !/^\.{1,2}$/ } $ftp->ls($dir)
@@ -1998,10 +1996,10 @@ run of your program which does yield the problem.
 
 =head1 AUTHOR
 
-Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
+Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
 
 Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02
+1.22_02.
 
 =head1 SEE ALSO
 
@@ -2038,9 +2036,11 @@ Roderick Schertler <roderick@gate.net> - for various inputs
 
 =head1 COPYRIGHT
 
-Versions up to 2.77_2 Copyright (c) 1995-2004 Graham Barr. All rights reserved.
-Changes in Version 2.77_3 onwards Copyright (C) 2013-2015 Steve Hay.  All rights
-reserved.
+Copyright (C) 1995-2004 Graham Barr.  All rights reserved.
+
+Copyright (C) 2013-2017 Steve Hay.  All rights reserved.
+
+=head1 LICENCE
 
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public

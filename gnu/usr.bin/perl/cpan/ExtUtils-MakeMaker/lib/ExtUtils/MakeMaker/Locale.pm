@@ -1,7 +1,8 @@
 package ExtUtils::MakeMaker::Locale;
 
 use strict;
-our $VERSION = "7.10";
+our $VERSION = "7.34";
+$VERSION = eval $VERSION;
 
 use base 'Exporter';
 our @EXPORT_OK = qw(
@@ -27,11 +28,8 @@ sub _init {
 	    eval {
 		unless (defined &GetConsoleCP) {
 		    require Win32;
-                    # no point falling back to Win32::GetConsoleCP from this
-                    # as added same time, 0.45
-                    eval { Win32::GetConsoleCP() };
                     # manually "import" it since Win32->import refuses
-		    *GetConsoleCP = sub { &Win32::GetConsoleCP } unless $@;
+		    *GetConsoleCP = sub { &Win32::GetConsoleCP } if defined &Win32::GetConsoleCP;
 		}
 		unless (defined &GetConsoleCP) {
 		    require Win32::API;
@@ -51,18 +49,17 @@ sub _init {
                     require Win32;
                     eval { Win32::GetConsoleCP() };
                     # manually "import" it since Win32->import refuses
-                    *GetInputCP = sub { &Win32::GetConsoleCP } unless $@;
-                    *GetOutputCP = sub { &Win32::GetConsoleOutputCP } unless $@;
+                    *GetInputCP = sub { &Win32::GetConsoleCP } if defined &Win32::GetConsoleCP;
+                    *GetOutputCP = sub { &Win32::GetConsoleOutputCP } if defined &Win32::GetConsoleOutputCP;
                 };
                 unless (defined &GetInputCP) {
                     eval {
                         # try Win32::Console module for codepage to use
                         require Win32::Console;
-                        eval { Win32::Console::InputCP() };
                         *GetInputCP = sub { &Win32::Console::InputCP }
-                            unless $@;
+                            if defined &Win32::Console::InputCP;
                         *GetOutputCP = sub { &Win32::Console::OutputCP }
-                            unless $@;
+                            if defined &Win32::Console::OutputCP;
                     };
                 }
                 unless (defined &GetInputCP) {
@@ -137,7 +134,7 @@ Encode::Alias::define_alias(sub {
 
 sub _flush_aliases {
     no strict 'refs';
-    for my $a (keys %Encode::Alias::Alias) {
+    for my $a (sort keys %Encode::Alias::Alias) {
 	if (defined ${"ENCODING_" . uc($a)}) {
 	    delete $Encode::Alias::Alias{$a};
 	    warn "Flushed alias cache for $a" if DEBUG;

@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..24\n"; }
+BEGIN { $| = 1; print "1..29\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -42,8 +42,7 @@ $objAs->change(level => 1);
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : "";
-    $objAs->change(highestFFFF => 1) if $h;
+    my $t = $h ? pack('U', 0xFFFF) : 'z';
 
     ok($objAs->lt("\x{993}$t", "\x{994}"));
     ok($objAs->lt("\x{994}$t", "\x{982}"));
@@ -55,7 +54,18 @@ for my $h (0, 1) {
     ok($objAs->lt("\x{9A3}$t", "\x{9A4}\x{9CD}\x{200D}"));
     ok($objAs->lt("\x{9A4}\x{9CD}\x{200D}$t", "\x{9A4}"));
 
+    ok($objAs->lt("\x{9A3}$t", "\x{9CE}"));
+    ok($objAs->lt("\x{9CE}$t", "\x{9A4}"));
+
     ok($objAs->lt("\x{9B8}$t", "\x{9B9}"));
     ok($objAs->lt("\x{9B9}$t", "\x{995}\x{9CD}\x{9B7}"));
     ok($objAs->lt("\x{995}\x{9CD}\x{9B7}$t", "\x{9BD}"));
 }
+
+# 28
+
+$objAs->change(level => 3);
+
+ok($objAs->eq("\x{9A4}\x{9CD}\x{200D}", "\x{9CE}"));
+
+# 29

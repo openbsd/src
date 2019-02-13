@@ -1,29 +1,40 @@
 package DirHandle;
 
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 
 =head1 NAME 
 
-DirHandle - supply object methods for directory handles
+DirHandle - (obsolete) supply object methods for directory handles
 
 =head1 SYNOPSIS
 
+    # recommended approach since Perl 5.6: do not use DirHandle
+    if (opendir my $d, '.') {
+        while (readdir $d) { something($_); }
+        rewind $d;
+        while (readdir $d) { something_else($_); }
+    }
+
+    # how you would use this module if you were going to
     use DirHandle;
-    $d = DirHandle->new(".");
-    if (defined $d) {
+    if (my $d = DirHandle->new(".")) {
         while (defined($_ = $d->read)) { something($_); }
         $d->rewind;
         while (defined($_ = $d->read)) { something_else($_); }
-        undef $d;
     }
 
 =head1 DESCRIPTION
 
+B<There is no reason to use this module nowadays.>
+
 The C<DirHandle> method provide an alternative interface to the
 opendir(), closedir(), readdir(), and rewinddir() functions.
 
-The only objective benefit to using C<DirHandle> is that it avoids
-namespace pollution by creating globs to hold directory handles.
+Up to Perl 5.5, opendir() could not autovivify a directory handle from
+C<undef>, so using a lexical handle required using a function from L<Symbol>
+to create an anonymous glob, which took a separate step.
+C<DirHandle> encapsulates this, which allowed cleaner code than opendir().
+Since Perl 5.6, opendir() alone has been all you need for lexical handles.
 
 =cut
 

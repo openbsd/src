@@ -35,6 +35,8 @@ xsusage_two()
     ALIAS:
         two_x = 1
         FOO::two = 2
+    INIT:
+        PERL_UNUSED_VAR(ix);
 
 int
 interface_v_i()

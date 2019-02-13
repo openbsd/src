@@ -20,7 +20,7 @@ ExtUtils::ParseXS - converts Perl XS code into C code
                       optimize => 1,
                       prototypes => 1,
                     );
-  
+
   # Legacy non-OO interface using a singleton:
   use ExtUtils::ParseXS qw(process_file);
   process_file( filename => 'foo.xs' );

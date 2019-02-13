@@ -146,7 +146,7 @@ than C<$]> (a numeric value).  (This is a potential incompatibility.
 Send us a report via perlbug if you are affected by this.)
 
 The v1.2.3 syntax is also now legal in Perl.
-See L<Support for strings represented as a vector of ordinals> for more on that.
+See L</Support for strings represented as a vector of ordinals> for more on that.
 
 To cope with the new versioning system's use of at least three significant
 digits for each version component, the method used for incrementing the
@@ -1494,7 +1494,7 @@ capabilities.  In other words: if your operating system has the
 necessary APIs and datatypes, you should be able just to go ahead and
 use them, for threads by Configure -Dusethreads, and for 64 bits
 either explicitly by Configure -Duse64bitint or implicitly if your
-system has 64-bit wide datatypes.  See also L<"64-bit support">.
+system has 64-bit wide datatypes.  See also L</"64-bit support">.
 
 =head2 Long Doubles
 
@@ -1505,7 +1505,7 @@ Perl's scalars, use -Duselongdouble.
 =head2 -Dusemorebits
 
 You can enable both -Duse64bitint and -Duselongdouble with -Dusemorebits.
-See also L<"64-bit support">.
+See also L</"64-bit support">.
 
 =head2 -Duselargefiles
 
@@ -1513,7 +1513,7 @@ Some platforms support system APIs that are capable of handling large files
 (typically, files larger than two gigabytes).  Perl will try to use these
 APIs if you ask for -Duselargefiles.
 
-See L<"Large file support"> for more information. 
+See L</"Large file support"> for more information. 
 
 =head2 installusrbinperl
 

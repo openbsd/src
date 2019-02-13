@@ -2,11 +2,11 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
-plan tests => 29;
+plan tests => 33;
 
 $x='banana';
 $x=~/.a/g;
@@ -20,7 +20,7 @@ sub f { my $p=$_[0]; return $p }
 $x=~/.a/g;
 is(f(pos($x)), 4, "matching again, pos() next leaves off at offset 4");
 
-# Is pos() set inside //g? (bug id 19990615.008)
+# Is pos() set inside //g? (bug id 19990615.008 (#874))
 $x = "test string?"; $x =~ s/\w/pos($x)/eg;
 is($x, "0123 5678910?", "pos() set inside //g");
 
@@ -130,4 +130,32 @@ for my $one(pos $x) {
         is $one, undef,
            'no assertion failure when getting pos clobbers ref with undef';
     }
+}
+
+{
+    # RT # 127518
+    my $x = "\N{U+10000}abc";
+    my %expected = (
+        chars   => { length => 4, pos => 2 },
+        bytes   => { length => 7, pos => 5 },
+    );
+    my %observed;
+    $observed{chars}{length} = length($x);
+    $x =~ m/a/g;
+    $observed{chars}{pos}    = pos($x);
+
+    {
+        use bytes;
+        $observed{bytes}{length} = length($x);
+        $observed{bytes}{pos}    = pos($x);
+    }
+
+    is( $observed{chars}{length}, $expected{chars}{length},
+         "Got expected length in chars");
+    is( $observed{chars}{pos}, $expected{chars}{pos},
+         "Got expected pos in chars");
+    is( $observed{bytes}{length}, $expected{bytes}{length},
+         "Got expected length in bytes");
+    is( $observed{bytes}{pos}, $expected{bytes}{pos},
+         "Got expected pos in bytes");
 }

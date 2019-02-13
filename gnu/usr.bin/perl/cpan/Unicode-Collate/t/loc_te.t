@@ -42,8 +42,7 @@ $objTe->change(level => 1);
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : "";
-    $objTe->change(highestFFFF => 1) if $h;
+    my $t = $h ? pack('U', 0xFFFF) : 'z';
 
     ok($objTe->lt("\x{C13}$t", "\x{C14}"));
     ok($objTe->lt("\x{C14}$t", "\x{C01}"));
@@ -51,3 +50,5 @@ for my $h (0, 1) {
     ok($objTe->lt("\x{C02}$t", "\x{C03}"));
     ok($objTe->lt("\x{C03}$t", "\x{C15}"));
 }
+
+# 12

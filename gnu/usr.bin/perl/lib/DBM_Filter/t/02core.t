@@ -22,7 +22,7 @@ sub writeFile
 {
     my $filename = shift ;
     my $content = shift;
-    open F, ">DBM_Filter/$filename.pm" or croak "Cannot open $filename: $!" ;
+    open F, '>', "DBM_Filter/$filename.pm" or croak "Cannot open $filename: $!" ;
     print F $content ;
     close F;
     $files{"DBM_Filter/$filename.pm"} ++;

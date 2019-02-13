@@ -6,13 +6,13 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 my @ops = split //, 'rwxoRWXOezsfdlpSbctugkTMBAC';
 
-plan( tests => @ops * 5 );
+plan( tests => @ops * 5 + 1 );
 
 package o { use overload '-X' => sub { 1 } }
 my $o = bless [], 'o';
@@ -46,4 +46,10 @@ for my $op (@ops) {
 
     my @foo = eval "-$op \$o";
     is @foo, 1, "-$op \$overld did not leave \$overld on the stack";
+}
+
+{
+    # [perl #129347] cope with stacked filetests where PL_op->op_next is null
+    () = sort { -d -d } \*TEST0, \*TEST1;
+    ok 1, "survived stacked filetests with null op_next";
 }

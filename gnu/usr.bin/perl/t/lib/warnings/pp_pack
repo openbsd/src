@@ -21,37 +21,17 @@ EXPECT
 Invalid type ',' in unpack at - line 4.
 Invalid type ',' in pack at - line 5.
 ########
-# pp.c
-use warnings 'uninitialized' ;
-my $a = undef ; 
-my $b = $$a;
-no warnings 'uninitialized' ;
-my $c = $$a;
-EXPECT
-Use of uninitialized value $a in scalar dereference at - line 4.
-########
 # pp_pack.c
 use warnings 'pack' ;
 sub foo { my $a = "a"; return $a . $a++ . $a++ }
 my $a = pack("p", &foo) ;
+@a = "foo";
+sub bar { pop @{\@_}, pack "p", $a[0] } # This should *not* warn, even
+bar(@a);                                # though $a[0] is SvTEMP.
 no warnings 'pack' ;
 my $b = pack("p", &foo) ;
 EXPECT
 Attempt to pack pointer to temporary value at - line 4.
-########
-# pp.c
-use warnings 'misc' ;
-bless \[], "" ;
-no warnings 'misc' ;
-bless \[], "" ;
-EXPECT
-Explicit blessing to '' (assuming package main) at - line 3.
-########
-# pp.c
-use utf8 ;
-$_ = "\x80  \xff" ;
-reverse ;
-EXPECT
 ########
 # pp_pack.c
 use warnings 'pack' ;

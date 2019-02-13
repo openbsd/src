@@ -21,7 +21,9 @@ use Encode;
 
 no utf8; # we have raw Chinese encodings here
 
-use_ok('Encode::CN');
+BEGIN {
+    use_ok('Encode::CN');
+}
 
 # Since JP.t already tests basic file IO, we will just focus on
 # internal encode / decode test here. Unfortunately, to test

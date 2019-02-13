@@ -1,5 +1,5 @@
 package encoding::warnings;
-$encoding::warnings::VERSION = '0.12';
+$encoding::warnings::VERSION = '0.13';
 
 use strict;
 use 5.007;
@@ -10,8 +10,22 @@ encoding::warnings - Warn on implicit encoding conversions
 
 =head1 VERSION
 
-This document describes version 0.11 of encoding::warnings, released
-June 5, 2007.
+This document describes version 0.13 of encoding::warnings, released
+June 20, 2016.
+
+=head1 NOTICE
+
+As of Perl 5.26.0, this module has no effect.  The internal Perl feature
+that was used to implement this module has been removed.  In recent years,
+much work has been done on the Perl core to eliminate discrepancies in the
+treatment of upgraded versus downgraded strings.  In addition, the
+L<encoding> pragma, which caused many of the problems, is no longer
+supported.  Thus, the warnings this module produced are no longer
+necessary.
+
+Hence, if you load this module on Perl 5.26.0, you will get one warning
+that the module is no longer supported; and the module will do nothing
+thereafter.
 
 =head1 SYNOPSIS
 
@@ -146,8 +160,16 @@ sub ASCII  () { 0 }
 sub LATIN1 () { 1 }
 sub FATAL  () { 2 }
 
-# Install a ${^ENCODING} handler if no other one are already in place.
 sub import {
+    if ($] >= 5.025003) {
+	require Carp;
+	Carp::cluck(
+	    "encoding::warnings is not supported on Perl 5.26.0 and later"
+	);
+	return;
+    }
+
+    # Install a ${^ENCODING} handler if no other one are already in place.
     my $class = shift;
     my $fatal = shift || '';
 

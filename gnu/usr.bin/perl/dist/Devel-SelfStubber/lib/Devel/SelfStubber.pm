@@ -4,7 +4,7 @@ require SelfLoader;
 @ISA = qw(SelfLoader);
 @EXPORT = 'AUTOLOAD';
 $JUST_STUBS = 1;
-$VERSION = 1.05;
+$VERSION = 1.06;
 sub Version {$VERSION}
 
 # Use as
@@ -39,7 +39,7 @@ sub stub {
     my (@BEFORE_DATA, @AFTER_DATA, @AFTER_END);
     @DATA = @STUBS = ();
 
-    open($fh,$mod_file) || die "Unable to open $mod_file";
+    open($fh,'<',$mod_file) || die "Unable to open $mod_file";
     local $/ = "\n";
     while(defined ($line = <$fh>) and $line !~ m/^__DATA__/) {
 	push(@BEFORE_DATA,$line);

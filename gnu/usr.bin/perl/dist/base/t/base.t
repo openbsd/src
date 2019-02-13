@@ -8,7 +8,7 @@ use_ok('base');
 
 package No::Version;
 
-use vars qw($Foo);
+our $Foo;
 sub VERSION { 42 }
 
 package Test::Version;

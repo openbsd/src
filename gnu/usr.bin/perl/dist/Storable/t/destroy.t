@@ -7,7 +7,7 @@ BEGIN {
 package foo;
 sub new { return bless {} }
 DESTROY {
-  open FH, "<foo" or die $!;
+  open FH, '<', "foo" or die $!;
   eval { Storable::pretrieve(*FH); };
   close FH or die $!;
   unlink "foo";

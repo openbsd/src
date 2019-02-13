@@ -106,7 +106,7 @@ directly accessing perl globals as C<GvSV(errgv)>.  The API call is
 backward compatible with existing perls and provides source compatibility
 with threading is enabled.
 
-See L<"C Source Compatibility"> for more information.
+See L</"C Source Compatibility"> for more information.
 
 =back
 
@@ -134,7 +134,7 @@ Oneliners with the C<-e> switch do not create temporary files anymore.
 
 Many new warnings that were introduced in 5.004 have been made
 optional.  Some of these warnings are still present, but perl's new
-features make them less often a problem.  See L<New Diagnostics>.
+features make them less often a problem.  See L</New Diagnostics>.
 
 =head2 Licensing
 

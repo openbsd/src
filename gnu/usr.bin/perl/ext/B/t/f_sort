@@ -68,10 +68,6 @@ sub other::backwards ($$) { $_[1] cmp $_[0]; }
 use sort 'stable';
 @new = sort { substr($a, 3, 5) cmp substr($b, 3, 5) } @old;
 
-# force use of mergesort (not portable outside Perl 5.8)
-use sort '_mergesort';
-@new = sort { substr($a, 3, 5) cmp substr($b, 3, 5) } @old;
-
 # you should have a good reason to do this!
 @articles = sort {$FooPack::b <=> $FooPack::a} @files;
 

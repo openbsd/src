@@ -1,0 +1,8 @@
+5.008000
+Poison                         # E
+hv_iternext_flags              # U
+hv_store_flags                 # U
+is_utf8_idcont                 # U
+nothreadhook                   # U
+WARN_LAYER                     # added by devel/scanprov
+WARN_THREADS                   # added by devel/scanprov

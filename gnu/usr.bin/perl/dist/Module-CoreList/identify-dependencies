@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Module::CoreList;
 
-use vars qw/%modules/;
+our %modules;
 
 my @files = @ARGV;
 unless (@files) {

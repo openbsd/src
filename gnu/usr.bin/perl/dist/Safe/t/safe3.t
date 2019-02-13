@@ -38,7 +38,7 @@ print $fh <<EOF;
 \$_[1] = "\0" x $masksize;
 EOF
 close $fh;
-$safe2->rdo('nasty.pl');
+$safe2->rdo('./nasty.pl');
 $safe2->reval( q{$x + $y} );
 # Written this way to keep the Test::More that comes with perl 5.6.2 happy
 ok( $@ =~ /^'?addition \(\+\)'? trapped by operation mask/,

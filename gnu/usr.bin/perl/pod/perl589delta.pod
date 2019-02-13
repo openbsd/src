@@ -314,7 +314,7 @@ properly deparse C<print readpipe $x, $y>.
 
 =item *
 
-now handles C<''->()>, C<::()>, C<sub :: {}>, I<etc.> correctly [RT #43010].
+now handles C<< ''->() >>, C<::()>, C<sub :: {}>, I<etc.> correctly [RT #43010].
 All bugs in parsing these kinds of syntax are now fixed:
 
     perl -MO=Deparse -e '"my %h = "->()'

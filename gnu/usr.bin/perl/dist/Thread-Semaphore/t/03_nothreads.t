@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More 'tests' => 6;
+use Test::More 'tests' => 7;
 
 use Thread::Semaphore;
 
@@ -15,6 +15,7 @@ $s->down();
 is($$s, 1, 'Non-threaded semaphore');
 ok(! $s->down_nb(2), 'Non-threaded semaphore');
 ok($s->down_nb(), 'Non-threaded semaphore');
+ok(! $s->down_timed(1), 'Non-threaded semaphore');
 
 exit(0);
 

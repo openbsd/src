@@ -11,6 +11,7 @@ my ($source_file, $obj_file, $lib_file);
 require_ok( 'ExtUtils::ParseXS' );
 
 chdir('t') if -d 't';
+push @INC, '.';
 
 use Carp; $SIG{__WARN__} = \&Carp::cluck;
 

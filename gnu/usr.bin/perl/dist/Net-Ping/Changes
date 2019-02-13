@@ -1,5 +1,116 @@
 CHANGES
 -------
+2.61  Sat Jun 17 13:12:58 CEST 2017 (rurban)
+       Bugfixes
+        - Fix ping_udp for a started udp echo server (PR#5 by Stephan Loyd)
+
+2.60  Mon Jun 12 20:14:13 CEST 2017 (rurban)
+       Bugfixes
+        - Fix t/400_ping_syn.t phases
+        - Try to handle Windows Socket::getnameinfo errors
+        - Improve some tests on missing network connections
+
+2.59  Tue Apr 18 08:46:48 2017 +0200 (rurban)
+       Bugfixes
+        - skip udp ping tests on more platforms: hpux, irix, aix.
+          also pingecho on os390.
+          (from perl5 core)
+       Features
+        - added a make release target
+
+2.58  Wed Feb  1 19:34:03 CET 2017 (rurban)
+       Features
+        - return the port num as 5th return value with ack (jfraire)
+
+2.57  Wed Feb  1 19:34:03 CET 2017 (rurban)
+       Bugfixes
+        - Resigned with new gpg key
+
+2.56  Wed Jan 18 16:00:00  2017 -0700 (bbb)
+       Bugfixes
+        - Stabilize tests
+
+2.55  Thu Oct 20 09:16:06  2016 +0200 (rurban)
+
+       Bugfixes
+       - Skip sudo for t/500_ping_icmp.t if a prompt is required
+         [RT #118451]
+
+2.54  Thu Oct 20 09:16:06  2016 +0200 (rurban)
+
+       Bugfixes
+       - Fixed ping_external argument type, either packed ip or hostname.
+         [RT #113825]
+       - Fixed wrong skip message in t/020_external.t
+
+2.53  Thu Oct 20 09:16:06  2016 +0200 (rurban)
+
+       Bugfixes
+       - Relax icmp tests on local firewalls, eg. as here on windows reported
+         by kmx. [RT #118441]
+
+       Internals
+       - Enhanced .travis.yml
+
+2.52  Tue Oct 18 16:29:29 2016 +0200 (rurban)
+       version in cperl since 5.25.2c
+
+       Bugfixes
+       - Fixed _pack_sockaddr_in for a proper 2nd argument type, hash or packed address.
+       - Improved 500_ping_icmp.t to try sudo.
+       
+       Internals
+       - Converted all hash string keys to bare.
+
+2.51  Mon Oct 17 16:11:03 2016 +0200 (rurban)
+       version in cperl since 5.25.2c
+ 
+       Bugfixes
+       - Fixed missing _unpack_sockaddr_in family, which took AF_INET6 for
+         a AF_INET addr in t/500_ping_icmp.t and t/500_ping_icmp_ttl.t.
+         Use now a proper default.
+
+2.50  Sat Apr 16 11:50:20 2016 +0200 (rurban)
+       version in cperl since 5.22.2c
+
+       Features
+       - Handle IPv6 addresses and the AF_INET6 family.
+       - Added the optional family argument to most methods.
+         valid values: 6, "v6", "ip6", "ipv6", AF_INET6
+       - new can take now named arguments, a hashref.
+       - Added the following named arguments to new:
+         gateway host port bind retrans pingstring source_verify econnrefused
+         IPV6_USE_MIN_MTU IPV6_RECVPATHMTU IPV6_HOPLIMIT
+       - Added a dontfrag option, setting IP_DONTFRAG and on linux
+         also IP_MTU_DISCOVER to IP_PMTUDISC_DO. Note that is ignored if
+         Socket does not export IP_DONTFRAG.
+       - Added the wakeonlan method
+       - Improve argument default handling
+       - Added missing documentation
+
+       Bugfixes
+       - Reapply tos with ping_udp, when the address is changed.
+         RT #6706 (Torgny.Hofstedt@sevenlevels.se)
+         ditto re-bind to a device.
+
+       Internals
+       - $ip is now a hash with {addr, addr_in, family} not the addr_in packed IP.
+       - added _resolv replacing inet_aton,
+         _pack_sockaddr_in and _unpack_sockaddr_in replacing sockaddr_in,
+         _inet_ntoa replacing inet_ntoa
+       - Use _isroot helper, with Win32 _IsAdminUser helper.
+       - added several new tests (Steve Peters)
+
+2.43  Mon Apr 29 00:23:56 2013 -0300
+        version in perl core since 5.19.9
+        Bugfixes
+        - Handle getprotobyn{ame,umber} not being available
+2.42  Sun May 26 19:08:46 2013 -0700
+        version in perl core since 5.19.1
+        Bugfixes
+        - Stabilize tests
+       Internals
+        - wrap long pod lines
 2.41  Mar 17 09:35 2013
         Bugfixes
         - Windows Vista does not appear to support inet_ntop().  It seems to
@@ -7,31 +118,31 @@ CHANGES
           and passing in the NI_NUMERICHOST to get an IP address.
         Features
         - Change Net::Ping to use Time::HiRes::time() instead of CORE::time()
-          by default.  For most successful cases, CORE::time() returned zero.
+          by default.  For most successful cases, CORE::time() returned zero. 
 2.40  Mar 15 11:20 2013
         Bugfixes
-        - several fixes to tests to stop the black smoke on Win32's
+        - several fixes to tests to stop the black smoke on Win32's 
           and Cygwin since the core updated the module to Test::More.
           I had planned a later release, but all the black smoke is
           forcing a release.
-        - fixes to some skips in tests that were still using the
+        - fixes to some skips in tests that were still using the 
           Test style skip's.
         - Documentation fix for https://rt.cpan.org/Ticket/Display.html?id=48014.
           Thanks to Keith Taylor <keith@supanet.net.uk>
-        - Instead of using a hard-coded TOS value, import IP_TOS from
-          Socket.  This fixes an outstanding bug on Solaris which uses a
+        - Instead of using a hard-coded TOS value, import IP_TOS from 
+          Socket.  This fixes an outstanding bug on Solaris which uses a 
           different value for IP_TOS in it headers than Linux.  I'm assuming
           other OS's were fixed with this change as well.
 
         Features
-        - added TTL handling for icmp pings to allow traceroute like
-          applications to be built with Net::Ping.  Thanks to
+        - added TTL handling for icmp pings to allow traceroute like 
+          applications to be built with Net::Ping.  Thanks to 
           <rolek@bokxing.nl> for the patch and tests!
 
        Internals
-        - replaced SOL_IP with IPPROTO_IP.  SOL_IP is not portable and was
+        - replaced SOL_IP with IPPROTO_IP.  SOL_IP is not portable and was 
           hard-coded anyway.
-        - added IPPROTO_IP, IP_TOS, IP_TTL, and AF_INET to the list of Socket
+        - added IPPROTO_IP, IP_TOS, IP_TTL, and AF_INET to the list of Socket 
           constants imported.
         - removed some hard-coded constants.
         - converted all calls to inet_ntoa() to inet_ntop() in preparation
@@ -56,7 +167,7 @@ CHANGES
         - release to include a few fixes from the Perl core
 
 2.35  Feb 08 14:42 2008
-	- Patch in Perl change #33242 by Nicholas Clark
+	- Patch in Perl change #33242 by Nicholas Clark 
 		<http://perl5.git.perl.org/perl.git/commit/5d6b07c5a4c042580b85248d570ee299fd102a79>
 
 2.34  Dec 19 08:51 2007

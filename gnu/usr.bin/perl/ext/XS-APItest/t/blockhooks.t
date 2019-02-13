@@ -5,6 +5,9 @@ use strict;
 use Test::More tests => 17;
 
 use XS::APItest;
+
+BEGIN { push @INC, '.' } # t/BHK.pm is in ext/XS-APItest/ directory
+
 use t::BHK ();      # make sure it gets compiled early
 
 BEGIN { package XS::APItest; *main::bhkav = \@XS::APItest::bhkav }

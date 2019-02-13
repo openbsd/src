@@ -21,7 +21,12 @@ Conversion from the original HTML to POD format
 =item *
 
 Include list of valid licenses from L<Module::Build> 0.17 rather than
-linking to the module.
+linking to the module, with minor updates to text and links to reflect
+versions at the time of publication.
+
+=item *
+
+Fixed some dead links to point to active resources.
 
 =back
 
@@ -43,16 +48,17 @@ install it.
 
 F<META.yml> files are written in the L<YAML|http://www.yaml.org/> format.  The
 reasons we chose YAML instead of, say, XML or Data::Dumper are discussed in
-L<this thread|http://archive.develooper.com/makemaker@perl.org/msg00405.html>
+L<this thread|http://www.nntp.perl.org/group/perl.makemaker/2002/04/msg406.html>
 on the MakeMaker mailing list.
 
-The first line of a F<META.yml> file should be a valid L<YAML document header|http://www.yaml.org/spec/#.Document>
+The first line of a F<META.yml> file should be a valid
+L<YAML document header|http://yaml.org/spec/history/2002-10-31.html#syntax-document>
 like C<"--- #YAML:1.0">
 
 =head1 Fields
 
 The rest of the META.yml file is one big YAML
-L<mapping|http://www.yaml.org/spec/#.-syntax-mapping-Mapping->,
+L<mapping|http://yaml.org/spec/history/2002-10-31.html#syntax-mapping>,
 whose keys are described here.
 
 =over 4
@@ -87,28 +93,29 @@ Must be one of the following licenses:
 
 The distribution may be copied and redistributed under the same terms as perl
 itself (this is by far the most common licensing option for modules on CPAN).
-This is a dual license, in which the user may choose between either the GPL or
-the Artistic license.
+This is a dual license, in which the user may choose between either the GPL
+version 1 or the Artistic version 1 license.
 
 =item gpl
 
-The distribution is distributed under the terms of the Gnu General Public
-License (L<http://www.opensource.org/licenses/gpl-license.php>).
+The distribution is distributed under the terms of the GNU General Public
+License version 2 (L<http://opensource.org/licenses/GPL-2.0>).
 
 =item lgpl
 
-The distribution is distributed under the terms of the Gnu Lesser General
-Public License (L<http://www.opensource.org/licenses/lgpl-license.php>).
+The distribution is distributed under the terms of the GNU Lesser General
+Public License version 2 (L<http://opensource.org/licenses/LGPL-2.1>).
 
 =item artistic
 
-The distribution is licensed under the Artistic License, as specified by the
-Artistic file in the standard perl distribution.
+The distribution is licensed under the Artistic License version 1, as specified
+by the Artistic file in the standard perl distribution
+(L<http://opensource.org/licenses/Artistic-Perl-1.0>).
 
 =item bsd
 
-The distribution is licensed under the BSD License
-(L<http://www.opensource.org/licenses/bsd-license.php>).
+The distribution is licensed under the BSD 3-Clause License
+(L<http://opensource.org/licenses/BSD-3-Clause>).
 
 =item open_source
 
@@ -118,7 +125,7 @@ license listed at L<http://www.opensource.org/licenses/>.
 =item unrestricted
 
 The distribution is licensed under a license that is B<not> approved by
-L<www.opensource.org|http://www.opensource.org> but that allows distribution
+L<www.opensource.org|http://www.opensource.org/> but that allows distribution
 without restrictions.
 
 =item restrictive
@@ -143,10 +150,11 @@ Example:
   Data::Dumper: 0
   File::Find: 1.03
 
-A YAML L<mapping|http://www.yaml.org/spec/#.-syntax-mapping-Mapping->
+A YAML L<mapping|http://yaml.org/spec/history/2002-10-31.html#syntax-mapping>
 indicating the Perl modules this distribution requires for proper
 operation.  The keys are the module names, and the values are version
-specifications as described in the L<Module::Build|documentation for Module::Build's "requires" parameter>.
+specifications as described in the
+L<documentation for Module::Build's "requires" parameter|Module::Build::API/requires>.
 
 I<Note: the exact nature of the fancy specifications like
 C<< ">= 1.2, != 1.5, < 2.0" >> is subject to
@@ -160,7 +168,7 @@ Example:
   Data::Dumper: 0
   File::Find: 1.03
 
-A YAML L<mapping|http://www.yaml.org/spec/#.-syntax-mapping-Mapping->
+A YAML L<mapping|http://yaml.org/spec/history/2002-10-31.html#syntax-mapping>
 indicating the Perl modules this distribution recommends for enhanced
 operation.
 
@@ -171,7 +179,7 @@ Example:
   Data::Dumper: 0
   File::Find: 1.03
 
-A YAML L<mapping|http://www.yaml.org/spec/#.-syntax-mapping-Mapping->
+A YAML L<mapping|http://yaml.org/spec/history/2002-10-31.html#syntax-mapping>
 indicating the Perl modules required for building and/or testing of
 this distribution.  These dependencies are not required after the
 module is installed.
@@ -183,7 +191,7 @@ Example:
   Data::Dumper: 0
   File::Find: 1.03
 
-A YAML L<mapping|http://www.yaml.org/spec/#.-syntax-mapping-Mapping->
+A YAML L<mapping|http://yaml.org/spec/history/2002-10-31.html#syntax-mapping>
 indicating the Perl modules that cannot be installed while this
 distribution is installed.  This is a pretty uncommon situation.
 
@@ -200,7 +208,7 @@ sensing the environment, etc.) as part of its build/install process.
 
 Currently L<Module::Build> doesn't actually do anything with
 this flag - it's probably going to be up to higher-level tools like
-L<CPAN|CPAN.pm> to do something useful with it.  It can potentially
+L<CPAN.pm|CPAN> to do something useful with it.  It can potentially
 bring lots of security, packaging, and convenience improvements.
 
 =item generated_by

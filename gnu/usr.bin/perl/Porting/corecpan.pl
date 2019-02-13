@@ -58,7 +58,7 @@ our $opt_f || !-f $packagefile and get_package_details;
 
 # Load the package details. All of them.
 my %cpanversions;
-open my $fh, $packagefile or die $!;
+open my $fh, '<', $packagefile or die $!;
 while (<$fh>) {
     my ($p, $v) = split ' ';
     next if 1../^\s*$/; # skip header

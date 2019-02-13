@@ -20,11 +20,13 @@ use ExtUtils::MakeMaker::Config;
 
 my $Is_VMS = $^O eq 'VMS';
 
-use File::Temp qw[tempdir];
-my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
-chdir $tmpdir;
+chdir 't';
+perl_lib; # sets $ENV{PERL5LIB} relative to t/
 
-perl_lib;
+use File::Temp qw[tempdir];
+my $tmpdir = tempdir( DIR => '../t', CLEANUP => 1 );
+use Cwd; my $cwd = getcwd; END { chdir $cwd } # so File::Temp can cleanup
+chdir $tmpdir;
 
 $| = 1;
 
@@ -51,8 +53,8 @@ my $mm = WriteMakefile(
 );
 
 like( $stdout->read, qr{
-                        Generating\ a\ \w+?-style\ $Makefile\n
-                        Writing\ $Makefile\ for\ Big::Liar\n
+                        (?:Generating\ a\ \w+?-style\ $Makefile\n)?
+                        (?:Writing\ $Makefile\ for\ Big::Liar\n)?
                         (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
                         Big::Liar's\ vars\n
                         INST_LIB\ =\ \S+\n
@@ -83,8 +85,8 @@ $mm = WriteMakefile(
     PREFIX        => $PREFIX,
 );
 like( $stdout->read, qr{
-                        Generating\ a\ \w+?-style\ $Makefile\n
-                        Writing\ $Makefile\ for\ Big::Liar\n
+                        (?:Generating\ a\ \w+?-style\ $Makefile\n)?
+                        (?:Writing\ $Makefile\ for\ Big::Liar\n)?
                         (?:Writing\ MYMETA.yml\ and\ MYMETA.json\n)?
                         Big::Liar's\ vars\n
                         INST_LIB\ =\ \S+\n

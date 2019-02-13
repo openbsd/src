@@ -5,11 +5,12 @@ use warnings;
 BEGIN {
     unless (-d 'blib') {
         chdir 't' if -d 't';
-        @INC = '../lib';
     }
+    require q(./test.pl);
+    set_up_inc('../lib');
 }
 
-require q(./test.pl); plan(tests => 7);
+plan(tests => 7);
 
 {
     package BaseTest;

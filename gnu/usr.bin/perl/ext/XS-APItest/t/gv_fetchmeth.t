@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 40;
+use Test::More tests => 44;
 
 use_ok('XS::APItest');
 
@@ -45,6 +45,10 @@ ok !XS::APItest::gv_fetchmeth_type(\%::, "method\0not quite!", 3, $level, 0), "g
 
     sub ｍｅｔｈｏｄ { 1 }
 
+    use constant { φου1 => 1,
+                   φου2 => 2,
+                   φου3 => 3, };
+
     my $meth_as_octets =
             "\357\275\215\357\275\205\357\275\224\357\275\210\357\275\217\357\275\204";
 
@@ -53,6 +57,7 @@ ok !XS::APItest::gv_fetchmeth_type(\%::, "method\0not quite!", 3, $level, 0), "g
         ::is XS::APItest::gv_fetchmeth_type(\%ｍａｉｎ::, "ｍｅｔｈｏｄ", $type, $level, 0), "*ｍａｉｎ::ｍｅｔｈｏｄ", "$types[$type] is UTF-8 clean";
         ::ok !XS::APItest::gv_fetchmeth_type(\%ｍａｉｎ::, $meth_as_octets, $type, $level, 0);
         ::ok !XS::APItest::gv_fetchmeth_type(\%ｍａｉｎ::, "method", $type, $level, 0);
+        ::is XS::APItest::gv_fetchmeth_type(\%ｍａｉｎ::, "φου$type", $type, $level, 0), "*ｍａｉｎ::φου$type", "$types[$type] can fetch UTF-8 constant";
         
         {
             no strict 'refs';
@@ -64,4 +69,11 @@ ok !XS::APItest::gv_fetchmeth_type(\%::, "method\0not quite!", 3, $level, 0), "g
                             "method", $type, $level, 0);
         }
     }
+}
+
+{
+    @Foo::ISA = qw/Bar/;
+    @Bar::ISA = qw//;
+
+    is(XS::APItest::gv_fetchmeth_type(\%Foo::, "nomethod", 1, -1, 0), undef, 'gv_fetchmeth_sv survives @ISA traversal');
 }

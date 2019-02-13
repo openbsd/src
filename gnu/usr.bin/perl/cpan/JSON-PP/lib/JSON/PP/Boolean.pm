@@ -1,3 +1,19 @@
+package JSON::PP::Boolean;
+
+use strict;
+use overload (
+    "0+"     => sub { ${$_[0]} },
+    "++"     => sub { $_[0] = ${$_[0]} + 1 },
+    "--"     => sub { $_[0] = ${$_[0]} - 1 },
+    fallback => 1,
+);
+
+$JSON::PP::Boolean::VERSION = '2.97001';
+
+1;
+
+__END__
+
 =head1 NAME
 
 JSON::PP::Boolean - dummy module providing JSON::PP::Boolean
@@ -10,13 +26,6 @@ JSON::PP::Boolean - dummy module providing JSON::PP::Boolean
 
 This module exists only to provide overload resolution for Storable and similar modules. See
 L<JSON::PP> for more info about this class.
-
-=cut
-
-use JSON::PP ();
-use strict;
-
-1;
 
 =head1 AUTHOR
 

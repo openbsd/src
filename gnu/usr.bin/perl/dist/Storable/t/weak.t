@@ -31,8 +31,10 @@ sub BEGIN {
 use Test::More 'no_plan';
 use Storable qw (store retrieve freeze thaw nstore nfreeze);
 require 'testlib.pl';
-use vars '$file';
+our $file;
 use strict;
+
+# $Storable::flags = Storable::FLAGS_COMPAT;
 
 sub tester {
   my ($contents, $sub, $testersub, $what) = @_;

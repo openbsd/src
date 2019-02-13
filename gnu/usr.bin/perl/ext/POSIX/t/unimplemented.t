@@ -83,15 +83,17 @@ foreach ([atexit => 'C-specific: use END {} instead'],
 	 [strspn => 'C-specific, stopped'],
 	 [strtok => 'C-specific, stopped'],
 	 [tmpfile => \'IO::File::new_tmpfile'],
+	 [tmpnam => \'use File::Temp'],
 	 [ungetc => \'IO::Handle::ungetc'],
 	 [vfprintf => 'C-specific, stopped'],
 	 [vprintf => 'C-specific, stopped'],
 	 [vsprintf => 'C-specific, stopped'],
+	 [L_tmpnam => 'C-specific, stopped'],
 	) {
     my ($func, $action) = @$_;
     my $expect = ref $action
-	? qr/Use method $$action\(\) instead of POSIX::$func\(\) at \(eval/
-	: qr/Unimplemented: POSIX::$func\(\) is \Q$action\E at \(eval/;
+	? qr/Unimplemented: POSIX::$func\(\): .*$$action(?:\(\))? instead at \(eval/
+	: qr/Unimplemented: POSIX::$func\(\): \Q$action\E at \(eval/;
     is(eval "POSIX::$func(); 1", undef, "POSIX::$func fails as expected");
     like($@, $expect, "POSIX::$func gives expected error message");
 }

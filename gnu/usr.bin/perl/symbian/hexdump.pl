@@ -22,7 +22,7 @@ for my $fn ($EXE, $RSC) {
 	my $newfn = $new{$fn};
 	unlink($newfn);
 	if (($read = sysread($fh, $buffer, $size)) == $size) {
-	    if (open(my $newfh, ">$newfn")) {
+	    if (open(my $newfh, '>', $newfn)) {
 		binmode($newfh);
 		print $newfh unpack("H*", $buffer);
 		close($newfh);

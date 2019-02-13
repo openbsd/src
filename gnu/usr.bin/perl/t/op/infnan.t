@@ -2,8 +2,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
 }
 
 use strict;
@@ -15,6 +15,9 @@ BEGIN {
         # FWIW: NaN actually seems to be working decently,
         # but Inf is completely broken (e.g. Inf + 0 -> NaN).
         skip_all "$^O with long doubles does not have sane inf/nan";
+    }
+    unless ($Config{d_double_has_inf} && $Config{d_double_has_nan}) {
+        skip_all "the doublekind $Config{doublekind} does not have inf/nan";
     }
 }
 
@@ -35,7 +38,7 @@ my @NaN = ("NAN", "nan", "qnan", "SNAN", "NanQ", "NANS",
            "1.#QNAN", "+1#SNAN", "-1.#NAN", "1#IND", "1.#IND00",
            "NAN(123)");
 
-my @printf_fmt = qw(e f g a d u o i b x p);
+my @printf_fmt = qw(e f g a d u o i b x);
 my @packi_fmt = qw(c C s S l L i I n N v V j J w W U);
 my @packf_fmt = qw(f d F);
 my @packs_fmt = qw(a4 A4 Z5 b20 B20 h10 H10 u);
@@ -521,6 +524,40 @@ cmp_ok('-1e-9999', '==', 0,     "underflow to 0 (runtime) from neg");
                  "$n numify warn");
         } else {
             is($w, "", "no warning expected");
+        }
+    }
+}
+
+# Size qualifiers shouldn't affect printing Inf/Nan
+#
+# Prior to the commit which introduced these tests and the fix,
+# the code path taken when int-ish formats saw an Inf/Nan was to
+# jump to the floating-point handler, but then that would
+# warn about (valid) qualifiers.
+
+{
+    my @w;
+    local $SIG{__WARN__} = sub { push @w, $_[0] };
+
+    for my $format (qw(B b c D d i O o U u X x)) {
+        # skip unportable: j L q
+        for my $size (qw(hh h l ll t z)) {
+            for my $num ($NInf, $PInf, $NaN) {
+                @w = ();
+                my $res = eval { sprintf "%${size}${format}", $num; };
+                my $desc = "sprintf(\"%${size}${format}\", $num)";
+                if ($format eq 'c') {
+                    like($@, qr/Cannot printf $num with 'c'/, "$desc: like");
+                }
+                else {
+                    is($res, $num, "$desc: equality");
+                }
+
+                is (@w, 0, "$desc: warnings")
+                    or do {
+                        diag("got warning: [$_]") for map { chomp; $_} @w;
+                    };
+            }
         }
     }
 }

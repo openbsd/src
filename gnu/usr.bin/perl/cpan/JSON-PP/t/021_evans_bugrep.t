@@ -32,7 +32,7 @@ eval {
     $j->incr_text;
 };
 
-like( $@, qr/incr_text can not be called when the incremental parser already started parsing/ );
+like( $@, qr/incr_text can ?not be called when the incremental parser already started parsing/ );
 
 $object = $j->incr_parse($parts[1]);
 

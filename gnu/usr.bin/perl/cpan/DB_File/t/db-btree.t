@@ -1261,33 +1261,6 @@ EOM
 
 }
 
-#{
-#   # R_SETCURSOR
-#   use strict ;
-#   my (%h, $db) ;
-#   unlink $Dfile;
-#
-#   ok(156, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_BTREE ) );
-#
-#   $h{abc} = 33 ;
-#   my $k = "newest" ;
-#   my $v = 44 ;
-#   my $status = $db->put($k, $v, R_SETCURSOR) ;
-#   print "status = [$status]\n" ;
-#   ok(157, $status == 0) ;
-#   $status = $db->del($k, R_CURSOR) ;
-#   print "status = [$status]\n" ;
-#   ok(158, $status == 0) ;
-#   $k = "newest" ;
-#   ok(159, $db->get($k, $v, R_CURSOR)) ;
-#
-#   ok(160, keys %h == 1) ;
-#   
-#   undef $db ;
-#   untie %h;
-#   unlink $Dfile;
-#}
-
 {
     # Bug ID 20001013.009
     #
@@ -1654,4 +1627,37 @@ ok(165,1);
     untie %h;
     unlink $Dfile;
 }
+
+#{
+#   # R_SETCURSOR
+#   use strict ;
+#   my (%h, $db) ;
+#   unlink $Dfile;
+#
+#   ok 198, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_BTREE ) ;
+#
+#   $h{abc} = 33 ;
+#   my $k = "newest" ;
+#   my $v = 44 ;
+#   my $status = $db->put($k, $v, R_SETCURSOR) ;
+#   print "status = [$status]\n" ;
+#   ok 199, $status == 0 ;
+#   $k = $v = '';
+#   $status = $db->get($k, $v, R_CURSOR) ;
+#   ok 200, $status == 0 ;
+#   ok 201, $k eq 'newest';
+#   ok 202, $v == 44;
+#   $status = $db->del($k, R_CURSOR) ;
+#   print "status = [$status]\n" ;
+#   ok(203, $status == 0) ;
+#   $k = "newest" ;
+#   ok(204, $db->get($k, $v, R_CURSOR)) ;
+#
+#   ok(205, keys %h == 1) ;
+#   
+#   undef $db ;
+#   untie %h;
+#   unlink $Dfile;
+#}
+
 exit ;

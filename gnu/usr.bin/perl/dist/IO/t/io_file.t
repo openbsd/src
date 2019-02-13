@@ -16,7 +16,7 @@ can_ok( $Class,                 "binmode" );
 ### use standard open to make sure we can compare binmodes
 ### on both.
 {   my $tmp;
-    open $tmp, ">$File" or die "Could not open '$File': $!";
+    open $tmp, '>', $File or die "Could not open '$File': $!";
     binmode $tmp;
     print $tmp $All_Chars; 
     close $tmp;

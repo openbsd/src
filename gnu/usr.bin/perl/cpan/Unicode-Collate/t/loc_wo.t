@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..40\n"; }
+BEGIN { $| = 1; print "1..44\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -41,17 +41,21 @@ ok($objWo->getlocale, 'wo');
 $objWo->change(level => 1);
 
 ok($objWo->lt("a", "a\x{300}"));
+ok($objWo->lt("az","a\x{300}"));
 ok($objWo->gt("b", "a\x{300}"));
 ok($objWo->lt("e", "e\x{301}"));
+ok($objWo->lt("ez","e\x{301}"));
 ok($objWo->lt("e\x{301}", "e\x{308}"));
 ok($objWo->gt("f", "e\x{308}"));
 ok($objWo->lt("n", "n\x{303}"));
+ok($objWo->lt("nz","n\x{303}"));
 ok($objWo->lt("n\x{303}", "\x{14B}"));
 ok($objWo->gt("o", "\x{14B}"));
 ok($objWo->lt("o", "o\x{301}"));
+ok($objWo->lt("oz","o\x{301}"));
 ok($objWo->gt("p", "o\x{301}"));
 
-# 12
+# 16
 
 $objWo->change(level => 2);
 
@@ -62,7 +66,7 @@ ok($objWo->eq("n\x{303}", "N\x{303}"));
 ok($objWo->eq( "\x{14B}",  "\x{14A}"));
 ok($objWo->eq("o\x{301}", "O\x{301}"));
 
-# 18
+# 22
 
 $objWo->change(level => 3);
 
@@ -73,7 +77,7 @@ ok($objWo->lt("n\x{303}", "N\x{303}"));
 ok($objWo->lt( "\x{14B}",  "\x{14A}"));
 ok($objWo->lt("o\x{301}", "O\x{301}"));
 
-# 24
+# 28
 
 ok($objWo->eq("a\x{300}", pack('U', 0xE0)));
 ok($objWo->eq("a\x{340}", pack('U', 0xE0)));
@@ -92,4 +96,4 @@ ok($objWo->eq("o\x{341}", pack('U', 0xF3)));
 ok($objWo->eq("O\x{301}", pack('U', 0xD3)));
 ok($objWo->eq("O\x{341}", pack('U', 0xD3)));
 
-# 40
+# 44

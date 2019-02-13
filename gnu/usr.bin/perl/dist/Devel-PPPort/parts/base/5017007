@@ -1,0 +1,7 @@
+5.017007
+SvREFCNT_dec_NN                # U
+_is_uni_perl_idstart           # U
+_is_utf8_perl_idstart          # U
+is_uni_alnumc                  # U
+is_uni_alnumc_lc               # U
+is_utf8_alnumc                 # U

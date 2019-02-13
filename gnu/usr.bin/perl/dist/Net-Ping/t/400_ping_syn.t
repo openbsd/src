@@ -4,7 +4,7 @@ BEGIN {
   if ($ENV{PERL_CORE}) {
     unless ($ENV{PERL_TEST_Net_Ping}) {
       print "1..0 # Skip: network dependent test\n";
-        exit;
+      exit;
     }
   }
   unless (eval "require Socket") {
@@ -33,25 +33,22 @@ BEGIN {
 # $ PERL_CORE=1 make test
 
 # Try a few remote servers
-my %webs;
-BEGIN {
-  %webs = (
+my %webs = (
   # Hopefully this is never a routeable host
   "172.29.249.249" => 0,
 
   # Hopefully all these web ports are open
-  "www.geocities.com." => 1,
   "www.freeservers.com." => 1,
   "yahoo.com." => 1,
   "www.yahoo.com." => 1,
   "www.about.com." => 1,
   "www.microsoft.com." => 1,
 );
-}
 
-use Test::More tests => 3 + 2 * keys %webs;
+use Test::More;
+plan tests => 3 + 2 * keys %webs;
 
-BEGIN {use_ok('Net::Ping')};
+use_ok('Net::Ping');
 
 my $can_alarm = eval {alarm 0; 1;};
 
@@ -73,6 +70,13 @@ isa_ok($p, 'Net::Ping', 'new() worked');
 # (Make sure getservbyname works in scalar context.)
 cmp_ok(($p->{port_num} = getservbyname("http", "tcp")), '>', 0, 'valid port');
 
+# check if network is up
+eval { $p->ping('www.google.com.'); };
+if ($@ =~ /getaddrinfo.*failed/) {
+  ok(1, "skip $@");
+  ok(1, "skip") for 0..12;
+  exit;
+}
 foreach my $host (keys %webs) {
   # ping() does dns resolution and
   # only sends the SYN at this point
@@ -80,13 +84,23 @@ foreach my $host (keys %webs) {
   is($p->ping($host), 1, "Can reach $host [" . ($p->{bad}->{$host} || "") . "]");
 }
 
+my $failed;
 Alarm(20);
 while (my $host = $p->ack()) {
-  is($webs{$host}, 1, "supposed to be up: http://$host/");
+  next if $host eq 'www.google.com.';
+  $failed += !is($webs{$host}, 1, "supposed to be up: http://$host/");
   delete $webs{$host};
 }
 
 Alarm(0);
 foreach my $host (keys %webs) {
-  is($webs{$host}, 0, "supposed to be down: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
+  $failed += !is($webs{$host}, 0,
+                "supposed to be down: http://$host/ [" . ($p->{bad}->{$host} || "") . "]");
+}
+
+if ($failed) {
+  diag ("NOTE: ",
+        "Network connectivity will be required for all tests to pass.\n",
+        "Firewalls may also cause some tests to fail, so test it ",
+        "on a clear network.");
 }

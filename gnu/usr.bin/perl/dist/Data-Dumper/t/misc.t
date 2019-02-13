@@ -15,7 +15,7 @@ BEGIN {
 use strict;
 
 use Data::Dumper;
-use Test::More tests => 20;
+use Test::More tests => 18;
 use lib qw( ./t/lib );
 use Testing qw( _dumptostr );
 
@@ -77,15 +77,8 @@ note("Argument validation for new()");
     $dumps{'noprev'} = _dumptostr($obj);
 
     $obj = Data::Dumper->new([$a,$b]);
-    $obj->Pad(undef);
-    $dumps{'undef'} = _dumptostr($obj);
-
-    $obj = Data::Dumper->new([$a,$b]);
     $obj->Pad('');
     $dumps{'emptystring'} = _dumptostr($obj);
-
-    is($dumps{'noprev'}, $dumps{'undef'},
-        "No setting for \$Data::Dumper::Pad and Pad(undef) give same result");
 
     is($dumps{'noprev'}, $dumps{'emptystring'},
         "No setting for \$Data::Dumper::Pad and Pad('') give same result");
@@ -114,15 +107,8 @@ note("Argument validation for new()");
     $dumps{'noprev'} = _dumptostr($obj);
 
     $obj = Data::Dumper->new([$a,$b]);
-    $obj->Varname(undef);
-    $dumps{'undef'} = _dumptostr($obj);
-
-    $obj = Data::Dumper->new([$a,$b]);
     $obj->Varname('');
     $dumps{'emptystring'} = _dumptostr($obj);
-
-    is($dumps{'noprev'}, $dumps{'undef'},
-        "No setting for \$Data::Dumper::Varname and Varname(undef) give same result");
 
     # Because Varname defaults to '$VAR', providing an empty argument to
     # Varname produces a non-default result.

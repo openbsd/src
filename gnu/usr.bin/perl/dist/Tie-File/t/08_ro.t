@@ -30,7 +30,7 @@ for my $i (0..$#items) {
 
 sub init_file {
   my $data = shift;
-  open F, "> $file" or die $!;
+  open F, '>', $file or die $!;
   binmode F;
   print F $data;
   close F;
@@ -56,7 +56,7 @@ if (setup_badly_terminated_file(4)) {
 
 sub setup_badly_terminated_file {
   my $NTESTS = shift;
-  open F, "> $file" or die "Couldn't open $file: $!";
+  open F, '>', $file or die "Couldn't open $file: $!";
   binmode F;
   print F $badrec;
   close F;

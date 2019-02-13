@@ -13,6 +13,29 @@ SKIP: {
     strict_lax_tests();
     is ref($version::LAX), 'Regexp', 'Can see $version::LAX '.$version::LAX ;
     is ref($version::STRICT), 'Regexp', 'Can see $version::STRICT '.$version::STRICT;
+    { # https://rt.cpan.org/Ticket/Display.html?id=114712
+        my ($v) = ( "snapshot-1.2.3ga-001-432" =~ /($version::LAX)/ );
+        is $v, '1.2.3', "Extract just the version: $v";
+        ($v) = ( "snapshot-1.2ga-001-432" =~ /($version::LAX)/ );
+        is $v, '1.2', "Extract just the version: $v";
+        ($v) = ( "snapshot-v1.2.3ga-001-432" =~ /($version::STRICT)/ );
+        is $v, 'v1.2.3', "Extract just the version: $v";
+    }
+
+    is ref($version::LAX_DECIMAL_VERSION), 'Regexp', 'Can see $version::LAX_DECIMAL_VERSION '.$version::LAX_DECIMAL_VERSION ;
+    is ref($version::LAX_DOTTED_DECIMAL_VERSION), 'Regexp', 'Can see $version::LAX_DOTTED_DECIMAL_VERSION '.$version::LAX_DOTTED_DECIMAL_VERSION ;
+    is ref($version::STRICT_DECIMAL_VERSION), 'Regexp', 'Can see $version::STRICT_DECIMAL_VERSION '.$version::STRICT_DECIMAL_VERSION;
+    is ref($version::STRICT_DOTTED_DECIMAL_VERSION), 'Regexp', 'Can see $version::STRICT_DOTTED_DECIMAL_VERSION '.$version::STRICT_DOTTED_DECIMAL_VERSION;
+    { # https://rt.cpan.org/Ticket/Display.html?id=119669
+        ($v) = ( "snapshot-1.2.3ga-001-432" =~ /($version::LAX_DOTTED_DECIMAL_VERSION)/ );
+        is $v, '1.2.3', "Extract just the version: $v";
+        ($v) = ( "snapshot-1.2ga-001-432" =~ /($version::LAX_DECIMAL_VERSION)/ );
+        is $v, '1.2', "Extract just the version: $v";
+        ($v) = ( "snapshot-v1.2.3ga-001-432" =~ /($version::STRICT_DOTTED_DECIMAL_VERSION)/ );
+        is $v, 'v1.2.3', "Extract just the version: $v";
+        ($v) = ( "snapshot-1.2ga-001-432" =~ /($version::STRICT_DECIMAL_VERSION)/ );
+        is $v, '1.2', "Extract just the version: $v";
+      }
 }
 
 

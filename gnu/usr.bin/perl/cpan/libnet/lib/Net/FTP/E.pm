@@ -8,6 +8,6 @@ use warnings;
 use Net::FTP::I;
 
 our @ISA = qw(Net::FTP::I);
-our $VERSION = "3.08_01";
+our $VERSION = "3.11";
 
 1;

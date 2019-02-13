@@ -8,7 +8,7 @@ if( $] >= 5.009 ) {
 }
 
 use strict;
-use vars qw($Total_tests);
+our $Total_tests;
 
 my $test_num = 1;
 BEGIN { $| = 1; $^W = 1; }
@@ -62,7 +62,7 @@ BEGIN {
 }
 
 use strict;
-use vars qw($DEBUG);
+our $DEBUG;
 
 package B1;
 use fields qw(b1 b2 b3);

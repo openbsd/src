@@ -44,7 +44,7 @@ if (opendir(D, ".")) {
    @correct = grep { !/^\./ } sort readdir(D);
    closedir D;
 }
-my @a = File::Glob::glob("*", 0);
+my @a = do {no warnings 'deprecated'; File::Glob::glob("*", 0);};
 @a = sort @a;
 if (GLOB_ERROR) {
     fail(GLOB_ERROR);
@@ -192,7 +192,7 @@ if ($^O eq 'VMS') { # VMS is happily caseignorant
 }
 
 for (@f_names) {
-    open T, "> $_";
+    open T, '>', $_;
     close T;
 }
 

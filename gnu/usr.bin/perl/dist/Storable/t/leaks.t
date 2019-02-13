@@ -32,3 +32,18 @@ plan 'tests' => 1;
     }
 }
 
+{ # [cpan #97316]
+  package TestClass;
+
+  sub new {
+    my $class = shift;
+    return bless({}, $class);
+  }
+  sub STORABLE_freeze {
+    die;
+  }
+
+  package main;
+  my $obj = TestClass->new;
+  eval { freeze($obj); };
+}

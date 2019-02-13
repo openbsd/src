@@ -241,7 +241,7 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
 
     if (level > 100)
         Perl_croak(aTHX_
-		  "Recursive inheritance detected in package '%"HEKf"'",
+		  "Recursive inheritance detected in package '%" HEKf "'",
 		   HEKfARG(stashhek));
 
     meta = HvMROMETA(stash);
@@ -346,7 +346,7 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
 		    /* They have no stash.  So create ourselves an ->isa cache
 		       as if we'd copied it from what theirs should be.  */
 		    stored = MUTABLE_HV(sv_2mortal(MUTABLE_SV(newHV())));
-		    (void) hv_store(stored, "UNIVERSAL", 9, &PL_sv_undef, 0);
+		    (void) hv_stores(stored, "UNIVERSAL", &PL_sv_undef);
 		    av_push(retval,
 			    newSVhek(HeKEY_hek(hv_store_ent(stored, sv,
 							    &PL_sv_undef, 0))));
@@ -356,7 +356,7 @@ S_mro_get_linear_isa_dfs(pTHX_ HV *stash, U32 level)
     } else {
 	/* We have no parents.  */
 	stored = MUTABLE_HV(sv_2mortal(MUTABLE_SV(newHV())));
-	(void) hv_store(stored, "UNIVERSAL", 9, &PL_sv_undef, 0);
+	(void) hv_stores(stored, "UNIVERSAL", &PL_sv_undef);
     }
 
     (void) hv_store_ent(stored, our_name, &PL_sv_undef, 0);
@@ -451,7 +451,7 @@ Perl_mro_get_linear_isa(pTHX_ HV *stash)
 			     HEK_LEN(canon_name), HEK_FLAGS(canon_name),
 			     HV_FETCH_ISSTORE, &PL_sv_undef,
 			     HEK_HASH(canon_name));
-	    (void) hv_store(isa_hash, "UNIVERSAL", 9, &PL_sv_undef, 0);
+	    (void) hv_stores(isa_hash, "UNIVERSAL", &PL_sv_undef);
 
 	    SvREADONLY_on(isa_hash);
 
@@ -524,8 +524,8 @@ Perl_mro_isa_changed_in(pTHX_ HV* stash)
     svp = hv_fetchhek(PL_isarev, stashhek, 0);
     isarev = svp ? MUTABLE_HV(*svp) : NULL;
 
-    if((stashname_len == 9 && strEQ(stashname, "UNIVERSAL"))
-        || (isarev && hv_exists(isarev, "UNIVERSAL", 9))) {
+    if((memEQs(stashname, stashname_len, "UNIVERSAL"))
+        || (isarev && hv_existss(isarev, "UNIVERSAL"))) {
         PL_sub_generation++;
         is_universal = TRUE;
     }
@@ -790,7 +790,7 @@ Perl_mro_package_moved(pTHX_ HV * const stash, HV * const oldstash,
 	if (name_count < 0) ++namep, name_count = -name_count - 1;
     }
     if (name_count == 1) {
-	if (HEK_LEN(*namep) == 4 && strnEQ(HEK_KEY(*namep), "main", 4)) {
+	if (memEQs(HEK_KEY(*namep), HEK_LEN(*namep), "main")) {
 	    namesv = GvNAMELEN(gv) == 1
 		? newSVpvs_flags(":", SVs_TEMP)
 		: newSVpvs_flags("",  SVs_TEMP);
@@ -812,7 +812,7 @@ Perl_mro_package_moved(pTHX_ HV * const stash, HV * const oldstash,
 	SV *aname;
 	namesv = sv_2mortal((SV *)newAV());
 	while (name_count--) {
-	    if(HEK_LEN(*namep) == 4 && strnEQ(HEK_KEY(*namep), "main", 4)){
+	    if(memEQs(HEK_KEY(*namep), HEK_LEN(*namep), "main")){
 		aname = GvNAMELEN(gv) == 1
 		         ? newSVpvs(":")
 		         : newSVpvs("");
@@ -954,7 +954,7 @@ S_mro_gather_and_rename(pTHX_ HV * const stashes, HV * const seen_stashes,
 		STRLEN len;
 		const char *name = SvPVx_const(*svp, len);
 		if(PL_stashcache) {
-                    DEBUG_o(Perl_deb(aTHX_ "mro_gather_and_rename clearing PL_stashcache for '%"SVf"'\n",
+                    DEBUG_o(Perl_deb(aTHX_ "mro_gather_and_rename clearing PL_stashcache for '%" SVf "'\n",
                                      SVfARG(*svp)));
 		   (void)hv_delete(PL_stashcache, name, name_utf8 ? -(I32)len : (I32)len, G_DISCARD);
                 }
@@ -1329,8 +1329,8 @@ Perl_mro_method_changed_in(pTHX_ HV *stash)
 
     /* If stash is UNIVERSAL, or one of UNIVERSAL's parents,
        invalidate all method caches globally */
-    if((stashname_len == 9 && strEQ(stashname, "UNIVERSAL"))
-        || (isarev && hv_exists(isarev, "UNIVERSAL", 9))) {
+    if((memEQs(stashname, stashname_len, "UNIVERSAL"))
+        || (isarev && hv_existss(isarev, "UNIVERSAL"))) {
         PL_sub_generation++;
         return;
     }
@@ -1369,7 +1369,7 @@ Perl_mro_set_mro(pTHX_ struct mro_meta *const meta, SV *const name)
     PERL_ARGS_ASSERT_MRO_SET_MRO;
 
     if (!which)
-        Perl_croak(aTHX_ "Invalid mro name: '%"SVf"'", name);
+        Perl_croak(aTHX_ "Invalid mro name: '%" SVf "'", name);
 
     if(meta->mro_which != which) {
 	if (meta->mro_linear_current && !meta->mro_linear_all) {
@@ -1415,7 +1415,7 @@ XS(XS_mro_method_changed_in)
     classname = ST(0);
 
     class_stash = gv_stashsv(classname, 0);
-    if(!class_stash) Perl_croak(aTHX_ "No such class: '%"SVf"'!", SVfARG(classname));
+    if(!class_stash) Perl_croak(aTHX_ "No such class: '%" SVf "'!", SVfARG(classname));
 
     mro_method_changed_in(class_stash);
 

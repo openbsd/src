@@ -161,7 +161,7 @@ if (setup_badly_terminated_file(1)) {
 
 sub setup_badly_terminated_file {
   my $NTESTS = shift;
-  open F, "> $file" or die "Couldn't open $file: $!";
+  open F, '>', $file or die "Couldn't open $file: $!";
   binmode F;
   print F $badrec;
   close F;

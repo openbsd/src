@@ -1,7 +1,7 @@
 #!./perl
 
 BEGIN {
-    unless ($] >= 5.008 and find PerlIO::Layer 'perlio') {
+    unless (find PerlIO::Layer 'perlio') {
 	print "1..0 # Skip: not perlio\n";
 	exit 0;
     }

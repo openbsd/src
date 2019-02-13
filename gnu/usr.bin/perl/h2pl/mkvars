@@ -8,7 +8,7 @@ foreach $include (@ARGV) {
     printf STDERR "including %s\n", $include;
     do $include;
     warn "sourcing $include: $@\n" if ($@);
-    if (!open (INCLUDE,"$LIB/$include")) {
+    if (!open (INCLUDE,'<',"$LIB/$include")) {
 	warn "can't open $LIB/$include: $!\n"; 
 	next; 
     } 

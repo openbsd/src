@@ -1,25 +1,11 @@
 # Adapted from script by Mark Lawrence (ref. rt.cpan.org #94830)
 
 use strict;
-
-my $MODULE;
-
-BEGIN {
-	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
-	eval "require $MODULE" || die $@;
-	$MODULE->import(qw(sha1));
-}
-
-BEGIN {
-	if ($ENV{PERL_CORE}) {
-		chdir 't' if -d 't';
-		@INC = '../lib';
-	}
-}
+use Digest::SHA qw(sha1);
 
 package P1;
 use vars qw(@ISA);
-@ISA = ($MODULE);
+@ISA = ("Digest::SHA");
 
 package main;
 

@@ -17,7 +17,7 @@ use Tie::File;
 print "ok $N\n"; $N++;
 
 # 2-3 FETCHSIZE 0-length file
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 close F;
 $o = tie @a, 'Tie::File', $file, recsep => 'blah';
 print $o ? "ok $N\n" : "not ok $N\n";
@@ -31,7 +31,7 @@ undef $o;
 untie @a;
 
 # 4-5 FETCHSIZE positive-length file
-open F, "> $file" or die $!;
+open F, '>', $file or die $!;
 print F $data;
 close F;
 $o = tie @a, 'Tie::File', $file, recsep => 'blah';

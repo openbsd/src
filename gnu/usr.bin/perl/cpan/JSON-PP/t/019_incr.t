@@ -1,6 +1,4 @@
-#!/usr/bin/perl -w
-
-# copied over from JSON::PP::XS and modified to use JSON::PP
+# copied over from JSON::XS and modified to use JSON::PP
 
 use strict;
 

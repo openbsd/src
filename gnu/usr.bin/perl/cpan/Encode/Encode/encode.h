@@ -88,7 +88,12 @@ extern void Encode_DefineEncoding(encode_t *enc);
 #define ENCODE_FALLBACK 4
 #define ENCODE_FOUND_TERM 5
 
-#define FBCHAR_UTF8		"\xEF\xBF\xBD"
+/* Use the perl core value if available; it is portable to EBCDIC */
+#ifdef REPLACEMENT_CHARACTER_UTF8
+#  define FBCHAR_UTF8		REPLACEMENT_CHARACTER_UTF8
+#else
+#  define FBCHAR_UTF8           "\xEF\xBF\xBD"
+#endif
 
 #define  ENCODE_DIE_ON_ERR     0x0001 /* croaks immediately */
 #define  ENCODE_WARN_ON_ERR    0x0002 /* warn on error; may proceed */

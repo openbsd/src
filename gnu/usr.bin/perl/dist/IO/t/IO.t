@@ -93,7 +93,7 @@ my $fakemod = File::Spec->catfile( $fakedir, 'fakemod.pm' );
 my $flag;
 if ( -d $fakedir or mkpath( $fakedir ))
 {
-	if (open( OUT, ">$fakemod"))
+	if (open( OUT, '>', $fakemod ))
 	{
 		(my $package = <<'		END_HERE') =~ tr/\t//d;
 		package IO::fakemod;

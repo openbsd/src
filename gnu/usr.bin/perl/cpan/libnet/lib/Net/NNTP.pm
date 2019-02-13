@@ -1,9 +1,7 @@
 # Net::NNTP.pm
 #
-# Versions up to 2.24_1 Copyright (c) 1995-1997 Graham Barr <gbarr@pobox.com>.
-# All rights reserved.
-# Changes in Version 2.25 onwards Copyright (C) 2013-2015 Steve Hay.  All rights
-# reserved.
+# Copyright (C) 1995-1997 Graham Barr.  All rights reserved.
+# Copyright (C) 2013-2016 Steve Hay.  All rights reserved.
 # This module is free software; you can redistribute it and/or modify it under
 # the same terms as Perl itself, i.e. under the terms of either the GNU General
 # Public License or the Artistic License, as specified in the F<LICENCE> file.
@@ -21,7 +19,7 @@ use Net::Cmd;
 use Net::Config;
 use Time::Local;
 
-our $VERSION = "3.08_01";
+our $VERSION = "3.11";
 
 # Code for detecting if we can use SSL
 my $ssl_class = eval {
@@ -39,7 +37,7 @@ my $family_key = 'Domain';
 my $inet6_class = eval {
   require IO::Socket::IP;
   no warnings 'numeric';
-  IO::Socket::IP->VERSION(0.20) || die;
+  IO::Socket::IP->VERSION(0.25) || die;
   $family_key = 'Family';
 } && 'IO::Socket::IP' || eval {
   require IO::Socket::INET6;
@@ -845,10 +843,10 @@ NNTP server, a value of zero will cause all IO operations to block.
 B<Debug> - Enable the printing of debugging information to STDERR
 
 B<Reader> - If the remote server is INN then initially the connection
-will be to nnrpd, by default C<Net::NNTP> will issue a C<MODE READER> command
-so that the remote server becomes innd. If the C<Reader> option is given
+will be to innd, by default C<Net::NNTP> will issue a C<MODE READER> command
+so that the remote server becomes nnrpd. If the C<Reader> option is given
 with a value of zero, then this command will not be sent and the
-connection will be left talking to nnrpd.
+connection will be left talking to innd.
 
 B<LocalAddr> and B<LocalPort> - These parameters are passed directly
 to IO::Socket to allow binding the socket to a specific local address and port.
@@ -1284,16 +1282,18 @@ L<IO::Socket::SSL>
 
 =head1 AUTHOR
 
-Graham Barr E<lt>F<gbarr@pobox.com>E<gt>
+Graham Barr E<lt>F<gbarr@pobox.com>E<gt>.
 
 Steve Hay E<lt>F<shay@cpan.org>E<gt> is now maintaining libnet as of version
-1.22_02
+1.22_02.
 
 =head1 COPYRIGHT
 
-Versions up to 2.24_1 Copyright (c) 1995-1997 Graham Barr. All rights reserved.
-Changes in Version 2.25 onwards Copyright (C) 2013-2015 Steve Hay.  All rights
-reserved.
+Copyright (C) 1995-1997 Graham Barr.  All rights reserved.
+
+Copyright (C) 2013-2016 Steve Hay.  All rights reserved.
+
+=head1 LICENCE
 
 This module is free software; you can redistribute it and/or modify it under the
 same terms as Perl itself, i.e. under the terms of either the GNU General Public

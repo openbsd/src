@@ -1,145 +1,214 @@
-#!perl
+#!/usr/bin/perl
 use strict;
 use warnings;
-use autodie;
+use Getopt::Long qw< :config no_ignore_case >;
 
-use Getopt::Long;
-use Pod::Simple::HTML;
+sub pod {
+    my $filename = shift;
 
-sub main {
-    my ( $help, $type, $html );
-    GetOptions(
-        'type:s' => \$type,
-        'html'   => \$html,
-        'help'   => \$help,
-    );
+    open my $fh, '<', $filename
+        or die "Cannot open file ($filename): $!\n";
 
-    if ($help) {
-        print <<'EOF';
-make-rmg-checklist [--type TYPE]
+    my @lines = <$fh>;
+
+    close $fh
+        or die "Cannot close file ($filename): $!\n";
+
+    return \@lines;
+}
+
+sub _help {
+    my $msg = shift;
+    if ($msg) {
+        print "Error: $msg\n\n";
+    }
+
+    print << "_END_HELP";
+$0 --version VERSION
 
 This script creates a release checklist as a simple HTML document. It accepts
 the following arguments:
 
-  --type    The release type for the checklist. This can be BLEAD-FINAL,
-            BLEAD-POINT, MAINT, or RC. This defaults to BLEAD-POINT.
+  --version     The version you are working on. This will infer the type
+                of release you want to have
 
-  --html    Output HTML instead of POD
+  --html        Output HTML instead of POD
+_END_HELP
 
-EOF
-
-        exit;
-    }
-
-    $type = _validate_type($type);
-
-    open my $fh, '<', 'Porting/release_managers_guide.pod';
-    my $pod = do { local $/; <$fh> };
-    close $fh;
-
-    my $heads = _parse_rmg( $pod, $type );
-    my $new_pod = _munge_pod( $pod, $heads );
-
-    if ($html) {
-        my $simple = Pod::Simple::HTML->new();
-        $simple->output_fh(*STDOUT);
-        $simple->parse_string_document($new_pod);
-    }
-    else {
-        print $new_pod;
-    }
+    exit;
 }
 
-sub _validate_type {
-    my $type = shift || 'BLEAD-POINT';
+sub _type_from_version {
+    my $version = shift;
 
-    my @valid = qw( BLEAD-FINAL BLEAD-POINT MAINT RC );
-    my %valid = map { $_ => 1 } @valid;
+    # 5.26.0      = BLEAD-FINAL
+    # 5.26.0-RC1  = RC
+    # 5.26.1      = MAINT
+    # 5.27.0      = BLEAD-POINT
+    # 5.27.1      = BLEAD-POINT
+    $version =~ m{^ 5\. (\d{1,2}) \. (\d{1,2}) (?: -RC(\d) )? $}xms
+        or die "Version must be 5.x.y or 5.x.y-RC#\n";
 
-    unless ( $valid{ uc $type } ) {
-        my $err
-            = "The type you provided ($type) is not a valid release type. It must be one of ";
-        $err .= join ', ', @valid;
-        $err .= "\n";
+    my ( $major, $minor, $rc ) = ( $1, $2, $3 );
 
-        die $err;
+    # Dev release
+    if ( $major % 2 != 0 ) {
+        defined $rc
+            and die "Cannot have BLEAD-POINT RC release\n";
+
+        return 'BLEAD-POINT';
     }
 
-    return $type;
+    defined $rc
+        and return 'RC';
+
+    return $minor == 0 ? 'BLEAD-FINAL' : 'MAINT';
 }
 
-sub _parse_rmg {
-    my $pod  = shift;
-    my $type = shift;
+sub iterate_items {
+    my ( $items, $type, $cb ) = @_;
 
-    my @heads;
-    my $include = 0;
-    my %skip;
-
-    for ( split /\n/, $pod ) {
-        if (/^=for checklist begin/) {
-            $include = 1;
-            next;
-        }
-
-        next unless $include;
-
-        last if /^=for checklist end/;
-
-        if (/^=for checklist skip (.+)/) {
-            %skip = map { $_ => 1 } split / /, $1;
-            next;
-        }
-
-        if (/^=head(\d) (.+)/) {
-            unless ( keys %skip && $skip{$type} ) {
-                push @heads, [ $1, $2 ];
+    ITEM:
+    foreach my $item ( @{$items} ) {
+        foreach my $meta ( @{ $item->{'metadata'} || [] } ) {
+            if ( $meta =~ /skip .+ $type/xms ) {
+                next ITEM;
             }
-
-            %skip = ();
+            elsif ( $meta =~ /skip/xms ) {
+                $item->{content} =~
+                    s/^ [^\n]* \b MUST\ SKIP\ this\ step \b [^\n]* \n\n//xms;
+            }
         }
-    }
 
-    return \@heads;
+        $cb->($item);
+    }
 }
 
-sub _munge_pod {
-    my $pod   = shift;
-    my $heads = shift;
+sub create_checklist {
+    my ( $type, $items ) = @_;
 
-    $pod =~ s/=head1 NAME.+?(=head1 SYNOPSIS)/$1/s;
+    my $collect;
+    my $prev_head = 0;
+    my $over_level;
+    iterate_items( $items, $type, sub {
+        my $item = shift;
 
-    my $new_pod = <<'EOF';
+        foreach my $meta ( @{ $item->{'metadata'} || [] } ) {
+            $meta =~ /checklist \s+ begin/xmsi
+                and $collect = 1;
+
+            $meta =~ /checklist \s+ end/xmsi
+                and $collect = 0;
+
+        }
+
+        $collect
+            or return;
+
+        $over_level = ( $item->{'head'} - 1 ) * 4;
+
+        print $prev_head < $item->{'head'} ? "=over $over_level\n\n"
+            : $prev_head > $item->{'head'} ? "=back\n\n"
+            :                                '';
+
+        chomp( my $name = $item->{'name'} );
+        print "=item * L<< /$name >>\n\n";
+
+        $prev_head = $item->{'head'};
+    });
+
+    print "=back\n\n" x ( $over_level / 4 );
+}
+
+my ($version, $html);
+GetOptions(
+    'version|v=s' => \$version,
+    'html'        => \$html,
+    'help|h'      => sub { _help(); },
+);
+
+defined $version
+    or _help('You must provide a version number');
+
+my $pod_output = '';
+if ($html) {
+    require Pod::Simple::HTML;
+    open my $fh, '>', \$pod_output
+        or die "Can't create fh to string: $!\n";
+    select $fh;
+}
+
+my $type = _type_from_version($version);
+
+chomp( my @pod_lines = @{ pod('Porting/release_managers_guide.pod') } );
+
+my ( @items, $current_element, @leading_attrs );
+my $skip_headers     = qr/^=encoding/xms;
+my $passthru_headers = qr/^= (?: over | item | back | cut )/xms;
+
+foreach my $line (@pod_lines) {
+    $line =~ $skip_headers
+        and next;
+
+    if ( $line =~ /^ =head(\d) \s+ (.+) $/xms ) {
+        my ( $head_num, $head_title ) = ( $1, $2 );
+
+        my $elem = {
+            'head' => $head_num,
+            'name' => $head_title,
+        };
+
+        if (@leading_attrs) {
+            $elem->{'metadata'} = [ @leading_attrs ];
+            @leading_attrs = ();
+        }
+
+        $current_element = $elem;
+        push @items, $elem;
+
+        next;
+    }
+
+    if ( $line =~ /^ =for \s+ (.+) $ /xms ) {
+        push @leading_attrs, $1;
+        next;
+    }
+
+    $line =~ $passthru_headers
+        or length $line == 0 # allow empty lines
+        or $line =~ /^[^=]/xms
+        or die "Cannot recognize line: '$line'\n";
+
+    $current_element->{'content'} .= "\n" . $line;
+}
+
+print << "_END_BEGINNING";
 =head1 NAME
 
-Release Manager's Guide with Checklist
+Release Manager's Guide with Checklist for $version ($type)
 
 =head2 Checklist
 
-EOF
+_END_BEGINNING
 
-    my $last_level = 0;
-    for my $head ( @{$heads} ) {
-        my $level = $head->[0] - 1;
+# Remove beginning
+# This can also be done with a '=for introduction' in the future
+$items[0]{'name'} =~ /^NAME/xmsi
+    and shift @items;
 
-        if ( $level > $last_level ) {
-            $new_pod .= '=over ' . $level * 4;
-            $new_pod .= "\n\n";
-        }
-        elsif ( $level < $last_level ) {
-            $new_pod .= "=back\n\n" for 1 .. ( $last_level - $level );
-        }
+$items[0]{'name'} =~ /^MAKING \s+ A \s+ CHECKLIST/xmsi
+    and shift @items;
 
-        $new_pod .= '=item * ' . 'L<< /' . $head->[1] . " >>\n\n";
+create_checklist( $type, \@items );
 
-        $last_level = $level;
-    }
+iterate_items( \@items, $type, sub {
+    my $item = shift;
+    print "=head$item->{'head'} $item->{'name'}";
+    print "$item->{'content'}\n";
+} );
 
-    $new_pod .= "=back\n\n" while $last_level--;
-
-    $new_pod .= $pod;
-
-    return $new_pod;
+if ($html) {
+    my $simple = Pod::Simple::HTML->new;
+    $simple->output_fh(*STDOUT);
+    $simple->parse_string_document($pod_output);
 }
-
-main();

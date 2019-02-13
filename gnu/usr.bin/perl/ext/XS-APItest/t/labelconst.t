@@ -89,7 +89,7 @@ isnt $@, "";
 is $t, "";
 
 $t = "";
-$t = do("t/labelconst.aux");
+$t = do("./t/labelconst.aux");
 is $@, "";
 is $t, "FOOBARBAZQUUX";
 
@@ -163,7 +163,7 @@ is $t, "FOOBARBAZQUUX";
 {
     use utf8;
     $t = "";
-    $t = do("t/labelconst_utf8.aux");
+    $t = do("./t/labelconst_utf8.aux");
     is $@, "";
     is $t, "ＦǑǑBÀRᛒÀZQÙÙX";
 }

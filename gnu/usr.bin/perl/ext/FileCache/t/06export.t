@@ -1,5 +1,5 @@
 #!./perl
-use vars qw(@funcs $i);
+our (@funcs, $i);
 
 BEGIN {
     # Functions exported by FileCache;

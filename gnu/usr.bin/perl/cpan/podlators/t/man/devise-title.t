@@ -30,11 +30,11 @@ my $output;
 $parser->output_string(\$output);
 $parser->parse_file($handle);
 
-# Check the results of devise_title for this.  We should get back STDIN, and
-# we should have reported an error.
+# Check the results of devise_title for this.  We should get back STDIN and
+# not report an error.
 my ($name, $section) = $parser->devise_title;
 is($name, 'STDIN', 'devise_title uses STDIN for file handle input');
-ok($parser->errors_seen, '...and errors were seen');
+ok(!$parser->errors_seen, '...and no errors were seen');
 
 # Now check handling of a simple file name with no parent directory, which
 # simulates a POD file at the top of a distribution.  In podlators 4.06, this

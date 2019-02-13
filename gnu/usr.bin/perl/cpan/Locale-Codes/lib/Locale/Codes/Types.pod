@@ -1,0 +1,414 @@
+=pod
+
+=head1 NAME
+
+Locale::Codes::Types - types of data sets supported
+
+=head1 DESCRIPTION
+
+This document contains a description of different types of code sets
+supported by the B<Locale-Codes> distribution.
+
+The following types are supported:
+
+=over 4
+
+=item L</"country">
+
+=item L</"language">
+
+=item L</"currency">
+
+=item L</"script">
+
+=item L</"langfam">
+
+=item L</"langvar">
+
+=item L</"langext">
+
+=back
+
+Any time you have to specify the type of data, use one of the values from
+this list.  When using the OO interface, you have to specify the type of
+data you are working with.  For example:
+
+   use Locale::Codes;
+   ...
+   $obj->type('country');
+   $obj->type('langext');
+
+When using the traditional interfaces, the functions all have the data type
+included in the function name.  For example:
+
+   use Locale::Codes::Country;
+   code2country(...);
+
+   use Locale::Codes::LangExt;
+   code2langext(...);
+
+Each type of data may have any number of code sets.  Code sets may be
+specified by name.  Traditionally, a perl constant was exported and could
+also be used to specify the code set.
+
+Both methods are available for both the OO and traditional interfaces, so
+whenever a function or method takes an argument specifying a code set, either
+the name or a constant can be used.
+
+In the lists below, a code set is specified in the list by including the
+name and the constant.  So, for example, the first country code set is
+named C<'alpha-2'> and has a perl constant C<LOCALE_COUNTRY_ALPHA_2>
+associated with it.  When using the OO interface, the constants are only
+available if you import them by loading the module with:
+
+   use Locale::Codes ':constants';
+
+The constants are always available when using the traditional interfaces.
+
+Some of the older perl constants names were not consistent, and in those
+cases, two constants are available (a newer consistent name and the older
+inconsistent one).  Either may be used.
+
+The default code set for each type is marked with an asterisk (*).
+
+=head1 country
+
+Code sets for identifying countries are maintained by several different
+agencies and standards.
+
+The following code sets are maintained in the ISO 3166 standard.
+The official home page for the ISO 3166 maintenance agency is:
+L<http://www.iso.org/iso/home/standards/country_codes.htm> .
+
+Only the officially assigned codes are included.
+
+=over 4
+
+=item B<* alpha-2, LOCALE_COUNTRY_ALPHA_2, LOCALE_CODE_ALPHA_2>
+
+This is the set of two-letter (lowercase) codes from ISO 3166-1, such
+as 'tv' for Tuvalu.
+
+=item B<alpha-3, LOCALE_COUNTRY_ALPHA_3, LOCALE_CODE_ALPHA_3>
+
+This is the set of three-letter (lowercase) codes from ISO 3166-1,
+such as 'brb' for Barbados. These codes are actually defined and
+maintained by the U.N. Statistics division.
+
+=item B<numeric, LOCALE_COUNTRY_NUMERIC, LOCALE_CODE_NUMERIC>
+
+This is the set of three-digit numeric codes from ISO 3166-1, such as
+064 for Bhutan.
+
+If a 2-digit code is entered, it is converted to 3 digits by prepending
+a 0.
+
+=back
+
+A list of domain names are maintained by the IANA (Internet Assigned
+Numbers Authority).  These are available at:
+L<http://www.iana.org/domains/root/db/> .  Only the actual country
+codes are used, and the country names come from ISO 3166.
+
+=over 4
+
+=item B<dom, LOCALE_COUNTRY_DOM, LOCALE_CODE_DOM>
+
+The country domains assigned by IANA are usually the two-letter
+(lowercase) codes from ISO 3166, but there are a few other additions.
+
+=back
+
+The United Nations also maintains country lists.  Their list is also
+similar, but not identical, to the ISO 3166 list.
+
+The data is available here:
+L<https://unstats.un.org/unsd/methodology/m49/>
+
+Previously, this table was treated as a source of the ISO 3166 data,
+but I found that the table was incomplete, so I stopped using it.
+Later, it was added back in as it's own list of codes.
+
+=over 4
+
+=item B<un-alpha-3, LOCALE_COUNTRY_UN_ALPHA_3, LOCALE_CODE_UN_ALPHA_3>
+
+This is similar to the 'alpha-3' set from ISO 3166, except that the
+codes are uppercase.
+
+=item B<un-numeric, LOCALE_COUNTRY_UN_NUMERIC, LOCALE_CODE_UN_NUMERIC>
+
+This is similar to the 'numeric' set from ISO 3166.
+
+=back
+
+The US Government also keeps a list of codes.  Originally, it maintained
+the FIPS-11 code set, but this was deprecated and replaced by the GENC code
+set.  The FIPS-11 code sets are no longer supported by B<Locale-Codes>.
+
+The GENC code sets are available here:
+L<https://nsgreg.nga.mil/genc/discovery> .  They are also similar, but
+not identical, to the ISO 3166 code sets.
+
+=over 4
+
+=item B<genc-alpha-2, LOCALE_COUNTRY_GENC_ALPHA_2, LOCALE_CODE_GENC_ALPHA_2>
+
+Similar to the 'alpha-2' set, but uppercase.
+
+=item B<genc-alpha-3, LOCALE_COUNTRY_GENC_ALPHA_3, LOCALE_CODE_GENC_ALPHA_3>
+
+Similar to the 'alpha-3' set, but uppercase.
+
+=item B<genc-numeric, LOCALE_COUNTRY_GENC_NUMERIC, LOCALE_CODE_GENC_NUMERIC>
+
+Similar to the 'numeric' set.
+
+=back
+
+There are other sources of codes that are not currently used in this
+distribution.
+
+ISO codes for country sub-divisions (states, counties, provinces,
+etc), as defined in ISO 3166-2.  This module is not part of the
+Locale-Codes distribution, but is available from CPAN in
+CPAN/modules/by-module/Locale/
+
+The World Factbook maintained by the CIA is a potential source of
+the data.  Unfortunately, it adds/preserves non-standard codes, so it is
+not used as a source of data.
+L<https://www.cia.gov/library/publications/the-world-factbook/appendix/print_appendix-d.html>
+
+Another unofficial source of data is the Statoids web site:
+L<http://www.statoids.com/wab.html> . Currently, it is not used to get
+data, but the notes and explanatory material were very useful for
+understanding discrepancies between the sources.
+
+=head1 language
+
+Code sets for identifying languages come from a couple different locations.
+
+The primary source is ISO 639 .  The ISO 639-2 codes are available here:
+L<http://www.loc.gov/standards/iso639-2/>
+and the ISO 639-5 codes are available here:
+L<http://www.loc.gov/standards/iso639-5/> .
+
+In addition, the IANA maintains a language registry which are added to the ISO
+lists.  Because it is intended to supplement the ISO standard, the IANA list is
+not separate.
+
+The IANA data is available here:
+L<http://www.iana.org/assignments/language-subtag-registry>
+
+The code sets are:
+
+=over 4
+
+=item B<* alpha-2, LOCALE_LANGUAGE_ALPHA_2, LOCALE_LANG_ALPHA_2>
+
+This is the set of two-letter (lowercase) codes from ISO 639-1, such
+as 'he' for Hebrew.  It also includes additions to this set included
+in the IANA language registry.
+
+=item B<alpha-3, LOCALE_LANGUAGE_ALPHA_3, LOCALE_LANG_ALPHA_3>
+
+This is the set of three-letter (lowercase) bibliographic codes from
+ISO 639-2 and 639-5, such as 'heb' for Hebrew.  It also includes
+additions to this set included in the IANA language registry.
+
+=item B<term, LOCALE_LANGUAGE_TERM, LOCALE_LANG_TERM>
+
+This is the set of three-letter (lowercase) terminologic codes from
+ISO 639.
+
+=back
+
+=head1 currency
+
+The source of currency codes is the ISO 4217 data available here:
+L<http://www.iso.org/iso/support/currency_codes_list-1.htm>
+
+The code sets are:
+
+=over 4
+
+=item B<* alpha, LOCALE_CURRENCY_ALPHA, LOCALE_CURR_ALPHA>
+
+This is a set of three-letter (uppercase) codes from ISO 4217 such
+as EUR for Euro.
+
+Two of the codes specified by the standard (XTS which is reserved
+for testing purposes and XXX which is for transactions where no
+currency is involved) are omitted.
+
+=item B<num, LOCALE_CURRENCY_NUMERIC, LOCALE_CURR_NUMERIC>
+
+This is the set of three-digit numeric codes from ISO 4217.
+
+=back
+
+=head1 script
+
+The source of script code sets is ISO 15924 available here:
+L<http://www.unicode.org/iso15924/>
+
+Additional data comes from the IANA language subtag registry:
+L<http://www.iana.org/assignments/language-subtag-registry> .
+
+Code sets are:
+
+=over 4
+
+=item B<* alpha, LOCALE_SCRIPT_ALPHA>
+
+This is a set of four-letter (capitalized) codes from ISO 15924
+such as 'Phnx' for Phoenician.  It also includes additions to this
+set included in the IANA language registry.
+
+The Zxxx, Zyyy, and Zzzz codes are not used.
+
+=item B<num, LOCALE_SCRIPT_NUMERIC>
+
+This is a set of three-digit numeric codes from ISO 15924 such as 115
+for Phoenician.
+
+=back
+
+=head1 langfam
+
+Language families are specified using codes from ISO 639-5 available here:
+L<http://www.loc.gov/standards/iso639-5/id.php>
+
+Code sets are:
+
+=over 4
+
+=item B<* alpha, LOCALE_LANGFAM_ALPHA>
+
+This is the set of three-letter (lowercase) codes from ISO 639-5
+such as 'apa' for Apache languages.
+
+=back
+
+=head1 langvar
+
+Language variations are specified using codes from he IANA language
+subtag registry available here:
+L<http://www.iana.org/assignments/language-subtag-registry>
+
+Code sets are:
+
+=over 4
+
+=item B<* alpha, LOCALE_LANGVAR_ALPHA>
+
+This is the set of alphanumeric codes from the IANA
+language registry, such as 'arevela' for Eastern Armenian.
+
+=back
+
+=head1 langext
+
+Language extensions are specified using codes from he IANA language
+subtag registry available here:
+L<http://www.iana.org/assignments/language-subtag-registry>
+
+Code sets are:
+
+=over 4
+
+=item B<* alpha, LOCALE_LANGEXT_ALPHA>
+
+This is the set of three-letter (lowercase) codes from the IANA
+language registry, such as 'acm' for Mesopotamian Arabic.
+
+=back
+
+=head1 NEW CODE SETS
+
+I'm always open to suggestions for new code sets.
+
+In order for me to add a code set, I want the following criteria
+to be met:
+
+=over 4
+
+=item B<General-use code set>
+
+If a code set is not general use, I'm not likely to spend the time
+to add and support it.
+
+=item B<An official source of data>
+
+I require an official (or at least, a NEARLY official) source where I
+can get the data on a regular basis.
+
+Ideally, I'd only get data from an official source, but sometimes that
+is not possible. For example the ISO standards are not typically
+available for free, so I may have to get some of that data from
+alternate sources that I'm confident are getting their data from the
+official source.  However, I will always be hesitant to accept a
+non-official source.
+
+As an example, I used to get some country data from the CIA World
+Factbook. Given the nature of the source, I'm sure they're updating
+data from the official sources and I consider it "nearly" official.
+However, even in this case, I found that they were adding codes that
+were not part of the standard, so I have stopped using them as a
+source.
+
+There are many 3rd party sites which maintain lists (many of which are
+actually in a more convenient form than the official sites).
+Unfortunately, I will reject most of them since I have no feel for how
+"official" they are.
+
+=item B<A free source of the data>
+
+Obviously, the data must be free-of-charge. I'm not interested in
+paying for the data (and I'm not interested in the overhead of having
+someone else pay for the data for me).
+
+=item B<A reliable source of data>
+
+The source of data must come from a source that I can reasonably expect
+to exist for the foreseeable future since I will be extremely reluctant
+to drop support for a data set once it's included.
+
+I am also reluctant to accept data sent to me by an individual.
+Although I appreciate the offer, it is simply not practical to consider
+an individual contribution as a reliable source of data. The source
+should be an official agency of some sort.
+
+=back
+
+These requirements are open to discussion. If you have a code set
+you'd like to see added, but which may not meet all of the above
+requirements, feel free to email me and we'll discuss it.  Depending
+on circumstances, I may be willing to waive some of these criteria.
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Locale::Codes>
+
+The Locale-Codes distribution.
+
+=back
+
+=head1 AUTHOR
+
+See Locale::Codes for full author history.
+
+Currently maintained by Sullivan Beck (sbeck@cpan.org).
+
+=head1 COPYRIGHT
+
+   Copyright (c) 1997-2001 Canon Research Centre Europe (CRE).
+   Copyright (c) 2001-2010 Neil Bowers
+   Copyright (c) 2010-2018 Sullivan Beck
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.
+
+=cut

@@ -90,6 +90,18 @@ foreach my $key (qw(INST_LIB INST_ARCHLIB)) {
 }
 END
 
+             'Big-Dummy/lib/Dummy/Split.pm'     => <<'END',
+package Dummy::Split;
+$VERSION = 0.02;
+use AutoLoader 'AUTOLOAD';
+
+__END__
+
+sub split { print "split\n"; }
+
+1;
+END
+
             );
 
 

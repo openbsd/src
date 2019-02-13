@@ -14,7 +14,8 @@ for my $ord (0, 10, 13, 78, 255, 256, 0xD7FF, 0xE000, 0xFFFD,
 	    my $string = $prefix . $chr . $suffix;
 	    my $name = sprintf "for chr $ord prefix %d, suffix %d",
 		length $prefix, length $suffix;
-	    my $as_utf8 = encode('UTF-8', $string);
+	    my $as_utf8 = $string;
+	    utf8::encode($as_utf8);
 	    is(utf16_to_utf8(encode('UTF-16BE', $string)), $as_utf8,
 	       "utf16_to_utf8 $name");
 	    is(utf16_to_utf8_reversed(encode('UTF-16LE', $string)), $as_utf8,

@@ -18,7 +18,7 @@ BEGIN {
 
 unlink <Op_dbmx*>;
 
-open my $fh, $^X or die "Can't open $^X: $!";
+open my $fh, '<', $^X or die "Can't open $^X: $!";
 my $fileno = fileno $fh;
 isnt($fileno, undef, "Can find next available file descriptor");
 close $fh or die $!;

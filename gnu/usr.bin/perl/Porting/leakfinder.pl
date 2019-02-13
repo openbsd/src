@@ -31,9 +31,9 @@ for(`find .`) {
          =~ s/\0/'."\\0".'/grid;
     $prog = <<end;   
             open oUt, ">&", STDOUT;
-            open STDOUT, ">/dev/null";
-            open STDIN, "</dev/null";
-            open STDERR, ">/dev/null";
+            open STDOUT, ">", "/dev/null";
+            open STDIN, "<", "/dev/null";
+            open STDERR, ">", "/dev/null";
             \$unused_variable = '$q';
             eval \$unused_variable while \$also_unused++ < 4;
             print oUt sv_count, "\n";

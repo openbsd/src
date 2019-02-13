@@ -307,6 +307,13 @@ interested in hearing about it.)
 These two methods are discussed in the section "Controlling
 Lookup Failure".
 
+=item $lh->blacklist(@list)
+
+=item $lh->whitelist(@list)
+
+These methods are discussed in the section "Bracket Notation
+Security".
+
 =back
 
 =head2 Utility Methods
@@ -861,6 +868,73 @@ I do not anticipate that you will need (or particularly want)
 to nest bracket groups, but you are welcome to email me with
 convincing (real-life) arguments to the contrary.
 
+=head1 BRACKET NOTATION SECURITY
+
+Locale::Maketext does not use any special syntax to differentiate
+bracket notation methods from normal class or object methods. This
+design makes it vulnerable to format string attacks whenever it is
+used to process strings provided by untrusted users.
+
+Locale::Maketext does support blacklist and whitelist functionality
+to limit which methods may be called as bracket notation methods.
+
+By default, Locale::Maketext blacklists all methods in the
+Locale::Maketext namespace that begin with the '_' character,
+and all methods which include Perl's namespace separator characters.
+
+The default blacklist for Locale::Maketext also prevents use of the
+following methods in bracket notation:
+
+  blacklist
+  encoding
+  fail_with
+  failure_handler_auto
+  fallback_language_classes
+  fallback_languages
+  get_handle
+  init
+  language_tag
+  maketext
+  new
+  whitelist
+
+This list can be extended by either blacklisting additional "known bad"
+methods, or whitelisting only "known good" methods.
+
+To prevent specific methods from being called in bracket notation, use
+the blacklist() method:
+
+  my $lh = MyProgram::L10N->get_handle();
+  $lh->blacklist(qw{my_internal_method my_other_method});
+  $lh->maketext('[my_internal_method]'); # dies
+
+To limit the allowed bracked notation methods to a specific list, use the
+whitelist() method:
+
+  my $lh = MyProgram::L10N->get_handle();
+  $lh->whitelist('numerate', 'numf');
+  $lh->maketext('[_1] [numerate, _1,shoe,shoes]', 12); # works
+  $lh->maketext('[my_internal_method]'); # dies
+
+The blacklist() and whitelist() methods extend their internal lists
+whenever they are called. To reset the blacklist or whitelist, create
+a new maketext object.
+
+  my $lh = MyProgram::L10N->get_handle();
+  $lh->blacklist('numerate');
+  $lh->blacklist('numf');
+  $lh->maketext('[_1] [numerate,_1,shoe,shoes]', 12); # dies
+
+For lexicons that use an internal cache, translations which have already
+been cached in their compiled form are not affected by subsequent changes
+to the whitelist or blacklist settings. Lexicons that use an external
+cache will have their cache cleared whenever the whitelist of blacklist
+setings change.  The difference between the two types of caching is explained
+in the "Readonly Lexicons" section.
+
+Methods disallowed by the blacklist cannot be permitted by the
+whitelist.
+
 =head1 AUTO LEXICONS
 
 If maketext goes to look in an individual %Lexicon for an entry
@@ -1152,7 +1226,7 @@ If you get tired of constantly saying C<print $lh-E<gt>maketext>,
 consider making a functional wrapper for it, like so:
 
   use Projname::L10N;
-  use vars qw($lh);
+  our $lh;
   $lh = Projname::L10N->get_handle(...) || die "Language?";
   sub pmt (@) { print( $lh->maketext(@_)) }
    # "pmt" is short for "Print MakeText"

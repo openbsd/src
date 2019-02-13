@@ -4,8 +4,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
     require Config;
     skip_all('no Errno')
 	unless eval 'use Errno qw(EINVAL); 1';

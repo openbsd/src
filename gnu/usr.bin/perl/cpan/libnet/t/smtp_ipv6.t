@@ -65,4 +65,5 @@ sub smtp_server {
   }
 
   note("SMTP dialog done");
+  return 0;
 }

@@ -50,8 +50,7 @@ ok($objOr->eq("\x{B2F}", "\x{B5F}"));
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : "";
-    $objOr->change(highestFFFF => 1) if $h;
+    my $t = $h ? pack('U', 0xFFFF) : 'z';
 
     ok($objOr->lt("\x{B13}$t", "\x{B14}"));
     ok($objOr->lt("\x{B14}$t", "\x{B01}"));

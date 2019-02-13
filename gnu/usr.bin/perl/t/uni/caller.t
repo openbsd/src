@@ -3,8 +3,8 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
     require './test.pl';
+    set_up_inc('../lib');
     plan( tests => 18 );
 }
 
@@ -24,8 +24,11 @@ sub { @c = caller(0) } -> ();
 ::is( $c[3], "ｍａｉｎ::__ANON__", "anonymous subroutine name" );
 ::ok( $c[4], "hasargs true with anon sub" );
 
-# Bug 20020517.003, used to dump core
+# Bug 20020517.003 (#9367), used to dump core
 sub ｆｏｏ { @c = caller(0) }
+# The subroutine only gets anonymised if it is relying on a real GV
+# for its name.
+() = *{"ｆｏｏ"}; # with quotes so that the op tree doesn’t reference the GV
 my $fooref = delete $ｍａｉｎ::{ｆｏｏ};
 $fooref -> ();
 ::is( $c[3], "ｍａｉｎ::__ANON__", "deleted subroutine name" );
@@ -55,6 +58,7 @@ sub { ｆ() } -> ();
 ::ok( $c[4], "hasargs true with anon sub" );
 
 sub ｆｏｏ2 { ｆ() }
+() = *{"ｆｏｏ2"}; # see ｆｏｏ notes above
 my $fooref2 = delete $ｍａｉｎ::{ｆｏｏ2};
 $fooref2 -> ();
 ::is( $c[3], "ｍａｉｎ::__ANON__", "deleted subroutine name" );

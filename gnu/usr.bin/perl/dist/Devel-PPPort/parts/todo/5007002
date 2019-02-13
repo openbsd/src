@@ -1,0 +1,17 @@
+5.007002
+calloc                         # U
+getcwd_sv                      # U
+init_tm                        # U
+malloc                         # U
+mfree                          # U
+mini_mktime                    # U
+my_atof2                       # U
+my_strftime                    # U
+op_null                        # U
+realloc                        # U
+sv_catpvn_flags                # U
+sv_catsv_flags                 # U
+sv_setsv_flags                 # U
+sv_utf8_upgrade_flags          # U
+sv_utf8_upgrade_nomg           # U
+swash_fetch                    # E (Perl_swash_fetch)

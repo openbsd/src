@@ -2,7 +2,7 @@ use strict;
 
 my %VERSION;
 
-if (open(PATCHLEVEL_H, "patchlevel.h")) {
+if (open(PATCHLEVEL_H, "<", "patchlevel.h")) {
   while (<PATCHLEVEL_H>) {
      if (/#define\s+PERL_(REVISION|VERSION|SUBVERSION)\s+(\d+)/) {
          $VERSION{$1} = $2;

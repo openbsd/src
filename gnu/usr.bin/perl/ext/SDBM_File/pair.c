@@ -17,26 +17,26 @@
 #include "tune.h"
 #include "pair.h"
 
-#define exhash(item)	sdbm_hash((item).dptr, (item).dsize)
+#define exhash(item)    sdbm_hash((item).dptr, (item).dsize)
 
 /* 
  * forward 
  */
-static int seepair proto((char *, int, const char *, int));
+static int seepair(char *, int, const char *, int);
 
 /*
  * page format:
- *	+------------------------------+
- * ino	| n | keyoff | datoff | keyoff |
- * 	+------------+--------+--------+
- *	| datoff | - - - ---->	       |
- *	+--------+---------------------+
- *	|	 F R E E A R E A       |
- *	+--------------+---------------+
- *	|  <---- - - - | data          |
- *	+--------+-----+----+----------+
- *	|  key   | data     | key      |
- *	+--------+----------+----------+
+ *      +------------------------------+
+ * ino  | n | keyoff | datoff | keyoff |
+ *      +------------+--------+--------+
+ *      | datoff | - - - ---->         |
+ *      +--------+---------------------+
+ *      |        F R E E A R E A       |
+ *      +--------------+---------------+
+ *      |  <---- - - - | data          |
+ *      +--------+-----+----+----------+
+ *      |  key   | data     | key      |
+ *      +--------+----------+----------+
  *
  * calculating the offsets for free area:  if the number
  * of entries (ino[0]) is zero, the offset to the END of
@@ -47,116 +47,116 @@ static int seepair proto((char *, int, const char *, int));
 int
 fitpair(char *pag, int need)
 {
-	int n;
-	int off;
-	int free;
-	short *ino = (short *) pag;
+        int n;
+        int off;
+        int free;
+        short *ino = (short *) pag;
 
-	off = ((n = ino[0]) > 0) ? ino[n] : PBLKSIZ;
-	free = off - (n + 1) * sizeof(short);
-	need += 2 * sizeof(short);
+        off = ((n = ino[0]) > 0) ? ino[n] : PBLKSIZ;
+        free = off - (n + 1) * sizeof(short);
+        need += 2 * sizeof(short);
 
-	debug(("free %d need %d\n", free, need));
+        debug(("free %d need %d\n", free, need));
 
-	return need <= free;
+        return need <= free;
 }
 
 void
 putpair(char *pag, datum key, datum val)
 {
-	int n;
-	int off;
-	short *ino = (short *) pag;
+        int n;
+        int off;
+        short *ino = (short *) pag;
 
-	off = ((n = ino[0]) > 0) ? ino[n] : PBLKSIZ;
+        off = ((n = ino[0]) > 0) ? ino[n] : PBLKSIZ;
 /*
  * enter the key first
  */
-	off -= key.dsize;
-	(void) memcpy(pag + off, key.dptr, key.dsize);
-	ino[n + 1] = off;
+        off -= key.dsize;
+        (void) memcpy(pag + off, key.dptr, key.dsize);
+        ino[n + 1] = off;
 /*
  * now the data
  */
-	off -= val.dsize;
-	(void) memcpy(pag + off, val.dptr, val.dsize);
-	ino[n + 2] = off;
+        off -= val.dsize;
+        (void) memcpy(pag + off, val.dptr, val.dsize);
+        ino[n + 2] = off;
 /*
  * adjust item count
  */
-	ino[0] += 2;
+        ino[0] += 2;
 }
 
 datum
 getpair(char *pag, datum key)
 {
-	int i;
-	int n;
-	datum val;
-	short *ino = (short *) pag;
+        int i;
+        int n;
+        datum val;
+        short *ino = (short *) pag;
 
-	if ((n = ino[0]) == 0)
-		return nullitem;
+        if ((n = ino[0]) == 0)
+                return nullitem;
 
-	if ((i = seepair(pag, n, key.dptr, key.dsize)) == 0)
-		return nullitem;
+        if ((i = seepair(pag, n, key.dptr, key.dsize)) == 0)
+                return nullitem;
 
-	val.dptr = pag + ino[i + 1];
-	val.dsize = ino[i] - ino[i + 1];
-	return val;
+        val.dptr = pag + ino[i + 1];
+        val.dsize = ino[i] - ino[i + 1];
+        return val;
 }
 
 int
 exipair(char *pag, datum key)
 {
-	short *ino = (short *) pag;
+        short *ino = (short *) pag;
 
-	if (ino[0] == 0)
-		return 0;
+        if (ino[0] == 0)
+                return 0;
 
-	return (seepair(pag, ino[0], key.dptr, key.dsize) != 0);
+        return (seepair(pag, ino[0], key.dptr, key.dsize) != 0);
 }
 
 #ifdef SEEDUPS
 int
 duppair(char *pag, datum key)
 {
-	short *ino = (short *) pag;
-	return ino[0] > 0 && seepair(pag, ino[0], key.dptr, key.dsize) > 0;
+        short *ino = (short *) pag;
+        return ino[0] > 0 && seepair(pag, ino[0], key.dptr, key.dsize) > 0;
 }
 #endif
 
 datum
 getnkey(char *pag, int num)
 {
-	datum key;
-	int off;
-	short *ino = (short *) pag;
+        datum key;
+        int off;
+        short *ino = (short *) pag;
 
-	num = num * 2 - 1;
-	if (ino[0] == 0 || num > ino[0])
-		return nullitem;
+        num = num * 2 - 1;
+        if (ino[0] == 0 || num > ino[0])
+                return nullitem;
 
-	off = (num > 1) ? ino[num - 1] : PBLKSIZ;
+        off = (num > 1) ? ino[num - 1] : PBLKSIZ;
 
-	key.dptr = pag + ino[num];
-	key.dsize = off - ino[num];
+        key.dptr = pag + ino[num];
+        key.dsize = off - ino[num];
 
-	return key;
+        return key;
 }
 
 int
 delpair(char *pag, datum key)
 {
-	int n;
-	int i;
-	short *ino = (short *) pag;
+        int n;
+        int i;
+        short *ino = (short *) pag;
 
-	if ((n = ino[0]) == 0)
-		return 0;
+        if ((n = ino[0]) == 0)
+                return 0;
 
-	if ((i = seepair(pag, n, key.dptr, key.dsize)) == 0)
-		return 0;
+        if ((i = seepair(pag, n, key.dptr, key.dsize)) == 0)
+                return 0;
 /*
  * found the key. if it is the last entry
  * [i.e. i == n - 1] we just adjust the entry count.
@@ -164,52 +164,47 @@ delpair(char *pag, datum key)
  * shift offsets onto deleted offsets, and adjust them.
  * [note: 0 < i < n]
  */
-	if (i < n - 1) {
-		int m;
-		char *dst = pag + (i == 1 ? PBLKSIZ : ino[i - 1]);
-		char *src = pag + ino[i + 1];
-		int   zoo = dst - src;
+        if (i < n - 1) {
+                int m;
+                char *dst = pag + (i == 1 ? PBLKSIZ : ino[i - 1]);
+                char *src = pag + ino[i + 1];
+                int   zoo = dst - src;
 
-		debug(("free-up %d ", zoo));
+                debug(("free-up %d ", zoo));
 /*
  * shift data/keys down
  */
-		m = ino[i + 1] - ino[n];
+                m = ino[i + 1] - ino[n];
 #ifdef DUFF
-#define MOVB 	*--dst = *--src
+#define MOVB    *--dst = *--src
 
-		if (m > 0) {
-			int loop = (m + 8 - 1) >> 3;
+                if (m > 0) {
+                        int loop = (m + 8 - 1) >> 3;
 
-			switch (m & (8 - 1)) {
-			case 0:	do {
-				MOVB;	case 7:	MOVB;
-			case 6:	MOVB;	case 5:	MOVB;
-			case 4:	MOVB;	case 3:	MOVB;
-			case 2:	MOVB;	case 1:	MOVB;
-				} while (--loop);
-			}
-		}
+                        switch (m & (8 - 1)) {
+                        case 0: do {
+                                MOVB; /* FALLTHROUGH */ case 7: MOVB; /* FALLTHROUGH */
+                        case 6: MOVB; /* FALLTHROUGH */ case 5: MOVB; /* FALLTHROUGH */
+                        case 4: MOVB; /* FALLTHROUGH */ case 3: MOVB; /* FALLTHROUGH */
+                        case 2: MOVB; /* FALLTHROUGH */ case 1: MOVB;
+                                } while (--loop);
+                        }
+                }
 #else
-#ifdef HAS_MEMMOVE
-		dst -= m;
-		src -= m;
-		memmove(dst, src, m);
-#else
-		while (m--)
-			*--dst = *--src;
-#endif
+                dst -= m;
+                src -= m;
+                memmove(dst, src, m);
 #endif
 /*
  * adjust offset index up
  */
-		while (i < n - 1) {
-			ino[i] = ino[i + 2] + zoo;
-			i++;
-		}
-	}
-	ino[0] -= 2;
-	return 1;
+                while (i < n - 1) {
+                        ino[i] = ino[i + 2] + zoo;
+                        i++;
+                }
+        }
+        ino[0] -= 2;
+        return 1;
 }
 
 /*
@@ -220,52 +215,52 @@ delpair(char *pag, datum key)
 static int
 seepair(char *pag, int n, const char *key, int siz)
 {
-	int i;
-	int off = PBLKSIZ;
-	short *ino = (short *) pag;
+        int i;
+        int off = PBLKSIZ;
+        short *ino = (short *) pag;
 
-	for (i = 1; i < n; i += 2) {
-		if (siz == off - ino[i] &&
-		    memEQ(key, pag + ino[i], siz))
-			return i;
-		off = ino[i + 1];
-	}
-	return 0;
+        for (i = 1; i < n; i += 2) {
+                if (siz == off - ino[i] &&
+                    memEQ(key, pag + ino[i], siz))
+                        return i;
+                off = ino[i + 1];
+        }
+        return 0;
 }
 
 void
 splpage(char *pag, char *New, long int sbit)
 {
-	datum key;
-	datum val;
+        datum key;
+        datum val;
 
-	int n;
-	int off = PBLKSIZ;
-	char cur[PBLKSIZ];
-	short *ino = (short *) cur;
+        int n;
+        int off = PBLKSIZ;
+        char cur[PBLKSIZ];
+        short *ino = (short *) cur;
 
-	(void) memcpy(cur, pag, PBLKSIZ);
-	(void) memset(pag, 0, PBLKSIZ);
-	(void) memset(New, 0, PBLKSIZ);
+        (void) memcpy(cur, pag, PBLKSIZ);
+        (void) memset(pag, 0, PBLKSIZ);
+        (void) memset(New, 0, PBLKSIZ);
 
-	n = ino[0];
-	for (ino++; n > 0; ino += 2) {
-		key.dptr = cur + ino[0]; 
-		key.dsize = off - ino[0];
-		val.dptr = cur + ino[1];
-		val.dsize = ino[0] - ino[1];
+        n = ino[0];
+        for (ino++; n > 0; ino += 2) {
+                key.dptr = cur + ino[0]; 
+                key.dsize = off - ino[0];
+                val.dptr = cur + ino[1];
+                val.dsize = ino[0] - ino[1];
 /*
  * select the page pointer (by looking at sbit) and insert
  */
-		(void) putpair((exhash(key) & sbit) ? New : pag, key, val);
+                (void) putpair((exhash(key) & sbit) ? New : pag, key, val);
 
-		off = ino[1];
-		n -= 2;
-	}
+                off = ino[1];
+                n -= 2;
+        }
 
-	debug(("%d split %d/%d\n", ((short *) cur)[0] / 2, 
-	       ((short *) New)[0] / 2,
-	       ((short *) pag)[0] / 2));
+        debug(("%d split %d/%d\n", ((short *) cur)[0] / 2, 
+               ((short *) New)[0] / 2,
+               ((short *) pag)[0] / 2));
 }
 
 /*
@@ -277,22 +272,22 @@ splpage(char *pag, char *New, long int sbit)
 int
 chkpage(char *pag)
 {
-	int n;
-	int off;
-	short *ino = (short *) pag;
+        int n;
+        int off;
+        short *ino = (short *) pag;
 
-	if ((n = ino[0]) < 0 || n > (int)(PBLKSIZ / sizeof(short)))
-		return 0;
+        if ((n = ino[0]) < 0 || n > (int)(PBLKSIZ / sizeof(short)))
+                return 0;
 
-	if (n > 0) {
-		off = PBLKSIZ;
-		for (ino++; n > 0; ino += 2) {
-			if (ino[0] > off || ino[1] > off ||
-			    ino[1] > ino[0])
-				return 0;
-			off = ino[1];
-			n -= 2;
-		}
-	}
-	return 1;
+        if (n > 0) {
+                off = PBLKSIZ;
+                for (ino++; n > 0; ino += 2) {
+                        if (ino[0] > off || ino[1] > off ||
+                            ino[1] > ino[0])
+                                return 0;
+                        off = ino[1];
+                        n -= 2;
+                }
+        }
+        return 1;
 }

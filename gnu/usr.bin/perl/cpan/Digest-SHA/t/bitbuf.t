@@ -1,19 +1,5 @@
 use strict;
-
-my $MODULE;
-
-BEGIN {
-	$MODULE = (-d "src") ? "Digest::SHA" : "Digest::SHA::PurePerl";
-	eval "require $MODULE" || die $@;
-	$MODULE->import(qw());
-}
-
-BEGIN {
-	if ($ENV{PERL_CORE}) {
-		chdir 't' if -d 't';
-		@INC = '../lib';
-	}
-}
+use Digest::SHA;
 
 my $numtests = 4;
 print "1..$numtests\n";
@@ -23,7 +9,7 @@ print "1..$numtests\n";
 my $ONEBITS = pack("B*", "1" x 80000);
 my $digest = "11003389959355c2773af6b0f36d842fe430ec49";
 
-my $state = $MODULE->new("sHa1");
+my $state = Digest::SHA->new("sHa1");
 my $testnum = 1;
 
 $state->add_bits($ONEBITS, 80000);
@@ -44,7 +30,7 @@ print "ok ", $testnum++, "\n";
 
 	# create a buffer-alignment nuisance
 
-$state = $MODULE->new("1");
+$state = Digest::SHA->new("1");
 
 $state->add_bits($ONEBITS, 1);
 for (1 .. 99) {
@@ -60,7 +46,7 @@ print "ok ", $testnum++, "\n";
 my $reps = 80000;
 my $maxbits = 8 * 127;
 
-$state = $MODULE->new(1);
+$state = Digest::SHA->new(1);
 
 while ($reps > $maxbits) {
 	my $num = int(rand($maxbits));

@@ -10,7 +10,7 @@ BEGIN {
 use strict;
 use warnings;
 
-use Test::More tests => 42;
+use Test::More tests => 44;
 
 use IO::File;
 use File::Spec;
@@ -124,6 +124,9 @@ my @sources = (
         handler  => 'TAP::Parser::SourceHandler::Handle',
         iterator => 'TAP::Parser::Iterator::Stream',
     },
+    {   file     => 'test.tap',
+        tie      => 1,
+    },
 );
 
 for my $test (@sources) {
@@ -141,10 +144,18 @@ for my $test (@sources) {
     my $source   = TAP::Parser::Source->new->raw( ref($raw) ? $raw : \$raw );
     my $iterator = eval { $sf->make_iterator($source) };
     my $error    = $@;
-    ok( !$error, "$name: no error on make_iterator" );
-    diag($error) if $error;
 
-    #    isa_ok( $iterator, $test->{iterator}, $name );
+    if( $test->{tie} ) {
+        like(
+            $error, qr{^There is a tie.*Both voted .* on $test->{file}}ms,
+            "$name: votes tied"
+        )
+    }
+    else {
+        ok( !$error, "$name: no error on make_iterator" );
+        diag($error) if $error;
+    }
+
     is( $sf->_last_handler, $test->{handler}, $name );
 }
 

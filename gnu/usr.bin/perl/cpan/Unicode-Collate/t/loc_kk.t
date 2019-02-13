@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..211\n"; }
+BEGIN { $| = 1; print "1..172\n"; }
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -40,200 +40,189 @@ ok($objKk->getlocale, 'kk');
 
 $objKk->change(level => 1);
 
-ok($objKk->gt("\x{451}", "\x{435}"));
-ok($objKk->lt("\x{451}", "\x{454}"));
-ok($objKk->gt("\x{4AF}", "\x{4B1}"));
-ok($objKk->lt("\x{4AF}", "\x{A64B}"));
-ok($objKk->gt("\x{456}", "\x{4F9}"));
-ok($objKk->lt("\x{456}", "\x{44C}"));
+ok($objKk->lt("\x{430}z", "\x{4d9}"));
+ok($objKk->lt("\x{4d9}z", "\x{431}"));
+ok($objKk->lt("\x{431}z", "\x{432}"));
+ok($objKk->lt("\x{432}z", "\x{433}"));
+ok($objKk->lt("\x{433}z", "\x{493}"));
+ok($objKk->lt("\x{493}z", "\x{434}"));
+ok($objKk->lt("\x{434}z", "\x{435}"));
+ok($objKk->lt("\x{435}z", "\x{451}"));
+ok($objKk->lt("\x{451}z", "\x{436}"));
+ok($objKk->lt("\x{436}z", "\x{437}"));
+ok($objKk->lt("\x{437}z", "\x{438}"));
+ok($objKk->lt("\x{438}z", "\x{439}"));
+ok($objKk->lt("\x{439}z", "\x{43a}"));
+ok($objKk->lt("\x{43a}z", "\x{49b}"));
+ok($objKk->lt("\x{49b}z", "\x{43b}"));
+ok($objKk->lt("\x{43b}z", "\x{43c}"));
+ok($objKk->lt("\x{43c}z", "\x{43d}"));
+ok($objKk->lt("\x{43d}z", "\x{4a3}"));
+ok($objKk->lt("\x{4a3}z", "\x{43e}"));
+ok($objKk->lt("\x{43e}z", "\x{4e9}"));
+ok($objKk->lt("\x{4e9}z", "\x{43f}"));
+ok($objKk->lt("\x{43f}z", "\x{440}"));
+ok($objKk->lt("\x{440}z", "\x{441}"));
+ok($objKk->lt("\x{441}z", "\x{442}"));
+ok($objKk->lt("\x{442}z", "\x{443}"));
+ok($objKk->lt("\x{443}z", "\x{4b1}"));
+ok($objKk->lt("\x{4b1}z", "\x{4af}"));
+ok($objKk->lt("\x{4af}z", "\x{444}"));
+ok($objKk->lt("\x{444}z", "\x{445}"));
+ok($objKk->lt("\x{445}z", "\x{4bb}"));
+ok($objKk->lt("\x{4bb}z", "\x{446}"));
+ok($objKk->lt("\x{446}z", "\x{447}"));
+ok($objKk->lt("\x{447}z", "\x{448}"));
+ok($objKk->lt("\x{448}z", "\x{449}"));
+ok($objKk->lt("\x{449}z", "\x{44a}"));
+ok($objKk->lt("\x{44a}z", "\x{44b}"));
+ok($objKk->lt("\x{44b}z", "\x{456}"));
+ok($objKk->lt("\x{456}z", "\x{44c}"));
+ok($objKk->lt("\x{44c}z", "\x{44d}"));
+ok($objKk->lt("\x{44d}z", "\x{44e}"));
+ok($objKk->lt("\x{44e}z", "\x{44f}"));
 
-# 8
+ok($objKk->lt("\x{410}z", "\x{4d8}"));
+ok($objKk->lt("\x{4d8}z", "\x{411}"));
+ok($objKk->lt("\x{411}z", "\x{412}"));
+ok($objKk->lt("\x{412}z", "\x{413}"));
+ok($objKk->lt("\x{413}z", "\x{492}"));
+ok($objKk->lt("\x{492}z", "\x{414}"));
+ok($objKk->lt("\x{414}z", "\x{415}"));
+ok($objKk->lt("\x{415}z", "\x{401}"));
+ok($objKk->lt("\x{401}z", "\x{416}"));
+ok($objKk->lt("\x{416}z", "\x{417}"));
+ok($objKk->lt("\x{417}z", "\x{418}"));
+ok($objKk->lt("\x{418}z", "\x{419}"));
+ok($objKk->lt("\x{419}z", "\x{41a}"));
+ok($objKk->lt("\x{41a}z", "\x{49a}"));
+ok($objKk->lt("\x{49a}z", "\x{41b}"));
+ok($objKk->lt("\x{41b}z", "\x{41c}"));
+ok($objKk->lt("\x{41c}z", "\x{41d}"));
+ok($objKk->lt("\x{41d}z", "\x{4a2}"));
+ok($objKk->lt("\x{4a2}z", "\x{41e}"));
+ok($objKk->lt("\x{41e}z", "\x{4e8}"));
+ok($objKk->lt("\x{4e8}z", "\x{41f}"));
+ok($objKk->lt("\x{41f}z", "\x{420}"));
+ok($objKk->lt("\x{420}z", "\x{421}"));
+ok($objKk->lt("\x{421}z", "\x{422}"));
+ok($objKk->lt("\x{422}z", "\x{423}"));
+ok($objKk->lt("\x{423}z", "\x{4b0}"));
+ok($objKk->lt("\x{4b0}z", "\x{4ae}"));
+ok($objKk->lt("\x{4ae}z", "\x{424}"));
+ok($objKk->lt("\x{424}z", "\x{425}"));
+ok($objKk->lt("\x{425}z", "\x{4ba}"));
+ok($objKk->lt("\x{4ba}z", "\x{426}"));
+ok($objKk->lt("\x{426}z", "\x{427}"));
+ok($objKk->lt("\x{427}z", "\x{428}"));
+ok($objKk->lt("\x{428}z", "\x{429}"));
+ok($objKk->lt("\x{429}z", "\x{42a}"));
+ok($objKk->lt("\x{42a}z", "\x{42b}"));
+ok($objKk->lt("\x{42b}z", "\x{406}"));
+ok($objKk->lt("\x{406}z", "\x{42c}"));
+ok($objKk->lt("\x{42c}z", "\x{42d}"));
+ok($objKk->lt("\x{42d}z", "\x{42e}"));
+ok($objKk->lt("\x{42e}z", "\x{42f}"));
 
-ok($objKk->gt("\x{4E5}", "\x{438}")); # not suppressed
-ok($objKk->gt("\x{4E4}", "\x{418}")); # not suppressed
-ok($objKk->gt("\x{439}", "\x{438}")); # not suppressed
-ok($objKk->gt("\x{419}", "\x{418}")); # not suppressed
-
-# 12
-
-ok($objKk->eq("\x{4D1}", "\x{430}"));
-ok($objKk->eq("\x{4D0}", "\x{410}"));
-ok($objKk->eq("\x{4D3}", "\x{430}"));
-ok($objKk->eq("\x{4D2}", "\x{410}"));
-ok($objKk->eq("\x{4DB}", "\x{4D9}"));
-ok($objKk->eq("\x{4DA}", "\x{4D8}"));
-ok($objKk->eq("\x{453}", "\x{433}"));
-ok($objKk->eq("\x{403}", "\x{413}"));
-ok($objKk->eq("\x{450}", "\x{435}")); # not contraction
-ok($objKk->eq("\x{400}", "\x{415}")); # not contraction
-ok($objKk->eq("\x{4D7}", "\x{435}"));
-ok($objKk->eq("\x{4D6}", "\x{415}"));
-ok($objKk->eq("\x{4C2}", "\x{436}")); # not contraction
-ok($objKk->eq("\x{4C1}", "\x{416}")); # not contraction
-ok($objKk->eq("\x{4DD}", "\x{436}"));
-ok($objKk->eq("\x{4DC}", "\x{416}"));
-ok($objKk->eq("\x{4DF}", "\x{437}"));
-ok($objKk->eq("\x{4DE}", "\x{417}"));
-ok($objKk->eq("\x{45D}", "\x{438}")); # not contraction
-ok($objKk->eq("\x{40D}", "\x{418}")); # not contraction
-ok($objKk->eq("\x{4E3}", "\x{438}")); # not contraction
-ok($objKk->eq("\x{4E2}", "\x{418}")); # not contraction
-ok($objKk->eq("\x{457}", "\x{456}"));
-ok($objKk->eq("\x{407}", "\x{406}"));
-ok($objKk->eq("\x{4E7}", "\x{43E}"));
-ok($objKk->eq("\x{4E6}", "\x{41E}"));
-ok($objKk->eq("\x{4EB}", "\x{4E9}"));
-ok($objKk->eq("\x{4EA}", "\x{4E8}"));
-ok($objKk->eq("\x{45C}", "\x{43A}"));
-ok($objKk->eq("\x{40C}", "\x{41A}"));
-ok($objKk->eq("\x{4EF}", "\x{443}")); # not contraction
-ok($objKk->eq("\x{4EE}", "\x{423}")); # not contraction
-ok($objKk->eq("\x{45E}", "\x{443}"));
-ok($objKk->eq("\x{40E}", "\x{423}"));
-ok($objKk->eq("\x{4F1}", "\x{443}"));
-ok($objKk->eq("\x{4F0}", "\x{423}"));
-ok($objKk->eq("\x{4F3}", "\x{443}"));
-ok($objKk->eq("\x{4F2}", "\x{423}"));
-ok($objKk->eq("\x{4F5}", "\x{447}"));
-ok($objKk->eq("\x{4F4}", "\x{427}"));
-ok($objKk->eq("\x{4F9}", "\x{44B}"));
-ok($objKk->eq("\x{4F8}", "\x{42B}"));
-ok($objKk->eq("\x{4ED}", "\x{44D}"));
-ok($objKk->eq("\x{4EC}", "\x{42D}"));
-ok($objKk->eq("\x{477}", "\x{475}"));
-ok($objKk->eq("\x{476}", "\x{474}"));
-
-# 58
+# 84
 
 $objKk->change(level => 2);
 
+ok($objKk->eq("\x{430}", "\x{410}"));
+ok($objKk->eq("\x{4d9}", "\x{4d8}"));
+ok($objKk->eq("\x{431}", "\x{411}"));
+ok($objKk->eq("\x{432}", "\x{412}"));
+ok($objKk->eq("\x{433}", "\x{413}"));
+ok($objKk->eq("\x{493}", "\x{492}"));
+ok($objKk->eq("\x{434}", "\x{414}"));
+ok($objKk->eq("\x{435}", "\x{415}"));
 ok($objKk->eq("\x{451}", "\x{401}"));
-ok($objKk->eq("\x{4AF}", "\x{4AE}"));
+ok($objKk->eq("\x{436}", "\x{416}"));
+ok($objKk->eq("\x{437}", "\x{417}"));
+ok($objKk->eq("\x{438}", "\x{418}"));
+ok($objKk->eq("\x{439}", "\x{419}"));
+ok($objKk->eq("\x{43a}", "\x{41a}"));
+ok($objKk->eq("\x{49b}", "\x{49a}"));
+ok($objKk->eq("\x{43b}", "\x{41b}"));
+ok($objKk->eq("\x{43c}", "\x{41c}"));
+ok($objKk->eq("\x{43d}", "\x{41d}"));
+ok($objKk->eq("\x{4a3}", "\x{4a2}"));
+ok($objKk->eq("\x{43e}", "\x{41e}"));
+ok($objKk->eq("\x{4e9}", "\x{4e8}"));
+ok($objKk->eq("\x{43f}", "\x{41f}"));
+ok($objKk->eq("\x{440}", "\x{420}"));
+ok($objKk->eq("\x{441}", "\x{421}"));
+ok($objKk->eq("\x{442}", "\x{422}"));
+ok($objKk->eq("\x{443}", "\x{423}"));
+ok($objKk->eq("\x{4b1}", "\x{4b0}"));
+ok($objKk->eq("\x{4af}", "\x{4ae}"));
+ok($objKk->eq("\x{444}", "\x{424}"));
+ok($objKk->eq("\x{445}", "\x{425}"));
+ok($objKk->eq("\x{4bb}", "\x{4ba}"));
+ok($objKk->eq("\x{446}", "\x{426}"));
+ok($objKk->eq("\x{447}", "\x{427}"));
+ok($objKk->eq("\x{448}", "\x{428}"));
+ok($objKk->eq("\x{449}", "\x{429}"));
+ok($objKk->eq("\x{44a}", "\x{42a}"));
+ok($objKk->eq("\x{44b}", "\x{42b}"));
 ok($objKk->eq("\x{456}", "\x{406}"));
+ok($objKk->eq("\x{44c}", "\x{42c}"));
+ok($objKk->eq("\x{44d}", "\x{42d}"));
+ok($objKk->eq("\x{44e}", "\x{42e}"));
+ok($objKk->eq("\x{44f}", "\x{42f}"));
 
-# 61
-
-ok($objKk->gt("\x{4D1}", "\x{430}"));
-ok($objKk->gt("\x{4D0}", "\x{410}"));
-ok($objKk->gt("\x{4D3}", "\x{430}"));
-ok($objKk->gt("\x{4D2}", "\x{410}"));
-ok($objKk->gt("\x{4DB}", "\x{4D9}"));
-ok($objKk->gt("\x{4DA}", "\x{4D8}"));
-ok($objKk->gt("\x{453}", "\x{433}"));
-ok($objKk->gt("\x{403}", "\x{413}"));
-ok($objKk->gt("\x{450}", "\x{435}")); # not contraction
-ok($objKk->gt("\x{400}", "\x{415}")); # not contraction
-ok($objKk->gt("\x{4D7}", "\x{435}"));
-ok($objKk->gt("\x{4D6}", "\x{415}"));
-ok($objKk->gt("\x{4C2}", "\x{436}")); # not contraction
-ok($objKk->gt("\x{4C1}", "\x{416}")); # not contraction
-ok($objKk->gt("\x{4DD}", "\x{436}"));
-ok($objKk->gt("\x{4DC}", "\x{416}"));
-ok($objKk->gt("\x{4DF}", "\x{437}"));
-ok($objKk->gt("\x{4DE}", "\x{417}"));
-ok($objKk->gt("\x{45D}", "\x{438}")); # not contraction
-ok($objKk->gt("\x{40D}", "\x{418}")); # not contraction
-ok($objKk->gt("\x{4E3}", "\x{438}")); # not contraction
-ok($objKk->gt("\x{4E2}", "\x{418}")); # not contraction
-ok($objKk->gt("\x{457}", "\x{456}"));
-ok($objKk->gt("\x{407}", "\x{406}"));
-ok($objKk->gt("\x{4E7}", "\x{43E}"));
-ok($objKk->gt("\x{4E6}", "\x{41E}"));
-ok($objKk->gt("\x{4EB}", "\x{4E9}"));
-ok($objKk->gt("\x{4EA}", "\x{4E8}"));
-ok($objKk->gt("\x{45C}", "\x{43A}"));
-ok($objKk->gt("\x{40C}", "\x{41A}"));
-ok($objKk->gt("\x{4EF}", "\x{443}")); # not contraction
-ok($objKk->gt("\x{4EE}", "\x{423}")); # not contraction
-ok($objKk->gt("\x{45E}", "\x{443}"));
-ok($objKk->gt("\x{40E}", "\x{423}"));
-ok($objKk->gt("\x{4F1}", "\x{443}"));
-ok($objKk->gt("\x{4F0}", "\x{423}"));
-ok($objKk->gt("\x{4F3}", "\x{443}"));
-ok($objKk->gt("\x{4F2}", "\x{423}"));
-ok($objKk->gt("\x{4F5}", "\x{447}"));
-ok($objKk->gt("\x{4F4}", "\x{427}"));
-ok($objKk->gt("\x{4F9}", "\x{44B}"));
-ok($objKk->gt("\x{4F8}", "\x{42B}"));
-ok($objKk->gt("\x{4ED}", "\x{44D}"));
-ok($objKk->gt("\x{4EC}", "\x{42D}"));
-ok($objKk->gt("\x{477}", "\x{475}"));
-ok($objKk->gt("\x{476}", "\x{474}"));
-
-# 107
+# 126
 
 $objKk->change(level => 3);
 
+ok($objKk->lt("\x{430}", "\x{410}"));
+ok($objKk->lt("\x{4d9}", "\x{4d8}"));
+ok($objKk->lt("\x{431}", "\x{411}"));
+ok($objKk->lt("\x{432}", "\x{412}"));
+ok($objKk->lt("\x{433}", "\x{413}"));
+ok($objKk->lt("\x{493}", "\x{492}"));
+ok($objKk->lt("\x{434}", "\x{414}"));
+ok($objKk->lt("\x{435}", "\x{415}"));
 ok($objKk->lt("\x{451}", "\x{401}"));
-ok($objKk->lt("\x{4AF}", "\x{4AE}"));
+ok($objKk->lt("\x{436}", "\x{416}"));
+ok($objKk->lt("\x{437}", "\x{417}"));
+ok($objKk->lt("\x{438}", "\x{418}"));
+ok($objKk->lt("\x{439}", "\x{419}"));
+ok($objKk->lt("\x{43a}", "\x{41a}"));
+ok($objKk->lt("\x{49b}", "\x{49a}"));
+ok($objKk->lt("\x{43b}", "\x{41b}"));
+ok($objKk->lt("\x{43c}", "\x{41c}"));
+ok($objKk->lt("\x{43d}", "\x{41d}"));
+ok($objKk->lt("\x{4a3}", "\x{4a2}"));
+ok($objKk->lt("\x{43e}", "\x{41e}"));
+ok($objKk->lt("\x{4e9}", "\x{4e8}"));
+ok($objKk->lt("\x{43f}", "\x{41f}"));
+ok($objKk->lt("\x{440}", "\x{420}"));
+ok($objKk->lt("\x{441}", "\x{421}"));
+ok($objKk->lt("\x{442}", "\x{422}"));
+ok($objKk->lt("\x{443}", "\x{423}"));
+ok($objKk->lt("\x{4b1}", "\x{4b0}"));
+ok($objKk->lt("\x{4af}", "\x{4ae}"));
+ok($objKk->lt("\x{444}", "\x{424}"));
+ok($objKk->lt("\x{445}", "\x{425}"));
+ok($objKk->lt("\x{4bb}", "\x{4ba}"));
+ok($objKk->lt("\x{446}", "\x{426}"));
+ok($objKk->lt("\x{447}", "\x{427}"));
+ok($objKk->lt("\x{448}", "\x{428}"));
+ok($objKk->lt("\x{449}", "\x{429}"));
+ok($objKk->lt("\x{44a}", "\x{42a}"));
+ok($objKk->lt("\x{44b}", "\x{42b}"));
 ok($objKk->lt("\x{456}", "\x{406}"));
+ok($objKk->lt("\x{44c}", "\x{42c}"));
+ok($objKk->lt("\x{44d}", "\x{42d}"));
+ok($objKk->lt("\x{44e}", "\x{42e}"));
+ok($objKk->lt("\x{44f}", "\x{42f}"));
 
-# 110
+# 168
 
 ok($objKk->eq("\x{451}", "\x{435}\x{308}"));
 ok($objKk->eq("\x{401}", "\x{415}\x{308}"));
-ok($objKk->eq("\x{4E5}", "\x{438}\x{308}")); # not suppressed
-ok($objKk->eq("\x{4E4}", "\x{418}\x{308}")); # not suppressed
-ok($objKk->eq("\x{439}", "\x{438}\x{306}")); # not suppressed
-ok($objKk->eq("\x{419}", "\x{418}\x{306}")); # not suppressed
+ok($objKk->eq("\x{439}", "\x{438}\x{306}"));
+ok($objKk->eq("\x{419}", "\x{418}\x{306}"));
 
-# 116
-
-for my $i ("", "\0") {
-  ok($objKk->eq("\x{4D1}", "\x{430}$i\x{306}"));
-  ok($objKk->eq("\x{4D0}", "\x{410}$i\x{306}"));
-  ok($objKk->eq("\x{4D3}", "\x{430}$i\x{308}"));
-  ok($objKk->eq("\x{4D2}", "\x{410}$i\x{308}"));
-  ok($objKk->eq("\x{4DB}", "\x{4D9}$i\x{308}"));
-  ok($objKk->eq("\x{4DA}", "\x{4D8}$i\x{308}"));
-  ok($objKk->eq("\x{453}", "\x{433}$i\x{301}"));
-  ok($objKk->eq("\x{403}", "\x{413}$i\x{301}"));
-  ok($objKk->eq("\x{450}", "\x{435}$i\x{300}")); # not contraction
-  ok($objKk->eq("\x{400}", "\x{415}$i\x{300}")); # not contraction
-  ok($objKk->eq("\x{4D7}", "\x{435}$i\x{306}"));
-  ok($objKk->eq("\x{4D6}", "\x{415}$i\x{306}"));
-  ok($objKk->eq("\x{4C2}", "\x{436}$i\x{306}")); # not contraction
-  ok($objKk->eq("\x{4C1}", "\x{416}$i\x{306}")); # not contraction
-  ok($objKk->eq("\x{4DD}", "\x{436}$i\x{308}"));
-  ok($objKk->eq("\x{4DC}", "\x{416}$i\x{308}"));
-  ok($objKk->eq("\x{4DF}", "\x{437}$i\x{308}"));
-  ok($objKk->eq("\x{4DE}", "\x{417}$i\x{308}"));
-  ok($objKk->eq("\x{45D}", "\x{438}$i\x{300}")); # not contraction
-  ok($objKk->eq("\x{40D}", "\x{418}$i\x{300}")); # not contraction
-  ok($objKk->eq("\x{4E3}", "\x{438}$i\x{304}")); # not contraction
-  ok($objKk->eq("\x{4E2}", "\x{418}$i\x{304}")); # not contraction
-  ok($objKk->eq("\x{457}", "\x{456}$i\x{308}"));
-  ok($objKk->eq("\x{407}", "\x{406}$i\x{308}"));
-  ok($objKk->eq("\x{4E7}", "\x{43E}$i\x{308}"));
-  ok($objKk->eq("\x{4E6}", "\x{41E}$i\x{308}"));
-  ok($objKk->eq("\x{4EB}", "\x{4E9}$i\x{308}"));
-  ok($objKk->eq("\x{4EA}", "\x{4E8}$i\x{308}"));
-  ok($objKk->eq("\x{45C}", "\x{43A}$i\x{301}"));
-  ok($objKk->eq("\x{40C}", "\x{41A}$i\x{301}"));
-  ok($objKk->eq("\x{4EF}", "\x{443}$i\x{304}")); # not contraction
-  ok($objKk->eq("\x{4EE}", "\x{423}$i\x{304}")); # not contraction
-  ok($objKk->eq("\x{45E}", "\x{443}$i\x{306}"));
-  ok($objKk->eq("\x{40E}", "\x{423}$i\x{306}"));
-  ok($objKk->eq("\x{4F1}", "\x{443}$i\x{308}"));
-  ok($objKk->eq("\x{4F0}", "\x{423}$i\x{308}"));
-  ok($objKk->eq("\x{4F3}", "\x{443}$i\x{30B}"));
-  ok($objKk->eq("\x{4F2}", "\x{423}$i\x{30B}"));
-  ok($objKk->eq("\x{4F5}", "\x{447}$i\x{308}"));
-  ok($objKk->eq("\x{4F4}", "\x{427}$i\x{308}"));
-  ok($objKk->eq("\x{4F9}", "\x{44B}$i\x{308}"));
-  ok($objKk->eq("\x{4F8}", "\x{42B}$i\x{308}"));
-  ok($objKk->eq("\x{4ED}", "\x{44D}$i\x{308}"));
-  ok($objKk->eq("\x{4EC}", "\x{42D}$i\x{308}"));
-  ok($objKk->eq("\x{477}", "\x{475}$i\x{30F}"));
-  ok($objKk->eq("\x{476}", "\x{474}$i\x{30F}"));
-}
-
-# 208
-
-$objKk->change(upper_before_lower => 1);
-
-ok($objKk->gt("\x{451}", "\x{401}"));
-ok($objKk->gt("\x{4AF}", "\x{4AE}"));
-ok($objKk->gt("\x{456}", "\x{406}"));
-
-# 211
+# 172

@@ -22,7 +22,7 @@ BEGIN {
 }
 
 use strict;
-use vars qw($DEBUG);
+our $DEBUG;
 
 package B1;
 use fields qw(b1 b2 b3);
