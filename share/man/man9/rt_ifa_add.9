@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rt_ifa_add.9,v 1.5 2015/10/30 09:48:03 bluhm Exp $
+.\"	$OpenBSD: rt_ifa_add.9,v 1.6 2019/02/13 23:47:43 dlg Exp $
 .\"
 .\" Copyright (c) 2014 Martin Pieuchot
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2015 $
+.Dd $Mdocdate: February 13 2019 $
 .Dt RT_IFA_ADD 9
 .Os
 .Sh NAME
@@ -29,9 +29,19 @@
 .In net/if.h
 .In net/route.h
 .Ft int
-.Fn rt_ifa_add "struct ifaddr *ifa" "int flags" "struct sockaddr *dst"
+.Fo rt_ifa_add
+.Fa "struct ifaddr *ifa"
+.Fa "int flags"
+.Fa "struct sockaddr *dst"
+.Fa "unsigned int rdomain"
+.Fc
 .Ft int
-.Fn rt_ifa_del "struct ifaddr *ifa" "int flags" "struct sockaddr *dst"
+.Fo rt_ifa_del
+.Fa "struct ifaddr *ifa"
+.Fa "int flags"
+.Fa "struct sockaddr *dst"
+.Fa "unsigned int rdomain"
+.Fc
 .Ft int
 .Fn rt_ifa_addlocal "struct ifaddr *ifa"
 .Ft int
@@ -42,7 +52,9 @@ stack and managed by the kernel.
 .Bl -tag -width rt_ifa_addlocalxx
 .It Fn rt_ifa_add
 Creates and associates a connected routing entry with
-.Fa ifa .
+.Fa ifa
+in the routing domain specified by
+.Fa rdomain .
 .Pp
 Connected routing entries represent routes to prefixes and should be created
 with
@@ -65,7 +77,9 @@ Connected routing entries have a priority of
 .Dv RTP_CONNECTED .
 .It Fn rt_ifa_del
 Removes the connected routing entry associated with
-.Fa ifa .
+.Fa ifa
+in the routing domain specified by
+.Fa rdomain .
 .It Fn rt_ifa_addlocal
 Creates and associates a local routing entry
 with

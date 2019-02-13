@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.80 2019/02/11 00:11:24 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.81 2019/02/13 23:47:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -130,7 +130,7 @@ mpe_clone_destroy(struct ifnet *ifp)
 
 	if (sc->sc_smpls.smpls_label) {
 		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
-		    smplstosa(&sc->sc_smpls));
+		    smplstosa(&sc->sc_smpls), 0);
 	}
 
 	if_detach(ifp);
@@ -316,12 +316,12 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (sc->sc_smpls.smpls_label) {
 			/* remove old MPLS route */
 			rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
-			    smplstosa(&sc->sc_smpls));
+			    smplstosa(&sc->sc_smpls), 0);
 		}
 		/* add new MPLS route */
 		sc->sc_smpls.smpls_label = shim.shim_label;
 		error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
-		    smplstosa(&sc->sc_smpls));
+		    smplstosa(&sc->sc_smpls), 0);
 		if (error) {
 			sc->sc_smpls.smpls_label = 0;
 			break;
@@ -333,7 +333,7 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ifr->ifr_rdomainid != ifp->if_rdomain) {
 			if (sc->sc_smpls.smpls_label) {
 				rt_ifa_add(&sc->sc_ifa, RTF_MPLS,
-				    smplstosa(&sc->sc_smpls));
+				    smplstosa(&sc->sc_smpls), 0);
 			}
 		}
 		/* return with ENOTTY so that the parent handler finishes */

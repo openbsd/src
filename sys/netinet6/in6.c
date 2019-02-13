@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.229 2019/02/10 22:32:26 dlg Exp $	*/
+/*	$OpenBSD: in6.c,v 1.230 2019/02/13 23:47:43 dlg Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -378,7 +378,7 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 
 		error = rt_ifa_add(&ia6->ia_ifa,
 		    RTF_CLONING | RTF_CONNECTED | RTF_MPATH,
-		    ia6->ia_ifa.ifa_addr);
+		    ia6->ia_ifa.ifa_addr, ifp->if_rdomain);
 		if (error) {
 			in6_purgeaddr(&ia6->ia_ifa);
 			break;
@@ -680,7 +680,8 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		struct ifaddr *ifa = &ia6->ia_ifa;
 
 		if ((ia6->ia_flags & IFA_ROUTE) != 0 &&
-		    rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr) != 0) {
+		    rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr,
+		     ifp->if_rdomain) != 0) {
 			nd6log((LOG_ERR, "in6_update_ifa: failed to remove "
 			    "a route to the old destination: %s\n",
 			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
@@ -888,7 +889,9 @@ in6_purgeaddr(struct ifaddr *ifa)
 	    ia6->ia_dstaddr.sin6_len != 0) {
 		int e;
 
-		if ((e = rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr)) != 0) {
+		e = rt_ifa_del(ifa, RTF_HOST, ifa->ifa_dstaddr,
+		    ifp->if_rdomain);
+		if (e != 0) {
 			char addr[INET6_ADDRSTRLEN];
 			log(LOG_ERR, "in6_purgeaddr: failed to remove "
 			    "a route to the p2p destination: %s on %s, "
@@ -929,7 +932,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 	plen = in6_mask2len(&ia6->ia_prefixmask.sin6_addr, NULL);
 	if ((ifp->if_flags & IFF_LOOPBACK) == 0 && plen != 128) {
 		rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED,
-		    ifa->ifa_addr);
+		    ifa->ifa_addr, ifp->if_rdomain);
 	}
 
 	rt_ifa_purge(ifa);
@@ -984,7 +987,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia6, int newhost)
 	    ia6->ia_dstaddr.sin6_family == AF_INET6) {
 		ifa = &ia6->ia_ifa;
 		error = rt_ifa_add(ifa, RTF_HOST | RTF_MPATH,
-		    ifa->ifa_dstaddr);
+		    ifa->ifa_dstaddr, ifp->if_rdomain);
 		if (error != 0)
 			return (error);
 		ia6->ia_flags |= IFA_ROUTE;

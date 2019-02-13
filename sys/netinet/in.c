@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.161 2019/02/10 22:32:26 dlg Exp $	*/
+/*	$OpenBSD: in.c,v 1.162 2019/02/13 23:47:43 dlg Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -694,13 +694,15 @@ in_purgeaddr(struct ifaddr *ifa)
 int
 in_addhost(struct in_ifaddr *ia, struct sockaddr_in *dst)
 {
-	return rt_ifa_add(&ia->ia_ifa, RTF_HOST | RTF_MPATH, sintosa(dst));
+	return rt_ifa_add(&ia->ia_ifa, RTF_HOST | RTF_MPATH,
+	    sintosa(dst), ia->ia_ifa.ifa_ifp->if_rdomain);
 }
 
 int
 in_scrubhost(struct in_ifaddr *ia, struct sockaddr_in *dst)
 {
-	return rt_ifa_del(&ia->ia_ifa, RTF_HOST, sintosa(dst));
+	return rt_ifa_del(&ia->ia_ifa, RTF_HOST,
+	    sintosa(dst), ia->ia_ifa.ifa_ifp->if_rdomain);
 }
 
 /*
@@ -713,13 +715,14 @@ in_insert_prefix(struct in_ifaddr *ia)
 	int error;
 
 	error = rt_ifa_add(ifa, RTF_CLONING | RTF_CONNECTED | RTF_MPATH,
-	    ifa->ifa_addr);
+	    ifa->ifa_addr, ifa->ifa_ifp->if_rdomain);
 	if (error)
 		return (error);
 
-	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
+	if (ia->ia_broadaddr.sin_addr.s_addr != 0) {
 		error = rt_ifa_add(ifa, RTF_HOST | RTF_BROADCAST | RTF_MPATH,
-		    ifa->ifa_broadaddr);
+		    ifa->ifa_broadaddr, ifa->ifa_ifp->if_rdomain);
+	}
 
 	return (error);
 }
@@ -729,10 +732,13 @@ in_remove_prefix(struct in_ifaddr *ia)
 {
 	struct ifaddr *ifa = &ia->ia_ifa;
 
-	rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED, ifa->ifa_addr);
+	rt_ifa_del(ifa, RTF_CLONING | RTF_CONNECTED,
+	    ifa->ifa_addr, ifa->ifa_ifp->if_rdomain);
 
-	if (ia->ia_broadaddr.sin_addr.s_addr != 0)
-		rt_ifa_del(ifa, RTF_HOST | RTF_BROADCAST, ifa->ifa_broadaddr);
+	if (ia->ia_broadaddr.sin_addr.s_addr != 0) {
+		rt_ifa_del(ifa, RTF_HOST | RTF_BROADCAST,
+		    ifa->ifa_broadaddr, ifa->ifa_ifp->if_rdomain);
+	}
 }
 
 /*

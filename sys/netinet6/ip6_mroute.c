@@ -1241,7 +1241,8 @@ mrt6_mcast6_add(struct ifnet *ifp, struct sockaddr *origin,
 		return NULL;
 	}
 
-	rv = rt_ifa_add(ifa, RTF_HOST | RTF_MULTICAST | RTF_MPATH, group);
+	rv = rt_ifa_add(ifa, RTF_HOST | RTF_MULTICAST | RTF_MPATH, group,
+	    ifp->if_rdomain);
 	if (rv != 0) {
 		DPRINTF("rt_ifa_add failed %d", rv);
 		return NULL;

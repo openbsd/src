@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.380 2019/02/10 22:32:26 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.381 2019/02/13 23:47:42 dlg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1030,13 +1030,13 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 }
 
 int
-rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
+rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst,
+    unsigned int rdomain)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
 	struct rtentry		*rt;
 	struct sockaddr_rtlabel	 sa_rl;
 	struct rt_addrinfo	 info;
-	unsigned int		 rtableid = ifp->if_rdomain;
 	uint8_t			 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
 
@@ -1048,14 +1048,16 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		info.rti_info[RTAX_GATEWAY] = sdltosa(ifp->if_sadl);
 	else
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
+
+	KASSERT(rdomain == rtable_l2(rdomain));
+	if (rdomain == rtable_l2(ifp->if_rtlabelid)) {
+		info.rti_info[RTAX_LABEL] =
+		    rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
+	}
 
 #ifdef MPLS
-	if ((flags & RTF_MPLS) == RTF_MPLS) {
+	if ((flags & RTF_MPLS) == RTF_MPLS)
 		info.rti_mpls = MPLS_OP_POP;
-		/* MPLS routes only exist in rdomain 0 */
-		rtableid = 0;
-	}
 #endif /* MPLS */
 
 	if ((flags & RTF_HOST) == 0)
@@ -1067,7 +1069,7 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (flags & RTF_CONNECTED)
 		prio = ifp->if_priority + RTP_CONNECTED;
 
-	error = rtrequest(RTM_ADD, &info, prio, &rt, rtableid);
+	error = rtrequest(RTM_ADD, &info, prio, &rt, rdomain);
 	if (error == 0) {
 		/*
 		 * A local route is created for every address configured
@@ -1076,14 +1078,15 @@ rt_ifa_add(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 		 */
 		if (flags & RTF_LOCAL)
 			rtm_addr(RTM_NEWADDR, ifa);
-		rtm_send(rt, RTM_ADD, 0, rtableid);
+		rtm_send(rt, RTM_ADD, 0, rdomain);
 		rtfree(rt);
 	}
 	return (error);
 }
 
 int
-rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
+rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst,
+    unsigned int rdomain)
 {
 	struct ifnet		*ifp = ifa->ifa_ifp;
 	struct rtentry		*rt;
@@ -1091,15 +1094,8 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	struct sockaddr		*deldst;
 	struct rt_addrinfo	 info;
 	struct sockaddr_rtlabel	 sa_rl;
-	unsigned int		 rtableid = ifp->if_rdomain;
 	uint8_t			 prio = ifp->if_priority + RTP_STATIC;
 	int			 error;
-
-#ifdef MPLS
-	if ((flags & RTF_MPLS) == RTF_MPLS)
-		/* MPLS routes only exist in rdomain 0 */
-		rtableid = 0;
-#endif /* MPLS */
 
 	if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
 		m = m_get(M_DONTWAIT, MT_SONAME);
@@ -1116,7 +1112,12 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	info.rti_info[RTAX_DST] = dst;
 	if ((flags & RTF_LLINFO) == 0)
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
-	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
+
+	KASSERT(rdomain == rtable_l2(rdomain));
+	if (rdomain == rtable_l2(ifp->if_rtlabelid)) {
+		info.rti_info[RTAX_LABEL] =
+		    rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
+	}
 
 	if ((flags & RTF_HOST) == 0)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
@@ -1127,9 +1128,9 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 	if (flags & RTF_CONNECTED)
 		prio = ifp->if_priority + RTP_CONNECTED;
 
-	error = rtrequest_delete(&info, prio, ifp, &rt, rtableid);
+	error = rtrequest_delete(&info, prio, ifp, &rt, rdomain);
 	if (error == 0) {
-		rtm_send(rt, RTM_DELETE, 0, rtableid);
+		rtm_send(rt, RTM_DELETE, 0, rdomain);
 		if (flags & RTF_LOCAL)
 			rtm_addr(RTM_DELADDR, ifa);
 		rtfree(rt);
@@ -1145,6 +1146,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst)
 int
 rt_ifa_addlocal(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct rtentry *rt;
 	u_int flags = RTF_HOST|RTF_LOCAL;
 	int error = 0;
@@ -1171,13 +1173,15 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 		break;
 	}
 
-	if (!ISSET(ifa->ifa_ifp->if_flags, (IFF_LOOPBACK|IFF_POINTOPOINT)))
+	if (!ISSET(ifp->if_flags, (IFF_LOOPBACK|IFF_POINTOPOINT)))
 		flags |= RTF_LLINFO;
 
 	/* If there is no local entry, allocate one. */
-	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
-	if (rt == NULL || ISSET(rt->rt_flags, flags) != flags)
-		error = rt_ifa_add(ifa, flags | RTF_MPATH, ifa->ifa_addr);
+	rt = rtalloc(ifa->ifa_addr, 0, ifp->if_rdomain);
+	if (rt == NULL || ISSET(rt->rt_flags, flags) != flags) {
+		error = rt_ifa_add(ifa, flags | RTF_MPATH, ifa->ifa_addr,
+		    ifp->if_rdomain);
+	}
 	rtfree(rt);
 
 	return (error);
@@ -1189,6 +1193,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 int
 rt_ifa_dellocal(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct rtentry *rt;
 	u_int flags = RTF_HOST|RTF_LOCAL;
 	int error = 0;
@@ -1213,7 +1218,7 @@ rt_ifa_dellocal(struct ifaddr *ifa)
 		break;
 	}
 
-	if (!ISSET(ifa->ifa_ifp->if_flags, (IFF_LOOPBACK|IFF_POINTOPOINT)))
+	if (!ISSET(ifp->if_flags, (IFF_LOOPBACK|IFF_POINTOPOINT)))
 		flags |= RTF_LLINFO;
 
 	/*
@@ -1224,9 +1229,11 @@ rt_ifa_dellocal(struct ifaddr *ifa)
 	 * a subnet-router anycast address on an interface attached
 	 * to a shared medium.
 	 */
-	rt = rtalloc(ifa->ifa_addr, 0, ifa->ifa_ifp->if_rdomain);
-	if (rt != NULL && ISSET(rt->rt_flags, flags) == flags)
-		error = rt_ifa_del(ifa, flags, ifa->ifa_addr);
+	rt = rtalloc(ifa->ifa_addr, 0, ifp->if_rdomain);
+	if (rt != NULL && ISSET(rt->rt_flags, flags) == flags) {
+		error = rt_ifa_del(ifa, flags, ifa->ifa_addr,
+		    ifp->if_rdomain);
+	}
 	rtfree(rt);
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.124 2019/02/10 22:32:26 dlg Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.125 2019/02/13 23:47:43 dlg Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1308,7 +1308,8 @@ rt_mcast_add(struct ifnet *ifp, struct sockaddr *origin, struct sockaddr *group)
 		return (NULL);
 	}
 
-	rv = rt_ifa_add(ifa, RTF_HOST | RTF_MULTICAST | RTF_MPATH, group);
+	rv = rt_ifa_add(ifa, RTF_HOST | RTF_MULTICAST | RTF_MPATH,
+	    group, ifp->if_rdomain);
 	if (rv != 0) {
 		DPRINTF("rt_ifa_add failed (%d)", rv);
 		return (NULL);
