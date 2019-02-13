@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.72 2017/07/10 21:30:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.73 2019/02/13 07:11:21 nicm Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -166,12 +166,3 @@ afterinstall:
 	done
 
 .include <bsd.lib.mk>
-
-# must be at the end because bsd.lib.mk clears it
-.SUFFIXES: .3 .3tbl .5 .5tbl
-
-.3tbl.3:
-	cp ${.IMPSRC} ${.TARGET}
-
-.5tbl.5:
-	cp ${.IMPSRC} ${.TARGET}
