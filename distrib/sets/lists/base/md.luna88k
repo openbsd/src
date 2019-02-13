@@ -42,6 +42,7 @@
 ./usr/libdata/perl5/m88k-openbsd/CORE/handy.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/hv.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/hv_func.h
+./usr/libdata/perl5/m88k-openbsd/CORE/hv_macro.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/inline.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/intrpvar.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/invlist_inline.h
@@ -68,6 +69,8 @@
 ./usr/libdata/perl5/m88k-openbsd/CORE/parser.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/patchlevel.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/perl.h
+./usr/libdata/perl5/m88k-openbsd/CORE/perl_inc_macro.h
+./usr/libdata/perl5/m88k-openbsd/CORE/perl_langinfo.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/perlapi.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/perliol.h
@@ -82,12 +85,15 @@
 ./usr/libdata/perl5/m88k-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/regexp.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/regnodes.h
+./usr/libdata/perl5/m88k-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/scope.h
+./usr/libdata/perl5/m88k-openbsd/CORE/stadtx_hash.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/sv.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/thread.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/time64.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/time64_config.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/uconfig.h
+./usr/libdata/perl5/m88k-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/unixish.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/utf8.h
@@ -97,6 +103,7 @@
 ./usr/libdata/perl5/m88k-openbsd/CORE/vutil.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/vxs.inc
 ./usr/libdata/perl5/m88k-openbsd/CORE/warnings.h
+./usr/libdata/perl5/m88k-openbsd/CORE/zaphod32_hash.h
 ./usr/libdata/perl5/m88k-openbsd/Compress
 ./usr/libdata/perl5/m88k-openbsd/Compress/Raw
 ./usr/libdata/perl5/m88k-openbsd/Compress/Raw/Bzip2.pm
@@ -252,7 +259,9 @@
 ./usr/libdata/perl5/m88k-openbsd/Scalar
 ./usr/libdata/perl5/m88k-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/m88k-openbsd/Socket.pm
+./usr/libdata/perl5/m88k-openbsd/Storable
 ./usr/libdata/perl5/m88k-openbsd/Storable.pm
+./usr/libdata/perl5/m88k-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/m88k-openbsd/Sub
 ./usr/libdata/perl5/m88k-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/m88k-openbsd/Sys

@@ -104,6 +104,7 @@
 ./usr/libdata/perl5/alpha-openbsd/CORE/handy.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/hv.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/hv_func.h
+./usr/libdata/perl5/alpha-openbsd/CORE/hv_macro.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/inline.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/intrpvar.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/invlist_inline.h
@@ -130,6 +131,8 @@
 ./usr/libdata/perl5/alpha-openbsd/CORE/parser.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/patchlevel.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/perl.h
+./usr/libdata/perl5/alpha-openbsd/CORE/perl_inc_macro.h
+./usr/libdata/perl5/alpha-openbsd/CORE/perl_langinfo.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/perlapi.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/perliol.h
@@ -144,12 +147,15 @@
 ./usr/libdata/perl5/alpha-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/regexp.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/regnodes.h
+./usr/libdata/perl5/alpha-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/scope.h
+./usr/libdata/perl5/alpha-openbsd/CORE/stadtx_hash.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/sv.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/thread.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/time64.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/time64_config.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/uconfig.h
+./usr/libdata/perl5/alpha-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/unixish.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/utf8.h
@@ -159,6 +165,7 @@
 ./usr/libdata/perl5/alpha-openbsd/CORE/vutil.h
 ./usr/libdata/perl5/alpha-openbsd/CORE/vxs.inc
 ./usr/libdata/perl5/alpha-openbsd/CORE/warnings.h
+./usr/libdata/perl5/alpha-openbsd/CORE/zaphod32_hash.h
 ./usr/libdata/perl5/alpha-openbsd/Compress
 ./usr/libdata/perl5/alpha-openbsd/Compress/Raw
 ./usr/libdata/perl5/alpha-openbsd/Compress/Raw/Bzip2.pm
@@ -314,7 +321,9 @@
 ./usr/libdata/perl5/alpha-openbsd/Scalar
 ./usr/libdata/perl5/alpha-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/alpha-openbsd/Socket.pm
+./usr/libdata/perl5/alpha-openbsd/Storable
 ./usr/libdata/perl5/alpha-openbsd/Storable.pm
+./usr/libdata/perl5/alpha-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/alpha-openbsd/Sub
 ./usr/libdata/perl5/alpha-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/alpha-openbsd/Sys

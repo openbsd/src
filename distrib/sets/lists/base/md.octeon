@@ -81,6 +81,7 @@
 ./usr/libdata/perl5/mips64-openbsd/CORE/handy.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/hv.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/hv_func.h
+./usr/libdata/perl5/mips64-openbsd/CORE/hv_macro.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/inline.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/intrpvar.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/invlist_inline.h
@@ -107,6 +108,8 @@
 ./usr/libdata/perl5/mips64-openbsd/CORE/parser.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/patchlevel.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/perl.h
+./usr/libdata/perl5/mips64-openbsd/CORE/perl_inc_macro.h
+./usr/libdata/perl5/mips64-openbsd/CORE/perl_langinfo.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/perlapi.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/perliol.h
@@ -121,12 +124,15 @@
 ./usr/libdata/perl5/mips64-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/regexp.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/regnodes.h
+./usr/libdata/perl5/mips64-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/scope.h
+./usr/libdata/perl5/mips64-openbsd/CORE/stadtx_hash.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/sv.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/thread.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/time64.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/time64_config.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/uconfig.h
+./usr/libdata/perl5/mips64-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/unixish.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/utf8.h
@@ -136,6 +142,7 @@
 ./usr/libdata/perl5/mips64-openbsd/CORE/vutil.h
 ./usr/libdata/perl5/mips64-openbsd/CORE/vxs.inc
 ./usr/libdata/perl5/mips64-openbsd/CORE/warnings.h
+./usr/libdata/perl5/mips64-openbsd/CORE/zaphod32_hash.h
 ./usr/libdata/perl5/mips64-openbsd/Compress
 ./usr/libdata/perl5/mips64-openbsd/Compress/Raw
 ./usr/libdata/perl5/mips64-openbsd/Compress/Raw/Bzip2.pm
@@ -291,7 +298,9 @@
 ./usr/libdata/perl5/mips64-openbsd/Scalar
 ./usr/libdata/perl5/mips64-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/mips64-openbsd/Socket.pm
+./usr/libdata/perl5/mips64-openbsd/Storable
 ./usr/libdata/perl5/mips64-openbsd/Storable.pm
+./usr/libdata/perl5/mips64-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/mips64-openbsd/Sub
 ./usr/libdata/perl5/mips64-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/mips64-openbsd/Sys

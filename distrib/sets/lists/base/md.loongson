@@ -83,6 +83,7 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/handy.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/hv.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/hv_func.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/hv_macro.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/inline.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/intrpvar.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/invlist_inline.h
@@ -109,6 +110,8 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/parser.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/patchlevel.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perl.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/perl_inc_macro.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/perl_langinfo.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perlapi.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/perliol.h
@@ -123,12 +126,15 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regexp.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/regnodes.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/scope.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/stadtx_hash.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/sv.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/thread.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/time64.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/time64_config.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/uconfig.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/unixish.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/utf8.h
@@ -138,6 +144,7 @@
 ./usr/libdata/perl5/mips64el-openbsd/CORE/vutil.h
 ./usr/libdata/perl5/mips64el-openbsd/CORE/vxs.inc
 ./usr/libdata/perl5/mips64el-openbsd/CORE/warnings.h
+./usr/libdata/perl5/mips64el-openbsd/CORE/zaphod32_hash.h
 ./usr/libdata/perl5/mips64el-openbsd/Compress
 ./usr/libdata/perl5/mips64el-openbsd/Compress/Raw
 ./usr/libdata/perl5/mips64el-openbsd/Compress/Raw/Bzip2.pm
@@ -293,7 +300,9 @@
 ./usr/libdata/perl5/mips64el-openbsd/Scalar
 ./usr/libdata/perl5/mips64el-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/mips64el-openbsd/Socket.pm
+./usr/libdata/perl5/mips64el-openbsd/Storable
 ./usr/libdata/perl5/mips64el-openbsd/Storable.pm
+./usr/libdata/perl5/mips64el-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/mips64el-openbsd/Sub
 ./usr/libdata/perl5/mips64el-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/mips64el-openbsd/Sys

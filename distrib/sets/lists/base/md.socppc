@@ -100,6 +100,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/handy.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/hv.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/hv_func.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/hv_macro.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/inline.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/intrpvar.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/invlist_inline.h
@@ -126,6 +127,8 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/parser.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/patchlevel.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perl.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/perl_inc_macro.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/perl_langinfo.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perlapi.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perliol.h
@@ -140,12 +143,15 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regcomp.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regexp.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regnodes.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/scope.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/stadtx_hash.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/sv.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/thread.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/time64.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/time64_config.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/uconfig.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/uni_keywords.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/unicode_constants.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/unixish.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/utf8.h
@@ -155,6 +161,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/vutil.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/vxs.inc
 ./usr/libdata/perl5/powerpc-openbsd/CORE/warnings.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/zaphod32_hash.h
 ./usr/libdata/perl5/powerpc-openbsd/Compress
 ./usr/libdata/perl5/powerpc-openbsd/Compress/Raw
 ./usr/libdata/perl5/powerpc-openbsd/Compress/Raw/Bzip2.pm
@@ -310,7 +317,9 @@
 ./usr/libdata/perl5/powerpc-openbsd/Scalar
 ./usr/libdata/perl5/powerpc-openbsd/Scalar/Util.pm
 ./usr/libdata/perl5/powerpc-openbsd/Socket.pm
+./usr/libdata/perl5/powerpc-openbsd/Storable
 ./usr/libdata/perl5/powerpc-openbsd/Storable.pm
+./usr/libdata/perl5/powerpc-openbsd/Storable/Limit.pm
 ./usr/libdata/perl5/powerpc-openbsd/Sub
 ./usr/libdata/perl5/powerpc-openbsd/Sub/Util.pm
 ./usr/libdata/perl5/powerpc-openbsd/Sys
