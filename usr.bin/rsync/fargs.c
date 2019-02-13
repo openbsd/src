@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.8 2019/02/12 19:39:57 benno Exp $ */
+/*	$Id: fargs.c,v 1.9 2019/02/13 19:13:18 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "extern.h"
 
@@ -27,17 +28,15 @@
 char **
 fargs_cmdline(struct sess *sess, const struct fargs *f)
 {
-	char		**args;
-	size_t		  i = 0, j, argsz = 0;
-	char		 *rsync_path, *ssh_prog;
+	char		**args = NULL, **new;
+	size_t		  i = 0, n = 1, j, argsz = 0;
+	char		 *rsync_path;
 
 	assert(f != NULL);
 	assert(f->sourcesz > 0);
 
 	if ((rsync_path = sess->opts->rsync_path) == NULL)
 		rsync_path = RSYNC_PATH;
-	if ((ssh_prog = sess->opts->ssh_prog) == NULL)
-		ssh_prog = "ssh";
 
 	/* Be explicit with array size. */
 
@@ -49,15 +48,35 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 	argsz += f->sourcesz;
 
 	args = calloc(argsz, sizeof(char *));
-	if (args == NULL) {
-		ERR(sess, "calloc");
-		return NULL;
-	}
+	if (args == NULL)
+		goto out;
 
 	if (f->host != NULL) {
 		assert(f->host != NULL);
 
-		args[i++] = ssh_prog;
+		if (sess->opts->ssh_prog) {
+			char *ap = strdup(sess->opts->ssh_prog);
+
+			if (ap == NULL)
+				goto out;
+			while ((args[i] = strsep(&ap, " \t")) != NULL) {
+				if (args[i][0] == '\0') {
+					ap++;	/* skip seperators */
+					continue;
+				}
+
+				/* Grow command-area of array */
+				if (i++ < n)
+					continue;
+				n += 10;
+				new = reallocarray(args, argsz + n, sizeof(char *));
+				if (new == NULL)
+					goto out;
+				args = new;
+				argsz += n;
+			}
+		} else
+			args[i++] = "ssh";
 		args[i++] = f->host;
 		args[i++] = rsync_path;
 		args[i++] = "--server";
@@ -105,4 +124,8 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 
 	args[i] = NULL;
 	return args;
+out:
+	free(args);
+	ERR(sess, "calloc");
+	return NULL;
 }
