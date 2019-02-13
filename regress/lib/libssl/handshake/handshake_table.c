@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.9 2019/01/27 03:59:23 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.10 2019/02/13 17:04:17 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -438,7 +438,8 @@ verify_table(enum tls13_message_type table[UINT8_MAX][TLS13_NUM_MESSAGE_TYPES],
 
 	num_valid = count_handshakes();
 	if (num_valid != num_found) {
-		printf("incorrect number of handshakes: want %zu, got %zu.\n",
+		fprintf(stderr,
+		    "incorrect number of handshakes: want %zu, got %zu.\n",
 		    num_valid, num_found);
 		success = 0;
 	}
