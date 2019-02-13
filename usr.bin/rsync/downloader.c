@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.7 2019/02/12 19:39:57 benno Exp $ */
+/*	$Id: downloader.c,v 1.8 2019/02/13 05:41:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,8 +29,9 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <openssl/md4.h>
+
 #include "extern.h"
-#include "md4.h"
 
 /*
  * A small optimisation: have a 1 MB pre-write buffer.
