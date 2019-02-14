@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.208 2019/02/11 15:44:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.209 2019/02/14 10:34:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -262,7 +262,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 
 		timeout = mrt_timeout(conf->mrt);
-		if (timeout > MAX_TIMEOUT)
+		if (timeout == -1 || timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
 
 		if (poll(pfd, POLL_MAX, timeout * 1000) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.462 2019/02/11 15:44:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.463 2019/02/14 10:34:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -250,7 +250,7 @@ rde_main(int debug, int verbose)
 			pfd = newp;
 			pfd_elms = PFD_PIPE_COUNT + rde_mrt_cnt;
 		}
-		timeout = INFTIM;
+		timeout = -1;
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
 
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
