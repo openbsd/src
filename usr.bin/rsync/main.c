@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.15 2019/02/14 18:31:01 florian Exp $ */
+/*	$Id: main.c,v 1.16 2019/02/14 18:32:00 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -365,7 +365,7 @@ main(int argc, char *argv[])
 	 */
 
 	if (opts.server) {
-		if (pledge("stdio rpath wpath cpath fattr unveil", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath fattr getpw unveil", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_server(&opts, (size_t)argc, argv);
 		return c ? EXIT_SUCCESS : EXIT_FAILURE;
