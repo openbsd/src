@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.82 2019/02/13 23:55:56 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.83 2019/02/14 00:49:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -55,6 +55,7 @@
 
 struct mpe_softc {
 	struct ifnet		sc_if;		/* the interface */
+	unsigned int		sc_rdomain;
 	struct ifaddr		sc_ifa;
 	struct sockaddr_mpls	sc_smpls;
 };
@@ -115,6 +116,7 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 
+	sc->sc_rdomain = 0;
 	sc->sc_ifa.ifa_ifp = ifp;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 	sc->sc_smpls.smpls_len = sizeof(sc->sc_smpls);
@@ -129,8 +131,8 @@ mpe_clone_destroy(struct ifnet *ifp)
 	struct mpe_softc	*sc = ifp->if_softc;
 
 	if (sc->sc_smpls.smpls_label) {
-		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
-		    smplstosa(&sc->sc_smpls), 0);
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 	}
 
 	if_detach(ifp);
@@ -274,6 +276,29 @@ out:
 }
 
 int
+mpe_set_label(struct mpe_softc *sc, uint32_t label, unsigned int rdomain)
+{
+	int error;
+
+	if (sc->sc_smpls.smpls_label) {
+		/* remove old MPLS route */
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
+	}
+
+	/* add new MPLS route */
+	sc->sc_smpls.smpls_label = label;
+	sc->sc_rdomain = rdomain;
+
+	error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+	    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
+	if (error)
+		sc->sc_smpls.smpls_label = 0;
+
+	return (error);
+}
+
+int
 mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mpe_softc	*sc = ifp->if_softc;
@@ -313,20 +338,26 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		shim.shim_label = MPLS_LABEL2SHIM(shim.shim_label);
 		if (sc->sc_smpls.smpls_label == shim.shim_label)
 			break;
-		if (sc->sc_smpls.smpls_label) {
-			/* remove old MPLS route */
-			rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
-			    smplstosa(&sc->sc_smpls), 0);
-		}
-		/* add new MPLS route */
-		sc->sc_smpls.smpls_label = shim.shim_label;
-		error = rt_ifa_add(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
-		    smplstosa(&sc->sc_smpls), 0);
-		if (error) {
-			sc->sc_smpls.smpls_label = 0;
+		error = mpe_set_label(sc, shim.shim_label, sc->sc_rdomain);
+		break;
+	case SIOCSLIFPHYRTABLE:
+		if (ifr->ifr_rdomainid < 0 ||
+		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
+		    !rtable_exists(ifr->ifr_rdomainid) ||
+		    ifr->ifr_rdomainid != rtable_l2(ifr->ifr_rdomainid)) {
+			error = EINVAL;
 			break;
 		}
+		if (sc->sc_rdomain == ifr->ifr_rdomainid)
+			break;
+
+		error = mpe_set_label(sc, sc->sc_smpls.smpls_label,
+		    ifr->ifr_rdomainid);
 		break;
+	case SIOCGLIFPHYRTABLE:
+		ifr->ifr_rdomainid = sc->sc_rdomain;
+		break;
+
 	default:
 		return (ENOTTY);
 	}
