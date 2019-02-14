@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.13 2019/02/14 18:26:52 florian Exp $ */
+/*	$Id: main.c,v 1.14 2019/02/14 18:28:23 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -325,6 +325,7 @@ main(int argc, char *argv[])
 			opts.dry_run = 1;
 			break;
 		case 'o':
+			/* XXX: not finished yet. */
 			opts.preserve_uids = 1;
 			break;
 		case 'p':
@@ -458,7 +459,7 @@ main(int argc, char *argv[])
 		close(fds[0]);
 	return c ? EXIT_SUCCESS : EXIT_FAILURE;
 usage:
-	fprintf(stderr, "usage: %s [-glnoprtv] "
+	fprintf(stderr, "usage: %s [-glnprtv] "
 		"[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",
 		getprogname());
 	return EXIT_FAILURE;
