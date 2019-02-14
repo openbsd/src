@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.6 2019/02/12 17:58:35 benno Exp $ */
+/*	$Id: receiver.c,v 1.7 2019/02/14 18:29:08 florian Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -39,6 +39,53 @@ enum	pfdt {
 	PFD_SENDER_OUT, /* output to the sender */
 	PFD__MAX
 };
+
+int
+rsync_set_metadata(struct sess *sess, int newfile,
+	int fd, const struct flist *f, const char *path)
+{
+	uid_t		 uid;
+	gid_t		 gid;
+	struct timespec	 tv[2];
+
+	/*
+	 * Conditionally adjust identifiers.
+	 * If we have an EPERM, report it but continue on: this just
+	 * means that we're mapping into an unknown (or disallowed)
+	 * group identifier.
+	 */
+
+	if (sess->opts->preserve_gids ||
+	    sess->opts->preserve_uids) {
+		uid = sess->opts->preserve_uids ? f->st.uid : -1;
+		gid = sess->opts->preserve_gids ? f->st.gid : -1;
+		if (fchown(fd, uid, gid) == -1) {
+			if (errno != EPERM) {
+				ERR(sess, "%s: fchown", path);
+				return 0;
+			}
+			WARNX(sess, "%s: identity unknown or not available "
+				"to user.group: %u.%u", f->path, uid, gid);
+		} else
+			LOG4(sess, "%s: updated uid and/or gid", f->path);
+	}
+
+	/* Conditionally adjust file modification time. */
+
+	if (sess->opts->preserve_times) {
+		tv[0].tv_sec = time(NULL);
+		tv[0].tv_nsec = 0;
+		tv[1].tv_sec = f->st.mtime;
+		tv[1].tv_nsec = 0;
+		if (futimens(fd, tv) == -1) {
+			ERR(sess, "%s: futimens", path);
+			return 0;
+		}
+		LOG4(sess, "%s: updated date", f->path);
+	}
+
+	return 1;
+}
 
 /*
  * Pledges: unveil, rpath, cpath, wpath, stdio, fattr.

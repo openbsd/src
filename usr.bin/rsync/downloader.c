@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.8 2019/02/13 05:41:35 tb Exp $ */
+/*	$Id: downloader.c,v 1.9 2019/02/14 18:29:08 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -306,7 +306,6 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	char		*buf = NULL;
 	unsigned char	 ourmd[MD4_DIGEST_LENGTH],
 			 md[MD4_DIGEST_LENGTH];
-	struct timespec	 tv[2];
 
 	/*
 	 * If we don't have a download already in session, then the next
@@ -569,39 +568,11 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		goto out;
 	}
 
-	/*
-	 * Conditionally adjust group id.
-	 * FIXME: remember the original file's group id and don't
-	 * reassign it if it's the same.
-	 * If we have an EPERM, report it but continue on: this just
-	 * means that we're mapping into an unknown (or disallowed)
-	 * group identifier.
-	 */
+	/* Adjust our file metadata (uid, mode, etc.). */
 
-	if (sess->opts->preserve_gids) {
-		if (fchown(p->fd, -1, f->st.gid) == -1) {
-			if (errno != EPERM) {
-				ERR(sess, "%s: fchown", p->fname);
-				goto out;
-			}
-			WARNX(sess, "%s: gid unknown or not available "
-				"to user: %u", f->path, f->st.gid);
-		} else
-			LOG4(sess, "%s: updated gid", f->path);
-	}
-
-	/* Conditionally adjust file modification time. */
-
-	if (sess->opts->preserve_times) {
-		tv[0].tv_sec = time(NULL);
-		tv[0].tv_nsec = 0;
-		tv[1].tv_sec = f->st.mtime;
-		tv[1].tv_nsec = 0;
-		if (futimens(p->fd, tv) == -1) {
-			ERR(sess, "%s: futimens", p->fname);
-			goto out;
-		}
-		LOG4(sess, "%s: updated date", f->path);
+	if (!rsync_set_metadata(sess, 1, p->fd, f, p->fname)) {
+		ERRX1(sess, "rsync_set_metadata");
+		goto out;
 	}
 
 	/* Finally, rename the temporary to the real file. */

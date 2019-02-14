@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: uploader.c,v 1.5 2019/02/14 18:29:08 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -499,12 +499,13 @@ int
 rsync_uploader(struct upload *u, int *fileinfd,
 	struct sess *sess, int *fileoutfd)
 {
-	struct blkset	 blk;
-	struct stat	 st;
-	void		*map, *bufp;
-	size_t		 i, mapsz, pos, sz;
-	off_t		 offs;
-	int		 c;
+	struct blkset	    blk;
+	struct stat	    st;
+	void		   *map, *bufp;
+	size_t		    i, mapsz, pos, sz;
+	off_t		    offs;
+	int		    c;
+	const struct flist *f;
 
 	/* This should never get called. */
 
@@ -617,23 +618,33 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	if (u->state == UPLOAD_READ_LOCAL) {
 		assert(*fileinfd != -1);
 		assert(*fileoutfd == -1);
+		f = &u->fl[u->idx];
 
 		if (fstat(*fileinfd, &st) == -1) {
-			WARN(sess, "%s: fstat", u->fl[u->idx].path);
+			ERR(sess, "%s: fstat", f->path);
 			close(*fileinfd);
 			*fileinfd = -1;
 			return -1;
 		} else if (!S_ISREG(st.st_mode)) {
-			WARNX(sess, "%s: not regular", u->fl[u->idx].path);
+			ERRX(sess, "%s: not regular", f->path);
 			close(*fileinfd);
 			*fileinfd = -1;
 			return -1;
 		}
 
-		if (st.st_size == u->fl[u->idx].st.size &&
-		    st.st_mtime == u->fl[u->idx].st.mtime) {
-			LOG3(sess, "%s: skipping: "
-				"up to date", u->fl[u->idx].path);
+		if (st.st_size == f->st.size &&
+		    st.st_mtime == f->st.mtime) {
+			LOG3(sess, "%s: skipping: up to date", f->path);
+#if 0
+			/* Not yet: investigate behaviour. */
+			if (!rsync_set_metadata
+			    (sess, 0, *fileinfd, f, f->path)) {
+				ERRX1(sess, "rsync_set_metadata");
+				close(*fileinfd);
+				*fileinfd = -1;
+				return -1;
+			}
+#endif
 			close(*fileinfd);
 			*fileinfd = -1;
 			*fileoutfd = u->fdout;

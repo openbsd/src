@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.9 2019/02/14 18:26:52 florian Exp $ */
+/*	$Id: extern.h,v 1.10 2019/02/14 18:29:08 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -264,6 +264,8 @@ int		  rsync_client(const struct opts *, int, const struct fargs *);
 int		  rsync_socket(const struct opts *, const struct fargs *);
 int		  rsync_server(const struct opts *, size_t, char *[]);
 int		  rsync_downloader(struct download *, struct sess *, int *);
+int		  rsync_set_metadata(struct sess *, int, int, 
+			const struct flist *, const char *);
 int		  rsync_uploader(struct upload *,
 			int *, struct sess *, int *);
 int		  rsync_uploader_tail(struct upload *, struct sess *);
