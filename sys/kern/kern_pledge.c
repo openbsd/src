@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.250 2019/01/22 00:59:31 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.251 2019/02/14 15:41:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -315,7 +315,9 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_mkdirat] = PLEDGE_CPATH,
 
 	[SYS_mkfifo] = PLEDGE_DPATH,
+	[SYS_mkfifoat] = PLEDGE_DPATH,
 	[SYS_mknod] = PLEDGE_DPATH,
+	[SYS_mknodat] = PLEDGE_DPATH,
 
 	[SYS_revoke] = PLEDGE_TTY,	/* also requires PLEDGE_RPATH */
 
