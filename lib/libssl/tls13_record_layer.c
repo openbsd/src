@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.1 2019/01/20 10:31:54 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.2 2019/02/14 17:55:32 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -260,21 +260,23 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, EVP_AEAD_CTX *aead_ctx,
 }
 
 int
-tls13_record_layer_set_traffic_keys(struct tls13_record_layer *rl,
-    struct tls13_secret *read_key, struct tls13_secret *write_key)
+tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
+    struct tls13_secret *read_key)
 {
 	memset(rl->read_seq_num, 0, TLS13_RECORD_SEQ_NUM_LEN);
+
+	return tls13_record_layer_set_traffic_key(rl->aead, &rl->read_aead_ctx,
+	    rl->hash, &rl->read_iv, &rl->read_nonce, read_key);
+}
+
+int
+tls13_record_layer_set_write_traffic_key(struct tls13_record_layer *rl,
+    struct tls13_secret *write_key)
+{
 	memset(rl->write_seq_num, 0, TLS13_RECORD_SEQ_NUM_LEN);
 
-	if (!tls13_record_layer_set_traffic_key(rl->aead, &rl->read_aead_ctx,
-	    rl->hash, &rl->read_iv, &rl->read_nonce, read_key))
-		return 0;
-
-	if (!tls13_record_layer_set_traffic_key(rl->aead, &rl->write_aead_ctx,
-	    rl->hash, &rl->write_iv, &rl->write_nonce, write_key))
-		return 0;
-
-	return 1;
+	return tls13_record_layer_set_traffic_key(rl->aead, &rl->write_aead_ctx,
+	    rl->hash, &rl->write_iv, &rl->write_nonce, write_key);
 }
 
 static int

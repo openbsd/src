@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.8 2019/02/13 16:29:18 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.9 2019/02/14 17:55:31 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -308,8 +308,10 @@ tls13_server_hello_recv(struct tls13_ctx *ctx)
 	tls13_record_layer_set_aead(ctx->rl, ctx->aead);
 	tls13_record_layer_set_hash(ctx->rl, ctx->hash);
 
-	if (!tls13_record_layer_set_traffic_keys(ctx->rl,
-	    &secrets->server_handshake_traffic,
+	if (!tls13_record_layer_set_read_traffic_key(ctx->rl,
+	    &secrets->server_handshake_traffic))
+		goto err;
+	if (!tls13_record_layer_set_write_traffic_key(ctx->rl,
 	    &secrets->client_handshake_traffic))
 		goto err;
 
