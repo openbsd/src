@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.83 2019/02/14 00:49:04 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.84 2019/02/14 03:27:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -146,6 +146,7 @@ mpe_clone_destroy(struct ifnet *ifp)
 void
 mpe_start(struct ifnet *ifp)
 {
+	struct mpe_softc	*sc = ifp->if_softc;
 	struct mbuf		*m;
 	struct sockaddr		*sa;
 	struct sockaddr		smpls = { .sa_family = AF_MPLS };
@@ -154,7 +155,7 @@ mpe_start(struct ifnet *ifp)
 
 	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 		sa = mtod(m, struct sockaddr *);
-		rt = rtalloc(sa, RT_RESOLVE, 0);
+		rt = rtalloc(sa, RT_RESOLVE, sc->sc_rdomain);
 		if (!rtisvalid(rt)) {
 			m_freem(m);
 			rtfree(rt);
