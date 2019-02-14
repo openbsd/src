@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.5 2019/02/14 18:29:08 florian Exp $ */
+/*	$Id: uploader.c,v 1.6 2019/02/14 18:31:01 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -237,7 +237,10 @@ pre_link(struct upload *p, struct sess *sess)
 		free(b);
 	}
 
-	/* Optionally preserve times/perms on the symlink. */
+	/* 
+	 * Optionally preserve times/perms on the symlink.
+	 * FIXME: run rsync_set_metadata()?
+	 */
 
 	if (sess->opts->preserve_times) {
 		tv[0].tv_sec = time(NULL);
@@ -364,6 +367,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
 	/*
 	 * Update the modification time if we're a new directory *or* if
 	 * we're preserving times and the time has changed.
+	 * FIXME: run rsync_set_metadata()?
 	 */
 
 	if (u->newdir[idx] ||

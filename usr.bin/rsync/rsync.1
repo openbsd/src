@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.3 2019/02/12 19:16:41 benno Exp $
+.\"	$OpenBSD: rsync.1,v 1.4 2019/02/14 18:31:01 florian Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 12 2019 $
+.Dd $Mdocdate: February 14 2019 $
 .Dt RSYNC 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd synchronise local and remote files
 .Sh SYNOPSIS
 .Nm rsync
-.Op Fl glnprtv
+.Op Fl glnoprtv
 .Op Fl -delete
 .Op Fl -rsync-path Ar prog
 .Ar source ...
@@ -59,6 +59,11 @@ not exist, it will be broken.
 .It Fl n
 Dry-run mode.
 Does not actually modify the destination.
+.It Fl o
+Set user identifier to match the source.
+This behaves like
+.Fl g
+and only works if run as root.
 .It Fl p
 Set destination file or directory permissions to match the source when
 it is updated.
