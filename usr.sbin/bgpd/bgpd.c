@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.211 2019/02/14 13:13:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.212 2019/02/14 14:34:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -256,13 +256,13 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 	while (quit == 0) {
 		bzero(pfd, sizeof(pfd));
 
-		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
-		set_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde);
+		timeout = mrt_timeout(conf->mrt);
 
 		pfd[PFD_SOCK_ROUTE].fd = rfd;
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 
-		timeout = mrt_timeout(conf->mrt);
+		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
+		set_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde);
 
 		if (timeout < 0 || timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
