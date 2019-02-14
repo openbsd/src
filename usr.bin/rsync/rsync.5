@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.5,v 1.5 2019/02/12 19:13:03 benno Exp $
+.\"	$OpenBSD: rsync.5,v 1.6 2019/02/14 18:27:39 florian Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 12 2019 $
+.Dd $Mdocdate: February 14 2019 $
 .Dt RSYNC 5
 .Os
 .Sh NAME
@@ -46,6 +46,8 @@ for dry-run,
 for group ids,
 .Fl l
 for links,
+.Fl o
+for user ids,
 .Fl r
 for recursion,
 .Fl v
@@ -221,6 +223,10 @@ file modification time (optional, time_t, integer)
 file mode (optional, mode_t, integer)
 .It
 if
+.Fl o ,
+the user id (integer)
+.It
+if
 .Fl g ,
 the group id (integer)
 .It
@@ -239,6 +245,10 @@ of the optional fields are transmitted.
 .Bl -tag -compact -width Ds
 .It 0x02
 Do not send the file mode: it is a repeat of the last file's mode.
+.It 0x08
+Like
+.Li 0x02 ,
+but for the user id.
 .It 0x10
 Like
 .Li 0x02 ,
@@ -255,21 +265,27 @@ file's.
 .El
 .Pp
 If the status byte is zero, the file-list has terminated.
+.Pp
 If
-.Fl g
-has been specified, the sender sends the list of all groups encountered
+.Fl o
+has been specified, the sender sends the list of all users encountered
 in the file list.
-Group zero (commonly wheel) is never transmitted, as it has identifier
-zero and would corrupt the list.
+Identifier zero
+.Pq Qq root
+is never transmitted, as it would prematurely end the list.
 .Pp
 .Bl -enum -compact
 .It
-group identifier or zero to indicate end of set (integer)
+user identifier or zero to indicate end of set (integer)
 .It
-non-zero length of group (byte)
+non-zero length of user name (byte)
 .It
-non-empty group name (prior length)
+user name (prior length)
 .El
+.Pp
+The same sequence is then sent for groups if
+.Fl g
+has been specified.
 .Pp
 The sender then sends any IO error values, which for
 .Xr openrsync 1
