@@ -14,6 +14,18 @@
 #ifndef LLVM_CONFIG_H
 #define LLVM_CONFIG_H
 
+/*
+ * When bsd.lib.mk builds shared libraries it builds with -DPIC which 
+ * causes problems in the following files which use PIC as a variable name.
+ * undefine PIC here to minimise the diff to upstream LLVM
+ *
+ * include/llvm/MC/MCObjectFileInfo.h
+ * lib/MC/MCObjectFileInfo.cpp
+ * lib/Transforms/Scalar/LICM.cpp
+ * lib/Transforms/Utils/PredicateInfo.cpp
+ */
+#undef PIC
+
 /* Define if LLVM_ENABLE_DUMP is enabled */
 /* #undef LLVM_ENABLE_DUMP */
 
