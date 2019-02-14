@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.366 2019/02/14 10:34:54 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.367 2019/02/14 10:38:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1093,6 +1093,7 @@ struct rde_hashstats {
 
 #define	MRT_FILE_LEN	512
 #define	MRT2MC(x)	((struct mrt_config *)(x))
+#define	MRT_MAX_TIMEOUT	7200
 
 enum mrt_type {
 	MRT_NONE,
