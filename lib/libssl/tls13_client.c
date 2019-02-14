@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.9 2019/02/14 17:55:31 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.10 2019/02/14 18:06:11 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -622,6 +622,14 @@ tls13_server_finished_recv(struct tls13_ctx *ctx)
 	if (!tls13_derive_application_secrets(secrets, &context))
 		return TLS13_IO_FAILURE;
 
+	/*
+	 * Any records following the server finished message must be encrypted
+	 * using the server application traffic keys.
+	 */
+	if (!tls13_record_layer_set_read_traffic_key(ctx->rl,
+	    &secrets->server_application_traffic))
+		return TLS13_IO_FAILURE;
+
 	ret = 1;
 
  err:
@@ -678,6 +686,14 @@ tls13_client_finished_send(struct tls13_ctx *ctx)
 		goto err;
 	if (!tls13_handshake_msg_finish(ctx->hs_msg))
 		goto err;
+
+	/*
+	 * Any records following the client finished message must be encrypted
+	 * using the client application traffic keys.
+	 */
+	if (!tls13_record_layer_set_write_traffic_key(ctx->rl,
+	    &secrets->client_application_traffic))
+		return TLS13_IO_FAILURE;
 
 	ret = 1;
 
