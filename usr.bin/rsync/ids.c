@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.4 2019/02/12 19:39:57 benno Exp $ */
+/*	$Id: ids.c,v 1.5 2019/02/14 18:26:52 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <grp.h>
 #include <inttypes.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,125 +42,169 @@ idents_free(struct ident *p, size_t sz)
 }
 
 /*
- * Given a list of files with the groups as set by the sender, re-assign
- * the groups from the list of remapped group identifiers.
- * Don't ever remap group wheel.
+ * Given a list of files with the identifiers as set by the sender,
+ * re-assign the identifiers from the list of remapped ones.
+ * Don't ever remap wheel/root.
  */
 void
-idents_gid_assign(struct sess *sess, struct flist *fl, size_t flsz,
-	const struct ident *gids, size_t gidsz)
+idents_assign_gid(struct sess *sess, struct flist *fl, size_t flsz,
+	const struct ident *ids, size_t idsz)
 {
 	size_t	 i, j;
 
 	for (i = 0; i < flsz; i++) {
-		if (0 == fl[i].st.gid)
+		if (fl[i].st.gid == 0)
 			continue;
-		for (j = 0; j < gidsz; j++)
-			if ((int32_t)fl[i].st.gid == gids[j].id)
+		for (j = 0; j < idsz; j++)
+			if ((int32_t)fl[i].st.gid == ids[j].id)
 				break;
-		assert(j < gidsz);
-		fl[i].st.gid = gids[j].mapped;
+		assert(j < idsz);
+		fl[i].st.gid = ids[j].mapped;
 	}
 }
 
 /*
- * Given a list of groups from the remote host, fill in our local
+ * Like idents_assign_gid().
+ */
+void
+idents_assign_uid(struct sess *sess, struct flist *fl, size_t flsz,
+	const struct ident *ids, size_t idsz)
+{
+	size_t	 i, j;
+
+	for (i = 0; i < flsz; i++) {
+		if (fl[i].st.uid == 0)
+			continue;
+		for (j = 0; j < idsz; j++)
+			if ((int32_t)fl[i].st.uid == ids[j].id)
+				break;
+		assert(j < idsz);
+		fl[i].st.uid = ids[j].mapped;
+	}
+}
+
+/*
+ * Given a list of identifiers from the remote host, fill in our local
  * identifiers of the same names.
- * Use the remote numeric identifier if we can't find the group OR the
- * group has identifier zero.
- * FIXME: what happens if we don't find the local group (we should
- * really warn about this), but the remote group identifier maps into a
- * different group name for us?
+ * Use the remote numeric identifier if we can't find the identifier OR
+ * the identifier is zero (wheel/root).
+ * FIXME: what happens if we don't find the local identifier (we should
+ * really warn about this), but the remote identifier maps into a
+ * different name for us?
  * These are pretty unexpected things for rsync to do.
  * Another FIXME because we shouldn't let that happen even though the
  * reference rsync does.
  */
 void
-idents_gid_remap(struct sess *sess, struct ident *gids, size_t gidsz)
+idents_remap(struct sess *sess, int isgid, struct ident *ids, size_t idsz)
 {
 	size_t		 i;
 	struct group	*grp;
+	struct passwd	*usr;
+	int32_t		 id;
 
-	for (i = 0; i < gidsz; i++) {
-		assert(gids[i].id != 0);
+	for (i = 0; i < idsz; i++) {
+		assert(ids[i].id != 0);
+
+		/* Start by getting our local representation. */
+
+		if (isgid)
+			id = (grp = getgrnam(ids[i].name)) == NULL ?
+				-1 : grp->gr_gid;
+		else
+			id = (usr = getpwnam(ids[i].name)) == NULL ?
+				-1 : usr->pw_uid;
 
 		/*
 		 * (1) Empty names inherit.
-		 * (2) Unknown group names inherit.
-		 * (3) Group wheel inherits.
+		 * (2) Unknown identifier names inherit.
+		 * (3) Wheel/root inherits.
 		 * (4) Otherwise, use the local identifier.
 		 */
 
-		if (gids[i].name[0] == '\0')
-			gids[i].mapped = gids[i].id;
-		else if ((grp = getgrnam(gids[i].name)) == NULL)
-			gids[i].mapped = gids[i].id;
-		else if (grp->gr_gid == 0)
-			gids[i].mapped = gids[i].id;
+		if (ids[i].name[0] == '\0')
+			ids[i].mapped = ids[i].id;
+		else if (id <= 0)
+			ids[i].mapped = ids[i].id;
 		else
-			gids[i].mapped = grp->gr_gid;
+			ids[i].mapped = id;
 
-		LOG4(sess, "remapped group %s: %" PRId32 " -> %" PRId32,
-			gids[i].name, gids[i].id, gids[i].mapped);
+		LOG4(sess, "remapped identifier %s: %" PRId32 " -> %" PRId32,
+			ids[i].name, ids[i].id, ids[i].mapped);
 	}
 }
 
 /*
- * If "gid" is not part of the list of known groups, add it.
- * This also verifies that the group name isn't too long.
- * Does nothing with group zero.
+ * If "id" is not part of the list of known users or groups (depending
+ * upon "isgid", add it.
+ * This also verifies that the name isn't too long.
+ * Does nothing with user/group zero.
  * Return zero on failure, non-zero on success.
  */
 int
-idents_gid_add(struct sess *sess, struct ident **gids, size_t *gidsz, gid_t gid)
+idents_add(struct sess *sess, int isgid,
+	struct ident **ids, size_t *idsz, int32_t id)
 {
 	struct group	*grp;
+	struct passwd	*usr;
 	size_t		 i, sz;
 	void		*pp;
+	const char	*name;
 
-	if (gid == 0)
+	if (id == 0)
 		return 1;
 
-	for (i = 0; i < *gidsz; i++)
-		if ((*gids)[i].id == (int32_t)gid)
+	for (i = 0; i < *idsz; i++)
+		if ((*ids)[i].id == id)
 			return 1;
 
 	/*
-	 * Look us up in /etc/group.
-	 * Make sure that the group name length is sane: we transmit it
-	 * using a single byte.
+	 * Look up the reference in a type-specific way.
+	 * Make sure that the name length is sane: we transmit it using
+	 * a single byte.
 	 */
 
-	assert(i == *gidsz);
-	if ((grp = getgrgid(gid)) == NULL) {
-		ERR(sess, "%u: unknown gid", gid);
-		return 0;
-	} else if ((sz = strlen(grp->gr_name)) > UINT8_MAX) {
-		ERRX(sess, "%u: group name too long: %s", gid, grp->gr_name);
+	assert(i == *idsz);
+	if (isgid) {
+		if ((grp = getgrgid((gid_t)id)) == NULL) {
+			ERR(sess, "%" PRId32 ": unknown gid", id);
+			return 0;
+		}
+		name = grp->gr_name;
+	} else {
+		if ((usr = getpwuid((uid_t)id)) == NULL) {
+			ERR(sess, "%" PRId32 ": unknown uid", id);
+			return 0;
+		}
+		name = usr->pw_name;
+	}
+
+	if ((sz = strlen(name)) > UINT8_MAX) {
+		ERRX(sess, "%" PRId32 ": name too long: %s", id, name);
 		return 0;
 	} else if (sz == 0) {
-		ERRX(sess, "%u: group name zero-length", gid);
+		ERRX(sess, "%" PRId32 ": zero-length name", id);
 		return 0;
 	}
 
-	/* Add the group to the array. */
+	/* Add the identifier to the array. */
 
-	pp = reallocarray(*gids, *gidsz + 1, sizeof(struct ident));
+	pp = reallocarray(*ids, *idsz + 1, sizeof(struct ident));
 	if (pp == NULL) {
 		ERR(sess, "reallocarray");
 		return 0;
 	}
-	*gids = pp;
-	(*gids)[*gidsz].id = gid;
-	(*gids)[*gidsz].name = strdup(grp->gr_name);
-	if (NULL == (*gids)[*gidsz].name) {
+	*ids = pp;
+	(*ids)[*idsz].id = id;
+	(*ids)[*idsz].name = strdup(name);
+	if ((*ids)[*idsz].name == NULL) {
 		ERR(sess, "strdup");
 		return 0;
 	}
 
-	LOG4(sess, "adding group to list: %s (%u)",
-		(*gids)[*gidsz].name, (*gids)[*gidsz].id);
-	(*gidsz)++;
+	LOG4(sess, "adding identifier to list: %s (%u)",
+		(*ids)[*idsz].name, (*ids)[*idsz].id);
+	(*idsz)++;
 	return 1;
 }
 
@@ -231,8 +276,7 @@ idents_recv(struct sess *sess,
 		memset(&(*ids)[*idsz], 0, sizeof(struct ident));
 
 		/*
-		 * When reading the size, warn if we get a group size of
-		 * zero.
+		 * When reading the size, warn if we get a size of zero.
 		 * The spec doesn't allow this, but we might have a
 		 * noncomformant or adversarial sender.
 		 */
@@ -240,9 +284,9 @@ idents_recv(struct sess *sess,
 		if (!io_read_byte(sess, fd, &sz)) {
 			ERRX1(sess, "io_read_byte");
 			return 0;
-		} else if (0 == sz)
-			WARNX(sess, "zero-length group name "
-				"in group list");
+		} else if (sz == 0)
+			WARNX(sess, "zero-length name "
+				"in identifier list");
 
 		(*ids)[*idsz].id = id;
 		(*ids)[*idsz].name = calloc(sz + 1, 1);

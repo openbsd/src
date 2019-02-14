@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.12 2019/02/12 19:39:57 benno Exp $ */
+/*	$Id: flist.c,v 1.13 2019/02/14 18:26:52 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,6 +43,7 @@
  * information that affects subsequent transmissions.
  */
 #define FLIST_MODE_SAME  0x0002 /* mode is repeat */
+#define	FLIST_UID_SAME	 0x0008 /* uid is repeat */
 #define	FLIST_GID_SAME	 0x0010 /* gid is repeat */
 #define	FLIST_NAME_SAME  0x0020 /* name is repeat */
 #define FLIST_NAME_LONG	 0x0040 /* name >255 bytes */
@@ -241,11 +242,11 @@ int
 flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
     size_t flsz)
 {
-	size_t		 i, sz, gidsz = 0;
+	size_t		 i, sz, gidsz = 0, uidsz = 0;
 	uint8_t		 flag;
 	const struct flist *f;
 	const char	*fn;
-	struct ident	*gids = NULL;
+	struct ident	*gids = NULL, *uids = NULL;
 	int		 rc = 0;
 
 	/* Double-check that we've no pending multiplexed data. */
@@ -309,6 +310,19 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 			goto out;
 		}
 
+		/* Conditional part: uid. */
+
+		if (sess->opts->preserve_uids) {
+			if (!io_write_int(sess, fdout, f->st.uid)) {
+				ERRX1(sess, "io_write_int");
+				goto out;
+			}
+			if (!idents_add(sess, 0, &uids, &uidsz, f->st.uid)) {
+				ERRX1(sess, "idents_add");
+				goto out;
+			}
+		}
+
 		/* Conditional part: gid. */
 
 		if (sess->opts->preserve_gids) {
@@ -316,8 +330,8 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 				ERRX1(sess, "io_write_int");
 				goto out;
 			}
-			if (!idents_gid_add(sess, &gids, &gidsz, f->st.gid)) {
-				ERRX1(sess, "idents_gid_add");
+			if (!idents_add(sess, 1, &gids, &gidsz, f->st.gid)) {
+				ERRX1(sess, "idents_add");
 				goto out;
 			}
 		}
@@ -349,7 +363,15 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		goto out;
 	}
 
-	/* Conditionally write gid list and terminator. */
+	/* Conditionally write identifier lists. */
+
+	if (sess->opts->preserve_uids) {
+		LOG2(sess, "sending uid list: %zu", uidsz);
+		if (!idents_send(sess, fdout, uids, uidsz)) {
+			ERRX1(sess, "idents_send");
+			goto out;
+		}
+	}
 
 	if (sess->opts->preserve_gids) {
 		LOG2(sess, "sending gid list: %zu", gidsz);
@@ -362,6 +384,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 	rc = 1;
 out:
 	idents_free(gids, gidsz);
+	idents_free(uids, uidsz);
 	return rc;
 }
 
@@ -540,12 +563,12 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	struct flist	*fl = NULL;
 	struct flist	*ff;
 	const struct flist *fflast = NULL;
-	size_t		 flsz = 0, flmax = 0, lsz, gidsz = 0;
+	size_t		 flsz = 0, flmax = 0, lsz, gidsz = 0, uidsz = 0;
 	uint8_t		 flag;
 	char		 last[MAXPATHLEN];
 	uint64_t	 lval; /* temporary values... */
 	int32_t		 ival;
-	struct ident	*gids = NULL;
+	struct ident	*gids = NULL, *uids = NULL;
 
 	last[0] = '\0';
 
@@ -607,6 +630,23 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		} else
 			ff->st.mode = fflast->st.mode;
 
+		/* Conditional part: uid. */
+
+		if (sess->opts->preserve_uids) {
+			if (!(FLIST_UID_SAME & flag)) {
+				if (!io_read_int(sess, fd, &ival)) {
+					ERRX1(sess, "io_read_int");
+					goto out;
+				}
+				ff->st.uid = ival;
+			} else if (fflast == NULL) {
+				ERRX(sess, "same uid "
+					"without last entry");
+				goto out;
+			} else
+				ff->st.uid = fflast->st.uid;
+		}
+
 		/* Conditional part: gid. */
 
 		if (sess->opts->preserve_gids) {
@@ -655,10 +695,15 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 			sess->total_size += ff->st.size;
 	}
 
-	/*
-	 * Now conditionally read the group list.
-	 * We then remap all group identifiers to the local ids.
-	 */
+	/* Conditionally read the user/group list. */
+
+	if (sess->opts->preserve_uids) {
+		if (!idents_recv(sess, fd, &uids, &uidsz)) {
+			ERRX1(sess, "idents_recv");
+			goto out;
+		}
+		LOG2(sess, "received uid list: %zu", uidsz);
+	}
 
 	if (sess->opts->preserve_gids) {
 		if (!idents_recv(sess, fd, &gids, &gidsz)) {
@@ -676,18 +721,25 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	*sz = flsz;
 	*flp = fl;
 
-	/* Lastly, remap and reassign group identifiers. */
+	/* Conditionally remap and reassign identifiers. */
+
+	if (sess->opts->preserve_uids) {
+		idents_remap(sess, 0, uids, uidsz);
+		idents_assign_uid(sess, fl, flsz, uids, uidsz);
+	}
 
 	if (sess->opts->preserve_gids) {
-		idents_gid_remap(sess, gids, gidsz);
-		idents_gid_assign(sess, fl, flsz, gids, gidsz);
+		idents_remap(sess, 1, gids, gidsz);
+		idents_assign_gid(sess, fl, flsz, gids, gidsz);
 	}
 
 	idents_free(gids, gidsz);
+	idents_free(uids, uidsz);
 	return 1;
 out:
 	flist_free(fl, flsz);
 	idents_free(gids, gidsz);
+	idents_free(uids, uidsz);
 	*sz = 0;
 	*flp = NULL;
 	return 0;
