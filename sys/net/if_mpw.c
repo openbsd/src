@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.34 2019/02/13 23:47:42 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.35 2019/02/14 01:21:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -119,7 +119,7 @@ mpw_clone_destroy(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_RUNNING;
 
 	if (sc->sc_smpls.smpls_label) {
-		rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
+		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 		    smplstosa(&sc->sc_smpls), 0);
 	}
 
@@ -165,7 +165,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/* Teardown all configuration if got no nexthop */
 		sin = (struct sockaddr_in *) &imr.imr_nexthop;
 		if (sin->sin_addr.s_addr == 0) {
-			if (rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
+			if (rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 			    smplstosa(&sc->sc_smpls), 0) == 0)
 				sc->sc_smpls.smpls_label = 0;
 
@@ -194,7 +194,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		if (sc->sc_smpls.smpls_label != imr.imr_lshim.shim_label) {
 			if (sc->sc_smpls.smpls_label)
-				rt_ifa_del(&sc->sc_ifa, RTF_MPLS,
+				rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 				    smplstosa(&sc->sc_smpls), 0);
 
 			sc->sc_smpls.smpls_label = imr.imr_lshim.shim_label;
