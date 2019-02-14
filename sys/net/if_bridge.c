@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.320 2019/02/14 17:51:25 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.321 2019/02/14 18:19:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -682,14 +682,15 @@ bridge_init(struct bridge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
-	if ((ifp->if_flags & IFF_RUNNING) == IFF_RUNNING)
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		return;
 
-	ifp->if_flags |= IFF_RUNNING;
 	bstp_initialization(sc->sc_stp);
 
 	if (sc->sc_brttimeout != 0)
 		timeout_add_sec(&sc->sc_brtimeout, sc->sc_brttimeout);
+
+	SET(ifp->if_flags, IFF_RUNNING);
 }
 
 /*
@@ -700,17 +701,15 @@ bridge_stop(struct bridge_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
-	/*
-	 * If we're not running, there's nothing to do.
-	 */
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return;
 
-	timeout_del(&sc->sc_brtimeout);
+	CLR(ifp->if_flags, IFF_RUNNING);
+
+	if (!timeout_del(&sc->sc_brtimeout))
+		timeout_barrier(&sc->sc_brtimeout);
 
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
-
-	ifp->if_flags &= ~IFF_RUNNING;
 }
 
 /*

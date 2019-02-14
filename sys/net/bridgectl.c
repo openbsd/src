@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.13 2018/12/12 14:19:15 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.14 2019/02/14 18:19:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -321,10 +321,14 @@ void
 bridge_rtage(void *vsc)
 {
 	struct bridge_softc *sc = vsc;
+	struct ifnet *ifp = &sc->sc_if;
 	struct bridge_rtnode *n, *p;
 	int i;
 
 	KERNEL_ASSERT_LOCKED();
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return;
 
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
