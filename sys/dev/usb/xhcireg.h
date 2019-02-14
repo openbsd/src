@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.14 2018/04/28 08:19:35 mpi Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.15 2019/02/14 18:41:00 mglocker Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -93,8 +93,8 @@
 #define  XHCI_HCC_NSS(x)	(((x) >> 7) & 0x1) /* No secondary sid */
 #define  XHCI_HCC_PAE(x)	(((x) >> 8) & 0x1) /* Pase All Event Data */
 #define  XHCI_HCC_SPC(x)	(((x) >> 9) & 0x1) /* Short packet */
-#define  XHCI_HCC_SEC(x)	(((x) >> 10) & 0xf) /* Stopped EDTLA */
-#define  XHCI_HCC_CFC(x)	(((x) >> 11) & 0xf) /* Configuous Frame ID */
+#define  XHCI_HCC_SEC(x)	(((x) >> 10) & 0x1) /* Stopped EDTLA */
+#define  XHCI_HCC_CFC(x)	(((x) >> 11) & 0x1) /* Configuous Frame ID */
 #define  XHCI_HCC_MAX_PSA_SZ(x)	(((x) >> 12) & 0xf) /* Max pri. stream arr. */
 #define  XHCI_HCC_XECP(x)	(((x) >> 16) & 0xffff) /* Ext. capabilities */
 
