@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.210 2019/02/14 10:38:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.211 2019/02/14 13:13:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -102,13 +102,14 @@ main(int argc, char *argv[])
 	struct bgpd_config	*conf;
 	struct peer		*peer_l, *p;
 	struct pollfd		 pfd[POLL_MAX];
+	time_t			 timeout;
 	pid_t			 se_pid = 0, rde_pid = 0, pid;
 	char			*conffile;
 	char			*saved_argv0;
 	int			 debug = 0;
 	int			 rflag = 0, sflag = 0;
 	int			 rfd = -1;
-	int			 ch, timeout, status;
+	int			 ch, status;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
 
@@ -262,9 +263,9 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 
 		timeout = mrt_timeout(conf->mrt);
-		if (timeout > MAX_TIMEOUT)
-			timeout = MAX_TIMEOUT;
 
+		if (timeout < 0 || timeout > MAX_TIMEOUT)
+			timeout = MAX_TIMEOUT;
 		if (poll(pfd, POLL_MAX, timeout * 1000) == -1)
 			if (errno != EINTR) {
 				log_warn("poll error");
