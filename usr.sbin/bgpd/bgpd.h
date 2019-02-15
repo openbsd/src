@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.368 2019/02/14 13:13:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.369 2019/02/15 11:38:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -638,6 +638,7 @@ struct kif {
 	u_int8_t		 if_type;
 	u_int8_t		 link_state;
 	u_int8_t		 nh_reachable;	/* for nexthop verification */
+	u_int8_t		 depend_state;	/* for session depend on */
 };
 
 struct session_up {
