@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.99 2018/11/19 13:15:37 visa Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.100 2019/02/15 05:55:21 dlg Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -1020,14 +1020,14 @@ sbdroprecord(struct sockbuf *sb)
  * with the specified type for presentation on a socket buffer.
  */
 struct mbuf *
-sbcreatecontrol(caddr_t p, int size, int type, int level)
+sbcreatecontrol(const void *p, size_t size, int type, int level)
 {
 	struct cmsghdr *cp;
 	struct mbuf *m;
 
 	if (CMSG_SPACE(size) > MCLBYTES) {
-		printf("sbcreatecontrol: message too large %d\n", size);
-		return NULL;
+		printf("sbcreatecontrol: message too large %zu\n", size);
+		return (NULL);
 	}
 
 	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
