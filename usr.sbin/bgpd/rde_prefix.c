@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.37 2019/02/15 09:45:17 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.38 2019/02/15 09:55:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -266,9 +266,9 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	case AID_VPN_IPv4:
 		va4 = (const struct pt_entry_vpn4 *)a;
 		vb4 = (const struct pt_entry_vpn4 *)b;
-		if (betoh64(va4->rd) > betoh64(vb4->rd))
+		if (be64toh(va4->rd) > be64toh(vb4->rd))
 			return (1);
-		if (betoh64(va4->rd) < betoh64(vb4->rd))
+		if (be64toh(va4->rd) < be64toh(vb4->rd))
 			return (-1);
 		if (ntohl(va4->prefix4.s_addr) > ntohl(vb4->prefix4.s_addr))
 			return (1);
@@ -282,9 +282,9 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	case AID_VPN_IPv6:
 		va6 = (const struct pt_entry_vpn6 *)a;
 		vb6 = (const struct pt_entry_vpn6 *)b;
-		if (betoh64(va6->rd) > betoh64(vb6->rd))
+		if (be64toh(va6->rd) > be64toh(vb6->rd))
 			return (1);
-		if (betoh64(va6->rd) < betoh64(vb6->rd))
+		if (be64toh(va6->rd) < be64toh(vb6->rd))
 			return (-1);
 		i = memcmp(&va6->prefix6, &vb6->prefix6,
 		    sizeof(struct in6_addr));

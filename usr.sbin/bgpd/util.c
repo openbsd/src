@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.42 2018/12/30 13:53:07 denis Exp $ */
+/*	$OpenBSD: util.c,v 1.43 2019/02/15 09:55:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -121,7 +121,7 @@ log_rd(u_int64_t rd)
 	u_int32_t	u32;
 	u_int16_t	u16;
 
-	rd = betoh64(rd);
+	rd = be64toh(rd);
 	switch (rd >> 48) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
 		u32 = rd & 0xffffffff;
@@ -697,9 +697,9 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 	case AID_VPN_IPv4:
 		if (prefixlen > 32)
 			return (-1);
-		if (betoh64(a->vpn4.rd) > betoh64(b->vpn4.rd))
+		if (be64toh(a->vpn4.rd) > be64toh(b->vpn4.rd))
 			return (1);
-		if (betoh64(a->vpn4.rd) < betoh64(b->vpn4.rd))
+		if (be64toh(a->vpn4.rd) < be64toh(b->vpn4.rd))
 			return (-1);
 		mask = htonl(prefixlen2mask(prefixlen));
 		aa = ntohl(a->vpn4.addr.s_addr & mask);
@@ -715,9 +715,9 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 	case AID_VPN_IPv6:
 		if (prefixlen > 128)
 			return (-1);
-		if (betoh64(a->vpn6.rd) > betoh64(b->vpn6.rd))
+		if (be64toh(a->vpn6.rd) > be64toh(b->vpn6.rd))
 			return (1);
-		if (betoh64(a->vpn6.rd) < betoh64(b->vpn6.rd))
+		if (be64toh(a->vpn6.rd) < be64toh(b->vpn6.rd))
 			return (-1);
 		for (i = 0; i < prefixlen / 8; i++)
 			if (a->vpn6.addr.s6_addr[i] != b->vpn6.addr.s6_addr[i])
