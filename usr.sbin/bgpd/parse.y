@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.373 2019/02/15 09:55:21 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.374 2019/02/15 10:10:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1704,7 +1704,7 @@ safi		: NONE		{ $$ = SAFI_NONE; }
 		| VPN		{ $$ = SAFI_MPLSVPN; }
 		;
 
-nettype		: STATIC { $$ = 1; },
+nettype		: STATIC { $$ = 1; }
 		| CONNECTED { $$ = 0; }
 		;
 
