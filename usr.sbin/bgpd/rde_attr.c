@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.116 2019/02/04 18:53:10 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.117 2019/02/15 09:51:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <netinet/in.h>
 
+#include <endian.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
