@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.37 2019/02/15 01:06:38 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.38 2019/02/15 02:01:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -56,6 +56,9 @@ struct mpw_softc {
 	uint32_t		sc_type;
 	struct shim_hdr		sc_rshim;
 	struct sockaddr_storage	sc_nexthop;
+
+	struct rwlock		sc_lock;
+	unsigned int		sc_dead;
 };
 
 void	mpwattach(int);
@@ -101,6 +104,9 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ether_fakeaddr(ifp);
 
+	rw_init(&sc->sc_lock, ifp->if_xname);
+	sc->sc_dead = 0;
+
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -120,10 +126,14 @@ mpw_clone_destroy(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
+	rw_enter_write(&sc->sc_lock);
+	sc->sc_dead = 1;
+
 	if (sc->sc_smpls.smpls_label) {
 		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 	}
+	rw_exit_write(&sc->sc_lock);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -138,6 +148,10 @@ mpw_set_label(struct mpw_softc *sc, uint32_t label, unsigned int rdomain)
 {
 	int error;
 
+	rw_assert_wrlock(&sc->sc_lock);
+	if (sc->sc_dead)
+		return (ENXIO);
+
 	if (sc->sc_smpls.smpls_label) {
 		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
@@ -151,7 +165,7 @@ mpw_set_label(struct mpw_softc *sc, uint32_t label, unsigned int rdomain)
 	if (error != 0)
 		sc->sc_smpls.smpls_label = 0;
 
-	return (0);
+	return (error);
 }
 
 int
@@ -215,12 +229,14 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		imr.imr_rshim.shim_label =
 		    MPLS_LABEL2SHIM(imr.imr_rshim.shim_label);
 
+		rw_enter_write(&sc->sc_lock);
 		if (sc->sc_smpls.smpls_label != imr.imr_lshim.shim_label) {
 			error = mpw_set_label(sc, imr.imr_lshim.shim_label,
 			    sc->sc_rdomain);
-			if (error != 0)
-				break;
 		}
+		rw_exit_write(&sc->sc_lock);
+		if (error != 0)
+			break;
 
 		/* Apply configuration */
 		sc->sc_flags = imr.imr_flags;
@@ -256,10 +272,12 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
+		rw_enter_write(&sc->sc_lock);
 		if (sc->sc_rdomain != ifr->ifr_rdomainid) {
 			error = mpw_set_label(sc, sc->sc_smpls.smpls_label,
 			    ifr->ifr_rdomainid);
 		}
+		rw_exit_write(&sc->sc_lock);
 		break;
 	case SIOCGLIFPHYRTABLE:
 		ifr->ifr_rdomainid = sc->sc_rdomain;
