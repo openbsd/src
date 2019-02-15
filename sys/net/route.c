@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.381 2019/02/13 23:47:42 dlg Exp $	*/
+/*	$OpenBSD: route.c,v 1.382 2019/02/15 21:16:01 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1113,7 +1113,6 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst,
 	if ((flags & RTF_LLINFO) == 0)
 		info.rti_info[RTAX_GATEWAY] = ifa->ifa_addr;
 
-	KASSERT(rdomain == rtable_l2(rdomain));
 	if (rdomain == rtable_l2(ifp->if_rtlabelid)) {
 		info.rti_info[RTAX_LABEL] =
 		    rtlabel_id2sa(ifp->if_rtlabelid, &sa_rl);
