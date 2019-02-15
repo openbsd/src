@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.36 2018/12/30 13:53:07 denis Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.37 2019/02/15 09:45:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
+#include <endian.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
