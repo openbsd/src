@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.240 2019/02/10 16:42:35 phessler Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.241 2019/02/15 16:46:59 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1768,7 +1768,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
  * Inside a vm_map find the sp address and verify MAP_STACK, and also
  * remember low and high regions of that of region  which is marked
  * with MAP_STACK.  Return TRUE.
- * If sp isn't in a MAP_STACK region return FALSE.
+ * If sp isn't in a non-guard MAP_STACK region return FALSE.
  */
 boolean_t
 uvm_map_check_stack_range(struct proc *p, vaddr_t sp)
@@ -1789,7 +1789,11 @@ uvm_map_check_stack_range(struct proc *p, vaddr_t sp)
 	}
 
 	if ((entry->etype & UVM_ET_STACK) == 0) {
+		int protection = entry->protection;
+
 		vm_map_unlock_read(map);
+		if (protection == PROT_NONE)
+			return (TRUE);	/* don't update range */
 		return (FALSE);
 	}
 	p->p_spstart = entry->start;
