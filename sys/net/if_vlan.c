@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.182 2019/02/14 17:53:15 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.183 2019/02/15 13:00:51 mpi Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -276,7 +276,7 @@ vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
 		return (if_enqueue_ifq(ifp, m));
 
 	ifv = ifp->if_softc;
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		m_freem(m);
@@ -300,7 +300,7 @@ vlan_start(struct ifqueue *ifq)
 	struct ifnet	*ifp0;
 	struct mbuf	*m;
 
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		ifq_purge(ifq);
 		goto leave;
@@ -381,7 +381,7 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	list = &tagh[TAG_HASH(tag)];
 	SRPL_FOREACH(ifv, &sr, list, ifv_list) {
-		if (ifp0->if_index == ifv->ifv_ifp0 && tag == ifv->ifv_tag &&
+		if (ifp0->if_index == ifv->ifv_ifidx0 && tag == ifv->ifv_tag &&
 		    etype == ifv->ifv_type)
 			break;
 	}
@@ -459,7 +459,7 @@ vlan_up(struct ifvlan *ifv)
 	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 	list = &tagh[TAG_HASH(ifv->ifv_tag)];
 
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 	if (ifp0 == NULL)
 		return (ENXIO);
 
@@ -506,7 +506,7 @@ vlan_up(struct ifvlan *ifv)
 	if (error != 0)
 		goto scrub;
 
-	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifp0, ifv->ifv_tag);
+	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifidx0, ifv->ifv_tag);
 	if (error != 0)
 		goto leave;
 
@@ -558,7 +558,7 @@ vlan_down(struct ifvlan *ifv)
 
 	ifq_barrier(&ifp->if_snd);
 
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 	if (ifp0 != NULL) {
 		if_ih_remove(ifp0, vlan_input, NULL);
 		if (ISSET(ifv->ifv_flags, IFVF_PROMISC))
@@ -591,7 +591,7 @@ vlan_ifdetach(void *v)
 		CLR(ifp->if_flags, IFF_UP);
 	}
 
-	ifv->ifv_ifp0 = 0;
+	ifv->ifv_ifidx0 = 0;
 }
 
 void
@@ -603,7 +603,7 @@ vlan_link_hook(void *v)
 	u_char link = LINK_STATE_DOWN;
 	uint64_t baud = 0;
 
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 	if (ifp0 != NULL) {
 		link = ifp0->if_link_state;
 		baud = ifp0->if_baudrate;
@@ -682,7 +682,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGIFPARENT:
-		ifp0 = if_get(ifv->ifv_ifp0);
+		ifp0 = if_get(ifv->ifv_ifidx0);
 		if (ifp0 == NULL)
 			error = EADDRNOTAVAIL;
 		else {
@@ -766,7 +766,7 @@ vlan_iff(struct ifvlan *ifv)
 		return (0);
 
 	if (ISSET(ifv->ifv_if.if_flags, IFF_RUNNING)) {
-		ifp0 = if_get(ifv->ifv_ifp0);
+		ifp0 = if_get(ifv->ifv_ifidx0);
 		if (ifp0 != NULL)
 			error = ifpromisc(ifp0, promisc);
 		if_put(ifp0);
@@ -792,7 +792,7 @@ vlan_setlladdr(struct ifvlan *ifv, struct ifreq *ifr)
 
 	/* setting the mac addr to 00:00:00:00:00:00 means reset lladdr */
 	if (memcmp(lladdr, etheranyaddr, sizeof(lladdr)) == 0) {
-		ifp0 = if_get(ifv->ifv_ifp0);
+		ifp0 = if_get(ifv->ifv_ifidx0);
 		if (ifp0 != NULL)
 			memcpy(lladdr, LLADDR(ifp0->if_sadl), sizeof(lladdr));
 		if_put(ifp0);
@@ -833,7 +833,7 @@ vlan_set_vnetid(struct ifvlan *ifv, uint16_t tag)
 	if (error != 0)
 		return (error);
 
-	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifp0, tag);
+	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifidx0, tag);
 	if (error != 0)
 		goto unlock;
 
@@ -871,7 +871,7 @@ vlan_set_parent(struct ifvlan *ifv, const char *parent)
 	if (ifp0->if_type != IFT_ETHER)
 		return (EPROTONOSUPPORT);
 
-	if (ifv->ifv_ifp0 == ifp0->if_index) {
+	if (ifv->ifv_ifidx0 == ifp0->if_index) {
 		/* nop */
 		return (0);
 	}
@@ -884,7 +884,7 @@ vlan_set_parent(struct ifvlan *ifv, const char *parent)
 		return (error);
 
 	/* commit */
-	ifv->ifv_ifp0 = ifp0->if_index;
+	ifv->ifv_ifidx0 = ifp0->if_index;
 	if (!ISSET(ifv->ifv_flags, IFVF_LLADDR))
 		if_setlladdr(ifp, LLADDR(ifp0->if_sadl));
 
@@ -900,7 +900,7 @@ vlan_del_parent(struct ifvlan *ifv)
 		return (EBUSY);
 
 	/* commit */
-	ifv->ifv_ifp0 = 0;
+	ifv->ifv_ifidx0 = 0;
 	if (!ISSET(ifv->ifv_flags, IFVF_LLADDR))
 		if_setlladdr(ifp, etheranyaddr);
 
@@ -956,7 +956,7 @@ vlan_get_compat(struct ifnet *ifp, struct ifreq *ifr)
 	struct ifnet *p;
 
 	memset(&vlr, 0, sizeof(vlr));
-	p = if_get(ifv->ifv_ifp0);
+	p = if_get(ifv->ifv_ifidx0);
 	if (p != NULL)
 		memcpy(vlr.vlr_parent, p->if_xname, sizeof(vlr.vlr_parent));
 	if_put(p);
@@ -1000,7 +1000,7 @@ vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 	SRPL_FOREACH_LOCKED(ifv, list, ifv_list) {
 		if (ifv->ifv_tag == tag &&
 		    ifv->ifv_type == type && /* wat */
-		    ifv->ifv_ifp0 == ifidx)
+		    ifv->ifv_ifidx0 == ifidx)
 			return (EADDRINUSE);
 	}
 
@@ -1038,7 +1038,7 @@ vlan_multi_add(struct ifvlan *ifv, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
 	LIST_INSERT_HEAD(&ifv->vlan_mc_listhead, mc, mc_entries);
 
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCADDMULTI, (caddr_t)ifr);
 	if_put(ifp0);
@@ -1092,7 +1092,7 @@ vlan_multi_del(struct ifvlan *ifv, struct ifreq *ifr)
 	if (!ISSET(ifv->ifv_if.if_flags, IFF_RUNNING))
 		goto forget;
 
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCDELMULTI, (caddr_t)ifr);
 	if_put(ifp0);
@@ -1116,7 +1116,7 @@ vlan_media_get(struct ifvlan *ifv, struct ifreq *ifr)
 	struct ifnet		*ifp0;
 	int			 error;
 
-	ifp0 = if_get(ifv->ifv_ifp0);
+	ifp0 = if_get(ifv->ifv_ifidx0);
 	error = (ifp0 == NULL) ? ENOTTY :
 	    (*ifp0->if_ioctl)(ifp0, SIOCGIFMEDIA, (caddr_t)ifr);
 	if_put(ifp0);
