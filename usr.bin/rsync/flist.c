@@ -1,6 +1,7 @@
-/*	$Id: flist.c,v 1.15 2019/02/16 10:48:05 florian Exp $ */
+/*	$Id: flist.c,v 1.16 2019/02/16 10:49:37 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
