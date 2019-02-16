@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.16 2019/02/16 17:59:33 deraadt Exp $ */
+/*	$Id: extern.h,v 1.17 2019/02/16 23:16:54 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -199,9 +199,7 @@ struct	ident {
 struct	download;
 struct	upload;
 
-#ifndef MIN
-# define MIN(_x1, _x2) ((_x1) < (_x2) ? (_x1) : (_x2))
-#endif
+#define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
 
 #define LOG0(_sess, _fmt, ...) \
 	rsync_log((_sess), __FILE__, __LINE__, -1, (_fmt), ##__VA_ARGS__)
