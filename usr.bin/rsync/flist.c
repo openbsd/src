@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.13 2019/02/14 18:26:52 florian Exp $ */
+/*	$Id: flist.c,v 1.14 2019/02/16 05:06:30 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1146,8 +1146,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 				cargv[j] = NULL;
 				goto out;
 			}
-			LOG4(sess, "%s: will scan "
-				"for deletions", cargv[j]);
+			LOG4(sess, "%s: will scan for deletions", cargv[j]);
 			j++;
 		}
 		assert(j == cargvs);

@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: io.c,v 1.5 2019/02/16 05:06:30 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -48,8 +48,8 @@ io_read_check(struct sess *sess, int fd)
  * Returns zero on failure, non-zero on success (zero or more bytes).
  */
 static int
-io_write_nonblocking(struct sess *sess,
-	int fd, const void *buf, size_t bsz, size_t *sz)
+io_write_nonblocking(struct sess *sess, int fd, const void *buf, size_t bsz,
+    size_t *sz)
 {
 	struct pollfd	pfd;
 	ssize_t		wsz;
@@ -91,8 +91,7 @@ io_write_nonblocking(struct sess *sess,
  * Returns 0 on failure, non-zero on success (all bytes written).
  */
 static int
-io_write_blocking(struct sess *sess,
-	int fd, const void *buf, size_t sz)
+io_write_blocking(struct sess *sess, int fd, const void *buf, size_t sz)
 {
 	size_t		wsz;
 	int		c;
@@ -540,8 +539,7 @@ io_unbuffer_int(struct sess *sess, const void *buf,
 {
 	int32_t	oval;
 
-	io_unbuffer_buf(sess, buf, bufpos,
-		bufsz, &oval, sizeof(int32_t));
+	io_unbuffer_buf(sess, buf, bufpos, bufsz, &oval, sizeof(int32_t));
 	*val = le32toh(oval);
 }
 

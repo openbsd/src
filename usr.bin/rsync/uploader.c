@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.6 2019/02/14 18:31:01 florian Exp $ */
+/*	$Id: uploader.c,v 1.7 2019/02/16 05:06:30 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,8 +71,7 @@ log_dir(struct sess *sess, const struct flist *f)
 		return;
 	sz = strlen(f->path);
 	assert(sz > 0);
-	LOG1(sess, "%s%s", f->path,
-		'/' == f->path[sz - 1] ? "" : "/");
+	LOG1(sess, "%s%s", f->path, ('/' == f->path[sz - 1]) ? "" : "/");
 }
 
 /*
@@ -247,8 +246,7 @@ pre_link(struct upload *p, struct sess *sess)
 		tv[0].tv_nsec = 0;
 		tv[1].tv_sec = f->st.mtime;
 		tv[1].tv_nsec = 0;
-		rc = utimensat(p->rootfd,
-			f->path, tv, AT_SYMLINK_NOFOLLOW);
+		rc = utimensat(p->rootfd, f->path, tv, AT_SYMLINK_NOFOLLOW);
 		if (rc == -1) {
 			ERR(sess, "%s: utimensat", f->path);
 			return -1;
@@ -262,8 +260,7 @@ pre_link(struct upload *p, struct sess *sess)
 	 */
 
 	if (newlink || sess->opts->preserve_perms) {
-		rc = fchmodat(p->rootfd,
-			f->path, f->st.mode, AT_SYMLINK_NOFOLLOW);
+		rc = fchmodat(p->rootfd, f->path, f->st.mode, AT_SYMLINK_NOFOLLOW);
 		if (rc == -1) {
 			ERR(sess, "%s: fchmodat", f->path);
 			return -1;
@@ -670,8 +667,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 	if (*fileinfd != -1 && st.st_size > 0) {
 		mapsz = st.st_size;
-		map = mmap(NULL, mapsz,
-			PROT_READ, MAP_SHARED, *fileinfd, 0);
+		map = mmap(NULL, mapsz, PROT_READ, MAP_SHARED, *fileinfd, 0);
 		if (map == MAP_FAILED) {
 			WARN(sess, "%s: mmap", u->fl[u->idx].path);
 			close(*fileinfd);

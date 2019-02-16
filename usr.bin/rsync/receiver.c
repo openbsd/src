@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.8 2019/02/14 18:30:11 florian Exp $ */
+/*	$Id: receiver.c,v 1.9 2019/02/16 05:06:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -94,8 +94,7 @@ rsync_set_metadata(struct sess *sess, int newfile,
  * Pledges (dry-run): -cpath, -wpath, -fattr.
  */
 int
-rsync_receiver(struct sess *sess,
-	int fdin, int fdout, const char *root)
+rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 {
 	struct flist	*fl = NULL, *dfl = NULL;
 	size_t		 i, flsz = 0, dflsz = 0, excl;

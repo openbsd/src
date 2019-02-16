@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.6 2019/02/12 19:20:15 benno Exp $ */
+/*	$Id: socket.c,v 1.7 2019/02/16 05:06:30 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,13 +71,11 @@ inet_connect(struct sess *sess, int *sd,
 	 * while waiting for this to finish.
 	 */
 
-	c = connect(*sd,
-		(const struct sockaddr *)&src->sa,
-		src->salen);
+	c = connect(*sd, (const struct sockaddr *)&src->sa, src->salen);
 	if (c == -1) {
 		if (errno == ECONNREFUSED || errno == EHOSTUNREACH) {
-			WARNX(sess, "connect refused: "
-				"%s, %s", src->ip, host);
+			WARNX(sess, "connect refused: %s, %s",
+			    src->ip, host);
 			return 0;
 		}
 		ERR(sess, "connect");
@@ -124,11 +122,11 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 
 	if (error == EAI_AGAIN || error == EAI_NONAME) {
 		ERRX(sess, "DNS resolve error: %s: %s",
-			host, gai_strerror(error));
+		    host, gai_strerror(error));
 		return NULL;
 	} else if (error) {
 		ERRX(sess, "DNS parse error: %s: %s",
-			host, gai_strerror(error));
+		    host, gai_strerror(error));
 		return NULL;
 	}
 
@@ -170,13 +168,13 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 		if (res->ai_family == AF_INET) {
 			src[i].family = PF_INET;
 			inet_ntop(AF_INET,
-				&(((struct sockaddr_in *)sa)->sin_addr),
-				src[i].ip, INET6_ADDRSTRLEN);
+			    &(((struct sockaddr_in *)sa)->sin_addr),
+			    src[i].ip, INET6_ADDRSTRLEN);
 		} else {
 			src[i].family = PF_INET6;
 			inet_ntop(AF_INET6,
-				&(((struct sockaddr_in6 *)sa)->sin6_addr),
-				src[i].ip, INET6_ADDRSTRLEN);
+			    &(((struct sockaddr_in6 *)sa)->sin6_addr),
+			    src[i].ip, INET6_ADDRSTRLEN);
 		}
 
 		LOG2(sess, "DNS resolved: %s: %s", host, src[i].ip);

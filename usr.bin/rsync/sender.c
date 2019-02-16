@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.6 2019/02/12 17:58:35 benno Exp $ */
+/*	$Id: sender.c,v 1.7 2019/02/16 05:06:30 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,7 +62,7 @@ rsync_sender(struct sess *sess, int fdin,
 	/* Client sends zero-length exclusions if deleting. */
 
 	if (!sess->opts->server && sess->opts->del &&
-	     !io_write_int(sess, fdout, 0)) {
+	    !io_write_int(sess, fdout, 0)) {
 		ERRX1(sess, "io_write_int");
 		goto out;
 	}
