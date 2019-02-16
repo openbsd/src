@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.20 2019/02/16 17:05:21 deraadt Exp $ */
+/*	$Id: main.c,v 1.21 2019/02/16 17:36:07 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -287,12 +287,13 @@ main(int argc, char *argv[])
 	int		 fds[2], c, st;
 	struct fargs	*fargs;
 	struct option	 lopts[] = {
-		{ "rsync-path",	required_argument, NULL,		1 },
 		{ "rsh",	required_argument, NULL,		'e' },
+		{ "rsync-path",	required_argument, NULL,		1 },
 		{ "sender",	no_argument,	&opts.sender,		1 },
 		{ "server",	no_argument,	&opts.server,		1 },
 		{ "dry-run",	no_argument,	&opts.dry_run,		1 },
 		{ "version",	no_argument,	NULL,			2 },
+		{ "help",	no_argument,	NULL,			'h' },
 		{ "delete",	no_argument,	&opts.del,		1 },
 		{ "no-delete",	no_argument,	&opts.del,		0 },
 		{ "devices",	no_argument,	&opts.devices,		1 },
@@ -308,7 +309,7 @@ main(int argc, char *argv[])
 		{ "recursive",	no_argument,	&opts.recursive,	1 },
 		{ "no-recursive", no_argument,	&opts.recursive,	0 },
 		{ "specials",	no_argument,	&opts.specials,		1 },
-		{ "no-specials",	no_argument,	&opts.specials,	0 },
+		{ "no-specials", no_argument,	&opts.specials,		0 },
 		{ "times",	no_argument,	&opts.preserve_times,	1 },
 		{ "no-times",	no_argument,	&opts.preserve_times,	0 },
 		{ "verbose",	no_argument,	&opts.verbose,		1 },
@@ -323,7 +324,7 @@ main(int argc, char *argv[])
 
 	memset(&opts, 0, sizeof(struct opts));
 
-	while ((c = getopt_long(argc, argv, "Dae:glnoprtv", lopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtv", lopts, NULL)) != -1) {
 		switch (c) {
 		case 'D':
 			opts.devices = 1;
@@ -377,6 +378,7 @@ main(int argc, char *argv[])
 			fprintf(stderr, "openrsync: protocol version %u\n",
 			    RSYNC_PROTOCOL);
 			exit(0);
+		case 'h':
 		default:
 			goto usage;
 		}
