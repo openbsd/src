@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.163 2019/01/19 21:07:13 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.164 2019/02/16 18:42:07 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -92,6 +92,8 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (quit == RESTART) {
 			quit = 0;
 			time(&ifi->startup_time);
+			free(ifi->configured);
+			ifi->configured = NULL;
 			ifi->state = S_PREBOOT;
 			state_preboot(ifi);
 		}
