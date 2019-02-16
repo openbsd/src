@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.16 2019/02/16 10:49:37 florian Exp $ */
+/*	$Id: flist.c,v 1.17 2019/02/16 16:25:45 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -346,6 +346,18 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 			}
 		}
 
+		/* Conditional part: devices & special files. */
+
+		if ((sess->opts->devices && (S_ISBLK(f->st.mode) ||
+		     S_ISCHR(f->st.mode))) ||
+		    (sess->opts->specials && (S_ISFIFO(f->st.mode) ||
+		    S_ISSOCK(f->st.mode)))) {
+			if (!io_write_int(sess, fdout, f->st.rdev)) {
+				ERRX1(sess, "io_write_int");
+				goto out;
+			}
+		}
+
 		/* Conditional part: link. */
 
 		if (S_ISLNK(f->st.mode) &&
@@ -357,14 +369,6 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 				goto out;
 			}
 			if (!io_write_buf(sess, fdout, fn, sz)) {
-				ERRX1(sess, "io_write_int");
-				goto out;
-			}
-		}
-
-		if (S_ISBLK(f->st.mode) || S_ISCHR(f->st.mode) ||
-		    S_ISFIFO(f->st.mode) || S_ISSOCK(f->st.mode)) {
-			if (!io_write_int(sess, fdout, f->st.rdev)) {
 				ERRX1(sess, "io_write_int");
 				goto out;
 			}
@@ -682,10 +686,10 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 				ff->st.gid = fflast->st.gid;
 		}
 
-		/* handle devices & special files*/
+		/* Conditional part: devices & special files. */
 
 		if ((sess->opts->devices && (S_ISBLK(ff->st.mode) ||
-		    S_ISCHR(ff->st.mode))) ||
+		     S_ISCHR(ff->st.mode))) ||
 		    (sess->opts->specials && (S_ISFIFO(ff->st.mode) ||
 		    S_ISSOCK(ff->st.mode)))) {
 			if (!(FLIST_RDEV_SAME & flag)) {
@@ -695,7 +699,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 				}
 				ff->st.rdev = ival;
 			} else if (fflast == NULL) {
-				ERRX(sess, "same mode without last entry");
+				ERRX(sess, "same device without last entry");
 				goto out;
 			} else
 				ff->st.rdev = fflast->st.rdev;
