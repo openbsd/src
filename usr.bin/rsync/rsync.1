@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.4 2019/02/14 18:31:01 florian Exp $
+.\"	$OpenBSD: rsync.1,v 1.5 2019/02/16 17:07:21 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2019 $
+.Dd $Mdocdate: February 16 2019 $
 .Dt RSYNC 1
 .Os
 .Sh NAME
@@ -100,6 +100,8 @@ Run
 .Ar prog
 on the remote host instead of the default
 .Ar rsync .
+.It Fl -version
+Print version and exit.
 .El
 .Pp
 A remote
