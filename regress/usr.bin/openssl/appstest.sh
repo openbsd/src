@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.15 2018/09/15 13:26:13 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.16 2019/02/16 02:39:18 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -353,6 +353,10 @@ function test_key {
 	$openssl_bin genpkey -paramfile $genpkey_ec_param -out $genpkey_ec
 	check_exit_status $?
 	
+	genpkey_ec_2=$key_dir/genpkey_ec_2.pem
+	$openssl_bin genpkey -paramfile $genpkey_ec_param -out $genpkey_ec_2
+	check_exit_status $?
+	
 	start_message "pkeyparam"
 	
 	$openssl_bin pkeyparam -in $genpkey_dh_param -text \
@@ -369,16 +373,24 @@ function test_key {
 	
 	start_message "pkey"
 	
-	$openssl_bin pkey -in $genpkey_dh -text -out $genpkey_dh.out
+	$openssl_bin pkey -in $genpkey_dh -pubout -out $genpkey_dh.pub \
+		-text_pub
 	check_exit_status $?
 	
-	$openssl_bin pkey -in $genpkey_dsa -text -out $genpkey_dsa.out
+	$openssl_bin pkey -in $genpkey_dsa -pubout -out $genpkey_dsa.pub \
+		-text_pub
 	check_exit_status $?
 	
-	$openssl_bin pkey -in $genpkey_rsa -text -out $genpkey_rsa.out
+	$openssl_bin pkey -in $genpkey_rsa -pubout -out $genpkey_rsa.pub \
+		-text_pub
 	check_exit_status $?
 	
-	$openssl_bin pkey -in $genpkey_ec -text -out $genpkey_ec.out
+	$openssl_bin pkey -in $genpkey_ec -pubout -out $genpkey_ec.pub \
+		-text_pub
+	check_exit_status $?
+	
+	$openssl_bin pkey -in $genpkey_ec_2 -pubout -out $genpkey_ec_2.pub \
+		-text_pub
 	check_exit_status $?
 	
 	start_message "pkeyutl"
@@ -387,7 +399,7 @@ function test_key {
 	pkeyutlsig=$key_dir/pkeyutl.sig
 	echo "abcdefghijklmnopqrstuvwxyz1234567890" > $pkeyutldat
 	
-	$openssl_bin pkeyutl -sign -in  $pkeyutldat -inkey $genpkey_rsa \
+	$openssl_bin pkeyutl -sign -in $pkeyutldat -inkey $genpkey_rsa \
 		-out $pkeyutlsig
 	check_exit_status $?
 	
@@ -396,6 +408,34 @@ function test_key {
 	check_exit_status $?
 	
 	$openssl_bin pkeyutl -verifyrecover -in $pkeyutlsig -inkey $genpkey_rsa
+	check_exit_status $?
+
+	pkeyutlenc=$key_dir/pkeyutl.enc
+	pkeyutldec=$key_dir/pkeyutl.dec
+
+	$openssl_bin pkeyutl -encrypt -in $pkeyutldat \
+		-pubin -inkey $genpkey_rsa.pub -out $pkeyutlenc
+	check_exit_status $?
+
+	$openssl_bin pkeyutl -decrypt -in $pkeyutlenc \
+		-inkey $genpkey_rsa -out $pkeyutldec
+	check_exit_status $?
+
+	diff $pkeyutldat $pkeyutldec
+	check_exit_status $?
+
+	pkeyutlsc1=$key_dir/pkeyutl.sc1
+	pkeyutlsc2=$key_dir/pkeyutl.sc2
+
+	$openssl_bin pkeyutl -derive -inkey $genpkey_ec \
+		-peerkey $genpkey_ec_2.pub -out $pkeyutlsc1 -hexdump
+	check_exit_status $?
+
+	$openssl_bin pkeyutl -derive -inkey $genpkey_ec_2 \
+		-peerkey $genpkey_ec.pub -out $pkeyutlsc2 -hexdump
+	check_exit_status $?
+
+	diff $pkeyutlsc1 $pkeyutlsc2
 	check_exit_status $?
 }
 
