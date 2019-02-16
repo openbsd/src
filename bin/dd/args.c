@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.30 2018/07/25 15:09:48 cheloha Exp $	*/
+/*	$OpenBSD: args.c,v 1.31 2019/02/16 10:54:00 bluhm Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -274,6 +274,7 @@ static const struct conv {
 	{ "ascii",	C_ASCII,	C_EBCDIC,	e2a_POSIX },
 	{ "block",	C_BLOCK,	C_UNBLOCK,	NULL },
 	{ "ebcdic",	C_EBCDIC,	C_ASCII,	a2e_POSIX },
+	{ "fsync",	C_FSYNC,	0,		NULL },
 	{ "ibm",	C_EBCDIC,	C_ASCII,	a2ibm_POSIX },
 	{ "lcase",	C_LCASE,	C_UCASE,	NULL },
 	{ "osync",	C_OSYNC,	C_BS,		NULL },

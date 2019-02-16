@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.25 2018/07/23 23:09:37 cheloha Exp $	*/
+/*	$OpenBSD: dd.c,v 1.26 2019/02/16 10:54:00 bluhm Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -347,6 +347,10 @@ dd_close(void)
 	}
 	if (out.dbcnt)
 		dd_out(1);
+	if (ddflags & C_FSYNC) {
+		if (fsync(out.fd) == -1)
+			err(1, "fsync %s", out.name);
+	}
 }
 
 void
