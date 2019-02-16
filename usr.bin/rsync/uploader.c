@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.7 2019/02/16 05:06:30 deraadt Exp $ */
+/*	$Id: uploader.c,v 1.8 2019/02/16 05:30:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -242,8 +242,10 @@ pre_link(struct upload *p, struct sess *sess)
 	 */
 
 	if (sess->opts->preserve_times) {
-		tv[0].tv_sec = time(NULL);
-		tv[0].tv_nsec = 0;
+		struct timeval now;
+
+		gettimeofday(&now, NULL);
+		TIMEVAL_TO_TIMESPEC(&now, &tv[0]);
 		tv[1].tv_sec = f->st.mtime;
 		tv[1].tv_nsec = 0;
 		rc = utimensat(p->rootfd, f->path, tv, AT_SYMLINK_NOFOLLOW);
