@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.5 2019/02/16 17:07:21 deraadt Exp $
+.\"	$OpenBSD: rsync.1,v 1.6 2019/02/16 17:43:06 florian Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -43,6 +43,25 @@ may be remote,
 but not both.
 The arguments are as follows:
 .Bl -tag -width Ds
+.It Fl a , Fl -archive
+Archive mode.
+Shorthand for
+.Fl D ,
+.Fl g ,
+.Fl l ,
+.Fl o ,
+.Fl p ,
+.Fl r ,
+and
+.Fl t .
+.It Fl D
+Transfer device and special files.
+Shorthand for
+.Fl -devices
+and
+.Fl specials .
+.It Fl -devices
+Transfer device files.
 .It Fl g
 Set group identifier to match the source.
 Groups are matched by name: group
@@ -79,6 +98,8 @@ directory.
 If
 .Ar source
 is a file, this has no effect.
+.It Fl -specials
+Transfer fifo and unix domain socket files.
 .It Fl t
 Set destination file and directory modification time to match the source
 when it is updated or created.
