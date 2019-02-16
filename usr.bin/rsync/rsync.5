@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.5,v 1.6 2019/02/14 18:27:39 florian Exp $
+.\"	$OpenBSD: rsync.5,v 1.7 2019/02/16 16:26:45 florian Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 14 2019 $
+.Dd $Mdocdate: February 16 2019 $
 .Dt RSYNC 5
 .Os
 .Sh NAME
@@ -40,12 +40,14 @@ command-line given file locations.
 There are a number of options in the protocol that are dictated by command-line
 flags.
 These will be noted as
-.Fl n
-for dry-run,
+.Fl D
+for devices,
 .Fl g
 for group ids,
 .Fl l
 for links,
+.Fl n
+for dry-run,
 .Fl o
 for user ids,
 .Fl r
@@ -229,6 +231,12 @@ the user id (integer)
 if
 .Fl g ,
 the group id (integer)
+.It
+if a special file and
+.Fl D ,
+the device 
+.Dq rdev
+type (integer)
 .It
 if a symbolic link and
 .Fl l ,
