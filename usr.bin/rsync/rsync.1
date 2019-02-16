@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.6 2019/02/16 17:43:06 florian Exp $
+.\"	$OpenBSD: rsync.1,v 1.7 2019/02/16 17:51:46 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -62,7 +62,7 @@ and
 .Fl specials .
 .It Fl -devices
 Transfer device files.
-.It Fl g
+.It Fl g , Fl -group
 Set group identifier to match the source.
 Groups are matched by name: group
 .Qq kristaps
@@ -71,22 +71,22 @@ with id 1000 on a remote server will be properly assigned group
 on the local machine with id 2000.
 If the sender's group is unknown on the local machine, it is used
 verbatim.
-.It Fl l
+.It Fl l , Fl -links
 Transfer symbolic links.
 The link is transferred as a standalone file: if the destination does
 not exist, it will be broken.
-.It Fl n
+.It Fl n , Fl -dry-run
 Dry-run mode.
 Does not actually modify the destination.
-.It Fl o
+.It Fl o , Fl -owner
 Set user identifier to match the source.
 This behaves like
 .Fl g
 and only works if run as root.
-.It Fl p
+.It Fl p , Fl -perms
 Set destination file or directory permissions to match the source when
 it is updated.
-.It Fl r
+.It Fl r , Fl -recursive
 If
 .Ar source
 designates a directory, synchronise the directory and the entire subtree
@@ -100,10 +100,10 @@ If
 is a file, this has no effect.
 .It Fl -specials
 Transfer fifo and unix domain socket files.
-.It Fl t
+.It Fl t , Fl -times
 Set destination file and directory modification time to match the source
 when it is updated or created.
-.It Fl v
+.It Fl v , Fl -verbose
 Increase verbosity.
 Specify once for files being transferred, twice for specific status,
 thrice for per-file transfer information, and four times for per-file
