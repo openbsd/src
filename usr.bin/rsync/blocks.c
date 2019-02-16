@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.6 2019/02/13 05:41:35 tb Exp $ */
+/*	$Id: blocks.c,v 1.7 2019/02/16 16:57:17 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,13 +14,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/mman.h>
 #include <sys/stat.h>
 
 #include <assert.h>
 #include <endian.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +32,6 @@
 /*
  * Flush out "size" bytes of the buffer, doing all of the appropriate
  * chunking of the data, then the subsequent token (or zero).
- * This is symmetrised in blk_merge().
  * Return zero on failure, non-zero on success.
  */
 static int
@@ -150,6 +147,8 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 
 /*
  * The main reconstruction algorithm on the sender side.
+ * This is reentrant: it's meant to be called whenever "fd" unblocks for
+ * writing by the sender.
  * Scans byte-wise over the input file, looking for matching blocks in
  * what the server sent us.
  * If a block is found, emit all data up until the block, then the token
@@ -159,13 +158,11 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
  */
 static int
 blk_match_send(struct sess *sess, const char *path, int fd,
-	const void *buf, off_t size, const struct blkset *blks)
+	const struct blkset *blks, struct blkstat *st)
 {
-	off_t		 offs, last, end, fromcopy = 0, fromdown = 0,
-			 total = 0, sz;
+	off_t		 last, end, sz;
 	int32_t		 tok;
 	struct blk	*blk;
-	size_t		 hint = 0;
 
 	/*
 	 * Stop searching at the length of the file minus the size of
@@ -175,20 +172,20 @@ blk_match_send(struct sess *sess, const char *path, int fd,
 	 * it doesn't match.
 	 */
 
-	end = size + 1 - blks->blks[blks->blksz - 1].len;
+	end = st->mapsz + 1 - blks->blks[blks->blksz - 1].len;
+	last = st->offs;
 
-	for (last = offs = 0; offs < end; offs++) {
-		blk = blk_find(sess, buf, size,
-			offs, blks, path, hint);
+	for ( ; st->offs < end; st->offs++) {
+		blk = blk_find(sess, st->map, st->mapsz,
+			st->offs, blks, path, st->hint);
 		if (blk == NULL)
 			continue;
 
-		sz = offs - last;
-		fromdown += sz;
-		total += sz;
+		sz = st->offs - last;
+		st->dirty += sz;
+		st->total += sz;
 		LOG4(sess, "%s: flushing %jd B before %zu B "
-			"block %zu", path, (intmax_t)sz, blk->len,
-			blk->idx);
+			"block %zu", path, (intmax_t)sz, blk->len, blk->idx);
 		tok = -(blk->idx + 1);
 
 		/*
@@ -198,96 +195,71 @@ blk_match_send(struct sess *sess, const char *path, int fd,
 		 * it already has in the matching block.
 		 */
 
-		if (!blk_flush(sess, fd, buf + last, sz, tok)) {
+		if (!blk_flush(sess, fd, st->map + last, sz, tok)) {
 			ERRX1(sess, "blk_flush");
-			return 0;
+			return -1;
 		}
 
-		fromcopy += blk->len;
-		total += blk->len;
-		offs += blk->len - 1;
-		last = offs + 1;
-		hint = blk->idx + 1;
+		st->total += blk->len;
+		st->offs += blk->len;
+		st->hint = blk->idx + 1;
+		return 0;
 	}
 
 	/* Emit remaining data and send terminator token. */
 
-	sz = size - last;
-	total += sz;
-	fromdown += sz;
+	sz = st->mapsz - last;
+	st->total += sz;
+	st->dirty += sz;
 
 	LOG4(sess, "%s: flushing remaining %jd B", path, (intmax_t)sz);
 
-	if (!blk_flush(sess, fd, buf + last, sz, 0)) {
+	if (!blk_flush(sess, fd, st->map + last, sz, 0)) {
 		ERRX1(sess, "blk_flush");
-		return 0;
+		return -1;
 	}
 
 	LOG3(sess, "%s: flushed (chunked) %jd B total, "
-		"%.2f%% upload ratio", path, (intmax_t)total,
-		100.0 * fromdown / total);
+		"%.2f%% upload ratio", path, (intmax_t)st->total,
+		100.0 * st->dirty / st->total);
 	return 1;
 }
 
 /*
  * Given a local file "path" and the blocks created by a remote machine,
  * find out which blocks of our file they don't have and send them.
- * Return zero on failure, non-zero on success.
+ * This function is reentrant: it must be called while there's still
+ * data to send.
+ * Return 0 if there's more data to send, >0 if the file has completed
+ * its update, or <0 on error.
  */
 int
-blk_match(struct sess *sess, int fd,
-	const struct blkset *blks, const char *path)
+blk_match(struct sess *sess, int fd, const struct blkset *blks,
+	const char *path, struct blkstat *st)
 {
-	int		 nfd = -1, rc = 0, c;
-	struct stat	 st;
-	void		*map = MAP_FAILED;
-	size_t		 mapsz;
 	unsigned char	 filemd[MD4_DIGEST_LENGTH];
-
-	/* Start by mapping our file into memory. */
-
-	if ((nfd = open(path, O_RDONLY, 0)) == -1) {
-		ERR(sess, "%s: open", path);
-		goto out;
-	} else if (fstat(nfd, &st) == -1) {
-		ERR(sess, "%s: fstat", path);
-		goto out;
-	}
-
-	/*
-	 * We might possibly have a zero-length file, in which case the
-	 * mmap() will fail, so only do this with non-zero files.
-	 */
-
-	if ((mapsz = st.st_size) > 0) {
-		map = mmap(NULL, mapsz, PROT_READ, MAP_SHARED, nfd, 0);
-		if (map == MAP_FAILED) {
-			ERR(sess, "%s: mmap", path);
-			goto out;
-		}
-	}
+	int		 c;
 
 	/*
 	 * If the file's empty or we don't have any blocks from the
 	 * sender, then simply send the whole file.
 	 * Otherwise, run the hash matching routine and send raw chunks
 	 * and subsequent matching tokens.
-	 * This part broadly symmetrises blk_merge().
 	 */
 
-	if (st.st_size && blks->blksz) {
-		c = blk_match_send(sess, path, fd, map, st.st_size, blks);
-		if (!c) {
+	if (st->mapsz && blks->blksz) {
+		if ((c = blk_match_send(sess, path, fd, blks, st)) < 0) {
 			ERRX1(sess, "blk_match_send");
-			goto out;
-		}
+			return -1;
+		} else if (c == 0)
+			return 0;
 	} else {
-		if (!blk_flush(sess, fd, map, st.st_size, 0)) {
+		if (!blk_flush(sess, fd, st->map, st->mapsz, 0)) {
 			ERRX1(sess, "blk_flush");
-			goto out;
+			return -1;
 		}
 		LOG3(sess, "%s: flushed (un-chunked) %jd B, 100%% upload ratio",
-		    path, (intmax_t)st.st_size);
+		    path, (intmax_t)st->mapsz);
 	}
 
 	/*
@@ -296,31 +268,14 @@ blk_match(struct sess *sess, int fd,
 	 * of data even if the file's zero-length.
 	 */
 
-	hash_file(map, st.st_size, filemd, sess);
+	hash_file(st->map, st->mapsz, filemd, sess);
 
 	if (!io_write_buf(sess, fd, filemd, MD4_DIGEST_LENGTH)) {
 		ERRX1(sess, "io_write_buf");
-		goto out;
+		return -1;
 	}
 
-	rc = 1;
-out:
-	if (map != MAP_FAILED)
-		munmap(map, mapsz);
-	if (-1 != nfd)
-		close(nfd);
-	return rc;
-}
-
-/* FIXME: remove. */
-void
-blkset_free(struct blkset *p)
-{
-
-	if (p == NULL)
-		return;
-	free(p->blks);
-	free(p);
+	return 1;
 }
 
 /*
@@ -446,7 +401,8 @@ blk_recv(struct sess *sess, int fd, const char *path)
 		"blocked data", path, s->blksz, (intmax_t)s->size);
 	return s;
 out:
-	blkset_free(s);
+	free(s->blks);
+	free(s);
 	return NULL;
 }
 
@@ -489,132 +445,6 @@ blk_send_ack(struct sess *sess, int fd, struct blkset *p)
 		return 1;
 
 	return 0;
-}
-
-/*
- * The receiver now reads raw data and block indices from the sender,
- * and merges them into the temporary file.
- * Returns zero on failure, non-zero on success.
- */
-int
-blk_merge(struct sess *sess, int fd, int ffd,
-	const struct blkset *block, int outfd, const char *path,
-	const void *map, size_t mapsz, float *stats)
-{
-	size_t		 sz, tok;
-	int32_t		 rawtok;
-	char		*buf = NULL;
-	void		*pp;
-	ssize_t		 ssz;
-	int		 rc = 0;
-	unsigned char	 md[MD4_DIGEST_LENGTH],
-			 ourmd[MD4_DIGEST_LENGTH];
-	off_t		 total = 0, fromcopy = 0, fromdown = 0;
-	MD4_CTX		 ctx;
-
-	MD4_Init(&ctx);
-
-	rawtok = htole32(sess->seed);
-	MD4_Update(&ctx, (unsigned char *)&rawtok, sizeof(int32_t));
-
-	for (;;) {
-		/*
-		 * This matches the sequence in blk_flush().
-		 * We read the size/token, then optionally the data.
-		 * The size >0 for reading data, 0 for no more data, and
-		 * <0 for a token indicator.
-		 */
-
-		if (!io_read_int(sess, fd, &rawtok)) {
-			ERRX1(sess, "io_read_int");
-			goto out;
-		} else if (rawtok == 0)
-			break;
-
-		if (rawtok > 0) {
-			sz = rawtok;
-			if ((pp = realloc(buf, sz)) == NULL) {
-				ERR(sess, "realloc");
-				goto out;
-			}
-			buf = pp;
-			if (!io_read_buf(sess, fd, buf, sz)) {
-				ERRX1(sess, "io_read_int");
-				goto out;
-			}
-
-			if ((ssz = write(outfd, buf, sz)) < 0) {
-				ERR(sess, "write: temporary file");
-				goto out;
-			} else if ((size_t)ssz != sz) {
-				ERRX(sess, "write: short write");
-				goto out;
-			}
-
-			fromdown += sz;
-			total += sz;
-			LOG4(sess, "%s: received %zd B block, now %jd "
-				"B total", path, ssz, (intmax_t)total);
-
-			MD4_Update(&ctx, buf, sz);
-		} else {
-			tok = -rawtok - 1;
-			if (tok >= block->blksz) {
-				ERRX(sess, "token not in block set");
-				goto out;
-			}
-
-			/*
-			 * Now we read from our block.
-			 * We should only be at this point if we have a
-			 * block to read from, i.e., if we were able to
-			 * map our origin file and create a block
-			 * profile from it.
-			 */
-
-			assert(map != MAP_FAILED);
-
-			ssz = write(outfd,
-				map + block->blks[tok].offs,
-				block->blks[tok].len);
-
-			if (ssz < 0) {
-				ERR(sess, "write: temporary file");
-				goto out;
-			} else if ((size_t)ssz != block->blks[tok].len) {
-				ERRX(sess, "write: short write");
-				goto out;
-			}
-
-			fromcopy += block->blks[tok].len;
-			total += block->blks[tok].len;
-			LOG4(sess, "%s: copied %zu B, now %jd "
-				"B total", path, block->blks[tok].len,
-				(intmax_t)total);
-
-			MD4_Update(&ctx, map + block->blks[tok].offs,
-			    block->blks[tok].len);
-		}
-	}
-
-
-	/* Make sure our resulting MD4_ hashes match. */
-
-	MD4_Final(ourmd, &ctx);
-
-	if (!io_read_buf(sess, fd, md, MD4_DIGEST_LENGTH)) {
-		ERRX1(sess, "io_read_buf");
-		goto out;
-	} else if (memcmp(md, ourmd, MD4_DIGEST_LENGTH)) {
-		ERRX(sess, "%s: file hash does not match", path);
-		goto out;
-	}
-
-	*stats = 100.0 * fromdown / total;
-	rc = 1;
-out:
-	free(buf);
-	return rc;
 }
 
 /*

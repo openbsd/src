@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.5 2019/02/16 05:06:30 deraadt Exp $ */
+/*	$Id: io.c,v 1.6 2019/02/16 16:57:17 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,6 +53,7 @@ io_write_nonblocking(struct sess *sess, int fd, const void *buf, size_t bsz,
 {
 	struct pollfd	pfd;
 	ssize_t		wsz;
+	int		c;
 
 	*sz = 0;
 
@@ -62,10 +63,14 @@ io_write_nonblocking(struct sess *sess, int fd, const void *buf, size_t bsz,
 	pfd.fd = fd;
 	pfd.events = POLLOUT;
 
-	if (poll(&pfd, 1, INFTIM) < 0) {
+	if ((c = poll(&pfd, 1, POLL_TIMEOUT)) == -1) {
 		ERR(sess, "poll");
 		return 0;
+	} else if (c == 0) {
+		ERRX(sess, "poll: timeout");
+		return 0;
 	}
+
 	if ((pfd.revents & (POLLERR|POLLNVAL))) {
 		ERRX(sess, "poll: bad fd");
 		return 0;
@@ -178,6 +183,7 @@ io_read_nonblocking(struct sess *sess,
 {
 	struct pollfd	pfd;
 	ssize_t		rsz;
+	int		c;
 
 	*sz = 0;
 
@@ -187,10 +193,14 @@ io_read_nonblocking(struct sess *sess,
 	pfd.fd = fd;
 	pfd.events = POLLIN;
 
-	if (poll(&pfd, 1, INFTIM) < 0) {
+	if ((c = poll(&pfd, 1, POLL_TIMEOUT)) == -1) {
 		ERR(sess, "poll");
 		return 0;
+	} else if (c == 0) {
+		ERRX(sess, "poll: timeout");
+		return 0;
 	}
+
 	if ((pfd.revents & (POLLERR|POLLNVAL))) {
 		ERRX(sess, "poll: bad fd");
 		return 0;

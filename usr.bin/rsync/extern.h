@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.12 2019/02/16 10:48:05 florian Exp $ */
+/*	$Id: extern.h,v 1.13 2019/02/16 16:57:17 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -40,6 +40,8 @@
  */
 #define	CSUM_LENGTH_PHASE1 (2)
 #define	CSUM_LENGTH_PHASE2 (16)
+
+#define POLL_TIMEOUT	(10000)
 
 /*
  * Operating mode for a client or a server.
@@ -124,6 +126,19 @@ struct	blk {
 	size_t		 len; /* bytes in block */
 	uint32_t	 chksum_short; /* fast checksum */
 	unsigned char	 chksum_long[CSUM_LENGTH_PHASE2]; /* slow checksum */
+};
+
+/*
+ * Information for the sender updating receiver blocks reentrantly.
+ */
+struct	blkstat {
+	off_t	 offs;	/* position in sender file */
+	off_t	 total;	/* total amount processed */
+	off_t	 dirty;	/* total amount sent */
+	size_t	 hint;	/* optimisation: next probable block match */
+	void	*map;	/* mapped file or MAP_FAILED otherwise */
+	size_t	 mapsz;	/* size of file or zero */
+	int	 fd;	/* descriptor girding the map */
 };
 
 /*
@@ -285,15 +300,11 @@ void		  upload_free(struct upload *);
 struct blkset	 *blk_recv(struct sess *, int, const char *);
 int		  blk_recv_ack(struct sess *,
 			int, const struct blkset *, int32_t);
-int		  blk_match(struct sess *, int,
-			const struct blkset *, const char *);
+int		  blk_match(struct sess *, int, const struct blkset *,
+			const char *, struct blkstat *);
 int		  blk_send(struct sess *, int, size_t,
 			const struct blkset *, const char *);
 int		  blk_send_ack(struct sess *, int, struct blkset *);
-int		  blk_merge(struct sess *, int, int,
-			const struct blkset *, int, const char *,
-			const void *, size_t, float *);
-void		  blkset_free(struct blkset *);
 
 uint32_t	  hash_fast(const void *, size_t);
 void		  hash_slow(const void *, size_t,
