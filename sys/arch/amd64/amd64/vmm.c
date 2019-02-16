@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.227 2019/02/09 04:50:35 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.228 2019/02/16 01:55:48 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6172,7 +6172,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = *((uint32_t *)&vmm_hv_signature[8]);
 		break;
 	case 0x80000000:	/* Extended function level */
-		*rax = 0x80000007; /* curcpu()->ci_pnfeatset */
+		*rax = 0x80000008; /* curcpu()->ci_pnfeatset */
 		*rbx = 0;
 		*rcx = 0;
 		*rdx = 0;
@@ -6217,12 +6217,9 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		CPUID(0x80000007, *rax, *rbx, *rcx, *rdx);
 		break;
 	case 0x80000008:	/* Phys bits info and topology (AMD) */
-		DPRINTF("%s: function 0x80000008 (phys bits info) not "
-		    "supported\n", __func__);
-		*rax = 0;
-		*rbx = 0;
+		CPUID(0x80000008, *rax, *rbx, *rcx, *rdx);
+		/* Reset %rcx (topology) */
 		*rcx = 0;
-		*rdx = 0;
 		break;
 	default:
 		DPRINTF("%s: unsupported rax=0x%llx\n", __func__, *rax);
