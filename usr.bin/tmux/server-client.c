@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.264 2018/12/18 13:20:44 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.265 2019/02/16 11:42:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1982,6 +1982,8 @@ server_client_get_cwd(struct client *c, struct session *s)
 {
 	const char	*home;
 
+	if (!cfg_finished && cfg_client != NULL)
+		return (cfg_client->cwd);
 	if (c != NULL && c->session == NULL && c->cwd != NULL)
 		return (c->cwd);
 	if (s != NULL && s->cwd != NULL)

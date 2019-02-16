@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.852 2018/12/18 13:20:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.853 2019/02/16 11:42:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1527,6 +1527,7 @@ void	proc_toggle_log(struct tmuxproc *);
 
 /* cfg.c */
 extern int cfg_finished;
+extern struct client *cfg_client;
 void	start_cfg(void);
 int	load_cfg(const char *, struct client *, struct cmdq_item *, int);
 void	set_cfg_file(const char *);
