@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.17 2019/02/16 05:36:07 deraadt Exp $ */
+/*	$Id: main.c,v 1.18 2019/02/16 10:44:01 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -304,7 +304,7 @@ main(int argc, char *argv[])
 
 	/* Global pledge. */
 
-	if (pledge("stdio rpath wpath cpath inet fattr dns getpw proc exec unveil",
+	if (pledge("stdio rpath wpath cpath inet fattr chown dns getpw proc exec unveil",
 	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
@@ -370,7 +370,7 @@ main(int argc, char *argv[])
 	 */
 
 	if (opts.server) {
-		if (pledge("stdio rpath wpath cpath fattr getpw unveil", NULL) == -1)
+		if (pledge("stdio rpath wpath cpath fattr chown getpw unveil", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_server(&opts, (size_t)argc, argv);
 		return c ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -397,7 +397,7 @@ main(int argc, char *argv[])
 
 	if (fargs->remote) {
 		assert(fargs->mode == FARGS_RECEIVER);
-		if (pledge("stdio rpath wpath cpath inet fattr dns getpw unveil",
+		if (pledge("stdio rpath wpath cpath inet fattr chown dns getpw unveil",
 		    NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_socket(&opts, fargs);
@@ -407,7 +407,7 @@ main(int argc, char *argv[])
 
 	/* Drop the dns/inet possibility. */
 
-	if (pledge("stdio rpath wpath cpath fattr getpw proc exec unveil",
+	if (pledge("stdio rpath wpath cpath fattr chown getpw proc exec unveil",
 	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
@@ -424,7 +424,7 @@ main(int argc, char *argv[])
 
 	/* Drop the fork possibility. */
 
-	if (pledge("stdio rpath wpath cpath fattr getpw exec unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr chown getpw exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	if (child == 0) {
@@ -438,7 +438,7 @@ main(int argc, char *argv[])
 
 	close(fds[1]);
 	fds[1] = -1;
-	if (pledge("stdio rpath wpath cpath fattr getpw unveil", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr chown getpw unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 	c = rsync_client(&opts, fds[0], fargs);
 	fargs_free(fargs);

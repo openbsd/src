@@ -1,4 +1,4 @@
-/*	$Id: client.c,v 1.5 2019/02/16 05:06:30 deraadt Exp $ */
+/*	$Id: client.c,v 1.6 2019/02/16 10:44:01 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,9 +30,9 @@
  * In the former, it synchronises local files from a remote sink.
  * In the latter, the remote sink synchronses to the local files.
  *
- * Pledges: stdio, rpath, wpath, cpath, unveil, fattr.
+ * Pledges: stdio, rpath, wpath, cpath, unveil, fattr, chown.
  *
- * Pledges (dry-run): -cpath, -wpath, -fattr.
+ * Pledges (dry-run): -cpath, -wpath, -fattr, chown.
  * Pledges (!preserve_times): -fattr.
  */
 int
