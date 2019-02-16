@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.10 2019/02/16 10:47:20 florian Exp $ */
+/*	$Id: uploader.c,v 1.11 2019/02/16 10:48:05 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,6 +50,7 @@ struct	upload {
 	size_t		    bufpos; /* position in buf */
 	size_t		    idx; /* current transfer index */
 	mode_t		    oumask; /* umask for creating files */
+	char		   *root; /* destination directory path */
 	int		    rootfd; /* destination directory */
 	size_t		    csumlen; /* checksum length */
 	int		    fdout; /* write descriptor to sender */
@@ -168,11 +169,9 @@ static int
 pre_link(struct upload *p, struct sess *sess)
 {
 	struct stat		 st;
-	struct timespec		 tv[2];
 	const struct flist	*f;
 	int			 rc, newlink = 0, updatelink = 0;
-	mode_t			 mode;
-	char			*b;
+	char			*b, *temp = NULL;
 
 	f = &p->fl[p->idx];
 	assert(S_ISLNK(f->st.mode));
@@ -228,74 +227,252 @@ pre_link(struct upload *p, struct sess *sess)
 		LOG3(sess, "%s: creating "
 			"symlink: %s", f->path, f->link);
 
-		if (mktemplate(&b, f->path, sess->opts->recursive) == -1) {
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
 			ERR(sess, "asprintf");
 			return -1;
 		}
-		if (mkstemplinkat(f->link, p->rootfd, b) == NULL) {
-			WARN(sess, "%s: symlinkat", b);
-			free(b);
+		if (mkstemplinkat(f->link, p->rootfd, temp) == NULL) {
+			WARN(sess, "%s: symlinkat", temp);
+			free(temp);
 			return -1;
 		}
 		newlink = 1;
 	}
 
-	/* 
-	 * Optionally preserve times/perms on the symlink.
-	 * FIXME: run rsync_set_metadata()?
-	 */
-
-	if (sess->opts->preserve_times) {
-		struct timeval now;
-
-		gettimeofday(&now, NULL);
-		TIMEVAL_TO_TIMESPEC(&now, &tv[0]);
-		tv[1].tv_sec = f->st.mtime;
-		tv[1].tv_nsec = 0;
-		rc = utimensat(p->rootfd, newlink ? b : f->path, tv,
-		    AT_SYMLINK_NOFOLLOW);
-		if (rc == -1) {
-			ERR(sess, "%s: futimes", f->path);
-			if (newlink) {
-				(void)unlinkat(p->rootfd, b, 0);
-				free(b);
-			}
-			return -1;
-		}
-		LOG4(sess, "%s: updated symlink date", f->path);
-	}
-
-	if (newlink || sess->opts->preserve_perms) {
-		if (updatelink && !sess->opts->preserve_perms)
-			/* carry over permissions from replaced symlink */
-			mode = st.st_mode;
-		else
-			mode = f->st.mode;
-
-		rc = fchmodat(p->rootfd, newlink ? b : f->path, mode,
-		    AT_SYMLINK_NOFOLLOW);
-		if (rc == -1) {
-			ERR(sess, "%s: fchmodat", newlink ? b : f->path);
-			if (newlink) {
-				(void)unlinkat(p->rootfd, b, 0);
-				free(b);
-			}
-			return -1;
-		}
-		LOG4(sess, "%s: updated symlink mode", f->path);
-	}
+	rsync_set_metadata_at(sess, newlink, p->rootfd, f,
+	    newlink ? temp : f->path);
 
 	if (newlink) {
-		if (renameat(p->rootfd, b, p->rootfd, f->path) == -1) {
-			ERR(sess, "%s: renameat %s", b, f->path);
-			(void)unlinkat(p->rootfd, b, 0);
-			free(b);
+		if (renameat(p->rootfd, temp, p->rootfd, f->path) == -1) {
+			ERR(sess, "%s: renameat %s", temp, f->path);
+			(void)unlinkat(p->rootfd, temp, 0);
+			free(temp);
 			return -1;
 		}
-		free(b);
+		free(temp);
 	}
 
 	log_link(sess, f);
+	return 0;
+}
+
+/*
+ * Return <0 on failure 0 on success.
+ */
+static int
+pre_dev(struct upload *p, struct sess *sess)
+{
+	struct stat		 st;
+	const struct flist	*f;
+	int			 rc, newdev = 0, updatedev = 0;
+	char			*temp = NULL;
+
+	f = &p->fl[p->idx];
+	assert(S_ISBLK(f->st.mode) || S_ISCHR(f->st.mode));
+
+	if (!sess->opts->devices || getuid() != 0) {
+		WARNX(sess, "skipping non-regular file %s", f->path);
+		return 0;
+	} else if (sess->opts->dry_run) {
+		log_file(sess, f);
+		return 0;
+	}
+
+	/* See if the dev already exists */
+	assert(p->rootfd != -1);
+
+	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
+
+	if (rc != -1 && !(S_ISBLK(st.st_mode) || S_ISCHR(st.st_mode))) {
+		if (S_ISDIR(st.st_mode)) {
+			if (unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
+				WARN(sess, "%s", f->path);
+				return -1;
+			}
+		}
+		rc = -1; /* overwrite object with dev */
+	} else if (rc == -1 && errno != ENOENT) {
+		WARN(sess, "%s: fstatat", f->path);
+		return -1;
+	}
+
+	/*
+	 * If the device already exists make sure it is of the correct type.
+	 */
+
+	if (rc != -1) {
+		if ((f->st.mode & (S_IFCHR|S_IFBLK)) !=
+		    (st.st_mode & (S_IFCHR|S_IFBLK)) || f->st.rdev !=
+		    st.st_rdev) {
+			LOG3(sess, "%s: updating dev", f->path);
+			updatedev = 1;
+		}
+	}
+
+	if (rc == -1 || updatedev) {
+		newdev = 1;
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
+			ERR(sess, "asprintf");
+			return -1;
+		}
+		if (mkstempnodat(p->rootfd, temp, f->st.mode &
+		    (S_IFCHR|S_IFBLK), f->st.rdev) == NULL) {
+			WARN(sess, "%s: mknodat", temp);
+			free(temp);
+			return -1;
+		}
+	}
+
+	rsync_set_metadata_at(sess, newdev, p->rootfd, f,
+	    newdev ? temp : f->path);
+
+	if (newdev) {
+		if (renameat(p->rootfd, temp, p->rootfd, f->path) == -1) {
+			ERR(sess, "%s: renameat %s", temp, f->path);
+			(void)unlinkat(p->rootfd, temp, 0);
+			free(temp);
+			return -1;
+		}
+		free(temp);
+	}
+	log_file(sess, f);
+	return 0;
+}
+
+/*
+ * Return <0 on failure 0 on success.
+ */
+static int
+pre_fifo(struct upload *p, struct sess *sess)
+{
+	struct stat		 st;
+	const struct flist	*f;
+	int			 rc, newfifo = 0;
+	char			*temp = NULL;
+
+	f = &p->fl[p->idx];
+	assert(S_ISFIFO(f->st.mode));
+
+	if (!sess->opts->specials) {
+		WARNX(sess, "skipping non-regular file %s", f->path);
+		return 0;
+	} else if (sess->opts->dry_run) {
+		log_file(sess, f);
+		return 0;
+	}
+
+	/* See if the fifo already exists */
+	assert(p->rootfd != -1);
+
+	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
+
+	if (rc != -1 && !S_ISFIFO(st.st_mode)) {
+		if (S_ISDIR(st.st_mode)) {
+			if (unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
+				WARN(sess, "%s", f->path);
+				return -1;
+			}
+		}
+		rc = -1; /* overwrite object with fifo */
+	} else if (rc == -1 && errno != ENOENT) {
+		WARN(sess, "%s: fstatat", f->path);
+		return -1;
+	}
+
+	if (rc == -1) {
+		newfifo = 1;
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
+			ERR(sess, "asprintf");
+			return -1;
+		}
+		if (mkstempfifoat(p->rootfd, temp) == NULL) {
+			WARN(sess, "%s: mkfifoat", temp);
+			free(temp);
+			return -1;
+		}
+	}
+
+	rsync_set_metadata_at(sess, newfifo, p->rootfd, f,
+	    newfifo ? temp : f->path);
+
+	if (newfifo) {
+		if (renameat(p->rootfd, temp, p->rootfd, f->path) == -1) {
+			ERR(sess, "%s: renameat %s", temp, f->path);
+			(void)unlinkat(p->rootfd, temp, 0);
+			free(temp);
+			return -1;
+		}
+		free(temp);
+	}
+	log_file(sess, f);
+	return 0;
+}
+
+/*
+ * Return <0 on failure 0 on success.
+ */
+static int
+pre_sock(struct upload *p, struct sess *sess)
+{
+	struct stat		 st;
+	const struct flist	*f;
+	int			 rc, newsock = 0;
+	char			*temp = NULL;
+
+	f = &p->fl[p->idx];
+	assert(S_ISSOCK(f->st.mode));
+
+	if (!sess->opts->specials) {
+		WARNX(sess, "skipping non-regular file %s", f->path);
+		return 0;
+	} else if (sess->opts->dry_run) {
+		log_file(sess, f);
+		return 0;
+	}
+
+	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
+
+	if (rc != -1 && !S_ISSOCK(st.st_mode)) {
+		if (S_ISDIR(st.st_mode)) {
+			if (unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
+				WARN(sess, "%s", f->path);
+				return -1;
+			}
+		}
+		rc = -1; /* overwrite object with sock */
+	} else if (rc == -1 && errno != ENOENT) {
+		WARN(sess, "%s: fstatat", f->path);
+		return -1;
+	}
+
+	if (rc == -1) {
+		newsock = 1;
+
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
+			ERR(sess, "asprintf");
+			return -1;
+		}
+
+		if (mkstempsock(p->root, temp) == NULL) {
+			WARN(sess, "%s: mksockat", temp);
+			free(temp);
+			return -1;
+		}
+	}
+
+	rsync_set_metadata_at(sess, newsock, p->rootfd, f,
+	    newsock ? temp : f->path);
+
+	if (newsock) {
+		if (renameat(p->rootfd, temp, p->rootfd, f->path) == -1) {
+			ERR(sess, "%s: renameat %s", temp, f->path);
+			(void)unlinkat(p->rootfd, temp, 0);
+			free(temp);
+			return -1;
+		}
+		free(temp);
+	}
+	log_file(sess, f);
 	return 0;
 }
 
@@ -474,7 +651,7 @@ pre_file(const struct upload *p, int *filefd, struct sess *sess)
  * On success, upload_free() must be called with the allocated pointer.
  */
 struct upload *
-upload_alloc(struct sess *sess, int rootfd, int fdout,
+upload_alloc(struct sess *sess, const char *root, int rootfd, int fdout,
 	size_t clen, const struct flist *fl, size_t flsz, mode_t msk)
 {
 	struct upload	*p;
@@ -486,6 +663,12 @@ upload_alloc(struct sess *sess, int rootfd, int fdout,
 
 	p->state = UPLOAD_FIND_NEXT;
 	p->oumask = msk;
+	p->root = strdup(root);
+	if (p->root == NULL) {
+		ERR(sess, "strdup");
+		free(p);
+		return NULL;
+	}
 	p->rootfd = rootfd;
 	p->csumlen = clen;
 	p->fdout = fdout;
@@ -494,6 +677,7 @@ upload_alloc(struct sess *sess, int rootfd, int fdout,
 	p->newdir = calloc(flsz, sizeof(int));
 	if (p->newdir == NULL) {
 		ERR(sess, "calloc");
+		free(p->root);
 		free(p);
 		return NULL;
 	}
@@ -510,6 +694,7 @@ upload_free(struct upload *p)
 
 	if (p == NULL)
 		return;
+	free(p->root);
 	free(p->newdir);
 	free(p->buf);
 	free(p);
@@ -603,6 +788,13 @@ rsync_uploader(struct upload *u, int *fileinfd,
 				c = pre_link(u, sess);
 			else if (S_ISREG(u->fl[u->idx].st.mode))
 				c = pre_file(u, fileinfd, sess);
+			else if (S_ISBLK(u->fl[u->idx].st.mode) ||
+			    S_ISCHR(u->fl[u->idx].st.mode))
+				c = pre_dev(u, sess);
+			else if (S_ISFIFO(u->fl[u->idx].st.mode))
+				c = pre_fifo(u, sess);
+			else if (S_ISSOCK(u->fl[u->idx].st.mode))
+				c = pre_sock(u, sess);
 			else
 				c = 0;
 

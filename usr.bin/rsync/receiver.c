@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.13 2019/02/16 10:47:20 florian Exp $ */
+/*	$Id: receiver.c,v 1.14 2019/02/16 10:48:05 florian Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -101,9 +101,72 @@ rsync_set_metadata(struct sess *sess, int newfile,
 	return 1;
 }
 
+int
+rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
+	const struct flist *f, const char *path)
+{
+	uid_t		 uid = (uid_t)-1;
+	gid_t		 gid = (gid_t)-1;
+	struct timespec	 tv[2];
+
+	/*
+	 * Conditionally adjust identifiers.
+	 * If we have an EPERM, report it but continue on: this just
+	 * means that we're mapping into an unknown (or disallowed)
+	 * group identifier.
+	 */
+
+	if (getuid() == 0 && sess->opts->preserve_uids)
+		uid = f->st.uid;
+	if (sess->opts->preserve_gids)
+		gid = f->st.gid;
+
+	if (uid != (uid_t)-1 || gid != (gid_t)-1) {
+		if (fchownat(rootfd, path, uid, gid, AT_SYMLINK_NOFOLLOW) ==
+		    -1) {
+			if (errno != EPERM) {
+				ERR(sess, "%s: fchownat", path);
+				return 0;
+			}
+			WARNX(sess, "%s: identity unknown or not available "
+				"to user.group: %u.%u", f->path, uid, gid);
+		} else
+			LOG4(sess, "%s: updated uid and/or gid", f->path);
+	}
+
+	/* Conditionally adjust file modification time. */
+
+	if (sess->opts->preserve_times) {
+		struct timeval now;
+
+		gettimeofday(&now, NULL);
+		TIMEVAL_TO_TIMESPEC(&now, &tv[0]);
+		tv[1].tv_sec = f->st.mtime;
+		tv[1].tv_nsec = 0;
+		if (utimensat(rootfd, path, tv, AT_SYMLINK_NOFOLLOW) == -1) {
+			ERR(sess, "%s: utimensat", path);
+			return 0;
+		}
+		LOG4(sess, "%s: updated date", f->path);
+	}
+
+	/* Conditionally adjust file permissions. */
+
+	if (newfile || sess->opts->preserve_perms) {
+		if (fchmodat(rootfd, path, f->st.mode, AT_SYMLINK_NOFOLLOW) ==
+		    -1) {
+			ERR(sess, "%s: fchmodat", path);
+			return 0;
+		}
+		LOG4(sess, "%s: updated permissions", f->path);
+	}
+
+	return 1;
+}
+
 /*
- * Pledges: unveil, rpath, cpath, wpath, stdio, fattr, chown.
- * Pledges (dry-run): -cpath, -wpath, -fattr, -chown.
+ * Pledges: unveil, unix, rpath, cpath, wpath, stdio, fattr, chown.
+ * Pledges (dry-run): -unix, -cpath, -wpath, -fattr, -chown.
  */
 int
 rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
@@ -118,7 +181,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	struct upload	*ul = NULL;
 	mode_t		 oumask;
 
-	if (pledge("stdio rpath wpath cpath fattr chown getpw unveil", NULL) == -1) {
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1) {
 		ERR(sess, "pledge");
 		goto out;
 	}
@@ -250,7 +313,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	pfd[PFD_DOWNLOADER_IN].events = POLLIN;
 	pfd[PFD_SENDER_OUT].events = POLLOUT;
 
-	ul = upload_alloc(sess, dfd, fdout,
+	ul = upload_alloc(sess, root, dfd, fdout,
 		CSUM_LENGTH_PHASE1, fl, flsz, oumask);
 	if (ul == NULL) {
 		ERRX1(sess, "upload_alloc");

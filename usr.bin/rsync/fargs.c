@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.11 2019/02/14 18:31:36 florian Exp $ */
+/*	$Id: fargs.c,v 1.12 2019/02/16 10:48:05 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 	argsz += 1;	/* dot separator */
 	argsz += 1;	/* sink file */
 	argsz += 5;	/* per-mode maximum */
-	argsz += 12;	/* shared args */
+	argsz += 14;	/* shared args */
 	argsz += 1;	/* NULL pointer */
 	argsz += f->sourcesz;
 
@@ -111,6 +111,8 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 		args[i++] = "-o";
 	if (sess->opts->preserve_perms)
 		args[i++] = "-p";
+	if (sess->opts->devices)
+		args[i++] = "-D";
 	if (sess->opts->recursive)
 		args[i++] = "-r";
 	if (sess->opts->preserve_times)
@@ -123,6 +125,11 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 		args[i++] = "-v";
 	if (sess->opts->verbose > 0)
 		args[i++] = "-v";
+	if (sess->opts->specials && !sess->opts->devices)
+		args[i++] = "--specials";
+	if (!sess->opts->specials && sess->opts->devices)
+		/* --devices is sent as -D --no-specials */
+		args[i++] = "--no-specials";
 
 	/* Terminate with a full-stop for reasons unknown. */
 

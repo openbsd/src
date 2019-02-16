@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.1 2019/02/16 10:46:22 florian Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.2 2019/02/16 10:48:05 florian Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -18,6 +18,8 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <sys/un.h>                                                             
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -31,6 +33,9 @@
 #define MKTEMP_FILE	1
 #define MKTEMP_DIR	2
 #define MKTEMP_LINK	3
+#define MKTEMP_FIFO	4
+#define MKTEMP_NOD	5
+#define MKTEMP_SOCK	6
 
 #define TEMPCHARS	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 #define NUM_CHARS	(sizeof(TEMPCHARS) - 1)
@@ -45,14 +50,15 @@
 /* adapted from libc/stdio/mktemp.c */
 static int
 mktemp_internalat(int pfd, char *path, int slen, int mode, int flags,
-    char *link)
+    const char *link, mode_t dev_type, dev_t dev)
 {
 	char *start, *cp, *ep;
 	const char tempchars[] = TEMPCHARS;
 	unsigned int tries;
 	struct stat sb;
+	struct sockaddr_un sun;
 	size_t len;
-	int fd;
+	int fd, saved_errno;
 
 	len = strlen(path);
 	if (len < MIN_X || slen < 0 || (size_t)slen > len - MIN_X) {
@@ -112,6 +118,59 @@ mktemp_internalat(int pfd, char *path, int slen, int mode, int flags,
 			else if (errno != EEXIST)
 				return(-1);
 			break;
+		case MKTEMP_FIFO:
+			if (mkfifoat(pfd, path, S_IRUSR|S_IWUSR) == 0)
+				return(0);
+			else if (errno != EEXIST)
+				return(-1);
+			break;
+		case MKTEMP_NOD:
+			if (!(dev_type == S_IFCHR || dev_type == S_IFBLK)) {
+				errno = EINVAL;
+				return(-1);
+			}
+			if (mknodat(pfd, path, S_IRUSR|S_IWUSR|dev_type, dev)
+			    == 0)
+				return(0);
+			else if (errno != EEXIST)
+				return(-1);
+			break;
+		case MKTEMP_SOCK:
+			memset(&sun, 0, sizeof(sun));
+			sun.sun_family = AF_UNIX;
+			if ((len = strlcpy(sun.sun_path, link,
+			    sizeof(sun.sun_path))) >= sizeof(sun.sun_path)) {
+				errno = EINVAL;
+				return(-1);
+			}
+			if (sun.sun_path[len] != '/') {
+				if (strlcat(sun.sun_path, "/",
+				    sizeof(sun.sun_path)) >=
+				    sizeof(sun.sun_path)) {
+					errno = EINVAL;
+					return(-1);
+				}
+			}
+			if (strlcat(sun.sun_path, path, sizeof(sun.sun_path)) >=
+			    sizeof(sun.sun_path)) {
+				errno = EINVAL;
+				return(-1);
+			}
+			if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC |
+			    SOCK_NONBLOCK, 0)) == -1)
+				return -1;
+			if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) ==
+			    0) {
+				close(fd);
+				return(0);
+			} else if (errno != EEXIST) {
+					saved_errno = errno;
+					close(fd);
+					errno = saved_errno;
+					return -1;
+			}
+			close(fd);
+			break;
 		}
 	} while (--tries);
 
@@ -128,7 +187,7 @@ mktemp_internalat(int pfd, char *path, int slen, int mode, int flags,
 int
 mkstempat(int fd, char *path)
 {
-	return(mktemp_internalat(fd, path, 0, MKTEMP_FILE, 0, NULL));
+	return(mktemp_internalat(fd, path, 0, MKTEMP_FILE, 0, NULL, 0, 0));
 }
 
 /*
@@ -140,7 +199,50 @@ mkstempat(int fd, char *path)
 char*
 mkstemplinkat(char *link, int fd, char *path)
 {
-	if (mktemp_internalat(fd, path, 0, MKTEMP_LINK, 0, link) == -1)
+	if (mktemp_internalat(fd, path, 0, MKTEMP_LINK, 0, link, 0, 0) == -1)
+		return(NULL);
+	return(path);
+}
+
+/*
+ * A combination of mkstemp(3) and mkfifoat(2).
+ * On success returns path with trailing Xs overwritten to create a unique
+ * file name.
+ * Returns NULL on failure.
+ */
+char*
+mkstempfifoat(int fd, char *path)
+{
+	if (mktemp_internalat(fd, path, 0, MKTEMP_FIFO, 0, NULL, 0, 0) == -1)
+		return(NULL);
+	return(path);
+}
+
+/*
+ * A combination of mkstemp(3) and mknodat(2).
+ * On success returns path with trailing Xs overwritten to create a unique
+ * file name.
+ * Returns NULL on failure.
+ */
+char*
+mkstempnodat(int fd, char *path, mode_t mode, dev_t dev)
+{
+	if (mktemp_internalat(fd, path, 0, MKTEMP_NOD, 0, NULL, mode, dev) ==
+	    -1)
+		return(NULL);
+	return(path);
+}
+
+/*
+ * A combination of mkstemp(3) and bind(2) on a unix domain socket.
+ * On success returns path with trailing Xs overwritten to create a unique
+ * file name.
+ * Returns NULL on failure.
+ */
+char*
+mkstempsock(const char *root, char *path)
+{
+	if (mktemp_internalat(0, path, 0, MKTEMP_SOCK, 0, root, 0, 0) == -1)
 		return(NULL);
 	return(path);
 }

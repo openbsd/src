@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.8 2019/02/16 10:44:01 florian Exp $ */
+/*	$Id: socket.c,v 1.9 2019/02/16 10:48:05 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -228,9 +228,9 @@ protocol_line(struct sess *sess, const char *host, const char *cp)
 }
 
 /*
- * Pledges: dns, inet, unveil, rpath, cpath, wpath, stdio, fattr, chown.
+ * Pledges: dns, inet, unix, unveil, rpath, cpath, wpath, stdio, fattr, chown.
  *
- * Pledges (dry-run): -cpath, -wpath, -fattr, -chown.
+ * Pledges (dry-run): -unix, -cpath, -wpath, -fattr, -chown.
  * Pledges (!preserve_times): -fattr.
  */
 int
@@ -265,7 +265,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	/* Drop the DNS pledge. */
 
-	if (pledge("stdio rpath wpath cpath fattr chown getpw inet unveil", NULL) == -1) {
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw inet unveil", NULL) == -1) {
 		ERR(&sess, "pledge");
 		goto out;
 	}
@@ -286,7 +286,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	}
 
 	/* Drop the inet pledge. */
-	if (pledge("stdio rpath wpath cpath fattr chown getpw unveil", NULL) == -1) {
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1) {
 		ERR(&sess, "pledge");
 		goto out;
 	}

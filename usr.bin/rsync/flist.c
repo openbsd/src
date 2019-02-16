@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.14 2019/02/16 05:06:30 deraadt Exp $ */
+/*	$Id: flist.c,v 1.15 2019/02/16 10:48:05 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,6 +43,7 @@
  * information that affects subsequent transmissions.
  */
 #define FLIST_MODE_SAME  0x0002 /* mode is repeat */
+#define	FLIST_RDEV_SAME  0x0004 /* rdev is repeat */
 #define	FLIST_UID_SAME	 0x0008 /* uid is repeat */
 #define	FLIST_GID_SAME	 0x0010 /* gid is repeat */
 #define	FLIST_NAME_SAME  0x0020 /* name is repeat */
@@ -195,6 +196,13 @@ flist_fts_check(struct sess *sess, FTSENT *ent)
 		errno = ent->fts_errno;
 		WARN(sess, "%s", ent->fts_path);
 	} else if (ent->fts_info == FTS_DEFAULT) {
+		if ((sess->opts->devices && (S_ISBLK(ent->fts_statp->st_mode) ||
+		    S_ISCHR(ent->fts_statp->st_mode))) ||
+		    (sess->opts->specials &&
+		    (S_ISFIFO(ent->fts_statp->st_mode) ||
+		    S_ISSOCK(ent->fts_statp->st_mode)))) {
+			return 1;
+		}
 		WARNX(sess, "%s: skipping special", ent->fts_path);
 	} else if (ent->fts_info == FTS_NS) {
 		errno = ent->fts_errno;
@@ -215,6 +223,7 @@ flist_copy_stat(struct flist *f, const struct stat *st)
 	f->st.gid = st->st_gid;
 	f->st.size = st->st_size;
 	f->st.mtime = st->st_mtime;
+	f->st.rdev = st->st_rdev;
 }
 
 void
@@ -347,6 +356,14 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 				goto out;
 			}
 			if (!io_write_buf(sess, fdout, fn, sz)) {
+				ERRX1(sess, "io_write_int");
+				goto out;
+			}
+		}
+
+		if (S_ISBLK(f->st.mode) || S_ISCHR(f->st.mode) ||
+		    S_ISFIFO(f->st.mode) || S_ISSOCK(f->st.mode)) {
+			if (!io_write_int(sess, fdout, f->st.rdev)) {
 				ERRX1(sess, "io_write_int");
 				goto out;
 			}
@@ -664,6 +681,25 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 				ff->st.gid = fflast->st.gid;
 		}
 
+		/* handle devices & special files*/
+
+		if ((sess->opts->devices && (S_ISBLK(ff->st.mode) ||
+		    S_ISCHR(ff->st.mode))) ||
+		    (sess->opts->specials && (S_ISFIFO(ff->st.mode) ||
+		    S_ISSOCK(ff->st.mode)))) {
+			if (!(FLIST_RDEV_SAME & flag)) {
+				if (!io_read_int(sess, fd, &ival)) {
+					ERRX1(sess, "io_read_int");
+					goto out;
+				}
+				ff->st.rdev = ival;
+			} else if (fflast == NULL) {
+				ERRX(sess, "same mode without last entry");
+				goto out;
+			} else
+				ff->st.rdev = fflast->st.rdev;
+		}
+
 		/* Conditional part: link. */
 
 		if (S_ISLNK(ff->st.mode) &&
@@ -687,9 +723,10 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		}
 
 		LOG3(sess, "%s: received file metadata: "
-			"size %jd, mtime %jd, mode %o",
+			"size %jd, mtime %jd, mode %o, rdev (%d, %d)",
 			ff->path, (intmax_t)ff->st.size,
-			(intmax_t)ff->st.mtime, ff->st.mode);
+			(intmax_t)ff->st.mtime, ff->st.mode,
+			major(ff->st.rdev), minor(ff->st.rdev));
 
 		if (S_ISREG(ff->st.mode))
 			sess->total_size += ff->st.size;

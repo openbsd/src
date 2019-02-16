@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.11 2019/02/16 10:46:22 florian Exp $ */
+/*	$Id: extern.h,v 1.12 2019/02/16 10:48:05 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,13 +71,14 @@ struct	fargs {
  * (There are some parts we don't use yet.)
  */
 struct	flstat {
-	mode_t		 mode; /* mode */
-	uid_t		 uid; /* user */
-	gid_t		 gid; /* group */
-	off_t		 size; /* size */
-	time_t		 mtime; /* modification */
+	mode_t		 mode;	/* mode */
+	uid_t		 uid;	/* user */
+	gid_t		 gid;	/* group */
+	dev_t		 rdev;	/* device type */
+	off_t		 size;	/* size */
+	time_t		 mtime;	/* modification */
 	unsigned int	 flags;
-#define	FLSTAT_TOP_DIR	 0x01 /* a top-level directory */
+#define	FLSTAT_TOP_DIR	 0x01	/* a top-level directory */
 
 };
 
@@ -107,6 +108,8 @@ struct	opts {
 	int		 preserve_gids;		/* -g */
 	int		 preserve_uids;		/* -u */
 	int		 del;			/* --delete */
+	int		 devices;		/* --devices */
+	int		 specials;		/* --specials */
 	char		*rsync_path;		/* --rsync-path */
 	char		*ssh_prog;		/* --rsh or -e */
 };
@@ -266,6 +269,8 @@ int		  rsync_server(const struct opts *, size_t, char *[]);
 int		  rsync_downloader(struct download *, struct sess *, int *);
 int		  rsync_set_metadata(struct sess *, int, int, 
 			const struct flist *, const char *);
+int		  rsync_set_metadata_at(struct sess *, int, int, 
+			const struct flist *, const char *);
 int		  rsync_uploader(struct upload *,
 			int *, struct sess *, int *);
 int		  rsync_uploader_tail(struct upload *, struct sess *);
@@ -273,7 +278,7 @@ int		  rsync_uploader_tail(struct upload *, struct sess *);
 struct download	 *download_alloc(struct sess *, int,
 			const struct flist *, size_t, int);
 void		  download_free(struct download *);
-struct upload	 *upload_alloc(struct sess *, int, int, size_t,
+struct upload	 *upload_alloc(struct sess *, const char *, int, int, size_t,
 			const struct flist *, size_t, mode_t);
 void		  upload_free(struct upload *);
 
@@ -300,6 +305,9 @@ int		  mkpath(struct sess *, char *);
 
 int		  mkstempat(int, char *);
 char		 *mkstemplinkat(char*, int, char *);
+char		 *mkstempfifoat(int, char *);
+char		 *mkstempnodat(int, char *, mode_t, dev_t);
+char		 *mkstempsock(const char *, char *);
 int		  mktemplate(char **, const char *, int);
 
 char		 *symlink_read(struct sess *, const char *);

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.18 2019/02/16 10:44:01 florian Exp $ */
+/*	$Id: main.c,v 1.19 2019/02/16 10:48:05 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -299,19 +299,37 @@ main(int argc, char *argv[])
 		{ "recursive",	no_argument,	&opts.recursive,	1 },
 		{ "times",	no_argument,	&opts.preserve_times,	1 },
 		{ "group",	no_argument,	&opts.preserve_gids,	1 },
+		{ "devices",	no_argument,	&opts.devices,		1 },
+		{ "no-devices",	no_argument,	&opts.devices,		0 },
+		{ "specials",	no_argument,	&opts.specials,		1 },
+		{ "no-specials",	no_argument,	&opts.specials,	0 },
 		{ "version",	no_argument,	NULL,			2 },
 		{ NULL,		0,		NULL,			0 }};
 
 	/* Global pledge. */
 
-	if (pledge("stdio rpath wpath cpath inet fattr chown dns getpw proc exec unveil",
+	if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw proc exec unveil",
 	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	memset(&opts, 0, sizeof(struct opts));
 
-	while ((c = getopt_long(argc, argv, "e:glnoprtv", lopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "Dae:glnoprtv", lopts, NULL)) != -1) {
 		switch (c) {
+		case 'D':
+			opts.devices = 1;
+			opts.specials = 1;
+			break;
+		case 'a':
+			opts.recursive = 1;
+			opts.preserve_links = 1;
+			opts.preserve_perms = 1;
+			opts.preserve_times = 1;
+			opts.preserve_gids = 1;
+			opts.preserve_uids = 1;
+			opts.devices = 1;
+			opts.specials = 1;
+			break;
 		case 'e':
 			opts.ssh_prog = optarg;
 			/* Ignore. */
@@ -370,7 +388,7 @@ main(int argc, char *argv[])
 	 */
 
 	if (opts.server) {
-		if (pledge("stdio rpath wpath cpath fattr chown getpw unveil", NULL) == -1)
+		if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_server(&opts, (size_t)argc, argv);
 		return c ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -397,7 +415,7 @@ main(int argc, char *argv[])
 
 	if (fargs->remote) {
 		assert(fargs->mode == FARGS_RECEIVER);
-		if (pledge("stdio rpath wpath cpath inet fattr chown dns getpw unveil",
+		if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw unveil",
 		    NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
 		c = rsync_socket(&opts, fargs);
@@ -407,7 +425,7 @@ main(int argc, char *argv[])
 
 	/* Drop the dns/inet possibility. */
 
-	if (pledge("stdio rpath wpath cpath fattr chown getpw proc exec unveil",
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw proc exec unveil",
 	    NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
@@ -424,7 +442,7 @@ main(int argc, char *argv[])
 
 	/* Drop the fork possibility. */
 
-	if (pledge("stdio rpath wpath cpath fattr chown getpw exec unveil", NULL) == -1)
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw exec unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 
 	if (child == 0) {
@@ -438,7 +456,7 @@ main(int argc, char *argv[])
 
 	close(fds[1]);
 	fds[1] = -1;
-	if (pledge("stdio rpath wpath cpath fattr chown getpw unveil", NULL) == -1)
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
 	c = rsync_client(&opts, fds[0], fargs);
 	fargs_free(fargs);
@@ -463,7 +481,7 @@ main(int argc, char *argv[])
 		close(fds[0]);
 	return c ? EXIT_SUCCESS : EXIT_FAILURE;
 usage:
-	fprintf(stderr, "usage: %s [-glnoprtv] "
+	fprintf(stderr, "usage: %s [-Daglnoprtv] "
 		"[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",
 		getprogname());
 	return EXIT_FAILURE;
