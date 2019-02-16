@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.11 2018/05/16 09:07:45 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.12 2019/02/16 20:14:14 patrick Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -17,15 +17,12 @@
 #ifndef	_ARM64_PMAP_H_
 #define	_ARM64_PMAP_H_
 
+#ifndef _LOCORE
 #include <sys/mutex.h>
-
+#include <sys/queue.h>
 #include <machine/pte.h>
+#endif
 
-#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
-#define PMAP_NOCACHE	0x1 /* non-cacheable memory */
-#define PMAP_DEVICE	0x2 /* device memory */
-
-typedef struct pmap *pmap_t;
 
 /* V->P mapping data */
 #define VP_IDX0_CNT	512
@@ -41,7 +38,6 @@ typedef struct pmap *pmap_t;
 #define VP_IDX3_MASK	(VP_IDX3_CNT-1)
 #define VP_IDX3_POS	12
 
-void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 /* cache flags */
 #define PMAP_CACHE_CI		(PMAP_MD0)		/* cache inhibit */
 #define PMAP_CACHE_WT		(PMAP_MD1)	 	/* writethru */
@@ -53,20 +49,14 @@ void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 #define PTED_VA_WIRED_M		(PMAP_MD3 << 1)
 #define PTED_VA_EXEC_M		(PMAP_MD3 << 2)
 
-#define PG_PMAP_MOD		PG_PMAP0
-#define PG_PMAP_REF		PG_PMAP1
-#define PG_PMAP_EXE		PG_PMAP2
 
-// [NCPUS]
-extern paddr_t zero_page;
-extern paddr_t copy_src_page;
-extern paddr_t copy_dst_page;
-
-void pagezero_cache(vaddr_t);
-
+#if defined(_KERNEL) && !defined(_LOCORE)
 /*
  * Pmap stuff
  */
+
+typedef struct pmap *pmap_t;
+
 struct pmap {
 	struct mutex pm_mtx;
 	union {
@@ -81,6 +71,20 @@ struct pmap {
 	struct pmap_statistics  pm_stats;	/* pmap statistics */
 };
 
+#define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
+#define PMAP_NOCACHE	0x1 /* non-cacheable memory */
+#define PMAP_DEVICE	0x2 /* device memory */
+
+#define PG_PMAP_MOD		PG_PMAP0
+#define PG_PMAP_REF		PG_PMAP1
+#define PG_PMAP_EXE		PG_PMAP2
+
+// [NCPUS]
+extern paddr_t zero_page;
+extern paddr_t copy_src_page;
+extern paddr_t copy_dst_page;
+
+void pagezero_cache(vaddr_t);
 
 extern struct pmap kernel_pmap_;
 #define pmap_kernel()   		(&kernel_pmap_)
@@ -89,6 +93,7 @@ extern struct pmap kernel_pmap_;
 
 vaddr_t pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart,
     long kernelend, long ram_start, long ram_end);
+void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 void pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot);
 
 paddr_t pmap_steal_avail(size_t size, int align, void **kva);
@@ -105,8 +110,9 @@ int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 void pmap_postinit(void);
 void	pmap_map_early(paddr_t, psize_t);
 
-#ifndef _LOCORE
+#endif /* _KERNEL && !_LOCORE */
 
+#ifndef _LOCORE
 #define __HAVE_VM_PAGE_MD
 struct vm_page_md {
 	struct mutex pv_mtx;
@@ -119,7 +125,6 @@ struct vm_page_md {
 	LIST_INIT(&((pg)->mdpage.pv_list));     \
 	(pg)->mdpage.pvh_attrs = 0;		\
 } while (0)
-
-#endif /* _LOCORE */
+#endif	/* _LOCORE */
 
 #endif	/* _ARM64_PMAP_H_ */
