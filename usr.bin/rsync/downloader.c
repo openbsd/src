@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.11 2019/02/16 10:47:20 florian Exp $ */
+/*	$Id: downloader.c,v 1.12 2019/02/16 16:55:35 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -296,6 +296,7 @@ buf_copy(struct sess *sess,
 int
 rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 {
+	int		 c;
 	int32_t		 idx, rawtok;
 	const struct flist *f;
 	size_t		 sz, tok;
@@ -447,6 +448,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	 * a token indicator.
 	 */
 
+again:
 	assert(p->state == DOWNLOAD_READ_REMOTE);
 	assert(p->fname != NULL);
 	assert(p->fd != -1);
@@ -475,6 +477,15 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		LOG4(sess, "%s: received %zu B block", p->fname, sz);
 		MD4_Update(&p->ctx, buf, sz);
 		free(buf);
+
+		/* Fast-track more reads as they arrive. */
+
+		if ((c = io_read_check(sess, p->fdin)) < 0) {
+			ERRX1(sess, "io_read_check");
+			goto out;
+		} else if (c > 0)
+			goto again;
+
 		return 1;
 	} else if (rawtok < 0) {
 		tok = -rawtok - 1;
@@ -505,6 +516,15 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		p->total += sz;
 		LOG4(sess, "%s: copied %zu B", p->fname, sz);
 		MD4_Update(&p->ctx, buf, sz);
+
+		/* Fast-track more reads as they arrive. */
+
+		if ((c = io_read_check(sess, p->fdin)) < 0) {
+			ERRX1(sess, "io_read_check");
+			goto out;
+		} else if (c > 0)
+			goto again;
+
 		return 1;
 	}
 
