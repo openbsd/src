@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.7 2019/02/16 16:58:14 florian Exp $ */
+/*	$Id: io.c,v 1.8 2019/02/16 16:58:39 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,12 +27,6 @@
 #include <unistd.h>
 
 #include "extern.h"
-
-/*
- * Use this for debugging deadlocks.
- * All poll events will use it and catch time-outs.
- */
-#define POLL_TIMEOUT	(INFTIM)
 
 /*
  * A non-blocking check to see whether there's POLLIN data in fd.

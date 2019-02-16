@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.13 2019/02/16 16:57:17 florian Exp $ */
+/*	$Id: extern.h,v 1.14 2019/02/16 16:58:39 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,7 +41,11 @@
 #define	CSUM_LENGTH_PHASE1 (2)
 #define	CSUM_LENGTH_PHASE2 (16)
 
-#define POLL_TIMEOUT	(10000)
+/*
+ * Use this for debugging deadlocks.
+ * All poll events will use it and catch time-outs.
+ */
+#define POLL_TIMEOUT	(INFTIM)
 
 /*
  * Operating mode for a client or a server.
@@ -128,17 +132,30 @@ struct	blk {
 	unsigned char	 chksum_long[CSUM_LENGTH_PHASE2]; /* slow checksum */
 };
 
+enum	blkstatst {
+	BLKSTAT_NONE = 0,
+	BLKSTAT_DATASZ,
+	BLKSTAT_DATA,
+	BLKSTAT_TOK,
+	BLKSTAT_HASH,
+	BLKSTAT_DONE
+};
+
 /*
  * Information for the sender updating receiver blocks reentrantly.
  */
 struct	blkstat {
-	off_t	 offs;	/* position in sender file */
-	off_t	 total;	/* total amount processed */
-	off_t	 dirty;	/* total amount sent */
-	size_t	 hint;	/* optimisation: next probable block match */
-	void	*map;	/* mapped file or MAP_FAILED otherwise */
-	size_t	 mapsz;	/* size of file or zero */
-	int	 fd;	/* descriptor girding the map */
+	off_t		 offs; /* position in sender file */
+	off_t		 total; /* total amount processed */
+	off_t		 dirty; /* total amount sent */
+	size_t		 hint; /* optimisation: next probable match */
+	void		*map; /* mapped file or MAP_FAILED otherwise */
+	size_t		 mapsz; /* size of file or zero */
+	int		 fd; /* descriptor girding the map */
+	enum blkstatst	 curst; /* FSM for sending file blocks */
+	off_t		 curpos; /* sending: position in file to send */
+	off_t		 curlen; /* sending: length of send */
+	int32_t		 curtok; /* sending: next matching token or zero */
 };
 
 /*
@@ -181,6 +198,10 @@ struct	ident {
 
 struct	download;
 struct	upload;
+
+#ifndef MIN
+# define MIN(_x1, _x2) ((_x1) < (_x2) ? (_x1) : (_x2))
+#endif
 
 #define LOG0(_sess, _fmt, ...) \
 	rsync_log((_sess), __FILE__, __LINE__, -1, (_fmt), ##__VA_ARGS__)
@@ -262,6 +283,13 @@ int		  io_write_int(struct sess *, int, int32_t);
 int		  io_write_line(struct sess *, int, const char *);
 int		  io_write_long(struct sess *, int, int64_t);
 
+int		  io_lowbuffer_alloc(struct sess *, void **,
+			size_t *, size_t *, size_t);
+void		  io_lowbuffer_int(struct sess *, void *,
+			size_t *, size_t, int32_t);
+void		  io_lowbuffer_buf(struct sess *, void *,
+			size_t *, size_t, const void *, size_t);
+
 void		  io_buffer_int(struct sess *, void *,
 			size_t *, size_t, int32_t);
 void		  io_buffer_buf(struct sess *, void *,
@@ -300,7 +328,7 @@ void		  upload_free(struct upload *);
 struct blkset	 *blk_recv(struct sess *, int, const char *);
 int		  blk_recv_ack(struct sess *,
 			int, const struct blkset *, int32_t);
-int		  blk_match(struct sess *, int, const struct blkset *,
+void		  blk_match(struct sess *, const struct blkset *,
 			const char *, struct blkstat *);
 int		  blk_send(struct sess *, int, size_t,
 			const struct blkset *, const char *);

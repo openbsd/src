@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.8 2019/02/16 16:57:48 florian Exp $ */
+/*	$Id: blocks.c,v 1.9 2019/02/16 16:58:39 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,38 +28,6 @@
 #include <openssl/md4.h>
 
 #include "extern.h"
-
-/*
- * Flush out "size" bytes of the buffer, doing all of the appropriate
- * chunking of the data, then the subsequent token (or zero).
- * Return zero on failure, non-zero on success.
- */
-static int
-blk_flush(struct sess *sess, int fd,
-	const void *b, off_t size, int32_t token)
-{
-	off_t	i = 0, sz;
-
-	while (i < size) {
-		sz = MAX_CHUNK < (size - i) ?
-			MAX_CHUNK : (size - i);
-		if (!io_write_int(sess, fd, sz)) {
-			ERRX1(sess, "io_write_int");
-			return 0;
-		} else if (!io_write_buf(sess, fd, b + i, sz)) {
-			ERRX1(sess, "io_write_buf");
-			return 0;
-		}
-		i += sz;
-	}
-
-	if (!io_write_int(sess, fd, token)) {
-		ERRX1(sess, "io_write_int");
-		return 0;
-	}
-
-	return 1;
-}
 
 /*
  * From our current position of "offs" in buffer "buf" of total size
@@ -146,99 +114,18 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 }
 
 /*
- * The main reconstruction algorithm on the sender side.
- * This is reentrant: it's meant to be called whenever "fd" unblocks for
- * writing by the sender.
- * Scans byte-wise over the input file, looking for matching blocks in
- * what the server sent us.
- * If a block is found, emit all data up until the block, then the token
- * for the block.
- * The receiving end can then reconstruct the file trivially.
- * Return zero on failure, non-zero on success.
- */
-static int
-blk_match_send(struct sess *sess, const char *path, int fd,
-	const struct blkset *blks, struct blkstat *st)
-{
-	off_t		 last, end, sz;
-	int32_t		 tok;
-	struct blk	*blk;
-
-	/*
-	 * Stop searching at the length of the file minus the size of
-	 * the last block.
-	 * The reason for this being that we don't need to do an
-	 * incremental hash within the last block---if it doesn't match,
-	 * it doesn't match.
-	 */
-
-	end = st->mapsz + 1 - blks->blks[blks->blksz - 1].len;
-	last = st->offs;
-
-	for ( ; st->offs < end; st->offs++) {
-		blk = blk_find(sess, st->map, st->mapsz,
-			st->offs, blks, path, st->hint);
-		if (blk == NULL)
-			continue;
-
-		sz = st->offs - last;
-		st->dirty += sz;
-		st->total += sz;
-		LOG4(sess, "%s: flushing %jd B before %zu B "
-			"block %zu", path, (intmax_t)sz, blk->len, blk->idx);
-		tok = -(blk->idx + 1);
-
-		/*
-		 * Write the data we have, then follow it with the tag
-		 * of the block that matches.
-		 * The receiver will then write our data, then the data
-		 * it already has in the matching block.
-		 */
-
-		if (!blk_flush(sess, fd, st->map + last, sz, tok)) {
-			ERRX1(sess, "blk_flush");
-			return -1;
-		}
-
-		st->total += blk->len;
-		st->offs += blk->len;
-		st->hint = blk->idx + 1;
-		return 0;
-	}
-
-	/* Emit remaining data and send terminator token. */
-
-	sz = st->mapsz - last;
-	st->total += sz;
-	st->dirty += sz;
-
-	LOG4(sess, "%s: flushing remaining %jd B", path, (intmax_t)sz);
-
-	if (!blk_flush(sess, fd, st->map + last, sz, 0)) {
-		ERRX1(sess, "blk_flush");
-		return -1;
-	}
-
-	LOG3(sess, "%s: flushed (chunked) %jd B total, "
-		"%.2f%% upload ratio", path, (intmax_t)st->total,
-		100.0 * st->dirty / st->total);
-	return 1;
-}
-
-/*
  * Given a local file "path" and the blocks created by a remote machine,
  * find out which blocks of our file they don't have and send them.
  * This function is reentrant: it must be called while there's still
  * data to send.
- * Return 0 if there's more data to send, >0 if the file has completed
- * its update, or <0 on error.
  */
-int
-blk_match(struct sess *sess, int fd, const struct blkset *blks,
+void
+blk_match(struct sess *sess, const struct blkset *blks,
 	const char *path, struct blkstat *st)
 {
-	unsigned char	 filemd[MD4_DIGEST_LENGTH];
-	int		 c;
+	off_t		 last, end, sz;
+	int32_t		 tok;
+	struct blk	*blk;
 
 	/*
 	 * If the file's empty or we don't have any blocks from the
@@ -248,34 +135,69 @@ blk_match(struct sess *sess, int fd, const struct blkset *blks,
 	 */
 
 	if (st->mapsz && blks->blksz) {
-		if ((c = blk_match_send(sess, path, fd, blks, st)) < 0) {
-			ERRX1(sess, "blk_match_send");
-			return -1;
-		} else if (c == 0)
-			return 0;
-	} else {
-		if (!blk_flush(sess, fd, st->map, st->mapsz, 0)) {
-			ERRX1(sess, "blk_flush");
-			return -1;
+		/*
+		 * Stop searching at the length of the file minus the
+		 * size of the last block.
+		 * The reason for this being that we don't need to do an
+		 * incremental hash within the last block---if it
+		 * doesn't match, it doesn't match.
+		 */
+
+		end = st->mapsz + 1 - blks->blks[blks->blksz - 1].len;
+		last = st->offs;
+
+		for ( ; st->offs < end; st->offs++) {
+			blk = blk_find(sess, st->map, st->mapsz,
+				st->offs, blks, path, st->hint);
+			if (blk == NULL)
+				continue;
+
+			sz = st->offs - last;
+			st->dirty += sz;
+			st->total += sz;
+			LOG4(sess, "%s: flushing %jd B before %zu B "
+				"block %zu", path, (intmax_t)sz,
+				blk->len, blk->idx);
+			tok = -(blk->idx + 1);
+
+			/*
+			 * Write the data we have, then follow it with
+			 * the tag of the block that matches.
+			 */
+
+			st->curpos = last;
+			st->curlen = st->curpos + sz;
+			st->curtok = tok;
+			assert(0 != st->curtok);
+			st->curst = sz ? BLKSTAT_DATA : BLKSTAT_TOK;
+			st->total += blk->len;
+			st->offs += blk->len;
+			st->hint = blk->idx + 1;
+			return;
 		}
-		LOG3(sess, "%s: flushed (un-chunked) %jd B, 100%% upload ratio",
-		    path, (intmax_t)st->mapsz);
+
+		/* Emit remaining data and send terminator token. */
+
+		sz = st->mapsz - last;
+		LOG4(sess, "%s: flushing remaining %jd B",
+			path, (intmax_t)sz);
+
+		st->total += sz;
+		st->dirty += sz;
+		st->curpos = last;
+		st->curlen = st->curpos + sz;
+		st->curtok = 0;
+		st->curst = sz ? BLKSTAT_DATA : BLKSTAT_TOK;
+	} else {
+		st->curpos = 0;
+		st->curlen = st->mapsz;
+		st->curtok = 0;
+		st->curst = st->mapsz ? BLKSTAT_DATA : BLKSTAT_TOK;
+		st->dirty = st->total = st->mapsz;
+
+		LOG4(sess, "%s: flushing whole file %zu B",
+			path, st->mapsz);
 	}
-
-	/*
-	 * Now write the full file hash.
-	 * Since we're seeding the hash, this always gives us some sort
-	 * of data even if the file's zero-length.
-	 */
-
-	hash_file(st->map, st->mapsz, filemd, sess);
-
-	if (!io_write_buf(sess, fd, filemd, MD4_DIGEST_LENGTH)) {
-		ERRX1(sess, "io_write_buf");
-		return -1;
-	}
-
-	return 1;
 }
 
 /*
