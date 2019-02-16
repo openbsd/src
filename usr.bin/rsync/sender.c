@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.10 2019/02/16 16:59:34 florian Exp $ */
+/*	$Id: sender.c,v 1.11 2019/02/16 17:59:33 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,7 +34,7 @@
  * A request from the receiver to download updated file data.
  */
 struct	send_dl {
-	int32_t	 	     idx; /* index in our file list */
+	int32_t		     idx; /* index in our file list */
 	struct blkset	    *blks; /* the sender's block information */
 	TAILQ_ENTRY(send_dl) entries;
 };
@@ -103,7 +103,7 @@ send_dl_enqueue(struct sess *sess, struct send_dlq *q,
 	int32_t idx, const struct flist *fl, size_t flsz, int fd)
 {
 	struct send_dl	*s;
-	
+
 	/* End-of-phase marker. */
 
 	if (idx == -1) {
@@ -118,7 +118,7 @@ send_dl_enqueue(struct sess *sess, struct send_dlq *q,
 	}
 
 	/* Validate the index. */
-		
+
 	if (idx < 0 || (uint32_t)idx >= flsz) {
 		ERRX(sess, "file index out of bounds: invalid %"
 			PRId32 " out of %zu", idx, flsz);
@@ -586,7 +586,7 @@ rsync_sender(struct sess *sess, int fdin,
 				pfd[1].fd = fdout;
 				continue;
 			}
-			
+
 			/*
 			 * Non-blocking open of file.
 			 * This will be picked up in the state machine

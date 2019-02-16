@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.3 2019/02/16 10:49:37 florian Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.4 2019/02/16 17:59:33 deraadt Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/un.h>                                                             
+#include <sys/un.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>

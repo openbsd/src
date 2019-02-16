@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.22 2019/02/16 17:48:48 deraadt Exp $ */
+/*	$Id: main.c,v 1.23 2019/02/16 17:59:33 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -293,7 +293,7 @@ main(int argc, char *argv[])
 		{ "server",	no_argument,	&opts.server,		1 },
 		{ "dry-run",	no_argument,	&opts.dry_run,		1 },
 		{ "version",	no_argument,	NULL,			2 },
-		{ "archive",	no_argument, 	NULL,			'a' },
+		{ "archive",	no_argument,	NULL,			'a' },
 		{ "help",	no_argument,	NULL,			'h' },
 		{ "delete",	no_argument,	&opts.del,		1 },
 		{ "no-delete",	no_argument,	&opts.del,		0 },
