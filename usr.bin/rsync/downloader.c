@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.9 2019/02/14 18:29:08 florian Exp $ */
+/*	$Id: downloader.c,v 1.10 2019/02/16 10:46:22 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -297,10 +297,8 @@ int
 rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 {
 	int32_t		 idx, rawtok;
-	uint32_t	 hash;
 	const struct flist *f;
-	size_t		 sz, dirlen, tok;
-	const char	*cp;
+	size_t		 sz, tok;
 	mode_t		 perm;
 	struct stat	 st;
 	char		*buf = NULL;
@@ -415,29 +413,16 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		*ofd = -1;
 
-		/*
-		 * Create the temporary file.
-		 * Use a simple scheme of path/.FILE.RANDOM, where we
-		 * fill in RANDOM with an arc4random number.
-		 * The tricky part is getting into the directory if
-		 * we're in recursive mode.
-		 */
+		/* Create the temporary file. */
 
-		hash = arc4random();
-		if (sess->opts->recursive &&
-		    NULL != (cp = strrchr(f->path, '/'))) {
-			dirlen = cp - f->path;
-			if (asprintf(&p->fname, "%.*s/.%s.%" PRIu32,
-			    (int)dirlen, f->path,
-			    f->path + dirlen + 1, hash) < 0)
-				p->fname = NULL;
-		} else {
-			if (asprintf(&p->fname, ".%s.%" PRIu32,
-			    f->path, hash) < 0)
-				p->fname = NULL;
-		}
-		if (p->fname == NULL) {
+		if (mktemplate(&p->fname, f->path, sess->opts->recursive)
+		    == -1) {
 			ERR(sess, "asprintf");
+			goto out;
+		}
+
+		if ((p->fd = mkstempat(p->rootfd, p->fname)) == -1) {
+			ERR(sess, "%s: openat", p->fname);
 			goto out;
 		}
 
@@ -451,11 +436,9 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		else
 			perm = f->st.mode;
 
-		p->fd = openat(p->rootfd, p->fname,
-			O_APPEND|O_WRONLY|O_CREAT|O_EXCL, perm);
-
-		if (p->fd == -1) {
-			ERR(sess, "%s: openat", p->fname);
+		if (fchmod(p->fd, perm) == -1) {
+			ERR(sess, "%s: fchmod", p->fname);
+			(void)unlinkat(p->rootfd, p->fname, 0);
 			goto out;
 		}
 

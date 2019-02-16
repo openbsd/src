@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.8 2019/02/16 05:30:28 deraadt Exp $ */
+/*	$Id: uploader.c,v 1.9 2019/02/16 10:46:22 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -167,11 +167,12 @@ init_blk(struct blk *p, const struct blkset *set, off_t offs,
 static int
 pre_link(struct upload *p, struct sess *sess)
 {
-	int		 rc, newlink = 0;
-	char		*b;
-	struct stat	 st;
-	struct timespec	 tv[2];
-	const struct flist *f;
+	struct stat		 st;
+	struct timespec		 tv[2];
+	const struct flist	*f;
+	int			 rc, newlink = 0, updatelink = 0;
+	mode_t			 mode;
+	char			*b;
 
 	f = &p->fl[p->idx];
 	assert(S_ISLNK(f->st.mode));
@@ -189,8 +190,13 @@ pre_link(struct upload *p, struct sess *sess)
 	assert(p->rootfd != -1);
 	rc = fstatat(p->rootfd, f->path, &st, AT_SYMLINK_NOFOLLOW);
 	if (rc != -1 && !S_ISLNK(st.st_mode)) {
-		WARNX(sess, "%s: not a symlink", f->path);
-		return -1;
+		if (S_ISDIR(st.st_mode)) {
+			if (unlinkat(p->rootfd, f->path, AT_REMOVEDIR) == -1) {
+				WARN(sess, "%s", f->path);
+				return -1;
+			}
+		}
+		rc = -1; /* overwrite object with symlink */
 	} else if (rc == -1 && errno != ENOENT) {
 		WARN(sess, "%s: fstatat", f->path);
 		return -1;
@@ -199,20 +205,9 @@ pre_link(struct upload *p, struct sess *sess)
 	/*
 	 * If the symbolic link already exists, then make sure that it
 	 * points to the correct place.
-	 * FIXME: does symlinkat() set permissions on the link using the
-	 * destination file or the default umask?
-	 * Do we need a fchmod in here as well?
 	 */
 
-	if (rc == -1) {
-		LOG3(sess, "%s: creating "
-			"symlink: %s", f->path, f->link);
-		if (symlinkat(f->link, p->rootfd, f->path) == -1) {
-			WARN(sess, "%s: symlinkat", f->path);
-			return -1;
-		}
-		newlink = 1;
-	} else {
+	if (rc != -1) {
 		b = symlinkat_read(sess, p->rootfd, f->path);
 		if (b == NULL) {
 			ERRX1(sess, "%s: symlinkat_read", f->path);
@@ -223,17 +218,26 @@ pre_link(struct upload *p, struct sess *sess)
 			b = NULL;
 			LOG3(sess, "%s: updating "
 				"symlink: %s", f->path, f->link);
-			if (unlinkat(p->rootfd, f->path, 0) == -1) {
-				WARN(sess, "%s: unlinkat", f->path);
-				return -1;
-			}
-			if (symlinkat(f->link, p->rootfd, f->path) == -1) {
-				WARN(sess, "%s: symlinkat", f->path);
-				return -1;
-			}
-			newlink = 1;
+			updatelink = 1;
 		}
 		free(b);
+		b = NULL;
+	}
+
+	if (rc == -1 || updatelink) {
+		LOG3(sess, "%s: creating "
+			"symlink: %s", f->path, f->link);
+
+		if (mktemplate(&b, f->path, sess->opts->recursive) == -1) {
+			ERR(sess, "asprintf");
+			return -1;
+		}
+		if (mkstemplinkat(f->link, p->rootfd, b) == NULL) {
+			WARN(sess, "%s: symlinkat", b);
+			free(b);
+			return -1;
+		}
+		newlink = 1;
 	}
 
 	/* 
@@ -248,26 +252,47 @@ pre_link(struct upload *p, struct sess *sess)
 		TIMEVAL_TO_TIMESPEC(&now, &tv[0]);
 		tv[1].tv_sec = f->st.mtime;
 		tv[1].tv_nsec = 0;
-		rc = utimensat(p->rootfd, f->path, tv, AT_SYMLINK_NOFOLLOW);
+		rc = utimensat(p->rootfd, newlink ? b : f->path, tv,
+		    AT_SYMLINK_NOFOLLOW);
 		if (rc == -1) {
-			ERR(sess, "%s: utimensat", f->path);
+			ERR(sess, "%s: futimes", f->path);
+			if (newlink) {
+				(void)unlinkat(p->rootfd, b, 0);
+				free(b);
+			}
 			return -1;
 		}
 		LOG4(sess, "%s: updated symlink date", f->path);
 	}
 
-	/*
-	 * FIXME: if newlink is set because we updated the symlink, we
-	 * want to carry over the permissions from the last.
-	 */
-
 	if (newlink || sess->opts->preserve_perms) {
-		rc = fchmodat(p->rootfd, f->path, f->st.mode, AT_SYMLINK_NOFOLLOW);
+		if (updatelink && !sess->opts->preserve_perms)
+			/* carry over permissions from replaced symlink */
+			mode = st.st_mode;
+		else
+			mode = f->st.mode;
+
+		rc = fchmodat(p->rootfd, newlink ? b : f->path, mode,
+		    AT_SYMLINK_NOFOLLOW);
 		if (rc == -1) {
-			ERR(sess, "%s: fchmodat", f->path);
+			ERR(sess, "%s: fchmodat", newlink ? b : f->path);
+			if (newlink) {
+				(void)unlinkat(p->rootfd, b, 0);
+				free(b);
+			}
 			return -1;
 		}
 		LOG4(sess, "%s: updated symlink mode", f->path);
+	}
+
+	if (newlink) {
+		if (renameat(p->rootfd, b, p->rootfd, f->path) == -1) {
+			ERR(sess, "%s: renameat %s", b, f->path);
+			(void)unlinkat(p->rootfd, b, 0);
+			free(b);
+			return -1;
+		}
+		free(b);
 	}
 
 	log_link(sess, f);

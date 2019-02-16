@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.10 2019/02/14 18:29:08 florian Exp $ */
+/*	$Id: extern.h,v 1.11 2019/02/16 10:46:22 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -297,6 +297,10 @@ void		  hash_file(const void *, size_t,
 			unsigned char *, const struct sess *);
 
 int		  mkpath(struct sess *, char *);
+
+int		  mkstempat(int, char *);
+char		 *mkstemplinkat(char*, int, char *);
+int		  mktemplate(char **, const char *, int);
 
 char		 *symlink_read(struct sess *, const char *);
 char		 *symlinkat_read(struct sess *, int, const char *);
