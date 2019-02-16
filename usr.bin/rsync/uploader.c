@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.12 2019/02/16 10:49:37 florian Exp $ */
+/*	$Id: uploader.c,v 1.13 2019/02/16 16:56:33 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -23,7 +23,6 @@
 #include <fcntl.h>
 #include <inttypes.h>
 #include <math.h>
-#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
