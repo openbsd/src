@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.12 2019/02/16 10:44:01 florian Exp $ */
+/*	$Id: receiver.c,v 1.13 2019/02/16 10:47:20 florian Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -86,6 +86,16 @@ rsync_set_metadata(struct sess *sess, int newfile,
 			return 0;
 		}
 		LOG4(sess, "%s: updated date", f->path);
+	}
+
+	/* Conditionally adjust file permissions. */
+
+	if (newfile || sess->opts->preserve_perms) {
+		if (fchmod(fd, f->st.mode) == -1) {
+			ERR(sess, "%s: fchmod", path);
+			return 0;
+		}
+		LOG4(sess, "%s: updated permissions", f->path);
 	}
 
 	return 1;

@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.9 2019/02/16 10:46:22 florian Exp $ */
+/*	$Id: uploader.c,v 1.10 2019/02/16 10:47:20 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -663,8 +663,6 @@ rsync_uploader(struct upload *u, int *fileinfd,
 		if (st.st_size == f->st.size &&
 		    st.st_mtime == f->st.mtime) {
 			LOG3(sess, "%s: skipping: up to date", f->path);
-#if 0
-			/* Not yet: investigate behaviour. */
 			if (!rsync_set_metadata
 			    (sess, 0, *fileinfd, f, f->path)) {
 				ERRX1(sess, "rsync_set_metadata");
@@ -672,7 +670,6 @@ rsync_uploader(struct upload *u, int *fileinfd,
 				*fileinfd = -1;
 				return -1;
 			}
-#endif
 			close(*fileinfd);
 			*fileinfd = -1;
 			*fileoutfd = u->fdout;

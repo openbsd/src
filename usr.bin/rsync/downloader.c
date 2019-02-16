@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.10 2019/02/16 10:46:22 florian Exp $ */
+/*	$Id: downloader.c,v 1.11 2019/02/16 10:47:20 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -299,7 +299,6 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 	int32_t		 idx, rawtok;
 	const struct flist *f;
 	size_t		 sz, tok;
-	mode_t		 perm;
 	struct stat	 st;
 	char		*buf = NULL;
 	unsigned char	 ourmd[MD4_DIGEST_LENGTH],
@@ -423,22 +422,6 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		if ((p->fd = mkstempat(p->rootfd, p->fname)) == -1) {
 			ERR(sess, "%s: openat", p->fname);
-			goto out;
-		}
-
-		/*
-		 * Inherit permissions from the source file if we're new
-		 * or specifically told with -p.
-		 */
-
-		if (!sess->opts->preserve_perms)
-			perm = -1 == p->ofd ? f->st.mode : st.st_mode;
-		else
-			perm = f->st.mode;
-
-		if (fchmod(p->fd, perm) == -1) {
-			ERR(sess, "%s: fchmod", p->fname);
-			(void)unlinkat(p->rootfd, p->fname, 0);
 			goto out;
 		}
 
