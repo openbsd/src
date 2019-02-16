@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.10 2019/02/16 16:50:09 deraadt Exp $ */
+/*	$Id: socket.c,v 1.11 2019/02/16 16:52:54 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -116,7 +116,7 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
 
-	error = getaddrinfo(host, "873", &hints, &res0);
+	error = getaddrinfo(host, "rsync", &hints, &res0);
 
 	LOG2(sess, "resolving: %s", host);
 
