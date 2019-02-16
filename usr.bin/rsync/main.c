@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.16 2019/02/14 18:32:00 florian Exp $ */
+/*	$Id: main.c,v 1.17 2019/02/16 05:36:07 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -299,6 +299,7 @@ main(int argc, char *argv[])
 		{ "recursive",	no_argument,	&opts.recursive,	1 },
 		{ "times",	no_argument,	&opts.preserve_times,	1 },
 		{ "group",	no_argument,	&opts.preserve_gids,	1 },
+		{ "version",	no_argument,	NULL,			2 },
 		{ NULL,		0,		NULL,			0 }};
 
 	/* Global pledge. */
@@ -345,6 +346,10 @@ main(int argc, char *argv[])
 		case 1:
 			opts.rsync_path = optarg;
 			break;
+		case 2:
+			fprintf(stderr, "openrsync: protocol version %u\n",
+			    RSYNC_PROTOCOL);
+			exit(0);
 		default:
 			goto usage;
 		}
