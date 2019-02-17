@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.11 2019/02/16 16:52:54 deraadt Exp $ */
+/*	$Id: socket.c,v 1.12 2019/02/17 03:16:15 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -114,7 +114,7 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
+	hints.ai_socktype = SOCK_STREAM;
 
 	error = getaddrinfo(host, "rsync", &hints, &res0);
 
