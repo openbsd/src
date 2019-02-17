@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.26 2019/02/17 18:11:50 deraadt Exp $ */
+/*	$Id: main.c,v 1.27 2019/02/17 20:11:42 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -351,7 +351,6 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			opts.ssh_prog = optarg;
-			/* Ignore. */
 			break;
 		case 'g':
 			opts.preserve_gids = 1;
