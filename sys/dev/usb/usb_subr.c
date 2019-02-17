@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.147 2019/01/22 14:25:56 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.148 2019/02/17 15:02:22 mpi Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1208,7 +1208,6 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	 * address does not correspond to the hardware one.
 	 */
 	dev->address = addr;
-	bus->devices[addr] = dev;
 
 	err = usbd_reload_device_desc(dev);
 	if (err) {
@@ -1244,6 +1243,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 		up->device = NULL;
 		return (err);
   	}
+
+	bus->devices[addr] = dev;
 
 	err = usbd_probe_and_attach(parent, dev, port, addr);
 	if (err) {
