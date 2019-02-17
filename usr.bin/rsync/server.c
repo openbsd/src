@@ -1,4 +1,4 @@
-/*	$Id: server.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: server.c,v 1.5 2019/02/17 16:17:07 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -55,7 +55,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 {
 	struct sess	 sess;
 	int		 fdin = STDIN_FILENO,
-			 fdout = STDOUT_FILENO, c = 0;
+			 fdout = STDOUT_FILENO, rc = 0;
 
 	memset(&sess, 0, sizeof(struct sess));
 	sess.opts = opts;
@@ -87,10 +87,10 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 	sess.mplex_writes = 1;
 
 	if (sess.rver < sess.lver) {
-		ERRX(&sess, "remote protocol is older "
-			"than our own (%" PRId32 " < %" PRId32 "): "
-			"this is not supported",
-			sess.rver, sess.lver);
+		ERRX(&sess,
+		    "remote protocol %d is older than our own %d: unsupported",
+		    sess.rver, sess.lver);
+		rc = 2;
 		goto out;
 	}
 
@@ -156,7 +156,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 		WARNX(&sess, "data remains in read pipe");
 #endif
 
-	c = 1;
+	rc = 1;
 out:
-	return c;
+	return rc;
 }
