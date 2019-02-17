@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.13 2019/02/16 16:56:33 florian Exp $ */
+/*	$Id: downloader.c,v 1.14 2019/02/17 16:34:04 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -85,7 +85,7 @@ log_file(struct sess *sess,
 	if (sess->opts->server)
 		return;
 
-	frac = 0 == dl->total ? 100.0 :
+	frac = (dl->total == 0) ? 100.0 :
 		100.0 * dl->downloaded / dl->total;
 
 	if (dl->total > 1024 * 1024 * 1024) {

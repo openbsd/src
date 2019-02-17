@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.12 2019/02/16 23:16:54 deraadt Exp $ */
+/*	$Id: sender.c,v 1.13 2019/02/17 16:34:04 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -59,7 +59,7 @@ static void
 send_up_reset(struct send_up *p)
 {
 
-	assert(NULL != p);
+	assert(p != NULL);
 
 	/* Free the download request, if applicable. */
 
@@ -386,7 +386,7 @@ rsync_sender(struct sess *sess, int fdin,
 
 		if (pfd[1].revents & POLLOUT) {
 			assert(pfd[2].fd == -1);
-			assert(0 == wbufpos && 0 == wbufsz);
+			assert(wbufpos == 0 && wbufsz == 0);
 
 			/*
 			 * If we have data to write, do it now according
@@ -476,7 +476,7 @@ rsync_sender(struct sess *sess, int fdin,
 					(intmax_t)up.stat.total / 1024,
 					100.0 * up.stat.dirty / up.stat.total);
 				send_up_reset(&up);
-			} else if (NULL != up.cur && up.cur->idx < 0) {
+			} else if (up.cur != NULL && up.cur->idx < 0) {
 				/*
 				 * We've hit the phase change following
 				 * the last file (or start, or prior
@@ -504,7 +504,7 @@ rsync_sender(struct sess *sess, int fdin,
 
 				if (phase++)
 					break;
-			} else if (NULL != up.cur && 0 == up.primed) {
+			} else if (up.cur != NULL && up.primed == 0) {
 				/*
 				 * We're getting ready to send the file
 				 * contents to the receiver.
@@ -534,7 +534,7 @@ rsync_sender(struct sess *sess, int fdin,
 					fl[up.cur->idx].path,
 					(intmax_t)up.cur->blks->size);
 				up.primed = 1;
-			} else if (NULL != up.cur) {
+			} else if (up.cur != NULL) {
 				/*
 				 * Our last case: we need to find the
 				 * next block (and token) to transmit to

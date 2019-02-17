@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.13 2019/02/16 16:56:33 florian Exp $ */
+/*	$Id: uploader.c,v 1.14 2019/02/17 16:34:04 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -732,7 +732,7 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	 */
 
 	if (u->state == UPLOAD_WRITE_LOCAL) {
-		assert(NULL != u->buf);
+		assert(u->buf != NULL);
 		assert(*fileoutfd != -1);
 		assert(*fileinfd == -1);
 
@@ -823,8 +823,8 @@ rsync_uploader(struct upload *u, int *fileinfd,
 
 		/* Go back to the event loop, if necessary. */
 
-		u->state = -1 == *fileinfd ?
-			UPLOAD_WRITE_LOCAL : UPLOAD_READ_LOCAL;
+		u->state = (*fileinfd == -1) ?
+		    UPLOAD_WRITE_LOCAL : UPLOAD_READ_LOCAL;
 		if (u->state == UPLOAD_READ_LOCAL)
 			return 1;
 	}

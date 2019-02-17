@@ -1,4 +1,4 @@
-/*	$Id: log.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$Id: log.c,v 1.3 2019/02/17 16:34:04 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,7 +38,7 @@ rsync_log(struct sess *sess, const char *fname,
 	if (sess->opts->verbose < level + 1)
 		return;
 
-	if (NULL != fmt) {
+	if (fmt != NULL) {
 		va_start(ap, fmt);
 		if (vasprintf(&buf, fmt, ap) < 0) {
 			va_end(ap);
@@ -47,12 +47,12 @@ rsync_log(struct sess *sess, const char *fname,
 		va_end(ap);
 	}
 
-	if (level <= 0 && NULL != buf)
+	if (level <= 0 && buf != NULL)
 		fprintf(stderr, "%s\n", buf);
 	else if (level > 0)
 		fprintf(stderr, "%s:%zu%s%s\n", fname, line,
-			NULL != buf ? ": " : "",
-			NULL != buf ? buf : "");
+		    (buf != NULL) ? ": " : "",
+		    (buf != NULL) ? buf : "");
 	free(buf);
 }
 
@@ -67,7 +67,7 @@ rsync_errx(struct sess *sess, const char *fname,
 	char	*buf = NULL;
 	va_list	 ap;
 
-	if (NULL != fmt) {
+	if (fmt != NULL) {
 		va_start(ap, fmt);
 		if (vasprintf(&buf, fmt, ap) < 0) {
 			va_end(ap);
@@ -77,8 +77,8 @@ rsync_errx(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: error%s%s\n", fname, line,
-		NULL != buf ? ": " : "",
-		NULL != buf ? buf : "");
+		buf != NULL ? ": " : "",
+		buf != NULL ? buf : "");
 	free(buf);
 }
 
@@ -94,7 +94,7 @@ rsync_err(struct sess *sess, const char *fname,
 	va_list	 ap;
 	int	 er = errno;
 
-	if (NULL != fmt) {
+	if (fmt != NULL) {
 		va_start(ap, fmt);
 		if (vasprintf(&buf, fmt, ap) < 0) {
 			va_end(ap);
@@ -104,8 +104,8 @@ rsync_err(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: error%s%s: %s\n", fname, line,
-		NULL != buf ? ": " : "",
-		NULL != buf ? buf : "", strerror(er));
+		buf != NULL ? ": " : "",
+		buf != NULL ? buf : "", strerror(er));
 	free(buf);
 }
 
@@ -123,7 +123,7 @@ rsync_errx1(struct sess *sess, const char *fname,
 	if (sess->opts->verbose < 1)
 		return;
 
-	if (NULL != fmt) {
+	if (fmt != NULL) {
 		va_start(ap, fmt);
 		if (vasprintf(&buf, fmt, ap) < 0) {
 			va_end(ap);
@@ -133,8 +133,8 @@ rsync_errx1(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: error%s%s\n", fname, line,
-		NULL != buf ? ": " : "",
-		NULL != buf ? buf : "");
+		buf != NULL ? ": " : "",
+		buf != NULL ? buf : "");
 	free(buf);
 }
 
@@ -148,7 +148,7 @@ rsync_warnx(struct sess *sess, const char *fname,
 	char	*buf = NULL;
 	va_list	 ap;
 
-	if (NULL != fmt) {
+	if (fmt != NULL) {
 		va_start(ap, fmt);
 		if (vasprintf(&buf, fmt, ap) < 0) {
 			va_end(ap);
@@ -158,8 +158,8 @@ rsync_warnx(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: warning%s%s\n", fname, line,
-		NULL != buf ? ": " : "",
-		NULL != buf ? buf : "");
+		buf != NULL ? ": " : "",
+		buf != NULL ? buf : "");
 	free(buf);
 }
 
@@ -178,7 +178,7 @@ rsync_warn(struct sess *sess, int level,
 	if (sess->opts->verbose < level)
 		return;
 
-	if (NULL != fmt) {
+	if (fmt != NULL) {
 		va_start(ap, fmt);
 		if (vasprintf(&buf, fmt, ap) < 0) {
 			va_end(ap);
@@ -188,7 +188,7 @@ rsync_warn(struct sess *sess, int level,
 	}
 
 	fprintf(stderr, "%s:%zu: warning%s%s: %s\n", fname, line,
-		NULL != buf ? ": " : "",
-		NULL != buf ? buf : "", strerror(er));
+		buf != NULL ? ": " : "",
+		buf != NULL ? buf : "", strerror(er));
 	free(buf);
 }
