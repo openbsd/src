@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.7 2019/02/16 17:51:46 deraadt Exp $
+.\"	$OpenBSD: rsync.1,v 1.8 2019/02/17 15:57:01 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 16 2019 $
+.Dd $Mdocdate: February 17 2019 $
 .Dt RSYNC 1
 .Os
 .Sh NAME
@@ -62,6 +62,9 @@ and
 .Fl specials .
 .It Fl -devices
 Transfer device files.
+.It Fl e Ar program , Fl -rsh Ns = Ns program
+Specify alternative program, defaults to
+.Xr ssh 1 .
 .It Fl g , Fl -group
 Set group identifier to match the source.
 Groups are matched by name: group
@@ -116,7 +119,7 @@ not found in
 directories.
 Only applicable with
 .Fl r .
-.It Fl -rsync-path Ar prog
+.It Fl -rsync-path Ns = Ns Ar prog
 Run
 .Ar prog
 on the remote host instead of the default
