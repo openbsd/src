@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.13 2019/02/17 14:49:15 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.14 2019/02/17 16:15:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1184,7 +1184,7 @@ parse_trust_anchor(struct trust_anchor_head *tah, int fd)
 
 	while ((line = strsep(&str, "\n")) != NULL) {
 		if (sldns_str2wire_rr_buf(line, rr, &len, &dname_len,
-		    172800, NULL, 0, NULL, 0) != 0)
+		    ROOT_DNSKEY_TTL, NULL, 0, NULL, 0) != 0)
 			continue;
 		if (sldns_wirerr_get_type(rr, len, dname_len) ==
 		    LDNS_RR_TYPE_DNSKEY)

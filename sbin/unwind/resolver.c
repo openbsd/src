@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.18 2019/02/17 14:52:16 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.19 2019/02/17 16:15:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -58,9 +58,6 @@
 
 #define	UB_LOG_VERBOSE			4
 #define	UB_LOG_BRIEF			0
-
-/* don't cause churn when trust anchor comes from a cache */
-#define	ROOT_DNSKEY_TTL			172800
 
 #define	PORTAL_CHECK_SEC		15
 #define	PORTAL_CHECK_MAXSEC		600
