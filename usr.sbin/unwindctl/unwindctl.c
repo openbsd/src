@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.4 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.5 2019/02/17 14:49:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -242,8 +242,8 @@ show_status_msg(struct imsg *imsg)
 	case IMSG_CTL_RESOLVER_INFO:
 		cri = imsg->data;
 		printf("%8s %16s %s\n", cri->selected ? "*" : " ",
-		    unwind_resolver_type_str[cri->type],
-		    unwind_resolver_state_str[cri->state]);
+		    uw_resolver_type_str[cri->type],
+		    uw_resolver_state_str[cri->state]);
 		break;
 	case IMSG_CTL_RESOLVER_WHY_BOGUS:
 		/* make sure this is a string */
