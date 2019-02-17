@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.8 2019/02/17 15:57:01 deraadt Exp $
+.\"	$OpenBSD: rsync.1,v 1.9 2019/02/17 18:11:50 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -111,6 +111,8 @@ Increase verbosity.
 Specify once for files being transferred, twice for specific status,
 thrice for per-file transfer information, and four times for per-file
 breakdowns.
+.It Fl -port Ns = Ns portnumber
+Specify alternative port number.
 .It Fl -delete
 Delete files in
 .Ar directory

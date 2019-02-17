@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.25 2019/02/17 17:19:05 deraadt Exp $ */
+/*	$Id: main.c,v 1.26 2019/02/17 18:11:50 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -89,10 +89,10 @@ fargs_is_daemon(const char *v)
  * Always returns the parsed and sanitised options.
  */
 static struct fargs *
-fargs_parse(size_t argc, char *argv[])
+fargs_parse(size_t argc, char *argv[], struct opts *opts)
 {
 	struct fargs	*f = NULL;
-	char		*cp;
+	char		*cp, *ccp;
 	size_t		 i, j, len = 0;
 
 	/* Allocations. */
@@ -149,6 +149,11 @@ fargs_parse(size_t argc, char *argv[])
 			f->module = cp;
 			if ((cp = strchr(f->module, '/')) != NULL)
 				*cp = '\0';
+			if ((cp = strchr(f->host, ':'))) {
+				/* host:port --> extract port */
+				*cp++ = '\0';
+				opts->port = cp;
+			}
 		} else {
 			/* host:[/path] */
 			cp = strchr(f->host, ':');
@@ -243,6 +248,8 @@ fargs_parse(size_t argc, char *argv[])
 		    strncasecmp(cp, "rsync://", 8) == 0) {
 			/* rsync://path */
 			cp += 8;
+			if ((ccp = strchr(cp, ':')))	/* skip :port */
+				*ccp = '\0';
 			if (strncmp(cp, f->host, len) ||
 			    (cp[len] != '/' && cp[len] != '\0'))
 				errx(1, "different remote "
@@ -287,6 +294,7 @@ main(int argc, char *argv[])
 	int		 fds[2], rc = 0, c, st;
 	struct fargs	*fargs;
 	struct option	 lopts[] = {
+		{ "port",	required_argument, NULL,		3 },
 		{ "rsh",	required_argument, NULL,		'e' },
 		{ "rsync-path",	required_argument, NULL,		1 },
 		{ "sender",	no_argument,	&opts.sender,		1 },
@@ -379,6 +387,9 @@ main(int argc, char *argv[])
 			fprintf(stderr, "openrsync: protocol version %u\n",
 			    RSYNC_PROTOCOL);
 			exit(0);
+		case 3:
+			opts.port = optarg;
+			break;
 		case 'h':
 		default:
 			goto usage;
@@ -392,6 +403,9 @@ main(int argc, char *argv[])
 
 	if (argc < 2)
 		goto usage;
+
+	if (opts.port == NULL)
+		opts.port = "rsync";
 
 	/*
 	 * This is what happens when we're started with the "hidden"
@@ -415,7 +429,7 @@ main(int argc, char *argv[])
 	 * invoke rsync with the --server option.
 	 */
 
-	fargs = fargs_parse(argc, argv);
+	fargs = fargs_parse(argc, argv, &opts);
 	assert(fargs != NULL);
 
 	/*
