@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.17 2019/02/17 14:49:15 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.18 2019/02/17 14:52:16 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1270,6 +1270,7 @@ restart_resolvers(void)
 
 	new_recursor();
 	new_static_forwarders();
+	new_static_dot_forwarders();
 	new_forwarders();
 }
 
