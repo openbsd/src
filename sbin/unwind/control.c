@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.7 2019/02/17 14:49:15 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.8 2019/02/17 14:51:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -270,6 +270,9 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			frontend_imsg_compose_main(imsg.hdr.type, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			frontend_imsg_compose_resolver(imsg.hdr.type,
+			    imsg.hdr.pid, imsg.data,
+			    imsg.hdr.len - IMSG_HEADER_SIZE);
+			frontend_imsg_compose_captiveportal(imsg.hdr.type,
 			    imsg.hdr.pid, imsg.data,
 			    imsg.hdr.len - IMSG_HEADER_SIZE);
 

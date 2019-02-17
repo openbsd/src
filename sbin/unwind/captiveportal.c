@@ -1,4 +1,4 @@
-/*	$OpenBSD: captiveportal.c,v 1.4 2019/02/17 14:49:15 florian Exp $	*/
+/*	$OpenBSD: captiveportal.c,v 1.5 2019/02/17 14:51:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -475,7 +475,7 @@ captiveportal_dispatch_frontend(int fd, short event, void *bula)
 	struct imsgev	*iev = bula;
 	struct imsgbuf	*ibuf = &iev->ibuf;
 	struct imsg	 imsg;
-	int		 n, shut = 0;
+	int		 n, verbose, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -497,6 +497,14 @@ captiveportal_dispatch_frontend(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
+		case IMSG_CTL_LOG_VERBOSE:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(verbose))
+				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
+				    "%d", __func__, imsg.hdr.len);
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_setverbose(verbose);
+			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
 			    imsg.hdr.type);
