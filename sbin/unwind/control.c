@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.6 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.7 2019/02/17 14:49:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,8 @@ control_init(char *path)
 	}
 	umask(old_umask);
 
-	if (chmod(path, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) == -1) {
+	if (chmod(path,
+	    S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH) == -1) {
 		log_warn("%s: chmod", __func__);
 		close(fd);
 		(void)unlink(path);
@@ -139,8 +140,8 @@ control_accept(int listenfd, short event, void *bula)
 	imsg_init(&c->iev.ibuf, connfd);
 	c->iev.handler = control_dispatch_imsg;
 	c->iev.events = EV_READ;
-	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events,
-	    c->iev.handler, &c->iev);
+	event_set(&c->iev.ev, c->iev.ibuf.fd, c->iev.events, c->iev.handler,
+	    &c->iev);
 	event_add(&c->iev.ev, NULL);
 
 	TAILQ_INSERT_TAIL(&ctl_conns, c, entry);
@@ -277,7 +278,7 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_STATUS:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(enum
-			    unwind_resolver_type))
+			    uw_resolver_type))
 				break;
 			frontend_imsg_compose_resolver(imsg.hdr.type, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);

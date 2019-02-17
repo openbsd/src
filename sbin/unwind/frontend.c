@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.12 2019/02/10 14:10:22 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.13 2019/02/17 14:49:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -93,7 +93,7 @@ void			 parse_trust_anchor(struct trust_anchor_head *, int);
 void			 send_trust_anchors(struct trust_anchor_head *);
 void			 write_trust_anchors(struct trust_anchor_head *, int);
 
-struct unwind_conf	*frontend_conf;
+struct uw_conf		*frontend_conf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_resolver;
 struct imsgev		*iev_captiveportal;
@@ -124,11 +124,11 @@ frontend_sig_handler(int sig, short event, void *bula)
 void
 frontend(int debug, int verbose)
 {
-	struct event		 ev_sigint, ev_sigterm;
-	struct passwd		*pw;
-	size_t			 rcvcmsglen, sndcmsgbuflen;
-	uint8_t			*rcvcmsgbuf;
-	uint8_t			*sndcmsgbuf = NULL;
+	struct event	 ev_sigint, ev_sigterm;
+	struct passwd	*pw;
+	size_t		 rcvcmsglen, sndcmsgbuflen;
+	uint8_t		*rcvcmsgbuf;
+	uint8_t		*sndcmsgbuf = NULL;
 
 	frontend_conf = config_new_empty();
 	control_state.fd = -1;
@@ -144,9 +144,9 @@ frontend(int debug, int verbose)
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 
-	unwind_process = PROC_FRONTEND;
-	setproctitle("%s", log_procnames[unwind_process]);
-	log_procinit(log_procnames[unwind_process]);
+	uw_process = PROC_FRONTEND;
+	setproctitle("%s", log_procnames[uw_process]);
+	log_procinit(log_procnames[uw_process]);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -240,19 +240,20 @@ frontend_shutdown(void)
 int
 frontend_imsg_compose_main(int type, pid_t pid, void *data, uint16_t datalen)
 {
-	return (imsg_compose_event(iev_main, type, 0, pid, -1, data,
-	    datalen));
+	return (imsg_compose_event(iev_main, type, 0, pid, -1, data, datalen));
 }
 
 int
-frontend_imsg_compose_resolver(int type, pid_t pid, void *data, uint16_t datalen)
+frontend_imsg_compose_resolver(int type, pid_t pid, void *data,
+    uint16_t datalen)
 {
 	return (imsg_compose_event(iev_resolver, type, 0, pid, -1, data,
 	    datalen));
 }
 
 int
-frontend_imsg_compose_captiveportal(int type, pid_t pid, void *data, uint16_t datalen)
+frontend_imsg_compose_captiveportal(int type, pid_t pid, void *data,
+    uint16_t datalen)
 {
 	return (imsg_compose_event(iev_captiveportal, type, 0, pid, -1, data,
 	    datalen));
@@ -261,12 +262,12 @@ frontend_imsg_compose_captiveportal(int type, pid_t pid, void *data, uint16_t da
 void
 frontend_dispatch_main(int fd, short event, void *bula)
 {
-	static struct unwind_conf		*nconf;
-	struct unwind_forwarder		*unwind_forwarder;
-	struct imsg			 imsg;
-	struct imsgev			*iev = bula;
-	struct imsgbuf			*ibuf = &iev->ibuf;
-	int				 n, shut = 0;
+	static struct uw_conf	*nconf;
+	struct uw_forwarder	*uw_forwarder;
+	struct imsg		 imsg;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	int			 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -314,7 +315,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			iev_resolver->events = EV_READ;
 
 			event_set(&iev_resolver->ev, iev_resolver->ibuf.fd,
-			iev_resolver->events, iev_resolver->handler, iev_resolver);
+			    iev_resolver->events, iev_resolver->handler,
+			    iev_resolver);
 			event_add(&iev_resolver->ev, NULL);
 			break;
 		case IMSG_SOCKET_IPC_CAPTIVEPORTAL:
@@ -339,27 +341,29 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatal(NULL);
 
 			imsg_init(&iev_captiveportal->ibuf, fd);
-			iev_captiveportal->handler = frontend_dispatch_captiveportal;
+			iev_captiveportal->handler =
+			    frontend_dispatch_captiveportal;
 			iev_captiveportal->events = EV_READ;
 
-			event_set(&iev_captiveportal->ev, iev_captiveportal->ibuf.fd,
-			iev_captiveportal->events, iev_captiveportal->handler, iev_captiveportal);
+			event_set(&iev_captiveportal->ev,
+			    iev_captiveportal->ibuf.fd,
+			    iev_captiveportal->events,
+			    iev_captiveportal->handler, iev_captiveportal);
 			event_add(&iev_captiveportal->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct unwind_conf))
+			    sizeof(struct uw_conf))
 				fatalx("%s: IMSG_RECONF_CONF wrong length: %d",
 				    __func__, imsg.hdr.len);
-			if ((nconf = malloc(sizeof(struct unwind_conf))) ==
-			    NULL)
+			if ((nconf = malloc(sizeof(struct uw_conf))) == NULL)
 				fatal(NULL);
-			memcpy(nconf, imsg.data, sizeof(struct unwind_conf));
+			memcpy(nconf, imsg.data, sizeof(struct uw_conf));
 			nconf->captive_portal_host = NULL;
 			nconf->captive_portal_path = NULL;
 			nconf->captive_portal_expected_response = NULL;
-			SIMPLEQ_INIT(&nconf->unwind_forwarder_list);
-			SIMPLEQ_INIT(&nconf->unwind_dot_forwarder_list);
+			SIMPLEQ_INIT(&nconf->uw_forwarder_list);
+			SIMPLEQ_INIT(&nconf->uw_dot_forwarder_list);
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
 			/* make sure this is a string */
@@ -387,29 +391,29 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_RECONF_FORWARDER:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct unwind_forwarder))
+			    sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
 				    " %d", __func__, imsg.hdr.len);
-			if ((unwind_forwarder = malloc(sizeof(struct
-			    unwind_forwarder))) == NULL)
+			if ((uw_forwarder = malloc(sizeof(struct
+			    uw_forwarder))) == NULL)
 				fatal(NULL);
-			memcpy(unwind_forwarder, imsg.data, sizeof(struct
-			    unwind_forwarder));
-			SIMPLEQ_INSERT_TAIL(&nconf->unwind_forwarder_list,
-			    unwind_forwarder, entry);
+			memcpy(uw_forwarder, imsg.data, sizeof(struct
+			    uw_forwarder));
+			SIMPLEQ_INSERT_TAIL(&nconf->uw_forwarder_list,
+			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_DOT_FORWARDER:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct unwind_forwarder))
+			    sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
 				    "length: %d", __func__, imsg.hdr.len);
-			if ((unwind_forwarder = malloc(sizeof(struct
-			    unwind_forwarder))) == NULL)
+			if ((uw_forwarder = malloc(sizeof(struct
+			    uw_forwarder))) == NULL)
 				fatal(NULL);
-			memcpy(unwind_forwarder, imsg.data, sizeof(struct
-			    unwind_forwarder));
-			SIMPLEQ_INSERT_TAIL(&nconf->unwind_dot_forwarder_list,
-			    unwind_forwarder, entry);
+			memcpy(uw_forwarder, imsg.data, sizeof(struct
+			    uw_forwarder));
+			SIMPLEQ_INSERT_TAIL(&nconf->uw_dot_forwarder_list,
+			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_END:
 			merge_config(frontend_conf, nconf);
@@ -421,8 +425,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				    __func__);
 			if ((udp6sock = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
-				    "UDP6 fd but didn't receive any",
-				    __func__);
+				    "UDP6 fd but didn't receive any", __func__);
 			event_set(&udp6ev.ev, udp6sock, EV_READ | EV_PERSIST,
 			    udp_receive, &udp6ev);
 			event_add(&udp6ev.ev, NULL);
@@ -433,8 +436,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				    __func__);
 			if ((udp4sock = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
-				    "UDP4 fd but didn't receive any",
-				    __func__);
+				    "UDP4 fd but didn't receive any", __func__);
 			event_set(&udp4ev.ev, udp4sock, EV_READ | EV_PERSIST,
 			    udp_receive, &udp4ev);
 			event_add(&udp4ev.ev, NULL);
@@ -459,9 +461,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatalx("%s: received unexpected controlsock",
 				    __func__);
 			if ((fd = imsg.fd) == -1)
-				fatalx("%s: expected to receive imsg "
-				    "control fd but didn't receive any",
-				    __func__);
+				fatalx("%s: expected to receive imsg control "
+				    "fd but didn't receive any", __func__);
 			control_state.fd = fd;
 			/* Listen on control socket. */
 			TAILQ_INIT(&ctl_conns);
@@ -469,9 +470,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_LEASEFD:
 			if ((fd = imsg.fd) == -1)
-				fatalx("%s: expected to receive imsg "
-				    "dhcp lease fd but didn't receive any",
-				    __func__);
+				fatalx("%s: expected to receive imsg dhcp "
+				   "lease fd but didn't receive any", __func__);
 			parse_dhcp_lease(fd);
 			break;
 		case IMSG_TAFD:
@@ -622,10 +622,10 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 void
 frontend_dispatch_captiveportal(int fd, short event, void *bula)
 {
-	struct imsgev			*iev = bula;
-	struct imsgbuf			*ibuf = &iev->ibuf;
-	struct imsg			 imsg;
-	int				 n, shut = 0;
+	struct imsgev	*iev = bula;
+	struct imsgbuf	*ibuf = &iev->ibuf;
+	struct imsg	 imsg;
+	int		 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -786,14 +786,12 @@ udp_receive(int fd, short events, void *arg)
 		free(pq->query);
 		free(pq);
 	}
-
 }
 
 void
 send_answer(struct pending_query *pq, uint8_t *answer, ssize_t len)
 {
-	log_debug("result for %s",
-	    ip_port((struct sockaddr*)&pq->from));
+	log_debug("result for %s", ip_port((struct sockaddr*)&pq->from));
 
 	if (answer == NULL) {
 		answer = pq->query;
@@ -820,8 +818,8 @@ send_answer(struct pending_query *pq, uint8_t *answer, ssize_t len)
 		}
 	}
 
-	if(sendto(pq->fd, answer, len, 0, (struct sockaddr *)
-	   &pq->from, pq->from.ss_len) == -1)
+	if(sendto(pq->fd, answer, len, 0, (struct sockaddr *)&pq->from,
+	    pq->from.ss_len) == -1)
 		log_warn("sendto");
 
 	TAILQ_REMOVE(&pending_queries, pq, entry);
@@ -864,11 +862,11 @@ find_pending_query(uint64_t id)
 void
 route_receive(int fd, short events, void *arg)
 {
-	static uint8_t			 *buf;
+	static uint8_t		*buf;
 
-	struct rt_msghdr		*rtm;
-	struct sockaddr			*sa, *rti_info[RTAX_MAX];
-	ssize_t				 n;
+	struct rt_msghdr	*rtm;
+	struct sockaddr		*sa, *rti_info[RTAX_MAX];
+	ssize_t			 n;
 
 	if (buf == NULL) {
 		buf = malloc(ROUTE_SOCKET_BUF_SIZE);
@@ -955,7 +953,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	default:
 		break;
 	}
-
 }
 
 void
@@ -1081,7 +1078,6 @@ parse_dhcp_lease(int fd)
 void
 add_new_ta(struct trust_anchor_head *tah, char *val)
 {
-
 	struct trust_anchor	*ta, *i;
 	int			 cmp;
 
@@ -1133,7 +1129,7 @@ merge_tas(struct trust_anchor_head *newh, struct trust_anchor_head *oldh)
 		}
 		j = TAILQ_NEXT(j, entry);	
 	}
-	if (j!= NULL)
+	if (j != NULL)
 		chg = 1;
 
 	if (chg) {

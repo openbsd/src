@@ -1,4 +1,4 @@
-/*	$OpenBSD: captiveportal.c,v 1.3 2019/02/08 08:21:05 florian Exp $	*/
+/*	$OpenBSD: captiveportal.c,v 1.4 2019/02/17 14:49:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -62,28 +62,28 @@ enum http_state {
 
 struct http_ctx {
 	TAILQ_ENTRY(http_ctx)	 entry;
-	struct event			 ev;
-	int				 fd;
-	enum http_state			 state;
-	char				*buf;
-	size_t				 bufsz;
-	int				 status;
-	int				 content_length;
+	struct event		 ev;
+	int			 fd;
+	enum http_state		 state;
+	char			*buf;
+	size_t			 bufsz;
+	int			 status;
+	int			 content_length;
 };
 
-__dead void		 captiveportal_shutdown(void);
-void			 captiveportal_sig_handler(int, short, void *);
-void			 captiveportal_startup(void);
-void			 http_callback(int, short, void *);
-int			 parse_http_header(struct http_ctx *);
-void			 check_http_body(struct http_ctx *ctx);
-void			 free_http_ctx(struct http_ctx *);
-void			 close_other_http_contexts(struct http_ctx *);
+__dead void	 captiveportal_shutdown(void);
+void		 captiveportal_sig_handler(int, short, void *);
+void		 captiveportal_startup(void);
+void		 http_callback(int, short, void *);
+int		 parse_http_header(struct http_ctx *);
+void		 check_http_body(struct http_ctx *ctx);
+void		 free_http_ctx(struct http_ctx *);
+void		 close_other_http_contexts(struct http_ctx *);
 
-struct unwind_conf		*captiveportal_conf;
-struct imsgev			*iev_main;
-struct imsgev			*iev_resolver;
-struct imsgev			*iev_frontend;
+struct uw_conf	*captiveportal_conf;
+struct imsgev	*iev_main;
+struct imsgev	*iev_resolver;
+struct imsgev	*iev_frontend;
 
 #define MAX_SERVERS_DNS	 8
 enum http_global_state	 http_global_state = IDLE;
@@ -112,8 +112,8 @@ captiveportal_sig_handler(int sig, short event, void *bula)
 void
 captiveportal(int debug, int verbose)
 {
-	struct event		 ev_sigint, ev_sigterm;
-	struct passwd		*pw;
+	struct event	 ev_sigint, ev_sigterm;
+	struct passwd	*pw;
 
 	captiveportal_conf = config_new_empty();
 
@@ -128,9 +128,9 @@ captiveportal(int debug, int verbose)
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 
-	unwind_process = PROC_CAPTIVEPORTAL;
-	setproctitle("%s", log_procnames[unwind_process]);
-	log_procinit(log_procnames[unwind_process]);
+	uw_process = PROC_CAPTIVEPORTAL;
+	setproctitle("%s", log_procnames[uw_process]);
+	log_procinit(log_procnames[uw_process]);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -192,14 +192,15 @@ captiveportal_shutdown(void)
 }
 
 int
-captiveportal_imsg_compose_main(int type, pid_t pid, void *data, uint16_t datalen)
+captiveportal_imsg_compose_main(int type, pid_t pid, void *data,
+    uint16_t datalen)
 {
-	return (imsg_compose_event(iev_main, type, 0, pid, -1, data,
-	    datalen));
+	return (imsg_compose_event(iev_main, type, 0, pid, -1, data, datalen));
 }
 
 int
-captiveportal_imsg_compose_resolver(int type, pid_t pid, void *data, uint16_t datalen)
+captiveportal_imsg_compose_resolver(int type, pid_t pid, void *data,
+    uint16_t datalen)
 {
 	return (imsg_compose_event(iev_resolver, type, 0, pid, -1, data,
 	    datalen));
@@ -216,13 +217,13 @@ captiveportal_imsg_compose_frontend(int type, pid_t pid, void *data,
 void
 captiveportal_dispatch_main(int fd, short event, void *bula)
 {
-	static struct unwind_conf	*nconf;
-	struct unwind_forwarder		*unwind_forwarder;
-	struct imsg			 imsg;
-	struct imsgev			*iev = bula;
-	struct imsgbuf			*ibuf = &iev->ibuf;
-	struct http_ctx			*ctx;
-	int				 n, shut = 0;
+	static struct uw_conf	*nconf;
+	struct uw_forwarder	*uw_forwarder;
+	struct imsg		 imsg;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	struct http_ctx		*ctx;
+	int			 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -270,7 +271,8 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			iev_resolver->events = EV_READ;
 
 			event_set(&iev_resolver->ev, iev_resolver->ibuf.fd,
-			iev_resolver->events, iev_resolver->handler, iev_resolver);
+			    iev_resolver->events, iev_resolver->handler,
+			    iev_resolver);
 			event_add(&iev_resolver->ev, NULL);
 			break;
 		case IMSG_SOCKET_IPC_FRONTEND:
@@ -299,23 +301,23 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			iev_frontend->events = EV_READ;
 
 			event_set(&iev_frontend->ev, iev_frontend->ibuf.fd,
-			iev_frontend->events, iev_frontend->handler, iev_frontend);
+			    iev_frontend->events, iev_frontend->handler,
+			    iev_frontend);
 			event_add(&iev_frontend->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct unwind_conf))
+			    sizeof(struct uw_conf))
 				fatalx("%s: IMSG_RECONF_CONF wrong length: %d",
 				    __func__, imsg.hdr.len);
-			if ((nconf = malloc(sizeof(struct unwind_conf))) ==
-			    NULL)
+			if ((nconf = malloc(sizeof(struct uw_conf))) == NULL)
 				fatal(NULL);
-			memcpy(nconf, imsg.data, sizeof(struct unwind_conf));
+			memcpy(nconf, imsg.data, sizeof(struct uw_conf));
 			nconf->captive_portal_host = NULL;
 			nconf->captive_portal_path = NULL;
 			nconf->captive_portal_expected_response = NULL;
-			SIMPLEQ_INIT(&nconf->unwind_forwarder_list);
-			SIMPLEQ_INIT(&nconf->unwind_dot_forwarder_list);
+			SIMPLEQ_INIT(&nconf->uw_forwarder_list);
+			SIMPLEQ_INIT(&nconf->uw_dot_forwarder_list);
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
 			/* make sure this is a string */
@@ -343,29 +345,29 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_RECONF_FORWARDER:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct unwind_forwarder))
+			    sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
 				    " %d", __func__, imsg.hdr.len);
-			if ((unwind_forwarder = malloc(sizeof(struct
-			    unwind_forwarder))) == NULL)
+			if ((uw_forwarder = malloc(sizeof(struct
+			    uw_forwarder))) == NULL)
 				fatal(NULL);
-			memcpy(unwind_forwarder, imsg.data, sizeof(struct
-			    unwind_forwarder));
-			SIMPLEQ_INSERT_TAIL(&nconf->unwind_forwarder_list,
-			    unwind_forwarder, entry);
+			memcpy(uw_forwarder, imsg.data, sizeof(struct
+			    uw_forwarder));
+			SIMPLEQ_INSERT_TAIL(&nconf->uw_forwarder_list,
+			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_DOT_FORWARDER:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct unwind_forwarder))
+			    sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
 				    "length: %d", __func__, imsg.hdr.len);
-			if ((unwind_forwarder = malloc(sizeof(struct
-			    unwind_forwarder))) == NULL)
+			if ((uw_forwarder = malloc(sizeof(struct
+			    uw_forwarder))) == NULL)
 				fatal(NULL);
-			memcpy(unwind_forwarder, imsg.data, sizeof(struct
-			    unwind_forwarder));
-			SIMPLEQ_INSERT_TAIL(&nconf->unwind_dot_forwarder_list,
-			    unwind_forwarder, entry);
+			memcpy(uw_forwarder, imsg.data, sizeof(struct
+			    uw_forwarder));
+			SIMPLEQ_INSERT_TAIL(&nconf->uw_dot_forwarder_list,
+			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_END:
 			merge_config(captiveportal_conf, nconf);
@@ -426,10 +428,10 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 void
 captiveportal_dispatch_resolver(int fd, short event, void *bula)
 {
-	struct imsgev			*iev = bula;
-	struct imsgbuf			*ibuf = &iev->ibuf;
-	struct imsg			 imsg;
-	int				 n, shut = 0;
+	struct imsgev	*iev = bula;
+	struct imsgbuf	*ibuf = &iev->ibuf;
+	struct imsg	 imsg;
+	int		 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -470,10 +472,10 @@ captiveportal_dispatch_resolver(int fd, short event, void *bula)
 void
 captiveportal_dispatch_frontend(int fd, short event, void *bula)
 {
-	struct imsgev			*iev = bula;
-	struct imsgbuf			*ibuf = &iev->ibuf;
-	struct imsg			 imsg;
-	int				 n, shut = 0;
+	struct imsgev	*iev = bula;
+	struct imsgbuf	*ibuf = &iev->ibuf;
+	struct imsg	 imsg;
+	int		 n, shut = 0;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -514,9 +516,9 @@ captiveportal_dispatch_frontend(int fd, short event, void *bula)
 void
 http_callback(int fd, short events, void *arg)
 {
-	struct http_ctx		*ctx;
-	ssize_t			 n;
-	char			*query, buf[512], *vis_str, *p, *ep;
+	struct http_ctx	*ctx;
+	ssize_t		 n;
+	char		*query, buf[512], *vis_str, *p, *ep;
 
 	ctx = (struct http_ctx *)arg;
 

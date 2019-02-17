@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.5 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.6 2019/02/17 14:49:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -52,27 +52,26 @@ print_forwarder(char *name)
 }
 
 void
-print_config(struct unwind_conf *conf)
+print_config(struct uw_conf *conf)
 {
-	struct unwind_forwarder	*unwind_forwarder;
+	struct uw_forwarder	*uw_forwarder;
 
 #if notyet
-	printf("strict %s\n", yesno(conf->unwind_options));
+	printf("strict %s\n", yesno(conf->uw_options));
 #endif
 
-	if (!SIMPLEQ_EMPTY(&conf->unwind_forwarder_list) ||
-	    !SIMPLEQ_EMPTY(&conf->unwind_dot_forwarder_list)) {
+	if (!SIMPLEQ_EMPTY(&conf->uw_forwarder_list) ||
+	    !SIMPLEQ_EMPTY(&conf->uw_dot_forwarder_list)) {
 		printf("forwarder {\n");
-		SIMPLEQ_FOREACH(unwind_forwarder, &conf->unwind_forwarder_list,
-		    entry) {
+		SIMPLEQ_FOREACH(uw_forwarder, &conf->uw_forwarder_list, entry) {
 			printf("\t");
-			print_forwarder(unwind_forwarder->name);
+			print_forwarder(uw_forwarder->name);
 			printf("\n");
 		}
-		SIMPLEQ_FOREACH(unwind_forwarder,
-		    &conf->unwind_dot_forwarder_list, entry) {
+		SIMPLEQ_FOREACH(uw_forwarder, &conf->uw_dot_forwarder_list,
+		    entry) {
 			printf("\t");
-			print_forwarder(unwind_forwarder->name);
+			print_forwarder(uw_forwarder->name);
 			printf(" DoT\n");
 		}
 		printf("}\n");
@@ -80,8 +79,8 @@ print_config(struct unwind_conf *conf)
 
 	if (conf->captive_portal_host != NULL) {
 		printf("captive portal {\n");
-		printf("\turl \"http://%s%s\"\n",
-		    conf->captive_portal_host, conf->captive_portal_path);
+		printf("\turl \"http://%s%s\"\n", conf->captive_portal_host,
+		    conf->captive_portal_path);
 		printf("\texpected status %d\n",
 		    conf->captive_portal_expected_status);
 		if (conf->captive_portal_expected_response != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uw_parse.y,v 1.10 2019/02/13 22:57:07 deraadt Exp $	*/
+/*	$OpenBSD: uw_parse.y,v 1.11 2019/02/17 14:49:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -81,11 +81,11 @@ struct sym {
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
 
-static struct unwind_conf	*conf;
+static struct uw_conf		*conf;
 static int			 errors;
-static struct unwind_forwarder	*unwind_forwarder;
+static struct uw_forwarder	*uw_forwarder;
 
-void			 clear_config(struct unwind_conf *xconf);
+void			 clear_config(struct uw_conf *xconf);
 struct sockaddr_storage	*host_ip(const char *);
 
 typedef struct {
@@ -114,7 +114,7 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar conf_main '\n'
 		| grammar varset '\n'
-		| grammar unwind_forwarder '\n'
+		| grammar uw_forwarder '\n'
 		| grammar captive_portal '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
@@ -170,7 +170,7 @@ varset		: STRING '=' string		{
 		;
 
 conf_main	: STRICT yesno {
-			conf->unwind_options = $2;
+			conf->uw_options = $2;
 		}
 		;
 
@@ -228,7 +228,7 @@ captive_portal_optsl	: URL STRING {
 			}
 			;
 
-unwind_forwarder	: FORWARDER forwarder_block
+uw_forwarder		: FORWARDER forwarder_block
 			;
 
 forwarder_block		: '{' optnl forwarderopts_l '}'
@@ -248,22 +248,21 @@ forwarderoptsl		: STRING {
 				}
 				free(ss);
 
-				if ((unwind_forwarder = calloc(1,
-				    sizeof(*unwind_forwarder))) == NULL)
+				if ((uw_forwarder = calloc(1,
+				    sizeof(*uw_forwarder))) == NULL)
 					err(1, NULL);
 
-				if(strlcpy(unwind_forwarder->name, $1,
-				    sizeof(unwind_forwarder->name)) >=
-				    sizeof(unwind_forwarder->name)) {
-					free(unwind_forwarder);
+				if(strlcpy(uw_forwarder->name, $1,
+				    sizeof(uw_forwarder->name)) >=
+				    sizeof(uw_forwarder->name)) {
+					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
 					free($1);
 					YYERROR;
 				}
 
-				SIMPLEQ_INSERT_TAIL(
-				    &conf->unwind_forwarder_list,
-				    unwind_forwarder, entry);
+				SIMPLEQ_INSERT_TAIL(&conf->uw_forwarder_list,
+				    uw_forwarder, entry);
 			}
 			| STRING PORT NUMBER {
 				int ret;
@@ -281,24 +280,23 @@ forwarderoptsl		: STRING {
 					YYERROR;
 				}
 
-				if ((unwind_forwarder = calloc(1,
-				    sizeof(*unwind_forwarder))) == NULL)
+				if ((uw_forwarder = calloc(1,
+				    sizeof(*uw_forwarder))) == NULL)
 					err(1, NULL);
 
-				ret = snprintf(unwind_forwarder->name,
-				    sizeof(unwind_forwarder->name), "%s@%d", $1,
+				ret = snprintf(uw_forwarder->name,
+				    sizeof(uw_forwarder->name), "%s@%d", $1,
 				    (int)$3);
 				if (ret == -1 || (size_t)ret >=
-				    sizeof(unwind_forwarder->name)) {
-					free(unwind_forwarder);
+				    sizeof(uw_forwarder->name)) {
+					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
 					free($1);
 					YYERROR;
 				}
 
-				SIMPLEQ_INSERT_TAIL(
-				    &conf->unwind_forwarder_list,
-				    unwind_forwarder, entry);
+				SIMPLEQ_INSERT_TAIL(&conf->uw_forwarder_list,
+				    uw_forwarder, entry);
 			}
 			| STRING DOT {
 				struct sockaddr_storage *ss;
@@ -309,22 +307,22 @@ forwarderoptsl		: STRING {
 				}
 				free(ss);
 
-				if ((unwind_forwarder = calloc(1,
-				    sizeof(*unwind_forwarder))) == NULL)
+				if ((uw_forwarder = calloc(1,
+				    sizeof(*uw_forwarder))) == NULL)
 					err(1, NULL);
 
-				if(strlcpy(unwind_forwarder->name, $1,
-				    sizeof(unwind_forwarder->name)) >=
-				    sizeof(unwind_forwarder->name)) {
-					free(unwind_forwarder);
+				if(strlcpy(uw_forwarder->name, $1,
+				    sizeof(uw_forwarder->name)) >=
+				    sizeof(uw_forwarder->name)) {
+					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
 					free($1);
 					YYERROR;
 				}
 
 				SIMPLEQ_INSERT_TAIL(
-				    &conf->unwind_dot_forwarder_list,
-				    unwind_forwarder, entry);
+				    &conf->uw_dot_forwarder_list, uw_forwarder,
+				    entry);
 			}
 			| STRING PORT NUMBER DOT {
 				int ret;
@@ -342,24 +340,24 @@ forwarderoptsl		: STRING {
 					YYERROR;
 				}
 
-				if ((unwind_forwarder = calloc(1,
-				    sizeof(*unwind_forwarder))) == NULL)
+				if ((uw_forwarder = calloc(1,
+				    sizeof(*uw_forwarder))) == NULL)
 					err(1, NULL);
 
-				ret = snprintf(unwind_forwarder->name,
-				    sizeof(unwind_forwarder->name), "%s@%d", $1,
+				ret = snprintf(uw_forwarder->name,
+				    sizeof(uw_forwarder->name), "%s@%d", $1,
 				    (int)$3);
 				if (ret == -1 || (size_t)ret >=
-				    sizeof(unwind_forwarder->name)) {
-					free(unwind_forwarder);
+				    sizeof(uw_forwarder->name)) {
+					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
 					free($1);
 					YYERROR;
 				}
 
 				SIMPLEQ_INSERT_TAIL(
-				    &conf->unwind_dot_forwarder_list,
-				    unwind_forwarder, entry);
+				    &conf->uw_dot_forwarder_list, uw_forwarder,
+				    entry);
 			}
 			;
 %%
@@ -760,10 +758,10 @@ popfile(void)
 	return (file ? 0 : EOF);
 }
 
-struct unwind_conf *
+struct uw_conf *
 parse_config(char *filename)
 {
-	struct sym		*sym, *next;
+	struct sym	*sym, *next;
 
 	conf = config_new_empty();
 
@@ -874,17 +872,17 @@ symget(const char *nam)
 }
 
 void
-clear_config(struct unwind_conf *xconf)
+clear_config(struct uw_conf *xconf)
 {
-	while((unwind_forwarder =
-	    SIMPLEQ_FIRST(&xconf->unwind_forwarder_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->unwind_forwarder_list, entry);
-		free(unwind_forwarder);
+	while((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_forwarder_list)) !=
+	    NULL) {
+		SIMPLEQ_REMOVE_HEAD(&xconf->uw_forwarder_list, entry);
+		free(uw_forwarder);
 	}
-	while((unwind_forwarder =
-	    SIMPLEQ_FIRST(&xconf->unwind_dot_forwarder_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&xconf->unwind_dot_forwarder_list, entry);
-		free(unwind_forwarder);
+	while((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_dot_forwarder_list)) !=
+	    NULL) {
+		SIMPLEQ_REMOVE_HEAD(&xconf->uw_dot_forwarder_list, entry);
+		free(uw_forwarder);
 	}
 
 	free(xconf);

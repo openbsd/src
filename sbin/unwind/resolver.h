@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.h,v 1.3 2019/02/03 12:02:30 florian Exp $	*/
+/*	$OpenBSD: resolver.h,v 1.4 2019/02/17 14:49:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -17,21 +17,21 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-enum unwind_resolver_state {
+enum uw_resolver_state {
 	DEAD,
 	UNKNOWN,
 	RESOLVING,
 	VALIDATING
 };
 
-static const char * const	unwind_resolver_state_str[] = {
+static const char * const	uw_resolver_state_str[] = {
 	"dead",
 	"unknown",
 	"resolving",
 	"validating"
 };
 
-enum unwind_resolver_type {
+enum uw_resolver_type {
 	RECURSOR,
 	FORWARDER,
 	STATIC_FORWARDER,
@@ -39,7 +39,7 @@ enum unwind_resolver_type {
 	RESOLVER_NONE = -1
 };
 
-static const char * const	unwind_resolver_type_str[] = {
+static const char * const	uw_resolver_type_str[] = {
 	"recursor",
 	"dhcp forwarder",
 	"static forwarder",
@@ -63,9 +63,9 @@ static const int64_t		histogram_limits[] = {
 };
 
 struct ctl_resolver_info {
-	enum unwind_resolver_state	 state;
-	enum unwind_resolver_type	 type;
-	int				 selected;
+	enum uw_resolver_state	 state;
+	enum uw_resolver_type	 type;
+	int			 selected;
 };
 
 void	 resolver(int, int);
