@@ -110,6 +110,7 @@ private:
   bool call_next_insn_pattern_p();
   bool mov_reg_to_local_stack_frame_p(int &regno, int &rbp_offset);
   bool ret_pattern_p();
+  bool retguard_prologue_p(size_t offset, int insn_len);
   uint32_t extract_4(uint8_t *b);
 
   bool instruction_length(uint8_t *insn, int &length, uint32_t buffer_remaining_bytes);
