@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.23 2019/02/16 17:59:33 deraadt Exp $ */
+/*	$Id: main.c,v 1.24 2019/02/17 15:59:09 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -284,7 +284,7 @@ main(int argc, char *argv[])
 {
 	struct opts	 opts;
 	pid_t		 child;
-	int		 fds[2], c, st;
+	int		 fds[2], rc = 0, c, st;
 	struct fargs	*fargs;
 	struct option	 lopts[] = {
 		{ "rsh",	required_argument, NULL,		'e' },
@@ -402,8 +402,7 @@ main(int argc, char *argv[])
 	if (opts.server) {
 		if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
-		c = rsync_server(&opts, (size_t)argc, argv);
-		return c ? EXIT_SUCCESS : EXIT_FAILURE;
+		return rsync_server(&opts, (size_t)argc, argv);
 	}
 
 	/*
@@ -430,9 +429,9 @@ main(int argc, char *argv[])
 		if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw unveil",
 		    NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
-		c = rsync_socket(&opts, fargs);
+		rc = rsync_socket(&opts, fargs);
 		fargs_free(fargs);
-		return c ? EXIT_SUCCESS : EXIT_FAILURE;
+		return rc;
 	}
 
 	/* Drop the dns/inet possibility. */
@@ -470,7 +469,7 @@ main(int argc, char *argv[])
 	fds[1] = -1;
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
 		err(EXIT_FAILURE, "pledge");
-	c = rsync_client(&opts, fds[0], fargs);
+	rc = rsync_client(&opts, fds[0], fargs);
 	fargs_free(fargs);
 
 	/*
@@ -479,7 +478,7 @@ main(int argc, char *argv[])
 	 * So close the connection here so that they don't hang.
 	 */
 
-	if (!c) {
+	if (!rc) {
 		close(fds[0]);
 		fds[0] = -1;
 	}
@@ -487,11 +486,11 @@ main(int argc, char *argv[])
 	if (waitpid(child, &st, 0) == -1)
 		err(EXIT_FAILURE, "waitpid");
 	if (!(WIFEXITED(st) && WEXITSTATUS(st) == EXIT_SUCCESS))
-		c = 0;
+		rc = 0;
 
 	if (fds[0] != -1)
 		close(fds[0]);
-	return c ? EXIT_SUCCESS : EXIT_FAILURE;
+	return rc;
 usage:
 	fprintf(stderr, "usage: %s [-Daglnoprtv] "
 		"[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",

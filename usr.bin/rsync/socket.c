@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.12 2019/02/17 03:16:15 deraadt Exp $ */
+/*	$Id: socket.c,v 1.13 2019/02/17 15:59:09 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -396,10 +396,10 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	/* Now we've completed the handshake. */
 
 	if (sess.rver < sess.lver) {
-		ERRX(&sess, "remote protocol is older "
-			"than our own (%" PRId32 " < %" PRId32 "): "
-			"this is not supported",
-			sess.rver, sess.lver);
+		ERRX(&sess,
+		    "remote protocol %d is older than own %d: unsupported\n",
+		    sess.rver, sess.lver);
+		rc = 2;	/* Protocol incompatibility*/		
 		goto out;
 	}
 
