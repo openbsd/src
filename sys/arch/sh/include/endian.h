@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.7 2018/10/05 15:13:55 naddy Exp $	*/
+/*	$OpenBSD: endian.h,v 1.8 2019/02/17 15:44:26 deraadt Exp $	*/
 /*	$NetBSD: endian.h,v 1.4 2000/03/17 00:09:25 mycroft Exp $	*/
 
 /* Written by Manuel Bouyer. Public domain */
@@ -36,8 +36,8 @@ __swap64md(__uint64_t _x)
 {
 	__uint64_t _rv;
 
-	_rv = (__uint64_t)__swap32md(_x >> 32) |
-	    (__uint64_t)__swap32md(_x) << 32;
+	_rv = (__uint64_t)__swap32md((__uint32_t)(_x >> 32)) |
+	    (__uint64_t)__swap32md((__uint32_t)_x) << 32;
 
 	return (_rv);
 }
