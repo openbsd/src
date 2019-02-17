@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.187 2018/11/21 16:14:43 mpi Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.188 2019/02/17 22:17:28 tedu Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -867,6 +867,11 @@ brelse(struct buf *bp)
 	/* If it's not cacheable, or an error, mark it invalid. */
 	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
 		SET(bp->b_flags, B_INVAL);
+	/* If it's a write error, also mark the vnode as damaged. */
+	if (ISSET(bp->b_flags, B_ERROR) && !ISSET(bp->b_flags, B_READ)) {
+		if (bp->b_vp && bp->b_vp->v_type == VREG)
+			SET(bp->b_vp->v_bioflag, VBIOERROR);
+	}
 
 	if (ISSET(bp->b_flags, B_INVAL)) {
 		/*

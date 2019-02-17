@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.285 2019/01/21 18:09:21 anton Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.286 2019/02/17 22:17:28 tedu Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -712,6 +712,7 @@ vputonfreelist(struct vnode *vp)
 #endif
 
 	vp->v_bioflag |= VBIOONFREELIST;
+	vp->v_bioflag &= ~VBIOERROR;
 
 	if (vp->v_holdcnt > 0)
 		lst = &vnode_hold_list;

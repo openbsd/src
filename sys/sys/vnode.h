@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.149 2018/12/23 10:46:51 natano Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.150 2019/02/17 22:17:28 tedu Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ struct vnode {
 #define	VBIOWAIT	0x0001	/* waiting for output to complete */
 #define VBIOONSYNCLIST	0x0002	/* Vnode is on syncer worklist */
 #define VBIOONFREELIST  0x0004  /* Vnode is on a free list */
+#define VBIOERROR	0x0008  /* A write failed */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
