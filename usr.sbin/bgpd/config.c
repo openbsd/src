@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.82 2019/02/18 09:43:57 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.83 2019/02/18 09:58:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -18,11 +18,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <sys/ioctl.h>
-
-#include <netmpls/mpls.h>
 
 #include <errno.h>
 #include <ifaddrs.h>
@@ -467,44 +462,6 @@ prepare_listeners(struct bgpd_config *conf)
 	}
 
 	return (r);
-}
-
-int
-get_mpe_config(const char *name, u_int *rdomain, u_int *label)
-{
-	struct  ifreq	ifr;
-	struct shim_hdr	shim;
-	int		s;
-
-	*label = 0;
-	*rdomain = 0;
-
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s == -1)
-		return (-1);
-
-	bzero(&shim, sizeof(shim));
-	bzero(&ifr, sizeof(ifr));
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_data = (caddr_t)&shim;
-
-	if (ioctl(s, SIOCGETLABEL, (caddr_t)&ifr) == -1) {
-		close(s);
-		return (-1);
-	}
-
-	ifr.ifr_data = NULL;
-	if (ioctl(s, SIOCGIFRDOMAIN, (caddr_t)&ifr) == -1) {
-		close(s);
-		return (-1);
-	}
-
-	close(s);
-
-	*rdomain = ifr.ifr_rdomainid;
-	*label = shim.shim_label;
-
-	return (0);
 }
 
 void

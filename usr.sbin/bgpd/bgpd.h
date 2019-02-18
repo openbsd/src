@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.370 2019/02/18 09:43:57 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.371 2019/02/18 09:58:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1182,6 +1182,7 @@ void		 kr_ifinfo(char *);
 void		 kr_net_reload(u_int, u_int64_t, struct network_head *);
 int		 kr_reload(void);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
+int		 get_mpe_config(const char *, u_int *, u_int *);
 
 /* log.c */
 void		 log_peer_info(const struct peer_config *, const char *, ...)
