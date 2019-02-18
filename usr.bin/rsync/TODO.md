@@ -47,12 +47,6 @@ I would rate this as easy/medium.
 
 - Hard: the same, but for Linux.
 
-- Hard: make the sender loop use an event handler on incoming and
-  outgoing I/O.  Right now it moves in lockstep and can be considerably
-  more responsive to requests by reading them in immediately instead of
-  having them sit in the receiver queue while it waits for disc IO.
-  This isn't *that* hard.
-
 - Hard: once the sender loop is optimised, the uploader can also queue
   up block metadata to send on-demand instead of reading in the file
   then sending, then reading again, then sending.

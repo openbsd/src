@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.14 2019/02/17 16:34:04 deraadt Exp $ */
+/*	$Id: downloader.c,v 1.15 2019/02/18 21:34:54 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -414,14 +414,14 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		/* Create the temporary file. */
 
-		if (mktemplate(&p->fname, f->path, sess->opts->recursive)
-		    == -1) {
-			ERR(sess, "asprintf");
+		if (mktemplate(sess, &p->fname, 
+		    f->path, sess->opts->recursive) == -1) {
+			ERRX1(sess, "mktemplate");
 			goto out;
 		}
 
 		if ((p->fd = mkstempat(p->rootfd, p->fname)) == -1) {
-			ERR(sess, "%s: openat", p->fname);
+			ERR(sess, "mkstempat");
 			goto out;
 		}
 

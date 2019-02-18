@@ -1,4 +1,4 @@
-/*	$Id: child.c,v 1.5 2019/02/17 17:19:05 deraadt Exp $ */
+/*	$Id: child.c,v 1.6 2019/02/18 21:34:54 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,7 +46,7 @@ rsync_child(const struct opts *opts, int fd, const struct fargs *f)
 
 	if ((args = fargs_cmdline(&sess, f)) == NULL) {
 		ERRX1(&sess, "fargs_cmdline");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	for (i = 0; args[i] != NULL; i++)
@@ -56,10 +56,10 @@ rsync_child(const struct opts *opts, int fd, const struct fargs *f)
 
 	if (dup2(fd, STDIN_FILENO) == -1) {
 		ERR(&sess, "dup2");
-		exit(1);
+		exit(EXIT_FAILURE);
 	} if (dup2(fd, STDOUT_FILENO) == -1) {
 		ERR(&sess, "dup2");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	/* Here we go... */
@@ -67,6 +67,6 @@ rsync_child(const struct opts *opts, int fd, const struct fargs *f)
 	execvp(args[0], args);
 
 	ERR(&sess, "%s: execvp", args[0]);
-	exit(1);
+	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }

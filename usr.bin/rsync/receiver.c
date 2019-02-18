@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.17 2019/02/17 16:34:04 deraadt Exp $ */
+/*	$Id: receiver.c,v 1.18 2019/02/18 21:34:54 benno Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -199,7 +199,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		if (!io_read_size(sess, fdin, &excl)) {
 			ERRX1(sess, "io_read_size");
 			goto out;
-		} else if (excl != 0) {
+		} else if (0 != excl) {
 			ERRX(sess, "exclusion list is non-empty");
 			goto out;
 		}
@@ -220,7 +220,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	if (!io_read_int(sess, fdin, &ioerror)) {
 		ERRX1(sess, "io_read_int");
 		goto out;
-	} else if (ioerror != 0) {
+	} else if (0 != ioerror) {
 		ERRX1(sess, "io_error is non-zero");
 		goto out;
 	}
