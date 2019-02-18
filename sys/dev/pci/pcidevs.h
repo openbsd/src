@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1875 2019/01/10 18:35:56 sf Exp 
+ *	OpenBSD: pcidevs,v 1.1876 2019/02/18 08:59:43 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5329,6 +5329,7 @@
 #define	PCI_PRODUCT_INTEL_200SERIES_PCIE_23	0xa2ed		/* 200 Series PCIE */
 #define	PCI_PRODUCT_INTEL_200SERIES_PCIE_24	0xa2ee		/* 200 Series PCIE */
 #define	PCI_PRODUCT_INTEL_200SERIES_HDA	0xa2f0		/* 200 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_WL_9560_2	0xa370		/* Dual Band Wireless AC 9560 */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */
