@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ctfstrip,v 1.8 2017/08/15 15:48:10 jasper Exp $
+# $OpenBSD: ctfstrip,v 1.9 2019/02/18 11:01:48 sunil Exp $
 #
 # Copyright (c) 2017 Martin Pieuchot
 #
@@ -61,9 +61,9 @@ fi
 ctfconv -o ${TMPFILE} -l "${LABEL}" "${INFILE}" 2> /dev/null
 
 if [ $? -eq 0 ]; then
-        objcopy --add-section .SUNW_ctf=${TMPFILE} ${STRIPFLAG} "${INFILE}" "${OUTFILE}"
+	objcopy --add-section .SUNW_ctf=${TMPFILE} ${STRIPFLAG} "${INFILE}" ${OUTFILE}
 else
-        strip ${STRIPFLAG} -o "${OUTFILE}" "$@"
+	strip ${STRIPFLAG} ${OUTFILE:+"-o${OUTFILE}"} "${INFILE}"
 fi
 
 rm -f ${TMPFILE}
