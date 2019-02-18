@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.376 2019/02/18 12:35:08 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.377 2019/02/18 12:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,7 +30,6 @@
 #include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
-#include <netmpls/mpls.h>
 
 #include <ctype.h>
 #include <err.h>
