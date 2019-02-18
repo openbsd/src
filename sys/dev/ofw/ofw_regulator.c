@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.10 2019/01/02 18:50:15 patrick Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.11 2019/02/18 20:34:37 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -226,7 +226,8 @@ regulator_gpio_get_voltage(int node)
 	idx = 0;
 	gpio = gpios;
 	while (gpio && gpio < gpios + (glen / sizeof(uint32_t))) {
-		idx |= (1 << i);
+		if (gpio_controller_get_pin(gpio))
+			idx |= (1 << i);
 		gpio = gpio_controller_next_pin(gpio);
 		i++;
 	}
