@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.81 2019/02/12 09:00:21 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.82 2019/02/18 09:43:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -397,7 +397,7 @@ prepare_listeners(struct bgpd_config *conf)
 		la->fd = -1;
 		la->flags = DEFAULT_LISTENER;
 		la->reconf = RECONF_REINIT;
-		la->sa.ss_len = sizeof(struct sockaddr_in);
+		la->sa_len = sizeof(struct sockaddr_in);
 		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
 		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
 		    htonl(INADDR_ANY);
@@ -409,7 +409,7 @@ prepare_listeners(struct bgpd_config *conf)
 		la->fd = -1;
 		la->flags = DEFAULT_LISTENER;
 		la->reconf = RECONF_REINIT;
-		la->sa.ss_len = sizeof(struct sockaddr_in6);
+		la->sa_len = sizeof(struct sockaddr_in6);
 		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
 		((struct sockaddr_in6 *)&la->sa)->sin6_port = htons(BGP_PORT);
 		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
@@ -437,24 +437,25 @@ prepare_listeners(struct bgpd_config *conf)
 		    &opt, sizeof(opt)) == -1)
 			fatal("setsockopt SO_REUSEADDR");
 
-		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa.ss_len) ==
+		if (bind(la->fd, (struct sockaddr *)&la->sa, la->sa_len) ==
 		    -1) {
 			switch (la->sa.ss_family) {
 			case AF_INET:
 				log_warn("cannot bind to %s:%u",
-				    log_sockaddr((struct sockaddr *)&la->sa),
-				    ntohs(((struct sockaddr_in *)
+				    log_sockaddr((struct sockaddr *)&la->sa,
+				    la->sa_len), ntohs(((struct sockaddr_in *)
 				    &la->sa)->sin_port));
 				break;
 			case AF_INET6:
 				log_warn("cannot bind to [%s]:%u",
-				    log_sockaddr((struct sockaddr *)&la->sa),
-				    ntohs(((struct sockaddr_in6 *)
+				    log_sockaddr((struct sockaddr *)&la->sa,
+				    la->sa_len), ntohs(((struct sockaddr_in6 *)
 				    &la->sa)->sin6_port));
 				break;
 			default:
 				log_warn("cannot bind to %s",
-				    log_sockaddr((struct sockaddr *)&la->sa));
+				    log_sockaddr((struct sockaddr *)&la->sa,
+				    la->sa_len));
 				break;
 			}
 			close(la->fd);

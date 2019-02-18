@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.372 2019/02/15 11:38:06 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.373 2019/02/18 09:43:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -145,7 +145,8 @@ setup_listeners(u_int *la_cnt)
 
 		if (la->fd == -1) {
 			log_warn("cannot establish listener on %s: invalid fd",
-			    log_sockaddr((struct sockaddr *)&la->sa));
+			    log_sockaddr((struct sockaddr *)&la->sa,
+			    la->sa_len));
 			continue;
 		}
 
@@ -179,7 +180,7 @@ setup_listeners(u_int *la_cnt)
 		la->flags |= LISTENER_LISTENING;
 
 		log_info("listening on %s",
-		    log_sockaddr((struct sockaddr *)&la->sa));
+		    log_sockaddr((struct sockaddr *)&la->sa, la->sa_len));
 	}
 
 	*la_cnt = cnt;
@@ -1087,7 +1088,7 @@ open:
 		/* then do part of the open dance */
 		goto open;
 	} else {
-		log_conn_attempt(p, (struct sockaddr *)&cliaddr);
+		log_conn_attempt(p, (struct sockaddr *)&cliaddr, len);
 		close(connfd);
 	}
 }
@@ -1097,6 +1098,7 @@ session_connect(struct peer *peer)
 {
 	int			 opt = 1;
 	struct sockaddr		*sa;
+	socklen_t		 sa_len;
 
 	/*
 	 * we do not need the overcomplicated collision detection RFC 1771
@@ -1137,8 +1139,8 @@ session_connect(struct peer *peer)
 	peer->wbuf.fd = peer->fd;
 
 	/* if update source is set we need to bind() */
-	if ((sa = addr2sa(&peer->conf.local_addr, 0)) != NULL) {
-		if (bind(peer->fd, sa, sa->sa_len) == -1) {
+	if ((sa = addr2sa(&peer->conf.local_addr, 0, &sa_len)) != NULL) {
+		if (bind(peer->fd, sa, sa_len) == -1) {
 			log_peer_warn(&peer->conf, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
@@ -1150,8 +1152,8 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
-	sa = addr2sa(&peer->conf.remote_addr, BGP_PORT);
-	if (connect(peer->fd, sa, sa->sa_len) == -1) {
+	sa = addr2sa(&peer->conf.remote_addr, BGP_PORT, &sa_len);
+	if (connect(peer->fd, sa, sa_len) == -1) {
 		if (errno != EINPROGRESS) {
 			if (errno != peer->lasterr)
 				log_peer_warn(&peer->conf, "connect");
@@ -2695,7 +2697,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 					log_warnx("expected to receive fd for "
 					    "%s but didn't receive any",
 					    log_sockaddr((struct sockaddr *)
-					    &nla->sa));
+					    &nla->sa, nla->sa_len));
 
 				la = calloc(1, sizeof(struct listen_addr));
 				if (la == NULL)
@@ -2777,8 +2779,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				nla = TAILQ_NEXT(la, entry);
 				if (la->reconf == RECONF_NONE) {
 					log_info("not listening on %s any more",
-					    log_sockaddr(
-					    (struct sockaddr *)&la->sa));
+					    log_sockaddr((struct sockaddr *)
+					    &la->sa, la->sa_len));
 					TAILQ_REMOVE(conf->listen_addrs, la,
 					    entry);
 					close(la->fd);

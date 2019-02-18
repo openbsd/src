@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.374 2019/02/15 10:10:53 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.375 2019/02/18 09:43:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -578,13 +578,15 @@ conf_main	: AS as4number		{
 		}
 		| LISTEN ON address	{
 			struct listen_addr	*la;
+			struct sockaddr		*sa;
 
 			if ((la = calloc(1, sizeof(struct listen_addr))) ==
 			    NULL)
 				fatal("parse conf_main listen on calloc");
 
 			la->fd = -1;
-			memcpy(&la->sa, addr2sa(&$3, BGP_PORT), sizeof(la->sa));
+			sa = addr2sa(&$3, BGP_PORT, &la->sa_len);
+			memcpy(&la->sa, sa, la->sa_len);
 			TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 		}
 		| FIBPRIORITY NUMBER		{

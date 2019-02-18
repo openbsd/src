@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.129 2019/02/12 09:00:56 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.130 2019/02/18 09:43:57 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -367,7 +367,7 @@ print_mainconf(struct bgpd_config *conf)
 
 	TAILQ_FOREACH(la, conf->listen_addrs, entry)
 		printf("listen on %s\n",
-		    log_sockaddr((struct sockaddr *)&la->sa));
+		    log_sockaddr((struct sockaddr *)&la->sa, la->sa_len));
 
 	if (conf->flags & BGPD_FLAG_NEXTHOP_BGP)
 		printf("nexthop qualify via bgp\n");
