@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.44 2019/02/18 09:43:57 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.45 2019/02/18 12:35:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -937,7 +937,7 @@ get_linkstate(uint8_t if_type, int link_state)
 }
 
 const char *
-get_baudrate(u_int64_t baudrate, char *unit)
+get_baudrate(unsigned long long baudrate, char *unit)
 {
 	static char bbuf[16];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.375 2019/02/18 09:43:57 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.376 2019/02/18 12:35:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,7 +164,7 @@ static void	 add_roa_set(struct prefixset_item *, u_int32_t, u_int8_t);
 
 typedef struct {
 	union {
-		int64_t			 number;
+		long long		 number;
 		char			*string;
 		struct bgpd_addr	 addr;
 		u_int8_t		 u8;
@@ -3465,7 +3465,7 @@ symget(const char *nam)
 static int
 getcommunity(char *s, int large, u_int32_t *val, u_int8_t *flag)
 {
-	int64_t		 max = USHRT_MAX;
+	long long	 max = USHRT_MAX;
 	const char	*errstr;
 
 	*flag = 0;
@@ -3484,7 +3484,7 @@ getcommunity(char *s, int large, u_int32_t *val, u_int8_t *flag)
 		max = UINT_MAX;
 	*val = strtonum(s, 0, max, &errstr);
 	if (errstr) {
-		yyerror("Community %s is %s (max: %llu)", s, errstr, max);
+		yyerror("Community %s is %s (max: %lld)", s, errstr, max);
 		return -1;
 	}
 	return 0;

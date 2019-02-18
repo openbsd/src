@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.371 2019/02/18 09:58:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.372 2019/02/18 12:35:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1295,7 +1295,7 @@ void		 sa2addr(struct sockaddr *, struct bgpd_addr *);
 uint64_t	 ift2ifm(uint8_t);
 const char *	 get_media_descr(uint64_t);
 const char *	 get_linkstate(uint8_t, int);
-const char *	 get_baudrate(u_int64_t, char *);
+const char *	 get_baudrate(unsigned long long, char *);
 
 static const char * const log_procnames[] = {
 	"parent",
