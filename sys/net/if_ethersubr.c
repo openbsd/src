@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.257 2018/12/26 18:32:38 denis Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.258 2019/02/18 03:41:21 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 		af = dst->sa_family;
 		if (af == AF_MPLS)
-			af = rt->rt_gateway->sa_family;         
+			af = rt->rt_gateway->sa_family;
 
 		switch (af) {
 		case AF_LINK:
