@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.10 2019/02/18 21:34:54 benno Exp $ */
+/*	$Id: io.c,v 1.11 2019/02/18 21:55:27 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -304,7 +304,8 @@ io_read_flush(struct sess *sess, int fd)
 	} else if (sess->mplex_read_remain == 0)
 		return 1;
 
-	if (!io_read_blocking(sess, fd, mpbuf, sess->mplex_read_remain)) {
+	if (!io_read_blocking(sess, fd,
+	    mpbuf, sess->mplex_read_remain)) {
 		ERRX1(sess, "io_read_blocking");
 		return 0;
 	}

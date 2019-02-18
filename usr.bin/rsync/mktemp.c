@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.5 2019/02/18 21:34:54 benno Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.6 2019/02/18 21:55:27 benno Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -16,71 +16,50 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
 
-#include "extern.h"
+#define MKTEMP_NAME	0
+#define MKTEMP_FILE	1
+#define MKTEMP_DIR	2
+#define MKTEMP_LINK	3
+#define MKTEMP_FIFO	4
+#define MKTEMP_NOD	5
+#define MKTEMP_SOCK	6
 
-/*
- * The type of temporary files we can create.
- */
-enum	tmpmode {
-	MKTEMP_NAME,
-	MKTEMP_FILE,
-	MKTEMP_DIR,
-	MKTEMP_LINK,
-	MKTEMP_FIFO,
-	MKTEMP_NOD,
-	MKTEMP_SOCK
-};
-
-/*
- * Characters we'll use for replacement in the template string.
- */
 #define TEMPCHARS	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 #define NUM_CHARS	(sizeof(TEMPCHARS) - 1)
-
-/*
- * The number of template replacement values (foo.XXXXXX = 6) that we
- * require as a minimum for the filename.
- */
 #define MIN_X		6
 
-/*
- * The only flags we'll accept for creation of the temporary file.
- */
 #define MKOTEMP_FLAGS	(O_APPEND | O_CLOEXEC | O_DSYNC | O_RSYNC | O_SYNC)
 
 #ifndef nitems
-# define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-/*
- * Adapted from libc/stdio/mktemp.c.
- */
+/* adapted from libc/stdio/mktemp.c */
 static int
-mktemp_internalat(int pfd, char *path, int slen, enum tmpmode mode,
-	int flags, const char *link, mode_t dev_type, dev_t dev)
+mktemp_internalat(int pfd, char *path, int slen, int mode, int flags,
+    const char *link, mode_t dev_type, dev_t dev)
 {
-	char 		*start, *cp, *ep;
-	const char 	 tempchars[] = TEMPCHARS;
-	unsigned int 	 tries;
-	struct stat 	 sb;
+	char *start, *cp, *ep;
+	const char tempchars[] = TEMPCHARS;
+	unsigned int tries;
+	struct stat sb;
 	struct sockaddr_un sun;
-	size_t 		 len;
-	int 		 fd, saved_errno;
+	size_t len;
+	int fd, saved_errno;
 
 	len = strlen(path);
 	if (len < MIN_X || slen < 0 || (size_t)slen > len - MIN_X) {
@@ -90,8 +69,7 @@ mktemp_internalat(int pfd, char *path, int slen, enum tmpmode mode,
 	ep = path + len - slen;
 
 	for (start = ep; start > path && start[-1] == 'X'; start--)
-		/* continue */ ;
-
+		;
 	if (ep - start < MIN_X) {
 		errno = EINVAL;
 		return(-1);
@@ -205,74 +183,69 @@ mktemp_internalat(int pfd, char *path, int slen, enum tmpmode mode,
  * A combination of mkstemp(3) and openat(2).
  * On success returns a file descriptor and trailing Xs are overwritten in
  * path to create a unique file name.
- * Returns -1 on failure and sets errno.
+ * Returns -1 on failure.
  */
 int
 mkstempat(int fd, char *path)
 {
-
-	return mktemp_internalat(fd, path, 0, MKTEMP_FILE, 0, NULL, 0, 0);
+	return(mktemp_internalat(fd, path, 0, MKTEMP_FILE, 0, NULL, 0, 0));
 }
 
 /*
  * A combination of mkstemp(3) and symlinkat(2).
  * On success returns path with trailing Xs overwritten to create a unique
  * file name.
- * Returns NULL on failure and sets errno.
+ * Returns NULL on failure.
  */
-char *
+char*
 mkstemplinkat(char *link, int fd, char *path)
 {
-
 	if (mktemp_internalat(fd, path, 0, MKTEMP_LINK, 0, link, 0, 0) == -1)
-		return NULL;
-	return path;
+		return(NULL);
+	return(path);
 }
 
 /*
  * A combination of mkstemp(3) and mkfifoat(2).
  * On success returns path with trailing Xs overwritten to create a unique
  * file name.
- * Returns NULL on failure and sets errno.
+ * Returns NULL on failure.
  */
-char *
+char*
 mkstempfifoat(int fd, char *path)
 {
-
 	if (mktemp_internalat(fd, path, 0, MKTEMP_FIFO, 0, NULL, 0, 0) == -1)
-		return NULL;
-	return path;
+		return(NULL);
+	return(path);
 }
 
 /*
  * A combination of mkstemp(3) and mknodat(2).
  * On success returns path with trailing Xs overwritten to create a unique
  * file name.
- * Returns NULL on failure and sets errno.
+ * Returns NULL on failure.
  */
-char *
+char*
 mkstempnodat(int fd, char *path, mode_t mode, dev_t dev)
 {
-
-	if (mktemp_internalat(fd, path, 0,
-	    MKTEMP_NOD, 0, NULL, mode, dev) == -1)
-		return NULL;
-	return path;
+	if (mktemp_internalat(fd, path, 0, MKTEMP_NOD, 0, NULL, mode, dev) ==
+	    -1)
+		return(NULL);
+	return(path);
 }
 
 /*
  * A combination of mkstemp(3) and bind(2) on a unix domain socket.
  * On success returns path with trailing Xs overwritten to create a unique
  * file name.
- * Returns NULL on failure and sets errno.
+ * Returns NULL on failure.
  */
-char *
+char*
 mkstempsock(const char *root, char *path)
 {
-
 	if (mktemp_internalat(0, path, 0, MKTEMP_SOCK, 0, root, 0, 0) == -1)
-		return NULL;
-	return path;
+		return(NULL);
+	return(path);
 }
 
 /*
@@ -283,23 +256,19 @@ mkstempsock(const char *root, char *path)
  * (excluding the final '\0').
  */
 int
-mktemplate(struct sess *sess, char **ret, const char *path, int recursive)
+mktemplate(char **ret, const char *path, int recursive)
 {
 	int		 n, dirlen;
 	const char	*cp;
 
 	if (recursive && (cp = strrchr(path, '/')) != NULL) {
 		dirlen = cp - path;
-		n = asprintf(ret, "%.*s/.%s.XXXXXXXXXX",
-			dirlen, path, path + dirlen + 1);
-		if (n < 0) {
-			ERR(sess, "asprintf");
+		if ((n = asprintf(ret, "%.*s/.%s.XXXXXXXXXX", dirlen, path,
+		    path + dirlen + 1)) == -1)
 			*ret = NULL;
-		}
-	} else if ((n = asprintf(ret, ".%s.XXXXXXXXXX", path)) < 0) {
-		ERR(sess, "asprintf");
-		*ret = NULL;
+	} else {
+		if ((n = asprintf(ret, ".%s.XXXXXXXXXX", path)) == -1)
+			*ret = NULL;
 	}
-
-	return n;
+	return(n);
 }

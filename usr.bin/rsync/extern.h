@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.19 2019/02/18 21:34:54 benno Exp $ */
+/*	$Id: extern.h,v 1.20 2019/02/18 21:55:27 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,11 +21,6 @@
  * This is the rsync protocol version that we support.
  */
 #define	RSYNC_PROTOCOL	(27)
-
-/*
- * The default service (see services(5)) for rsync.
- */
-#define RSYNC_SERVICE	"rsync"
 
 /*
  * Maximum amount of file data sent over the wire at once.
@@ -140,12 +135,11 @@ struct	blk {
 
 enum	blkstatst {
 	BLKSTAT_NONE = 0,
-	BLKSTAT_NEXT,
+	BLKSTAT_DATASZ,
 	BLKSTAT_DATA,
 	BLKSTAT_TOK,
 	BLKSTAT_HASH,
-	BLKSTAT_DONE,
-	BLKSTAT_PHASE,
+	BLKSTAT_DONE
 };
 
 /*
@@ -331,8 +325,8 @@ struct upload	 *upload_alloc(struct sess *, const char *, int, int, size_t,
 void		  upload_free(struct upload *);
 
 struct blkset	 *blk_recv(struct sess *, int, const char *);
-void		  blk_recv_ack(struct sess *,
-			char [20], const struct blkset *, int32_t);
+int		  blk_recv_ack(struct sess *,
+			int, const struct blkset *, int32_t);
 void		  blk_match(struct sess *, const struct blkset *,
 			const char *, struct blkstat *);
 int		  blk_send(struct sess *, int, size_t,
@@ -352,7 +346,7 @@ char		 *mkstemplinkat(char*, int, char *);
 char		 *mkstempfifoat(int, char *);
 char		 *mkstempnodat(int, char *, mode_t, dev_t);
 char		 *mkstempsock(const char *, char *);
-int		  mktemplate(struct sess *, char **, const char *, int);
+int		  mktemplate(char **, const char *, int);
 
 char		 *symlink_read(struct sess *, const char *);
 char		 *symlinkat_read(struct sess *, int, const char *);
