@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.14 2019/02/17 16:15:31 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.15 2019/02/18 07:50:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -352,10 +352,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_captiveportal->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct uw_conf))
-				fatalx("%s: IMSG_RECONF_CONF wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_conf))
+				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			if ((nconf = malloc(sizeof(struct uw_conf))) == NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct uw_conf));
@@ -367,33 +366,29 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
-			    = '\0';
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
 			if ((nconf->captive_portal_host = strdup(imsg.data)) ==
 			    NULL)
 				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_PATH:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
-			    = '\0';
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
 			if ((nconf->captive_portal_path = strdup(imsg.data)) ==
 			    NULL)
 				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
-			    = '\0';
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
 			if ((nconf->captive_portal_expected_response =
 			    strdup(imsg.data)) == NULL)
 				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_FORWARDER:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct uw_forwarder))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
-				    " %d", __func__, imsg.hdr.len);
+				    " %lu", __func__, IMSG_DATA_SIZE(imsg));
 			if ((uw_forwarder = malloc(sizeof(struct
 			    uw_forwarder))) == NULL)
 				fatal(NULL);
@@ -403,10 +398,10 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_DOT_FORWARDER:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct uw_forwarder))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
-				    "length: %d", __func__, imsg.hdr.len);
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
 			if ((uw_forwarder = malloc(sizeof(struct
 			    uw_forwarder))) == NULL)
 				fatal(NULL);
@@ -507,7 +502,6 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 	struct imsg			 imsg;
 	struct query_imsg		*query_imsg;
 	int				 n, shut = 0, chg;
-	char				*ta;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -530,10 +524,9 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_ANSWER_HEADER:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(*query_imsg))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(*query_imsg))
 				fatalx("%s: IMSG_ANSWER_HEADER wrong length: "
-				    "%d", __func__, imsg.hdr.len);
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			query_imsg = (struct query_imsg *)imsg.data;
 			if ((pq = find_pending_query(query_imsg->id)) ==
 			    NULL) {
@@ -551,8 +544,7 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 		case IMSG_ANSWER:
 			if (pq == NULL)
 				fatalx("IMSG_ANSWER without HEADER");
-			send_answer(pq, imsg.data, imsg.hdr.len -
-			    IMSG_HEADER_SIZE);
+			send_answer(pq, imsg.data, IMSG_DATA_SIZE(imsg));
 			break;
 		case IMSG_RESOLVER_DOWN:
 			log_debug("%s: IMSG_RESOLVER_DOWN", __func__);
@@ -580,10 +572,8 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			break;
 		case IMSG_NEW_TA:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
-			    = '\0';
-			ta = imsg.data;
-			add_new_ta(&new_trust_anchors, ta);
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
+			add_new_ta(&new_trust_anchors, imsg.data);
 			break;
 		case IMSG_NEW_TAS_ABORT:
 			log_debug("%s: IMSG_NEW_TAS_ABORT", __func__);

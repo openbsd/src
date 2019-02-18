@@ -1,4 +1,4 @@
-/*	$OpenBSD: captiveportal.c,v 1.5 2019/02/17 14:51:03 florian Exp $	*/
+/*	$OpenBSD: captiveportal.c,v 1.6 2019/02/18 07:50:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -306,10 +306,9 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_frontend->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct uw_conf))
-				fatalx("%s: IMSG_RECONF_CONF wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_conf))
+				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			if ((nconf = malloc(sizeof(struct uw_conf))) == NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct uw_conf));
@@ -321,33 +320,29 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
-			    = '\0';
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
 			if ((nconf->captive_portal_host = strdup(imsg.data)) ==
 			    NULL)
 				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_PATH:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
-			    = '\0';
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
 			if ((nconf->captive_portal_path = strdup(imsg.data)) ==
 			    NULL)
 				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE:
 			/* make sure this is a string */
-			((char *)imsg.data)[imsg.hdr.len - IMSG_HEADER_SIZE - 1]
-			    = '\0';
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
 			if ((nconf->captive_portal_expected_response =
 			    strdup(imsg.data)) == NULL)
 				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_FORWARDER:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct uw_forwarder))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
-				    " %d", __func__, imsg.hdr.len);
+				    " %lu", __func__, IMSG_DATA_SIZE(imsg));
 			if ((uw_forwarder = malloc(sizeof(struct
 			    uw_forwarder))) == NULL)
 				fatal(NULL);
@@ -357,10 +352,10 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_DOT_FORWARDER:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct uw_forwarder))
+			if (IMSG_DATA_SIZE(imsg) ! =sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
-				    "length: %d", __func__, imsg.hdr.len);
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
 			if ((uw_forwarder = malloc(sizeof(struct
 			    uw_forwarder))) == NULL)
 				fatal(NULL);
@@ -498,10 +493,9 @@ captiveportal_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_CTL_LOG_VERBOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(verbose))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
 				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
-				    "%d", __func__, imsg.hdr.len);
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.15 2019/02/17 14:49:15 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.16 2019/02/18 07:50:14 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -442,18 +442,16 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				log_warnx("configuration reloaded");
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(verbose))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
 				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
-				    "%d", __func__, imsg.hdr.len);
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
 		case IMSG_OPEN_DHCP_LEASE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(rtm_index))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(rtm_index))
 				fatalx("%s: IMSG_OPEN_DHCP_LEASE wrong length: "
-				    "%d", __func__, imsg.hdr.len);
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&rtm_index, imsg.data, sizeof(rtm_index));
 			open_dhcp_lease(rtm_index);
 			break;
@@ -509,10 +507,9 @@ main_dispatch_resolver(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_OPEN_HTTP_PORT:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(sin))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(sin))
 				fatalx("%s: IMSG_OPEN_HTTP_PORT wrong length: "
-				    "%d", __func__, imsg.hdr.len);
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&sin, imsg.data, sizeof(sin));
 
 			if ((httpsock = socket(AF_INET, SOCK_STREAM |
