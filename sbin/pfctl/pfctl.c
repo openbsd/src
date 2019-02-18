@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.370 2019/02/10 15:05:17 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.371 2019/02/18 13:11:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -953,8 +953,7 @@ pfctl_show_src_nodes(int dev, int opts)
 	struct pfioc_src_nodes psn;
 	struct pf_src_node *p;
 	char *inbuf = NULL, *newinbuf = NULL;
-	unsigned int len = 0;
-	int i;
+	size_t i, len = 0;
 
 	memset(&psn, 0, sizeof(psn));
 	for (;;) {
@@ -998,8 +997,8 @@ pfctl_show_states(int dev, const char *iface, int opts, long shownr)
 	struct pfioc_states ps;
 	struct pfsync_state *p;
 	char *inbuf = NULL, *newinbuf = NULL;
-	unsigned int len = 0;
-	int i, dotitle = (opts & PF_OPT_SHOWALL);
+	size_t i, len = 0;
+	int dotitle = (opts & PF_OPT_SHOWALL);
 
 	memset(&ps, 0, sizeof(ps));
 	for (;;) {
@@ -2194,8 +2193,7 @@ pfctl_state_store(int dev, const char *file)
 	FILE *f;
 	struct pfioc_states ps;
 	char *inbuf = NULL, *newinbuf = NULL;
-	unsigned int len = 0;
-	size_t n;
+	size_t n, len = 0;
 
 	f = fopen(file, "w");
 	if (f == NULL)

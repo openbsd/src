@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.489 2018/12/17 15:37:41 kn Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.490 2019/02/18 13:11:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1496,7 +1496,7 @@ struct pfioc_state_kill {
 };
 
 struct pfioc_states {
-	int	ps_len;
+	size_t	ps_len;
 	union {
 		caddr_t			 psu_buf;
 		struct pfsync_state	*psu_states;
@@ -1506,7 +1506,7 @@ struct pfioc_states {
 };
 
 struct pfioc_src_nodes {
-	int	psn_len;
+	size_t	psn_len;
 	union {
 		caddr_t		 psu_buf;
 		struct pf_src_node	*psu_src_nodes;

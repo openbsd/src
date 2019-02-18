@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.342 2018/12/27 16:54:01 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.343 2019/02/18 13:11:44 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1732,7 +1732,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		state = TAILQ_FIRST(&state_list);
 		while (state) {
 			if (state->timeout != PFTM_UNLINKED) {
-				if ((nr+1) * sizeof(*p) > (unsigned)ps->ps_len)
+				if ((nr+1) * sizeof(*p) > ps->ps_len)
 					break;
 				pf_state_export(pstore, state);
 				error = copyout(pstore, p, sizeof(*p));
@@ -2545,7 +2545,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pfioc_src_nodes	*psn = (struct pfioc_src_nodes *)addr;
 		struct pf_src_node	*n, *p, *pstore;
 		u_int32_t		 nr = 0;
-		int			 space = psn->psn_len;
+		size_t			 space = psn->psn_len;
 
 		PF_LOCK();
 		if (space == 0) {
@@ -2562,7 +2562,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
 			int	secs = time_uptime, diff;
 
-			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
+			if ((nr + 1) * sizeof(*p) > psn->psn_len)
 				break;
 
 			memcpy(pstore, n, sizeof(*pstore));

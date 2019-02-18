@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.42 2018/09/07 12:43:30 kn Exp $	 */
+/* $OpenBSD: pftop.c,v 1.43 2019/02/18 13:11:44 bluhm Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -107,10 +107,10 @@ int pf_dev = -1;
 
 struct sc_ent **state_cache = NULL;
 struct pfsync_state *state_buf = NULL;
-int state_buf_len = 0;
-u_int32_t *state_ord = NULL;
-u_int32_t num_states = 0;
-u_int32_t num_states_all = 0;
+size_t state_buf_len = 0;
+size_t *state_ord = NULL;
+size_t num_states = 0;
+size_t num_states_all = 0;
 u_int32_t num_rules = 0;
 u_int32_t num_queues = 0;
 int cachestates = 0;
@@ -311,10 +311,10 @@ TAILQ_HEAD(qnodes, pfctl_queue_node) qnodes = TAILQ_HEAD_INITIALIZER(qnodes);
 int
 sort_size_callback(const void *s1, const void *s2)
 {
-	u_int64_t b1 = COUNTER(state_buf[* (u_int32_t *) s1].bytes[0]) + 
-		COUNTER(state_buf[* (u_int32_t *) s1].bytes[1]);
-	u_int64_t b2 = COUNTER(state_buf[* (u_int32_t *) s2].bytes[0]) + 
-		COUNTER(state_buf[* (u_int32_t *) s2].bytes[1]);
+	u_int64_t b1 = COUNTER(state_buf[* (size_t *) s1].bytes[0]) + 
+		COUNTER(state_buf[* (size_t *) s1].bytes[1]);
+	u_int64_t b2 = COUNTER(state_buf[* (size_t *) s2].bytes[0]) + 
+		COUNTER(state_buf[* (size_t *) s2].bytes[1]);
 	if (b2 > b1)
 		return sortdir;
 	if (b2 < b1)
@@ -325,10 +325,10 @@ sort_size_callback(const void *s1, const void *s2)
 int
 sort_pkt_callback(const void *s1, const void *s2)
 {
-	u_int64_t p1 = COUNTER(state_buf[* (u_int32_t *) s1].packets[0]) + 
-		COUNTER(state_buf[* (u_int32_t *) s1].packets[1]);
-	u_int64_t p2 = COUNTER(state_buf[* (u_int32_t *) s2].packets[0]) + 
-		COUNTER(state_buf[* (u_int32_t *) s2].packets[1]);
+	u_int64_t p1 = COUNTER(state_buf[* (size_t *) s1].packets[0]) + 
+		COUNTER(state_buf[* (size_t *) s1].packets[1]);
+	u_int64_t p2 = COUNTER(state_buf[* (size_t *) s2].packets[0]) + 
+		COUNTER(state_buf[* (size_t *) s2].packets[1]);
 	if (p2 > p1)
 		return sortdir;
 	if (p2 < p1)
@@ -339,11 +339,11 @@ sort_pkt_callback(const void *s1, const void *s2)
 int
 sort_age_callback(const void *s1, const void *s2)
 {
-	if (ntohl(state_buf[* (u_int32_t *) s2].creation) >
-	    ntohl(state_buf[* (u_int32_t *) s1].creation))
+	if (ntohl(state_buf[* (size_t *) s2].creation) >
+	    ntohl(state_buf[* (size_t *) s1].creation))
 		return sortdir;
-	if (ntohl(state_buf[* (u_int32_t *) s2].creation) <
-	    ntohl(state_buf[* (u_int32_t *) s1].creation))
+	if (ntohl(state_buf[* (size_t *) s2].creation) <
+	    ntohl(state_buf[* (size_t *) s1].creation))
 		return -sortdir;
 	return 0;
 }
@@ -351,11 +351,11 @@ sort_age_callback(const void *s1, const void *s2)
 int
 sort_exp_callback(const void *s1, const void *s2)
 {
-	if (ntohl(state_buf[* (u_int32_t *) s2].expire) >
-	    ntohl(state_buf[* (u_int32_t *) s1].expire))
+	if (ntohl(state_buf[* (size_t *) s2].expire) >
+	    ntohl(state_buf[* (size_t *) s1].expire))
 		return sortdir;
-	if (ntohl(state_buf[* (u_int32_t *) s2].expire) <
-	    ntohl(state_buf[* (u_int32_t *) s1].expire))
+	if (ntohl(state_buf[* (size_t *) s2].expire) <
+	    ntohl(state_buf[* (size_t *) s1].expire))
 		return -sortdir;
 	return 0;
 }
@@ -569,32 +569,32 @@ sort_port_callback(const struct pfsync_state *s1,
 int
 sort_sa_callback(const void *p1, const void *p2)
 {
-	struct pfsync_state *s1 = state_buf + (* (u_int32_t *) p1);
-	struct pfsync_state *s2 = state_buf + (* (u_int32_t *) p2);
+	struct pfsync_state *s1 = state_buf + (* (size_t *) p1);
+	struct pfsync_state *s2 = state_buf + (* (size_t *) p2);
 	return sort_addr_callback(s1, s2, PF_OUT);
 }
 
 int
 sort_da_callback(const void *p1, const void *p2)
 {
-	struct pfsync_state *s1 = state_buf + (* (u_int32_t *) p1);
-	struct pfsync_state *s2 = state_buf + (* (u_int32_t *) p2);
+	struct pfsync_state *s1 = state_buf + (* (size_t *) p1);
+	struct pfsync_state *s2 = state_buf + (* (size_t *) p2);
 	return sort_addr_callback(s1, s2, PF_IN);
 }
 
 int
 sort_sp_callback(const void *p1, const void *p2)
 {
-	struct pfsync_state *s1 = state_buf + (* (u_int32_t *) p1);
-	struct pfsync_state *s2 = state_buf + (* (u_int32_t *) p2);
+	struct pfsync_state *s1 = state_buf + (* (size_t *) p1);
+	struct pfsync_state *s2 = state_buf + (* (size_t *) p2);
 	return sort_port_callback(s1, s2, PF_OUT);
 }
 
 int
 sort_dp_callback(const void *p1, const void *p2)
 {
-	struct pfsync_state *s1 = state_buf + (* (u_int32_t *) p1);
-	struct pfsync_state *s2 = state_buf + (* (u_int32_t *) p2);
+	struct pfsync_state *s1 = state_buf + (* (size_t *) p1);
+	struct pfsync_state *s2 = state_buf + (* (size_t *) p2);
 	return sort_port_callback(s1, s2, PF_IN);
 }
 
@@ -617,15 +617,15 @@ sort_states(void)
 	if (num_states <= 0)
 		return;
 
-	mergesort(state_ord, num_states, sizeof(u_int32_t), ordering->func);
+	mergesort(state_ord, num_states, sizeof(size_t), ordering->func);
 }
 
 /* state management functions */
 
 void
-alloc_buf(int ns)
+alloc_buf(size_t ns)
 {
-	int len;
+	size_t len;
 
 	if (ns < MIN_NUM_STATES)
 		ns = MIN_NUM_STATES;
@@ -636,7 +636,7 @@ alloc_buf(int ns)
 		len += NUM_STATE_INC;
 		state_buf = reallocarray(state_buf, len,
 		    sizeof(struct pfsync_state));
-		state_ord = reallocarray(state_ord, len, sizeof(u_int32_t));
+		state_ord = reallocarray(state_ord, len, sizeof(size_t));
 		state_cache = reallocarray(state_cache, len,
 		    sizeof(struct sc_ent *));
 		if (state_buf == NULL || state_ord == NULL ||
@@ -657,16 +657,16 @@ int
 read_states(void)
 {
 	struct pfioc_states ps;
-	int n;
+	size_t n;
 
 	if (pf_dev == -1)
 		return -1;
 
 	for (;;) {
-		int sbytes = state_buf_len * sizeof(struct pfsync_state);
+		size_t sbytes = state_buf_len * sizeof(struct pfsync_state);
 
 		ps.ps_len = sbytes;
-		ps.ps_buf = (char *) state_buf;
+		ps.ps_states = state_buf;
 
 		if (ioctl(pf_dev, DIOCGETSTATES, &ps) < 0) {
 			error("DIOCGETSTATES");
@@ -679,8 +679,8 @@ read_states(void)
 		alloc_buf(num_states_all);
 	}
 
-	num_states =  num_states_all;
-	for (n = 0; n<num_states_all; n++)
+	num_states = num_states_all;
+	for (n = 0; n < num_states_all; n++)
 		state_ord[n] = n;
 
 	if (cachestates) {
