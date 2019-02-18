@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.254 2019/01/21 06:18:37 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.255 2019/02/18 08:26:20 yasuoka Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -925,7 +925,7 @@ cpu_dump(void)
 	/*
 	 * Add the machine-dependent header info.
 	 */
-	cpuhdrp->ptdpaddr = PTDpaddr;
+	cpuhdrp->ptdpaddr = proc0.p_addr->u_pcb.pcb_cr3;
 	cpuhdrp->nmemsegs = mem_cluster_cnt;
 
 	/*

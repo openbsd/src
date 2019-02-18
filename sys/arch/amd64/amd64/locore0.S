@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.16 2019/01/24 00:57:14 mlarkin Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.17 2019/02/18 08:26:20 yasuoka Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -547,11 +547,6 @@ store_pte:
 	movl	RELOC((pg_nx + 4)), %ebp
 	movl	%ebp, 4(%ebx)
 	popl	%ebp
-
-	/* Save phys. addr of PTD, for libkvm. */
-	movl	$RELOC(PTDpaddr),%ebp
-	movl	%esi,(%ebp)
-	movl	$0,4(%ebp)
 
 	/*
 	 * Startup checklist:

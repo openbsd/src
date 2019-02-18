@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.113 2019/01/24 00:00:50 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.114 2019/02/18 08:26:19 yasuoka Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(ssym),_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootdev)
 	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
+	.globl	_C_LABEL(proc0paddr)
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(bootapiver)
 	.globl	_C_LABEL(pg_nx)
@@ -198,7 +198,6 @@ _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(bootapiver):	.long	0	# /boot API version
 _C_LABEL(bootdev):	.long	0	# device we booted from
 _C_LABEL(proc0paddr):	.quad	0
-_C_LABEL(PTDpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
 _C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
 #else
