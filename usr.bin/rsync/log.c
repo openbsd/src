@@ -1,4 +1,4 @@
-/*	$Id: log.c,v 1.5 2019/02/18 21:55:27 benno Exp $ */
+/*	$Id: log.c,v 1.6 2019/02/18 22:47:34 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -77,8 +77,8 @@ rsync_errx(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: error%s%s\n", fname, line,
-		buf != NULL ? ": " : "",
-		buf != NULL ? buf : "");
+	   (buf != NULL) ? ": " : "",
+	   (buf != NULL) ? buf : "");
 	free(buf);
 }
 
@@ -104,8 +104,8 @@ rsync_err(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: error%s%s: %s\n", fname, line,
-		buf != NULL ? ": " : "",
-		buf != NULL ? buf : "", strerror(er));
+	   (buf != NULL) ? ": " : "",
+	   (buf != NULL) ? buf : "", strerror(er));
 	free(buf);
 }
 
@@ -133,8 +133,8 @@ rsync_errx1(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: error%s%s\n", fname, line,
-		buf != NULL ? ": " : "",
-		buf != NULL ? buf : "");
+	   (buf != NULL) ? ": " : "",
+	   (buf != NULL) ? buf : "");
 	free(buf);
 }
 
@@ -158,8 +158,8 @@ rsync_warnx(struct sess *sess, const char *fname,
 	}
 
 	fprintf(stderr, "%s:%zu: warning%s%s\n", fname, line,
-		buf != NULL ? ": " : "",
-		buf != NULL ? buf : "");
+	   (buf != NULL) ? ": " : "",
+	   (buf != NULL) ? buf : "");
 	free(buf);
 }
 
@@ -188,7 +188,7 @@ rsync_warn(struct sess *sess, int level,
 	}
 
 	fprintf(stderr, "%s:%zu: warning%s%s: %s\n", fname, line,
-		buf != NULL ? ": " : "",
-		buf != NULL ? buf : "", strerror(er));
+	   (buf != NULL) ? ": " : "",
+	   (buf != NULL) ? buf : "", strerror(er));
 	free(buf);
 }

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.29 2019/02/18 21:55:27 benno Exp $ */
+/*	$Id: main.c,v 1.30 2019/02/18 22:47:34 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -138,13 +138,13 @@ fargs_parse(size_t argc, char *argv[], struct opts *opts)
 
 	if (f->host != NULL) {
 		if (strncasecmp(f->host, "rsync://", 8) == 0) {
-			/* rsync://host/module[/path] */
+			/* rsync://host[:port]/module[/path] */
 			f->remote = 1;
 			len = strlen(f->host) - 8 + 1;
 			memmove(f->host, f->host + 8, len);
 			if ((cp = strchr(f->host, '/')) == NULL)
-				errx(1, "rsync protocol "
-					"requires a module name");
+				errx(1, "rsync protocol requires a module "
+				    "name");
 			*cp++ = '\0';
 			f->module = cp;
 			if ((cp = strchr(f->module, '/')) != NULL)
@@ -333,7 +333,8 @@ main(int argc, char *argv[])
 
 	memset(&opts, 0, sizeof(struct opts));
 
-	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtv", lopts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtv", lopts, NULL))
+	    != -1) {
 		switch (c) {
 		case 'D':
 			opts.devices = 1;

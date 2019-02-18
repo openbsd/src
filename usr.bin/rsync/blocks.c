@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.12 2019/02/18 21:55:27 benno Exp $ */
+/*	$Id: blocks.c,v 1.13 2019/02/18 22:47:34 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -201,16 +201,14 @@ blk_match(struct sess *sess, const struct blkset *blks,
 }
 
 /*
- * Sent from the sender to the receiver to indicate that the block set
- * has been received.
+ * Buffer the message from sender to the receiver indicating that the
+ * block set has been received.
  * Symmetrises blk_send_ack().
- * Returns zero on failure, non-zero on success.
  */
-int
-blk_recv_ack(struct sess *sess,
-	int fd, const struct blkset *blocks, int32_t idx)
+void
+blk_recv_ack(struct sess *sess, char buf[20],
+	const struct blkset *blocks, int32_t idx)
 {
-	char	 buf[20];
 	size_t	 pos = 0, sz;
 
 	sz = sizeof(int32_t) + /* index */
@@ -218,7 +216,7 @@ blk_recv_ack(struct sess *sess,
 	     sizeof(int32_t) + /* block length */
 	     sizeof(int32_t) + /* checksum length */
 	     sizeof(int32_t); /* block remainder */
-	assert(sz <= sizeof(buf));
+	assert(sz == 20);
 
 	io_buffer_int(sess, buf, &pos, sz, idx);
 	io_buffer_int(sess, buf, &pos, sz, blocks->blksz);
@@ -226,13 +224,6 @@ blk_recv_ack(struct sess *sess,
 	io_buffer_int(sess, buf, &pos, sz, blocks->csum);
 	io_buffer_int(sess, buf, &pos, sz, blocks->rem);
 	assert(pos == sz);
-
-	if (!io_write_buf(sess, fd, buf, sz)) {
-		ERRX1(sess, "io_write_buf");
-		return 0;
-	}
-
-	return 1;
 }
 
 /*
