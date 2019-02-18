@@ -1,4 +1,4 @@
-/*	$OpenBSD: captiveportal.c,v 1.6 2019/02/18 07:50:14 florian Exp $	*/
+/*	$OpenBSD: captiveportal.c,v 1.7 2019/02/18 16:52:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -352,7 +352,7 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_DOT_FORWARDER:
-			if (IMSG_DATA_SIZE(imsg) ! =sizeof(struct uw_forwarder))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
 				    "length: %lu", __func__,
 				    IMSG_DATA_SIZE(imsg));
