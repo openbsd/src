@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.90 2019/02/11 15:47:55 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.91 2019/02/18 21:10:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -687,8 +687,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 					err(1, NULL);
 				if (table[i].type == LARGE_COMMUNITY)
 					type = COMMUNITY_TYPE_LARGE;
-				parsecommunity(&res.community,
-				    COMMUNITY_TYPE_BASIC, p);
+				parsecommunity(&res.community, type, p);
 				free(p);
 
 				if ((fs = calloc(1, sizeof(*fs))) == NULL)
@@ -1099,7 +1098,7 @@ parse_number(const char *word, struct parse_result *r, enum token_type type)
 static void
 getcommunity(char *s, int large, u_int32_t *val, u_int8_t *flag)
 {
-	int64_t		 max = USHRT_MAX;
+	long long	 max = USHRT_MAX;
 	const char	*errstr;
 
 	*flag = 0;
@@ -1291,7 +1290,7 @@ parseextcommunity(struct filter_community *c, const char *t, char *s)
 	u_int64_t	 ullval;
 	u_int32_t	 uval;
 	char		*p, *ep;
-	int		 type, subtype;
+	int		 type = 0, subtype = 0;
 
 	if (parsesubtype(t, &type, &subtype) == 0)
 		errx(1, "Bad ext-community unknown type");
