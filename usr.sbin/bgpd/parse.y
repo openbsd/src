@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.377 2019/02/18 12:43:23 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.378 2019/02/18 15:16:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3675,7 +3675,7 @@ parseextcommunity(struct filter_community *c, char *t, char *s)
 	u_int64_t	 ullval;
 	u_int32_t	 uval;
 	char		*p, *ep;
-	int		 type, subtype;
+	int		 type = 0, subtype = 0;
 
 	if (parsesubtype(t, &type, &subtype) == 0) {
 		yyerror("Bad ext-community unknown type");
