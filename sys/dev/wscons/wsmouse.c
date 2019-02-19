@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.50 2018/11/20 19:33:44 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.51 2019/02/19 07:01:02 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -168,8 +168,12 @@ struct cfattach wsmouse_ca = {
 
 #if NWSMUX > 0
 struct wssrcops wsmouse_srcops = {
-	WSMUX_MOUSE,
-	wsmouse_mux_open, wsmouse_mux_close, wsmousedoioctl, NULL, NULL
+	.type		= WSMUX_MOUSE,
+	.dopen		= wsmouse_mux_open,
+	.dclose		= wsmouse_mux_close,
+	.dioctl		= wsmousedoioctl,
+	.ddispioctl	= NULL,
+	.dsetdisplay	= NULL,
 };
 #endif
 

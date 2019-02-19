@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.39 2019/02/18 17:39:14 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.40 2019/02/19 07:01:02 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -108,9 +108,12 @@ void	wsmuxattach(int);
 void	wsmux_detach_sc_locked(struct wsmux_softc *, struct wsevsrc *);
 
 struct wssrcops wsmux_srcops = {
-	WSMUX_MUX,
-	wsmux_mux_open, wsmux_mux_close, wsmux_do_ioctl, wsmux_do_displayioctl,
-	wsmux_evsrc_set_display
+	.type		= WSMUX_MUX,
+	.dopen		= wsmux_mux_open,
+	.dclose		= wsmux_mux_close,
+	.dioctl		= wsmux_do_ioctl,
+	.ddispioctl	= wsmux_do_displayioctl,
+	.dsetdisplay	= wsmux_evsrc_set_display,
 };
 
 /* From upper level */

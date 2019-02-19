@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.95 2019/02/01 07:02:31 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.96 2019/02/19 07:01:02 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -279,13 +279,15 @@ struct wskbd_keyrepeat_data wskbd_default_keyrepeat_data = {
 
 #if NWSMUX > 0 || NWSDISPLAY > 0
 struct wssrcops wskbd_srcops = {
-	WSMUX_KBD,
-	wskbd_mux_open, wskbd_mux_close, wskbd_do_ioctl,
-	wskbd_displayioctl,
+	.type		= WSMUX_KBD,
+	.dopen		= wskbd_mux_open,
+	.dclose		= wskbd_mux_close,
+	.dioctl		= wskbd_do_ioctl,
+	.ddispioctl	= wskbd_displayioctl,
 #if NWSDISPLAY > 0
-	wskbd_set_display
+	.dsetdisplay	= wskbd_set_display,
 #else
-	NULL
+	.dsetdisplay	= NULL,
 #endif
 };
 #endif
