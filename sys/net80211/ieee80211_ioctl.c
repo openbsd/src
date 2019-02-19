@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.72 2019/01/18 20:40:00 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.73 2019/02/19 08:12:30 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -137,9 +137,16 @@ ieee80211_node2req(struct ieee80211com *ic, const struct ieee80211_node *ni,
 	memcpy(nr->nr_rxmcs, ni->ni_rxmcs, sizeof(nr->nr_rxmcs));
 	nr->nr_max_rxrate = ni->ni_max_rxrate;
 	nr->nr_tx_mcs_set = ni->ni_tx_mcs_set;
-	nr->nr_txmcs = ni->ni_txmcs;
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		nr->nr_flags |= IEEE80211_NODEREQ_HT;
+
+	/* HT / VHT */
+	nr->nr_txmcs = ni->ni_txmcs;
+
+	/* VHT */
+	nr->nr_vht_ss = ni->ni_vht_ss;
+	if (ni->ni_flags & IEEE80211_NODE_VHT)
+		nr->nr_flags |= IEEE80211_NODEREQ_VHT;
 }
 
 void

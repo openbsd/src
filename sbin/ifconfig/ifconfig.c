@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.391 2019/01/23 22:17:58 krw Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.392 2019/02/19 08:12:30 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2697,7 +2697,9 @@ ieee80211_printnode(struct ieee80211_nodereq *nr)
 	 * Print the fastest supported rate for APs.
 	 */
 	if ((nr->nr_flags & (IEEE80211_NODEREQ_AP)) == 0) {
-		if (nr->nr_flags & IEEE80211_NODEREQ_HT) {
+		if (nr->nr_flags & IEEE80211_NODEREQ_VHT) {
+			printf("VHT-MCS%d/%dSS", nr->nr_txmcs, nr->nr_vht_ss);
+		} else if (nr->nr_flags & IEEE80211_NODEREQ_HT) {
 			printf("HT-MCS%d ", nr->nr_txmcs);
 		} else if (nr->nr_nrates) {
 			printf("%uM ",

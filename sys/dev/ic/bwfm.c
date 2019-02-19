@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.57 2019/02/07 07:39:56 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.58 2019/02/19 08:12:30 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -281,6 +281,7 @@ bwfm_preinit(struct bwfm_softc *sc)
 				if (nmode)
 					ic->ic_channels[chan].ic_flags |=
 					    IEEE80211_CHAN_HT;
+				/* VHT is 5GHz only */
 			}
 			break;
 		case BWFM_BAND_5G:
@@ -298,6 +299,9 @@ bwfm_preinit(struct bwfm_softc *sc)
 				if (nmode)
 					ic->ic_channels[chan].ic_flags |=
 					    IEEE80211_CHAN_HT;
+				if (vhtmode)
+					ic->ic_channels[chan].ic_flags |=
+					    IEEE80211_CHAN_VHT;
 			}
 			break;
 		default:
@@ -556,11 +560,25 @@ bwfm_watchdog(struct ifnet *ifp)
  * But this is the best we can do given that firmware only reports kbit/s.
  */
 
-int
-bwfm_rate2vhtmcs(uint32_t txrate)
+void
+bwfm_rate2vhtmcs(int *mcs, int *ss, uint32_t txrate)
 {
-	/* TODO */
-	return -1;
+	const struct ieee80211_vht_rateset *rs;
+	int i, j;
+	
+	*mcs = -1;
+	*ss = -1;
+	/* TODO: Select specific ratesets based on BSS channel width. */
+	for (i = 0; i < IEEE80211_VHT_NUM_RATESETS; i++) {
+		rs = &ieee80211_std_ratesets_11ac[i];
+		for (j = 0; j < rs->nrates; j++) {
+			if (rs->rates[j] == txrate / 500) {
+				*mcs = j;
+				*ss = rs->num_ss;
+				return;
+			}
+		}
+	}
 }
 
 int
@@ -569,6 +587,7 @@ bwfm_rate2htmcs(uint32_t txrate)
 	const struct ieee80211_ht_rateset *rs;
 	int i, j;
 	
+	/* TODO: Select specific ratesets based on BSS channel width. */
 	for (i = 0; i < IEEE80211_HT_NUM_RATESETS; i++) {
 		rs = &ieee80211_std_ratesets_11n[i];
 		for (j = 0; j < rs->nrates; j++) {
@@ -589,7 +608,7 @@ bwfm_update_node(void *arg, struct ieee80211_node *ni)
 	uint32_t flags;
 	int8_t rssi;
 	uint32_t txrate;
-	int mcs, i;
+	int i;
 
 	memset(&sta, 0, sizeof(sta));
 	memcpy((uint8_t *)&sta, ni->ni_macaddr, sizeof(ni->ni_macaddr));
@@ -621,32 +640,37 @@ bwfm_update_node(void *arg, struct ieee80211_node *ni)
 	if (txrate == 0xffffffff) /* Seen this happening during association. */
 		return;
 
-	if ((le32toh(sta.flags) & BWFM_STA_VHT_CAP) &&
-	    (mcs = bwfm_rate2vhtmcs(txrate)) >= 0) {
-		/* TODO: Can't store VHT MCS in ni yet... */
-	} else if ((le32toh(sta.flags) & BWFM_STA_N_CAP) &&
-	    (mcs = bwfm_rate2htmcs(txrate)) >= 0) {
+	if ((le32toh(sta.flags) & BWFM_STA_VHT_CAP)) {
+		int mcs, ss;
+		/* Tell net80211 that firmware has negotiated 11ac. */
+		ni->ni_flags |= IEEE80211_NODE_VHT;
+		ni->ni_flags |= IEEE80211_NODE_HT; /* VHT implies HT support */
+		if (ic->ic_curmode < IEEE80211_MODE_11AC)
+			ieee80211_setmode(ic, IEEE80211_MODE_11AC);
+	    	bwfm_rate2vhtmcs(&mcs, &ss, txrate);
+		if (mcs >= 0) {
+			ni->ni_txmcs = mcs;
+			ni->ni_vht_ss = ss;
+		} else {
+			ni->ni_txmcs = 0;
+			ni->ni_vht_ss = 1;
+		}
+	} else if ((le32toh(sta.flags) & BWFM_STA_N_CAP)) {
+		int mcs;
 		/* Tell net80211 that firmware has negotiated 11n. */
 		ni->ni_flags |= IEEE80211_NODE_HT;
 		if (ic->ic_curmode < IEEE80211_MODE_11N)
 			ieee80211_setmode(ic, IEEE80211_MODE_11N);
-		ni->ni_txmcs = mcs;
+	    	mcs = bwfm_rate2htmcs(txrate);
+		ni->ni_txmcs = (mcs >= 0 ? mcs : 0);
 	} else {
-		/*
-		 * In 11n mode a fallback to legacy rates is transparent
-		 * to net80211. Just pretend we were using MCS 0.
-		 */
-		if (ni->ni_flags & IEEE80211_NODE_HT) {
-			ni->ni_txmcs = 0;
-		} else {
-			/* We're in 11a/g mode. Map to a legacy rate. */
-			for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
-				uint8_t rate = ni->ni_rates.rs_rates[i];
-				rate &= IEEE80211_RATE_VAL;
-				if (rate == txrate / 500) {
-					ni->ni_txrate = i;
-					break;
-				}
+		/* We're in 11a/g mode. Map to a legacy rate. */
+		for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
+			uint8_t rate = ni->ni_rates.rs_rates[i];
+			rate &= IEEE80211_RATE_VAL;
+			if (rate == txrate / 500) {
+				ni->ni_txrate = i;
+				break;
 			}
 		}
 	}

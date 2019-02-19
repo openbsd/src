@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.61 2019/01/15 10:00:47 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.62 2019/02/19 08:12:30 stsp Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -505,6 +505,7 @@ enum {
 #define	IEEE80211_RATE_MAXSIZE			15	/* max rates we'll handle */
 
 #define	IEEE80211_HT_NUM_MCS			77
+#define	IEEE80211_VHT_NUM_MCS			10
 
 /*
  * BlockAck/BlockAckReq Control field (see 802.11-2012 8.3.1.9 Figure 8-25).

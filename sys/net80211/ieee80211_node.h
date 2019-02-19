@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.78 2019/01/23 10:08:49 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.79 2019/02/19 08:12:30 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -87,6 +87,36 @@ struct ieee80211_ht_rateset {
 };
 
 extern const struct ieee80211_ht_rateset ieee80211_std_ratesets_11n[];
+
+/* Index into ieee80211_std_rateset_11ac[] array. */
+#define IEEE80211_VHT_RATESET_SISO		0
+#define IEEE80211_VHT_RATESET_SISO_SGI		1
+#define IEEE80211_VHT_RATESET_MIMO2		2
+#define IEEE80211_VHT_RATESET_MIMO2_SGI		3
+#define IEEE80211_VHT_RATESET_SISO_40		4
+#define IEEE80211_VHT_RATESET_SISO_40_SGI	5
+#define IEEE80211_VHT_RATESET_MIMO2_40		6
+#define IEEE80211_VHT_RATESET_MIMO2_40_SGI	7
+#define IEEE80211_VHT_RATESET_SISO_80		8
+#define IEEE80211_VHT_RATESET_SISO_80_SGI	9
+#define IEEE80211_VHT_RATESET_MIMO2_80		10
+#define IEEE80211_VHT_RATESET_MIMO2_80_SGI	11
+#define IEEE80211_VHT_NUM_RATESETS		12
+
+/* Maximum number of rates in a HT rateset. */
+#define IEEE80211_VHT_RATESET_MAX_NRATES	10
+
+struct ieee80211_vht_rateset {
+	uint32_t nrates;
+	uint32_t rates[IEEE80211_VHT_RATESET_MAX_NRATES]; /* 500 kbit/s units */
+
+	/* Number of spatial streams used by rates in this rateset. */
+	int num_ss;
+
+	int sgi;
+};
+
+extern const struct ieee80211_vht_rateset ieee80211_std_ratesets_11ac[];
 
 enum ieee80211_node_state {
 	IEEE80211_STA_CACHE,	/* cached node */
@@ -305,6 +335,7 @@ struct ieee80211_node {
 	struct ieee80211_rx_ba	ni_rx_ba[IEEE80211_NUM_TID];
 
 	int			ni_txmcs;	/* current MCS used for TX */
+	int			ni_vht_ss;	/* VHT # spatial streams */
 
 	/* others */
 	u_int16_t		ni_associd;	/* assoc response */
@@ -317,7 +348,7 @@ struct ieee80211_node {
 	int			ni_txrate;	/* index to ni_rates[] */
 	int			ni_state;
 
-	u_int16_t		ni_flags;	/* special-purpose state */
+	u_int32_t		ni_flags;	/* special-purpose state */
 #define IEEE80211_NODE_ERP		0x0001
 #define IEEE80211_NODE_QOS		0x0002
 #define IEEE80211_NODE_REKEY		0x0004	/* GTK rekeying in progress */
@@ -336,6 +367,7 @@ struct ieee80211_node {
 #define IEEE80211_NODE_RSN_NEW_PTK	0x2000	/* expecting a new PTK */
 #define IEEE80211_NODE_HT_SGI20		0x4000	/* SGI on 20 MHz negotiated */ 
 #define IEEE80211_NODE_HT_SGI40		0x8000	/* SGI on 40 MHz negotiated */ 
+#define IEEE80211_NODE_VHT		0x10000	/* VHT negotiated */
 
 	/* If not NULL, this function gets called when ni_refcnt hits zero. */
 	void			(*ni_unref_cb)(struct ieee80211com *,
