@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.40 2019/02/19 07:01:02 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.41 2019/02/19 07:03:29 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 /*
  * wscons mux device.
  *
- * The mux device is a collection of real mice and keyboards and acts as 
+ * The mux device is a collection of real mice and keyboards and acts as
  * a merge point for all the events from the different real devices.
  */
 
@@ -179,7 +179,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 
 	DPRINTF(("wsmuxopen: %s: sc=%p p=%p\n", sc->sc_base.me_dv.dv_xname, sc, p));
-	
+
 	if ((flags & (FREAD | FWRITE)) == FWRITE) {
 		/* Not opening for read, only ioctl is available. */
 		return (0);
@@ -827,7 +827,7 @@ wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
 	}
 	ok = 0;
 	error = 0;
-	TAILQ_FOREACH(me, &sc->sc_cld,me_next) {
+	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 #ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
 			printf("wsmux_set_display: bad child parent %p\n", me);
