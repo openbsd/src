@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.372 2019/02/18 12:35:08 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.373 2019/02/19 09:13:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1064,33 +1064,33 @@ extern struct rib_names ribnames;
 #define AS_NONE		0
 
 struct rde_memstats {
-	int64_t		path_cnt;
-	int64_t		path_refs;
-	int64_t		prefix_cnt;
-	int64_t		rib_cnt;
-	int64_t		pt_cnt[AID_MAX];
-	int64_t		nexthop_cnt;
-	int64_t		aspath_cnt;
-	int64_t		aspath_size;
-	int64_t		aspath_refs;
-	int64_t		attr_cnt;
-	int64_t		attr_refs;
-	int64_t		attr_data;
-	int64_t		attr_dcnt;
-	int64_t		aset_cnt;
-	int64_t		aset_size;
-	int64_t		aset_nmemb;
-	int64_t		pset_cnt;
-	int64_t		pset_size;
+	long long	path_cnt;
+	long long	path_refs;
+	long long	prefix_cnt;
+	long long	rib_cnt;
+	long long	pt_cnt[AID_MAX];
+	long long	nexthop_cnt;
+	long long	aspath_cnt;
+	long long	aspath_size;
+	long long	aspath_refs;
+	long long	attr_cnt;
+	long long	attr_refs;
+	long long	attr_data;
+	long long	attr_dcnt;
+	long long	aset_cnt;
+	long long	aset_size;
+	long long	aset_nmemb;
+	long long	pset_cnt;
+	long long	pset_size;
 };
 
 struct rde_hashstats {
 	char		name[16];
-	int64_t		num;
-	int64_t		min;
-	int64_t		max;
-	int64_t		sum;
-	int64_t		sumq;
+	long long	num;
+	long long	min;
+	long long	max;
+	long long	sum;
+	long long	sumq;
 };
 
 #define	MRT_FILE_LEN	512
