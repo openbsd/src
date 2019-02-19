@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.121 2019/02/18 23:30:39 sthen Exp $
+.\" $OpenBSD: isakmpd.8,v 1.122 2019/02/19 06:54:39 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: February 18 2019 $
+.Dd $Mdocdate: February 19 2019 $
 .Dt ISAKMPD 8
 .Os
 .Sh NAME
@@ -623,7 +623,6 @@ to a temporary file and edit it to replace
 .Dv $ENV::CERTIP
 with the IP address (10.0.0.1 in this example), then generate a signed
 certificate:
-.Pp
 .Bd -literal -offset indent
 # sed 's,\\$ENV::CERTIP,10.0.0.1,' \e
 	< /etc/ssl/x509v3.cnf > ~/tmp_x509v3.cnf
