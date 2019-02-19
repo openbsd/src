@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.227 2019/01/23 21:53:42 cheloha Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.228 2019/02/19 22:42:41 tedu Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1580,7 +1580,8 @@ coredump(struct proc *p)
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 
-	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW, S_IRUSR | S_IWUSR);
+	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW | O_NONBLOCK,
+	    S_IRUSR | S_IWUSR);
 
 	if (error)
 		goto out;
