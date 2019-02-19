@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.229 2019/02/11 15:47:55 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.230 2019/02/19 09:15:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 
+#include <endian.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -84,7 +85,6 @@ void		 show_attr(void *, u_int16_t, int);
 void		 show_community(u_char *, u_int16_t);
 void		 show_large_community(u_char *, u_int16_t);
 void		 show_ext_community(u_char *, u_int16_t);
-char		*fmt_mem(int64_t);
 int		 show_rib_memory_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 const char	*get_errstr(u_int8_t, u_int8_t);
@@ -1761,12 +1761,12 @@ show_ext_community(u_char *data, u_int16_t len)
 		case EXT_COMMUNITY_TRANS_OPAQUE:
 		case EXT_COMMUNITY_TRANS_EVPN:
 			memcpy(&ext, data + i, sizeof(ext));
-			ext = betoh64(ext) & 0xffffffffffffLL;
-			printf("0x%llx", ext);
+			ext = be64toh(ext) & 0xffffffffffffLL;
+			printf("0x%llx", (unsigned long long)ext);
 			break;
 		case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 			memcpy(&ext, data + i, sizeof(ext));
-			ext = betoh64(ext) & 0xffffffffffffLL;
+			ext = be64toh(ext) & 0xffffffffffffLL;
 			switch (ext) {
 			case EXT_COMMUNITY_OVS_VALID:
 				printf("valid ");
@@ -1778,26 +1778,26 @@ show_ext_community(u_char *data, u_int16_t len)
 				printf("invalid ");
 				break;
 			default:
-				printf("0x%llx ", ext);
+				printf("0x%llx ", (unsigned long long)ext);
 				break;
 			}
 			break;
 		default:
 			memcpy(&ext, data + i, sizeof(ext));
-			printf("0x%llx", betoh64(ext));
+			printf("0x%llx", (unsigned long long)be64toh(ext));
 		}
 		if (i + 8 < len)
 			printf(", ");
 	}
 }
 
-char *
-fmt_mem(int64_t num)
+static char *
+fmt_mem(long long num)
 {
 	static char	buf[16];
 
 	if (fmt_scaled(num, buf) == -1)
-		snprintf(buf, sizeof(buf), "%lldB", (long long)num);
+		snprintf(buf, sizeof(buf), "%lldB", num);
 
 	return (buf);
 }
@@ -1822,31 +1822,31 @@ show_rib_memory_msg(struct imsg *imsg)
 				continue;
 			pts += stats.pt_cnt[i] * pt_sizes[i];
 			printf("%10lld %s network entries using %s of memory\n",
-			    (long long)stats.pt_cnt[i], aid_vals[i].name,
+			    stats.pt_cnt[i], aid_vals[i].name,
 			    fmt_mem(stats.pt_cnt[i] * pt_sizes[i]));
 		}
 		printf("%10lld rib entries using %s of memory\n",
-		    (long long)stats.rib_cnt, fmt_mem(stats.rib_cnt *
+		    stats.rib_cnt, fmt_mem(stats.rib_cnt *
 		    sizeof(struct rib_entry)));
 		printf("%10lld prefix entries using %s of memory\n",
-		    (long long)stats.prefix_cnt, fmt_mem(stats.prefix_cnt *
+		    stats.prefix_cnt, fmt_mem(stats.prefix_cnt *
 		    sizeof(struct prefix)));
 		printf("%10lld BGP path attribute entries using %s of memory\n",
-		    (long long)stats.path_cnt, fmt_mem(stats.path_cnt *
+		    stats.path_cnt, fmt_mem(stats.path_cnt *
 		    sizeof(struct rde_aspath)));
 		printf("\t   and holding %lld references\n",
-		    (long long)stats.path_refs);
+		    stats.path_refs);
 		printf("%10lld BGP AS-PATH attribute entries using "
 		    "%s of memory\n\t   and holding %lld references\n",
-		    (long long)stats.aspath_cnt, fmt_mem(stats.aspath_size),
-		    (long long)stats.aspath_refs);
+		    stats.aspath_cnt, fmt_mem(stats.aspath_size),
+		    stats.aspath_refs);
 		printf("%10lld BGP attributes entries using %s of memory\n",
-		    (long long)stats.attr_cnt, fmt_mem(stats.attr_cnt *
+		    stats.attr_cnt, fmt_mem(stats.attr_cnt *
 		    sizeof(struct attr)));
 		printf("\t   and holding %lld references\n",
-		    (long long)stats.attr_refs);
+		    stats.attr_refs);
 		printf("%10lld BGP attributes using %s of memory\n",
-		    (long long)stats.attr_dcnt, fmt_mem(stats.attr_data));
+		    stats.attr_dcnt, fmt_mem(stats.attr_data));
 		printf("%10lld as-set elements in %lld tables using "
 		    "%s of memory\n", stats.aset_nmemb, stats.aset_cnt,
 		    fmt_mem(stats.aset_size));
