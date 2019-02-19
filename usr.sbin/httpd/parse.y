@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.109 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.110 2019/02/19 11:37:26 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -140,7 +140,7 @@ typedef struct {
 %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
 %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
-%token	CA CLIENT CRL OPTIONAL
+%token	CA CLIENT CRL OPTIONAL PARAM
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -290,6 +290,7 @@ server		: SERVER optmatch STRING	{
 
 			SPLAY_INIT(&srv->srv_clients);
 			TAILQ_INIT(&srv->srv_hosts);
+			TAILQ_INIT(&srv_conf->fcgiparams);
 
 			TAILQ_INSERT_TAIL(&srv->srv_hosts, srv_conf, entry);
 		} '{' optnl serveropts_l '}'	{
@@ -657,6 +658,36 @@ fcgiflags	: SOCKET STRING		{
 			}
 			free($2);
 			srv_conf->flags |= SRVFLAG_SOCKET;
+		}
+		| PARAM STRING STRING	{
+			struct fastcgi_param	*param;
+
+			if ((param = calloc(1, sizeof(*param))) == NULL)
+				fatal("out of memory");
+
+			if (strlcpy(param->name, $2, sizeof(param->name)) >=
+			    sizeof(param->name)) {
+				yyerror("fastcgi_param name truncated");
+				free($2);
+				free($3);
+				free(param);
+				YYERROR;
+			}
+			if (strlcpy(param->value, $3, sizeof(param->value)) >=
+			    sizeof(param->value)) {
+				yyerror("fastcgi_param value truncated");
+				free($2);
+				free($3);
+				free(param);
+				YYERROR;
+			}
+			free($2);
+			free($3);
+
+			DPRINTF("[%s,%s,%d]: adding param \"%s\" value \"%s\"",
+			    srv_conf->location, srv_conf->name, srv_conf->id,
+			    param->name, param->value);
+			TAILQ_INSERT_HEAD(&srv_conf->fcgiparams, param, entry);
 		}
 		;
 
@@ -1282,6 +1313,7 @@ lookup(char *s)
 		{ "ocsp",		OCSP },
 		{ "on",			ON },
 		{ "optional",		OPTIONAL },
+		{ "param",		PARAM },
 		{ "pass",		PASS },
 		{ "port",		PORT },
 		{ "prefork",		PREFORK },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.77 2018/10/15 08:16:17 bentley Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.78 2019/02/19 11:37:26 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -92,6 +92,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	struct http_descriptor		*desc = clt->clt_descreq;
 	struct fcgi_record_header	*h;
 	struct fcgi_begin_request_body	*begin;
+	struct fastcgi_param 		*fcgiparam;
 	char				 hbuf[HOST_NAME_MAX+1];
 	size_t				 scriptlen;
 	int				 pathlen;
@@ -290,6 +291,13 @@ server_fcgi(struct httpd *env, struct client *clt)
 		if (srv_conf->tls_flags != 0 && fcgi_add_param(&param,
 		    "TLS_PEER_VERIFY", printb_flags(srv_conf->tls_flags,
 		    TLSFLAG_BITS), clt) == -1) {
+			errstr = "failed to encode param";
+			goto fail;
+		}
+	}
+
+	TAILQ_FOREACH(fcgiparam, &srv_conf->fcgiparams, entry) {
+		if (fcgi_add_param(&param, fcgiparam->name, fcgiparam->value, clt) == -1) {
 			errstr = "failed to encode param";
 			goto fail;
 		}

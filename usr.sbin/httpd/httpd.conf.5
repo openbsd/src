@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.102 2019/02/08 11:46:07 florian Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.103 2019/02/19 11:37:26 pirofti Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 8 2019 $
+.Dd $Mdocdate: February 19 2019 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -274,8 +274,11 @@ Disable the directory index.
 .Xr httpd 8
 will neither display nor generate a directory index.
 .El
-.It Oo Ic no Oc Ic fastcgi Op Ic socket Ar socket
+.It Oo Ic no Oc Ic fastcgi Oo Ar option Oc
 Enable FastCGI instead of serving files.
+Valid options are:
+.Bl -tag -width Ds
+.It Ic socket Ar socket
 .Nm httpd
 passes HTTP requests to a FastCGI handler listening on the socket
 .Ar socket .
@@ -293,8 +296,12 @@ Alternatively if
 the FastCGI handler is listening on a TCP socket,
 .Ar socket
 starts with a colon followed by the TCP port number.
+.It Ic param Ar variable value
+Sets a variable that will be sent to the FastCGI server.
+Each statement defines one variable.
+.El
 .Pp
-The FastCGI handler will be given the following variables:
+The FastCGI handler will be given the following variables by default:
 .Pp
 .Bl -tag -width GATEWAY_INTERFACE -offset indent -compact
 .It Ic DOCUMENT_ROOT

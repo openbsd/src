@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.142 2018/10/11 09:52:22 benno Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.143 2019/02/19 11:37:26 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -64,6 +64,8 @@
 #define HTTPD_TLS_CIPHERS	"compat"
 #define HTTPD_TLS_DHE_PARAMS	"none"
 #define HTTPD_TLS_ECDHE_CURVES	"default"
+#define HTTPD_FCGI_NAME_MAX	511
+#define HTTPD_FCGI_VAL_MAX	511
 #define FD_RESERVE		5
 
 #define SERVER_MAX_CLIENTS	1024
@@ -225,6 +227,7 @@ enum imsg_type {
 	IMSG_CFG_TLS,
 	IMSG_CFG_MEDIA,
 	IMSG_CFG_AUTH,
+	IMSG_CFG_FCGI,
 	IMSG_CFG_DONE,
 	IMSG_LOG_ACCESS,
 	IMSG_LOG_ERROR,
@@ -467,6 +470,14 @@ struct server_tls_ticket {
 	unsigned char	tt_key[TLS_TICKET_KEY_SIZE];
 };
 
+struct fastcgi_param {
+	char			name[HTTPD_FCGI_NAME_MAX];
+	char			value[HTTPD_FCGI_VAL_MAX];
+
+	TAILQ_ENTRY(fastcgi_param) entry;	
+};
+TAILQ_HEAD(server_fcgiparams, fastcgi_param);
+
 struct server_config {
 	uint32_t		 id;
 	uint32_t		 parent_id;
@@ -533,6 +544,8 @@ struct server_config {
 
 	int			 hsts_max_age;
 	uint8_t			 hsts_flags;
+
+	struct server_fcgiparams fcgiparams;
 
 	TAILQ_ENTRY(server_config) entry;
 };
@@ -818,8 +831,10 @@ int	 config_getreset(struct httpd *, struct imsg *);
 int	 config_getcfg(struct httpd *, struct imsg *);
 int	 config_setserver(struct httpd *, struct server *);
 int	 config_setserver_tls(struct httpd *, struct server *);
+int	 config_setserver_fcgiparams(struct httpd *, struct server *);
 int	 config_getserver(struct httpd *, struct imsg *);
 int	 config_getserver_tls(struct httpd *, struct imsg *);
+int	 config_getserver_fcgiparams(struct httpd *, struct imsg *);
 int	 config_setmedia(struct httpd *, struct media_type *);
 int	 config_getmedia(struct httpd *, struct imsg *);
 int	 config_setauth(struct httpd *, struct auth *);
