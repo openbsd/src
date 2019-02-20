@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.41 2019/02/19 07:03:29 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.42 2019/02/20 17:54:34 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -608,7 +608,7 @@ wsmux_create(const char *name, int unit)
 	if (sc == NULL)
 		return (NULL);
 	TAILQ_INIT(&sc->sc_cld);
-	rw_init(&sc->sc_lock, "wsmuxlk");
+	rw_init_flags(&sc->sc_lock, "wsmuxlk", RWL_DUPOK);
 	snprintf(sc->sc_base.me_dv.dv_xname, sizeof sc->sc_base.me_dv.dv_xname,
 		 "%s%d", name, unit);
 	sc->sc_base.me_dv.dv_unit = unit;
