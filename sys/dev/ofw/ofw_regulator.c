@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.11 2019/02/18 20:34:37 patrick Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.12 2019/02/20 07:36:37 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -24,28 +24,48 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
 
+#define REGULATOR_VOLTAGE	0
+#define REGULATOR_CURRENT	1
+
 LIST_HEAD(, regulator_device) regulator_devices =
 	LIST_HEAD_INITIALIZER(regulator_devices);
 
-uint32_t regulator_gpio_get_voltage(int);
-int regulator_gpio_set_voltage(int, uint32_t);
+int regulator_type(int);
+uint32_t regulator_gpio_get(int);
+int regulator_gpio_set(int, uint32_t);
 
 void
 regulator_register(struct regulator_device *rd)
 {
-	rd->rd_min = OF_getpropint(rd->rd_node, "regulator-min-microvolt", 0);
-	rd->rd_max = OF_getpropint(rd->rd_node, "regulator-max-microvolt", ~0);
-	KASSERT(rd->rd_min <= rd->rd_max);
+	rd->rd_volt_min = OF_getpropint(rd->rd_node,
+	    "regulator-min-microvolt", 0);
+	rd->rd_volt_max = OF_getpropint(rd->rd_node,
+	    "regulator-max-microvolt", ~0);
+	KASSERT(rd->rd_volt_min <= rd->rd_volt_max);
+
+	rd->rd_amp_min = OF_getpropint(rd->rd_node,
+	    "regulator-min-microamp", 0);
+	rd->rd_amp_max = OF_getpropint(rd->rd_node,
+	    "regulator-max-microamp", ~0);
+	KASSERT(rd->rd_amp_min <= rd->rd_amp_max);
 
 	rd->rd_ramp_delay =
 	    OF_getpropint(rd->rd_node, "regulator-ramp-delay", 0);
 
 	if (rd->rd_get_voltage && rd->rd_set_voltage) {
 		uint32_t voltage = rd->rd_get_voltage(rd->rd_cookie);
-		if (voltage < rd->rd_min)
-			rd->rd_set_voltage(rd->rd_cookie, rd->rd_min);
-		if (voltage > rd->rd_max)
-			rd->rd_set_voltage(rd->rd_cookie, rd->rd_max);
+		if (voltage < rd->rd_volt_min)
+			rd->rd_set_voltage(rd->rd_cookie, rd->rd_volt_min);
+		if (voltage > rd->rd_volt_max)
+			rd->rd_set_voltage(rd->rd_cookie, rd->rd_volt_max);
+	}
+
+	if (rd->rd_get_current && rd->rd_set_current) {
+		uint32_t current = rd->rd_get_current(rd->rd_cookie);
+		if (current < rd->rd_amp_min)
+			rd->rd_set_current(rd->rd_cookie, rd->rd_amp_min);
+		if (current > rd->rd_amp_max)
+			rd->rd_set_current(rd->rd_cookie, rd->rd_amp_max);
 	}
 
 	rd->rd_phandle = OF_getpropint(rd->rd_node, "phandle", 0);
@@ -53,6 +73,18 @@ regulator_register(struct regulator_device *rd)
 		return;
 
 	LIST_INSERT_HEAD(&regulator_devices, rd, rd_list);
+}
+
+int
+regulator_type(int node)
+{
+	char type[16] = { 0 };
+
+	OF_getprop(node, "regulator-type", type, sizeof(type));
+	if (strcmp(type, "current") == 0)
+		return REGULATOR_CURRENT;
+
+	return REGULATOR_VOLTAGE;
 }
 
 int
@@ -152,8 +184,9 @@ regulator_get_voltage(uint32_t phandle)
 	if (OF_is_compatible(node, "regulator-fixed"))
 		return OF_getpropint(node, "regulator-min-microvolt", 0);
 
-	if (OF_is_compatible(node, "regulator-gpio"))
-		return regulator_gpio_get_voltage(node);
+	if (OF_is_compatible(node, "regulator-gpio") &&
+	    regulator_type(node) == REGULATOR_VOLTAGE)
+		return regulator_gpio_get(node);
 
 	return 0;
 }
@@ -171,7 +204,7 @@ regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 	}
 
 	/* Check limits. */
-	if (rd && (voltage < rd->rd_min || voltage > rd->rd_max))
+	if (rd && (voltage < rd->rd_volt_min || voltage > rd->rd_volt_max))
 		return EINVAL;
 
 	if (rd && rd->rd_set_voltage) {
@@ -192,17 +225,87 @@ regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 	    OF_getpropint(node, "regulator-min-microvolt", 0) == voltage)
 		return 0;
 
-	if (OF_is_compatible(node, "regulator-gpio"))
-		return regulator_gpio_set_voltage(node, voltage);
+	if (OF_is_compatible(node, "regulator-gpio") &&
+	    regulator_type(node) == REGULATOR_VOLTAGE)
+		return regulator_gpio_set(node, voltage);
 
 	return ENODEV;
 }
 
 uint32_t
-regulator_gpio_get_voltage(int node)
+regulator_get_current(uint32_t phandle)
+{
+	struct regulator_device *rd;
+	int node;
+
+	LIST_FOREACH(rd, &regulator_devices, rd_list) {
+		if (rd->rd_phandle == phandle)
+			break;
+	}
+
+	if (rd && rd->rd_get_current)
+		return rd->rd_get_current(rd->rd_cookie);
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return 0;
+
+	if (OF_is_compatible(node, "regulator-fixed"))
+		return OF_getpropint(node, "regulator-min-microamp", 0);
+
+	if (OF_is_compatible(node, "regulator-gpio") &&
+	    regulator_type(node) == REGULATOR_CURRENT)
+		return regulator_gpio_get(node);
+
+	return 0;
+}
+
+int
+regulator_set_current(uint32_t phandle, uint32_t current)
+{
+	struct regulator_device *rd;
+	uint32_t old, delta;
+	int error, node;
+
+	LIST_FOREACH(rd, &regulator_devices, rd_list) {
+		if (rd->rd_phandle == phandle)
+			break;
+	}
+
+	/* Check limits. */
+	if (rd && (current < rd->rd_amp_min || current > rd->rd_amp_max))
+		return EINVAL;
+
+	if (rd && rd->rd_set_current) {
+		old = rd->rd_get_current(rd->rd_cookie);
+		error = rd->rd_set_current(rd->rd_cookie, current);
+		if (current > old && rd->rd_ramp_delay > 0) {
+			delta = current - old;
+			delay(howmany(delta, rd->rd_ramp_delay));
+		}
+		return error;
+	}
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return ENODEV;
+
+	if (OF_is_compatible(node, "regulator-fixed") &&
+	    OF_getpropint(node, "regulator-min-microamp", 0) == current)
+		return 0;
+
+	if (OF_is_compatible(node, "regulator-gpio") &&
+	    regulator_type(node) == REGULATOR_CURRENT)
+		return regulator_gpio_set(node, current);
+
+	return ENODEV;
+}
+
+uint32_t
+regulator_gpio_get(int node)
 {
 	uint32_t *gpio, *gpios, *states;
-	uint32_t idx, voltage;
+	uint32_t idx, value;
 	size_t glen, slen;
 	int i;
 
@@ -232,10 +335,10 @@ regulator_gpio_get_voltage(int node)
 		i++;
 	}
 
-	voltage = 0;
+	value = 0;
 	for (i = 0; i < slen / (2 * sizeof(uint32_t)); i++) {
 		if (states[2 * i + 1] == idx) {
-			voltage = states[2 * i];
+			value = states[2 * i];
 			break;
 		}
 	}
@@ -245,11 +348,11 @@ regulator_gpio_get_voltage(int node)
 	free(gpios, M_TEMP, glen);
 	free(states, M_TEMP, slen);
 
-	return voltage;
+	return value;
 }
 
 int
-regulator_gpio_set_voltage(int node, uint32_t voltage)
+regulator_gpio_set(int node, uint32_t value)
 {
 	uint32_t *gpio, *gpios, *states;
 	size_t glen, slen;
@@ -259,10 +362,18 @@ regulator_gpio_set_voltage(int node, uint32_t voltage)
 
 	pinctrl_byname(node, "default");
 
+	if (regulator_type(node) == REGULATOR_VOLTAGE) {
+		min = OF_getpropint(node, "regulator-min-microvolt", 0);
+		max = OF_getpropint(node, "regulator-max-microvolt", 0);
+	}
+
+	if (regulator_type(node) == REGULATOR_CURRENT) {
+		min = OF_getpropint(node, "regulator-min-microamp", 0);
+		max = OF_getpropint(node, "regulator-max-microamp", 0);
+	}
+
 	/* Check limits. */
-	min = OF_getpropint(node, "regulator-min-microvolt", 0);
-	max = OF_getpropint(node, "regulator-max-microvolt", 0);
-	if (voltage < min || voltage > max)
+	if (value < min || value > max)
 		return EINVAL;
 
 	if ((glen = OF_getproplen(node, "gpios")) <= 0)
@@ -283,7 +394,7 @@ regulator_gpio_set_voltage(int node, uint32_t voltage)
 	for (i = 0; i < slen / (2 * sizeof(uint32_t)); i++) {
 		if (states[2 * i] < min || states[2 * i] > max)
 			continue;
-		if (states[2 * i] == voltage) {
+		if (states[2 * i] == value) {
 			idx = states[2 * i + 1];
 			break;
 		}
