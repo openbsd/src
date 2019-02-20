@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.42 2019/02/20 00:31:17 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.43 2019/02/20 00:38:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -264,7 +264,6 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_cword = ISSET(imr.imr_flags, IMR_FLAG_CONTROLWORD);
 		sc->sc_type = imr.imr_type;
 		sc->sc_rshim.shim_label = imr.imr_rshim.shim_label;
-		sc->sc_rshim.shim_label |= MPLS_BOS_MASK;
 
 		memset(&sc->sc_nexthop, 0, sizeof(sc->sc_nexthop));
 		sin_nexthop = (struct sockaddr_in *) &sc->sc_nexthop;
@@ -421,6 +420,7 @@ mpw_start(struct ifnet *ifp)
 		.smpls_len = sizeof(smpls),
 		.smpls_family = AF_MPLS,
 	};
+	uint32_t bos;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
 	    sc->sc_rshim.shim_label == 0 ||
@@ -467,13 +467,15 @@ mpw_start(struct ifnet *ifp)
 			memset(shim, 0, sizeof(*shim));
 		}
 
+		bos = MPLS_BOS_MASK;
+
 		m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
 		if (m0 == NULL)
 			continue;
 
 		shim = mtod(m0, struct shim_hdr *);
 		shim->shim_label = htonl(mpls_defttl) & MPLS_TTL_MASK;
-		shim->shim_label |= sc->sc_rshim.shim_label;
+		shim->shim_label |= sc->sc_rshim.shim_label | bos;
 
 		m0->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
