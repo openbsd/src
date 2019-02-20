@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.41 2019/02/20 00:17:35 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.42 2019/02/20 00:31:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -52,7 +52,7 @@ struct mpw_softc {
 	struct ifaddr		sc_ifa;
 	struct sockaddr_mpls	sc_smpls; /* Local label */
 
-	uint32_t		sc_flags;
+	unsigned int		sc_cword;
 	uint32_t		sc_type;
 	struct shim_hdr		sc_rshim;
 	struct sockaddr_storage	sc_nexthop;
@@ -230,7 +230,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 			memset(&sc->sc_rshim, 0, sizeof(sc->sc_rshim));
 			memset(&sc->sc_nexthop, 0, sizeof(sc->sc_nexthop));
-			sc->sc_flags = 0;
+			sc->sc_cword = 0;
 			sc->sc_type = 0;
 			break;
 		}
@@ -261,7 +261,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 
 		/* Apply configuration */
-		sc->sc_flags = imr.imr_flags;
+		sc->sc_cword = ISSET(imr.imr_flags, IMR_FLAG_CONTROLWORD);
 		sc->sc_type = imr.imr_type;
 		sc->sc_rshim.shim_label = imr.imr_rshim.shim_label;
 		sc->sc_rshim.shim_label |= MPLS_BOS_MASK;
@@ -274,7 +274,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGETMPWCFG:
-		imr.imr_flags = sc->sc_flags;
+		imr.imr_flags = sc->sc_cword ? IMR_FLAG_CONTROLWORD : 0;
 		imr.imr_type = sc->sc_type;
 		imr.imr_lshim.shim_label =
 		    MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
@@ -340,7 +340,7 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 	}
 	m_adj(m, sizeof(*shim));
 
-	if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
+	if (sc->sc_cword) {
 		if (m->m_len < sizeof(*shim)) {
 			m = m_pullup(m, sizeof(*shim));
 			if (m == NULL)
@@ -458,7 +458,7 @@ mpw_start(struct ifnet *ifp)
 		m_align(m0, 0);
 		m0->m_len = 0;
 
-		if (sc->sc_flags & IMR_FLAG_CONTROLWORD) {
+		if (sc->sc_cword) {
 			m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
 			if (m0 == NULL)
 				continue;
