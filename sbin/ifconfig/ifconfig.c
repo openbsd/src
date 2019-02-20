@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.393 2019/02/20 04:02:18 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.394 2019/02/20 19:17:17 jca Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1462,7 +1462,7 @@ setia6lifetime(const char *cmd, const char *val)
 	t = time(NULL);
 
 	if (afp->af_af != AF_INET6)
-		errx(1, "%s not allowed for the address family", cmd);
+		errx(1, "%s not allowed for this address family", cmd);
 	if (strcmp(cmd, "vltime") == 0) {
 		in6_addreq.ifra_lifetime.ia6t_expire = t + newval;
 		in6_addreq.ifra_lifetime.ia6t_vltime = newval;
@@ -1481,7 +1481,7 @@ setia6eui64(const char *cmd, int val)
 	struct in6_addr *in6;
 
 	if (afp->af_af != AF_INET6)
-		errx(1, "%s not allowed for the address family", cmd);
+		errx(1, "%s not allowed for this address family", cmd);
 
 	addaf(name, AF_INET6);
 
