@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.38 2019/02/15 02:01:44 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.39 2019/02/20 00:15:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -173,6 +173,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct mpw_softc *sc = ifp->if_softc;
+	struct shim_hdr shim;
 	struct sockaddr_in *sin;
 	struct sockaddr_in *sin_nexthop;
 	int error = 0;
@@ -188,6 +189,27 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGPWE3:
 		ifr->ifr_pwe3 = IF_PWE3_ETHERNET;
+		break;
+
+	case SIOCGETLABEL:
+		shim.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
+		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
+		break;
+		case SIOCSETLABEL:
+		if ((error = copyin(ifr->ifr_data, &shim, sizeof(shim))))
+			break;
+		if (shim.shim_label > MPLS_LABEL_MAX ||
+		    shim.shim_label <= MPLS_LABEL_RESERVED_MAX) {
+			error = EINVAL;
+			break;
+		}
+		shim.shim_label = MPLS_LABEL2SHIM(shim.shim_label);
+		rw_enter_write(&sc->sc_lock);
+		if (sc->sc_smpls.smpls_label != shim.shim_label) {
+		error = mpw_set_label(sc, shim.shim_label,
+			sc->sc_rdomain);
+		}
+		rw_exit_write(&sc->sc_lock);
 		break;
 
 	case SIOCSETMPWCFG:
