@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.96 2019/02/11 17:53:00 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.97 2019/02/20 08:51:09 robert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -205,6 +205,13 @@ lib${LIB}_p.a: ${POBJS}
 SOBJS+=	${OBJS:.o=.so}
 BUILDAFTER += ${SOBJS}
 
+# exclude from readelf(1) output for syspatch building
+EXCLUDE_REGEX:=	"(cmll-586|(comparetf|libgcc|unwind-dw)2| 		\
+		mul(t|d|s|x)(c|f)3|crt(begin|end)S|			\
+		(div|umod|mod)di3|emutls|(add|div|sub)tf3|		\
+		(fixtf|float|extend|trunctf)(d|s)(ftf2|i|itf|f2)|	\
+		floatunsitf)"
+
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f ${.TARGET}
@@ -212,7 +219,7 @@ ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
 	    `readelf -Ws ${SYSPATCH_PATH}${LIBDIR}/${.TARGET} | \
 	    awk '/ FILE/{sub(".*/", "", $$NF); gsub(/\..*/, ".so", $$NF); print $$NF}' | \
-	    egrep -v "(cmll-586|libgcc2|unwind-dw2|mul(d|s|x)c3)" | awk '!x[$$0]++'` ${LDADD}
+	    egrep -v ${EXCLUDE_REGEX:C/[[:blank:]]//g} | awk '!x[$$0]++'` ${LDADD}
 .else
 	${CC} -shared -Wl,-soname,${FULLSHLIBNAME} ${PICFLAG} -o ${.TARGET} \
 	    `echo ${SOBJS} | tr ' ' '\n' | sort -R` ${LDADD}
