@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.14 2018/09/18 16:02:08 mlarkin Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.15 2019/02/20 06:59:16 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -311,6 +311,16 @@ done_flush:
 	jnz	do_resume
 
 	/* Restore guest registers */
+	movq	0xa0(%rsi), %rax
+	movq	%rax, %dr0
+	movq	0xa8(%rsi), %rax
+	movq	%rax, %dr1
+	movq	0xb0(%rsi), %rax
+	movq	%rax, %dr2
+	movq	0xb8(%rsi), %rax
+	movq	%rax, %dr3
+	movq	0xc0(%rsi), %rax
+	movq	%rax, %dr6
 	movq	0x78(%rsi), %rax
 	movq	%rax, %cr2
 	movq	0x70(%rsi), %r15
@@ -338,6 +348,16 @@ done_flush:
 	jmp	fail_launch_or_resume
 do_resume:
 	/* Restore guest registers */
+	movq	0xa0(%rsi), %rax
+	movq	%rax, %dr0
+	movq	0xa8(%rsi), %rax
+	movq	%rax, %dr1
+	movq	0xb0(%rsi), %rax
+	movq	%rax, %dr2
+	movq	0xb8(%rsi), %rax
+	movq	%rax, %dr3
+	movq	0xc0(%rsi), %rax
+	movq	%rax, %dr6
 	movq	0x78(%rsi), %rax
 	movq	%rax, %cr2
 	movq	0x70(%rsi), %r15
@@ -416,6 +436,16 @@ vmx_exit_handler_asm:
 	movq	%r15, 0x70(%rsi)
 	movq	%cr2, %rax
 	movq	%rax, 0x78(%rsi)
+	movq	%dr0, %rax
+	movq	%rax, 0xa0(%rsi)
+	movq	%dr1, %rax
+	movq	%rax, 0xa8(%rsi)
+	movq	%dr2, %rax
+	movq	%rax, 0xb0(%rsi)
+	movq	%dr3, %rax
+	movq	%rax, 0xb8(%rsi)
+	movq	%dr6, %rax
+	movq	%rax, 0xc0(%rsi)
 
 	/* %rdi = 0 means we took an exit */
 	xorq	%rdi, %rdi
@@ -563,6 +593,15 @@ _C_LABEL(svm_enter_guest):
 
 	/* Restore guest registers */
 	movq	%r8, %rax	/* rax = vmcb pa */
+	movq	0xa0(%rsi), %r8
+	movq	%r8, %dr0
+	movq	0xa8(%rsi), %r8
+	movq	%r8, %dr1
+	movq	0xb0(%rsi), %r8
+	movq	%r8, %dr2
+	movq	0xb8(%rsi), %r8
+	movq	%r8, %dr3
+	/* %dr6 is saved in the VMCB */
 	movq	0x78(%rsi), %r8
 	movq	%r8, %cr2
 	movq	0x70(%rsi), %r15
@@ -611,6 +650,15 @@ _C_LABEL(svm_enter_guest):
 	movq	%r15, 0x70(%rsi)
 	movq	%cr2, %rax
 	movq	%rax, 0x78(%rsi)
+	movq	%dr0, %rax
+	movq	%rax, 0xa0(%rsi)
+	movq	%dr1, %rax
+	movq	%rax, 0xa8(%rsi)
+	movq	%dr2, %rax
+	movq	%rax, 0xb0(%rsi)
+	movq	%dr3, %rax
+	movq	%rax, 0xb8(%rsi)
+	/* %dr6 is saved in the VMCB */
 
 	/* %rdi = 0 means we took an exit */
 	xorq	%rdi, %rdi

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.59 2018/09/20 14:32:59 brynet Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.60 2019/02/20 06:59:16 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -415,10 +415,19 @@ struct vcpu_segment_info {
 #define VCPU_REGS_MISC_ENABLE	6
 #define VCPU_REGS_NMSRS	(VCPU_REGS_MISC_ENABLE + 1)
 
+#define VCPU_REGS_DR0		0
+#define VCPU_REGS_DR1		1
+#define VCPU_REGS_DR2		2
+#define VCPU_REGS_DR3		3
+#define VCPU_REGS_DR6		4
+#define VCPU_REGS_DR7		5
+#define VCPU_REGS_NDRS	(VCPU_REGS_DR7 + 1)
+
 struct vcpu_reg_state {
 	uint64_t			vrs_gprs[VCPU_REGS_NGPRS];
 	uint64_t			vrs_crs[VCPU_REGS_NCRS];
 	uint64_t			vrs_msrs[VCPU_REGS_NMSRS];
+	uint64_t			vrs_drs[VCPU_REGS_NDRS];
 	struct vcpu_segment_info	vrs_sregs[VCPU_REGS_NSREGS];
 	struct vcpu_segment_info	vrs_gdtr;
 	struct vcpu_segment_info	vrs_idtr;
@@ -519,8 +528,9 @@ struct vm_intr_params {
 #define VM_RWREGS_SREGS	0x2	/* read/write segment registers */
 #define VM_RWREGS_CRS	0x4	/* read/write CRs */
 #define VM_RWREGS_MSRS	0x8	/* read/write MSRs */
+#define VM_RWREGS_DRS	0x10	/* read/write DRs */
 #define VM_RWREGS_ALL	(VM_RWREGS_GPRS | VM_RWREGS_SREGS | VM_RWREGS_CRS | \
-    VM_RWREGS_MSRS)
+    VM_RWREGS_MSRS | VM_RWREGS_DRS)
 
 struct vm_rwregs_params {
 	/*
@@ -812,6 +822,16 @@ struct vcpu_gueststate
 	uint32_t	vg_exit_reason;		/* 0x88 */
 	uint64_t	vg_rflags;		/* 0x90 */
 	uint64_t	vg_xcr0;		/* 0x98 */
+	/*
+	 * Debug registers
+	 * - %dr4/%dr5 are aliased to %dr6/%dr7 (or cause #DE)
+	 * - %dr7 is saved automatically in the VMCS
+	 */
+	uint64_t	vg_dr0;			/* 0xa0 */
+	uint64_t	vg_dr1;			/* 0xa8 */
+	uint64_t	vg_dr2;			/* 0xb0 */
+	uint64_t	vg_dr3;			/* 0xb8 */
+	uint64_t	vg_dr6;			/* 0xc0 */
 };
 
 /*
