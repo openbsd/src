@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.39 2019/02/20 00:15:41 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.40 2019/02/20 00:16:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -195,7 +195,7 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		shim.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
 		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
 		break;
-		case SIOCSETLABEL:
+	case SIOCSETLABEL:
 		if ((error = copyin(ifr->ifr_data, &shim, sizeof(shim))))
 			break;
 		if (shim.shim_label > MPLS_LABEL_MAX ||
