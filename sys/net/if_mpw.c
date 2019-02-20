@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.43 2019/02/20 00:38:14 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.44 2019/02/20 01:04:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -53,6 +53,8 @@ struct mpw_softc {
 	struct sockaddr_mpls	sc_smpls; /* Local label */
 
 	unsigned int		sc_cword;
+	unsigned int		sc_fword;
+	uint32_t		sc_flow;
 	uint32_t		sc_type;
 	struct shim_hdr		sc_rshim;
 	struct sockaddr_storage	sc_nexthop;
@@ -90,6 +92,8 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_CANFAIL|M_ZERO);
 	if (sc == NULL)
 		return (ENOMEM);
+
+	sc->sc_flow = arc4random();
 
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
@@ -333,9 +337,29 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 		goto drop;
 
 	shim = mtod(m, struct shim_hdr *);
-	if (!MPLS_BOS_ISSET(shim->shim_label)) {
-		/* don't have RFC 6391: Flow-Aware Transport of Pseudowires */
-		goto drop;
+	if (sc->sc_fword) {
+		uint32_t flow;
+
+		if (MPLS_BOS_ISSET(shim->shim_label))
+			goto drop;
+		m_adj(m, sizeof(*shim));
+
+		if (m->m_len < sizeof(*shim)) {
+			m = m_pullup(m, sizeof(*shim));
+			if (m == NULL)
+				return;
+		}
+		shim = mtod(m, struct shim_hdr *);
+
+		if (!MPLS_BOS_ISSET(shim->shim_label))
+			goto drop;
+
+		flow = MPLS_SHIM2LABEL(shim->shim_label);
+		flow ^= sc->sc_flow;
+		m->m_pkthdr.ph_flowid = M_FLOWID_VALID | flow;
+	} else {
+		if (!MPLS_BOS_ISSET(shim->shim_label))
+			goto drop;
 	}
 	m_adj(m, sizeof(*shim));
 
@@ -468,6 +492,22 @@ mpw_start(struct ifnet *ifp)
 		}
 
 		bos = MPLS_BOS_MASK;
+		if (sc->sc_fword) {
+			uint32_t flow = sc->sc_flow;
+
+			m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
+			if (m0 == NULL)
+				continue;
+
+			if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
+				flow ^= m->m_pkthdr.ph_flowid & M_FLOWID_MASK;
+
+			shim = mtod(m0, struct shim_hdr *);
+			shim->shim_label = htonl(1) & MPLS_TTL_MASK;
+			shim->shim_label = MPLS_LABEL2SHIM(flow) | bos;
+
+			bos = 0;
+		}
 
 		m0 = m_prepend(m0, sizeof(*shim), M_NOWAIT);
 		if (m0 == NULL)
