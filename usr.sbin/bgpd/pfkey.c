@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.53 2019/02/18 09:43:57 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.54 2019/02/20 16:29:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -84,8 +84,10 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	/* we need clean sockaddr... no ports set */
 	bzero(&ssrc, sizeof(ssrc));
 	bzero(&smask, sizeof(smask));
-	if ((saptr = addr2sa(src, 0, &salen)))
+	if ((saptr = addr2sa(src, 0, &salen))) {
 		memcpy(&ssrc, saptr, salen);
+		ssrc.ss_len = salen;
+	}
 	switch (src->aid) {
 	case AID_INET:
 		memset(&((struct sockaddr_in *)&smask)->sin_addr, 0xff, 32/8);
@@ -105,8 +107,10 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 
 	bzero(&sdst, sizeof(sdst));
 	bzero(&dmask, sizeof(dmask));
-	if ((saptr = addr2sa(dst, 0, &salen)))
+	if ((saptr = addr2sa(dst, 0, &salen))) {
 		memcpy(&sdst, saptr, salen);
+		sdst.ss_len = salen;
+	}
 	switch (dst->aid) {
 	case AID_INET:
 		memset(&((struct sockaddr_in *)&dmask)->sin_addr, 0xff, 32/8);
