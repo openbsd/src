@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.63 2018/07/09 00:20:35 anton Exp $	*/
+/*	$OpenBSD: eval.c,v 1.64 2019/02/20 23:59:17 schwarze Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -65,6 +65,9 @@ char *
 substitute(const char *cp, int f)
 {
 	struct source *s, *sold;
+
+	if (disable_subst)
+		return str_save(cp, ATEMP);
 
 	sold = source;
 	s = pushs(SWSTR, ATEMP);
