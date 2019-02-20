@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.43 2018/12/10 21:30:33 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.44 2019/02/20 07:00:25 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -154,6 +154,12 @@ static const struct vcpu_reg_state vcpu_init_flat64 = {
 	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
 	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
 	.vrs_msrs[VCPU_REGS_EFER] = EFER_LME | EFER_LMA,
+	.vrs_drs[VCPU_REGS_DR0] = 0x0,
+	.vrs_drs[VCPU_REGS_DR1] = 0x0,
+	.vrs_drs[VCPU_REGS_DR2] = 0x0,
+	.vrs_drs[VCPU_REGS_DR3] = 0x0,
+	.vrs_drs[VCPU_REGS_DR6] = 0xFFFF0FF0,
+	.vrs_drs[VCPU_REGS_DR7] = 0x400,
 #ifndef __i386__
 	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
@@ -192,6 +198,12 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
 	.vrs_sregs[VCPU_REGS_LDTR] = { 0x0, 0xFFFF, 0x0082, 0x0},
 	.vrs_sregs[VCPU_REGS_TR] = { 0x0, 0xFFFF, 0x008B, 0x0},
 	.vrs_msrs[VCPU_REGS_EFER] = 0ULL,
+	.vrs_drs[VCPU_REGS_DR0] = 0x0,
+	.vrs_drs[VCPU_REGS_DR1] = 0x0,
+	.vrs_drs[VCPU_REGS_DR2] = 0x0,
+	.vrs_drs[VCPU_REGS_DR3] = 0x0,
+	.vrs_drs[VCPU_REGS_DR6] = 0xFFFF0FF0,
+	.vrs_drs[VCPU_REGS_DR7] = 0x400,
 #ifndef __i386__
 	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
