@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.321 2019/02/14 18:19:13 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.322 2019/02/20 17:11:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -173,6 +173,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	timeout_set(&sc->sc_brtimeout, bridge_rtage, sc);
 	SLIST_INIT(&sc->sc_iflist);
 	SLIST_INIT(&sc->sc_spanlist);
+	mtx_init(&sc->sc_mtx, IPL_MPFLOOR);
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++)
 		LIST_INIT(&sc->sc_rts[i]);
 	arc4random_buf(&sc->sc_hashkey, sizeof(sc->sc_hashkey));
