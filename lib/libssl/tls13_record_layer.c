@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.4 2019/02/21 17:09:51 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.5 2019/02/21 17:15:00 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -25,6 +25,15 @@
 struct tls13_record_layer {
 	int change_cipher_spec_seen;
 	int handshake_completed;
+
+	/*
+	 * Read and/or write channels are closed due to an alert being
+	 * sent or received. In the case of an error alert both channels
+	 * are closed, whereas in the case of a close notify only one
+	 * channel is closed.
+	 */
+	int read_closed;
+	int write_closed;
 
 	struct tls13_record *rrec;
 	struct tls13_record *wrec;
@@ -180,31 +189,55 @@ static ssize_t
 tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 {
 	uint8_t alert_level, alert_desc;
+	ssize_t ret = TLS13_IO_FAILURE;
 
 	/*
+	 * RFC 8446 - sections 5.1 and 6.
+	 *
 	 * A TLSv1.3 alert record can only contain a single alert - this means
 	 * that processing the alert must consume all of the record. The alert
 	 * will result in one of three things - continuation (user_cancelled),
 	 * read channel closure (close_notify) or termination (all others).
 	 */
 	if (rl->rbuf == NULL)
-		return TLS13_IO_FAILURE;
+		goto err;
 	if (rl->rbuf_content_type != SSL3_RT_ALERT)
-		return TLS13_IO_FAILURE;
+		goto err;
 
 	if (!CBS_get_u8(&rl->rbuf_cbs, &alert_level))
-		return TLS13_IO_FAILURE; /* XXX - decode error alert. */
+		goto err; /* XXX - decode error alert. */
 	if (!CBS_get_u8(&rl->rbuf_cbs, &alert_desc))
-		return TLS13_IO_FAILURE; /* XXX - decode error alert. */
+		goto err; /* XXX - decode error alert. */
 
 	if (CBS_len(&rl->rbuf_cbs) != 0)
-		return TLS13_IO_FAILURE;
+		goto err; /* XXX - decode error alert. */
 
 	tls13_record_layer_rbuf_free(rl);
 
+	/*
+	 * Alert level is ignored for closure alerts (RFC 8446 section 6.1),
+	 * however for error alerts (RFC 8446 section 6.2), the alert level
+	 * must be specified as fatal.
+	 */
+	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+		rl->read_closed = 1;
+		ret = TLS13_IO_SUCCESS;
+	} else if (alert_desc == SSL_AD_USER_CANCELLED) {
+		/* Ignored at the record layer. */
+		ret = TLS13_IO_SUCCESS;
+	} else if (alert_level == SSL3_AL_FATAL) {
+		rl->read_closed = 1;
+		rl->write_closed = 1;
+		ret = TLS13_IO_EOF;
+	} else {
+		/* XXX - decode error alert. */
+		return TLS13_IO_FAILURE;
+	}
+
 	rl->alert_cb(alert_level, alert_desc, rl->cb_arg);
 
-	return TLS13_IO_SUCCESS;
+ err:
+	return ret;
 }
 
 int
@@ -638,6 +671,9 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 {
 	ssize_t ret;
 
+	if (rl->read_closed)
+		return TLS13_IO_EOF;
+
 	/* XXX - loop here with record and byte limits. */
 	/* XXX - send alert... */
 
@@ -691,6 +727,9 @@ tls13_record_layer_write_record(struct tls13_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len)
 {
 	ssize_t ret;
+
+	if (rl->write_closed)
+		return TLS13_IO_EOF;
 
 	/* See if there is an existing record and attempt to push it out... */
 	if (rl->wrec != NULL) {

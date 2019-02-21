@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.3 2019/01/21 13:45:57 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.4 2019/02/21 17:15:00 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -61,6 +61,35 @@ tls13_cipher_hash(const SSL_CIPHER *cipher)
 	return NULL;
 }
 
+static void
+tls13_alert_received_cb(uint8_t alert_level, uint8_t alert_desc, void *arg)
+{
+	struct tls13_ctx *ctx = arg;
+	SSL *s = ctx->ssl;
+
+	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+		ctx->ssl->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
+		S3I(ctx->ssl)->warn_alert = alert_desc;
+		return;
+	}
+
+	if (alert_desc == SSL_AD_USER_CANCELLED) {
+		/*
+		 * We treat this as advisory, since a close_notify alert
+		 * SHOULD follow this alert (RFC 8446 section 6.1).
+		 */
+		return;
+	}
+
+	/* All other alerts are treated as fatal in TLSv1.3. */
+	S3I(ctx->ssl)->fatal_alert = alert_desc;
+
+	SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
+	ERR_asprintf_error_data("SSL alert number %d", alert_desc);
+
+	SSL_CTX_remove_session(s->ctx, s->session);
+}
+
 struct tls13_ctx *
 tls13_ctx_new(int mode)
 {
@@ -72,7 +101,8 @@ tls13_ctx_new(int mode)
 	ctx->mode = mode;
 
 	if ((ctx->rl = tls13_record_layer_new(tls13_legacy_wire_read_cb,
-	    tls13_legacy_wire_write_cb, NULL, NULL, ctx)) == NULL)
+	    tls13_legacy_wire_write_cb, tls13_alert_received_cb, NULL,
+	    ctx)) == NULL)
 		goto err;
 
 	return ctx;
