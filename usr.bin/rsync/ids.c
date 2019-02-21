@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.6 2019/02/21 22:06:26 benno Exp $ */
+/*	$Id: ids.c,v 1.7 2019/02/21 22:07:45 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,6 +52,8 @@ idents_assign_gid(struct sess *sess, struct flist *fl, size_t flsz,
 {
 	size_t	 i, j;
 
+	assert(!sess->opts->numeric_ids);
+
 	for (i = 0; i < flsz; i++) {
 		if (fl[i].st.gid == 0)
 			continue;
@@ -71,6 +73,8 @@ idents_assign_uid(struct sess *sess, struct flist *fl, size_t flsz,
 	const struct ident *ids, size_t idsz)
 {
 	size_t	 i, j;
+
+	assert(!sess->opts->numeric_ids);
 
 	for (i = 0; i < flsz; i++) {
 		if (fl[i].st.uid == 0)
@@ -99,14 +103,7 @@ idents_remap(struct sess *sess, int isgid, struct ident *ids, size_t idsz)
 	struct passwd	*usr;
 	int32_t		 id;
 
-	if (sess->opts->numeric_ids) {
-		for (i = 0; i < idsz; i++) {
-			assert(ids[i].id != 0);
-			ids[i].mapped = ids[i].id;
-		}
-		LOG4(sess, "did not remap identifiers");
-		return;
-	}
+	assert(!sess->opts->numeric_ids);
 
 	for (i = 0; i < idsz; i++) {
 		assert(ids[i].id != 0);
