@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.25 2018/12/31 18:00:53 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.26 2019/02/21 03:37:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -239,6 +239,7 @@ cpu_identify(struct cpu_info *ci)
 		case CPU_PART_CORTEX_A35:
 		case CPU_PART_CORTEX_A53:
 		case CPU_PART_CORTEX_A55:
+		case CPU_PART_CORTEX_A76:
 			/* Not vulnerable. */
 			ci->ci_flush_bp = cpu_flush_bp_noop;
 			break;
