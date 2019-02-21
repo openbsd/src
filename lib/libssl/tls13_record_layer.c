@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.3 2019/02/21 17:02:02 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.4 2019/02/21 17:09:51 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -188,21 +188,23 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 	 * read channel closure (close_notify) or termination (all others).
 	 */
 	if (rl->rbuf == NULL)
-		return -1;
+		return TLS13_IO_FAILURE;
 	if (rl->rbuf_content_type != SSL3_RT_ALERT)
-		return -1;
+		return TLS13_IO_FAILURE;
 
 	if (!CBS_get_u8(&rl->rbuf_cbs, &alert_level))
-		return -1; /* XXX - decode error alert. */
+		return TLS13_IO_FAILURE; /* XXX - decode error alert. */
 	if (!CBS_get_u8(&rl->rbuf_cbs, &alert_desc))
-		return -1; /* XXX - decode error alert. */
+		return TLS13_IO_FAILURE; /* XXX - decode error alert. */
 
 	if (CBS_len(&rl->rbuf_cbs) != 0)
-		return -1;
+		return TLS13_IO_FAILURE;
 
 	tls13_record_layer_rbuf_free(rl);
 
-	return rl->alert_cb(alert_level, alert_desc, rl->cb_arg);
+	rl->alert_cb(alert_level, alert_desc, rl->cb_arg);
+
+	return TLS13_IO_SUCCESS;
 }
 
 int
