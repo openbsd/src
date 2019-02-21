@@ -1,4 +1,4 @@
-/*	$OpenBSD: lrint_test.c,v 1.2 2019/02/21 17:36:41 bluhm Exp $	*/
+/*	$OpenBSD: lrint_test.c,v 1.3 2019/02/21 18:14:16 bluhm Exp $	*/
 /*-
  * Copyright (c) 2005-2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -37,10 +37,6 @@
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
-
-#ifdef	__i386__
-#include <ieeefp.h>
-#endif
 
 /*
  * XXX The volatile here is to avoid gcc's bogus constant folding and work
@@ -139,10 +135,6 @@ main(void)
 	printf("1..1\n");
 
 	run_tests();
-#ifdef	__i386__
-	fpsetprec(FP_PE);
-	run_tests();
-#endif
 
 	printf("ok 1 - lrint\n");
 
