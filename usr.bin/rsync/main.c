@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.30 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: main.c,v 1.31 2019/02/21 22:06:26 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -315,6 +315,7 @@ main(int argc, char *argv[])
 		{ "no-owner",	no_argument,	&opts.preserve_uids,	0 },
 		{ "perms",	no_argument,	&opts.preserve_perms,	1 },
 		{ "no-perms",	no_argument,	&opts.preserve_perms,	0 },
+		{ "numeric-ids", no_argument,	&opts.numeric_ids,	1 },
 		{ "recursive",	no_argument,	&opts.recursive,	1 },
 		{ "no-recursive", no_argument,	&opts.recursive,	0 },
 		{ "specials",	no_argument,	&opts.specials,		1 },

@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.21 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: extern.h,v 1.22 2019/02/21 22:06:26 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -116,6 +116,7 @@ struct	opts {
 	int		 del;			/* --delete */
 	int		 devices;		/* --devices */
 	int		 specials;		/* --specials */
+	int		 numeric_ids;		/* --numeric-ids */
 	char		*rsync_path;		/* --rsync-path */
 	char		*ssh_prog;		/* --rsh or -e */
 	char		*port;			/* --port */

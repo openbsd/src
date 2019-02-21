@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.12 2019/02/16 10:48:05 florian Exp $ */
+/*	$Id: fargs.c,v 1.13 2019/02/21 22:06:26 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 	argsz += 1;	/* dot separator */
 	argsz += 1;	/* sink file */
 	argsz += 5;	/* per-mode maximum */
-	argsz += 14;	/* shared args */
+	argsz += 15;	/* shared args */
 	argsz += 1;	/* NULL pointer */
 	argsz += f->sourcesz;
 
@@ -101,6 +101,8 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 
 	if (sess->opts->del)
 		args[i++] = "--delete";
+	if (sess->opts->numeric_ids)
+		args[i++] = "--numeric-ids";
 	if (sess->opts->preserve_gids)
 		args[i++] = "-g";
 	if (sess->opts->preserve_links)
