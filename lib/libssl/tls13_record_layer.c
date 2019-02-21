@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.2 2019/02/14 17:55:32 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.3 2019/02/21 17:02:02 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -176,7 +176,7 @@ tls13_record_layer_handshake_completed(struct tls13_record_layer *rl)
 	rl->handshake_completed = 1;
 }
 
-static int
+static ssize_t
 tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 {
 	uint8_t alert_level, alert_desc;
@@ -634,7 +634,7 @@ ssize_t
 tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
     uint8_t *buf, size_t n)
 {
-	int ret;
+	ssize_t ret;
 
 	/* XXX - loop here with record and byte limits. */
 	/* XXX - send alert... */
