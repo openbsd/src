@@ -1166,10 +1166,14 @@ playrec(char *dev, int mode, int bufsz, char *port)
 		return 0;
 	if (pledge("stdio audio", NULL) == -1)
 		err(1, "pledge");
+
 	n = sio_nfds(dev_sh);
 	if (dev_mh)
 		n += mio_nfds(dev_mh);
-	pfds = xmalloc(n * sizeof(struct pollfd));
+	pfds = reallocarray(NULL, n, sizeof(struct pollfd));
+	if (pfds == NULL)
+		err(1, "malloc");
+
 	for (s = slot_list; s != NULL; s = s->next)
 		slot_init(s);
 	if (dev_mh == NULL)
