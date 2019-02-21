@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.152 2017/06/22 02:44:37 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.153 2019/02/21 03:16:47 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -385,6 +385,7 @@ ixgbe_start(struct ifqueue *ifq)
 	struct ix_softc		*sc = ifp->if_softc;
 	struct tx_ring		*txr = sc->tx_rings;
 	struct mbuf  		*m_head;
+	unsigned int		 head, free, used;
 	int			 post = 0;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(ifq))
@@ -392,13 +393,21 @@ ixgbe_start(struct ifqueue *ifq)
 	if (!sc->link_up)
 		return;
 
-	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map, 0,
-	    txr->txdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	head = txr->next_avail_desc;
+	free = txr->next_to_clean;
+	if (free <= head)
+		free += sc->num_tx_desc;
+	free -= head;
+
+	membar_consumer();
+
+	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
+	    0, txr->txdma.dma_map->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
 
 	for (;;) {
 		/* Check that we have the minimal number of TX descriptors. */
-		if (txr->tx_avail <= IXGBE_TX_OP_THRESHOLD) {
+		if (free <= IXGBE_TX_OP_THRESHOLD) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -407,10 +416,13 @@ ixgbe_start(struct ifqueue *ifq)
 		if (m_head == NULL)
 			break;
 
-		if (ixgbe_encap(txr, m_head)) {
+		used = ixgbe_encap(txr, m_head);
+		if (used == 0) {
 			m_freem(m_head);
 			continue;
 		}
+
+		free -= used;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -426,7 +438,7 @@ ixgbe_start(struct ifqueue *ifq)
 
 	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    0, txr->txdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Advance the Transmit Descriptor Tail (Tdt), this tells the
@@ -579,8 +591,8 @@ ixgbe_watchdog(struct ifnet * ifp)
 		printf("%s: Queue(%d) tdh = %d, hw tdt = %d\n", ifp->if_xname, i,
 		    IXGBE_READ_REG(hw, IXGBE_TDH(i)),
 		    IXGBE_READ_REG(hw, IXGBE_TDT(i)));
-		printf("%s: TX(%d) desc avail = %d, Next TX to Clean = %d\n", ifp->if_xname,
-		    i, txr->tx_avail, txr->next_to_clean);
+		printf("%s: TX(%d) Next TX to Clean = %d\n", ifp->if_xname,
+		    i, txr->next_to_clean);
 	}
 	ifp->if_flags &= ~IFF_RUNNING;
 	sc->watchdog_events++;
@@ -1150,7 +1162,7 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 {
 	struct ix_softc *sc = txr->sc;
 	uint32_t	olinfo_status = 0, cmd_type_len;
-	int             i, j, error;
+	int             i, j, ntxc;
 	int		first, last = 0;
 	bus_dmamap_t	map;
 	struct ixgbe_tx_buf *txbuf;
@@ -1177,36 +1189,34 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	/*
 	 * Map the packet for DMA.
 	 */
-	error = bus_dmamap_load_mbuf(txr->txdma.dma_tag, map, m_head,
-	    BUS_DMA_NOWAIT);
-	switch (error) {
+	switch (bus_dmamap_load_mbuf(txr->txdma.dma_tag, map,
+	    m_head, BUS_DMA_NOWAIT)) {
 	case 0:
 		break;
 	case EFBIG:
 		if (m_defrag(m_head, M_NOWAIT) == 0 &&
-		    (error = bus_dmamap_load_mbuf(txr->txdma.dma_tag, map,
-		     m_head, BUS_DMA_NOWAIT)) == 0)
+		    bus_dmamap_load_mbuf(txr->txdma.dma_tag, map,
+		     m_head, BUS_DMA_NOWAIT) == 0)
 			break;
 		/* FALLTHROUGH */
 	default:
 		sc->no_tx_dma_setup++;
-		return (error);
+		return (0);
 	}
-
-	/* Make certain there are enough descriptors */
-	KASSERT(map->dm_nsegs <= txr->tx_avail - 2);
 
 	/*
 	 * Set the appropriate offload context
 	 * this will becomes the first descriptor.
 	 */
-	error = ixgbe_tx_ctx_setup(txr, m_head, &cmd_type_len, &olinfo_status);
-	if (error)
+	ntxc = ixgbe_tx_ctx_setup(txr, m_head, &cmd_type_len, &olinfo_status);
+	if (ntxc == -1)
 		goto xmit_fail;
 
-	i = txr->next_avail_desc;
+	i = txr->next_avail_desc + ntxc;
+	if (i >= sc->num_tx_desc)
+		i -= sc->num_tx_desc;
+
 	for (j = 0; j < map->dm_nsegs; j++) {
-		txbuf = &txr->tx_buffers[i];
 		txd = &txr->tx_base[i];
 
 		txd->read.buffer_addr = htole64(map->dm_segs[j].ds_addr);
@@ -1217,41 +1227,28 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 
 		if (++i == sc->num_tx_desc)
 			i = 0;
-
-		txbuf->m_head = NULL;
-		txbuf->eop_index = -1;
 	}
 
 	txd->read.cmd_type_len |=
 	    htole32(IXGBE_TXD_CMD_EOP | IXGBE_TXD_CMD_RS);
 
-	txbuf->m_head = m_head;
-	/*
-	 * Here we swap the map so the last descriptor,
-	 * which gets the completion interrupt has the
-	 * real map, and the first descriptor gets the
-	 * unused map from this descriptor.
-	 */
-	txr->tx_buffers[first].map = txbuf->map;
-	txbuf->map = map;
 	bus_dmamap_sync(txr->txdma.dma_tag, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
 	/* Set the index of the descriptor that will be marked done */
-	txbuf = &txr->tx_buffers[first];
+	txbuf->m_head = m_head;
 	txbuf->eop_index = last;
 
 	membar_producer();
 
-	atomic_sub_int(&txr->tx_avail, map->dm_nsegs);
 	txr->next_avail_desc = i;
 
 	++txr->tx_packets;
-	return (0);
+	return (ntxc + j);
 
 xmit_fail:
 	bus_dmamap_unload(txr->txdma.dma_tag, txbuf->map);
-	return (error);
+	return (0);
 }
 
 void
@@ -1977,9 +1974,6 @@ ixgbe_setup_transmit_ring(struct tx_ring *txr)
 	txr->next_avail_desc = 0;
 	txr->next_to_clean = 0;
 
-	/* Set number of descriptors available */
-	txr->tx_avail = sc->num_tx_desc;
-
 	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    0, txr->txdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -2155,7 +2149,6 @@ int
 ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
     uint32_t *cmd_type_len, uint32_t *olinfo_status)
 {
-	struct ix_softc *sc = txr->sc;
 	struct ixgbe_adv_tx_context_desc *TXD;
 	struct ixgbe_tx_buf *tx_buffer;
 #if NVLAN > 0
@@ -2215,12 +2208,12 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	 * helpful for QinQ too.
 	 */
 	if (mp->m_len < sizeof(struct ether_header))
-		return (1);
+		return (-1);
 #if NVLAN > 0
 	eh = mtod(mp, struct ether_vlan_header *);
 	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) {
 		if (mp->m_len < sizeof(struct ether_vlan_header))
-			return (1);
+			return (-1);
 		etype = ntohs(eh->evl_proto);
 		ehdrlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 	} else {
@@ -2239,7 +2232,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	switch (etype) {
 	case ETHERTYPE_IP:
 		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip))
-			return (1);
+			return (-1);
 		m = m_getptr(mp, ehdrlen, &ipoff);
 		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip));
 		ip = (struct ip *)(m->m_data + ipoff);
@@ -2250,7 +2243,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 #ifdef notyet
 	case ETHERTYPE_IPV6:
 		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip6))
-			return (1);
+			return (-1);
 		m = m_getptr(mp, ehdrlen, &ipoff);
 		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip6));
 		ip6 = (struct ip6 *)(m->m_data + ipoff);
@@ -2294,15 +2287,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	tx_buffer->m_head = NULL;
 	tx_buffer->eop_index = -1;
 
-	membar_producer();
-
-	/* We've consumed the first desc, adjust counters */
-	if (++ctxd == sc->num_tx_desc)
-		ctxd = 0;
-	txr->next_avail_desc = ctxd;
-	atomic_dec_int(&txr->tx_avail);
-
-	return (0);
+	return (1);
 }
 
 /**********************************************************************
@@ -2317,98 +2302,58 @@ ixgbe_txeof(struct tx_ring *txr)
 {
 	struct ix_softc			*sc = txr->sc;
 	struct ifnet			*ifp = &sc->arpcom.ac_if;
-	uint32_t			 first, last, done, processed;
-	uint32_t			 num_avail;
+	unsigned int			 head, tail, last;
 	struct ixgbe_tx_buf		*tx_buffer;
-	struct ixgbe_legacy_tx_desc *tx_desc, *eop_desc;
+	struct ixgbe_legacy_tx_desc	*tx_desc;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return FALSE;
 
-	if (txr->tx_avail == sc->num_tx_desc) {
-		txr->queue_status = IXGBE_QUEUE_IDLE;
-		return FALSE;
-	}
+	head = txr->next_avail_desc;
+	tail = txr->next_to_clean;
 
 	membar_consumer();
 
-	processed = 0;
-	first = txr->next_to_clean;
-	/* was the txt queue cleaned up in the meantime */
-	if (txr->tx_buffers == NULL)
-		return FALSE;
-	tx_buffer = &txr->tx_buffers[first];
-	/* For cleanup we just use legacy struct */
-	tx_desc = (struct ixgbe_legacy_tx_desc *)&txr->tx_base[first];
-	last = tx_buffer->eop_index;
-	if (last == -1)
-		return FALSE;
-	eop_desc = (struct ixgbe_legacy_tx_desc *)&txr->tx_base[last];
-
-	/*
-	 * Get the index of the first descriptor
-	 * BEYOND the EOP and call that 'done'.
-	 * I do this so the comparison in the
-	 * inner while loop below can be simple
-	 */
-	if (++last == sc->num_tx_desc) last = 0;
-	done = last;
+	if (head == tail)
+		return (FALSE);
 
 	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    0, txr->txdma.dma_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
-	while (eop_desc->upper.fields.status & IXGBE_TXD_STAT_DD) {
-		/* We clean the range of the packet */
-		while (first != done) {
-			tx_desc->upper.data = 0;
-			tx_desc->lower.data = 0;
-			tx_desc->buffer_addr = 0;
-			++processed;
-
-			if (tx_buffer->m_head) {
-				bus_dmamap_sync(txr->txdma.dma_tag,
-				    tx_buffer->map,
-				    0, tx_buffer->map->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-				bus_dmamap_unload(txr->txdma.dma_tag,
-				    tx_buffer->map);
-				m_freem(tx_buffer->m_head);
-				tx_buffer->m_head = NULL;
-			}
-			tx_buffer->eop_index = -1;
-
-			if (++first == sc->num_tx_desc)
-				first = 0;
-
-			tx_buffer = &txr->tx_buffers[first];
-			tx_desc = (struct ixgbe_legacy_tx_desc *)
-			    &txr->tx_base[first];
-		}
-		++txr->packets;
-		/* See if there is more work now */
+	for (;;) {
+		tx_buffer = &txr->tx_buffers[tail];
 		last = tx_buffer->eop_index;
-		if (last != -1) {
-			eop_desc =
-			    (struct ixgbe_legacy_tx_desc *)&txr->tx_base[last];
-			/* Get next done point */
-			if (++last == sc->num_tx_desc) last = 0;
-			done = last;
-		} else
+		tx_desc = (struct ixgbe_legacy_tx_desc *)&txr->tx_base[last];
+
+		if (!ISSET(tx_desc->upper.fields.status, IXGBE_TXD_STAT_DD))
 			break;
+
+		bus_dmamap_sync(txr->txdma.dma_tag, tx_buffer->map,
+		    0, tx_buffer->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(txr->txdma.dma_tag, tx_buffer->map);
+		m_freem(tx_buffer->m_head);
+
+		tx_buffer->m_head = NULL;
+		tx_buffer->eop_index = -1;
+
+		tail = last + 1;
+		if (tail == sc->num_tx_desc)
+			tail = 0;
+		if (head == tail) {
+			/* All clean, turn off the timer */
+			ifp->if_timer = 0;
+			break;
+		}
 	}
 
 	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map,
 	    0, txr->txdma.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD);
 
-	txr->next_to_clean = first;
+	membar_producer();
 
-	num_avail = atomic_add_int_nv(&txr->tx_avail, processed);
-
-	/* All clean, turn off the timer */
-	if (num_avail == sc->num_tx_desc)
-		ifp->if_timer = 0;
+	txr->next_to_clean = tail;
 
 	if (ifq_is_oactive(&ifp->if_snd))
 		ifq_restart(&ifp->if_snd);
