@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.5,v 1.11 2019/02/21 22:12:48 benno Exp $
+.\"	$OpenBSD: rsync.5,v 1.12 2019/02/21 22:15:09 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -285,6 +285,8 @@ in the file list.
 Identifier zero
 .Pq Qq root
 is never transmitted, as it would prematurely end the list.
+This list may be incomplete or empty: the server is not obligated to
+properly fill it in with all relevant users.
 .Pp
 .Bl -enum -compact
 .It
