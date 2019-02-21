@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.5,v 1.10 2019/02/18 21:55:27 benno Exp $
+.\"	$OpenBSD: rsync.5,v 1.11 2019/02/21 22:12:48 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2019 $
+.Dd $Mdocdate: February 21 2019 $
 .Dt RSYNC 5
 .Os
 .Sh NAME
@@ -251,6 +251,10 @@ The status byte may consist of the following bits and determines which
 of the optional fields are transmitted.
 .Pp
 .Bl -tag -compact -width Ds
+.It 0x01
+A top-level directory.
+(Only applies to directory files.)
+If specified, the matching local directory is for deletions.
 .It 0x02
 Do not send the file mode: it is a repeat of the last file's mode.
 .It 0x08
