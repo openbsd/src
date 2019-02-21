@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.24 2019/01/22 11:09:03 cheloha Exp $ */
+/*	$OpenBSD: strptime.c,v 1.25 2019/02/21 19:10:32 kn Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -254,8 +254,11 @@ literal:
 			century = i * 100;
 			break;
 
-		case 'd':	/* The day of month. */
-		case 'e':
+		case 'e':	/* The day of month. */
+			if (isspace(*bp))
+				bp++;
+			/* FALLTHROUGH */
+		case 'd':
 			_LEGAL_ALT(_ALT_O);
 			if (!(_conv_num(&bp, &tm->tm_mday, 1, 31)))
 				return (NULL);
