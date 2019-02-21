@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.232 2019/02/18 09:58:19 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.233 2019/02/21 11:17:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,6 +26,7 @@
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netmpls/mpls.h>
@@ -171,6 +172,9 @@ int		protect_lo(struct ktable *);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 u_int8_t	mask2prefixlen6(struct sockaddr_in6 *);
+uint64_t	ift2ifm(uint8_t);
+const char	*get_media_descr(uint64_t);
+const char	*get_linkstate(uint8_t, int);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *, u_int);
 void		if_announce(void *, u_int);
@@ -1011,6 +1015,30 @@ kr_nexthop_delete(u_int rtableid, struct bgpd_addr *addr,
 	knexthop_remove(kt, kn);
 }
 
+static struct ctl_show_interface *
+kr_show_interface(struct kif *kif)
+{
+	static struct ctl_show_interface iface;
+	uint64_t ifms_type;
+
+	bzero(&iface, sizeof(iface));
+	strlcpy(iface.ifname, kif->ifname, sizeof(iface.ifname));
+
+	snprintf(iface.linkstate, sizeof(iface.linkstate),
+	    "%s", get_linkstate(kif->if_type, kif->link_state));
+
+	if ((ifms_type = ift2ifm(kif->if_type)) != 0)
+		snprintf(iface.media, sizeof(iface.media),
+		    "%s", get_media_descr(ifms_type));
+
+	iface.baudrate = kif->baudrate;
+	iface.rdomain = kif->rdomain;
+	iface.nh_reachable = kif->nh_reachable;
+	iface.is_up = (kif->flags & IFF_UP) == IFF_UP;
+
+	return &iface;
+}
+
 void
 kr_show_route(struct imsg *imsg)
 {
@@ -1125,8 +1153,9 @@ kr_show_route(struct imsg *imsg)
 					break;
 				}
 				if ((kif = kif_find(ifindex)) != NULL)
-					memcpy(&snh.kif, &kif->k,
-					    sizeof(snh.kif));
+					memcpy(&snh.iface,
+					    kr_show_interface(&kif->k),
+					    sizeof(snh.iface));
 			}
 			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, imsg->hdr.pid,
 			    &snh, sizeof(snh));
@@ -1135,7 +1164,8 @@ kr_show_route(struct imsg *imsg)
 	case IMSG_CTL_SHOW_INTERFACE:
 		RB_FOREACH(kif, kif_tree, &kit)
 			send_imsg_session(IMSG_CTL_SHOW_INTERFACE,
-			    imsg->hdr.pid, &kif->k, sizeof(kif->k));
+			    imsg->hdr.pid, kr_show_interface(&kif->k),
+			    sizeof(struct ctl_show_interface));
 		break;
 	case IMSG_CTL_SHOW_FIB_TABLES:
 		for (i = 0; i < krt_size; i++) {
@@ -2627,6 +2657,54 @@ prefixlen2mask6(u_int8_t prefixlen)
 		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
 
 	return (&mask);
+}
+
+const struct if_status_description
+		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
+const struct ifmedia_description
+		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
+
+uint64_t
+ift2ifm(uint8_t if_type)
+{
+	switch (if_type) {
+	case IFT_ETHER:
+		return (IFM_ETHER);
+	case IFT_FDDI:
+		return (IFM_FDDI);
+	case IFT_CARP:
+		return (IFM_CARP);
+	case IFT_IEEE80211:
+		return (IFM_IEEE80211);
+	default:
+		return (0);
+	}
+}
+
+const char *
+get_media_descr(uint64_t media_type)
+{
+	const struct ifmedia_description	*p;
+
+	for (p = ifm_type_descriptions; p->ifmt_string != NULL; p++)
+		if (media_type == p->ifmt_word)
+			return (p->ifmt_string);
+
+	return ("unknown media");
+}
+
+const char *
+get_linkstate(uint8_t if_type, int link_state)
+{
+	const struct if_status_description *p;
+	static char buf[8];
+
+	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
+		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
+			return (p->ifs_string);
+	}
+	snprintf(buf, sizeof(buf), "[#%d]", link_state);
+	return (buf);
 }
 
 #define ROUNDUP(a) \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.45 2019/02/18 12:35:08 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.46 2019/02/21 11:17:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -18,9 +18,6 @@
  */
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <net/if.h>
-#include <net/if_media.h>
-#include <net/if_types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
@@ -888,68 +885,23 @@ sa2addr(struct sockaddr *sa, struct bgpd_addr *addr)
 	}
 }
 
-const struct if_status_description
-		if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
-const struct ifmedia_description
-		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
-
-uint64_t
-ift2ifm(uint8_t if_type)
-{
-	switch (if_type) {
-	case IFT_ETHER:
-		return (IFM_ETHER);
-	case IFT_FDDI:
-		return (IFM_FDDI);
-	case IFT_CARP:
-		return (IFM_CARP);
-	case IFT_IEEE80211:
-		return (IFM_IEEE80211);
-	default:
-		return (0);
-	}
-}
-
-const char *
-get_media_descr(uint64_t media_type)
-{
-	const struct ifmedia_description	*p;
-
-	for (p = ifm_type_descriptions; p->ifmt_string != NULL; p++)
-		if (media_type == p->ifmt_word)
-			return (p->ifmt_string);
-
-	return ("unknown media");
-}
-
-const char *
-get_linkstate(uint8_t if_type, int link_state)
-{
-	const struct if_status_description *p;
-	static char buf[8];
-
-	for (p = if_status_descriptions; p->ifs_string != NULL; p++) {
-		if (LINK_STATE_DESC_MATCH(p, if_type, link_state))
-			return (p->ifs_string);
-	}
-	snprintf(buf, sizeof(buf), "[#%d]", link_state);
-	return (buf);
-}
-
 const char *
 get_baudrate(unsigned long long baudrate, char *unit)
 {
 	static char bbuf[16];
+	const unsigned long long kilo = 1000;
+	const unsigned long long mega = 1000ULL * kilo;
+	const unsigned long long giga = 1000ULL * mega;
 
-	if (baudrate > IF_Gbps(1))
+	if (baudrate > giga)
 		snprintf(bbuf, sizeof(bbuf), "%llu G%s",
-		    baudrate / IF_Gbps(1), unit);
-	else if (baudrate > IF_Mbps(1))
+		    baudrate / giga, unit);
+	else if (baudrate > mega)
 		snprintf(bbuf, sizeof(bbuf), "%llu M%s",
-		    baudrate / IF_Mbps(1), unit);
-	else if (baudrate > IF_Kbps(1))
+		    baudrate / mega, unit);
+	else if (baudrate > kilo)
 		snprintf(bbuf, sizeof(bbuf), "%llu K%s",
-		    baudrate / IF_Kbps(1), unit);
+		    baudrate / kilo, unit);
 	else
 		snprintf(bbuf, sizeof(bbuf), "%llu %s",
 		    baudrate, unit);
