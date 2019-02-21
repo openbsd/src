@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.18 2019/02/21 22:09:47 benno Exp $ */
+/*	$Id: sender.c,v 1.19 2019/02/21 22:11:26 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -476,7 +476,7 @@ rsync_sender(struct sess *sess, int fdin,
 		 * left and hit it again if so (read priority).
 		 */
 
-		if (sess->mplex_reads && pfd[0].revents & POLLIN) {
+		if (sess->mplex_reads && (pfd[0].revents & POLLIN)) {
 			if (!io_read_flush(sess, fdin)) {
 				ERRX1(sess, "io_read_flush");
 				goto out;
