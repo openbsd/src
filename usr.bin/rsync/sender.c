@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.16 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: sender.c,v 1.17 2019/02/21 22:08:53 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -174,10 +174,11 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		 * to find another.
 		 */
 
-		LOG3(sess, "%s: flushed %jd KB total, %.2f%% uploaded",
-			fl[up->cur->idx].path,
-			(intmax_t)up->stat.total / 1024,
-			100.0 * up->stat.dirty / up->stat.total);
+		if (!sess->opts->dry_run)
+			LOG3(sess, "%s: flushed %jd KB total, %.2f%% "
+				"uploaded", fl[up->cur->idx].path,
+				(intmax_t)up->stat.total / 1024,
+				100.0 * up->stat.dirty / up->stat.total);
 		send_up_reset(up);
 		return 1;
 	case BLKSTAT_PHASE:
@@ -241,7 +242,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 			return 0;
 		}
 		io_lowbuffer_int(sess, *wb, &pos, *wbsz, up->cur->idx);
-		up->stat.curst = BLKSTAT_NEXT;
+		up->stat.curst = BLKSTAT_DONE;
 	} else {
 		assert(up->stat.fd != -1);
 
