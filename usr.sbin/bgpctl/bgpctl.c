@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.231 2019/02/21 11:18:27 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.232 2019/02/21 12:12:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -2485,11 +2485,11 @@ show_mrt_update(u_char *p, u_int16_t len)
 	printf("\n");
 	/* alen attributes here */
 	while (alen > 3) {
-		u_int8_t flags, type;
+		u_int8_t flags;
 		u_int16_t attrlen;
 
 		flags = p[0];
-		type = p[1];
+		/* type = p[1]; */
 
 		/* get the attribute length */
 		if (flags & ATTR_EXTLEN) {
