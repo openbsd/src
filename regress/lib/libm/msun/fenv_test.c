@@ -1,4 +1,4 @@
-/* $OpenBSD: fenv_test.c,v 1.1.1.1 2019/02/21 16:14:03 bluhm Exp $ */
+/*	$OpenBSD: fenv_test.c,v 1.2 2019/02/21 17:36:41 bluhm Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
  * All rights reserved.

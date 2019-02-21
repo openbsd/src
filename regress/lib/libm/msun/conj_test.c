@@ -1,4 +1,4 @@
-/* $OpenBSD: conj_test.c,v 1.1.1.1 2019/02/21 16:14:03 bluhm Exp $ */
+/*	$OpenBSD: conj_test.c,v 1.2 2019/02/21 17:36:41 bluhm Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -41,6 +41,23 @@
 #include "test-utils.h"
 
 #pragma	STDC CX_LIMITED_RANGE	OFF
+
+/*
+ * Test that a function returns the correct value and sets the
+ * exception flags correctly. The exceptmask specifies which
+ * exceptions we should check. We need to be lenient for several
+ * reasons, but mainly because on some architectures it's impossible
+ * to raise FE_OVERFLOW without raising FE_INEXACT. In some cases,
+ * whether cexp() raises an invalid exception is unspecified.
+ *
+ * These are macros instead of functions so that assert provides more
+ * meaningful error messages.
+ */
+#define	test(func, z, result, exceptmask, excepts)		do {	\
+	assert(feclearexcept(FE_ALL_EXCEPT) == 0);			\
+	assert(cfpequal((func)(z), (result)));				\
+	assert(((void)(func), fetestexcept(exceptmask) == (excepts)));	\
+} while (0)
 
 /* Make sure gcc doesn't use builtin versions of these or honor __pure2. */
 static float complex (*libconjf)(float complex) = conjf;
@@ -93,47 +110,17 @@ main(void)
 		assert(fpequal(libcimag(in), __imag__ in));
 		assert(fpequal(libcimagl(in), __imag__ in));
 
-		feclearexcept(FE_ALL_EXCEPT);
-		if (!cfpequal(libconjf(in), expected)) {
-			printf("not ok %d\t# conjf(%#.2g + %#.2gI): "
-			       "wrong value\n",
-			       3 * i + 1, creal(in), cimag(in));
-		} else if (fetestexcept(FE_ALL_EXCEPT)) {
-			printf("not ok %d\t# conjf(%#.2g + %#.2gI): "
-			       "threw an exception\n",
-			       3 * i + 1, creal(in), cimag(in));
-		} else {
-			printf("ok %d\t\t# conjf(%#.2g + %#.2gI)\n",
-			       3 * i + 1, creal(in), cimag(in));
-		}
+		test(libconjf, in, expected, FE_ALL_EXCEPT, 0);
+		printf("ok %d\t\t# conjf(%#.2g + %#.2gI)\n",
+		    3 * i + 1, creal(in), cimag(in));
 
-		feclearexcept(FE_ALL_EXCEPT);
-		if (!cfpequal(libconj(in), expected)) {
-			printf("not ok %d\t# conj(%#.2g + %#.2gI): "
-			       "wrong value\n",
-			       3 * i + 2, creal(in), cimag(in));
-		} else if (fetestexcept(FE_ALL_EXCEPT)) {
-			printf("not ok %d\t# conj(%#.2g + %#.2gI): "
-			       "threw an exception\n",
-			       3 * i + 2, creal(in), cimag(in));
-		} else {
-			printf("ok %d\t\t# conj(%#.2g + %#.2gI)\n",
-			       3 * i + 2, creal(in), cimag(in));
-		}
+		test(libconj, in, expected, FE_ALL_EXCEPT, 0);
+		printf("ok %d\t\t# conj(%#.2g + %#.2gI)\n",
+		    3 * i + 2, creal(in), cimag(in));
 
-		feclearexcept(FE_ALL_EXCEPT);
-		if (!cfpequal(libconjl(in), expected)) {
-			printf("not ok %d\t# conjl(%#.2g + %#.2gI): "
-			       "wrong value\n",
-			       3 * i + 3, creal(in), cimag(in));
-		} else if (fetestexcept(FE_ALL_EXCEPT)) {
-			printf("not ok %d\t# conjl(%#.2g + %#.2gI): "
-			       "threw an exception\n",
-			       3 * i + 3, creal(in), cimag(in));
-		} else {
-			printf("ok %d\t\t# conjl(%#.2g + %#.2gI)\n",
-			       3 * i + 3, creal(in), cimag(in));
-		}
+		test(libconjl, in, expected, FE_ALL_EXCEPT, 0);
+		printf("ok %d\t\t# conjl(%#.2g + %#.2gI)\n",
+		    3 * i + 3, creal(in), cimag(in));
 	}
 
 	return (0);
