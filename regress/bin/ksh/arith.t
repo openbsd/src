@@ -121,3 +121,66 @@ expected-stderr-pattern:
 	/.*:.* 0xg.*bad number/
 
 ---
+
+name: arith-recurse-1
+description:
+	Check that arithmetic evaluation substitutes integer values
+	of variables recursively.
+stdin:
+	vb=va
+	va=42
+	echo $((vb))
+expected-stdout:
+	42
+
+---
+
+name: arith-recurse-2
+description:
+	Check that variables can be used as array indices.
+stdin:
+	vb='aa[va]'
+	set -A aa 40 41 42 43
+	va=2
+	echo ${aa[va]}
+	echo ${aa[$va]}
+	echo $((aa[va]))
+	echo $((aa[$va]))
+	echo $((vb))
+expected-stdout:
+	42
+	42
+	42
+	42
+	42
+
+---
+
+name: arith-subst-1
+description:
+	Check that arithmetic evaluation does not apply parameter
+	substitution to the values of variables.
+stdin:
+	va=17
+	vb='$va'
+	echo $((vb))
+expected-exit: e != 0
+expected-stderr-pattern:
+	/.*:.*\$va.*unexpected.*\$/
+
+---
+
+name: arith-subst-2
+description:
+	Check that arithmetic evaluation does not apply parameter
+	substitution to arry indices inside the values of variables.
+stdin:
+	set -A aa 40 41 42 43
+	va=2
+	vb='aa[$va]'
+	echo $((vb))
+expected-exit: e != 0
+expected-stderr-pattern:
+	/.*:.*\$va.*unexpected.*\$/
+
+---
