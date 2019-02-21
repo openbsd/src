@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.230 2019/02/19 09:15:21 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.231 2019/02/21 11:18:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1080,22 +1080,12 @@ show_nexthop_msg(struct imsg *imsg)
 			printf("unknown address family\n");
 			return (0);
 		}
-		if (p->kif.ifname[0]) {
-			char *s1;
-			if (p->kif.baudrate) {
-				if (asprintf(&s1, ", %s",
-				    get_baudrate(p->kif.baudrate,
-				    "bps")) == -1)
-					err(1, NULL);
-			} else if (asprintf(&s1, ", %s", get_linkstate(
-			    p->kif.if_type, p->kif.link_state)) == -1)
-					err(1, NULL);
-			if (asprintf(&s, "%s (%s%s)", p->kif.ifname,
-			    p->kif.flags & IFF_UP ? "UP" : "DOWN", s1) == -1)
-				err(1, NULL);
-			printf("%-15s", s);
-			free(s1);
-			free(s);
+		if (p->iface.ifname[0]) {
+			printf("%s (%s, %s)", p->iface.ifname,
+			    p->iface.is_up ? "UP" : "DOWN",
+			    p->iface.baudrate ?
+			    get_baudrate(p->iface.baudrate, "bps") :
+			    p->iface.linkstate);
 		}
 		printf("\n");
 		break;
@@ -1120,24 +1110,22 @@ show_interface_head(void)
 int
 show_interface_msg(struct imsg *imsg)
 {
-	struct kif	*k;
-	uint64_t	 ifms_type;
+	struct ctl_show_interface	*iface;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_INTERFACE:
-		k = imsg->data;
-		printf("%-15s", k->ifname);
-		printf("%-9u", k->rdomain);
-		printf("%-9s", k->nh_reachable ? "ok" : "invalid");
-		printf("%-7s", k->flags & IFF_UP ? "UP" : "");
+		iface = imsg->data;
+		printf("%-15s", iface->ifname);
+		printf("%-9u", iface->rdomain);
+		printf("%-9s", iface->nh_reachable ? "ok" : "invalid");
+		printf("%-7s", iface->is_up ? "UP" : "");
 
-		if ((ifms_type = ift2ifm(k->if_type)) != 0)
-			printf("%s, ", get_media_descr(ifms_type));
+		if (iface->media[0])
+			printf("%s, ", iface->media);
+		printf("%s", iface->linkstate);
 
-		printf("%s", get_linkstate(k->if_type, k->link_state));
-
-		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0)
-			printf(", %s", get_baudrate(k->baudrate, "Bit/s"));
+		if (iface->baudrate > 0)
+			printf(", %s", get_baudrate(iface->baudrate, "Bit/s"));
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
