@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.5 2018/11/11 00:15:04 bluhm Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2019/02/21 23:06:33 bluhm Exp $
 
 .PATH:			${.CURDIR}/..
 
@@ -37,7 +37,9 @@ run-self-client-server: client server 127.0.0.1.crt
 
 CLEANFILES +=		127.0.0.1.{crt,key} \
 			ca.{crt,key,srl} fake-ca.{crt,key} \
-			{client,server}.{req,crt,key}
+			{client,server}.{req,crt,key} \
+			{dsa,ec,gost,rsa}.{key,req,crt} \
+			dh.param
 
 127.0.0.1.crt:
 	openssl req -batch -new \
@@ -55,5 +57,35 @@ client.req server.req:
 	    -nodes -newkey rsa -keyout ${@:R}.key -out $@
 
 client.crt server.crt: ca.crt ${@:R}.req
+	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt \
+	    -req -in ${@:R}.req -out $@
+
+dh.param:
+	openssl dhparam -out $@ 1024
+
+dsa.key:
+	openssl dsaparam -genkey -out $@ 2048
+
+ec.key:
+	openssl ecparam -genkey -name secp256r1 -out $@
+
+gost.key:
+	openssl genpkey -algorithm gost2001 \
+	    -pkeyopt paramset:A -pkeyopt dgst:md_gost94 -out $@
+
+rsa.key:
+	openssl genrsa -out $@ 2048
+
+dsa.req ec.req rsa.req: ${@:R}.key
+	openssl req -batch -new \
+	    -subj /L=OpenBSD/O=tls-regress/OU=${@:R}/CN=localhost/ \
+	    -nodes -key ${@:R}.key -out $@
+
+gost.req: ${@:R}.key
+	openssl req -batch -new -md_gost94 \
+	    -subj /L=OpenBSD/O=tls-regress/OU=${@:R}/CN=localhost/ \
+	    -nodes -key ${@:R}.key -out $@
+
+dsa.crt ec.crt gost.crt rsa.crt: ca.crt ${@:R}.req
 	openssl x509 -CAcreateserial -CAkey ca.key -CA ca.crt \
 	    -req -in ${@:R}.req -out $@

@@ -17,4 +17,6 @@ libtls.  Test TLS session reuse multiple times with different library
 combinations.  The cert subdir is testing all combinations of
 certificate validation.  Having the three libraries, client and
 server certificates, missing or invalid CA or certificates, and
-enforcing peer certificate results in 1944 test cases.
+enforcing peer certificate results in 1944 test cases.  The cipher
+test establishes connections between implementations for each
+supported cipher.

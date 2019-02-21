@@ -1,6 +1,6 @@
-/*	$OpenBSD: server.c,v 1.6 2019/02/11 12:22:44 bluhm Exp $	*/
+/*	$OpenBSD: server.c,v 1.7 2019/02/21 23:06:33 bluhm Exp $	*/
 /*
- * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
+ * Copyright (c) 2018-2019 Alexander Bluhm <bluhm@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -35,8 +35,8 @@ void __dead usage(void);
 void __dead
 usage(void)
 {
-	fprintf(stderr,
-	    "usage: server [-svv] [-C CA] [-c crt -k key] [host port]");
+	fprintf(stderr, "usage: server [-Lsvv] [-C CA] [-c crt -k key] "
+	    "[-l cipers] [-p dhparam] [host port]\n");
 	exit(2);
 }
 
@@ -48,12 +48,12 @@ main(int argc, char *argv[])
 	SSL *ssl;
 	BIO *abio, *cbio;
 	SSL_SESSION *session;
-	int ch, error, sessionreuse = 0, verify = 0;
-	char buf[256];
-	char *ca = NULL, *crt = NULL, *key = NULL;
+	int ch, error, listciphers = 0, sessionreuse = 0, verify = 0;
+	char buf[256], *dhparam = NULL;
+	char *ca = NULL, *crt = NULL, *key = NULL, *ciphers = NULL;
 	char *host_port, *host = "127.0.0.1", *port = "0";
 
-	while ((ch = getopt(argc, argv, "C:c:k:sv")) != -1) {
+	while ((ch = getopt(argc, argv, "C:c:k:Ll:p:sv")) != -1) {
 		switch (ch) {
 		case 'C':
 			ca = optarg;
@@ -63,6 +63,15 @@ main(int argc, char *argv[])
 			break;
 		case 'k':
 			key = optarg;
+			break;
+		case 'L':
+			listciphers = 1;
+			break;
+		case 'l':
+			ciphers = optarg;
+			break;
+		case 'p':
+			dhparam = optarg;
 			break;
 		case 's':
 			/* multiple reueses are possible */
@@ -81,7 +90,7 @@ main(int argc, char *argv[])
 	if (argc == 2) {
 		host = argv[0];
 		port = argv[1];
-	} else if (argc != 0) {
+	} else if (argc != 0 && !listciphers) {
 		usage();
 	}
 	if (asprintf(&host_port, strchr(host, ':') ? "[%s]:%s" : "%s:%s",
@@ -111,6 +120,27 @@ main(int argc, char *argv[])
 	ctx = SSL_CTX_new(method);
 	if (ctx == NULL)
 		err_ssl(1, "SSL_CTX_new");
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+	/* needed to use DHE cipher with libressl */
+	if (SSL_CTX_set_dh_auto(ctx, 1) <= 0)
+		err_ssl(1, "SSL_CTX_set_dh_auto");
+#endif
+	/* needed to use ADH, EDH, DHE cipher with openssl */
+	if (dhparam != NULL) {
+		DH *dh;
+		FILE *file;
+
+		file = fopen(dhparam, "r");
+		if (file == NULL)
+			err(1, "fopen %s", dhparam);
+		dh = PEM_read_DHparams(file, NULL, NULL, NULL);
+		if (dh == NULL)
+			err_ssl(1, "PEM_read_DHparams");
+		if (SSL_CTX_set_tmp_dh(ctx, dh) <= 0)
+			err_ssl(1, "SSL_CTX_set_tmp_dh");
+		fclose(file);
+	}
 
 	/* needed when linking with OpenSSL 1.0.2p */
 	if (SSL_CTX_set_ecdh_auto(ctx, 1) <= 0)
@@ -151,6 +181,19 @@ main(int argc, char *argv[])
 			err_ssl(1, "SSL_CTX_set_session_id_context");
 	}
 
+	if (ciphers) {
+		if (SSL_CTX_set_cipher_list(ctx, ciphers) <= 0)
+			err_ssl(1, "SSL_CTX_set_cipher_list");
+	}
+
+	if (listciphers) {
+		ssl = SSL_new(ctx);
+		if (ssl == NULL)
+			err_ssl(1, "SSL_new");
+		print_ciphers(SSL_get_ciphers(ssl));
+		return 0;
+	}
+
 	/* setup bio for socket operations */
 	abio = BIO_new_accept(host_port);
 	if (abio == NULL)
@@ -182,7 +225,6 @@ main(int argc, char *argv[])
 		ssl = SSL_new(ctx);
 		if (ssl == NULL)
 			err_ssl(1, "SSL_new");
-		print_ciphers(SSL_get_ciphers(ssl));
 		SSL_set_bio(ssl, cbio, cbio);
 		if ((error = SSL_accept(ssl)) <= 0)
 			err_ssl(1, "SSL_accept %d", error);
