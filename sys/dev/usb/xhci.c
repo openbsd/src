@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.90 2019/02/01 13:24:15 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.91 2019/02/21 22:44:44 patrick Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -91,7 +91,8 @@ int	xhci_ring_alloc(struct xhci_softc *, struct xhci_ring *, size_t,
 void	xhci_ring_free(struct xhci_softc *, struct xhci_ring *);
 void	xhci_ring_reset(struct xhci_softc *, struct xhci_ring *);
 struct	xhci_trb *xhci_ring_consume(struct xhci_softc *, struct xhci_ring *);
-struct	xhci_trb *xhci_ring_produce(struct xhci_softc *, struct xhci_ring *);
+struct	xhci_trb *xhci_ring_produce(struct xhci_softc *, struct xhci_ring *,
+	    int);
 
 struct	xhci_trb *xhci_xfer_get_trb(struct xhci_softc *, struct usbd_xfer*,
 	    uint8_t *, int);
@@ -1584,7 +1585,7 @@ xhci_ring_consume(struct xhci_softc *sc, struct xhci_ring *ring)
 }
 
 struct xhci_trb*
-xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring)
+xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring, int last)
 {
 	struct xhci_trb *trb = &ring->trbs[ring->index];
 
@@ -1605,6 +1606,9 @@ xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring)
 		    BUS_DMASYNC_POSTWRITE);
 
 		lnk->trb_flags ^= htole32(XHCI_TRB_CYCLE);
+		lnk->trb_flags &= htole32(~XHCI_TRB_CHAIN);
+		if (!last)
+			lnk->trb_flags |= htole32(XHCI_TRB_CHAIN);
 
 		bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, lnk),
 		    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
@@ -1633,7 +1637,7 @@ xhci_xfer_get_trb(struct xhci_softc *sc, struct usbd_xfer *xfer,
 	xx->ntrb += 1;
 
 	*togglep = xp->ring.toggle;
-	return (xhci_ring_produce(sc, &xp->ring));
+	return (xhci_ring_produce(sc, &xp->ring, last));
 }
 
 int
@@ -1646,7 +1650,7 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 
 	trb0->trb_flags |= htole32(sc->sc_cmd_ring.toggle);
 
-	trb = xhci_ring_produce(sc, &sc->sc_cmd_ring);
+	trb = xhci_ring_produce(sc, &sc->sc_cmd_ring, 1);
 	if (trb == NULL)
 		return (EAGAIN);
 	trb->trb_paddr = trb0->trb_paddr;
