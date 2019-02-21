@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.17 2019/02/21 22:08:53 benno Exp $ */
+/*	$Id: sender.c,v 1.18 2019/02/21 22:09:47 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -471,30 +471,50 @@ rsync_sender(struct sess *sess, int fdin,
 		/*
 		 * If we have a request coming down off the wire, pull
 		 * it in as quickly as possible into our buffer.
-		 * This unclogs the socket buffers so the data can flow.
-		 * FIXME: if we're multiplexing, we might stall here if
-		 * there's only a log message and no actual data.
-		 * This can be fixed by doing a conditional test.
+		 * Start by seeing if we have a log message.
+		 * If we do, pop it off, then see if we have anything
+		 * left and hit it again if so (read priority).
 		 */
 
-		if (pfd[0].revents & POLLIN)
-			for (;;) {
-				if (!io_read_int(sess, fdin, &idx)) {
-					ERRX1(sess, "io_read_int");
-					goto out;
-				}
-				if (!send_dl_enqueue(sess,
-				    &sdlq, idx, fl, flsz, fdin)) {
-					ERRX1(sess, "send_dl_enqueue");
-					goto out;
-				}
+		if (sess->mplex_reads && pfd[0].revents & POLLIN) {
+			if (!io_read_flush(sess, fdin)) {
+				ERRX1(sess, "io_read_flush");
+				goto out;
+			} else if (sess->mplex_read_remain == 0) {
 				c = io_read_check(sess, fdin);
 				if (c < 0) {
 					ERRX1(sess, "io_read_check");
 					goto out;
-				} else if (c == 0)
-					break;
+				} else if (c > 0)
+					continue;
+				pfd[0].revents &= ~POLLIN;
 			}
+		}
+
+		/*
+		 * Now that we've handled the log messages, we're left
+		 * here if we have any actual data coming down.
+		 * Enqueue message requests, then loop again if we see
+		 * more data (read priority).
+		 */
+
+		if (pfd[0].revents & POLLIN) {
+			if (!io_read_int(sess, fdin, &idx)) {
+				ERRX1(sess, "io_read_int");
+				goto out;
+			}
+			if (!send_dl_enqueue(sess,
+			    &sdlq, idx, fl, flsz, fdin)) {
+				ERRX1(sess, "send_dl_enqueue");
+				goto out;
+			}
+			c = io_read_check(sess, fdin);
+			if (c < 0) {
+				ERRX1(sess, "io_read_check");
+				goto out;
+			} else if (c > 0)
+				continue;
+		}
 
 		/*
 		 * One of our local files has been opened in response
