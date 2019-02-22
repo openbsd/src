@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv_test.c,v 1.2 2019/02/21 17:36:41 bluhm Exp $	*/
+/*	$OpenBSD: fenv_test.c,v 1.3 2019/02/22 14:22:51 bluhm Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -137,11 +137,13 @@ raiseexcept(int excepts)
 static int
 getround(void)
 {
-	volatile double d;
+	volatile double d, e;
 
 	/*
 	 * This test works just as well with 0.0 - 0.0, except on ia64
 	 * where 0.0 - 0.0 gives the wrong sign when rounding downwards.
+	 * For ia32 use a volatile double to force 64 bit rounding.
+	 * Otherwise the i387 would use its internal 80 bit stack.
 	 */
 	d = 1.0;
 	d -= 1.0;
@@ -149,9 +151,11 @@ getround(void)
 		return (FE_DOWNWARD);
 
 	d = 1.0;
-	if (d + (DBL_EPSILON * 3.0 / 4.0) == 1.0)
+	e = d + (DBL_EPSILON * 3.0 / 4.0);
+	if (e == 1.0)
 		return (FE_TOWARDZERO);
-	if (d + (DBL_EPSILON * 1.0 / 4.0) > 1.0)
+	e = d + (DBL_EPSILON * 1.0 / 4.0);
+	if (e > 1.0)
 		return (FE_UPWARD);
 
 	return (FE_TONEAREST);
