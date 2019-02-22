@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.18 2018/12/31 00:07:22 jsg Exp $
+.\" $OpenBSD: clang-local.1,v 1.19 2019/02/22 15:28:43 mortimer Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: December 31 2018 $
+.Dd $Mdocdate: February 22 2019 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -107,8 +107,10 @@ these functions.
 .It
 .Nm clang
 includes a security pass that exchanges some ROP-friendly instructions
-for safe alternatives on i386 and amd64 (X86FixupGadgets pass).
-There is no option to disable this pass.
+for safe alternatives on i386 and amd64.
+This can be disabled with the
+.Fl fno-fixup-gadgets
+option.
 .It
 .Nm clang
 includes the retguard security feature on amd64 and arm64.

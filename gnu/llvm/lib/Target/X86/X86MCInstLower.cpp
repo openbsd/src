@@ -1841,6 +1841,17 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
   }
 
+  case X86::JMP_TRAP: {
+    MCSymbol *RGSuccSym = OutContext.createTempSymbol();
+    const MCExpr *RGSuccExpr = MCSymbolRefExpr::create(RGSuccSym, OutContext);
+    EmitAndCountInstruction(MCInstBuilder(X86::JMP_1).addExpr(RGSuccExpr));
+    EmitAndCountInstruction(MCInstBuilder(X86::INT3));
+    EmitAndCountInstruction(MCInstBuilder(X86::INT3));
+    OutStreamer->EmitValueToAlignment(8, 0xCC, 1);
+    OutStreamer->EmitLabel(RGSuccSym);
+    return;
+  }
+
   case X86::SEH_PushReg:
   case X86::SEH_SaveReg:
   case X86::SEH_SaveXMM:

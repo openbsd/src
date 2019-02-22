@@ -4123,6 +4123,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(Args.MakeArgString(Twine("-ret-protector")));
   }
 
+  // -fixup-gadgets
+  if (Arg *A = Args.getLastArg(options::OPT_fno_fixup_gadgets,
+                               options::OPT_ffixup_gadgets)) {
+    CmdArgs.push_back(Args.MakeArgString(Twine("-mllvm")));
+    if (A->getOption().matches(options::OPT_fno_fixup_gadgets))
+      CmdArgs.push_back(Args.MakeArgString(Twine("-x86-fixup-gadgets=false")));
+    else if (A->getOption().matches(options::OPT_ffixup_gadgets))
+      CmdArgs.push_back(Args.MakeArgString(Twine("-x86-fixup-gadgets=true")));
+  }
+
   // Translate -mstackrealign
   if (Args.hasFlag(options::OPT_mstackrealign, options::OPT_mno_stackrealign,
                    false))

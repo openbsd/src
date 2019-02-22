@@ -281,6 +281,10 @@ let isCodeGenOnly = 1, Uses = [EFLAGS] in {
 def RETGUARD_JMP_TRAP: I<0, Pseudo, (outs), (ins), "", []>;
 }
 
+let isCodeGenOnly = 1 in {
+def JMP_TRAP: I<0, Pseudo, (outs), (ins), "", []>;
+}
+
 //===----------------------------------------------------------------------===//
 // Alias Instructions
 //===----------------------------------------------------------------------===//

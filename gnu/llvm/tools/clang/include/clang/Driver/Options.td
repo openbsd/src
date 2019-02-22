@@ -1599,6 +1599,10 @@ def fno_ret_protector : Flag<["-"], "fno-ret-protector">, Group<f_Group>,
   HelpText<"Disable return protector">;
 def fret_protector : Flag<["-"], "fret-protector">, Group<f_Group>,
   HelpText<"Enable return protector">;
+def fno_fixup_gadgets : Flag<["-"], "fno-fixup-gadgets">, Group<f_Group>,
+  HelpText<"Disable FixupGadgets pass (x86 only)">;
+def ffixup_gadgets : Flag<["-"], "ffixup-gadgets">, Group<f_Group>,
+  HelpText<"Replace ROP friendly instructions with safe alternatives (x86 only)">;
 def fstandalone_debug : Flag<["-"], "fstandalone-debug">, Group<f_Group>, Flags<[CoreOption]>,
   HelpText<"Emit full debug info for all types used by the program">;
 def fno_standalone_debug : Flag<["-"], "fno-standalone-debug">, Group<f_Group>, Flags<[CoreOption]>,
