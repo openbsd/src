@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tpd.c,v 1.20 2017/10/06 07:46:44 yasuoka Exp $ */
+/*	$OpenBSD: l2tpd.c,v 1.21 2019/02/22 07:04:20 jmc Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file L2TP(Layer Two Tunneling Protocol "L2TP") / RFC2661 */
-/* $Id: l2tpd.c,v 1.20 2017/10/06 07:46:44 yasuoka Exp $ */
+/* $Id: l2tpd.c,v 1.21 2019/02/22 07:04:20 jmc Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -233,7 +233,7 @@ l2tpd_assign_call(l2tpd *_this, l2tp_call *call)
 		L2TPD_ASSERT(shuffle_cnt == 0);
 		if (shuffle_cnt++ > 0) {
 			l2tpd_log(_this, LOG_ERR,
-			    "unexpected errror in %s(): free_session_id_list "
+			    "unexpected error in %s(): free_session_id_list "
 			    "full", __func__);
 			slist_add(&_this->free_session_id_list,
 			    (void *)L2TP_SESSION_ID_SHUFFLE_MARK);
