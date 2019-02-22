@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.22 2019/02/21 22:06:26 benno Exp $ */
+/*	$Id: extern.h,v 1.23 2019/02/22 09:54:36 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -229,8 +229,6 @@ struct	upload;
 #define ERRX(_sess, _fmt, ...) \
 	rsync_errx((_sess), __FILE__, __LINE__, (_fmt), ##__VA_ARGS__)
 
-__BEGIN_DECLS
-
 void		  rsync_log(struct sess *,
 			const char *, size_t, int, const char *, ...)
 			__attribute__((format(printf, 5, 6)));
@@ -366,7 +364,5 @@ void		  idents_free(struct ident *, size_t);
 int		  idents_recv(struct sess *, int, struct ident **, size_t *);
 void		  idents_remap(struct sess *, int, struct ident *, size_t);
 int		  idents_send(struct sess *, int, const struct ident *, size_t);
-
-__END_DECLS
 
 #endif /*!EXTERN_H*/
