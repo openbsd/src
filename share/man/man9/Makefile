@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.291 2018/11/12 15:13:12 visa Exp $
+#	$OpenBSD: Makefile,v 1.292 2019/02/23 04:54:25 dlg Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -25,8 +25,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	malloc.9 membar_sync.9 memcmp.9 mbuf.9 mbuf_tags.9 md5.9 mi_switch.9 \
 	microtime.9 ml_init.9 mq_init.9 mutex.9 \
 	namei.9 \
-	panic.9 pci_conf_read.9 pci_intr_map.9 physio.9 pmap.9 \
-	pool.9 pool_cache_init.9 ppsratecheck.9 printf.9 psignal.9 \
+	panic.9 pci_conf_read.9 pci_mapreg_map.9 pci_intr_map.9 physio.9 \
+	pmap.9 pool.9 pool_cache_init.9 ppsratecheck.9 printf.9 psignal.9 \
 	RBT_INIT.9 \
 	radio.9 arc4random.9 rasops.9 ratecheck.9 refcnt_init.9 resettodr.9 \
 	rssadapt.9 route.9 rt_ifa_add.9 rt_timer_add.9 rtalloc.9 rtable_add.9 \
