@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.160 2019/02/23 13:24:19 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.161 2019/02/23 13:37:34 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -75,7 +75,7 @@ void		 set_mtu(char *, int, uint16_t);
  * delete_addresses() removes all inet addresses on the named interface, except
  * for newaddr/newnetmask.
  *
- * If newaddr/newmask is already present, return 0, else 1.
+ * If newaddr/newmask is already present, return 1, else 0.
  */
 int
 delete_addresses(char *name, int ioctlfd, struct in_addr newaddr,
