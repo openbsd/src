@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mandoc.1,v 1.160 2019/01/01 08:18:06 schwarze Exp $
+.\"	$OpenBSD: mandoc.1,v 1.161 2019/02/23 18:52:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2012, 2014-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2019 $
+.Dd $Mdocdate: February 23 2019 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -267,6 +267,17 @@ instead.
 The special characters documented in
 .Xr mandoc_char 7
 are rendered best-effort in an ASCII equivalent.
+In particular, opening and closing
+.Sq single quotes
+are represented as characters number 0x60 and 0x27, respectively,
+which agrees with all ASCII standards from 1965 to the latest
+revision (2012) and which matches the traditional way in which
+.Xr roff 7
+formatters represent single quotes in ASCII output.
+This correct ASCII rendering may look strange with modern
+Unicode-compatible fonts because contrary to ASCII, Unicode uses
+the code point U+0060 for the grave accent only, never for an opening
+quote.
 .Pp
 The following
 .Fl O
