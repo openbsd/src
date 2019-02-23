@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.159 2019/02/12 16:50:44 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.160 2019/02/23 13:24:19 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -51,7 +51,7 @@
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
-int		 find_address(char *, struct in_addr, struct in_addr);
+int		 delete_addresses(char *, int, struct in_addr, struct in_addr);
 void		 set_address(char *, int, struct in_addr, struct in_addr);
 void		 delete_address(char *, int, struct in_addr);
 
@@ -72,20 +72,23 @@ char		*set_resolv_conf(char *, uint8_t *, unsigned int,
 void		 set_mtu(char *, int, uint16_t);
 
 /*
- * find_address() attempts to find newaddr/newmask in the addresses configured
- * on the named interface.
+ * delete_addresses() removes all inet addresses on the named interface, except
+ * for newaddr/newnetmask.
  *
- * If the new addr/mask is already present, return 0, else 1.
+ * If newaddr/newmask is already present, return 0, else 1.
  */
 int
-find_address(char *name, struct in_addr newaddr, struct in_addr newnetmask)
+delete_addresses(char *name, int ioctlfd, struct in_addr newaddr,
+    struct in_addr newnetmask)
 {
 	struct in_addr			 addr, netmask;
 	struct ifaddrs			*ifap, *ifa;
+	int				 found;
 
 	if (getifaddrs(&ifap) != 0)
 		fatal("getifaddrs");
 
+	found = 0;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_LOOPBACK) != 0 ||
 		    (ifa->ifa_flags & IFF_POINTOPOINT) != 0 ||
@@ -103,13 +106,14 @@ find_address(char *name, struct in_addr newaddr, struct in_addr newnetmask)
 
 		if (addr.s_addr == newaddr.s_addr &&
 		    netmask.s_addr == newnetmask.s_addr) {
-			freeifaddrs(ifap);
-			return 0;
+			found = 1;
+		} else {
+			delete_address(name, ioctlfd, addr);
 		}
 	}
 
 	freeifaddrs(ifap);
-	return 1;
+	return found;
 }
 
 /*
@@ -124,7 +128,7 @@ set_address(char *name, int ioctlfd, struct in_addr addr,
 	struct ifaliasreq	 ifaliasreq;
 	struct sockaddr_in	*in;
 
-	if (find_address(name, addr, netmask) == 0)
+	if (delete_addresses(name, ioctlfd, addr, netmask) == 1)
 		return;
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
