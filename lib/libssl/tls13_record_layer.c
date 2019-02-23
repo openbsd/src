@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.5 2019/02/21 17:15:00 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.6 2019/02/23 15:02:34 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -581,8 +581,6 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 	ssize_t ret;
 	CBS cbs;
 
- again: /* XXX */
-
 	if (rl->rrec == NULL) {
 		if ((rl->rrec = tls13_record_new()) == NULL)
 			goto err;
@@ -622,7 +620,7 @@ tls13_record_layer_read_record(struct tls13_record_layer *rl)
 		}
 		rl->change_cipher_spec_seen = 1;
 		tls13_record_layer_rrec_free(rl);
-		goto again; /* XXX */
+		return TLS13_IO_WANT_POLLIN;
 	}
 
 	/*
@@ -677,8 +675,6 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 	/* XXX - loop here with record and byte limits. */
 	/* XXX - send alert... */
 
- again: /* XXX */
-
 	/* If necessary, pull up the next record. */
 	if (CBS_len(&rl->rbuf_cbs) == 0) {
 		if ((ret = tls13_record_layer_read_record(rl)) <= 0)
@@ -697,7 +693,7 @@ tls13_record_layer_read(struct tls13_record_layer *rl, uint8_t content_type,
 			if (rl->handshake_completed) {
 				/* XXX - call callback, drop for now... */
 				tls13_record_layer_rbuf_free(rl);
-				goto again;
+				return TLS13_IO_WANT_POLLIN;
 			}
 		}
 
