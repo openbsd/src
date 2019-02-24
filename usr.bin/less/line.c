@@ -15,6 +15,8 @@
  * in preparation for output to the screen.
  */
 
+#include <wchar.h>
+
 #include "charset.h"
 #include "less.h"
 
@@ -373,50 +375,53 @@ attr_ewidth(int a)
  * attribute sequence to be inserted, so this must be taken into account.
  */
 static int
-pwidth(LWCHAR ch, int a, LWCHAR prev_ch)
+pwidth(wchar_t ch, int a, wchar_t prev_ch)
 {
 	int w;
 
-	if (ch == '\b')
-		/*
-		 * Backspace moves backwards one or two positions.
-		 * XXX - Incorrect if several '\b' in a row.
-		 */
-		return ((utf_mode && is_wide_char(prev_ch)) ? -2 : -1);
-
-	if (!utf_mode || is_ascii_char(ch)) {
-		if (control_char((char)ch)) {
-			/*
-			 * Control characters do unpredictable things,
-			 * so we don't even try to guess; say it doesn't move.
-			 * This can only happen if the -r flag is in effect.
-			 */
-			return (0);
-		}
-	} else {
-		if (is_composing_char(ch) || is_combining_char(prev_ch, ch)) {
-			/*
-			 * Composing and combining chars take up no space.
-			 *
-			 * Some terminals, upon failure to compose a
-			 * composing character with the character(s) that
-			 * precede(s) it will actually take up one column
-			 * for the composing character; there isn't much
-			 * we could do short of testing the (complex)
-			 * composition process ourselves and printing
-			 * a binary representation when it fails.
-			 */
-			return (0);
-		}
+	/*
+	 * In case of a backspace, back up by the width of the previous
+	 * character.  If that is non-printable (for example another
+	 * backspace) or zero width (for example a combining accent),
+	 * the terminal may actually back up to a character even further
+	 * back, but we no longer know how wide that may have been.
+	 * The best guess possible at this point is that it was
+	 * hopefully width one.
+	 */
+	if (ch == L'\b') {
+		w = wcwidth(prev_ch);
+		if (w <= 0)
+			w = 1;
+		return (-w);
 	}
+
+	w = wcwidth(ch);
+
+	/*
+	 * Non-printable characters can get here if the -r flag is in
+	 * effect, and possibly in some other situations (XXX check that!).
+	 * Treat them as zero width.
+	 * That may not always match their actual behaviour,
+	 * but there is no reasonable way to be more exact.
+	 */
+	if (w == -1)
+		w = 0;
+
+	/*
+	 * Combining accents take up no space.
+	 * Some terminals, upon failure to compose them with the
+	 * characters that precede them, will actually take up one column
+	 * for the combining accent; there isn't much we could do short
+	 * of testing the (complex) composition process ourselves and
+	 * printing a binary representation when it fails.
+	 */
+	if (w == 0)
+		return (0);
 
 	/*
 	 * Other characters take one or two columns,
 	 * plus the width of any attribute enter/exit sequence.
 	 */
-	w = 1;
-	if (is_wide_char(ch))
-		w++;
 	if (curr > 0 && !is_at_equiv(attr[curr-1], a))
 		w += attr_ewidth(attr[curr-1]);
 	if ((apply_at_specials(a) != AT_NORMAL) &&
