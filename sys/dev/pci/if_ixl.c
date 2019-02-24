@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.19 2019/02/01 06:11:16 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.20 2019/02/24 22:49:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1116,8 +1116,6 @@ struct ixl_softc {
 	struct ixl_dmamem	 sc_hmc_sd;
 	struct ixl_dmamem	 sc_hmc_pd;
 	struct ixl_hmc_entry	 sc_hmc_entries[IXL_HMC_COUNT];
-
-	unsigned int		 sc_nrings;
 
 	unsigned int		 sc_tx_ring_ndescs;
 	unsigned int		 sc_rx_ring_ndescs;
