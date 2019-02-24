@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.34 2019/02/24 09:11:09 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.35 2019/02/24 09:24:52 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -793,12 +793,9 @@ lf_print(const char *tag, struct lockf *lock)
 		printf("\n");
 		return;
 	}
-	printf(" for ");
-	if (lock->lf_flags & F_POSIX)
-		printf("thread %d", ((struct proc *)(lock->lf_id))->p_tid);
-	else
-		printf("id %p", lock->lf_id);
-	printf(" %s, start %llx, end %llx",
+	printf(", %s %p %s, start %llx, end %llx",
+		lock->lf_flags & F_POSIX ? "posix" : "flock",
+		lock->lf_id,
 		lock->lf_type == F_RDLCK ? "shared" :
 		lock->lf_type == F_WRLCK ? "exclusive" :
 		lock->lf_type == F_UNLCK ? "unlock" :
