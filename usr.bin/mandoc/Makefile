@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.114 2018/12/24 19:59:17 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.115 2019/02/24 12:57:14 kn Exp $
 
 .include <bsd.own.mk>
 
@@ -69,7 +69,7 @@ man.cgi: ${CGI_OBJS}
 
 installcgi: man.cgi
 	${INSTALL} -d -o root -g wheel -m 755 ${DESTDIR}/var/www/cgi-bin
-	${INSTALL} ${INSTALL_COPY} -S ${INSTALL_STRIP} \
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} \
 	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    man.cgi ${DESTDIR}/var/www/cgi-bin/man.cgi
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 \

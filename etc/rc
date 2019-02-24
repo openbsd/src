@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.533 2019/02/19 20:41:52 kn Exp $
+#	$OpenBSD: rc,v 1.534 2019/02/24 12:57:14 kn Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -202,7 +202,7 @@ reorder_libs() {
 		_tmpdir=$(mktemp -dq $_relink/_rebuild.XXXXXXXXXXXX) &&
 		(
 		set -o errexit
-		_install='install -F -S -o root -g bin -m 0444'
+		_install='install -F -o root -g bin -m 0444'
 		_lib=${_liba##*/}
 		_lib=${_lib%.a}
 		_lib_dir=${_liba#$_relink}
