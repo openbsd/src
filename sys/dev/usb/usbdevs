@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.694 2019/01/14 03:28:03 jmatthew Exp $
+$OpenBSD: usbdevs,v 1.695 2019/02/24 17:35:29 patrick Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1640,6 +1640,7 @@ product DVICO RT3070		0xb307	RT3070
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
 product DYNASTREAM ANT2USB	0x1004	ANT2USB
 product DYNASTREAM ANTDEVBOARD2	0x1006	ANT dev board
+product DYNASTREAM ANTUSB2	0x1008	ANTUSB-2 Stick
 product DYNASTREAM ANTUSBM	0x1009	ANTUSB-m Stick
 
 /* EasyDisk products */
