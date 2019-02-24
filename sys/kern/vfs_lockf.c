@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.33 2019/01/30 17:04:04 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.34 2019/02/24 09:11:09 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -243,15 +243,15 @@ lf_advlock(struct lockf_state **state, off_t size, caddr_t id, int op,
 		ls_rele(ls);
 		return (ENOLCK);
 	}
+	lock->lf_flags = flags;
+	lock->lf_type = fl->l_type;
 	lock->lf_start = start;
 	lock->lf_end = end;
 	lock->lf_id = id;
 	lock->lf_state = ls;
-	lock->lf_type = fl->l_type;
 	lock->lf_blk = NULL;
-	TAILQ_INIT(&lock->lf_blkhd);
-	lock->lf_flags = flags;
 	lock->lf_pid = (flags & F_POSIX) ? p->p_p->ps_pid : -1;
+	TAILQ_INIT(&lock->lf_blkhd);
 
 	switch (op) {
 	case F_SETLK:
