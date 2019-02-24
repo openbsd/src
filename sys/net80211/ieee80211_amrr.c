@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_amrr.c,v 1.11 2016/01/05 18:41:16 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_amrr.c,v 1.12 2019/02/24 09:36:28 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -41,45 +41,28 @@
 #define reset_cnt(amn)		\
 	do { (amn)->amn_txcnt = (amn)->amn_retrycnt = 0; } while (0)
 
-/* 
- * XXX In HT mode we only support MCS 0-7, for now.
- * Beyond MCS 7, incrementing the MCS index does not imply a
- * higher data rate, so this simple implementation will need
- * to be enhanced.
- */
-
 static inline int
 is_min_rate(struct ieee80211_node *ni)
 {
-	if (ni->ni_flags & IEEE80211_NODE_HT)
-		return (ni->ni_txmcs == 0);
 	return (ni->ni_txrate == 0);
 }
 
 static inline int
 is_max_rate(struct ieee80211_node *ni)
 {
-	if (ni->ni_flags & IEEE80211_NODE_HT)
-		return (ni->ni_txmcs == 7); /* XXX up to MCS 7 only */
 	return (ni->ni_txrate == ni->ni_rates.rs_nrates - 1);
 }
 
 static inline void
 increase_rate(struct ieee80211_node *ni)
 {
-	if (ni->ni_flags & IEEE80211_NODE_HT)
-		ni->ni_txmcs++;
-	else
-		ni->ni_txrate++;
+	ni->ni_txrate++;
 }
 
 static inline void
 decrease_rate(struct ieee80211_node *ni)
 {
-	if (ni->ni_flags & IEEE80211_NODE_HT)
-		ni->ni_txmcs--;
-	else
-		ni->ni_txrate--;
+	ni->ni_txrate--;
 }
 
 void
@@ -110,7 +93,6 @@ ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
 			amn->amn_success = 0;
 			increase_rate(ni);
 			DPRINTF(("increase rate=%d,#tx=%d,#retries=%d\n",
-			    (ni->ni_flags & IEEE80211_NODE_HT) ? ni->ni_txmcs :
 			    RV(ni->ni_rates.rs_rates[ni->ni_txrate]),
 			    amn->amn_txcnt, amn->amn_retrycnt));
 			need_change = 1;
@@ -132,7 +114,6 @@ ieee80211_amrr_choose(struct ieee80211_amrr *amrr, struct ieee80211_node *ni,
 			}
 			decrease_rate(ni);
 			DPRINTF(("decrease rate=%d,#tx=%d,#retries=%d\n",
-			    (ni->ni_flags & IEEE80211_NODE_HT) ? ni->ni_txmcs :
 			    RV(ni->ni_rates.rs_rates[ni->ni_txrate]),
 			    amn->amn_txcnt, amn->amn_retrycnt));
 			need_change = 1;
