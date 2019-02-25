@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.6 2019/02/23 15:02:34 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.7 2019/02/25 16:52:34 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -760,7 +760,9 @@ static ssize_t
 tls13_record_layer_write(struct tls13_record_layer *rl, uint8_t content_type,
     const uint8_t *buf, size_t n)
 {
-	/* XXX - handle fragmenting... */
+	if (n > TLS13_RECORD_MAX_PLAINTEXT_LEN)
+		n = TLS13_RECORD_MAX_PLAINTEXT_LEN;
+
 	return tls13_record_layer_write_record(rl, content_type, buf, n);
 }
 
