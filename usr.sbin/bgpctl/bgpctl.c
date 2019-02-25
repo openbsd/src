@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.232 2019/02/21 12:12:46 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.233 2019/02/25 11:51:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,6 @@ void		 show_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 network_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 show_mrt_state(struct mrt_bgp_state *, void *);
 void		 show_mrt_msg(struct mrt_bgp_msg *, void *);
-void		 mrt_to_bgpd_addr(union mrt_addr *, struct bgpd_addr *);
 const char	*msg_type(u_int8_t);
 void		 network_bulk(struct parse_result *);
 const char	*print_auth_method(enum auth_method);
@@ -2000,11 +1999,11 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	for (i = 0; i < mr->nentries; i++) {
 		mre = &mr->entries[i];
 		bzero(&ctl, sizeof(ctl));
-		mrt_to_bgpd_addr(&mr->prefix, &ctl.prefix);
+		ctl.prefix = mr->prefix;
 		ctl.prefixlen = mr->prefixlen;
 		ctl.lastchange = mre->originated;
-		mrt_to_bgpd_addr(&mre->nexthop, &ctl.true_nexthop);
-		mrt_to_bgpd_addr(&mre->nexthop, &ctl.exit_nexthop);
+		ctl.true_nexthop = mre->nexthop;
+		ctl.exit_nexthop = mre->nexthop;
 		ctl.origin = mre->origin;
 		ctl.local_pref = mre->local_pref;
 		ctl.med = mre->med;
@@ -2012,8 +2011,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		ctl.aspath_len = mre->aspath_len;
 
 		if (mre->peer_idx < mp->npeers) {
-			mrt_to_bgpd_addr(&mp->peers[mre->peer_idx].addr,
-			    &ctl.remote_addr);
+			ctl.remote_addr = mp->peers[mre->peer_idx].addr;
 			ctl.remote_id = mp->peers[mre->peer_idx].bgp_id;
 		}
 
@@ -2066,19 +2064,18 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	for (i = 0; i < mr->nentries; i++) {
 		mre = &mr->entries[i];
 		bzero(&ctl, sizeof(ctl));
-		mrt_to_bgpd_addr(&mr->prefix, &ctl.prefix);
+		ctl.prefix = mr->prefix;
 		ctl.prefixlen = mr->prefixlen;
 		ctl.lastchange = mre->originated;
-		mrt_to_bgpd_addr(&mre->nexthop, &ctl.true_nexthop);
-		mrt_to_bgpd_addr(&mre->nexthop, &ctl.exit_nexthop);
+		ctl.true_nexthop = mre->nexthop;
+		ctl.exit_nexthop = mre->nexthop;
 		ctl.origin = mre->origin;
 		ctl.local_pref = mre->local_pref;
 		ctl.med = mre->med;
 		ctl.aspath_len = mre->aspath_len;
 
 		if (mre->peer_idx < mp->npeers) {
-			mrt_to_bgpd_addr(&mp->peers[mre->peer_idx].addr,
-			    &ctl.remote_addr);
+			ctl.remote_addr = mp->peers[mre->peer_idx].addr;
 			ctl.remote_id = mp->peers[mre->peer_idx].bgp_id;
 		}
 
@@ -2151,13 +2148,9 @@ print_time(struct timespec *t)
 void
 show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 {
-	struct bgpd_addr src, dst;
-
-	mrt_to_bgpd_addr(&ms->src, &src);
-	mrt_to_bgpd_addr(&ms->dst, &dst);
 	printf("%s %s[%u] -> ", print_time(&ms->time),
-	    log_addr(&src), ms->src_as);
-	printf("%s[%u]: %s -> %s\n", log_addr(&dst), ms->dst_as,
+	    log_addr(&ms->src), ms->src_as);
+	printf("%s[%u]: %s -> %s\n", log_addr(&ms->dst), ms->dst_as,
 	    statenames[ms->old_state], statenames[ms->new_state]);
 }
 
@@ -2530,16 +2523,13 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 	static const u_int8_t marker[MSGSIZE_HEADER_MARKER] = {
 	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-	struct bgpd_addr src, dst;
 	u_char *p;
 	u_int16_t len;
 	u_int8_t type;
 
-	mrt_to_bgpd_addr(&mm->src, &src);
-	mrt_to_bgpd_addr(&mm->dst, &dst);
 	printf("%s %s[%u] -> ", print_time(&mm->time),
-	    log_addr(&src), mm->src_as);
-	printf("%s[%u]: size %u ", log_addr(&dst), mm->dst_as, mm->msg_len);
+	    log_addr(&mm->src), mm->src_as);
+	printf("%s[%u]: size %u ", log_addr(&mm->dst), mm->dst_as, mm->msg_len);
 	p = mm->msg;
 	len = mm->msg_len;
 
@@ -2612,25 +2602,6 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 		return;
 	}
 	printf("\n");
-}
-
-void
-mrt_to_bgpd_addr(union mrt_addr *ma, struct bgpd_addr *ba)
-{
-	switch (ma->sa.sa_family) {
-	case AF_INET:
-	case AF_INET6:
-		sa2addr(&ma->sa, ba);
-		break;
-	case AF_VPNv4:
-		bzero(ba, sizeof(*ba));
-		ba->aid = AID_VPN_IPv4;
-		ba->vpn4.rd = ma->svpn4.sv_rd;
-		ba->vpn4.addr.s_addr = ma->svpn4.sv_addr.s_addr;
-		memcpy(ba->vpn4.labelstack, ma->svpn4.sv_label,
-		    sizeof(ba->vpn4.labelstack));
-		break;
-	}
 }
 
 const char *
