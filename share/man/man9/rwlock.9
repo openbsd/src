@@ -1,4 +1,4 @@
-.\" $OpenBSD: rwlock.9,v 1.23 2018/06/04 04:52:33 guenther Exp $
+.\" $OpenBSD: rwlock.9,v 1.24 2019/02/25 22:03:56 dlg Exp $
 .\"
 .\" Copyright (c) 2006 Pedro Martelletto <pedro@ambientworks.net>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2018 $
+.Dd $Mdocdate: February 25 2019 $
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -188,19 +188,7 @@ functions check the status
 panicking if it is not write-, read-, any-, or unlocked, respectively.
 .Pp
 .Nm rw_status
-returns the current state of the lock:
-.Pp
-.Bl -tag -width "RW_WRITE_OTHER" -offset indent -compact
-.It Dv RW_WRITE
-Lock is write locked by the calling thread.
-.It Dv RW_WRITE_OTHER
-Lock is write locked by a different thread.
-.It Dv RW_READ
-Lock is read locked.
-The current thread may be one of the threads that has it locked.
-.It 0
-Lock is not locked.
-.El
+returns the current state of the lock.
 .Pp
 A lock declaration may be initialised with the
 .Fn RWLOCK_INITIALIZER
@@ -223,6 +211,30 @@ and
 can be called during autoconf, from process context, or from interrupt context.
 .Pp
 All other functions can be called during autoconf or from process context.
+.Sh RETURN VALUES
+.Nm rw_enter
+and
+.Nm rrw_enter
+return 0 on success, or an
+.Xr errno 2
+style value on failure.
+.Pp
+.Nm rw_status
+and
+.Nm rrw_status
+return the state of the lock:
+.Pp
+.Bl -tag -width "RW_WRITE_OTHER" -offset indent -compact
+.It Dv RW_WRITE
+Lock is write locked by the calling thread.
+.It Dv RW_WRITE_OTHER
+Lock is write locked by a different thread.
+.It Dv RW_READ
+Lock is read locked.
+The current thread may be one of the threads that has it locked.
+.It 0
+Lock is not locked.
+.El
 .Sh SEE ALSO
 .Xr witness 4 ,
 .Xr mutex 9 ,
