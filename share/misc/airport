@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.70 2019/01/09 01:03:41 danj Exp $
+#	$OpenBSD: airport,v 1.71 2019/02/25 21:21:45 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1073,6 +1073,7 @@ MES:Polonia, Medan, Indonesia
 MEX:Juarez International, Mexico City, Distrito Federal, Mexico
 MEY:Meghauli, Nepal
 MFE:Mc Allen/Mission, Texas, USA
+MFM:Macau
 MFN:Milford Sound, New Zealand
 MFW:All Airports around Miami, Ft. Lauderdale and West Palm Beach, Florida, USA
 MGA:Managua, Nicaragua
