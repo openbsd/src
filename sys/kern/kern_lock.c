@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.66 2018/06/15 13:59:53 visa Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.67 2019/02/25 04:50:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -361,7 +361,7 @@ __mtx_leave(struct mutex *mtx)
 
 	s = mtx->mtx_oldipl;
 #ifdef MULTIPROCESSOR
-	membar_exit_before_atomic();
+	membar_exit();
 #endif
 	mtx->mtx_owner = NULL;
 	if (mtx->mtx_wantipl != IPL_NONE)
