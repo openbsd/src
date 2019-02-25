@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.11 2019/02/25 16:39:14 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.12 2019/02/25 16:46:17 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -687,18 +687,23 @@ tls13_client_finished_send(struct tls13_ctx *ctx)
 	if (!tls13_handshake_msg_finish(ctx->hs_msg))
 		goto err;
 
-	/*
-	 * Any records following the client finished message must be encrypted
-	 * using the client application traffic keys.
-	 */
-	if (!tls13_record_layer_set_write_traffic_key(ctx->rl,
-	    &secrets->client_application_traffic))
-		goto err;
-
 	ret = 1;
 
  err:
 	HMAC_CTX_free(hmac_ctx);
 
 	return ret;
+}
+
+int
+tls13_client_finished_sent(struct tls13_ctx *ctx)
+{
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+
+	/*
+	 * Any records following the client finished message must be encrypted
+	 * using the client application traffic keys.
+	 */
+	return tls13_record_layer_set_write_traffic_key(ctx->rl,
+	    &secrets->client_application_traffic);
 }

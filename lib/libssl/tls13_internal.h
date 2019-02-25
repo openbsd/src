@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.21 2019/02/25 14:36:25 inoguchi Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.22 2019/02/25 16:46:17 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -244,6 +244,7 @@ int tls13_client_certificate_verify_send(struct tls13_ctx *ctx);
 int tls13_client_certificate_verify_recv(struct tls13_ctx *ctx);
 int tls13_client_finished_recv(struct tls13_ctx *ctx);
 int tls13_client_finished_send(struct tls13_ctx *ctx);
+int tls13_client_finished_sent(struct tls13_ctx *ctx);
 int tls13_client_key_update_send(struct tls13_ctx *ctx);
 int tls13_client_key_update_recv(struct tls13_ctx *ctx);
 int tls13_server_hello_recv(struct tls13_ctx *ctx);
