@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.22 2019/02/25 16:46:17 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.23 2019/02/25 19:40:05 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -149,28 +149,7 @@ struct tls13_handshake_stage {
 	uint8_t	message_number;
 };
 
-typedef struct ssl_handshake_tls13_st {
-	uint16_t min_version;
-	uint16_t max_version;
-	uint16_t version;
-
-	/* Version proposed by peer server. */
-	uint16_t server_version;
-
-	/* X25519 key share. */
-	uint8_t *x25519_public;
-	uint8_t *x25519_private;
-	uint8_t *x25519_peer_public;
-
-	struct tls13_secrets *secrets;
-
-	uint8_t *cookie;
-	size_t cookie_len;
-
-	/* Preserved transcript hash. */
-	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
-	size_t transcript_hash_len;
-} SSL_HANDSHAKE_TLS13;
+typedef struct ssl_handshake_tls13_st SSL_HANDSHAKE_TLS13;
 
 struct tls13_ctx {
 	SSL *ssl;

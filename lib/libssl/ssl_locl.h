@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.237 2019/02/25 14:36:25 inoguchi Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.238 2019/02/25 19:40:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -433,6 +433,29 @@ typedef struct ssl_handshake_st {
 	/* Extensions seen in this handshake. */
 	uint32_t extensions_seen;
 } SSL_HANDSHAKE;
+
+typedef struct ssl_handshake_tls13_st {
+	uint16_t min_version;
+	uint16_t max_version;
+	uint16_t version;
+
+	/* Version proposed by peer server. */
+	uint16_t server_version;
+
+	/* X25519 key share. */
+	uint8_t *x25519_public;
+	uint8_t *x25519_private;
+	uint8_t *x25519_peer_public;
+
+	struct tls13_secrets *secrets;
+
+	uint8_t *cookie;
+	size_t cookie_len;
+
+	/* Preserved transcript hash. */
+	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
+	size_t transcript_hash_len;
+} SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
