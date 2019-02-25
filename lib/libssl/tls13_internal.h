@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.23 2019/02/25 19:40:05 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.24 2019/02/25 19:44:04 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -149,11 +149,11 @@ struct tls13_handshake_stage {
 	uint8_t	message_number;
 };
 
-typedef struct ssl_handshake_tls13_st SSL_HANDSHAKE_TLS13;
+struct ssl_handshake_tls13_st;
 
 struct tls13_ctx {
 	SSL *ssl;
-	SSL_HANDSHAKE_TLS13 *hs;
+	struct ssl_handshake_tls13_st *hs;
 	uint8_t	mode;
 	struct tls13_handshake_stage handshake_stage;
 
