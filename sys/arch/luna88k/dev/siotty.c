@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.22 2018/02/19 08:59:52 mpi Exp $ */
+/* $OpenBSD: siotty.c,v 1.23 2019/02/25 11:29:30 jca Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -565,7 +565,7 @@ sioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (error >= 0)
 		return error;
 
-	/* the last resort for TIOC ioctl tranversing */
+	/* the last resort for TIOC ioctl traversing */
 	switch (cmd) {
 	case TIOCSBRK: /* Set the hardware into BREAK condition */
 		siomctl(sc, TIOCM_BREAK, DMBIS);
