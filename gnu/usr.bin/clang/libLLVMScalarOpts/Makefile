@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2019/02/25 14:40:16 jsg Exp $
 
 LIB=	LLVMScalarOpts
 NOPIC=
@@ -28,6 +28,7 @@ SRCS=	ADCE.cpp \
 	IVUsersPrinter.cpp \
 	InductiveRangeCheckElimination.cpp \
 	IndVarSimplify.cpp \
+	InferAddressSpaces.cpp \
 	InstSimplifyPass.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \

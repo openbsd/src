@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2019/02/25 14:40:16 jsg Exp $
 
 LIB=	LLVMCore
 NOPIC=
@@ -49,6 +49,7 @@ SRCS=	AsmWriter.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	ProfileSummary.cpp \
+	SafepointIRVerifier.cpp \
 	Statepoint.cpp \
 	Type.cpp \
 	TypeFinder.cpp \

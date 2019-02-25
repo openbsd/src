@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2019/02/25 14:40:16 jsg Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -7,7 +7,8 @@ NOPROFILE=
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Support
 
 .include <bsd.own.mk>
-SRCS=	APFloat.cpp \
+SRCS=	AMDGPUMetadata.cpp \
+	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
 	ARMAttributeParser.cpp \
@@ -63,6 +64,7 @@ SRCS=	APFloat.cpp \
 	MD5.cpp \
 	NativeFormatting.cpp \
 	Options.cpp \
+	Parallel.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
 	RandomNumberGenerator.cpp \

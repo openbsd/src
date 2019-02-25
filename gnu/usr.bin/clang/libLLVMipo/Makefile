@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2019/02/25 14:40:16 jsg Exp $
 
 LIB=	LLVMipo
 NOPIC=
@@ -11,6 +11,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/IPO
 SRCS=	ArgumentPromotion.cpp \
 	AlwaysInliner.cpp \
 	BarrierNoopPass.cpp \
+	BlockExtractor.cpp \
 	CalledValuePropagation.cpp \
 	ConstantMerge.cpp \
 	CrossDSOCFI.cpp \
