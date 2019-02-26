@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.85 2019/02/20 00:20:19 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.86 2019/02/26 03:23:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -59,7 +59,6 @@ struct mpe_softc {
 	struct ifaddr		sc_ifa;
 	struct sockaddr_mpls	sc_smpls;
 
-	struct rwlock		sc_lock;
 	int			sc_dead;
 };
 
@@ -114,7 +113,6 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_hdrlen = MPE_HDRLEN;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 
-	rw_init(&sc->sc_lock, ifp->if_xname);
 	sc->sc_dead = 0;
 
 	if_attach(ifp);
@@ -137,15 +135,17 @@ mpe_clone_destroy(struct ifnet *ifp)
 {
 	struct mpe_softc	*sc = ifp->if_softc;
 
-	rw_enter_write(&sc->sc_lock);
+	NET_LOCK();
+	CLR(ifp->if_flags, IFF_RUNNING);
 	sc->sc_dead = 1;
 
 	if (sc->sc_smpls.smpls_label) {
 		rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 		    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
 	}
+	NET_UNLOCK();
 
-	rw_exit_write(&sc->sc_lock);
+	ifq_barrier(&ifp->if_snd);
 
 	if_detach(ifp);
 	free(sc, M_DEVBUF, sizeof *sc);
@@ -293,7 +293,6 @@ mpe_set_label(struct mpe_softc *sc, uint32_t label, unsigned int rdomain)
 {
 	int error;
 
-	rw_assert_wrlock(&sc->sc_lock);
 	if (sc->sc_dead)
 		return (ENXIO);
 
@@ -345,7 +344,8 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
 		break;
 	case SIOCSETLABEL:
-		if ((error = copyin(ifr->ifr_data, &shim, sizeof(shim))))
+		error = copyin(ifr->ifr_data, &shim, sizeof(shim));
+		if (error != 0)
 			break;
 		if (shim.shim_label > MPLS_LABEL_MAX ||
 		    shim.shim_label <= MPLS_LABEL_RESERVED_MAX) {
@@ -353,12 +353,10 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		shim.shim_label = MPLS_LABEL2SHIM(shim.shim_label);
-		rw_enter_write(&sc->sc_lock);
 		if (sc->sc_smpls.smpls_label != shim.shim_label) {
 			error = mpe_set_label(sc, shim.shim_label,
 			    sc->sc_rdomain);
 		}
-		rw_exit_write(&sc->sc_lock);
 		break;
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
@@ -368,12 +366,10 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		rw_enter_write(&sc->sc_lock);
 		if (sc->sc_rdomain != ifr->ifr_rdomainid) {
 			error = mpe_set_label(sc, sc->sc_smpls.smpls_label,
 			    ifr->ifr_rdomainid);
 		}
-		rw_exit_write(&sc->sc_lock);
 		break;
 	case SIOCGLIFPHYRTABLE:
 		ifr->ifr_rdomainid = sc->sc_rdomain;
