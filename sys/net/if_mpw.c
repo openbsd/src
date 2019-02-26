@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.45 2019/02/26 03:22:36 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.46 2019/02/26 03:44:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -488,9 +488,6 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		goto drop;
 
-	if (sc->sc_type == IMR_TYPE_NONE)
-		goto drop;
-
 	shim = mtod(m, struct shim_hdr *);
 	if (sc->sc_fword) {
 		uint32_t flow;
@@ -604,7 +601,6 @@ mpw_start(struct ifnet *ifp)
 
 	n = sc->sc_neighbor;
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
-	    sc->sc_type == IMR_TYPE_NONE ||
 	    n == NULL) {
 		IFQ_PURGE(&ifp->if_snd);
 		return;
