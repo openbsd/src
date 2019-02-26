@@ -36,10 +36,10 @@
 /* #define LLVM_DEFAULT_TARGET_TRIPLE "amd64-unknown-openbsd6.0" */
 
 /* Define if threads enabled */
-/* #define LLVM_ENABLE_THREADS 1 */
+#define LLVM_ENABLE_THREADS 1
 
 /* Has gcc/MSVC atomic intrinsics */
-/* #define LLVM_HAS_ATOMICS 1 */
+#define LLVM_HAS_ATOMICS 1
 
 /* Host triple LLVM will be executed on */
 /* #define LLVM_HOST_TRIPLE "amd64-unknown-openbsd6.0" */
