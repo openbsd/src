@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.22 2019/02/26 03:17:18 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.23 2019/02/26 23:12:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2267,7 +2267,11 @@ ixl_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 
 	error = bus_dmamap_load_mbuf(dmat, map, m,
 	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
-	if (error != EFBIG || m_defrag(m, M_DONTWAIT) != 0)
+	if (error != EFBIG)
+		return (error);
+
+	error = m_defrag(m, M_DONTWAIT);
+	if (error != 0)
 		return (error);
 
 	return (bus_dmamap_load_mbuf(dmat, map, m,
@@ -2323,6 +2327,7 @@ ixl_start(struct ifqueue *ifq)
 		map = txm->txm_map;
 
 		if (ixl_load_mbuf(sc->sc_dmat, map, m) != 0) {
+			ifq->ifq_errors++;
 			m_freem(m);
 			continue;
 		}
