@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.47 2017/11/08 09:33:37 patrick Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.48 2019/02/26 14:21:30 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -429,7 +429,7 @@ ca_create(struct ca *ca)
 	system(cmd);
 	chmod(path, 0600);
 
-	snprintf(cmd, sizeof(cmd), "%s x509 -req -days 365"
+	snprintf(cmd, sizeof(cmd), "%s x509 -req -days 4500"
 	    " -in %s/private/ca.csr -signkey %s/private/ca.key"
 	    " -sha256"
 	    " -extfile %s -extensions x509v3_CA -out %s/ca.crt -passin file:%s",
