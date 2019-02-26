@@ -230,7 +230,7 @@ pshift(int shift)
 	 */
 	while (shifted <= shift && from < curr) {
 		c = linebuf[from];
-		if (ctldisp == OPT_ONPLUS && IS_CSI_START(c)) {
+		if (ctldisp == OPT_ONPLUS && c == ESC) {
 			/* Keep cumulative effect.  */
 			linebuf[to] = c;
 			attr[to++] = attr[from++];
@@ -463,17 +463,16 @@ backc(void)
 static int
 in_ansi_esc_seq(void)
 {
-	char *p;
+	int i;
 
 	/*
 	 * Search backwards for either an ESC (which means we ARE in a seq);
 	 * or an end char (which means we're NOT in a seq).
 	 */
-	for (p = &linebuf[curr]; p > linebuf; ) {
-		LWCHAR ch = step_char(&p, -1, linebuf);
-		if (IS_CSI_START(ch))
+	for (i = curr - 1; i >= 0; i--) {
+		if (linebuf[i] == ESC)
 			return (1);
-		if (!is_ansi_middle(ch))
+		if (!is_ansi_middle(linebuf[i]))
 			return (0);
 	}
 	return (0);
@@ -533,17 +532,14 @@ store_char(LWCHAR ch, char a, char *rep, off_t pos)
 	if (ctldisp == OPT_ONPLUS && in_ansi_esc_seq()) {
 		if (!is_ansi_end(ch) && !is_ansi_middle(ch)) {
 			/* Remove whole unrecognized sequence.  */
-			char *p = &linebuf[curr];
-			LWCHAR bch;
 			do {
-				bch = step_char(&p, -1, linebuf);
-			} while (p > linebuf && !IS_CSI_START(bch));
-			curr = p - linebuf;
+				curr--;
+			} while (curr > 0 && linebuf[curr] != ESC);
 			return (0);
 		}
 		a = AT_ANSI;	/* Will force re-AT_'ing around it.  */
 		w = 0;
-	} else if (ctldisp == OPT_ONPLUS && IS_CSI_START(ch)) {
+	} else if (ctldisp == OPT_ONPLUS && ch == ESC) {
 		a = AT_ANSI;	/* Will force re-AT_'ing around it.  */
 		w = 0;
 	} else {
@@ -851,7 +847,7 @@ do_append(LWCHAR ch, char *rep, off_t pos)
 	} else if ((!utf_mode || is_ascii_char(ch)) && control_char((char)ch)) {
 do_control_char:
 		if (ctldisp == OPT_ON ||
-		    (ctldisp == OPT_ONPLUS && IS_CSI_START(ch))) {
+		    (ctldisp == OPT_ONPLUS && ch == ESC)) {
 			/*
 			 * Output as a normal character.
 			 */

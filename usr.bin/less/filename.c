@@ -348,7 +348,7 @@ bin_file(int f)
 	pend = &data[n];
 	for (p = data; p < pend; ) {
 		LWCHAR c = step_char(&p, +1, pend);
-		if (ctldisp == OPT_ONPLUS && IS_CSI_START(c)) {
+		if (ctldisp == OPT_ONPLUS && c == ESC) {
 			do {
 				c = step_char(&p, +1, pend);
 			} while (p < pend && is_ansi_middle(c));

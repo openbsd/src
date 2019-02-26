@@ -77,7 +77,7 @@ cvt_text(char *odst, char *osrc, int *chpos, int *lenp, int ops)
 				dst--;
 			} while (dst > odst &&
 			    !IS_ASCII_OCTET(*dst) && !IS_UTF8_LEAD(*dst));
-		} else if ((ops & CVT_ANSI) && IS_CSI_START(ch)) {
+		} else if ((ops & CVT_ANSI) && ch == ESC) {
 			/* Skip to end of ANSI escape sequence. */
 			src++;	/* skip the CSI start char */
 			while (src < src_end)

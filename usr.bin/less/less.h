@@ -38,8 +38,6 @@
 #define	IS_SPACE(c)	isspace((unsigned char)(c))
 #define	IS_DIGIT(c)	isdigit((unsigned char)(c))
 
-#define	IS_CSI_START(c)	(((LWCHAR)(c)) == ESC || (((LWCHAR)(c)) == CSI))
-
 #ifndef TRUE
 #define	TRUE		1
 #endif
@@ -151,9 +149,7 @@ struct textlist {
 #define	AT_INDET	(1 << 7)  /* Indeterminate: either bold or underline */
 
 #define	CONTROL(c)	((c)&037)
-
 #define	ESC		CONTROL('[')
-#define	CSI		((unsigned char)'\233')
 
 #define	S_INTERRUPT	01
 #define	S_STOP		02
