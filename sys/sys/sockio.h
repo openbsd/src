@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.79 2019/01/23 08:23:18 dlg Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.80 2019/02/26 03:19:11 dlg Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -143,6 +143,7 @@
 #define	SIOCSSPPPPARAMS	 _IOW('i', 147, struct ifreq)	/* set pppoe params */
 #define	SIOCGSPPPPARAMS	_IOWR('i', 148, struct ifreq)	/* get pppoe params */
 
+#define SIOCDELLABEL	 _IOW('i', 151, struct ifreq)	/* del MPLS label */
 #define SIOCGPWE3	 _IOWR('i', 152, struct ifreq)	/* get MPLS PWE3 cap */
 #define SIOCSETLABEL	 _IOW('i', 153, struct ifreq)	/* set MPLS label */
 #define SIOCGETLABEL	 _IOW('i', 154, struct ifreq)	/* get MPLS label */
@@ -204,6 +205,14 @@
 
 #define	SIOCSLIFPHYECN	_IOW('i', 199, struct ifreq)	/* set ecn copying */
 #define	SIOCGLIFPHYECN	_IOWR('i', 200, struct ifreq)	/* get ecn copying */
+
+#define SIOCSPWE3CTRLWORD	_IOW('i', 220, struct ifreq)
+#define SIOCGPWE3CTRLWORD	_IOWR('i',  220, struct ifreq)
+#define SIOCSPWE3FAT		_IOW('i', 221, struct ifreq)
+#define SIOCGPWE3FAT		_IOWR('i', 221, struct ifreq)
+#define SIOCSPWE3NEIGHBOR	_IOW('i', 222, struct if_laddrreq)
+#define SIOCGPWE3NEIGHBOR	_IOWR('i', 222, struct if_laddrreq)
+#define SIOCDPWE3NEIGHBOR	_IOW('i', 222, struct ifreq)
 
 #define	SIOCSVH		_IOWR('i', 245, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 246, struct ifreq)	/* get carp param */
