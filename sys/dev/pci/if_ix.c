@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.154 2019/02/26 03:09:50 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.155 2019/02/26 04:04:30 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -2483,7 +2483,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	rxr->last_desc_filled = sc->num_rx_desc - 1;
 
 	if_rxr_init(&rxr->rx_ring, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1),
-	    sc->num_rx_desc);
+	    sc->num_rx_desc - 1);
 
 	ixgbe_rxfill(rxr);
 	if (if_rxr_inuse(&rxr->rx_ring) == 0) {
