@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.50 2018/11/17 23:10:08 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.51 2019/02/26 14:24:21 visa Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -90,6 +90,8 @@
 
 #define	SCHED_NQS	32			/* 32 run queues. */
 
+struct smr_entry;
+
 /*
  * Per-CPU scheduler state.
  */
@@ -111,6 +113,15 @@ struct schedstate_percpu {
 
 	volatile uint32_t spc_whichqs;
 	volatile u_int spc_spinning;	/* this cpu is currently spinning */
+
+	SIMPLEQ_HEAD(, smr_entry) spc_deferred; /* deferred smr calls */
+	u_int spc_ndeferred;		/* number of deferred smr calls */
+	u_int spc_smrdepth;		/* level of smr nesting */
+	u_char spc_smrexpedite;		/* if set, dispatch smr entries
+					 * without delay */
+	volatile u_char spc_insmr;	/* if set, CPU entered smr critical
+					 * section from interrupt context
+					 * that preempted idle state */
 };
 
 struct cpustats {

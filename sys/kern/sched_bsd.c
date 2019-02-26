@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.49 2019/01/28 11:48:13 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.50 2019/02/26 14:24:21 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <uvm/uvm_extern.h>
 #include <sys/sched.h>
 #include <sys/timeout.h>
+#include <sys/smr.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -416,6 +417,8 @@ mi_switch(void)
 #endif
 
 	SCHED_ASSERT_UNLOCKED();
+
+	smr_idle();
 
 	/*
 	 * We're running again; record our new start time.  We might

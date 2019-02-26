@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.283 2019/01/19 01:53:44 cheloha Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.284 2019/02/26 14:24:21 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
 #include <sys/pipe.h>
 #include <sys/task.h>
 #include <sys/witness.h>
+#include <sys/smr.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -239,6 +240,9 @@ main(void *framep)
 
 	/* Initialize SRP subsystem. */
 	srp_startup();
+
+	/* Initialize SMR subsystem. */
+	smr_startup();
 
 	/*
 	 * Initialize process and pgrp structures.

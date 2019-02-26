@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.147 2018/05/12 17:17:27 krw Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.148 2019/02/26 14:24:21 visa Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/smr.h>
 
 #include <uvm/uvm.h>
 
@@ -669,6 +670,7 @@ uvm_shutdown(void)
 #ifdef UVM_SWAP_ENCRYPT
 	uvm_swap_finicrypt_all();
 #endif
+	smr_flush();
 }
 
 /*
