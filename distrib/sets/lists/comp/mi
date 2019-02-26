@@ -1335,6 +1335,7 @@
 ./usr/include/sys/sigio.h
 ./usr/include/sys/signal.h
 ./usr/include/sys/signalvar.h
+./usr/include/sys/smr.h
 ./usr/include/sys/socket.h
 ./usr/include/sys/socketvar.h
 ./usr/include/sys/sockio.h
@@ -2839,6 +2840,8 @@
 ./usr/share/man/man3/ypclnt.3
 ./usr/share/man/man9/KASSERT.9
 ./usr/share/man/man9/RBT_INIT.9
+./usr/share/man/man9/SMR_LIST_INIT.9
+./usr/share/man/man9/SMR_PTR_GET.9
 ./usr/share/man/man9/SRPL_EMPTY_LOCKED.9
 ./usr/share/man/man9/SipHash24.9
 ./usr/share/man/man9/VOP_LOOKUP.9
@@ -2950,6 +2953,7 @@
 ./usr/share/man/man9/rwlock.9
 ./usr/share/man/man9/sensor_attach.9
 ./usr/share/man/man9/sigio_init.9
+./usr/share/man/man9/smr_call.9
 ./usr/share/man/man9/socreate.9
 ./usr/share/man/man9/sosplice.9
 ./usr/share/man/man9/spl.9
