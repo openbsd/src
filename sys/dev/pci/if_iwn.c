@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.206 2019/01/24 09:48:01 kn Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.207 2019/02/26 08:51:15 kn Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -6577,12 +6577,19 @@ iwn_init(struct ifnet *ifp)
 		goto fail;
 	}
 
+	/* Initialize interrupt mask to default value. */
+	sc->int_mask = IWN_INT_MASK_DEF;
+	sc->sc_flags &= ~IWN_FLAG_USE_ICT;
+
 	/* Check that the radio is not disabled by hardware switch. */
 	if (!(IWN_READ(sc, IWN_GP_CNTRL) & IWN_GP_CNTRL_RFKILL)) {
 		printf("%s: radio is disabled by hardware switch\n",
 		    sc->sc_dev.dv_xname);
 		error = EPERM;	/* :-) */
-		goto fail;
+		/* Re-enable interrupts. */
+		IWN_WRITE(sc, IWN_INT, 0xffffffff);
+		IWN_WRITE(sc, IWN_INT_MASK, sc->int_mask);
+		return error;
 	}
 
 	/* Read firmware images from the filesystem. */
@@ -6590,10 +6597,6 @@ iwn_init(struct ifnet *ifp)
 		printf("%s: could not read firmware\n", sc->sc_dev.dv_xname);
 		goto fail;
 	}
-
-	/* Initialize interrupt mask to default value. */
-	sc->int_mask = IWN_INT_MASK_DEF;
-	sc->sc_flags &= ~IWN_FLAG_USE_ICT;
 
 	/* Initialize hardware and upload firmware. */
 	error = iwn_hw_init(sc);
