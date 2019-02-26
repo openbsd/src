@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.166 2018/03/05 14:30:30 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.167 2019/02/26 18:05:22 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1935,7 +1935,7 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, struct ibuf *buf)
 		case IKEV2_CFG_INTERNAL_IP6_DHCP:
 		case IKEV2_CFG_INTERNAL_IP6_SERVER:
 			/* 16 bytes IPv6 address */
-			in6 = (struct sockaddr_in6 *)&ikecfg->cfg.address;
+			in6 = (struct sockaddr_in6 *)&ikecfg->cfg.address.addr;
 			cfg->cfg_length = htobe16(16);
 			if (ibuf_add(buf, &in6->sin6_addr.s6_addr, 16) == -1)
 				return (-1);
