@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMAnalysis
 NOPIC=
@@ -11,7 +11,7 @@ SRCS=	AliasAnalysis.cpp \
 	AliasAnalysisEvaluator.cpp \
 	AliasAnalysisSummary.cpp \
 	AliasSetTracker.cpp \
-	Analysis.cpp \
+	AnalysisAnalysis.cpp \
 	AssumptionCache.cpp \
 	BasicAliasAnalysis.cpp \
 	BlockFrequencyInfo.cpp \
@@ -96,9 +96,14 @@ SRCS=	AliasAnalysis.cpp \
 	ValueTracking.cpp \
 	VectorUtils.cpp
 
+AnalysisAnalysis.cpp:
+	ln -s ${LLVM_SRCS}/lib/Analysis/Analysis.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/Analysis
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= AnalysisAnalysis.cpp
 
 .include <bsd.lib.mk>

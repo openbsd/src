@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2019/02/25 14:40:16 jsg Exp $
+# $OpenBSD: Makefile,v 1.9 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -37,7 +37,7 @@ SRCS=	AMDGPUMetadata.cpp \
 	Debug.cpp \
 	DebugCounter.cpp \
 	DeltaAlgorithm.cpp \
-	Error.cpp \
+	SupportError.cpp \
 	ErrorHandling.cpp \
 	FileUtilities.cpp \
 	FileOutputBuffer.cpp \
@@ -57,7 +57,7 @@ SRCS=	AMDGPUMetadata.cpp \
 	LineIterator.cpp \
 	Locale.cpp \
 	LockFileManager.cpp \
-	LowLevelType.cpp \
+	SupportLowLevelType.cpp \
 	ManagedStatic.cpp \
 	MathExtras.cpp \
 	MemoryBuffer.cpp \
@@ -122,9 +122,17 @@ SRCS=	AMDGPUMetadata.cpp \
 	WithColor.cpp \
 	xxhash.cpp
 
+SupportError.cpp:
+	ln -s ${LLVM_SRCS}/lib/Support/Error.cpp $@
+
+SupportLowLevelType.cpp:
+	ln -s ${LLVM_SRCS}/lib/Support/LowLevelType.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/Support
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= SupportError.cpp SupportLowLevelType.cpp
 
 .include <bsd.lib.mk>

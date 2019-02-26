@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2019/02/25 14:40:16 jsg Exp $
+# $OpenBSD: Makefile,v 1.9 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMScalarOpts
 NOPIC=
@@ -64,7 +64,7 @@ SRCS=	ADCE.cpp \
 	Reassociate.cpp \
 	Reg2Mem.cpp \
 	RewriteStatepointsForGC.cpp \
-	SCCP.cpp \
+	ScalarSCCP.cpp \
 	SROA.cpp \
 	Scalar.cpp \
 	Scalarizer.cpp \
@@ -78,9 +78,14 @@ SRCS=	ADCE.cpp \
 	StructurizeCFG.cpp \
 	TailRecursionElimination.cpp
 
+ScalarSCCP.cpp:
+	ln -s ${LLVM_SRCS}/lib/Transforms/Scalar/SCCP.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Scalar
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= ScalarSCCP.cpp
 
 .include <bsd.lib.mk>

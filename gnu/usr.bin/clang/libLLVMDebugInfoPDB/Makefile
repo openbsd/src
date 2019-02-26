@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMDebugInfoPDB
 NOPIC=
@@ -12,7 +12,7 @@ SRCS=	DbiModuleDescriptor.cpp \
 	DbiModuleList.cpp \
 	DbiStream.cpp \
 	DbiStreamBuilder.cpp \
-	EnumTables.cpp \
+	DebugInfoPDBEnumTables.cpp \
 	GSIStreamBuilder.cpp \
 	GenericError.cpp \
 	GlobalsStream.cpp \
@@ -80,10 +80,15 @@ SRCS=	DbiModuleDescriptor.cpp \
 	TpiStreamBuilder.cpp \
 	UDTLayout.cpp \
 
+DebugInfoPDBEnumTables.cpp:
+	ln -s ${LLVM_SRCS}/lib/DebugInfo/PDB/Native/EnumTables.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/PDB
 .PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/PDB/Native
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= DebugInfoPDBEnumTables.cpp
 
 .include <bsd.lib.mk>

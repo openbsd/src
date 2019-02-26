@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMDebugInfoCodeView
 NOPIC=
@@ -25,7 +25,7 @@ SRCS=	AppendingTypeTableBuilder.cpp \
 	DebugSubsectionVisitor.cpp \
 	DebugSymbolRVASubsection.cpp \
 	DebugSymbolsSubsection.cpp \
-	EnumTables.cpp \
+	DebugInfoCodeViewEnumTables.cpp \
 	Formatters.cpp \
 	GlobalTypeTableBuilder.cpp \
 	LazyRandomTypeCollection.cpp \
@@ -46,9 +46,14 @@ SRCS=	AppendingTypeTableBuilder.cpp \
 	TypeStreamMerger.cpp \
 	TypeTableCollection.cpp
 
+DebugInfoCodeViewEnumTables.cpp:
+	ln -s ${LLVM_SRCS}/lib/DebugInfo/CodeView/EnumTables.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/CodeView
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= DebugInfoCodeViewEnumTables.cpp
 
 .include <bsd.lib.mk>

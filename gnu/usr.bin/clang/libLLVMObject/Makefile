@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMObject
 NOPIC=
@@ -14,7 +14,7 @@ SRCS=	Archive.cpp \
 	Decompressor.cpp \
 	ELF.cpp \
 	ELFObjectFile.cpp \
-	Error.cpp \
+	ObjectError.cpp \
 	IRObjectFile.cpp \
 	IRSymtab.cpp \
 	MachOObjectFile.cpp \
@@ -28,9 +28,14 @@ SRCS=	Archive.cpp \
 	WasmObjectFile.cpp \
 	WindowsResource.cpp
 
+ObjectError.cpp:
+	ln -s ${LLVM_SRCS}/lib/Object/Error.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/Object
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= ObjectError.cpp
 
 .include <bsd.lib.mk>

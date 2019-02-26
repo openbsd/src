@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2019/02/25 14:40:16 jsg Exp $
+# $OpenBSD: Makefile,v 1.7 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMCore
 NOPIC=
@@ -15,7 +15,7 @@ SRCS=	AsmWriter.cpp \
 	ConstantFold.cpp \
 	ConstantRange.cpp \
 	Constants.cpp \
-	Core.cpp \
+	CoreCore.cpp \
 	DIBuilder.cpp \
 	DataLayout.cpp \
 	DebugInfo.cpp \
@@ -59,6 +59,9 @@ SRCS=	AsmWriter.cpp \
 	ValueSymbolTable.cpp \
 	Verifier.cpp
 
+CoreCore.cpp:
+	ln -s ${LLVM_SRCS}/lib/IR/Core.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/IR
 
 Attributes.o: AttributesCompatFunc.inc
@@ -71,5 +74,7 @@ AttributesCompatFunc.inc: AttributesCompatFunc.td
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= CoreCore.cpp
 
 .include <bsd.lib.mk>

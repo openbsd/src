@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2019/02/25 14:40:16 jsg Exp $
+# $OpenBSD: Makefile,v 1.9 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMipo
 NOPIC=
@@ -36,7 +36,7 @@ SRCS=	ArgumentPromotion.cpp \
 	PartialInlining.cpp \
 	PassManagerBuilder.cpp \
 	PruneEH.cpp \
-	SCCP.cpp \
+	ipoSCCP.cpp \
 	SampleProfile.cpp \
 	StripDeadPrototypes.cpp \
 	StripSymbols.cpp \
@@ -44,9 +44,14 @@ SRCS=	ArgumentPromotion.cpp \
 	ThinLTOBitcodeWriter.cpp \
 	WholeProgramDevirt.cpp
 
+ipoSCCP.cpp:
+	ln -s ${LLVM_SRCS}/lib/Transforms/IPO/SCCP.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/IPO
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= ipoSCCP.cpp
 
 .include <bsd.lib.mk>

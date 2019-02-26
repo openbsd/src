@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/02/25 14:40:16 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMExecutionEngine
 NOPIC=
@@ -9,6 +9,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/ExecutionEngine
 .include <bsd.own.mk>
 SRCS=	Execution.cpp \
 	ExecutionEngine.cpp \
+	ExecutionEngineCore.cpp \
 	ExecutionEngineBindings.cpp \
 	ExecutionUtils.cpp \
 	ExternalFunctions.cpp \
@@ -32,7 +33,10 @@ SRCS=	Execution.cpp \
 	RuntimeDyldELFMips.cpp \
 	RuntimeDyldMachO.cpp \
 	SectionMemoryManager.cpp \
-	TargetSelect.cpp \
+	TargetSelect.cpp
+
+ExecutionEngineCore.cpp:
+	ln -s ${LLVM_SRCS}/lib/ExecutionEngine/Orc/Core.cpp $@
 
 .PATH:	${.CURDIR}/../../../llvm/lib/ExecutionEngine
 .PATH:	${.CURDIR}/../../../llvm/lib/ExecutionEngine/Interpreter
@@ -41,8 +45,9 @@ SRCS=	Execution.cpp \
 .PATH:	${.CURDIR}/../../../llvm/lib/ExecutionEngine/RuntimeDyld
 .PATH:	${.CURDIR}/../../../llvm/lib/ExecutionEngine/RuntimeDyld/Targets
 
-
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= ExecutionEngineCore.cpp
 
 .include <bsd.lib.mk>

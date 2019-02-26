@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2019/02/26 23:39:51 jsg Exp $
 
 LIB=	LLVMCodeGen
 NOPIC=
@@ -10,7 +10,7 @@ CPPFLAGS+=-I${LLVM_SRC}/include/llvm/CodeGen/PBQP
 .include <bsd.own.mk>
 SRCS=	AggressiveAntiDepBreaker.cpp \
 	AllocationOrder.cpp \
-	Analysis.cpp \
+	CodeGenAnalysis.cpp \
 	AtomicExpandPass.cpp \
 	BasicTargetTransformInfo.cpp \
 	BranchFolding.cpp \
@@ -67,7 +67,7 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	LiveVariables.cpp \
 	LocalStackSlotAllocation.cpp \
 	LoopTraversal.cpp \
-	LowLevelType.cpp \
+	CodeGenLowLevelType.cpp \
 	LowerEmuTLS.cpp \
 	MachineBasicBlock.cpp \
 	MachineBlockFrequencyInfo.cpp \
@@ -172,9 +172,17 @@ SRCS=	AggressiveAntiDepBreaker.cpp \
 	WinEHPrepare.cpp \
 	XRayInstrumentation.cpp
 
+CodeGenAnalysis.cpp:
+	ln -s ${LLVM_SRCS}/lib/CodeGen/Analysis.cpp $@
+
+CodeGenLowLevelType.cpp:
+	ln -s ${LLVM_SRCS}/lib/CodeGen/LowLevelType.cpp $@
+
 .PATH:	${.CURDIR}/../../../llvm/lib/CodeGen
 
 install:
 	@# Nothing here so far ...
+
+CLEANFILES+= CodeGenAnalysis.cpp CodeGenLowLevelType.cpp
 
 .include <bsd.lib.mk>
