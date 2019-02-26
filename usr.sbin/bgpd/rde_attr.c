@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.119 2019/02/26 10:49:15 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.120 2019/02/26 12:33:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1552,7 +1552,7 @@ community_ext_delete(struct rde_aspath *asp, struct filter_community *c,
 
 	if (community_ext_conv(c, peer, &community, &mask))
 		return;
-	if (mask != 0 && betoh64(mask) >> 56 == 0)
+	if (mask != 0 && be64toh(mask) >> 56 == 0)
 		check_type = 1;
 
 	attr = attr_optget(asp, ATTR_EXT_COMMUNITIES);
@@ -1565,7 +1565,7 @@ community_ext_delete(struct rde_aspath *asp, struct filter_community *c,
 		memcpy(&test, p + l, sizeof(community));
 		/* special handling of ext-community rt *, type is not known */
 		if (check_type) {
-			u_int8_t type = betoh64(test) >> 56;
+			u_int8_t type = be64toh(test) >> 56;
 			if (type != EXT_COMMUNITY_TRANS_TWO_AS &&
 			    type != EXT_COMMUNITY_TRANS_FOUR_AS &&
 			    type != EXT_COMMUNITY_TRANS_IPV4) {
@@ -1594,7 +1594,7 @@ community_ext_delete(struct rde_aspath *asp, struct filter_community *c,
 		memcpy(&test, p, sizeof(community));
 		/* special handling of ext-community rt *, type is not known */
 		if (check_type) {
-			u_int8_t type = betoh64(test) >> 56;
+			u_int8_t type = be64toh(test) >> 56;
 			if (type != EXT_COMMUNITY_TRANS_TWO_AS &&
 			    type != EXT_COMMUNITY_TRANS_FOUR_AS &&
 			    type != EXT_COMMUNITY_TRANS_IPV4) {
