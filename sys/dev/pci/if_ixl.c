@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.20 2019/02/24 22:49:31 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.21 2019/02/26 03:12:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -60,6 +60,7 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/task.h>
+#include <sys/syslog.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -1120,6 +1121,9 @@ struct ixl_softc {
 	unsigned int		 sc_tx_ring_ndescs;
 	unsigned int		 sc_rx_ring_ndescs;
 	unsigned int		 sc_nqueues;	/* 1 << sc_nqueues */
+
+	struct rwlock		 sc_cfg_lock;
+	unsigned int		 sc_dead;
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
@@ -1378,6 +1382,8 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t port, ari, func;
 	uint64_t phy_types = 0;
 	int tries;
+
+	rw_init(&sc->sc_cfg_lock, "ixlcfg");
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -1813,6 +1819,12 @@ ixl_up(struct ixl_softc *sc)
 	nqueues = ixl_nqueues(sc);
 	KASSERT(nqueues == 1); /* XXX */
 
+	rw_enter_write(&sc->sc_cfg_lock);
+	if (sc->sc_dead) {
+		rw_exit_write(&sc->sc_cfg_lock);
+		return (ENXIO);
+	}
+
 	/* allocation is the only thing that can fail, so do it up front */
 	for (i = 0; i < nqueues; i++) {
 		rxr = ixl_rxr_alloc(sc, i);
@@ -1892,6 +1904,8 @@ ixl_up(struct ixl_softc *sc)
 	ixl_wr(sc, I40E_PFINT_ITR0(1), 0x7a);
 	ixl_wr(sc, I40E_PFINT_ITR0(2), 0);
 
+	rw_exit_write(&sc->sc_cfg_lock);
+
 	return (ENETRESET);
 
 free:
@@ -1910,8 +1924,10 @@ free:
 		ixl_txr_free(sc, txr);
 		ixl_rxr_free(sc, rxr);
 	}
+	rw_exit_write(&sc->sc_cfg_lock);
 	return (rv);
 down:
+	rw_exit_write(&sc->sc_cfg_lock);
 	ixl_down(sc);
 	return (ETIMEDOUT);
 }
@@ -1967,7 +1983,11 @@ ixl_down(struct ixl_softc *sc)
 
 	nqueues = ixl_nqueues(sc);
 
+	rw_enter_write(&sc->sc_cfg_lock);
+
 	CLR(ifp->if_flags, IFF_RUNNING);
+
+	NET_UNLOCK();
 
 	/* mask interrupts */
 	reg = ixl_rd(sc, I40E_QINT_RQCTL(I40E_INTR_NOTX_QUEUE));
@@ -2016,15 +2036,10 @@ ixl_down(struct ixl_softc *sc)
 		txr = ifp->if_ifqs[i]->ifq_softc;
 
 		if (ixl_txr_disabled(sc, txr) != 0)
-			error = ETIMEDOUT;
+			goto die;
 
 		if (ixl_rxr_disabled(sc, rxr) != 0)
-			error = ETIMEDOUT;
-	}
-
-	if (error) {
-		printf("%s: failed to shut down rings\n", DEVNAME(sc));
-		return (error);
+			goto die;
 	}
 
 	for (i = 0; i < nqueues; i++) {
@@ -2044,7 +2059,15 @@ ixl_down(struct ixl_softc *sc)
 		ifp->if_ifqs[i]->ifq_softc =  NULL;
 	}
 
-	return (0);
+out:
+	rw_exit_write(&sc->sc_cfg_lock);
+	NET_LOCK();
+	return (error);
+die:
+	sc->sc_dead = 1;
+	log(LOG_CRIT, "%s: failed to shut down rings", DEVNAME(sc));
+	error = ETIMEDOUT;
+	goto out;
 }
 
 static struct ixl_tx_ring *
