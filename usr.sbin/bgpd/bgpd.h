@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.374 2019/02/21 11:17:22 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.375 2019/02/26 10:49:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -784,7 +784,7 @@ struct filter_community {
 		struct ext {
 			u_int32_t	data1;
 			u_int64_t	data2;
-			u_int8_t	type;
+			short		type;
 			u_int8_t	subtype;	/* if extended type */
 		} e;
 	}		c;
@@ -877,8 +877,10 @@ struct filter_peers {
 #define EXT_COMMUNITY_NON_TRANS_IPV4	0x41	/* IPv4 specific */
 #define EXT_COMMUNITY_NON_TRANS_FOUR_AS	0x42	/* 4 octet AS specific */
 #define EXT_COMMUNITY_NON_TRANS_OPAQUE	0x43	/* opaque ext community */
+#define EXT_COMMUNITY_UNKNOWN		-1
 
 /* BGP Origin Validation State Extended Community RFC8097 */
+#define EXT_COMMUNITY_SUBTYPE_OVS	0
 #define EXT_COMMUNITY_OVS_VALID		0
 #define EXT_COMMUNITY_OVS_NOTFOUND	1
 #define EXT_COMMUNITY_OVS_INVALID	2
@@ -888,7 +890,7 @@ struct filter_peers {
 #define EXT_COMMUNITY_FLAG_VALID	0x01
 
 struct ext_comm_pairs {
-	u_int8_t	type;
+	short		type;
 	u_int8_t	subtype;
 	const char	*subname;
 };
@@ -917,7 +919,7 @@ struct ext_comm_pairs {
 	{ EXT_COMMUNITY_TRANS_OPAQUE, 0x06, "ort" },		\
 	{ EXT_COMMUNITY_TRANS_OPAQUE, 0x0d, "defgw" },		\
 								\
-	{ EXT_COMMUNITY_NON_TRANS_OPAQUE, 0x00, "ovs" },	\
+	{ EXT_COMMUNITY_NON_TRANS_OPAQUE, EXT_COMMUNITY_SUBTYPE_OVS, "ovs" }, \
 								\
 	{ EXT_COMMUNITY_TRANS_EVPN, 0x00, "mac-mob" },		\
 	{ EXT_COMMUNITY_TRANS_EVPN, 0x01, "esi-lab" },		\
@@ -1269,7 +1271,7 @@ const char	*log_in6addr(const struct in6_addr *);
 const char	*log_sockaddr(struct sockaddr *, socklen_t);
 const char	*log_as(u_int32_t);
 const char	*log_rd(u_int64_t);
-const char	*log_ext_subtype(u_int8_t, u_int8_t);
+const char	*log_ext_subtype(short, u_int8_t);
 const char	*log_shutcomm(const char *);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);

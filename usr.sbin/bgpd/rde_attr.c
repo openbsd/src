@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.118 2019/02/15 09:55:21 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.119 2019/02/26 10:49:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1155,26 +1155,42 @@ aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 
 static int
 community_extract(struct filter_community *fc, struct rde_peer *peer,
-     int field, int large, u_int32_t *value)
+     int field, u_int32_t *value)
 {
 	u_int32_t data;
 	u_int8_t flag;
 	switch (field) {
 	case 1:
 		flag = fc->dflag1;
-		if (large)
-			data = fc->c.l.data1;
-		else
+		switch (fc->type) {
+		case COMMUNITY_TYPE_BASIC:
 			data = fc->c.b.data1;
+			break;
+		case COMMUNITY_TYPE_LARGE:
+			data = fc->c.l.data1;
+			break;
+		case COMMUNITY_TYPE_EXT:
+			data = fc->c.e.data1;
+			break;
+		}
 		break;
 	case 2:
 		flag = fc->dflag2;
-		if (large)
-			data = fc->c.l.data2;
-		else
+		switch (fc->type) {
+		case COMMUNITY_TYPE_BASIC:
 			data = fc->c.b.data2;
+			break;
+		case COMMUNITY_TYPE_LARGE:
+			data = fc->c.l.data2;
+			break;
+		case COMMUNITY_TYPE_EXT:
+			data = fc->c.e.data2;
+			break;
+		}
 		break;
 	case 3:
+		if (fc->type != COMMUNITY_TYPE_LARGE)
+			fatalx("%s: bad field %d", __func__, field);
 		flag = fc->dflag3;
 		data = fc->c.l.data3;
 		break;
@@ -1194,7 +1210,7 @@ community_extract(struct filter_community *fc, struct rde_peer *peer,
 	default:
 		*value = data;
 	}
-	if (!large && *value > USHRT_MAX)
+	if (fc->type == COMMUNITY_TYPE_BASIC && *value > USHRT_MAX)
 		return -1;
 	return 0;
 }
@@ -1203,9 +1219,23 @@ static int
 community_ext_matchone(struct filter_community *c, struct rde_peer *peer,
     u_int64_t community)
 {
+	u_int32_t	val;
 	u_int64_t	com, mask;
 
 	community = be64toh(community);
+
+	if (c->dflag3 == COMMUNITY_ANY)
+		/* handle 'ext-community *', etc */
+		return (1);
+
+	/* special handling of ext-community rt * since type is not known */
+	if (c->dflag1 == COMMUNITY_ANY && c->c.e.type == -1) {
+		u_int8_t type = community >> 56;
+		if (type == EXT_COMMUNITY_TRANS_TWO_AS ||
+		    type == EXT_COMMUNITY_TRANS_FOUR_AS ||
+		    type == EXT_COMMUNITY_TRANS_IPV4)
+			goto subtype;
+	}
 
 	com = (u_int64_t)c->c.e.type << 56;
 	mask = 0xffULL << 56;
@@ -1214,9 +1244,11 @@ community_ext_matchone(struct filter_community *c, struct rde_peer *peer,
 
 	switch (c->c.e.type & EXT_COMMUNITY_VALUE) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
-	case EXT_COMMUNITY_TRANS_IPV4:
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
+	case EXT_COMMUNITY_TRANS_IPV4:
 	case EXT_COMMUNITY_TRANS_OPAQUE:
+	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
+subtype:
 		com = (u_int64_t)c->c.e.subtype << 48;
 		mask = 0xffULL << 48;
 		if ((com & mask) != (community & mask))
@@ -1230,39 +1262,48 @@ community_ext_matchone(struct filter_community *c, struct rde_peer *peer,
 		return (0);
 	}
 
+	if (c->dflag1 == COMMUNITY_ANY)
+		/* handle 'ext-community rt *', etc */
+		return (1);
 
 	switch (c->c.e.type & EXT_COMMUNITY_VALUE) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
-		com = (u_int64_t)c->c.e.data1 << 32;
+		if (community_extract(c, peer, 1, &val) == -1)
+			return (0);
+		com = (u_int64_t)val << 32;
 		mask = 0xffffULL << 32;
 		if ((com & mask) != (community & mask))
 			return (0);
 
-		com = c->c.e.data2;
+		if (community_extract(c, peer, 2, &val) == -1)
+			return (0);
+		com = val;
 		mask = 0xffffffffULL;
-		if ((com & mask) == (community & mask))
-			return (1);
 		break;
 	case EXT_COMMUNITY_TRANS_IPV4:
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
-		com = (u_int64_t)c->c.e.data1 << 16;
+		if (community_extract(c, peer, 1, &val) == -1)
+			return (0);
+		com = (u_int64_t)val << 16;
 		mask = 0xffffffffULL << 16;
 		if ((com & mask) != (community & mask))
 			return (0);
 
-		com = c->c.e.data2;
+		if (community_extract(c, peer, 2, &val) == -1)
+			return (0);
+		com = val;
 		mask = 0xffff;
-		if ((com & mask) == (community & mask))
-			return (1);
 		break;
 	case EXT_COMMUNITY_TRANS_OPAQUE:
+	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 		com = c->c.e.data2;
 		mask = EXT_COMMUNITY_OPAQUE_MAX;
-		if ((com & mask) == (community & mask))
-			return (1);
 		break;
 	}
 
+	if (c->dflag2 == COMMUNITY_ANY ||
+	    (com & mask) == (community & mask))
+		return (1);
 	return (0);
 }
 
@@ -1280,8 +1321,8 @@ community_match(struct rde_aspath *asp, struct filter_community *fc,
 		/* no communities, no match */
 		return (0);
 
-	if (community_extract(fc, peer, 1, 0, &as) == -1 ||
-	    community_extract(fc, peer, 2, 0, &type) == -1)
+	if (community_extract(fc, peer, 1, &as) == -1 ||
+	    community_extract(fc, peer, 2, &type) == -1)
 		/* can't match community */
 		return (0);
 
@@ -1311,8 +1352,8 @@ community_set(struct rde_aspath *asp, struct filter_community *fc,
 	u_int8_t	 f = ATTR_OPTIONAL|ATTR_TRANSITIVE;
 
 	if (fc->dflag1 == COMMUNITY_ANY || fc->dflag2 == COMMUNITY_ANY ||
-	    community_extract(fc, peer, 1, 0, &as) == -1 ||
-	    community_extract(fc, peer, 2, 0, &type) == -1)
+	    community_extract(fc, peer, 1, &as) == -1 ||
+	    community_extract(fc, peer, 2, &type) == -1)
 		/* bad community */
 		return (0);
 
@@ -1370,8 +1411,8 @@ community_delete(struct rde_aspath *asp, struct filter_community *fc,
 		/* no attr nothing to do */
 		return;
 
-	if (community_extract(fc, peer, 1, 0, &as) == -1 ||
-	    community_extract(fc, peer, 2, 0, &type) == -1)
+	if (community_extract(fc, peer, 1, &as) == -1 ||
+	    community_extract(fc, peer, 2, &type) == -1)
 		/* bad community, nothing to do */
 		return;
 
@@ -1460,7 +1501,7 @@ community_ext_set(struct rde_aspath *asp, struct filter_community *c,
 	unsigned int	 i, ncommunities = 0;
 	u_int8_t	 f = ATTR_OPTIONAL|ATTR_TRANSITIVE;
 
-	if (community_ext_conv(c, peer, &community))
+	if (community_ext_conv(c, peer, &community, NULL))
 		return (0);
 
 	attr = attr_optget(asp, ATTR_EXT_COMMUNITIES);
@@ -1504,12 +1545,15 @@ community_ext_delete(struct rde_aspath *asp, struct filter_community *c,
 {
 	struct attr	*attr;
 	u_int8_t	*p, *n;
-	u_int64_t	 community;
+	u_int64_t	 community, mask, test;
 	u_int16_t	 l, len = 0;
 	u_int8_t	 f;
+	int		 check_type = 0;
 
-	if (community_ext_conv(c, peer, &community))
+	if (community_ext_conv(c, peer, &community, &mask))
 		return;
+	if (mask != 0 && betoh64(mask) >> 56 == 0)
+		check_type = 1;
 
 	attr = attr_optget(asp, ATTR_EXT_COMMUNITIES);
 	if (attr == NULL)
@@ -1518,7 +1562,19 @@ community_ext_delete(struct rde_aspath *asp, struct filter_community *c,
 
 	p = attr->data;
 	for (l = 0; l < attr->len; l += sizeof(community)) {
-		if (memcmp(&community, p + l, sizeof(community)) == 0)
+		memcpy(&test, p + l, sizeof(community));
+		/* special handling of ext-community rt *, type is not known */
+		if (check_type) {
+			u_int8_t type = betoh64(test) >> 56;
+			if (type != EXT_COMMUNITY_TRANS_TWO_AS &&
+			    type != EXT_COMMUNITY_TRANS_FOUR_AS &&
+			    type != EXT_COMMUNITY_TRANS_IPV4) {
+				/* no match */
+				len += sizeof(community);
+				continue;
+			}
+		}
+		if ((test & mask) == (community & mask))
 			/* match */
 			continue;
 		len += sizeof(community);
@@ -1535,9 +1591,23 @@ community_ext_delete(struct rde_aspath *asp, struct filter_community *c,
 	p = attr->data;
 	for (l = 0; l < len && p < attr->data + attr->len;
 	    p += sizeof(community)) {
-		if (memcmp(&community, p, sizeof(community)) == 0)
+		memcpy(&test, p, sizeof(community));
+		/* special handling of ext-community rt *, type is not known */
+		if (check_type) {
+			u_int8_t type = betoh64(test) >> 56;
+			if (type != EXT_COMMUNITY_TRANS_TWO_AS &&
+			    type != EXT_COMMUNITY_TRANS_FOUR_AS &&
+			    type != EXT_COMMUNITY_TRANS_IPV4) {
+				/* no match */
+				memcpy(n + l, p, sizeof(community));
+				l += sizeof(community);
+				continue;
+			}
+		}
+		if ((test & mask) == (community & mask)) {
 			/* match */
 			continue;
+		}
 		memcpy(n + l, p, sizeof(community));
 		l += sizeof(community);
 	}
@@ -1551,25 +1621,65 @@ community_ext_delete(struct rde_aspath *asp, struct filter_community *c,
 
 int
 community_ext_conv(struct filter_community *c, struct rde_peer *peer,
-    u_int64_t *community)
+    u_int64_t *community, u_int64_t *mask)
 {
-	u_int64_t	com;
+	u_int64_t	com = 0, m = 0;
+	u_int32_t	val;
 
+	if (c->dflag3 == COMMUNITY_ANY) {
+		m = ~m;
+		goto done;
+	}
+
+	/* special handling of ext-community rt * since type is not known */
+	if (c->dflag1 == COMMUNITY_ANY && c->c.e.type == -1) {
+		m |= 0xffULL << 56;
+		goto subtype;
+	}
 	com = (u_int64_t)c->c.e.type << 56;
 	switch (c->c.e.type & EXT_COMMUNITY_VALUE) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
+	case EXT_COMMUNITY_TRANS_FOUR_AS:
+	case EXT_COMMUNITY_TRANS_IPV4:
+	case EXT_COMMUNITY_TRANS_OPAQUE:
+subtype:
 		com |= (u_int64_t)c->c.e.subtype << 48;
-		com |= (u_int64_t)c->c.e.data1 << 32;
-		com |= c->c.e.data2 & 0xffffffff;
+		if (c->dflag1 == COMMUNITY_ANY) {
+			m |= 0xffffffffffffULL;
+			goto done;
+		}
+		break;
+	}
+
+	switch (c->c.e.type & EXT_COMMUNITY_VALUE) {
+	case EXT_COMMUNITY_TRANS_TWO_AS:
+		if (community_extract(c, peer, 1, &val) == -1)
+			return (-1);
+		com |= (u_int64_t)val << 32;
+
+		if (c->dflag2 == COMMUNITY_ANY) {
+			m |= 0xffffffffULL;
+			goto done;
+		}
+		if (community_extract(c, peer, 2, &val) == -1)
+			return (-1);
+		com |= (u_int64_t)val & 0xffffffffULL;
 		break;
 	case EXT_COMMUNITY_TRANS_IPV4:
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
-		com |= (u_int64_t)c->c.e.subtype << 48;
-		com |= (u_int64_t)c->c.e.data1 << 16;
-		com |= c->c.e.data2 & 0xffff;
+		if (community_extract(c, peer, 1, &val) == -1)
+			return (-1);
+		com |= (u_int64_t)val << 16;
+
+		if (c->dflag2 == COMMUNITY_ANY) {
+			m |= 0xffffULL;
+			goto done;
+		}
+		if (community_extract(c, peer, 2, &val) == -1)
+			return (-1);
+		com |= (u_int64_t)val & 0xffffULL;
 		break;
 	case EXT_COMMUNITY_TRANS_OPAQUE:
-		com |= (u_int64_t)c->c.e.subtype << 48;
 		com |= c->c.e.data2 & EXT_COMMUNITY_OPAQUE_MAX;
 		break;
 	default:
@@ -1577,9 +1687,45 @@ community_ext_conv(struct filter_community *c, struct rde_peer *peer,
 		break;
 	}
 
+done:
 	*community = htobe64(com);
+	if (mask)
+		*mask = htobe64(~m);
+	else if (m != 0)
+		return (-1);
 
 	return (0);
+}
+
+u_char *
+community_ext_delete_non_trans(u_char *data, u_int16_t len, u_int16_t *newlen)
+{
+	u_int8_t	*ext = data, *newdata;
+	u_int16_t	l, nlen = 0;
+
+	for (l = 0; l < len; l += sizeof(u_int64_t)) {
+		if (!(ext[l] & EXT_COMMUNITY_TRANSITIVE))
+			nlen += sizeof(u_int64_t);
+	}
+
+	if (nlen == 0) {
+		*newlen = 0;
+		return NULL;
+	}
+
+	newdata = malloc(nlen);
+	if (newdata == NULL)
+		fatal("%s", __func__);
+
+	for (l = 0, nlen = 0; l < len; l += sizeof(u_int64_t)) {
+		if (!(ext[l] & EXT_COMMUNITY_TRANSITIVE)) {
+			memcpy(newdata + nlen, ext + l, sizeof(u_int64_t));
+			nlen += sizeof(u_int64_t);
+		}
+	}
+
+	*newlen = nlen;
+	return newdata;
 }
 
 struct wire_largecommunity {
@@ -1603,9 +1749,9 @@ community_large_match(struct rde_aspath *asp, struct filter_community *fc,
 		/* no communities, no match */
 		return (0);
 
-	if (community_extract(fc, peer, 1, 1, &as) == -1 ||
-	    community_extract(fc, peer, 2, 1, &ld1) == -1 ||
-	    community_extract(fc, peer, 3, 1, &ld2) == -1)
+	if (community_extract(fc, peer, 1, &as) == -1 ||
+	    community_extract(fc, peer, 2, &ld1) == -1 ||
+	    community_extract(fc, peer, 3, &ld2) == -1)
 		/* can't match community */
 		return (0);
 	
@@ -1639,9 +1785,9 @@ community_large_set(struct rde_aspath *asp, struct filter_community *fc,
 
 	if (fc->dflag1 == COMMUNITY_ANY || fc->dflag2 == COMMUNITY_ANY ||
 	    fc->dflag3 == COMMUNITY_ANY ||
-	    community_extract(fc, peer, 1, 1, &as) == -1 ||
-	    community_extract(fc, peer, 2, 1, &ld1) == -1 ||
-	    community_extract(fc, peer, 3, 1, &ld2) == -1)
+	    community_extract(fc, peer, 1, &as) == -1 ||
+	    community_extract(fc, peer, 2, &ld1) == -1 ||
+	    community_extract(fc, peer, 3, &ld2) == -1)
 		/* can't match community */
 		return (0);
 
@@ -1704,9 +1850,9 @@ community_large_delete(struct rde_aspath *asp, struct filter_community *fc,
 		/* no attr nothing to do */
 		return;
 
-	if (community_extract(fc, peer, 1, 1, &as) == -1 ||
-	    community_extract(fc, peer, 2, 1, &ld1) == -1 ||
-	    community_extract(fc, peer, 3, 1, &ld2) == -1)
+	if (community_extract(fc, peer, 1, &as) == -1 ||
+	    community_extract(fc, peer, 2, &ld1) == -1 ||
+	    community_extract(fc, peer, 3, &ld2) == -1)
 		/* can't match community */
 		return;
 
@@ -1754,35 +1900,4 @@ community_large_delete(struct rde_aspath *asp, struct filter_community *fc,
 	attr_free(asp, attr);
 	attr_optadd(asp, f, ATTR_LARGE_COMMUNITIES, n, len);
 	free(n);
-}
-
-u_char *
-community_ext_delete_non_trans(u_char *data, u_int16_t len, u_int16_t *newlen)
-{
-	u_int8_t	*ext = data, *newdata;
-	u_int16_t	l, nlen = 0;
-
-	for (l = 0; l < len; l += sizeof(u_int64_t)) {
-		if (!(ext[l] & EXT_COMMUNITY_TRANSITIVE))
-			nlen += sizeof(u_int64_t);
-	}
-
-	if (nlen == 0) {
-		*newlen = 0;
-		return NULL;
-	}
-
-	newdata = malloc(nlen);
-	if (newdata == NULL)
-		fatal("%s", __func__);
-
-	for (l = 0, nlen = 0; l < len; l += sizeof(u_int64_t)) {
-		if (!(ext[l] & EXT_COMMUNITY_TRANSITIVE)) {
-			memcpy(newdata + nlen, ext + l, sizeof(u_int64_t));
-			nlen += sizeof(u_int64_t);
-		}
-	}
-
-	*newlen = nlen;
-	return newdata;
 }

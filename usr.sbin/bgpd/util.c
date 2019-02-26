@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.46 2019/02/21 11:17:22 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.47 2019/02/26 10:49:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -146,13 +146,13 @@ const struct ext_comm_pairs iana_ext_comms[] = IANA_EXT_COMMUNITIES;
 /* NOTE: this function does not check if the type/subtype combo is
  * actually valid. */
 const char *
-log_ext_subtype(u_int8_t type, u_int8_t subtype)
+log_ext_subtype(short type, u_int8_t subtype)
 {
 	static char etype[6];
 	const struct ext_comm_pairs *cp;
 
 	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
-		if (type == cp->type && subtype == cp->subtype)
+		if ((type == cp->type || type == -1) && subtype == cp->subtype)
 			return (cp->subname);
 	}
 	snprintf(etype, sizeof(etype), "[%u]", subtype);

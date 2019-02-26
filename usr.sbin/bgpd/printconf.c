@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.131 2019/02/18 11:43:44 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.132 2019/02/26 10:49:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -200,34 +200,66 @@ print_community(struct filter_community *c)
 		}
 		break;
 	case COMMUNITY_TYPE_EXT:
+		if (c->dflag3 == COMMUNITY_ANY) {
+			printf("* * ");
+			break;
+		}
 		printf("%s ", log_ext_subtype(c->c.e.type, c->c.e.subtype));
+		if (c->dflag1 == COMMUNITY_ANY) {
+			printf("* ");
+			break;
+		}
+
 		switch (c->c.e.type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
-			printf("%s:%llu ", log_as(c->c.e.data1),
-			    (unsigned long long)c->c.e.data2);
+			if (c->dflag1 == COMMUNITY_NEIGHBOR_AS)
+				printf("neighbor-as:");
+			else if (c->dflag1 == COMMUNITY_LOCAL_AS)
+				printf("local-as:");
+			else
+				printf("%s:", log_as(c->c.e.data1));
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
 			addr.s_addr = htonl(c->c.e.data1);
-			printf("%s:%llu ", inet_ntoa(addr),
-			    (unsigned long long)c->c.e.data2);
+			printf("%s:", inet_ntoa(addr));
+			break;
+		}
+
+		switch (c->c.e.type) {
+		case EXT_COMMUNITY_TRANS_TWO_AS:
+		case EXT_COMMUNITY_TRANS_FOUR_AS:
+		case EXT_COMMUNITY_TRANS_IPV4:
+			if (c->dflag2 == COMMUNITY_ANY)
+				printf("* ");
+			else if (c->dflag2 == COMMUNITY_NEIGHBOR_AS)
+				printf("neighbor-as ");
+			else if (c->dflag2 == COMMUNITY_LOCAL_AS)
+				printf("local-as ");
+			else
+				printf("%llu ",
+				    (unsigned long long)c->c.e.data2);
 			break;
 		case EXT_COMMUNITY_TRANS_OPAQUE:
 		case EXT_COMMUNITY_TRANS_EVPN:
 			printf("0x%llx ", (unsigned long long)c->c.e.data2);
 			break;
 		case EXT_COMMUNITY_NON_TRANS_OPAQUE:
-			switch (c->c.e.data2) {
-			case EXT_COMMUNITY_OVS_VALID:
-				printf("valid ");
-				break;
-			case EXT_COMMUNITY_OVS_NOTFOUND:
-				printf("not-found ");
-				break;
-			case EXT_COMMUNITY_OVS_INVALID:
-				printf("invalid ");
+			if (c->c.e.subtype == EXT_COMMUNITY_SUBTYPE_OVS) {
+				switch (c->c.e.data2) {
+				case EXT_COMMUNITY_OVS_VALID:
+					printf("valid ");
+					break;
+				case EXT_COMMUNITY_OVS_NOTFOUND:
+					printf("not-found ");
+					break;
+				case EXT_COMMUNITY_OVS_INVALID:
+					printf("invalid ");
+					break;
+				}
 				break;
 			}
+			printf("0x%llx ", (unsigned long long)c->c.e.data2);
 			break;
 		default:
 			printf("0x%llx ", (unsigned long long)c->c.e.data2);

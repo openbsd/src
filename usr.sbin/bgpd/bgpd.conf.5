@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.185 2019/02/11 17:45:59 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.186 2019/02/26 10:49:15 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 11 2019 $
+.Dd $Mdocdate: February 26 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1354,14 +1354,9 @@ and
 .Ar local
 may be set to
 .Sq *
-to do wildcard matching.
-Both
-.Ar as-number
-and
-.Ar local
-may be set to
+to do wildcard matching,
 .Ic neighbor-as ,
-which is expanded to the current neighbor remote AS number,
+which is expanded to the current neighbor remote AS number, or
 .Ic local-as ,
 which is expanded to the locally assigned AS number.
 .Pp
@@ -1379,7 +1374,7 @@ which is expanded to the locally assigned AS number.
 .Xc
 .It Xo
 .Ic ext-community
-.Ar ovs
+.Ic ovs
 .Pq Ic valid | not-found | invalid
 .Xc
 This rule applies only to
@@ -1391,6 +1386,26 @@ Extended Communities are specified by a
 .Ar subtype
 and normally two values, a globally unique part (e.g. the AS number) and a
 local part.
+Both
+.Ar as-number
+and
+.Ar local
+may be set to
+.Ic neighbor-as ,
+which is expanded to the current neighbor remote AS number, or
+.Ic local-as ,
+which is expanded to the locally assigned AS number.
+Wildcard matching is supported for
+.Ar local ,
+.Ar numvalue
+and
+.Ar subtype .
+If wildcard matching is used on the 
+.Ar subtype
+then
+.Ar numvalue
+also needs to be set to
+.Sq * .
 See also the
 .Sx ATTRIBUTE SET
 section for further information about the encoding.
@@ -1689,7 +1704,7 @@ to do wildcard matching.
 .Xc
 .It Xo
 .Ic ext-community Op Ar delete
-.Ar ovs
+.Ic ovs
 .Pq Ic valid | not-found | invalid
 .Xc
 Set or delete the
@@ -1736,6 +1751,22 @@ vrfri    VRF Route Import
 .Pp
 Not all type and subtype value pairs are allowed by IANA and the parser
 will ensure that no invalid combination is created.
+.Pp
+For
+.Cm delete ,
+.Ar subtype ,
+.Ar numvalue ,
+or
+.Ar local ,
+may be set to
+.Sq *
+to do wildcard matching.
+If wildcard matching is used on the 
+.Ar subtype
+then
+.Ar numvalue
+also needs to be set to
+.Sq * .
 .Pp
 .It Ic localpref Ar number
 Set the

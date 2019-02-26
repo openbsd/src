@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.379 2019/02/18 16:31:46 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.380 2019/02/26 10:49:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1100,6 +1100,7 @@ l3vpnopts	: RD STRING {
 			struct filter_community	ext;
 			u_int64_t		rd;
 
+			memset(&ext, 0, sizeof(ext));
 			if (parseextcommunity(&ext, "rt", $2) == -1) {
 				free($2);
 				YYERROR;
@@ -1109,7 +1110,7 @@ l3vpnopts	: RD STRING {
 			 * RD is almost encode like an ext-community,
 			 * but only almost so convert here.
 			 */
-			if (community_ext_conv(&ext, 0, &rd)) {
+			if (community_ext_conv(&ext, NULL, &rd, NULL)) {
 				yyerror("bad encoding of rd");
 				YYERROR;
 			}
@@ -3598,7 +3599,7 @@ parsesubtype(char *name, int *type, int *subtype)
 }
 
 static int
-parseextvalue(int type, char *s, u_int32_t *v)
+parseextvalue(int type, char *s, u_int32_t *v, u_int8_t *flag)
 {
 	const char 	*errstr;
 	char		*p;
@@ -3607,6 +3608,14 @@ parseextvalue(int type, char *s, u_int32_t *v)
 
 	if (type != -1) {
 		/* nothing */
+	} else if (strcmp(s, "neighbor-as") == 0) {
+		*flag = COMMUNITY_NEIGHBOR_AS;
+		*v = 0;
+		return EXT_COMMUNITY_TRANS_FOUR_AS;
+	} else if (strcmp(s, "local-as") == 0) {
+		*flag = COMMUNITY_LOCAL_AS;
+		*v = 0;
+		return EXT_COMMUNITY_TRANS_FOUR_AS;
 	} else if ((p = strchr(s, '.')) == NULL) {
 		/* AS_PLAIN number (4 or 2 byte) */
 		strtonum(s, 0, USHRT_MAX, &errstr);
@@ -3672,12 +3681,16 @@ int
 parseextcommunity(struct filter_community *c, char *t, char *s)
 {
 	const struct ext_comm_pairs *cp;
-	const char 	*errstr;
 	u_int64_t	 ullval;
-	u_int32_t	 uval;
+	u_int32_t	 uval, uval2;
 	char		*p, *ep;
 	int		 type = 0, subtype = 0;
 
+	if (strcmp(t, "*") == 0 && strcmp(s, "*") == 0) {
+		c->type = COMMUNITY_TYPE_EXT;
+		c->dflag3 = COMMUNITY_ANY;
+		return (0);
+	}
 	if (parsesubtype(t, &type, &subtype) == 0) {
 		yyerror("Bad ext-community unknown type");
 		return (-1);
@@ -3688,33 +3701,39 @@ parseextcommunity(struct filter_community *c, char *t, char *s)
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
 	case EXT_COMMUNITY_TRANS_IPV4:
 	case -1:
+		if (strcmp(s, "*") == 0) {
+			c->dflag1 = COMMUNITY_ANY;
+			break;
+		}
 		if ((p = strchr(s, ':')) == NULL) {
 			yyerror("Bad ext-community %s", s);
 			return (-1);
 		}
 		*p++ = '\0';
-		if ((type = parseextvalue(type, s, &uval)) == -1)
+		if ((type = parseextvalue(type, s, &uval, &c->dflag1)) == -1)
 			return (-1);
 		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
-			ullval = strtonum(p, 0, UINT_MAX, &errstr);
+			if (getcommunity(p, 1, &uval2, &c->dflag2) == -1)
+				return (-1);
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
-			ullval = strtonum(p, 0, USHRT_MAX, &errstr);
+			if (getcommunity(p, 0, &uval2, &c->dflag2) == -1)
+				return (-1);
 			break;
 		default:
 			fatalx("parseextcommunity: unexpected result");
 		}
-		if (errstr) {
-			yyerror("Bad ext-community %s is %s", p, errstr);
-			return (-1);
-		}
 		c->c.e.data1 = uval;
-		c->c.e.data2 = ullval;
+		c->c.e.data2 = uval2;
 		break;
 	case EXT_COMMUNITY_TRANS_OPAQUE:
 	case EXT_COMMUNITY_TRANS_EVPN:
+		if (strcmp(s, "*") == 0) {
+			c->dflag1 = COMMUNITY_ANY;
+			break;
+		}
 		errno = 0;
 		ullval = strtoull(s, &ep, 0);
 		if (s[0] == '\0' || *ep != '\0') {
@@ -3728,21 +3747,33 @@ parseextcommunity(struct filter_community *c, char *t, char *s)
 		c->c.e.data2 = ullval;
 		break;
 	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
-		if (strcmp(s, "valid") == 0)
-			c->c.e.data2 = EXT_COMMUNITY_OVS_VALID;
-		else if (strcmp(s, "invalid") == 0)
-			c->c.e.data2 = EXT_COMMUNITY_OVS_INVALID;
-		else if (strcmp(s, "not-found") == 0)
-			c->c.e.data2 = EXT_COMMUNITY_OVS_NOTFOUND;
-		else {
-			yyerror("Bad ext-community %s", s);
-			return (-1);
+		if (subtype == EXT_COMMUNITY_SUBTYPE_OVS) {
+			if (strcmp(s, "valid") == 0) {
+				c->c.e.data2 = EXT_COMMUNITY_OVS_VALID;
+				break;
+			} else if (strcmp(s, "invalid") == 0) {
+				c->c.e.data2 = EXT_COMMUNITY_OVS_INVALID;
+				break;
+			} else if (strcmp(s, "not-found") == 0) {
+				c->c.e.data2 = EXT_COMMUNITY_OVS_NOTFOUND;
+				break;
+			} else if (strcmp(s, "*") == 0) {
+				c->dflag1 = COMMUNITY_ANY;
+				break;
+			}
 		}
-		break;
+		yyerror("Bad ext-community %s", s);
+		return (-1);
 	}
 	c->c.e.type = type;
 	c->c.e.subtype = subtype;
 
+	/* special handling of ext-community rt * since type is not known */
+	if (c->dflag1 == COMMUNITY_ANY && c->c.e.type == -1) {
+		c->type = COMMUNITY_TYPE_EXT;
+		return (0);
+	}
+		
 	/* verify type/subtype combo */
 	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
 		if (cp->type == type && cp->subtype == subtype) {
