@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.37 2018/11/05 17:05:50 anton Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.38 2019/02/26 22:24:41 deraadt Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ struct ktr_pledge {
 /*
  * trace flags (also in p_traceflags)
  */
-#define KTRFAC_ROOT	0x80000000	/* root set this trace */
+#define KTRFAC_ROOT	0x80000000U	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 
 #ifndef	_KERNEL
