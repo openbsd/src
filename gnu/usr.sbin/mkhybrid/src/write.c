@@ -1545,7 +1545,7 @@ static int file_gen()
 		/* exit with the error */
 		if (*hce->error)
 		    fprintf(stderr, "%s\n", hce->error);
-		err(1, hfs_error);
+		err(1, "%s", hfs_error);
 	    }
 	    else
 	    {
@@ -1575,7 +1575,7 @@ static int file_gen()
       if (gen_mac_label(&mac_boot)) {
 	if (*hce->error)
 	    fprintf(stderr, "%s\n", hce->error);
-	err(1, hfs_error);
+	err(1, "%s", hfs_error);
       }
     }
 
