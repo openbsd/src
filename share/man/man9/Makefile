@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.292 2019/02/23 04:54:25 dlg Exp $
+#	$OpenBSD: Makefile,v 1.293 2019/02/26 14:28:20 visa Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -32,6 +32,7 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	rssadapt.9 route.9 rt_ifa_add.9 rt_timer_add.9 rtalloc.9 rtable_add.9 \
 	rtlabel_id2name.9 rtrequest.9 rwlock.9 SRPL_EMPTY_LOCKED.9 SipHash24.9 \
 	sensor_attach.9 sigio_init.9 \
+	SMR_LIST_INIT.9 SMR_PTR_GET.9 smr_call.9 \
 	spl.9 srp_enter.9 srpl_rc_init.9 startuphook_establish.9 \
 	socreate.9 sosplice.9 strcmp.9 style.9 syscall.9 sysctl_int.9 \
 	task_add.9 tc_init.9 tfind.9 thread_fork.9 \
