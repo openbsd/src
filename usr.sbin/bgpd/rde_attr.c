@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.120 2019/02/26 12:33:40 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.121 2019/02/26 12:46:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1172,6 +1172,8 @@ community_extract(struct filter_community *fc, struct rde_peer *peer,
 		case COMMUNITY_TYPE_EXT:
 			data = fc->c.e.data1;
 			break;
+		default:
+			fatalx("%s: unknown type %d", __func__, fc->type);
 		}
 		break;
 	case 2:
@@ -1186,6 +1188,8 @@ community_extract(struct filter_community *fc, struct rde_peer *peer,
 		case COMMUNITY_TYPE_EXT:
 			data = fc->c.e.data2;
 			break;
+		default:
+			fatalx("%s: unknown type %d", __func__, fc->type);
 		}
 		break;
 	case 3:
@@ -1203,12 +1207,15 @@ community_extract(struct filter_community *fc, struct rde_peer *peer,
 		if (peer == NULL)
 			return -1;
 		*value = peer->conf.remote_as;
+		break;
 	case COMMUNITY_LOCAL_AS:
 		if (peer == NULL)
 			return -1;
 		*value = peer->conf.local_as;
+		break;
 	default:
 		*value = data;
+		break;
 	}
 	if (fc->type == COMMUNITY_TYPE_BASIC && *value > USHRT_MAX)
 		return -1;
