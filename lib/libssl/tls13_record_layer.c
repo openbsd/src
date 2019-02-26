@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.7 2019/02/25 16:52:34 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.8 2019/02/26 17:38:39 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -221,10 +221,10 @@ tls13_record_layer_process_alert(struct tls13_record_layer *rl)
 	 */
 	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
 		rl->read_closed = 1;
-		ret = TLS13_IO_SUCCESS;
+		ret = TLS13_IO_EOF;
 	} else if (alert_desc == SSL_AD_USER_CANCELLED) {
 		/* Ignored at the record layer. */
-		ret = TLS13_IO_SUCCESS;
+		ret = TLS13_IO_WANT_POLLIN;
 	} else if (alert_level == SSL3_AL_FATAL) {
 		rl->read_closed = 1;
 		rl->write_closed = 1;
