@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.21 2019/02/26 03:12:34 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.22 2019/02/26 03:17:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2742,8 +2742,8 @@ ixl_rxfill(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 		m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES + ETHER_ALIGN);
 		if (m == NULL)
 			break;
+		m->m_data += (m->m_ext.ext_size - (MCLBYTES + ETHER_ALIGN));
 		m->m_len = m->m_pkthdr.len = MCLBYTES + ETHER_ALIGN;
-		m_adj(m, ETHER_ALIGN);
 
 		map = rxm->rxm_map;
 
