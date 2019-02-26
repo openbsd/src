@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.5 2019/02/23 15:00:44 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.6 2019/02/26 17:36:30 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -141,6 +141,8 @@ tls13_legacy_wire_read(SSL *ssl, uint8_t *buf, size_t len)
 			return TLS13_IO_WANT_POLLIN;
 		if (BIO_should_write(ssl->rbio))
 			return TLS13_IO_WANT_POLLOUT;
+		if (n == 0)
+			return TLS13_IO_EOF;
 
 		return TLS13_IO_FAILURE;
 	}
