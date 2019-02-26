@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.202 2019/01/10 12:44:54 mestre Exp $ */
+/* $OpenBSD: netcat.c,v 1.203 2019/02/26 17:32:47 jsing Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1267,9 +1267,11 @@ drainbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
 	ssize_t n;
 	ssize_t adjust;
 
-	if (tls)
+	if (tls) {
 		n = tls_write(tls, buf, *bufpos);
-	else {
+		if (n == -1)
+			errx(1, "tls write failed (%s)", tls_error(tls));
+	} else {
 		n = write(fd, buf, *bufpos);
 		/* don't treat EAGAIN, EINTR as error */
 		if (n == -1 && (errno == EAGAIN || errno == EINTR))
@@ -1291,9 +1293,11 @@ fillbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
 	size_t num = BUFSIZE - *bufpos;
 	ssize_t n;
 
-	if (tls)
+	if (tls) {
 		n = tls_read(tls, buf + *bufpos, num);
-	else {
+		if (n == -1)
+			errx(1, "tls read failed (%s)", tls_error(tls));
+	} else {
 		n = read(fd, buf + *bufpos, num);
 		/* don't treat EAGAIN, EINTR as error */
 		if (n == -1 && (errno == EAGAIN || errno == EINTR))
