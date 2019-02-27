@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.207 2019/02/26 08:51:15 kn Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.208 2019/02/27 01:09:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2167,11 +2167,10 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	if (chan > IEEE80211_CHAN_MAX)
 		chan = IEEE80211_CHAN_MAX;
 
-	if (ni == ic->ic_bss) {
+	/* Fix current channel. */
+	if (ni == ic->ic_bss)
 		bss_chan = ni->ni_chan;
-		/* Fix current channel. */
-		ni->ni_chan = &ic->ic_channels[chan];
-	}
+	ni->ni_chan = &ic->ic_channels[chan];
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
