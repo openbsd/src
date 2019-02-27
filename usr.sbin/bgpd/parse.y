@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.380 2019/02/26 10:49:15 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.381 2019/02/27 04:16:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -194,7 +194,7 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
-%token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT
+%token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
 %token	RDE RIB EVALUATE IGNORE COMPARE
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
@@ -1372,50 +1372,11 @@ peeropts	: REMOTEAS as4number	{
 		| ANNOUNCE AS4BYTE yesno {
 			curpeer->conf.capabilities.as4byte = $3;
 		}
-		| ANNOUNCE SELF {
-			yyerror("support for the 'announce self' directive has"
-			    " been removed. Urgent configuration review "
-			    "required!");
-			YYERROR;
+		| EXPORT NONE {
+			curpeer->conf.export_type = EXPORT_NONE;
 		}
-		| ANNOUNCE STRING {
-			if (!strcmp($2, "all"))
-				logit(LOG_ERR, "%s:%d: %s", file->name,
-				    yylval.lineno,
-				    "warning: 'announce all' is deprecated");
-			else if (!strcmp($2, "none")) {
-				logit(LOG_ERR, "%s:%d: %s", file->name,
-				    yylval.lineno,
-				    "warning: 'announce none' is deprecated, "
-				    "use 'export none' instead");
-				curpeer->conf.export_type = EXPORT_NONE;
-			} else if (!strcmp($2, "default-route")) {
-				logit(LOG_ERR, "%s:%d: %s", file->name,
-				    yylval.lineno,
-				    "warning: 'announce default-route' is "
-				    "deprecated, use 'export default-route' "
-				    "instead");
-				curpeer->conf.export_type =
-				    EXPORT_DEFAULT_ROUTE;
-			} else {
-				yyerror("syntax error: unknown '%s'", $2);
-				free($2);
-				YYERROR;
-			}
-			free($2);
-		}
-		| EXPORT STRING {
-			if (!strcmp($2, "none"))
-				curpeer->conf.export_type = EXPORT_NONE;
-			else if (!strcmp($2, "default-route"))
-				curpeer->conf.export_type =
-				    EXPORT_DEFAULT_ROUTE;
-			else {
-				yyerror("invalid export type");
-				free($2);
-				YYERROR;
-			}
-			free($2);
+		| EXPORT DEFAULTROUTE {
+			curpeer->conf.export_type = EXPORT_DEFAULT_ROUTE;
 		}
 		| ENFORCE NEIGHBORAS yesno {
 			if ($3)
@@ -2820,6 +2781,7 @@ lookup(char *s)
 		{ "compare",		COMPARE},
 		{ "connect-retry",	CONNECTRETRY},
 		{ "connected",		CONNECTED},
+		{ "default-route",	DEFAULTROUTE},
 		{ "delete",		DELETE},
 		{ "demote",		DEMOTE},
 		{ "deny",		DENY},
