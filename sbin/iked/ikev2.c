@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.167 2019/02/26 18:05:22 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.168 2019/02/27 06:33:56 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -4585,7 +4585,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	 *  (Ni | Nr) is used as a PRF key, otherwise a "key" buffer
 	 *  is used and PRF is performed on the concatenation of DH
 	 *  exchange result and nonces (g^ir | Ni | Nr).  See sections
-	 *  2.14 and 2.18 of RFC5996 for more information.
+	 *  2.14 and 2.18 of RFC7296 for more information.
 	 */
 
 	/*
