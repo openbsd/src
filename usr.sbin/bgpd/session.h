@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.132 2019/02/19 09:13:23 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.133 2019/02/27 04:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -208,8 +208,8 @@ struct peer {
 		enum auth_method	method;
 		u_int8_t		established;
 	} auth;
-	struct sockaddr_storage	 sa_local;
-	struct sockaddr_storage	 sa_remote;
+	struct bgpd_addr	 local;
+	struct bgpd_addr	 remote;
 	struct peer_timer_head	 timers;
 	struct msgbuf		 wbuf;
 	struct ibuf_read	*rbuf;
@@ -224,6 +224,8 @@ struct peer {
 	enum session_state	 prev_state;
 	u_int16_t		 short_as;
 	u_int16_t		 holdtime;
+	u_int16_t		 local_port;
+	u_int16_t		 remote_port;
 	u_int8_t		 depend_ok;
 	u_int8_t		 demoted;
 	u_int8_t		 passive;

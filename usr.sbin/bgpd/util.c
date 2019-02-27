@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.47 2019/02/26 10:49:15 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.48 2019/02/27 04:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -866,7 +866,7 @@ addr2sa(struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
 }
 
 void
-sa2addr(struct sockaddr *sa, struct bgpd_addr *addr)
+sa2addr(struct sockaddr *sa, struct bgpd_addr *addr, u_int16_t *port)
 {
 	struct sockaddr_in		*sa_in = (struct sockaddr_in *)sa;
 	struct sockaddr_in6		*sa_in6 = (struct sockaddr_in6 *)sa;
@@ -876,11 +876,15 @@ sa2addr(struct sockaddr *sa, struct bgpd_addr *addr)
 	case AF_INET:
 		addr->aid = AID_INET;
 		memcpy(&addr->v4, &sa_in->sin_addr, sizeof(addr->v4));
+		if (port)
+			*port = ntohs(sa_in->sin_port);
 		break;
 	case AF_INET6:
 		addr->aid = AID_INET6;
 		memcpy(&addr->v6, &sa_in6->sin6_addr, sizeof(addr->v6));
 		addr->scope_id = sa_in6->sin6_scope_id; /* I hate v6 */
+		if (port)
+			*port = ntohs(sa_in6->sin6_port);
 		break;
 	}
 }

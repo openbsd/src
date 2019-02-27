@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.373 2019/02/18 09:43:57 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.374 2019/02/27 04:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1263,16 +1263,17 @@ session_setup_socket(struct peer *p)
 void
 session_tcp_established(struct peer *peer)
 {
-	socklen_t	len;
+	struct sockaddr_storage	ss;
+	socklen_t		len;
 
-	len = sizeof(peer->sa_local);
-	if (getsockname(peer->fd, (struct sockaddr *)&peer->sa_local,
-	    &len) == -1)
+	len = sizeof(ss);
+	if (getsockname(peer->fd, (struct sockaddr *)&ss, &len) == -1)
 		log_warn("getsockname");
-	len = sizeof(peer->sa_remote);
-	if (getpeername(peer->fd, (struct sockaddr *)&peer->sa_remote,
-	    &len) == -1)
+	sa2addr((struct sockaddr *)&ss, &peer->local, &peer->local_port);
+	len = sizeof(ss);
+	if (getpeername(peer->fd, (struct sockaddr *)&ss, &len) == -1)
 		log_warn("getpeername");
+	sa2addr((struct sockaddr *)&ss, &peer->remote, &peer->remote_port);
 }
 
 void
@@ -3068,7 +3069,7 @@ getpeerbyip(struct sockaddr *ip)
 	struct peer	*p, *newpeer, *loose = NULL;
 	u_int32_t	 id;
 
-	sa2addr(ip, &addr);
+	sa2addr(ip, &addr, NULL);
 
 	/* we might want a more effective way to find peers by IP */
 	for (p = peers; p != NULL; p = p->next)
@@ -3150,7 +3151,7 @@ session_template_clone(struct peer *p, struct sockaddr *ip, u_int32_t id,
 	struct bgpd_addr	remote_addr;
 
 	if (ip)
-		sa2addr(ip, &remote_addr);
+		sa2addr(ip, &remote_addr, NULL);
 	else
 		memcpy(&remote_addr, &p->conf.remote_addr, sizeof(remote_addr));
 
@@ -3226,8 +3227,8 @@ session_up(struct peer *p)
 	    &p->conf, sizeof(p->conf)) == -1)
 		fatalx("imsg_compose error");
 
-	sa2addr((struct sockaddr *)&p->sa_local, &sup.local_addr);
-	sa2addr((struct sockaddr *)&p->sa_remote, &sup.remote_addr);
+	sup.local_addr = p->local;
+	sup.remote_addr = p->remote;
 
 	sup.remote_bgpid = p->remote_bgpid;
 	sup.short_as = p->short_as;

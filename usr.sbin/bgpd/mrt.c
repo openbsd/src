@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.92 2019/02/14 13:13:33 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.93 2019/02/27 04:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -712,15 +712,15 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 	DUMP_SHORT(*bp, type);
 	DUMP_SHORT(*bp, subtype);
 
-	switch (peer->sa_local.ss_family) {
-	case AF_INET:
+	switch (peer->local.aid) {
+	case AID_INET:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 		    subtype == BGP4MP_MESSAGE_AS4)
 			len += MRT_BGP4MP_ET_AS4_IPv4_HEADER_SIZE;
 		else
 			len += MRT_BGP4MP_ET_IPv4_HEADER_SIZE;
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		if (subtype == BGP4MP_STATE_CHANGE_AS4 ||
 		    subtype == BGP4MP_MESSAGE_AS4)
 			len += MRT_BGP4MP_ET_AS4_IPv6_HEADER_SIZE;
@@ -755,36 +755,30 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, u_int16_t type,
 
 	DUMP_SHORT(*bp, /* ifindex */ 0);
 
-	switch (peer->sa_local.ss_family) {
-	case AF_INET:
+	switch (peer->local.aid) {
+	case AID_INET:
 		DUMP_SHORT(*bp, AFI_IPv4);
 		if (!swap)
-			DUMP_NLONG(*bp, ((struct sockaddr_in *)
-			    &peer->sa_local)->sin_addr.s_addr);
-		DUMP_NLONG(*bp,
-		    ((struct sockaddr_in *)&peer->sa_remote)->sin_addr.s_addr);
+			DUMP_NLONG(*bp, peer->local.v4.s_addr);
+		DUMP_NLONG(*bp, peer->remote.v4.s_addr);
 		if (swap)
-			DUMP_NLONG(*bp, ((struct sockaddr_in *)
-			    &peer->sa_local)->sin_addr.s_addr);
+			DUMP_NLONG(*bp, peer->local.v4.s_addr);
 		break;
-	case AF_INET6:
+	case AID_INET6:
 		DUMP_SHORT(*bp, AFI_IPv6);
 		if (!swap)
-			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
-			    &peer->sa_local)->sin6_addr,
+			if (ibuf_add(*bp, &peer->local.v6,
 			    sizeof(struct in6_addr)) == -1) {
 				log_warn("mrt_dump_hdr_se: ibuf_add error");
 				goto fail;
 			}
-		if (ibuf_add(*bp,
-		    &((struct sockaddr_in6 *)&peer->sa_remote)->sin6_addr,
+		if (ibuf_add(*bp, &peer->remote.v6,
 		    sizeof(struct in6_addr)) == -1) {
 			log_warn("mrt_dump_hdr_se: ibuf_add error");
 			goto fail;
 		}
 		if (swap)
-			if (ibuf_add(*bp, &((struct sockaddr_in6 *)
-			    &peer->sa_local)->sin6_addr,
+			if (ibuf_add(*bp, &peer->local.v6,
 			    sizeof(struct in6_addr)) == -1) {
 				log_warn("mrt_dump_hdr_se: ibuf_add error");
 				goto fail;

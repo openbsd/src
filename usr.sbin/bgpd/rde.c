@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.463 2019/02/14 10:34:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.464 2019/02/27 04:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3366,7 +3366,7 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 			if (ifa->ifa_addr->sa_family ==
 			    match->ifa_addr->sa_family)
 				ifa = match;
-			sa2addr(ifa->ifa_addr, &peer->local_v4_addr);
+			sa2addr(ifa->ifa_addr, &peer->local_v4_addr, NULL);
 			break;
 		}
 	}
@@ -3387,7 +3387,7 @@ peer_localaddrs(struct rde_peer *peer, struct bgpd_addr *laddr)
 			    &((struct sockaddr_in6 *)ifa->
 			    ifa_addr)->sin6_addr))
 				continue;
-			sa2addr(ifa->ifa_addr, &peer->local_v6_addr);
+			sa2addr(ifa->ifa_addr, &peer->local_v6_addr, NULL);
 			break;
 		}
 	}

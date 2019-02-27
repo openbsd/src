@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.375 2019/02/26 10:49:15 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.376 2019/02/27 04:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1303,7 +1303,7 @@ int		 afi2aid(u_int16_t, u_int8_t, u_int8_t *);
 sa_family_t	 aid2af(u_int8_t);
 int		 af2aid(sa_family_t, u_int8_t, u_int8_t *);
 struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t, socklen_t *);
-void		 sa2addr(struct sockaddr *, struct bgpd_addr *);
+void		 sa2addr(struct sockaddr *, struct bgpd_addr *, u_int16_t *);
 const char *	 get_baudrate(unsigned long long, char *);
 
 static const char * const log_procnames[] = {

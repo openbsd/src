@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.83 2019/02/18 09:58:19 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.84 2019/02/27 04:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -367,7 +367,7 @@ host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(s, NULL, &hints, &res) == 0) {
 		*len = res->ai_family == AF_INET6 ? 128 : 32;
-		sa2addr(res->ai_addr, h);
+		sa2addr(res->ai_addr, h, NULL);
 		freeaddrinfo(res);
 	} else {	/* ie. for 10/8 parsing */
 		if ((bits = inet_net_pton(AF_INET, s, &h->v4, sizeof(h->v4))) == -1)
