@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.91 2019/02/18 21:10:25 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.92 2019/02/27 04:34:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -944,7 +944,7 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(word, "0", &hints, &r) == 0) {
-		sa2addr(r->ai_addr, addr);
+		sa2addr(r->ai_addr, addr, NULL);
 		freeaddrinfo(r);
 		return (1);
 	}

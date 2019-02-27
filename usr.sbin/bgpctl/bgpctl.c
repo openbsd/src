@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.233 2019/02/25 11:51:58 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.234 2019/02/27 04:34:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
-#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -657,7 +656,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 	struct peer		*p;
 	struct ctl_timer	*t;
 	struct in_addr		 ina;
-	char			 buf[NI_MAXHOST], pbuf[NI_MAXSERV], *s;
+	char			*s;
 	int			 hascapamp = 0;
 	u_int8_t		 i;
 
@@ -759,25 +758,11 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 			if (errstr)
 				printf("  Last error: %s\n\n", errstr);
 		} else {
-			if (getnameinfo((struct sockaddr *)&p->sa_local,
-			    (socklen_t)p->sa_local.ss_len,
-			    buf, sizeof(buf), pbuf, sizeof(pbuf),
-			    NI_NUMERICHOST | NI_NUMERICSERV)) {
-				strlcpy(buf, "(unknown)", sizeof(buf));
-				strlcpy(pbuf, "", sizeof(pbuf));
-			}
-			printf("  Local host:  %20s, Local port:  %5s\n", buf,
-			    pbuf);
+			printf("  Local host:  %20s, Local port:  %5u\n",
+			    log_addr(&p->local), p->local_port);
 
-			if (getnameinfo((struct sockaddr *)&p->sa_remote,
-			    (socklen_t)p->sa_remote.ss_len,
-			    buf, sizeof(buf), pbuf, sizeof(pbuf),
-			    NI_NUMERICHOST | NI_NUMERICSERV)) {
-				strlcpy(buf, "(unknown)", sizeof(buf));
-				strlcpy(pbuf, "", sizeof(pbuf));
-			}
-			printf("  Remote host: %20s, Remote port: %5s\n", buf,
-			    pbuf);
+			printf("  Remote host: %20s, Remote port: %5u\n",
+			    log_addr(&p->remote), p->remote_port);
 			printf("\n");
 		}
 		break;
