@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.48 2019/02/19 10:17:09 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.49 2019/02/27 04:10:35 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1514,11 +1514,16 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 	    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
 	    IEEE80211_FC0_TYPE_DATA) {
+		int rtsthres = ic->ic_rtsthreshold;
 		enum ieee80211_htprot htprot;
-		
+
+		if (ni->ni_flags & IEEE80211_NODE_HT)
+			rtsthres = ieee80211_mira_get_rts_threshold(&an->mn,
+			    ic, ni, totlen);
 		htprot = (ic->ic_bss->ni_htop1 & IEEE80211_HTOP1_PROT_MASK);
+
 		/* NB: Group frames are sent using CCK in 802.11b/g. */
-		if (totlen > ic->ic_rtsthreshold) {
+		if (totlen > rtsthres) {
 			ds->ds_ctl0 |= AR_TXC0_RTS_ENABLE;
 		} else if (((ic->ic_flags & IEEE80211_F_USEPROT) &&
 		    athn_rates[ridx[0]].phy == IEEE80211_T_OFDM) ||

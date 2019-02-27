@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.13 2019/01/23 10:08:49 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.14 2019/02/27 04:10:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -85,6 +85,9 @@ int	ieee80211_mira_valid_tx_mcs(struct ieee80211com *, int);
 uint32_t ieee80211_mira_valid_rates(struct ieee80211com *,
 	    struct ieee80211_node *);
 uint32_t ieee80211_mira_mcs_below(struct ieee80211_mira_node *, int, int);
+void	ieee80211_mira_set_rts_threshold(struct ieee80211_mira_node *,
+	    struct ieee80211com *, struct ieee80211_node *);
+void	ieee80211_mira_reset_collision_stats(struct ieee80211_mira_node *);
 
 /* We use fixed point arithmetic with 64 bit integers. */
 #define MIRA_FP_SHIFT	21
@@ -309,7 +312,7 @@ ieee80211_mira_ack_rate(struct ieee80211_node *ni)
 {
 	/* 
 	 * Assume the ACK was sent at a mandatory ERP OFDM rate.
-	 * In the worst case, the firmware has retried at non-HT rates,
+	 * In the worst case, the driver has retried at non-HT rates,
 	 * so for MCS 0 assume we didn't actually send an OFDM frame
 	 * and ACKs arrived at a basic rate.
 	 */
@@ -347,11 +350,12 @@ ieee80211_mira_toverhead(struct ieee80211_mira_node *mn,
 		(ic->ic_htcaps & IEEE80211_HTCAP_CBW20_40))
 		rts = 1;
 	else
-		rts = (mn->ampdu_size > ic->ic_rtsthreshold);
+		rts = (mn->ampdu_size > ieee80211_mira_get_rts_threshold(mn,
+		    ic, ni, mn->ampdu_size));
 
 	if (rts) {
 		/* Assume RTS/CTS were sent at a basic rate. */
-		rate = ieee80211_mira_best_basic_rate(ni);
+		rate = ieee80211_min_basic_rate(ic);
 		overhead += ieee80211_mira_legacy_txtime(MIRA_RTSLEN, rate, ic);
 		overhead += ieee80211_mira_legacy_txtime(MIRA_CTSLEN, rate, ic);
 	}
@@ -723,6 +727,7 @@ ieee80211_mira_probe_done(struct ieee80211_mira_node *mn)
 {
 	ieee80211_mira_cancel_timeouts(mn);
 	ieee80211_mira_reset_driver_stats(mn);
+	ieee80211_mira_reset_collision_stats(mn);
 	mn->probing = IEEE80211_MIRA_NOT_PROBING;
 	mn->probed_rates = 0;
 	mn->candidate_rates = 0;
@@ -1021,6 +1026,103 @@ ieee80211_mira_mcs_below(struct ieee80211_mira_node *mn, int mcs, int sgi)
 	return mcs_mask;
 }
 
+/*
+ * Constants involved in detecting suspected frame collisions.
+ * See section 5.2 of MiRA paper
+ */
+#define MIRA_COLLISION_LOSS_PERCENTAGE	10	/* from MiRA paper */
+#define MIRA_COLLISION_DETECTED		3	/* from MiRA paper */
+
+/*
+ * XXX The paper's algorithm assumes aggregated frames. This is particularly
+ * important for the detection of consecutive frame collisions which indicate
+ * high competition for air time. Because we do not yet support Tx aggregation,
+ * we run the algorithm over the result of several frames instead.
+ * We also aggregate retries across all frames and act upon a percentage of
+ * retried frames, rather than acting on retries seen for one aggregated frame.
+ *
+ * The collision window size (number of frames sent) needs to be short to
+ * ensure our detection of consecutive collisions remains somewhat accurate.
+ * We really have no idea how much time passes between frames in the window!
+ * The good news is that users will only care about collision detection during
+ * a transmit burst anyway, and we have this case more or less covered.
+ */
+#define MIRA_COLLISION_MIN_FRAMES	6	/* XXX magic number */
+#define MIRA_COLLISION_RETRY_PERCENTAGE	60	/* XXX magic number */
+
+/* Set RTS threshold based on suspected collision from other STAs. */
+void
+ieee80211_mira_set_rts_threshold(struct ieee80211_mira_node *mn,
+    struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	uint16_t rtsthreshold = mn->rts_threshold;
+	uint32_t loss, retry;
+
+	/* Update collision window stats. */
+	mn->ifwnd_frames += mn->frames;
+	mn->ifwnd_retries += mn->retries;
+	mn->ifwnd_txfail += mn->txfail;
+	if (mn->ifwnd_frames < MIRA_COLLISION_MIN_FRAMES)
+		return; /* not enough frames yet */
+
+	/* Check whether the loss pattern indicates frame collisions. */
+	loss = (mn->ifwnd_txfail * 100) / mn->ifwnd_frames;
+	retry = (mn->ifwnd_retries * 100) / mn->ifwnd_frames;
+	if (retry > MIRA_COLLISION_RETRY_PERCENTAGE &&
+	    loss < MIRA_COLLISION_LOSS_PERCENTAGE) {
+		if (mn->ifwnd == 0) {
+			/* First frame collision confirmed. */
+			mn->ifwnd = MIRA_COLLISION_DETECTED;
+		} else if (mn->ifwnd == MIRA_COLLISION_DETECTED) {
+			/* Successive frame collision confirmed. Use RTS. */
+			rtsthreshold = IEEE80211_RTS_DEFAULT;
+		}
+	} else {
+		if (mn->ifwnd > 0)
+			mn->ifwnd--;
+		if (mn->ifwnd == 0)
+			rtsthreshold = IEEE80211_RTS_MAX;
+	}
+
+	mn->rts_threshold = rtsthreshold;
+	ieee80211_mira_reset_collision_stats(mn);
+}
+
+int
+ieee80211_mira_get_rts_threshold(struct ieee80211_mira_node *mn,
+    struct ieee80211com *ic, struct ieee80211_node *ni, size_t framelen)
+{
+	int rtsrate = ieee80211_min_basic_rate(ic);
+	uint64_t txtime, rtsoverhead;
+	/* Magic number from MiRA paper ("cost/benefit ratio"). */
+	static const uint64_t k = MIRA_FP_1 + (MIRA_FP_1 / 2); /* 1.5 */
+
+	if (mn->probing || mn->rts_threshold >= IEEE80211_RTS_MAX)
+		return IEEE80211_RTS_MAX;
+
+	/* Use RTS only if potential gains outweigh overhead. */
+	txtime = ieee80211_mira_ht_txtime(framelen, ni->ni_txmcs,
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan),
+	    (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0);
+	rtsoverhead = ieee80211_mira_legacy_txtime(MIRA_RTSLEN, rtsrate, ic);
+	rtsoverhead += ieee80211_mira_legacy_txtime(MIRA_CTSLEN, rtsrate, ic);
+	/* convert to fixed-point */
+	txtime <<= MIRA_FP_SHIFT;
+	rtsoverhead <<= MIRA_FP_SHIFT;
+	if (txtime >= MIRA_FP_MUL(k, rtsoverhead))
+		return mn->rts_threshold;
+
+	return IEEE80211_RTS_MAX;
+}
+
+void
+ieee80211_mira_reset_collision_stats(struct ieee80211_mira_node *mn)
+{
+	mn->ifwnd_frames = 0;
+	mn->ifwnd_retries = 0;
+	mn->ifwnd_txfail = 0;
+}
+
 void
 ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
     struct ieee80211_node *ni)
@@ -1065,6 +1167,7 @@ ieee80211_mira_choose(struct ieee80211_mira_node *mn, struct ieee80211com *ic,
 		splx(s);
 		return;
 	} else {
+		ieee80211_mira_set_rts_threshold(mn, ic, ni);
 		ieee80211_mira_reset_driver_stats(mn);
 		ieee80211_mira_schedule_probe_timers(mn, ni);
 	}
@@ -1125,7 +1228,9 @@ ieee80211_mira_node_init(struct ieee80211_mira_node *mn)
 {
 	memset(mn, 0, sizeof(*mn));
 	mn->agglen = 1;
+	mn->rts_threshold = IEEE80211_RTS_MAX;
 	ieee80211_mira_reset_goodput_stats(mn);
+	ieee80211_mira_reset_collision_stats(mn);
 
 	timeout_set(&mn->probe_to[IEEE80211_MIRA_PROBE_TO_UP],
 	    ieee80211_mira_probe_timeout_up, mn);

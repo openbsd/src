@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.208 2019/02/27 01:09:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.209 2019/02/27 04:10:38 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3068,8 +3068,13 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	/* Check if frame must be protected using RTS/CTS or CTS-to-self. */
 	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		int rtsthres = ic->ic_rtsthreshold;
+		if (ni->ni_flags & IEEE80211_NODE_HT)
+			rtsthres = ieee80211_mira_get_rts_threshold(&wn->mn,
+			    ic, ni, totlen + IEEE80211_CRC_LEN);
+
 		/* NB: Group frames are sent using CCK in 802.11b/g/n (2GHz). */
-		if (totlen + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
+		if (totlen + IEEE80211_CRC_LEN > rtsthres) {
 			flags |= IWN_TX_NEED_RTS;
 		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
 		    ridx >= IWN_RIDX_OFDM6) {

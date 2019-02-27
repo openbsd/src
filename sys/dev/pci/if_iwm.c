@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.235 2019/02/24 09:37:18 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.236 2019/02/27 04:10:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4216,7 +4216,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	bus_dma_segment_t *seg;
 	uint8_t tid, type;
 	int i, totlen, err, pad;
-	int hdrlen2;
+	int hdrlen2, rtsthres = ic->ic_rtsthreshold;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
@@ -4292,9 +4292,13 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		flags |= IWM_TX_CMD_FLG_ACK;
 	}
 
+	if (ni->ni_flags & IEEE80211_NODE_HT)
+		rtsthres = ieee80211_mira_get_rts_threshold(&in->in_mn, ic, ni,
+		    totlen + IEEE80211_CRC_LEN);
+
 	if (type == IEEE80211_FC0_TYPE_DATA &&
 	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    (totlen + IEEE80211_CRC_LEN > ic->ic_rtsthreshold ||
+	    (totlen + IEEE80211_CRC_LEN > rtsthres ||
 	    (ic->ic_flags & IEEE80211_F_USEPROT)))
 		flags |= IWM_TX_CMD_FLG_PROT_REQUIRE;
 
