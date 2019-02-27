@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsm.c,v 1.9 2017/05/30 17:22:00 yasuoka Exp $ */
+/*	$OpenBSD: fsm.c,v 1.10 2019/02/27 04:52:19 denis Exp $ */
 
 /**@file
  * This file was adapted from NetBSD:/usr/src/usr.sbin/pppd/pppd/fsm.c
@@ -52,7 +52,6 @@
 #include <time.h>
 #include <event.h>
 #include "debugutil.h"
-#include "slist.h"
 #include "npppd.h"
 #include "fsm.h"
 

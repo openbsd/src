@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
+/*	$OpenBSD: ipcp.c,v 1.6 2019/02/27 04:52:19 denis Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -32,7 +32,7 @@
 /*
  * RFC 1332, 1877
  */
-/* $Id: ipcp.c,v 1.5 2012/09/18 13:14:08 yasuoka Exp $ */
+/* $Id: ipcp.c,v 1.6 2019/02/27 04:52:19 denis Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -46,7 +46,6 @@
 #include <event.h>
 
 #include "debugutil.h"
-#include "slist.h"
 #include "npppd.h"
 
 #ifdef	IPCP_DEBUG

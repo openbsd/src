@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.15 2016/03/22 04:11:27 yasuoka Exp $ */
+/*	$OpenBSD: chap.c,v 1.16 2019/02/27 04:52:19 denis Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -36,7 +36,7 @@
  * </ul></p>
  */
 /* RFC 1994, 2433 */
-/* $Id: chap.c,v 1.15 2016/03/22 04:11:27 yasuoka Exp $ */
+/* $Id: chap.c,v 1.16 2019/02/27 04:52:19 denis Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -54,7 +54,6 @@
 #include <md5.h>
 #include <vis.h>
 
-#include "slist.h"
 #include "npppd.h"
 #include "ppp.h"
 

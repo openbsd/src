@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_auth.c,v 1.20 2017/08/11 16:41:47 goda Exp $ */
+/*	$OpenBSD: npppd_auth.c,v 1.21 2019/02/27 04:52:19 denis Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file authentication realm */
-/* $Id: npppd_auth.c,v 1.20 2017/08/11 16:41:47 goda Exp $ */
+/* $Id: npppd_auth.c,v 1.21 2019/02/27 04:52:19 denis Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -44,7 +44,6 @@
 #include <errno.h>
 
 #include "debugutil.h"
-#include "slist.h"
 #include "npppd_local.h"
 #include "npppd_auth.h"
 #include "net_utils.h"

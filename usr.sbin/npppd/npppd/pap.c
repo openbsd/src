@@ -1,4 +1,4 @@
-/*	$OpenBSD: pap.c,v 1.10 2016/03/22 04:11:27 yasuoka Exp $ */
+/*	$OpenBSD: pap.c,v 1.11 2019/02/27 04:52:19 denis Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pap.c,v 1.10 2016/03/22 04:11:27 yasuoka Exp $ */
+/* $Id: pap.c,v 1.11 2019/02/27 04:52:19 denis Exp $ */
 /**@file
  * This file provides Password Authentication Protocol (PAP) handlers.
  * @author Yasuoka Masahiko
@@ -46,7 +46,6 @@
 #include <errno.h>
 #include <vis.h>
 
-#include "slist.h"
 #include "npppd.h"
 #include "ppp.h"
 

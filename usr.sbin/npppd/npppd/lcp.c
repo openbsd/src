@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.17 2017/05/30 17:22:00 yasuoka Exp $ */
+/*	$OpenBSD: lcp.c,v 1.18 2019/02/27 04:52:19 denis Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: lcp.c,v 1.17 2017/05/30 17:22:00 yasuoka Exp $ */
+/* $Id: lcp.c,v 1.18 2019/02/27 04:52:19 denis Exp $ */
 /**@file
  * This file provides LCP related functions.
  *<pre>
@@ -45,7 +45,6 @@
 #include <event.h>
 #include <ctype.h>
 
-#include "slist.h"
 #include "npppd.h"
 #include "ppp.h"
 #include "psm-opt.h"
