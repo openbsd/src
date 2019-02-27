@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: md5.sh,v 1.1 2019/02/20 22:17:14 benno Exp $
+#	$OpenBSD: md5.sh,v 1.2 2019/02/27 05:41:32 benno Exp $
 
 set -e
 
@@ -62,6 +62,11 @@ route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.md5.rdomain2.conf
 
 sleep 3
+echo debuging
+route -T ${RDOMAIN1} exec bgpctl neigh RDOMAIN2 clear
+route -T ${RDOMAIN2} exec bgpctl neigh RDOMAIN1 clear
+sleep 20
+tail -25 /var/log/daemon
 
 echo test1
 route -T ${RDOMAIN1} exec bgpctl sh sum | \
