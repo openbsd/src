@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.6 2019/02/26 17:36:30 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.7 2019/02/28 17:44:56 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -251,9 +251,12 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
+	if (len < 0) {
+		SSLerror(ssl, SSL_R_BAD_LENGTH); 
+		return -1;
+	}
 
 	ret = tls13_read_application_data(ctx->rl, buf, len);
-
 	return tls13_legacy_return_code(ssl, ret);
 }
 
@@ -267,8 +270,11 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len)
 		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
+	if (len <= 0) {
+		SSLerror(ssl, SSL_R_BAD_LENGTH); 
+		return -1;
+	}
 
 	ret = tls13_write_application_data(ctx->rl, buf, len);
-
 	return tls13_legacy_return_code(ssl, ret);
 }
