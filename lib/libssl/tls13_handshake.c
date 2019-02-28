@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.29 2019/02/25 16:46:17 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.30 2019/02/28 17:39:36 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -29,7 +29,6 @@
 #define TLS13_APPLICATION_DATA	2
 
 struct tls13_handshake_action {
-	uint8_t			record_type;
 	uint8_t			handshake_type;
 	uint8_t			sender;
 	uint8_t			handshake_complete;
@@ -55,42 +54,36 @@ int tls13_handshake_recv_action(struct tls13_ctx *ctx,
 
 struct tls13_handshake_action state_machine[] = {
 	[CLIENT_HELLO] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CLIENT_HELLO,
 		.sender = TLS13_HS_CLIENT,
 		.send = tls13_client_hello_send,
 		.recv = tls13_client_hello_recv,
 	},
 	[CLIENT_HELLO_RETRY] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CLIENT_HELLO,
 		.sender = TLS13_HS_CLIENT,
 		.send = tls13_client_hello_retry_send,
 		.recv = tls13_client_hello_retry_recv,
 	},
 	[CLIENT_END_OF_EARLY_DATA] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_END_OF_EARLY_DATA,
 		.sender = TLS13_HS_CLIENT,
 		.send = tls13_client_end_of_early_data_send,
 		.recv = tls13_client_end_of_early_data_recv,
 	},
 	[CLIENT_CERTIFICATE] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CERTIFICATE,
 		.sender = TLS13_HS_CLIENT,
 		.send = tls13_client_certificate_send,
 		.recv = tls13_client_certificate_recv,
 	},
 	[CLIENT_CERTIFICATE_VERIFY] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CERTIFICATE_VERIFY,
 		.sender = TLS13_HS_CLIENT,
 		.send = tls13_client_certificate_verify_send,
 		.recv = tls13_client_certificate_verify_recv,
 	},
 	[CLIENT_FINISHED] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_FINISHED,
 		.sender = TLS13_HS_CLIENT,
 		.send = tls13_client_finished_send,
@@ -98,42 +91,36 @@ struct tls13_handshake_action state_machine[] = {
 		.recv = tls13_client_finished_recv,
 	},
 	[CLIENT_KEY_UPDATE] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_KEY_UPDATE,
 		.sender = TLS13_HS_CLIENT,
 		.send = tls13_client_key_update_send,
 		.recv = tls13_client_key_update_recv,
 	},
 	[SERVER_HELLO] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_SERVER_HELLO,
 		.sender = TLS13_HS_SERVER,
 		.send = tls13_server_hello_send,
 		.recv = tls13_server_hello_recv,
 	},
 	[SERVER_ENCRYPTED_EXTENSIONS] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_ENCRYPTED_EXTENSIONS,
 		.sender = TLS13_HS_SERVER,
 		.send = tls13_server_encrypted_extensions_send,
 		.recv = tls13_server_encrypted_extensions_recv,
 	},
 	[SERVER_CERTIFICATE] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CERTIFICATE,
 		.sender = TLS13_HS_SERVER,
 		.send = tls13_server_certificate_send,
 		.recv = tls13_server_certificate_recv,
 	},
 	[SERVER_CERTIFICATE_REQUEST] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CERTIFICATE,
 		.sender = TLS13_HS_SERVER,
 		.send = tls13_server_certificate_request_send,
 		.recv = tls13_server_certificate_request_recv,
 	},
 	[SERVER_CERTIFICATE_VERIFY] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_CERTIFICATE_VERIFY,
 		.sender = TLS13_HS_SERVER,
 		.preserve_transcript_hash = 1,
@@ -141,7 +128,6 @@ struct tls13_handshake_action state_machine[] = {
 		.recv = tls13_server_certificate_verify_recv,
 	},
 	[SERVER_FINISHED] = {
-		.record_type = TLS13_HANDSHAKE,
 		.handshake_type = TLS13_MT_FINISHED,
 		.sender = TLS13_HS_SERVER,
 		.preserve_transcript_hash = 1,
@@ -149,7 +135,6 @@ struct tls13_handshake_action state_machine[] = {
 		.recv = tls13_server_finished_recv,
 	},
 	[APPLICATION_DATA] = {
-		.record_type = TLS13_APPLICATION_DATA,
 		.handshake_complete = 1,
 	},
 };
