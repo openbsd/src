@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.12 2019/02/25 16:46:17 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.13 2019/02/28 17:51:19 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -79,7 +79,10 @@ tls13_legacy_connect(SSL *ssl)
 		}
 	}
 
-	ret = tls13_connect(ctx);
+	S3I(ssl)->hs.state = SSL_ST_CONNECT;
+
+	if ((ret = tls13_connect(ctx)) == TLS13_IO_SUCCESS)
+		S3I(ssl)->hs.state = SSL_ST_OK;
 
 	return tls13_legacy_return_code(ssl, ret);
 }
