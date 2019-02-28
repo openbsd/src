@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.8 2019/02/28 17:56:43 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.9 2019/02/28 18:20:38 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -270,6 +270,7 @@ int
 tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len)
 {
 	struct tls13_ctx *ctx = ssl->internal->tls13;
+	size_t n, sent;
 	ssize_t ret;
 
 	if (ctx == NULL || !ctx->handshake_completed) {
@@ -287,6 +288,36 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len)
 		return -1;
 	}
 
-	ret = tls13_write_application_data(ctx->rl, buf, len);
-	return tls13_legacy_return_code(ssl, ret);
+	/*
+	 * The TLSv1.3 record layer write behaviour is the same as
+	 * SSL_MODE_ENABLE_PARTIAL_WRITE.
+	 */
+	if (ssl->internal->mode & SSL_MODE_ENABLE_PARTIAL_WRITE) {
+		ret = tls13_write_application_data(ctx->rl, buf, len);
+		return tls13_legacy_return_code(ssl, ret);
+	}
+
+	/*
+ 	 * In the non-SSL_MODE_ENABLE_PARTIAL_WRITE case we have to loop until
+	 * we have written out all of the requested data.
+	 */
+	sent = S3I(ssl)->wnum;
+	if (len < sent) {
+		SSLerror(ssl, SSL_R_BAD_LENGTH); 
+		return -1;
+	}
+	n = len - sent;
+	for (;;) {
+		if (n == 0) {
+			S3I(ssl)->wnum = 0;
+			return sent;
+		}
+		if ((ret = tls13_write_application_data(ctx->rl,
+		    &buf[sent], n)) <= 0) {
+			S3I(ssl)->wnum = sent;
+			return tls13_legacy_return_code(ssl, ret);
+		}
+		sent += ret;
+		n -= ret;
+	}
 }
