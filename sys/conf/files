@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.667 2019/02/26 14:24:21 visa Exp $
+#	$OpenBSD: files,v 1.668 2019/02/28 03:36:49 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -59,6 +59,7 @@ define	onewire_bitbang
 # net device attributes - we have generic code for ether(net)
 define	crypto
 define	ether
+define	mpls
 define	sppp
 define	wlan
 
@@ -563,6 +564,7 @@ pseudo-device crypto: ifnet
 pseudo-device trunk: ifnet, ether, ifmedia
 pseudo-device mpe: ifnet, ether
 pseudo-device mpw: ifnet, ether
+pseudo-device mpip: ifnet, mpls
 pseudo-device bpe: ifnet, ether, ifmedia
 pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
@@ -815,6 +817,7 @@ file net/if_trunk.c			trunk			needs-count
 file net/trunklacp.c			trunk
 file net/if_mpe.c			mpe			needs-count
 file net/if_mpw.c			mpw & bridge		needs-count
+file net/if_mpip.c			mpip
 file net/if_bpe.c			bpe			needs-count
 file net/if_vether.c			vether			needs-count
 file net/if_pair.c			pair			needs-count
