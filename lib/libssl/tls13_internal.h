@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.24 2019/02/25 19:44:04 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.25 2019/02/28 17:56:43 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -156,6 +156,7 @@ struct tls13_ctx {
 	struct ssl_handshake_tls13_st *hs;
 	uint8_t	mode;
 	struct tls13_handshake_stage handshake_stage;
+	int handshake_completed;
 
 	const EVP_AEAD *aead;
 	const EVP_MD *hash;

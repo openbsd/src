@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.7 2019/02/28 17:44:56 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.8 2019/02/28 17:56:43 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -241,6 +241,12 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 	struct tls13_ctx *ctx = ssl->internal->tls13;
 	ssize_t ret;
 
+	if (ctx == NULL || !ctx->handshake_completed) {
+		if ((ret = ssl->internal->handshake_func(ssl)) <= 0)
+			return ret;
+		return tls13_legacy_return_code(ssl, TLS13_IO_WANT_POLLIN);
+	}
+
 	if (peek) {
 		/* XXX - support peek... */
 		SSLerror(ssl, ERR_R_INTERNAL_ERROR);
@@ -265,6 +271,12 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len)
 {
 	struct tls13_ctx *ctx = ssl->internal->tls13;
 	ssize_t ret;
+
+	if (ctx == NULL || !ctx->handshake_completed) {
+		if ((ret = ssl->internal->handshake_func(ssl)) <= 0)
+			return ret;
+		return tls13_legacy_return_code(ssl, TLS13_IO_WANT_POLLOUT);
+	}
 
 	if (type != SSL3_RT_APPLICATION_DATA) {
 		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);

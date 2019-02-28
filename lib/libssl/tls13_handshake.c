@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.30 2019/02/28 17:39:36 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.31 2019/02/28 17:56:43 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -282,6 +282,7 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 			return TLS13_IO_FAILURE;
 
 		if (action->handshake_complete) {
+			ctx->handshake_completed = 1;
 			tls13_record_layer_handshake_completed(ctx->rl);
 			return TLS13_IO_SUCCESS;
 		}
