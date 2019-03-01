@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.101 2019/02/01 16:15:07 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.102 2019/03/01 07:39:56 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -136,6 +136,14 @@ int		athn_newstate(struct ieee80211com *, enum ieee80211_state,
 		    int);
 void		athn_updateedca(struct ieee80211com *);
 int		athn_clock_rate(struct athn_softc *);
+int		athn_chan_sifs(struct ieee80211_channel *);
+void		athn_setsifs(struct athn_softc *);
+int		athn_acktimeout(struct ieee80211_channel *, int);
+void		athn_setacktimeout(struct athn_softc *,
+		    struct ieee80211_channel *, int);
+void		athn_setctstimeout(struct athn_softc *,
+		    struct ieee80211_channel *, int);
+void		athn_setclockrate(struct athn_softc *);
 void		athn_updateslot(struct ieee80211com *);
 void		athn_start(struct ifnet *);
 void		athn_watchdog(struct ifnet *);
@@ -2403,6 +2411,9 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *c,
 
 	AR_SETBITS(sc, AR_PCU_MISC, AR_PCU_MIC_NEW_LOC_ENA);
 
+	athn_setsifs(sc);
+	athn_updateslot(ic);
+	athn_setclockrate(sc);
 	if (AR_SREV_9287_13_OR_LATER(sc) && !AR_SREV_9380_10_OR_LATER(sc))
 		ar9287_1_3_setup_async_fifo(sc);
 
@@ -2713,7 +2724,13 @@ athn_clock_rate(struct athn_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int clockrate;	/* MHz. */
 
-	if (ic->ic_bss->ni_chan != IEEE80211_CHAN_ANYC &&
+	/*
+	 * AR9287 v1.3+ MAC runs at 117MHz (instead of 88/44MHz) when
+	 * ASYNC FIFO is enabled.
+	 */
+	if (AR_SREV_9287_13_OR_LATER(sc) && !AR_SREV_9380_10_OR_LATER(sc))
+		clockrate = 117;
+	else if (ic->ic_bss->ni_chan != IEEE80211_CHAN_ANYC &&
 	    IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
 		if (sc->flags & ATHN_FLAG_FAST_PLL_CLOCK)
 			clockrate = AR_CLOCK_RATE_FAST_5GHZ_OFDM;
@@ -2729,6 +2746,69 @@ athn_clock_rate(struct athn_softc *sc)
 	return (clockrate);
 }
 
+int
+athn_chan_sifs(struct ieee80211_channel *c)
+{
+	return IEEE80211_IS_CHAN_2GHZ(c) ? IEEE80211_DUR_DS_SIFS : 16;
+}
+
+void
+athn_setsifs(struct athn_softc *sc)
+{
+	int sifs = athn_chan_sifs(sc->sc_ic.ic_bss->ni_chan);
+	AR_WRITE(sc, AR_D_GBL_IFS_SIFS, (sifs - 2) * athn_clock_rate(sc));
+	AR_WRITE_BARRIER(sc);
+}
+
+int
+athn_acktimeout(struct ieee80211_channel *c, int slot)
+{
+	int sifs = athn_chan_sifs(c);
+	int ackto = sifs + slot;
+
+	/* Workaround for early ACK timeouts. */
+	if (IEEE80211_IS_CHAN_2GHZ(c))
+		ackto += 64 - sifs - slot;
+
+	return ackto;
+}
+
+void
+athn_setacktimeout(struct athn_softc *sc, struct ieee80211_channel *c, int slot)
+{
+	int ackto = athn_acktimeout(c, slot);
+	uint32_t reg = AR_READ(sc, AR_TIME_OUT);
+	reg = RW(reg, AR_TIME_OUT_ACK, ackto * athn_clock_rate(sc));
+	AR_WRITE(sc, AR_TIME_OUT, reg);
+	AR_WRITE_BARRIER(sc);
+}
+
+void
+athn_setctstimeout(struct athn_softc *sc, struct ieee80211_channel *c, int slot)
+{
+	int ctsto = athn_acktimeout(c, slot);
+	int sifs = athn_chan_sifs(c);
+	uint32_t reg = AR_READ(sc, AR_TIME_OUT);
+
+	/* Workaround for early CTS timeouts. */
+	if (IEEE80211_IS_CHAN_2GHZ(c))
+		ctsto += 48 - sifs - slot;
+
+	reg = RW(reg, AR_TIME_OUT_CTS, ctsto * athn_clock_rate(sc));
+	AR_WRITE(sc, AR_TIME_OUT, reg);
+	AR_WRITE_BARRIER(sc);
+}
+
+void
+athn_setclockrate(struct athn_softc *sc)
+{
+	int clockrate = athn_clock_rate(sc);
+	uint32_t reg = AR_READ(sc, AR_USEC);
+	reg = RW(reg, AR_USEC_USEC, clockrate - 1);
+	AR_WRITE(sc, AR_USEC, reg);
+	AR_WRITE_BARRIER(sc);
+}
+
 void
 athn_updateslot(struct ieee80211com *ic)
 {
@@ -2739,6 +2819,9 @@ athn_updateslot(struct ieee80211com *ic)
 	    IEEE80211_DUR_DS_SHSLOT : IEEE80211_DUR_DS_SLOT;
 	AR_WRITE(sc, AR_D_GBL_IFS_SLOT, slot * athn_clock_rate(sc));
 	AR_WRITE_BARRIER(sc);
+
+	athn_setacktimeout(sc, ic->ic_bss->ni_chan, slot);
+	athn_setctstimeout(sc, ic->ic_bss->ni_chan, slot);
 }
 
 void
