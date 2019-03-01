@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.31 2019/01/11 12:44:10 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.32 2019/03/01 10:48:58 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -66,11 +66,13 @@ td.foot-os {	text-align: right; }
 .manual-text {
 		margin-left: 3.8em; }
 .Nd { }
-.Sh {		margin-top: 1.2em;
+section.Sh { }
+h1.Sh {		margin-top: 1.2em;
 		margin-bottom: 0.6em;
 		margin-left: -3.2em;
 		font-size: 110%; }
-.Ss {		margin-top: 1.2em;
+section.Ss { }
+h2.Ss {		margin-top: 1.2em;
 		margin-bottom: 0.6em;
 		margin-left: -1.2em;
 		font-size: 105%; }
@@ -256,7 +258,7 @@ a.In { }
 
 /* Tooltip support. */
 
-.Sh, .Ss {	position: relative; }
+h1.Sh, h2.Ss {	position: relative; }
 .An, .Ar, .Cd, .Cm, .Dv, .Em, .Er, .Ev, .Fa, .Fd, .Fl, .Fn, .Ft,
 .Ic, code.In, .Lb, .Lk, .Ms, .Mt, .Nd, code.Nm, .Pa, .Rs,
 .St, .Sx, .Sy, .Va, .Vt, .Xr {
@@ -286,8 +288,8 @@ code.In::before { content: "In"; }
 code.Nm::before { content: "Nm"; }
 .Pa::before {	content: "Pa"; }
 .Rs::before {	content: "Rs"; }
-.Sh::before {	content: "Sh"; }
-.Ss::before {	content: "Ss"; }
+h1.Sh::before {	content: "Sh"; }
+h2.Ss::before {	content: "Ss"; }
 .St::before {	content: "St"; }
 .Sx::before {	content: "Sx"; }
 .Sy::before {	content: "Sy"; }
@@ -301,7 +303,7 @@ code.Nm::before { content: "Nm"; }
 .Ic::before, code.In::before, .Lb::before, .Lk::before,
 .Ms::before, .Mt::before, .Nd::before, code.Nm::before,
 .Pa::before, .Rs::before,
-.Sh::before, .Ss::before, .St::before, .Sx::before, .Sy::before,
+h1.Sh::before, h2.Ss::before, .St::before, .Sx::before, .Sy::before,
 .Va::before, .Vt::before, .Xr::before {
 		opacity: 0;
 		transition: .15s ease opacity;
@@ -322,7 +324,7 @@ code.Nm::before { content: "Nm"; }
 .Ft:hover::before, .Ic:hover::before, code.In:hover::before,
 .Lb:hover::before, .Lk:hover::before, .Ms:hover::before, .Mt:hover::before,
 .Nd:hover::before, code.Nm:hover::before, .Pa:hover::before,
-.Rs:hover::before, .Sh:hover::before, .Ss:hover::before, .St:hover::before,
+.Rs:hover::before, h1.Sh:hover::before, h2.Ss:hover::before, .St:hover::before,
 .Sx:hover::before, .Sy:hover::before, .Va:hover::before, .Vt:hover::before,
 .Xr:hover::before {
 		opacity: 1;
@@ -333,7 +335,7 @@ code.Nm::before { content: "Nm"; }
 @media (max-width: 37.5em) {
 .manual-text {
 		margin-left: 0.5em; }
-.Sh, .Ss {	margin-left: 0em; }
+h1.Sh, h2.Ss {	margin-left: 0em; }
 .Bd-indent {	margin-left: 2em; }
 .Bl-hang > dd {
 		margin-left: 2em; }

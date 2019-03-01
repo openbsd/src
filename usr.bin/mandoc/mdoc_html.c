@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_html.c,v 1.202 2019/01/18 14:36:16 schwarze Exp $ */
+/*	$OpenBSD: mdoc_html.c,v 1.203 2019/03/01 10:48:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -529,8 +529,10 @@ mdoc_sh_pre(MDOC_ARGS)
 		html_close_paragraph(h);
 		if ((h->oflags & HTML_TOC) == 0 ||
 		    h->flags & HTML_TOCDONE ||
-		    n->sec <= SEC_SYNOPSIS)
+		    n->sec <= SEC_SYNOPSIS) {
+			print_otag(h, TAG_SECTION, "c", "Sh");
 			break;
+		}
 		h->flags |= HTML_TOCDONE;
 		sc = 0;
 		for (sn = n->next; sn != NULL; sn = sn->next)
@@ -571,6 +573,7 @@ mdoc_sh_pre(MDOC_ARGS)
 			print_tagq(h, tsec);
 		}
 		print_tagq(h, t);
+		print_otag(h, TAG_SECTION, "c", "Sh");
 		break;
 	case ROFFT_HEAD:
 		id = html_make_id(n, 1);
@@ -596,6 +599,7 @@ mdoc_ss_pre(MDOC_ARGS)
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		html_close_paragraph(h);
+		print_otag(h, TAG_SECTION, "c", "Ss");
 		return 1;
 	case ROFFT_HEAD:
 		break;

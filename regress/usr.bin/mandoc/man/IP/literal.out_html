@@ -24,6 +24,7 @@ literal
 paragraph
 </pre>
 regular text
+<section class="Ss">
 <h2 class="Ss" id="literal_into_indented_paragraph"><a class="permalink" href="#literal_into_indented_paragraph">literal
   into indented paragraph</a></h2>
 regular text
@@ -42,6 +43,8 @@ text
     indented regular text</dd>
 </dl>
 <p class="Pp">new regular paragraph</p>
+</section>
+<section class="Ss">
 <h2 class="Ss" id="literal_out_of_indented_paragraph"><a class="permalink" href="#literal_out_of_indented_paragraph">literal
   out of indented paragraph</a></h2>
 regular text

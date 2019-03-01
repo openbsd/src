@@ -1,7 +1,11 @@
 BEGINTEST
 <p class="Pp">descriptive text</p>
+<section class="Ss">
 <h2 class="Ss" id="Subsection"><a class="permalink" href="#Subsection">Subsection</a></h2>
 initial subsection text
 <p class="Pp">subsection paragraph</p>
+</section>
+</section>
+<section class="Sh">
 <h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
 ENDTEST

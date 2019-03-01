@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.124 2019/02/28 16:36:10 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.125 2019/03/01 10:48:58 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -308,18 +308,25 @@ man_root_post(const struct roff_meta *man, struct html *h)
 static int
 man_SH_pre(MAN_ARGS)
 {
-	char	*id;
+	const char	*class;
+	char		*id;
+	enum htmltag	 tag;
 
+	if (n->tok == MAN_SH) {
+		tag = TAG_H1;
+		class = "Sh";
+	} else {
+		tag = TAG_H2;
+		class = "Ss";
+	}
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		html_close_paragraph(h);
+		print_otag(h, TAG_SECTION, "c", class);
 		break;
 	case ROFFT_HEAD:
 		id = html_make_id(n, 1);
-		if (n->tok == MAN_SH)
-			print_otag(h, TAG_H1, "ci", "Sh", id);
-		else
-			print_otag(h, TAG_H2, "ci", "Ss", id);
+		print_otag(h, tag, "ci", class, id);
 		if (id != NULL)
 			print_otag(h, TAG_A, "chR", "permalink", id);
 		break;
