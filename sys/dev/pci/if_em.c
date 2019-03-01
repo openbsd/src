@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.341 2018/04/07 11:56:40 sf Exp $ */
+/* $OpenBSD: if_em.c,v 1.342 2019/03/01 10:02:44 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -250,6 +250,7 @@ void em_txeof(struct em_softc *);
 int  em_allocate_receive_structures(struct em_softc *);
 int  em_allocate_transmit_structures(struct em_softc *);
 int  em_rxfill(struct em_softc *);
+void em_rxrefill(void *);
 int  em_rxeof(struct em_softc *);
 void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
@@ -375,6 +376,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
+	timeout_set(&sc->rx_refill, em_rxrefill, sc);
 
 	/* Determine hardware revision */
 	em_identify_hardware(sc);
@@ -959,13 +961,8 @@ em_intr(void *arg)
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		em_txeof(sc);
-
-		if (em_rxeof(sc) || ISSET(reg_icr, E1000_ICR_RXO)) {
-			if (em_rxfill(sc)) {
-				E1000_WRITE_REG(&sc->hw, RDT,
-				    sc->sc_rx_desc_head);
-			}
-		}
+		if (em_rxeof(sc))
+			em_rxrefill(sc);
 	}
 
 	/* Link status change */
@@ -1534,6 +1531,7 @@ em_stop(void *arg, int softonly)
 
 	INIT_DEBUGOUT("em_stop: begin");
 
+	timeout_del(&sc->rx_refill);
 	timeout_del(&sc->timer_handle);
 	timeout_del(&sc->tx_fifo_timer_handle);
 
@@ -2753,6 +2751,17 @@ em_rxfill(struct em_softc *sc)
 	    BUS_DMASYNC_PREWRITE);
 
 	return (post);
+}
+
+void
+em_rxrefill(void *arg)
+{
+	struct em_softc *sc = arg;
+
+	if (em_rxfill(sc))
+		E1000_WRITE_REG(&sc->hw, RDT, sc->sc_rx_desc_head);
+	else if (if_rxr_inuse(&sc->sc_rx_ring) == 0)
+		timeout_add(&sc->rx_refill, 1);
 }
 
 /*********************************************************************
