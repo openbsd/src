@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.22 2018/12/11 01:36:42 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.23 2019/03/01 04:47:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -80,6 +80,7 @@ struct ifiqueue {
 	struct mutex		 ifiq_mtx;
 	struct mbuf_list	 ifiq_ml;
 	struct task		 ifiq_task;
+	unsigned int		 ifiq_pressure;
 
 	/* counters */
 	uint64_t		 ifiq_packets;
@@ -473,8 +474,7 @@ ifq_idx(struct ifqueue *ifq, unsigned int nifqs, const struct mbuf *m)
 
 void		 ifiq_init(struct ifiqueue *, struct ifnet *, unsigned int);
 void		 ifiq_destroy(struct ifiqueue *);
-int		 ifiq_input(struct ifiqueue *, struct mbuf_list *,
-		     unsigned int);
+int		 ifiq_input(struct ifiqueue *, struct mbuf_list *);
 int		 ifiq_enqueue(struct ifiqueue *, struct mbuf *);
 void		 ifiq_add_data(struct ifiqueue *, struct if_data *);
 void		 ifiq_barrier(struct ifiqueue *);

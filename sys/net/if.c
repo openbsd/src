@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.572 2019/02/26 03:20:08 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.573 2019/03/01 04:47:32 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -738,7 +738,7 @@ if_enqueue_ifq(struct ifnet *ifp, struct mbuf *m)
 void
 if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
-	ifiq_input(&ifp->if_rcv, ml, 2048);
+	ifiq_input(&ifp->if_rcv, ml);
 }
 
 int
