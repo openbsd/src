@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.58 2018/08/14 05:22:21 jmatthew Exp $ */
+/* $OpenBSD: mfii.c,v 1.59 2019/03/01 01:58:17 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -2917,8 +2917,14 @@ mfii_ioctl_vol(struct mfii_softc *sc, struct bioc_vol *bv)
 
 	/* additional status can modify MFI status */
 	switch (sc->sc_ld_details[i].mld_progress.mlp_in_prog) {
-	case MFI_LD_PROG_CC:
 	case MFI_LD_PROG_BGI:
+		bv->bv_status = BIOC_SVSCRUB;
+		per = (int)sc->sc_ld_details[i].mld_progress.mlp_bgi.mp_progress;
+		bv->bv_percent = (per * 100) / 0xffff;
+		bv->bv_seconds =
+		    sc->sc_ld_details[i].mld_progress.mlp_bgi.mp_elapsed_seconds;
+		break;
+	case MFI_LD_PROG_CC:
 		bv->bv_status = BIOC_SVSCRUB;
 		per = (int)sc->sc_ld_details[i].mld_progress.mlp_cc.mp_progress;
 		bv->bv_percent = (per * 100) / 0xffff;
