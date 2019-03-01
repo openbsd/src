@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.15 2019/02/18 07:50:14 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.16 2019/03/01 08:02:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -48,7 +48,7 @@
 #include "libunbound/sldns/str2wire.h"
 #include "libunbound/sldns/wire2str.h"
 
-#include "uw_log.h"
+#include "log.h"
 #include "unwind.h"
 #include "frontend.h"
 #include "control.h"

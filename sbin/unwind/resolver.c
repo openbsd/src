@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.20 2019/02/18 07:50:14 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.21 2019/03/01 08:02:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -51,7 +51,7 @@
 #include <openssl/crypto.h>
 
 #include "captiveportal.h"
-#include "uw_log.h"
+#include "log.h"
 #include "frontend.h"
 #include "unwind.h"
 #include "resolver.h"
