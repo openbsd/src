@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.22 2018/07/23 17:25:52 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.23 2019/03/01 16:34:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -564,7 +564,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		memset(&ifr6, 0, sizeof(ifr6));
 		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
-		
+
 		if (ioctl(ioctlsock, SIOCGIFNETMASK_IN6, (caddr_t)&ifr6) < 0) {
 			log_warn("SIOCGIFNETMASK_IN6");
 			continue;
@@ -605,7 +605,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	log_debug("%s: %s link state down? %s", __func__, if_name,
 	    imsg_link_state.link_state == LINK_STATE_DOWN ? "yes" : "no");
 
-	frontend_imsg_compose_main(IMSG_UPDATE_LINK_STATE, 0, 
+	frontend_imsg_compose_main(IMSG_UPDATE_LINK_STATE, 0,
 	    &imsg_link_state, sizeof(imsg_link_state));
 }
 
