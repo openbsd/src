@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.233 2019/02/21 11:17:22 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.234 2019/03/01 09:24:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1226,16 +1226,21 @@ kr_net_redist_add(struct ktable *kt, struct network_config *net,
 	r->dynamic = dynamic;
 
 	xr = RB_INSERT(kredist_tree, &kt->kredist, r);
-	if (xr != NULL && dynamic != xr->dynamic) {
-		if (dynamic) {
+	if (xr != NULL) {
+		if (dynamic == xr->dynamic || dynamic) {
 			/*
-			 * ignore update, a non-dynamic announcement
-			 * is already present.
+			 * ignore update, equal announcement already present,
+			 * or a non-dynamic announcement is already present
+			 * which has preference.
 			 */
 			free(r);
 			return 0;
 		}
-		/* non-dynamic announcments are preferred */
+		/*
+		 * only the case where xr->dynamic == 1 and dynamic == 0
+		 * ends up here and in this case non-dynamic announcments
+		 * are preferred. Override dynamic flag.
+		 */
 		xr->dynamic = dynamic;
 	}
 
@@ -1266,7 +1271,7 @@ kr_net_redist_del(struct ktable *kt, struct network_config *net, int dynamic)
 	free(r);
 
 	if (send_network(IMSG_NETWORK_REMOVE, net, NULL) == -1)
-		log_warnx("%s: faild to send network update", __func__);
+		log_warnx("%s: faild to send network removal", __func__);
 }
 
 int
@@ -1340,8 +1345,6 @@ kr_net_reload(u_int rtableid, u_int64_t rd, struct network_head *nh)
 		fatalx("%s: non-existent rtableid %d", __func__, rtableid);
 
 	while ((n = TAILQ_FIRST(nh)) != NULL) {
-		log_debug("%s: processing %s/%u", __func__,
-		    log_addr(&n->net.prefix), n->net.prefixlen);
 		TAILQ_REMOVE(nh, n, entry);
 		n->net.old = 0;
 		n->net.rd = rd;
