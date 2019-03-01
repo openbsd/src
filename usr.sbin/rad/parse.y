@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.13 2019/03/01 16:35:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -187,7 +187,7 @@ varset		: STRING '=' string		{
 
 conf_main	: ra_opt_block {
 			ra_options = &conf->ra_options;
-		} 
+		}
 		;
 
 ra_opt_block	: DEFAULT ROUTER yesno {
