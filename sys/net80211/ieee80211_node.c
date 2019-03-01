@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.161 2019/01/23 10:08:49 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.162 2019/03/01 08:13:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -894,11 +894,15 @@ ieee80211_create_ibss(struct ieee80211com* ic, struct ieee80211_channel *chan)
 		int aci;
 
 		/* 
-		 * Default to non-member HT protection. This will be updated
-		 * later based on the number of non-HT nodes in the node cache.
+		 * Configure HT protection. This will be updated later
+		 * based on the number of non-HT nodes in the node cache.
 		 */
-		ni->ni_htop1 = IEEE80211_HTPROT_NONMEMBER;
-		ic->ic_protmode = IEEE80211_PROT_RTSCTS;
+		ic->ic_protmode = IEEE80211_PROT_NONE;
+		ni->ni_htop1 = IEEE80211_HTPROT_NONE;
+		/* Disallow Greenfield mode. None of our drivers support it. */
+		ni->ni_htop1 |= IEEE80211_HTOP1_NONGF_STA;
+		if (ic->ic_update_htprot)
+			ic->ic_update_htprot(ic, ni);
 
 		/* Configure QoS EDCA parameters. */
 		for (aci = 0; aci < EDCA_NUM_AC; aci++) {
@@ -1985,7 +1989,14 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 #ifndef IEEE80211_STA_ONLY
 		nnodes++;
 		if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
-			if (!ieee80211_node_supports_ht(ni)) {
+			/*
+			 * Check if node supports 802.11n.
+			 * Only require HT capabilities IE for this check.
+			 * Nodes might never reveal their supported MCS to us
+			 * unless they go through a full association sequence.
+			 * ieee80211_node_supports_ht() could misclassify them.
+			 */
+			if ((ni->ni_flags & IEEE80211_NODE_HTCAP) == 0) {
 				nonht++;
 				if (ni->ni_state == IEEE80211_STA_ASSOC)
 					nonhtassoc++;
@@ -2031,7 +2042,7 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 #ifndef IEEE80211_STA_ONLY
 		nnodes--;
 		if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
-			if (!ieee80211_node_supports_ht(ni)) {
+			if ((ni->ni_flags & IEEE80211_NODE_HTCAP) == 0) {
 				nonht--;
 				if (ni->ni_state == IEEE80211_STA_ASSOC)
 					nonhtassoc--;
@@ -2052,16 +2063,20 @@ ieee80211_clean_nodes(struct ieee80211com *ic, int cache_timeout)
 
 #ifndef IEEE80211_STA_ONLY
 	if ((ic->ic_flags & IEEE80211_F_HTON) && cache_timeout) {
+		uint16_t htop1 = ic->ic_bss->ni_htop1;
+
 		/* Update HT protection settings. */
 		if (nonht) {
-			protmode = IEEE80211_PROT_RTSCTS;
+			protmode = IEEE80211_PROT_CTSONLY;
 			if (nonhtassoc)
 				htprot = IEEE80211_HTPROT_NONHT_MIXED;
 			else
 				htprot = IEEE80211_HTPROT_NONMEMBER;
 		}
-		if (ic->ic_bss->ni_htop1 != htprot) {
-			ic->ic_bss->ni_htop1 = htprot;
+		if ((htop1 & IEEE80211_HTOP1_PROT_MASK) != htprot) {
+			htop1 &= ~IEEE80211_HTOP1_PROT_MASK;
+			htop1 |= htprot;
+			ic->ic_bss->ni_htop1 |= htop1;
 			ic->ic_protmode = protmode;
 			if (ic->ic_update_htprot)
 				ic->ic_update_htprot(ic, ic->ic_bss);
@@ -2128,6 +2143,8 @@ ieee80211_setup_htcaps(struct ieee80211_node *ni, const uint8_t *data,
 	ni->ni_txbfcaps = (data[21] | (data[22] << 8) | (data[23] << 16) |
 		(data[24] << 24));
 	ni->ni_aselcaps = data[25];
+
+	ni->ni_flags |= IEEE80211_NODE_HTCAP;
 }
 
 #ifndef IEEE80211_STA_ONLY
@@ -2147,7 +2164,7 @@ ieee80211_clear_htcaps(struct ieee80211_node *ni)
 	ni->ni_aselcaps = 0;
 
 	ni->ni_flags &= ~(IEEE80211_NODE_HT | IEEE80211_NODE_HT_SGI20 |
-	    IEEE80211_NODE_HT_SGI40);
+	    IEEE80211_NODE_HT_SGI40 | IEEE80211_NODE_HTCAP);
 
 }
 #endif
@@ -2262,7 +2279,10 @@ ieee80211_node_join_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	/* Update HT protection setting. */
 	if ((ni->ni_flags & IEEE80211_NODE_HT) == 0) {
-		ic->ic_bss->ni_htop1 = IEEE80211_HTPROT_NONHT_MIXED;
+		uint16_t htop1 = ic->ic_bss->ni_htop1;
+		htop1 &= ~IEEE80211_HTOP1_PROT_MASK;
+		htop1 |= IEEE80211_HTPROT_NONHT_MIXED;
+		ic->ic_bss->ni_htop1 = htop1;
 		if (ic->ic_update_htprot)
 			ic->ic_update_htprot(ic, ic->ic_bss);
 	}

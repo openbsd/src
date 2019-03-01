@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.94 2019/02/19 08:12:30 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.95 2019/03/01 08:13:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -255,7 +255,7 @@ struct ieee80211com {
 	enum ieee80211_state	ic_state;	/* 802.11 state */
 	u_int32_t		*ic_aid_bitmap;
 	u_int16_t		ic_max_aid;
-	enum ieee80211_protmode	ic_protmode;	/* 802.11g protection mode */
+	enum ieee80211_protmode	ic_protmode;	/* 802.11g/n protection mode */
 	struct ifmedia		ic_media;	/* interface media config */
 	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	*ic_bss;	/* information for this node */

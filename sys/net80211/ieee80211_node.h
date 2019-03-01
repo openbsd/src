@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.79 2019/02/19 08:12:30 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.80 2019/03/01 08:13:11 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -368,6 +368,7 @@ struct ieee80211_node {
 #define IEEE80211_NODE_HT_SGI20		0x4000	/* SGI on 20 MHz negotiated */ 
 #define IEEE80211_NODE_HT_SGI40		0x8000	/* SGI on 40 MHz negotiated */ 
 #define IEEE80211_NODE_VHT		0x10000	/* VHT negotiated */
+#define IEEE80211_NODE_HTCAP		0x20000	/* claims to support HT */
 
 	/* If not NULL, this function gets called when ni_refcnt hits zero. */
 	void			(*ni_unref_cb)(struct ieee80211com *,
@@ -427,13 +428,14 @@ ieee80211_unref_node(struct ieee80211_node **ni)
 
 /* 
  * Check if the peer supports HT.
- * Require at least one of the mandatory MCS.
+ * Require a HT capabilities IE and at least one of the mandatory MCS.
  * MCS 0-7 are mandatory but some APs have particular MCS disabled.
  */
 static inline int
 ieee80211_node_supports_ht(struct ieee80211_node *ni)
 {
-	return (ni->ni_rxmcs[0] & 0xff);
+	return ((ni->ni_flags & IEEE80211_NODE_HTCAP) &&
+	    ni->ni_rxmcs[0] & 0xff);
 }
 
 /* Check if the peer supports HT short guard interval (SGI) on 20 MHz. */
