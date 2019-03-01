@@ -8619,8 +8619,13 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
   if (!info->reduce_memory_overheads)
     {
       for (sub = info->input_bfds; sub != NULL; sub = sub->link_next)
-	if (elf_tdata (sub)->symbuf)
-	  free (elf_tdata (sub)->symbuf);
+        {
+          if (bfd_get_flavour (sub) == bfd_target_elf_flavour)
+            {
+              free (elf_tdata (sub)->symbuf);
+              elf_tdata (sub)->symbuf = NULL;
+            }
+        }
     }
 
   /* Output any global symbols that got converted to local in a
