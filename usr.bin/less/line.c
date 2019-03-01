@@ -112,7 +112,7 @@ expand_linebuf(void)
 /*
  * Is a character ASCII?
  */
-int
+static int
 is_ascii_char(LWCHAR ch)
 {
 	return (ch <= 0x7F);
@@ -458,30 +458,9 @@ backc(void)
 }
 
 /*
- * Are we currently within a recognized ANSI escape sequence?
- */
-static int
-in_ansi_esc_seq(void)
-{
-	int i;
-
-	/*
-	 * Search backwards for either an ESC (which means we ARE in a seq);
-	 * or an end char (which means we're NOT in a seq).
-	 */
-	for (i = curr - 1; i >= 0; i--) {
-		if (linebuf[i] == ESC)
-			return (1);
-		if (!is_ansi_middle(linebuf[i]))
-			return (0);
-	}
-	return (0);
-}
-
-/*
  * Is a character the end of an ANSI escape sequence?
  */
-int
+static int
 is_ansi_end(LWCHAR ch)
 {
 	if (!is_ascii_char(ch))
@@ -512,6 +491,7 @@ is_ansi_middle(LWCHAR ch)
 static int
 store_char(LWCHAR ch, char a, char *rep, off_t pos)
 {
+	int i;
 	int w;
 	int replen;
 	char cs;
@@ -529,22 +509,43 @@ store_char(LWCHAR ch, char a, char *rep, off_t pos)
 		}
 	}
 
-	if (ctldisp == OPT_ONPLUS && in_ansi_esc_seq()) {
-		if (!is_ansi_end(ch) && !is_ansi_middle(ch)) {
+	w = -1;
+	if (ctldisp == OPT_ONPLUS) {
+		/*
+		 * Set i to the beginning of an ANSI escape sequence
+		 * that was begun and not yet ended, or to -1 otherwise.
+		 */
+		for (i = curr - 1; i >= 0; i--) {
+			if (linebuf[i] == ESC)
+				break;
+			if (!is_ansi_middle(linebuf[i]))
+				i = 0;
+		}
+		if (i >= 0 && !is_ansi_end(ch) && !is_ansi_middle(ch)) {
 			/* Remove whole unrecognized sequence.  */
-			do {
-				curr--;
-			} while (curr > 0 && linebuf[curr] != ESC);
+			curr = i;
 			return (0);
 		}
-		a = AT_ANSI;	/* Will force re-AT_'ing around it.  */
-		w = 0;
-	} else if (ctldisp == OPT_ONPLUS && ch == ESC) {
-		a = AT_ANSI;	/* Will force re-AT_'ing around it.  */
-		w = 0;
-	} else {
-		char *p = &linebuf[curr];
-		LWCHAR prev_ch = step_char(&p, -1, linebuf);
+		if (i >= 0 || ch == ESC) {
+			a = AT_ANSI;  /* Will force re-AT_'ing around it. */
+			w = 0;
+		}
+	}
+	if (w == -1) {
+		wchar_t prev_ch;
+
+		if (utf_mode) {
+			for (i = curr - 1; i >= 0; i--)
+				if (!IS_UTF8_TRAIL(linebuf[i]))
+					break;
+			if (i >= 0) {
+				w = mbtowc(&prev_ch, linebuf + i, curr - i);
+				if (w == -1 || i + w < curr)
+					prev_ch = L' ';
+			} else
+				prev_ch = L' ';
+		} else
+			prev_ch = curr > 0 ? linebuf[curr - 1] : L' ';
 		w = pwidth(ch, a, prev_ch);
 	}
 
