@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2019/03/01 10:34:14 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.54 2019/03/01 12:47:36 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -598,6 +598,8 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
 	if (argc > 0)
 		ctl_usage(res->ctl);
@@ -915,6 +917,8 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
 	if (argc > 0)
 		ctl_usage(res->ctl);
@@ -959,6 +963,8 @@ ctl_stop(struct parse_result *res, int argc, char *argv[])
 			/* NOTREACHED */
 		}
 	}
+	argc -= optind;
+	argv += optind;
 
 	if (argc > 0)
 		ctl_usage(res->ctl);
