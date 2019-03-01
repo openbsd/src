@@ -484,10 +484,6 @@ is_ansi_middle(LWCHAR ch)
 /*
  * Append a character and attribute to the line buffer.
  */
-#define	STORE_CHAR(ch, a, rep, pos)				\
-		if (store_char((ch), (a), (rep), (pos)))	\
-			return (1)
-
 static int
 store_char(LWCHAR ch, char a, char *rep, off_t pos)
 {
@@ -584,10 +580,6 @@ store_char(LWCHAR ch, char a, char *rep, off_t pos)
  * Append a tab to the line buffer.
  * Store spaces to represent the tab.
  */
-#define	STORE_TAB(a, pos)		\
-	if (store_tab((a), (pos)))	\
-		return (1)
-
 static int
 store_tab(int attr, off_t pos)
 {
@@ -609,14 +601,11 @@ store_tab(int attr, off_t pos)
 		return (1);
 
 	do {
-		STORE_CHAR(' ', attr, " ", pos);
+		if (store_char(' ', attr, " ", pos))
+			return (1);
 	} while (--to_tab > 0);
 	return (0);
 }
-
-#define	STORE_PRCHAR(c, pos)		\
-	if (store_prchar((c), (pos)))	\
-		return (1)
 
 static int
 store_prchar(char c, off_t pos)
@@ -637,7 +626,8 @@ store_prchar(char c, off_t pos)
 		return (1);
 
 	for (; *s != 0; s++) {
-		STORE_CHAR(*s, AT_BINARY, NULL, pos);
+		if (store_char(*s, AT_BINARY, NULL, pos))
+			return (1);
 	}
 	return (0);
 }
@@ -647,10 +637,10 @@ flush_mbc_buf(off_t pos)
 {
 	int i;
 
-	for (i = 0; i < mbc_buf_index; i++)
+	for (i = 0; i < mbc_buf_index; i++) {
 		if (store_prchar(mbc_buf[i], pos))
 			return (mbc_buf_index - i);
-
+	}
 	return (0);
 }
 
@@ -771,9 +761,11 @@ do_append(LWCHAR ch, char *rep, off_t pos)
 		if (curr <= lmargin ||
 		    column <= lmargin ||
 		    (attr[curr - 1] & (AT_ANSI|AT_BINARY))) {
-			STORE_PRCHAR('\b', pos);
+			if (store_prchar('\b', pos))
+				return (1);
 		} else if (bs_mode == BS_NORMAL) {
-			STORE_CHAR(ch, AT_NORMAL, NULL, pos);
+			if (store_char(ch, AT_NORMAL, NULL, pos))
+				return (1);
 		} else if (bs_mode == BS_SPECIAL) {
 			overstrike = backc();
 		}
@@ -842,7 +834,8 @@ do_append(LWCHAR ch, char *rep, off_t pos)
 			goto do_control_char;
 		case BS_NORMAL:
 		case BS_SPECIAL:
-			STORE_TAB(a, pos);
+			if (store_tab(a, pos))
+				return (1);
 			break;
 		}
 	} else if ((!utf_mode || is_ascii_char(ch)) && control_char((char)ch)) {
@@ -852,9 +845,11 @@ do_control_char:
 			/*
 			 * Output as a normal character.
 			 */
-			STORE_CHAR(ch, AT_NORMAL, rep, pos);
+			if (store_char(ch, AT_NORMAL, rep, pos))
+				return (1);
 		} else {
-			STORE_PRCHAR((char)ch, pos);
+			if (store_prchar(ch, pos))
+				return (1);
 		}
 	} else if (utf_mode && ctldisp != OPT_ON && is_ubin_char(ch)) {
 		char *s;
@@ -865,10 +860,13 @@ do_control_char:
 		    pwidth(' ', binattr, 0) + attr_ewidth(binattr) > sc_width)
 			return (1);
 
-		for (; *s != 0; s++)
-			STORE_CHAR(*s, AT_BINARY, NULL, pos);
+		for (; *s != 0; s++) {
+			if (store_char(*s, AT_BINARY, NULL, pos))
+				return (1);
+		}
 	} else {
-		STORE_CHAR(ch, a, rep, pos);
+		if (store_char(ch, a, rep, pos))
+			return (1);
 	}
 	return (0);
 }
