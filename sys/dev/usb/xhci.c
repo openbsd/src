@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.92 2019/02/27 05:22:37 patrick Exp $ */
+/* $OpenBSD: xhci.c,v 1.93 2019/03/01 19:15:59 patrick Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1551,7 +1551,8 @@ xhci_ring_reset(struct xhci_softc *sc, struct xhci_ring *ring)
 		struct xhci_trb *trb = &ring->trbs[ring->ntrb - 1];
 
 		trb->trb_paddr = htole64(ring->dma.paddr);
-		trb->trb_flags = htole32(XHCI_TRB_TYPE_LINK | XHCI_TRB_LINKSEG);
+		trb->trb_flags = htole32(XHCI_TRB_TYPE_LINK | XHCI_TRB_LINKSEG |
+		    XHCI_TRB_CYCLE);
 		bus_dmamap_sync(ring->dma.tag, ring->dma.map, 0, size,
 		    BUS_DMASYNC_PREWRITE);
 	} else
@@ -1586,27 +1587,21 @@ xhci_ring_consume(struct xhci_softc *sc, struct xhci_ring *ring)
 struct xhci_trb*
 xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring)
 {
-	struct xhci_trb *trb = &ring->trbs[ring->index];
-	int oidx;
+	struct xhci_trb *lnk, *trb;
 
 	KASSERT(ring->index < ring->ntrb);
 
-	bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, trb),
-	    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD |
-	    BUS_DMASYNC_POSTWRITE);
-
-	oidx = ring->index++;
-
-	/* Toggle cycle state of the link TRB and skip it. */
-	if (ring->index == (ring->ntrb - 1)) {
-		struct xhci_trb *lnk = &ring->trbs[ring->index];
+	/* Setup the link TRB after the previous TRB is done. */
+	if (ring->index == 0) {
+		lnk = &ring->trbs[ring->ntrb - 1];
+		trb = &ring->trbs[ring->ntrb - 2];
 
 		bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, lnk),
 		    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD |
 		    BUS_DMASYNC_POSTWRITE);
 
 		lnk->trb_flags &= htole32(~XHCI_TRB_CHAIN);
-		if (letoh32(ring->trbs[oidx].trb_flags) & XHCI_TRB_CHAIN)
+		if (letoh32(trb->trb_flags) & XHCI_TRB_CHAIN)
 			lnk->trb_flags |= htole32(XHCI_TRB_CHAIN);
 
 		bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, lnk),
@@ -1616,7 +1611,15 @@ xhci_ring_produce(struct xhci_softc *sc, struct xhci_ring *ring)
 
 		bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, lnk),
 		    sizeof(struct xhci_trb), BUS_DMASYNC_PREWRITE);
+	}
 
+	trb = &ring->trbs[ring->index++];
+	bus_dmamap_sync(ring->dma.tag, ring->dma.map, TRBOFF(ring, trb),
+	    sizeof(struct xhci_trb), BUS_DMASYNC_POSTREAD |
+	    BUS_DMASYNC_POSTWRITE);
+
+	/* Toggle cycle state of the link TRB and skip it. */
+	if (ring->index == (ring->ntrb - 1)) {
 		ring->index = 0;
 		ring->toggle ^= 1;
 	}
