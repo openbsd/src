@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.44 2019/02/20 07:00:25 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.45 2019/03/01 07:32:29 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -127,15 +127,9 @@ uint8_t vcpu_done[VMM_MAX_VCPUS_PER_VM];
  *        features of the CPU in use.
  */
 static const struct vcpu_reg_state vcpu_init_flat64 = {
-#ifdef __i386__
-	.vrs_gprs[VCPU_REGS_EFLAGS] = 0x2,
-	.vrs_gprs[VCPU_REGS_EIP] = 0x0,
-	.vrs_gprs[VCPU_REGS_ESP] = 0x0,
-#else
 	.vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
 	.vrs_gprs[VCPU_REGS_RIP] = 0x0,
 	.vrs_gprs[VCPU_REGS_RSP] = 0x0,
-#endif
 	.vrs_crs[VCPU_REGS_CR0] = CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG,
 	.vrs_crs[VCPU_REGS_CR3] = PML4_PAGE,
 	.vrs_crs[VCPU_REGS_CR4] = CR4_PAE | CR4_PSE,
@@ -160,7 +154,6 @@ static const struct vcpu_reg_state vcpu_init_flat64 = {
 	.vrs_drs[VCPU_REGS_DR3] = 0x0,
 	.vrs_drs[VCPU_REGS_DR6] = 0xFFFF0FF0,
 	.vrs_drs[VCPU_REGS_DR7] = 0x400,
-#ifndef __i386__
 	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
@@ -168,7 +161,6 @@ static const struct vcpu_reg_state vcpu_init_flat64 = {
 	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
 	.vrs_msrs[VCPU_REGS_MISC_ENABLE] = 0ULL,
 	.vrs_crs[VCPU_REGS_XCR0] = XCR0_X87
-#endif
 };
 
 /*
@@ -176,15 +168,9 @@ static const struct vcpu_reg_state vcpu_init_flat64 = {
  * as a flat 16 bit address space.
  */
 static const struct vcpu_reg_state vcpu_init_flat16 = {
-#ifdef __i386__
-	.vrs_gprs[VCPU_REGS_EFLAGS] = 0x2,
-	.vrs_gprs[VCPU_REGS_EIP] = 0xFFF0,
-	.vrs_gprs[VCPU_REGS_ESP] = 0x0,
-#else
 	.vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
 	.vrs_gprs[VCPU_REGS_RIP] = 0xFFF0,
 	.vrs_gprs[VCPU_REGS_RSP] = 0x0,
-#endif
 	.vrs_crs[VCPU_REGS_CR0] = 0x60000010,
 	.vrs_crs[VCPU_REGS_CR3] = 0,
 	.vrs_sregs[VCPU_REGS_CS] = { 0xF000, 0xFFFF, 0x809F, 0xF0000},
@@ -204,14 +190,12 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
 	.vrs_drs[VCPU_REGS_DR3] = 0x0,
 	.vrs_drs[VCPU_REGS_DR6] = 0xFFFF0FF0,
 	.vrs_drs[VCPU_REGS_DR7] = 0x400,
-#ifndef __i386__
 	.vrs_msrs[VCPU_REGS_STAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_LSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
 	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
 	.vrs_crs[VCPU_REGS_XCR0] = XCR0_X87
-#endif
 };
 
 /*
