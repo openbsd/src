@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.64 2017/03/09 20:27:41 guenther Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.65 2019/03/01 01:46:18 cheloha Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -225,6 +225,10 @@ uvm_should_coredump(struct proc *p, struct vm_map_entry *entry)
 	 * on each such page would suck.
 	 */
 	if ((entry->protection & PROT_READ) == 0)
+		return 0;
+
+	/* Skip ranges excluded from coredumps. */
+	if (UVM_ET_ISCONCEAL(entry))
 		return 0;
 
 	/* Don't dump mmaped devices. */

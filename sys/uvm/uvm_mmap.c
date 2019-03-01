@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.153 2019/01/11 18:46:30 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.154 2019/03/01 01:46:18 cheloha Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -284,7 +284,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 		if (vm_min_address > 0 && addr < vm_min_address)
 			return (EINVAL);
-
 	}
 
 	/* check for file mappings (i.e. not anonymous) and verify file. */
@@ -911,6 +910,8 @@ uvm_mmapanon(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		uvmflag |= UVM_FLAG_OVERLAY;
 	if (flags & MAP_STACK)
 		uvmflag |= UVM_FLAG_STACK;
+	if (flags & MAP_CONCEAL)
+		uvmflag |= UVM_FLAG_CONCEAL;
 
 	/* set up mapping flags */
 	uvmflag = UVM_MAPFLAG(prot, maxprot,
@@ -1019,6 +1020,8 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 		uvmflag |= (UVM_FLAG_NOFAULT | UVM_FLAG_OVERLAY);
 	if (flags & MAP_STACK)
 		uvmflag |= UVM_FLAG_STACK;
+	if (flags & MAP_CONCEAL)
+		uvmflag |= UVM_FLAG_CONCEAL;
 
 	/* set up mapping flags */
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

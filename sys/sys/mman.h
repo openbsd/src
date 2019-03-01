@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.33 2019/01/11 18:46:30 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.34 2019/03/01 01:46:18 cheloha Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -60,8 +60,9 @@
 #define	MAP_ANONYMOUS	MAP_ANON	/* alternate POSIX spelling */
 #define	__MAP_NOFAULT	0x2000
 #define	MAP_STACK	0x4000	/* mapping is used for a stack */
+#define	MAP_CONCEAL	0x8000	/* omit from dumps */
 
-#define	MAP_FLAGMASK	0x7ff7
+#define	MAP_FLAGMASK	0xfff7
 
 #ifndef _KERNEL
 /*

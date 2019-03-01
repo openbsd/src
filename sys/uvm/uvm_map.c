@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.241 2019/02/15 16:46:59 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.242 2019/03/01 01:46:18 cheloha Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1081,6 +1081,8 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
 			entry->etype |= UVM_ET_NEEDSCOPY;
 	}
+	if (flags & UVM_FLAG_CONCEAL)
+		entry->etype |= UVM_ET_CONCEAL;
 	if (flags & UVM_FLAG_OVERLAY) {
 		KERNEL_LOCK();
 		entry->aref.ar_pageoff = 0;
@@ -1350,6 +1352,8 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		if ((flags & UVM_FLAG_OVERLAY) == 0)
 			entry->etype |= UVM_ET_NEEDSCOPY;
 	}
+	if (flags & UVM_FLAG_CONCEAL)
+		entry->etype |= UVM_ET_CONCEAL;
 	if (flags & UVM_FLAG_OVERLAY) {
 		entry->aref.ar_pageoff = 0;
 		entry->aref.ar_amap = amap_alloc(sz, M_WAITOK, 0);

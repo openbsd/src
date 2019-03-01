@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.63 2018/10/31 08:50:25 kettenis Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.64 2019/03/01 01:46:18 cheloha Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ struct uvm {
 #define UVM_ET_NOFAULT		0x0020	/* don't fault */
 #define UVM_ET_STACK		0x0040	/* this is a stack */
 #define UVM_ET_WC		0x0080	/* write combining */
+#define UVM_ET_CONCEAL		0x0100	/* omit from dumps */
 #define UVM_ET_FREEMAPPED	0x8000	/* map entry is on free list (DEBUG) */
 
 #define UVM_ET_ISOBJ(E)		(((E)->etype & UVM_ET_OBJ) != 0)
@@ -100,6 +101,7 @@ struct uvm {
 #define UVM_ET_ISNOFAULT(E)	(((E)->etype & UVM_ET_NOFAULT) != 0)
 #define UVM_ET_ISSTACK(E)	(((E)->etype & UVM_ET_STACK) != 0)
 #define UVM_ET_ISWC(E)		(((E)->etype & UVM_ET_WC) != 0)
+#define UVM_ET_ISCONCEAL(E)	(((E)->etype & UVM_ET_CONCEAL) != 0)
 
 #ifdef _KERNEL
 
