@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.31 2018/07/27 06:23:08 bket Exp $	*/
+/*	$OpenBSD: engine.c,v 1.32 2019/03/02 05:34:59 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -435,33 +435,35 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_SHOW_INTERFACE_INFO:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
 				fatal("%s: IMSG_CTL_SHOW_INTERFACE_INFO wrong "
-				    "length: %d", __func__, imsg.hdr.len);
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			engine_showinfo_ctl(&imsg, if_index);
 			break;
 #endif	/* SMALL */
 		case IMSG_REMOVE_IF:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
-				fatal("%s: IMSG_REMOVE_IF wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
+				fatal("%s: IMSG_REMOVE_IF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			remove_slaacd_iface(if_index);
 			break;
 		case IMSG_RA:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(ra))
-				fatal("%s: IMSG_RA wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(ra))
+				fatal("%s: IMSG_RA wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&ra, imsg.data, sizeof(ra));
 			iface = get_slaacd_iface_by_id(ra.if_index);
 			if (iface != NULL)
 				parse_ra(iface, &ra);
 			break;
 		case IMSG_CTL_SEND_SOLICITATION:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
 				fatal("%s: IMSG_CTL_SEND_SOLICITATION wrong "
-				    "length: %d", __func__, imsg.hdr.len);
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			iface = get_slaacd_iface_by_id(if_index);
 			if (iface == NULL)
@@ -473,10 +475,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				    &iface->if_index, sizeof(iface->if_index));
 			break;
 		case IMSG_PROPOSAL_ACK:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(proposal_ack))
-				fatal("%s: IMSG_PROPOSAL_ACK wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(proposal_ack))
+				fatal("%s: IMSG_PROPOSAL_ACK wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&proposal_ack, imsg.data, sizeof(proposal_ack));
 			log_debug("%s: IMSG_PROPOSAL_ACK: %lld - %d", __func__,
 			    proposal_ack.id, proposal_ack.pid);
@@ -511,10 +512,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 
 			break;
 		case IMSG_DEL_ADDRESS:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(del_addr))
-				fatal("%s: IMSG_DEL_ADDRESS wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(del_addr))
+				fatal("%s: IMSG_DEL_ADDRESS wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&del_addr, imsg.data, sizeof(del_addr));
 			iface = get_slaacd_iface_by_id(del_addr.if_index);
 			if (iface == NULL) {
@@ -534,10 +534,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 
 			break;
 		case IMSG_DEL_ROUTE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(del_route))
-				fatal("%s: IMSG_DEL_ROUTE wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(del_route))
+				fatal("%s: IMSG_DEL_ROUTE wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&del_route, imsg.data, sizeof(del_route));
 			iface = get_slaacd_iface_by_id(del_route.if_index);
 			if (iface == NULL) {
@@ -556,10 +555,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			}
 			break;
 		case IMSG_DUP_ADDRESS:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(dup_addr))
-				fatal("%s: IMSG_DUP_ADDRESS wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(dup_addr))
+				fatal("%s: IMSG_DUP_ADDRESS wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&dup_addr, imsg.data, sizeof(dup_addr));
 			iface = get_slaacd_iface_by_id(dup_addr.if_index);
 			if (iface == NULL) {
@@ -663,10 +661,9 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatal("pledge");
 			break;
 		case IMSG_UPDATE_IF:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(imsg_ifinfo))
-				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_ifinfo))
+				fatal("%s: IMSG_UPDATE_IF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
 
 			iface = get_slaacd_iface_by_id(imsg_ifinfo.if_index);
@@ -750,10 +747,9 @@ engine_dispatch_main(int fd, short event, void *bula)
 			break;
 #ifndef	SMALL
 		case IMSG_UPDATE_ADDRESS:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(imsg_addrinfo))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_addrinfo))
 				fatal("%s: IMSG_UPDATE_ADDRESS wrong length: "
-				    "%d", __func__, imsg.hdr.len);
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 
 			memcpy(&imsg_addrinfo, imsg.data,
 			    sizeof(imsg_addrinfo));
@@ -809,10 +805,10 @@ engine_dispatch_main(int fd, short event, void *bula)
 
 			break;
 		case IMSG_UPDATE_LINK_STATE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(imsg_link_state))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_link_state))
 				fatal("%s: IMSG_UPDATE_LINK_STATE wrong "
-				    "length: %d", __func__, imsg.hdr.len);
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
 
 			memcpy(&imsg_link_state, imsg.data,
 			    sizeof(imsg_link_state));

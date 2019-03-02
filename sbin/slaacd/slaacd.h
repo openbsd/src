@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.20 2018/07/27 06:23:08 bket Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.21 2019/03/02 05:34:59 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -26,6 +26,8 @@
 
 /* MAXDNAME from arpa/namesr.h */
 #define SLAACD_MAX_DNSSL	1025
+
+#define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
 
 static const char * const log_procnames[] = {
 	"main",
