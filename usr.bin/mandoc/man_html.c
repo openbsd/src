@@ -1,4 +1,4 @@
-/*	$OpenBSD: man_html.c,v 1.125 2019/03/01 10:48:58 schwarze Exp $ */
+/*	$OpenBSD: man_html.c,v 1.126 2019/03/02 16:29:49 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -44,6 +44,8 @@ static	void		  print_man_head(const struct roff_meta *,
 				struct html *);
 static	void		  print_man_nodelist(MAN_ARGS);
 static	void		  print_man_node(MAN_ARGS);
+static	char		  list_continues(const struct roff_node *,
+				const struct roff_node *);
 static	int		  man_B_pre(MAN_ARGS);
 static	int		  man_IP_pre(MAN_ARGS);
 static	int		  man_I_pre(MAN_ARGS);
@@ -234,16 +236,13 @@ print_man_node(MAN_ARGS)
 	if (n->type == ROFFT_BLOCK &&
 	    (n->tok == MAN_IP || n->tok == MAN_TP || n->tok == MAN_TQ)) {
 		t = h->tag;
-		while (t->tag != TAG_DL)
+		while (t->tag != TAG_DL && t->tag != TAG_UL)
 			t = t->next;
 		/*
 		 * Close the list if no further item of the same type
 		 * follows; otherwise, close the item only.
 		 */
-		if (n->next == NULL ||
-		    (n->tok == MAN_IP && n->next->tok != MAN_IP) ||
-		    (n->tok != MAN_IP &&
-		     n->next->tok != MAN_TP && n->next->tok != MAN_TQ)) {
+		if (list_continues(n, n->next) == '\0') {
 			print_tagq(h, t);
 			t = NULL;
 		}
@@ -414,29 +413,82 @@ man_PP_pre(MAN_ARGS)
 	return 1;
 }
 
+static char
+list_continues(const struct roff_node *n1, const struct roff_node *n2)
+{
+	const char *s1, *s2;
+	char c1, c2;
+
+	if (n1 == NULL || n1->type != ROFFT_BLOCK ||
+	    n2 == NULL || n2->type != ROFFT_BLOCK)
+		return '\0';
+	if ((n1->tok == MAN_TP || n1->tok == MAN_TQ) &&
+	    (n2->tok == MAN_TP || n2->tok == MAN_TQ))
+		return ' ';
+	if (n1->tok != MAN_IP || n2->tok != MAN_IP)
+		return '\0';
+	n1 = n1->head->child;
+	n2 = n2->head->child;
+	s1 = n1 == NULL ? "" : n1->string;
+	s2 = n2 == NULL ? "" : n2->string;
+	c1 = strcmp(s1, "*") == 0 ? '*' :
+	     strcmp(s1, "\\-") == 0 ? '-' :
+	     strcmp(s1, "\\(bu") == 0 ? 'b' : ' ';
+	c2 = strcmp(s2, "*") == 0 ? '*' :
+	     strcmp(s2, "\\-") == 0 ? '-' :
+	     strcmp(s2, "\\(bu") == 0 ? 'b' : ' ';
+	return c1 != c2 ? '\0' : c1 == 'b' ? '*' : c1;
+}
+
 static int
 man_IP_pre(MAN_ARGS)
 {
 	const struct roff_node	*nn;
+	const char		*list_class;
+	enum htmltag		 list_elem, body_elem;
+	char			 list_type;
+
+	nn = n->type == ROFFT_BLOCK ? n : n->parent;
+	if ((list_type = list_continues(nn->prev, nn)) == '\0') {
+		/* Start a new list. */
+		if ((list_type = list_continues(nn, nn->next)) == '\0')
+			list_type = ' ';
+		switch (list_type) {
+		case ' ':
+			list_class = "Bl-tag";
+			list_elem = TAG_DL;
+			break;
+		case '*':
+			list_class = "Bl-bullet";
+			list_elem = TAG_UL;
+			break;
+		case '-':
+			list_class = "Bl-dash";
+			list_elem = TAG_UL;
+			break;
+		default:
+			abort();
+		}
+	} else {
+		/* Continue a list that was started earlier. */
+		list_class = NULL;
+		list_elem = TAG_MAX;
+	}
+	body_elem = list_type == ' ' ? TAG_DD : TAG_LI;
 
 	switch (n->type) {
 	case ROFFT_BLOCK:
 		html_close_paragraph(h);
-		/*
-		 * Open a new list unless there is an immediately
-		 * preceding item of the same type.
-		 */
-		if (n->prev == NULL ||
-		    (n->tok == MAN_IP && n->prev->tok != MAN_IP) ||
-		    (n->tok != MAN_IP &&
-		     n->prev->tok != MAN_TP && n->prev->tok != MAN_TQ))
-			print_otag(h, TAG_DL, "c", "Bl-tag");
+		if (list_elem != TAG_MAX)
+			print_otag(h, list_elem, "c", list_class);
 		return 1;
 	case ROFFT_HEAD:
+		if (body_elem == TAG_LI)
+			return 0;
 		print_otag(h, TAG_DT, "");
 		break;
 	case ROFFT_BODY:
-		print_otag(h, TAG_DD, "");
+		print_otag(h, body_elem, "");
 		return 1;
 	default:
 		abort();
