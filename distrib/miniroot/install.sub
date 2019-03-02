@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1110 2019/02/11 17:51:53 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1111 2019/03/02 17:33:18 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1640,6 +1640,10 @@ install_files() {
 		return
 	fi
 
+	if [[ $MODE == upgrade ]] && isin base$VERSION.tgz $_get_sets; then
+		rm -f /mnt/usr/share/relink/usr/lib/*
+	fi
+
 	# Install the set files.
 	for _f in $_get_sets; do
 		_fsrc="$_src/$_f"
@@ -3168,8 +3172,6 @@ do_upgrade() {
 
 	# Ensure that previous installer choices (e.g. method) are available.
 	wait_cgiinfo
-
-	rm -f /mnt/usr/share/relink/usr/lib/*
 
 	# Ask the user for locations, and install whatever sets the user
 	# selected.
