@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.10 2019/01/29 15:43:33 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.11 2019/03/02 03:40:45 pamela Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -211,23 +211,23 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 
 		switch (imsg.hdr.type) {
 		case IMSG_RA_RS:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(ra_rs))
-				fatal("%s: IMSG_RA_RS wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(ra_rs))
+				fatal("%s: IMSG_RA_RS wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&ra_rs, imsg.data, sizeof(ra_rs));
 			parse_ra_rs(&ra_rs);
 			break;
 		case IMSG_UPDATE_IF:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
-				fatal("%s: IMSG_UPDATE_IF wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
+				fatal("%s: IMSG_UPDATE_IF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			update_iface(if_index);
 			break;
 		case IMSG_REMOVE_IF:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(if_index))
-				fatal("%s: IMSG_REMOVE_IF wrong length: %d",
-				    __func__, imsg.hdr.len);
+			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
+				fatal("%s: IMSG_REMOVE_IF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			remove_iface(if_index);
 			break;

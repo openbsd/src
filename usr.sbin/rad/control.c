@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2018/08/04 09:37:17 florian Exp $	*/
+/*	$OpenBSD: control.c,v 1.5 2019/03/02 03:40:45 pamela Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,16 +240,14 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			frontend_imsg_compose_main(imsg.hdr.type, 0, NULL, 0);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(verbose))
+			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
 				break;
 
 			/* Forward to all other processes. */
 			frontend_imsg_compose_main(imsg.hdr.type, imsg.hdr.pid,
-			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
+			    imsg.data, IMSG_DATA_SIZE(imsg));
 			frontend_imsg_compose_engine(imsg.hdr.type,
-			    imsg.hdr.pid, imsg.data,
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
+			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
@@ -274,5 +272,5 @@ control_imsg_relay(struct imsg *imsg)
 		return (0);
 
 	return (imsg_compose_event(&c->iev, imsg->hdr.type, 0, imsg->hdr.pid,
-	    -1, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE));
+	    -1, imsg->data, IMSG_DATA_SIZE(*imsg)));
 }
