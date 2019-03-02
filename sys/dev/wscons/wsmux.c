@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.42 2019/02/20 17:54:34 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.43 2019/03/02 07:42:03 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -62,6 +62,8 @@
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wsmuxvar.h>
 
+#define WSMUX_MAXDEPTH	8
+
 #ifdef WSMUX_DEBUG
 #define DPRINTF(x)	if (wsmuxdebug) printf x
 #define DPRINTFN(n,x)	if (wsmuxdebug > (n)) printf x
@@ -103,6 +105,8 @@ int	wsmux_do_ioctl(struct device *, u_long, caddr_t,int,struct proc *);
 
 int	wsmux_add_mux(int, struct wsmux_softc *);
 
+int	wsmux_depth(struct wsmux_softc *);
+
 void	wsmuxattach(int);
 
 void	wsmux_detach_sc_locked(struct wsmux_softc *, struct wsevsrc *);
@@ -115,6 +119,12 @@ struct wssrcops wsmux_srcops = {
 	.ddispioctl	= wsmux_do_displayioctl,
 	.dsetdisplay	= wsmux_evsrc_set_display,
 };
+
+/*
+ * Lock used by wsmux_add_mux() to grant exclusive access to the tree of
+ * stacked wsmux devices.
+ */
+struct rwlock wsmux_tree_lock = RWLOCK_INITIALIZER("wsmuxtreelk");
 
 /* From upper level */
 void
@@ -577,24 +587,46 @@ int
 wsmux_add_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wsmux_softc *sc, *m;
+	int error;
+	int depth = 0;
 
 	sc = wsmux_getmux(unit);
 	if (sc == NULL)
 		return (ENXIO);
 
+	rw_enter_write(&wsmux_tree_lock);
+
 	DPRINTF(("wsmux_add_mux: %s(%p) to %s(%p)\n",
 		 sc->sc_base.me_dv.dv_xname, sc, muxsc->sc_base.me_dv.dv_xname,
 		 muxsc));
 
-	if (sc->sc_base.me_parent != NULL || sc->sc_base.me_evp != NULL)
-		return (EBUSY);
+	if (sc->sc_base.me_parent != NULL || sc->sc_base.me_evp != NULL) {
+		error = EBUSY;
+		goto out;
+	}
 
 	/* The mux we are adding must not be an ancestor of itself. */
-	for (m = muxsc; m != NULL ; m = m->sc_base.me_parent)
-		if (m == sc)
-			return (EINVAL);
+	for (m = muxsc; m != NULL; m = m->sc_base.me_parent) {
+		if (m == sc) {
+			error = EINVAL;
+			goto out;
+		}
+		depth++;
+	}
 
-	return (wsmux_attach_sc(muxsc, &sc->sc_base));
+	/*
+	 * Limit the number of stacked wsmux devices to avoid exhausting
+	 * the kernel stack during wsmux_do_open().
+	 */
+	if (depth + wsmux_depth(sc) > WSMUX_MAXDEPTH) {
+		error = EBUSY;
+		goto out;
+	}
+
+	error = wsmux_attach_sc(muxsc, &sc->sc_base);
+out:
+	rw_exit_write(&wsmux_tree_lock);
+	return (error);
 }
 
 /* Create a new mux softc. */
@@ -876,4 +908,31 @@ wsmux_set_layout(struct wsmux_softc *sc, uint32_t layout)
 {
 	if ((layout & KB_DEFAULT) == 0)
 		sc->sc_kbd_layout = layout;
+}
+
+/*
+ * Returns the depth of the longest chain of nested wsmux devices starting
+ * from sc.
+ */
+int
+wsmux_depth(struct wsmux_softc *sc)
+{
+	struct wsevsrc *me;
+	int depth;
+	int maxdepth = 0;
+
+	rw_assert_anylock(&wsmux_tree_lock);
+
+	rw_enter_read(&sc->sc_lock);
+	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
+		if (me->me_ops->type != WSMUX_MUX)
+			continue;
+
+		depth = wsmux_depth((struct wsmux_softc *)me);
+		if (depth > maxdepth)
+			maxdepth = depth;
+	}
+	rw_exit_read(&sc->sc_lock);
+
+	return (maxdepth + 1);
 }
