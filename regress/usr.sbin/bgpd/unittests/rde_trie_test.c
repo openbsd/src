@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.9 2018/11/01 14:20:41 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.10 2019/03/03 08:53:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -48,7 +48,7 @@ host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(s, NULL, &hints, &res) == 0) {
 		*len = res->ai_family == AF_INET6 ? 128 : 32;
-		sa2addr(res->ai_addr, h);
+		sa2addr(res->ai_addr, h, NULL);
 		freeaddrinfo(res);
 	} else {        /* ie. for 10/8 parsing */
 		if ((bits = inet_net_pton(AF_INET, s, &h->v4, sizeof(h->v4))) == -1)
