@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.221 2019/01/11 17:03:43 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.222 2019/03/03 13:01:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -805,6 +805,8 @@ parse(struct curparse *curp, int fd, const char *file)
 
 	if (curp->outdata == NULL)
 		outdata_alloc(curp);
+	else if (curp->outtype == OUTT_HTML)
+		html_reset(curp);
 
 	mandoc_xr_reset();
 	meta = mparse_result(curp->mp);

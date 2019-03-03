@@ -1,4 +1,4 @@
-/*	$OpenBSD: html.c,v 1.123 2019/03/01 10:48:58 schwarze Exp $ */
+/*	$OpenBSD: html.c,v 1.124 2019/03/03 13:01:47 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -108,6 +108,7 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 /* Avoid duplicate HTML id= attributes. */
 static	struct ohash	 id_unique;
 
+static	void	 html_reset_internal(struct html *);
 static	void	 print_byte(struct html *, char);
 static	void	 print_endword(struct html *);
 static	void	 print_indent(struct html *);
@@ -143,27 +144,37 @@ html_alloc(const struct manoutput *outopts)
 	return h;
 }
 
-void
-html_free(void *p)
+static void
+html_reset_internal(struct html *h)
 {
 	struct tag	*tag;
-	struct html	*h;
 	char		*cp;
 	unsigned int	 slot;
 
-	h = (struct html *)p;
 	while ((tag = h->tag) != NULL) {
 		h->tag = tag->next;
 		free(tag);
 	}
-	free(h);
-
 	cp = ohash_first(&id_unique, &slot);
 	while (cp != NULL) {
 		free(cp);
 		cp = ohash_next(&id_unique, &slot);
 	}
 	ohash_delete(&id_unique);
+}
+
+void
+html_reset(void *p)
+{
+	html_reset_internal(p);
+	mandoc_ohash_init(&id_unique, 4, 0);
+}
+
+void
+html_free(void *p)
+{
+	html_reset_internal(p);
+	free(p);
 }
 
 void

@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.h,v 1.24 2018/12/30 00:48:47 schwarze Exp $ */
+/*	$OpenBSD: main.h,v 1.25 2019/03/03 13:01:47 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014, 2015, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@ struct	manoutput;
 void		 *html_alloc(const struct manoutput *);
 void		  html_mdoc(void *, const struct roff_meta *);
 void		  html_man(void *, const struct roff_meta *);
+void		  html_reset(void *);
 void		  html_free(void *);
 
 void		  tree_mdoc(void *, const struct roff_meta *);
