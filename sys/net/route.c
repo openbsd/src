@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.382 2019/02/15 21:16:01 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.383 2019/03/03 16:31:12 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1026,7 +1026,7 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 	while (cp2 < cplim)
 		*cp2++ = *cp1++ & *cp3++;
 	if (cp2 < cplim2)
-		bzero((caddr_t)cp2, (unsigned)(cplim2 - cp2));
+		bzero(cp2, cplim2 - cp2);
 }
 
 int
