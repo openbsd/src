@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2019/03/04 19:31:07 anton Exp $
+#	$OpenBSD: Makefile,v 1.25 2019/03/04 19:33:41 anton Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
@@ -22,8 +22,8 @@ kq-tun: ${PROG}
 	@EVENT_SHOW_METHOD=yes EVENT_NOPOLL=yes EVENT_NOKQUEUE=yes ${SUDO} ./${PROG} -t
 	@EVENT_SHOW_METHOD=yes EVENT_NOSELECT=yes EVENT_NOKQUEUE=yes ${SUDO} ./${PROG} -t
 	@-${SUDO} rm -f /dev/tun98 /dev/tun99
-kq-pty: ${PROG}
-	${SUDO} ./${PROG} -T
+kq-pty-1: ${PROG}
+	${SUDO} ./${PROG} -T1
 kq-signal: ${PROG}
 	./${PROG} -s
 kq-fdpass: ${PROG}
@@ -47,7 +47,7 @@ TESTS+=	kq-fork
 TESTS+=	kq-invalid-timer
 TESTS+=	kq-pipe
 TESTS+=	kq-process
-TESTS+=	kq-pty
+TESTS+=	kq-pty-1
 TESTS+=	kq-random
 TESTS+=	kq-regress-1
 TESTS+=	kq-regress-2

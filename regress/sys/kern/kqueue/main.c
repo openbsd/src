@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2018/08/13 06:36:29 anton Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2019/03/04 19:33:41 anton Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -14,10 +14,10 @@ int
 main(int argc, char **argv)
 {
 	extern char *__progname;
-	int r, ret, c;
+	int n, ret, c;
 
 	ret = 0;
-	while ((c = getopt(argc, argv, "fFiIlpPrR:stT")) != -1) {
+	while ((c = getopt(argc, argv, "fFiIlpPrR:stT:")) != -1) {
 		switch (c) {
 		case 'f':
 			ret |= check_inheritance();
@@ -44,8 +44,8 @@ main(int argc, char **argv)
 			ret |= do_random();
 			break;
 		case 'R':
-			r = strtonum(optarg, 1, INT_MAX, NULL);
-			ret |= do_regress(r);
+			n = strtonum(optarg, 1, INT_MAX, NULL);
+			ret |= do_regress(n);
 			break;
 		case 's':
 			ret |= do_signal();
@@ -54,7 +54,8 @@ main(int argc, char **argv)
 			ret |= do_tun();
 			break;
 		case 'T':
-			ret |= do_pty();
+			n = strtonum(optarg, 1, INT_MAX, NULL);
+			ret |= do_pty(n);
 			break;
 		default:
 			fprintf(stderr, "usage: %s -[fFiIlpPrstT] [-R n]\n",
