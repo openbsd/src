@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.9 2019/02/28 18:20:38 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.10 2019/03/04 16:46:44 millert Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -267,9 +267,10 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 }
 
 int
-tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len)
+tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 {
 	struct tls13_ctx *ctx = ssl->internal->tls13;
+	const uint8_t *buf = vbuf;
 	size_t n, sent;
 	ssize_t ret;
 
