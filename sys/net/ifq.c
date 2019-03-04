@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.26 2019/03/01 04:47:33 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.27 2019/03/04 21:34:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -167,7 +167,6 @@ ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 	ifq->ifq_softc = NULL;
 
 	mtx_init(&ifq->ifq_mtx, IPL_NET);
-	ifq->ifq_qdrops = 0;
 
 	/* default to priq */
 	ifq->ifq_ops = &priq_ops;
@@ -447,7 +446,6 @@ ifiq_init(struct ifiqueue *ifiq, struct ifnet *ifp, unsigned int idx)
 	task_set(&ifiq->ifiq_task, ifiq_process, ifiq);
 	ifiq->ifiq_pressure = 0;
 
-	ifiq->ifiq_qdrops = 0;
 	ifiq->ifiq_packets = 0;
 	ifiq->ifiq_bytes = 0;
 	ifiq->ifiq_qdrops = 0;
