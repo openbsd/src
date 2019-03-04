@@ -1,4 +1,4 @@
-/*	$OpenBSD: captiveportal.c,v 1.8 2019/03/01 08:02:25 florian Exp $	*/
+/*	$OpenBSD: captiveportal.c,v 1.9 2019/03/04 08:58:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -642,7 +642,7 @@ parse_http_header(struct http_ctx *ctx)
 
 	/* ignore parse errors from here on out, we got the status */
 
-	p = strstr(ep + 1, "Content-Length:");
+	p = strcasestr(ep + 1, "Content-Length:");
 	if (p == NULL)
 		return (0);
 
