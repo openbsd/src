@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.90 2018/08/30 06:16:30 anton Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.91 2019/03/04 19:23:02 anton Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -678,6 +678,12 @@ filt_ptcread(struct knote *kn, long hint)
 		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
 			kn->kn_data++;
 	}
+
+	if (!ISSET(tp->t_state, TS_CARR_ON)) {
+		kn->kn_flags |= EV_EOF;
+		return (1);
+	}
+
 	return (kn->kn_data > 0);
 }
 
