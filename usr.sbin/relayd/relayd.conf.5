@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.187 2018/08/06 18:26:29 jmc Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.188 2019/03/04 21:25:03 benno Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 6 2018 $
+.Dd $Mdocdate: March 4 2019 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1006,6 +1006,10 @@ Valid options are:
 .It Ic headerlen Ar number
 Set the maximum size of all HTTP headers in bytes.
 The default value is 8192 and it is limited to a maximum of 131072.
+.It Ic websockets
+Allow connection upgrade to websocket protocol.
+The default is
+.Ic no websockets .
 .El
 .El
 .Sh FILTER RULES

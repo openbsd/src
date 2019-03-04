@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.231 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.232 2019/03/04 21:25:03 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -176,6 +176,7 @@ typedef struct {
 %token	TO ROUTER RTLABEL TRANSPARENT TRAP UPDATES URL VIRTUAL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS ERRORS STATE CHANGES CHECKS
+%token	WEBSOCKETS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostname interface table value optstring
@@ -1064,8 +1065,20 @@ protoptsl	: ssltls tlsflags
 		| ssltls '{' tlsflags_l '}'
 		| TCP tcpflags
 		| TCP '{' tcpflags_l '}'
-		| HTTP httpflags
-		| HTTP '{' httpflags_l '}'
+		| HTTP {
+			if (proto->type != RELAY_PROTO_HTTP) {
+				yyerror("can set http options only for "
+				    "http protocol");
+				YYERROR;
+			}
+		} httpflags
+		| HTTP  {
+			if (proto->type != RELAY_PROTO_HTTP) {
+				yyerror("can set http options only for "
+				    "http protocol");
+				YYERROR;
+			}
+		} '{' httpflags_l '}'
 		| RETURN ERROR opteflags	{ proto->flags |= F_RETURN; }
 		| RETURN ERROR '{' eflags_l '}'	{ proto->flags |= F_RETURN; }
 		| filterrule
@@ -1078,17 +1091,14 @@ httpflags_l	: httpflags comma httpflags_l
 		;
 
 httpflags	: HEADERLEN NUMBER	{
-			if (proto->type != RELAY_PROTO_HTTP) {
-				yyerror("can set http options only for "
-				    "http protocol");
-				YYERROR;
-			}
 			if ($2 < 0 || $2 > RELAY_MAXHEADERLENGTH) {
 				yyerror("invalid headerlen: %d", $2);
 				YYERROR;
 			}
 			proto->httpheaderlen = $2;
 		}
+		| WEBSOCKETS	{ proto->httpflags |= HTTPFLAG_WEBSOCKETS; }
+		| NO WEBSOCKETS	{ proto->httpflags &= ~HTTPFLAG_WEBSOCKETS; }
 		;
 
 tcpflags_l	: tcpflags comma tcpflags_l
@@ -2338,6 +2348,7 @@ lookup(char *s)
 		{ "url",		URL },
 		{ "value",		VALUE },
 		{ "virtual",		VIRTUAL },
+		{ "websockets",		WEBSOCKETS },
 		{ "with",		WITH }
 	};
 	const struct keywords	*p;

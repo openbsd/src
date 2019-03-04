@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.9 2016/08/01 21:14:45 benno Exp $	*/
+/*	$OpenBSD: http.h,v 1.10 2019/03/04 21:25:03 benno Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -249,6 +249,12 @@ struct http_descriptor {
 	/* A tree of headers and attached lists for repeated headers. */
 	struct kv		*http_lastheader;
 	struct kvtree		 http_headers;
+};
+
+struct relay_http_priv {
+#define HTTP_CONNECTION_UPGRADE	0x01
+#define HTTP_UPGRADE_WEBSOCKET	0x02
+	int			 http_upgrade_req;
 };
 
 #endif /* HTTP_H */
