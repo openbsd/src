@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.22 2018/05/30 13:43:51 krw Exp $	*/
+/*	$OpenBSD: systat.h,v 1.23 2019/03/04 21:27:35 dlg Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -104,9 +104,11 @@ struct ifcount {
 	u_int64_t	ifc_ib;			/* input bytes */
 	u_int64_t	ifc_ip;			/* input packets */
 	u_int64_t	ifc_ie;			/* input errors */
+	u_int64_t	ifc_iq;			/* input qdrops */
 	u_int64_t	ifc_ob;			/* output bytes */
 	u_int64_t	ifc_op;			/* output packets */
 	u_int64_t	ifc_oe;			/* output errors */
+	u_int64_t	ifc_oq;			/* output qdrops */
 	u_int64_t	ifc_co;			/* collisions */
 	int		ifc_flags;		/* up / down */
 	int		ifc_state;		/* link state */

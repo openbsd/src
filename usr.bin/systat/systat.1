@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.110 2018/07/25 17:24:14 bluhm Exp $
+.\"	$OpenBSD: systat.1,v 1.111 2019/03/04 21:27:35 dlg Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: July 25 2018 $
+.Dd $Mdocdate: March 4 2019 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -290,6 +290,13 @@ between display refreshes.
 changes the counters to show the average per second over
 the display refresh interval;
 this is the default.
+.Ic d
+displays input and output queue drops.
+.Ic e
+displays input and output errors.
+.Ic f
+displays input and output queue drops plus errors.
+This is the default view.
 .It Ic iostat
 Display statistics about disk throughput.
 Statistics

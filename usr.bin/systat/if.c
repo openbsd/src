@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.23 2015/01/16 00:03:37 deraadt Exp $ */
+/*	$OpenBSD: if.c,v 1.24 2019/03/04 21:27:35 dlg Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -56,6 +56,49 @@ static void showifstat(struct ifstat *);
 static void showtotal(void);
 static void rt_getaddrinfo(struct sockaddr *, int, struct sockaddr **);
 
+const char ifails[] = "IFAILS";
+const char ofails[] = "OFAILS";
+
+#define IF_ERR_SUM	0
+#define IF_ERR_ERRORS	1
+#define IF_ERR_QDROPS	2
+
+struct if_err_view {
+	const char *iname;
+	const char *oname;
+	uint64_t (*icount)(const struct ifcount *);
+	uint64_t (*ocount)(const struct ifcount *);
+};
+
+static uint64_t if_err_ifails(const struct ifcount *);
+static uint64_t if_err_ofails(const struct ifcount *);
+static uint64_t if_err_ierrors(const struct ifcount *);
+static uint64_t if_err_oerrors(const struct ifcount *);
+static uint64_t if_err_iqdrops(const struct ifcount *);
+static uint64_t if_err_oqdrops(const struct ifcount *);
+
+static const struct if_err_view if_err_views[] = {
+	[IF_ERR_SUM] =    {
+		.iname = ifails,
+		.oname = ofails,
+		.icount = if_err_ifails,
+		.ocount = if_err_ofails,
+	},
+	[IF_ERR_ERRORS] = {
+		.iname = "IERRS",
+		.oname = "OERRS",
+		.icount = if_err_ierrors,
+		.ocount = if_err_oerrors,
+	},
+	[IF_ERR_QDROPS] = {
+		.iname = "IQDROPS",
+		.oname = "OQDROPS",
+		.icount = if_err_iqdrops,
+		.ocount = if_err_oqdrops,
+	},
+};
+
+static const struct if_err_view *if_err_view = &if_err_views[IF_ERR_SUM];
 
 /* Define fields */
 field_def fields_if[] = {
@@ -63,10 +106,10 @@ field_def fields_if[] = {
 	{"STATE", 4, 6, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"IPKTS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"IBYTES", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"IERRS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{ifails, 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"OPKTS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"OBYTES", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
-	{"OERRS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
+	{ofails, 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"COLLS", 5, 8, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"DESC", 14, 64, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 };
@@ -264,9 +307,11 @@ fetchifstat(void)
 		UPDATE(ifc_ip, ifm_data.ifi_ipackets);
 		UPDATE(ifc_ib, ifm_data.ifi_ibytes);
 		UPDATE(ifc_ie, ifm_data.ifi_ierrors);
+		UPDATE(ifc_iq, ifm_data.ifi_iqdrops);
 		UPDATE(ifc_op, ifm_data.ifi_opackets);
 		UPDATE(ifc_ob, ifm_data.ifi_obytes);
 		UPDATE(ifc_oe, ifm_data.ifi_oerrors);
+		UPDATE(ifc_oq, ifm_data.ifi_oqdrops);
 		UPDATE(ifc_co, ifm_data.ifi_collisions);
 		ifs->ifs_cur.ifc_flags = ifm.ifm_flags;
 		ifs->ifs_cur.ifc_state = ifm.ifm_data.ifi_link_state;
@@ -315,11 +360,11 @@ showifstat(struct ifstat *ifs)
 
 	print_fld_sdiv(FLD_IF_IBYTES, ifs->ifs_cur.ifc_ib * conv, div);
 	print_fld_size(FLD_IF_IPKTS, ifs->ifs_cur.ifc_ip);
-	print_fld_size(FLD_IF_IERRS, ifs->ifs_cur.ifc_ie);
+	print_fld_size(FLD_IF_IERRS, if_err_view->icount(&ifs->ifs_cur));
 
 	print_fld_sdiv(FLD_IF_OBYTES, ifs->ifs_cur.ifc_ob * conv, div);
 	print_fld_size(FLD_IF_OPKTS, ifs->ifs_cur.ifc_op);
-	print_fld_size(FLD_IF_OERRS, ifs->ifs_cur.ifc_oe);
+	print_fld_size(FLD_IF_OERRS, if_err_view->ocount(&ifs->ifs_cur));
 
 	print_fld_size(FLD_IF_COLLS, ifs->ifs_cur.ifc_co);
 
@@ -336,16 +381,61 @@ showtotal(void)
 
 	print_fld_sdiv(FLD_IF_IBYTES, sum.ifc_ib * conv, div);
 	print_fld_size(FLD_IF_IPKTS, sum.ifc_ip);
-	print_fld_size(FLD_IF_IERRS, sum.ifc_ie);
+	print_fld_size(FLD_IF_IERRS, if_err_view->icount(&sum));
 
 	print_fld_sdiv(FLD_IF_OBYTES, sum.ifc_ob * conv, div);
 	print_fld_size(FLD_IF_OPKTS, sum.ifc_op);
-	print_fld_size(FLD_IF_OERRS, sum.ifc_oe);
+	print_fld_size(FLD_IF_OERRS, if_err_view->ocount(&sum));
 
 	print_fld_size(FLD_IF_COLLS, sum.ifc_co);
 
 	end_line();
 
+}
+
+static uint64_t
+if_err_ifails(const struct ifcount *ifc)
+{
+	return (ifc->ifc_ie + ifc->ifc_iq);
+}
+
+static uint64_t
+if_err_ofails(const struct ifcount *ifc)
+{
+	return (ifc->ifc_oe + ifc->ifc_oq);
+}
+
+static uint64_t
+if_err_ierrors(const struct ifcount *ifc)
+{
+	return (ifc->ifc_ie);
+}
+
+static uint64_t
+if_err_oerrors(const struct ifcount *ifc)
+{
+	return (ifc->ifc_oe);
+}
+
+static uint64_t
+if_err_iqdrops(const struct ifcount *ifc)
+{
+	return (ifc->ifc_iq);
+}
+
+static uint64_t
+if_err_oqdrops(const struct ifcount *ifc)
+{
+	return (ifc->ifc_oq);
+}
+
+static void
+if_set_errs(unsigned int v)
+{
+	if_err_view = &if_err_views[v];
+	FLD_IF_IERRS->title = if_err_view->iname;
+	FLD_IF_IERRS->title = if_err_view->oname;
+	gotsig_alarm = 1;
 }
 
 int
@@ -354,6 +444,16 @@ if_keyboard_callback(int ch)
 	struct ifstat *ifs;
 
 	switch (ch) {
+	case 'd':
+		if_set_errs(IF_ERR_QDROPS);
+		break;
+	case 'e':
+		if_set_errs(IF_ERR_ERRORS);
+		break;
+	case 'f':
+		if_set_errs(IF_ERR_SUM);
+		break;
+
 	case 'r':
 		for (ifs = ifstats; ifs < ifstats + nifs; ifs++)
 			ifs->ifs_old = ifs->ifs_now;
