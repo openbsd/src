@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.313 2019/01/20 15:57:27 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.314 2019/03/04 09:29:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -806,6 +806,9 @@ void
 tty_update_client_offset(struct client *c)
 {
 	u_int	ox, oy, sx, sy;
+
+	if (~c->flags & CLIENT_TERMINAL)
+		return;
 
 	c->tty.oflag = tty_window_offset1(&c->tty, &ox, &oy, &sx, &sy);
 	if (ox == c->tty.oox &&
