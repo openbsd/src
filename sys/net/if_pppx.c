@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.66 2018/07/11 21:18:23 nayden Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.67 2019/03/04 18:41:40 denis Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1047,6 +1047,11 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 #endif
 	if (pipex_enable) {
 		switch (dst->sa_family) {
+#ifdef INET6
+		case AF_INET6:
+			proto = PPP_IPV6;
+			break;
+#endif
 		case AF_INET:
 			proto = PPP_IP;
 			break;
