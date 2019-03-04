@@ -1,7 +1,7 @@
-/*	$OpenBSD: roff.h,v 1.50 2018/12/31 08:17:58 schwarze Exp $	*/
+/*	$OpenBSD: roff.h,v 1.51 2019/03/04 13:01:52 schwarze Exp $	*/
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -548,4 +548,5 @@ struct	roff_meta {
 extern	const char *const *roff_name;
 
 
+int		 arch_valid(const char *, enum mandoc_os);
 void		 deroff(char **, const struct roff_node *);

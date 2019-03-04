@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.222 2019/03/03 13:01:47 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.223 2019/03/04 13:01:52 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -767,7 +767,11 @@ fs_search(const struct mansearch *cfg, const struct manpaths *paths,
 		}
 		if (res != NULL && *ressz == lastsz &&
 		    strchr(*argv, '/') == NULL) {
-			if (cfg->sec == NULL)
+			if (cfg->arch != NULL &&
+			    arch_valid(cfg->arch, MANDOC_OS_OPENBSD) == 0)
+				warnx("Unknown architecture \"%s\".",
+				    cfg->arch);
+			else if (cfg->sec == NULL)
 				warnx("No entry for %s in the manual.",
 				    *argv);
 			else
