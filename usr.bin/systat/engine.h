@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.10 2019/01/17 05:56:29 tedu Exp $	 */
+/* $OpenBSD: engine.h,v 1.11 2019/03/04 21:23:48 dlg Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -53,7 +53,7 @@
 
 
 typedef struct {
-	char *title;
+	const char *title;
 	int norm_width;
 	int max_width;
 	int increment;
