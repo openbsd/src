@@ -1,4 +1,4 @@
-.\"	$OpenBSD: check-lib-depends.1,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"	$OpenBSD: check-lib-depends.1,v 1.2 2019/03/04 14:10:33 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
+.Dd $Mdocdate: March 4 2019 $
 .Dt CHECK-LIB-DEPENDS 1
 .Os
 .Sh NAME
@@ -138,6 +138,12 @@ option is used,
 .Nm
 will retrieve the packing-list from stdin, and scan the package according
 to other options.
+.Sh BUGS
+Currently,
+.Nm
+doesn't handle libraries living in subdirectories of
+.Sq ${LOCALBASE}
+correctly.
 .Sh SEE ALSO
 .Xr ldd 1 ,
 .Xr objdump 1 ,
