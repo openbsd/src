@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.24 2018/11/29 14:25:07 tedu Exp $ */
+/*	$Id: http.c,v 1.25 2019/03/04 10:59:04 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -442,9 +442,8 @@ http_head_get(const char *v, struct httphead *h, size_t hsz)
 	size_t	 i;
 
 	for (i = 0; i < hsz; i++) {
-		if (strcmp(h[i].key, v))
-			continue;
-		return &h[i];
+		if (strcasecmp(h[i].key, v) == 0)
+			return &h[i];
 	}
 	return NULL;
 }
