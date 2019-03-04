@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_validate.c,v 1.284 2018/12/31 08:38:17 schwarze Exp $ */
+/*	$OpenBSD: mdoc_validate.c,v 1.285 2019/03/04 11:40:03 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -1566,7 +1566,7 @@ post_it(POST_ARGS)
 			mandoc_msg(MANDOCERR_BL_COL, nit->line, nit->pos,
 			    "%d columns, %d cells", cols, i);
 		else if (nit->head->next->child != NULL &&
-		    nit->head->next->child->line > nit->line)
+		    nit->head->next->child->flags & NODE_LINE)
 			mandoc_msg(MANDOCERR_IT_NOARG,
 			    nit->line, nit->pos, "Bl -column It");
 		break;
