@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.107 2018/08/13 15:26:17 visa Exp $	*/
+/*	$OpenBSD: buf.h,v 1.108 2019/03/04 01:06:48 dhill Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -229,7 +229,7 @@ struct bufcache {
  * Zero out the buffer's data area.
  */
 #define	clrbuf(bp) {							\
-	bzero((bp)->b_data, (u_int)(bp)->b_bcount);			\
+	bzero((bp)->b_data, (bp)->b_bcount);				\
 	(bp)->b_resid = 0;						\
 }
 
