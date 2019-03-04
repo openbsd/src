@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.223 2019/03/04 13:01:52 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.224 2019/03/04 18:14:27 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>	/* MACHINE */
-#include <sys/termios.h>
 #include <sys/wait.h>
 
 #include <assert.h>
@@ -34,6 +33,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <time.h>
 #include <unistd.h>
 
