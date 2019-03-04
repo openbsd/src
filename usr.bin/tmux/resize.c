@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.27 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.28 2019/03/04 09:29:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -188,7 +188,7 @@ recalculate_sizes(void)
 		type = options_get_number(w->options, "window-size");
 		if (type == WINDOW_SIZE_MANUAL)
 			continue;
-		current = !options_get_number(w->options, "aggressive-resize");
+		current = options_get_number(w->options, "aggressive-resize");
 
 		changed = 1;
 		if (type == WINDOW_SIZE_LARGEST) {
