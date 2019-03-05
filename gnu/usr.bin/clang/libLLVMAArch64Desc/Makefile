@@ -1,14 +1,12 @@
-# $OpenBSD: Makefile,v 1.3 2017/10/04 20:57:09 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2019/03/05 09:44:39 jsg Exp $
 
 LIB=	LLVMAArch64Desc
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AArch64 \
 		-I${LLVM_SRCS}/lib/Target/AArch64
 
-.include <bsd.own.mk>
-SRCS=	AArch64AsmBackend.cpp \
+SRCS+=	AArch64AsmBackend.cpp \
 	AArch64ELFObjectWriter.cpp \
 	AArch64ELFStreamer.cpp \
 	AArch64MachObjectWriter.cpp \
@@ -21,8 +19,3 @@ SRCS=	AArch64AsmBackend.cpp \
 	AArch64WinCOFFStreamer.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64/MCTargetDesc
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

@@ -93,5 +93,3 @@
  * PrintStatistics() or PrintStatisticsJSON()
  */
 #define LLVM_FORCE_ENABLE_STATS 0
-
-#endif

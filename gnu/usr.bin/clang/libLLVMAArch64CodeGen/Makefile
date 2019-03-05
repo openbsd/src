@@ -1,14 +1,12 @@
-# $OpenBSD: Makefile,v 1.7 2018/08/12 17:07:00 mortimer Exp $
+# $OpenBSD: Makefile,v 1.8 2019/03/05 09:44:39 jsg Exp $
 
 LIB=	LLVMAArch64CodeGen
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AArch64 \
 		-I${LLVM_SRCS}/lib/Target/AArch64
 
-.include <bsd.own.mk>
-SRCS=	AArch64A57FPLoadBalancing.cpp \
+SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64AdvSIMDScalarPass.cpp \
 	AArch64AsmPrinter.cpp \
 	AArch64CallLowering.cpp \
@@ -46,8 +44,3 @@ SRCS=	AArch64A57FPLoadBalancing.cpp \
 	AArch64TargetTransformInfo.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

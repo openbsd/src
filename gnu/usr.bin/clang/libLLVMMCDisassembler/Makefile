@@ -1,19 +1,12 @@
-# $OpenBSD: Makefile,v 1.3 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2019/03/05 09:44:41 jsg Exp $
 
 LIB=	LLVMMCDisassembler
-NOPIC=
 NOPROFILE=
 
-.include <bsd.own.mk>
-SRCS=	Disassembler.cpp \
+SRCS+=	Disassembler.cpp \
 	MCDisassembler.cpp \
 	MCExternalSymbolizer.cpp \
 	MCRelocationInfo.cpp \
 	MCSymbolizer.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/lib/MC/MCDisassembler
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

@@ -1,13 +1,11 @@
-# $OpenBSD: Makefile,v 1.7 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.8 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMCore
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/IR
 
-.include <bsd.own.mk>
-SRCS=	AsmWriter.cpp \
+SRCS+=	AsmWriter.cpp \
 	Attributes.cpp \
 	AutoUpgrade.cpp \
 	BasicBlock.cpp \
@@ -72,9 +70,4 @@ AttributesCompatFunc.inc: AttributesCompatFunc.td
 		-I${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}
 
-install:
-	@# Nothing here so far ...
-
 CLEANFILES+= CoreCore.cpp
-
-.include <bsd.lib.mk>

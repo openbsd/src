@@ -1,14 +1,12 @@
-# $OpenBSD: Makefile,v 1.9 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.10 2019/03/05 09:44:42 jsg Exp $
 
 LIB=	LLVMipo
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/IPO
 
-.include <bsd.own.mk>
-SRCS=	ArgumentPromotion.cpp \
+SRCS+=	ArgumentPromotion.cpp \
 	AlwaysInliner.cpp \
 	BarrierNoopPass.cpp \
 	BlockExtractor.cpp \
@@ -49,9 +47,4 @@ ipoSCCP.cpp:
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/IPO
 
-install:
-	@# Nothing here so far ...
-
 CLEANFILES+= ipoSCCP.cpp
-
-.include <bsd.lib.mk>

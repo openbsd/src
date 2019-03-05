@@ -1,17 +1,10 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:41 jsg Exp $
 
 LIB=	LLVMMIRParser
-NOPIC=
 NOPROFILE=
 
-.include <bsd.own.mk>
-SRCS=	MILexer.cpp \
+SRCS+=	MILexer.cpp \
 	MIParser.cpp \
 	MIRParser.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/CodeGen/MIRParser
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

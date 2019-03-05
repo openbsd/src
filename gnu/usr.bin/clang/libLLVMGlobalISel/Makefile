@@ -1,11 +1,9 @@
-# $OpenBSD: Makefile,v 1.5 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.6 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMGlobalISel
-NOPIC=
 NOPROFILE=
 
-.include <bsd.own.mk>
-SRCS=	CallLowering.cpp \
+SRCS+=	CallLowering.cpp \
 	GlobalISel.cpp \
 	IRTranslator.cpp \
 	InstructionSelect.cpp \
@@ -27,9 +25,4 @@ GlobalISelUtils.cpp:
 
 .PATH:	${.CURDIR}/../../../llvm/lib/CodeGen/GlobalISel
 
-install:
-	@# Nothing here so far ...
-
 CLEANFILES+= GlobalISelUtils.cpp
-
-.include <bsd.lib.mk>

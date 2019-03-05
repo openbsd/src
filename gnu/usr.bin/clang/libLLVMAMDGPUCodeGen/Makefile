@@ -1,14 +1,12 @@
-# $OpenBSD: Makefile,v 1.1 2019/01/29 05:51:30 jsg Exp $
+# $OpenBSD: Makefile,v 1.2 2019/03/05 09:44:39 jsg Exp $
 
 LIB=	LLVMAMDGPUCodeGen
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AMDGPU \
 		-I${LLVM_SRCS}/lib/Target/AMDGPU
 
-.include <bsd.own.mk>
-SRCS=	AMDGPUAliasAnalysis.cpp \
+SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUAlwaysInlinePass.cpp \
 	AMDGPUAnnotateKernelFeatures.cpp \
 	AMDGPUAnnotateUniformValues.cpp \
@@ -95,8 +93,3 @@ SRCS=	AMDGPUAliasAnalysis.cpp \
 	GCNILPSched.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AMDGPU
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

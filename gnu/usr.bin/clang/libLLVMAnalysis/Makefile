@@ -1,13 +1,11 @@
-# $OpenBSD: Makefile,v 1.8 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.9 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMAnalysis
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Analysis
 
-.include <bsd.own.mk>
-SRCS=	AliasAnalysis.cpp \
+SRCS+=	AliasAnalysis.cpp \
 	AliasAnalysisEvaluator.cpp \
 	AliasAnalysisSummary.cpp \
 	AliasSetTracker.cpp \
@@ -101,9 +99,4 @@ AnalysisAnalysis.cpp:
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Analysis
 
-install:
-	@# Nothing here so far ...
-
 CLEANFILES+= AnalysisAnalysis.cpp
-
-.include <bsd.lib.mk>

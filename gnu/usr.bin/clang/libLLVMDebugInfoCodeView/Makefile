@@ -1,13 +1,11 @@
-# $OpenBSD: Makefile,v 1.7 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.8 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMDebugInfoCodeView
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/DebugInfo/CodeView
 
-.include <bsd.own.mk>
-SRCS=	AppendingTypeTableBuilder.cpp \
+SRCS+=	AppendingTypeTableBuilder.cpp \
 	CodeViewError.cpp \
 	CodeViewRecordIO.cpp \
 	ContinuationRecordBuilder.cpp \
@@ -51,9 +49,4 @@ DebugInfoCodeViewEnumTables.cpp:
 
 .PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/CodeView
 
-install:
-	@# Nothing here so far ...
-
 CLEANFILES+= DebugInfoCodeViewEnumTables.cpp
-
-.include <bsd.lib.mk>

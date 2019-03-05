@@ -1,13 +1,11 @@
-# $OpenBSD: Makefile,v 1.6 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.7 2019/03/05 09:44:41 jsg Exp $
 
 LIB=	LLVMObject
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Object
 
-.include <bsd.own.mk>
-SRCS=	Archive.cpp \
+SRCS+=	Archive.cpp \
 	ArchiveWriter.cpp \
 	Binary.cpp \
 	COFFObjectFile.cpp \
@@ -33,9 +31,4 @@ ObjectError.cpp:
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Object
 
-install:
-	@# Nothing here so far ...
-
 CLEANFILES+= ObjectError.cpp
-
-.include <bsd.lib.mk>

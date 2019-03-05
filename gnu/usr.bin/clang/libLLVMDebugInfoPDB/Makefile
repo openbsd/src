@@ -1,13 +1,11 @@
-# $OpenBSD: Makefile,v 1.2 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMDebugInfoPDB
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/DebugInfo/PDB
 
-.include <bsd.own.mk>
-SRCS=	DbiModuleDescriptor.cpp \
+SRCS+=	DbiModuleDescriptor.cpp \
 	DbiModuleDescriptorBuilder.cpp \
 	DbiModuleList.cpp \
 	DbiStream.cpp \
@@ -86,9 +84,4 @@ DebugInfoPDBEnumTables.cpp:
 .PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/PDB
 .PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/PDB/Native
 
-install:
-	@# Nothing here so far ...
-
 CLEANFILES+= DebugInfoPDBEnumTables.cpp
-
-.include <bsd.lib.mk>

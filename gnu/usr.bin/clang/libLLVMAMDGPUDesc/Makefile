@@ -1,14 +1,12 @@
-# $OpenBSD: Makefile,v 1.1 2019/01/29 00:18:23 jsg Exp $
+# $OpenBSD: Makefile,v 1.2 2019/03/05 09:44:39 jsg Exp $
 
 LIB=	LLVMAMDGPUDesc
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AMDGPU \
 		-I${LLVM_SRCS}/lib/Target/AMDGPU
 
-.include <bsd.own.mk>
-SRCS=	AMDGPUAsmBackend.cpp \
+SRCS+=	AMDGPUAsmBackend.cpp \
 	AMDGPUELFObjectWriter.cpp \
 	AMDGPUELFStreamer.cpp \
 	AMDGPUMCAsmInfo.cpp \
@@ -20,8 +18,3 @@ SRCS=	AMDGPUAsmBackend.cpp \
 	SIMCCodeEmitter.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Target/AMDGPU/MCTargetDesc
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

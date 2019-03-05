@@ -1,11 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMAsmPrinter
-NOPIC=
 NOPROFILE=
 
-.include <bsd.own.mk>
-SRCS=	ARMException.cpp \
+SRCS+=	ARMException.cpp \
 	AccelTable.cpp \
 	AddressPool.cpp \
 	AsmPrinter.cpp \
@@ -31,8 +29,3 @@ SRCS=	ARMException.cpp \
 	WinException.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/CodeGen/AsmPrinter
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>

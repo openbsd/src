@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/01/27 22:42:14 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2019/03/05 09:44:42 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,51 +18,7 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/tools/driver
 .PATH:	${.CURDIR}/../../../llvm/tools/lldb/docs
 
-LLVM_LIBDEPS=	${BACKEND_ASMPARSER} \
-		${BACKEND_ASMPRINTER} \
-		${BACKEND_CODEGEN} \
-		${BACKEND_DESC} \
-		${BACKEND_DISASSEMBLER} \
-		${BACKEND_INFO} \
-		${BACKEND_UTILS} \
-		LLVMAnalysis \
-		LLVMAsmParser \
-		LLVMAsmPrinter \
-		LLVMBinaryFormat \
-		LLVMBitReader \
-		LLVMBitWriter \
-		LLVMCodeGen \
-		LLVMCore \
-		LLVMCoroutines \
-		LLVMCoverage \
-		LLVMDebugInfoCodeView \
-		LLVMDebugInfoDWARF \
-		LLVMDebugInfoMSF \
-		LLVMDebugInfoPDB \
-		LLVMDemangle \
-		LLVMExecutionEngine \
-		LLVMGlobalISel \
-		LLVMIRReader \
-		LLVMInstCombine \
-		LLVMInstrumentation \
-		LLVMLTO \
-		LLVMLinker \
-		LLVMMC \
-		LLVMMCDisassembler \
-		LLVMMCParser \
-		LLVMObjCARCOpts \
-		LLVMObject \
-		LLVMOption \
-		LLVMPasses \
-		LLVMProfileData \
-		LLVMScalarOpts \
-		LLVMSelectionDAG \
-		LLVMSupport \
-		LLVMTarget \
-		LLVMTransformUtils \
-		LLVMVectorize \
-		LLVMipo \
-		clangAST \
+LLVM_LIBDEPS=	clangAST \
 		clangAnalysis \
 		clangBasic \
 		clangBasicTargets \
@@ -112,6 +68,8 @@ LLVM_LIBDEPS=	${BACKEND_ASMPARSER} \
 		lldbPluginUnwindAssembly \
 		lldbSymbol \
 		lldbTarget \
-		lldbUtility \
+		lldbUtility
+
+LDADD+= -L ${.OBJDIR}/../libLLVM -lLLVM
 
 .include <bsd.prog.mk>

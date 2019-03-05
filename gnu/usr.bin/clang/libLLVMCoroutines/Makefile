@@ -1,14 +1,12 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:35 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:40 jsg Exp $
 
 LIB=	LLVMCoroutines
-NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/Coroutines
 
-.include <bsd.own.mk>
-SRCS=	Coroutines.cpp \
+SRCS+=	Coroutines.cpp \
 	CoroCleanup.cpp \
 	CoroEarly.cpp \
 	CoroElide.cpp \
@@ -16,8 +14,3 @@ SRCS=	Coroutines.cpp \
 	CoroSplit.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Coroutines
-
-install:
-	@# Nothing here so far ...
-
-.include <bsd.lib.mk>
