@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.67 2018/11/23 16:24:11 claudio Exp $ */
+/*	$OpenBSD: rtable.c,v 1.68 2019/03/05 19:07:56 anton Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -885,7 +885,7 @@ rtable_satoplen(sa_family_t af, struct sockaddr *mask)
 		return (-1);
 
 	/* Trim trailing zeroes. */
-	while (ep[-1] == 0 && ap < ep)
+	while (ap < ep && ep[-1] == 0)
 		ep--;
 
 	if (ap == ep)
