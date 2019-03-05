@@ -37,6 +37,7 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
+./usr/lib/libLLVM.so.0.0
 ./usr/lib/libc++.so.2.1
 ./usr/lib/libc++abi.so.0.1
 ./usr/lib/libcompiler_rt.a
