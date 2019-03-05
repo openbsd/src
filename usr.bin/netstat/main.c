@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.114 2019/03/04 21:32:26 dlg Exp $	*/
+/*	$OpenBSD: main.c,v 1.115 2019/03/05 06:47:12 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -446,9 +446,9 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-AaBln] [-f address_family] [-M core] [-N system]\n"
-	    "       %s [-bdFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
-	    "               [-T tableid]\n"
-	    "       %s [-bdhn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
+	    "       %s [-bdeFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
+	    "               [-T rtable]\n"
+	    "       %s [-bdehn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
 	    "       %s [-v] [-M core] [-N system] -P pcbaddr\n"
 	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
 	    "       %s [-a] [-f address_family] [-i | -I interface]\n"
