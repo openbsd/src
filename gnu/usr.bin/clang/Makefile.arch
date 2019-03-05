@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile.arch,v 1.5 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile.arch,v 1.6 2019/03/05 06:04:32 jsg Exp $
 
-LLVM_ARCHS=AArch64 ARM Mips PowerPC Sparc X86
+LLVM_ARCHS=AArch64 AMDGPU ARM Mips PowerPC Sparc X86
 
 LLVM_ARCH?=
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
@@ -26,14 +26,15 @@ BACKEND_INFO?=
 BACKEND_UTILS?=
 
 .for arch in ${LLVM_ARCHS}
-.if "${arch}" == ${LLVM_ARCH} || make(obj)
+.if "${arch}" == ${LLVM_ARCH} || "${arch}" == "AMDGPU" || make(obj)
 BACKEND_ASMPARSER+=	LLVM${arch}AsmParser
 BACKEND_ASMPRINTER+=	LLVM${arch}AsmPrinter
 BACKEND_CODEGEN+=	LLVM${arch}CodeGen
 BACKEND_DESC+=		LLVM${arch}Desc
 BACKEND_DISASSEMBLER+=	LLVM${arch}Disassembler
 BACKEND_INFO+=		LLVM${arch}Info
-.if "${arch}" == "X86" || "${arch}" == "AArch64" || "${arch}" == "ARM"
+.if "${arch}" == "X86" || "${arch}" == "AArch64" || "${arch}" == "ARM" \
+ || "${arch}" == "AMDGPU"
 BACKEND_UTILS+=		LLVM${arch}Utils
 .endif
 .endif

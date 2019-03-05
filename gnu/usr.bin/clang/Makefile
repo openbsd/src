@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2019/03/05 06:04:32 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -53,7 +53,7 @@ SUBDIR+=libLLVMCoroutines
 SUBDIR+=libLLVMDemangle
 
 .for arch in ${LLVM_ARCHS}
-.if "${arch}" == ${LLVM_ARCH} || make(obj)
+.if "${arch}" == ${LLVM_ARCH} || "${arch}" == "AMDGPU" || make(obj)
 SUBDIR+=include/llvm/${arch}
 .endif
 .endfor
