@@ -1,8 +1,7 @@
-# $OpenBSD: Makefile,v 1.1 2019/03/05 01:55:18 jsg Exp $
+# $OpenBSD: Makefile,v 1.2 2019/03/05 14:01:08 jsg Exp $
 
 PROG=	llvm-config
 BINDIR= /usr/bin
-NOMAN=
 
 NATIVE_ARCHS=AArch64 ARM Mips PowerPC Sparc X86
 
