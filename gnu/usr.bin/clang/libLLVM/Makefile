@@ -1,5 +1,7 @@
 .include "../Makefile.arch"
 
+.if "${LLVM_ARCH}" != ""
+
 .include "../libLLVMAMDGPUAsmParser/Makefile"
 .include "../libLLVMAMDGPUAsmPrinter/Makefile"
 .include "../libLLVMAMDGPUCodeGen/Makefile"
@@ -55,6 +57,8 @@
 .include "../libLLVM${LLVM_ARCH}Utils/Makefile"
 .endif
 .include "../libLLVMipo/Makefile"
+
+.endif
 
 LIB=	LLVM
 
