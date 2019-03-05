@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.33 2019/03/02 05:34:59 pamela Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.34 2019/03/05 15:46:37 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -94,9 +94,6 @@ main_sig_handler(int sig, short event, void *arg)
 	case SIGTERM:
 	case SIGINT:
 		main_shutdown();
-	case SIGHUP:
-		log_debug("sighub received");
-		break;
 	default:
 		fatalx("unexpected signal");
 	}
@@ -115,7 +112,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct event		 ev_sigint, ev_sigterm, ev_sighup;
+	struct event		 ev_sigint, ev_sigterm;
 	struct icmp6_filter	 filt;
 	int			 ch;
 	int			 debug = 0, engine_flag = 0, frontend_flag = 0;
@@ -212,11 +209,10 @@ main(int argc, char *argv[])
 	/* Setup signal handler. */
 	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, main_sig_handler, NULL);
-	signal_set(&ev_sighup, SIGHUP, main_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
-	signal_add(&ev_sighup, NULL);
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP, SIG_IGN);
 
 	/* Setup pipes to children. */
 
