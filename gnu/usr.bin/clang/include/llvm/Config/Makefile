@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2019/03/05 09:44:39 jsg Exp $
+# $OpenBSD: Makefile,v 1.6 2019/03/06 08:13:54 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -27,9 +27,16 @@ Targets.def:
 
 llvm-config.h: llvm-config.h.in
 	cp ${.CURDIR}/llvm-config.h.in $@
-	echo "\n#define LLVM_DEFAULT_TARGET_TRIPLE \"${TRIPLE}\"" >> $@
-	echo "#define LLVM_HOST_TRIPLE \"${TRIPLE}\"" >> $@
-	echo "\n#endif" >> $@
+	printf "\n#define LLVM_DEFAULT_TARGET_TRIPLE \"${TRIPLE}\"\n" >> $@
+	printf "#define LLVM_HOST_TRIPLE \"${TRIPLE}\"\n" >> $@
+	printf "#define LLVM_NATIVE_ARCH ${LLVM_ARCH}\n" >> $@
+	printf "#define LLVM_NATIVE_ASMPARSER LLVMInitialize${LLVM_ARCH}AsmParser\n" >> $@
+	printf "#define LLVM_NATIVE_ASMPRINTER LLVMInitialize${LLVM_ARCH}AsmPrinter\n" >> $@
+	printf "#define LLVM_NATIVE_DISASSEMBLER LLVMInitialize${LLVM_ARCH}Disassembler\n" >> $@
+	printf "#define LLVM_NATIVE_TARGET LLVMInitialize${LLVM_ARCH}Target\n" >> $@
+	printf "#define LLVM_NATIVE_TARGETINFO LLVMInitialize${LLVM_ARCH}TargetInfo\n" >> $@
+	printf "#define LLVM_NATIVE_TARGETMC LLVMInitialize${LLVM_ARCH}TargetMC\n" >> $@
+	printf "\n#endif\n" >> $@
 
 install includes: ${DEFS}
 	${INSTALL} -d -m 755 ${DESTDIR}${INCDIR}
