@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.371 2019/02/18 13:11:44 bluhm Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.372 2019/03/06 19:49:05 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1111,43 +1111,19 @@ pfctl_show_limits(int dev, int opts)
 }
 
 /* callbacks for rule/nat/rdr/addr */
-int
-pfctl_add_rule(struct pfctl *pf, struct pf_rule *r, const char *anchor_call)
+void
+pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
 	struct pf_rule		*rule;
 	struct pf_ruleset	*rs;
-	char 			*p;
 
 	rs = &pf->anchor->ruleset;
-	if (anchor_call[0] && r->anchor == NULL) {
-		/*
-		 * Don't make non-brace anchors part of the main anchor pool.
-		 */
-		if ((r->anchor = calloc(1, sizeof(*r->anchor))) == NULL)
-			err(1, "pfctl_add_rule: calloc");
-
-		pf_init_ruleset(&r->anchor->ruleset);
-		r->anchor->ruleset.anchor = r->anchor;
-		if (strlcpy(r->anchor->path, anchor_call,
-		    sizeof(rule->anchor->path)) >= sizeof(rule->anchor->path))
-                        errx(1, "pfctl_add_rule: strlcpy");
-		if ((p = strrchr(anchor_call, '/')) != NULL) {
-			if (strlen(p) == 1)
-				errx(1, "pfctl_add_rule: bad anchor name %s",
-				    anchor_call);
-		} else
-			p = (char *)anchor_call;
-		if (strlcpy(r->anchor->name, p,
-		    sizeof(rule->anchor->name)) >= sizeof(rule->anchor->name))
-                        errx(1, "pfctl_add_rule: strlcpy");
-	}
 
 	if ((rule = calloc(1, sizeof(*rule))) == NULL)
 		err(1, "calloc");
 	bcopy(r, rule, sizeof(*rule));
 
 	TAILQ_INSERT_TAIL(rs->rules.active.ptr, rule, entries);
-	return (0);
 }
 
 int

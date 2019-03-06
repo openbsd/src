@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.693 2019/02/13 22:57:07 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.694 2019/03/06 19:49:05 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -354,7 +354,7 @@ struct pfctl_watermarks	 syncookie_opts;
 int		 disallow_table(struct node_host *, const char *);
 int		 disallow_urpf_failed(struct node_host *, const char *);
 int		 disallow_alias(struct node_host *, const char *);
-int		 rule_consistent(struct pf_rule *, int);
+int		 rule_consistent(struct pf_rule *);
 int		 process_tabledef(char *, struct table_opts *, int);
 void		 expand_label_str(char *, size_t, const char *, const char *);
 void		 expand_label_if(const char *, char *, size_t, const char *);
@@ -377,8 +377,7 @@ void		 expand_rule(struct pf_rule *, int, struct node_if *,
 		    struct node_proto *,
 		    struct node_os *, struct node_host *, struct node_port *,
 		    struct node_host *, struct node_port *, struct node_uid *,
-		    struct node_gid *, struct node_if *, struct node_icmp *,
-		    const char *);
+		    struct node_gid *, struct node_if *, struct node_icmp *);
 int		 expand_queue(char *, struct node_if *, struct queue_opts *);
 int		 expand_skip_interface(struct node_if *);
 
@@ -876,6 +875,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 		{
 			struct pf_rule	r;
 			struct node_proto	*proto;
+			char	*p;
 
 			memset(&r, 0, sizeof(r));
 			if (pf->astack[pf->asd + 1]) {
@@ -913,7 +913,33 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 					    "rules must specify a name");
 					YYERROR;
 				}
+
+				/*
+				 * Don't make non-brace anchors part of the main anchor pool.
+				 */
+				if ((r.anchor = calloc(1, sizeof(*r.anchor))) == NULL) {
+					err(1, "anchorrule: calloc");
+				}
+				pf_init_ruleset(&r.anchor->ruleset);
+				r.anchor->ruleset.anchor = r.anchor;
+				if (strlcpy(r.anchor->path, $2,
+				    sizeof(r.anchor->path)) >= sizeof(r.anchor->path)) {
+					errx(1, "anchorrule: strlcpy");
+				}
+				if ((p = strrchr($2, '/')) != NULL) {
+					if (strlen(p) == 1) {
+						yyerror("anchorrule: bad anchor name %s",
+						    $2);
+						YYERROR;
+					}
+				} else
+					p = $2;
+				if (strlcpy(r.anchor->name, p,
+				    sizeof(r.anchor->name)) >= sizeof(r.anchor->name)) {
+					errx(1, "anchorrule: strlcpy");
+				}
 			}
+
 			r.direction = $3;
 			r.quick = $4.quick;
 			r.af = $6;
@@ -955,8 +981,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 
 			expand_rule(&r, 0, $5, NULL, NULL, NULL, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    $9.uid, $9.gid, $9.rcv, $9.icmpspec,
-			    pf->astack[pf->asd + 1] ? pf->alast->name : $2);
+			    $9.uid, $9.gid, $9.rcv, $9.icmpspec);
 			free($2);
 			pf->astack[pf->asd + 1] = NULL;
 		}
@@ -1110,7 +1135,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				if (h != NULL)
 					expand_rule(&r, 0, j, NULL, NULL, NULL,
 					    NULL, NULL, h, NULL, NULL, NULL,
-					    NULL, NULL, NULL, NULL, "");
+					    NULL, NULL, NULL, NULL);
 
 				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
 					bzero(&r, sizeof(r));
@@ -1132,7 +1157,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 						expand_rule(&r, 0, NULL, NULL,
 						    NULL, NULL, NULL, NULL, h,
 						    NULL, NULL, NULL, NULL,
-						    NULL, NULL, NULL, "");
+						    NULL, NULL, NULL);
 				} else
 					free(hh);
 			}
@@ -1849,7 +1874,7 @@ pfrule		: action dir logquick interface af proto fromto
 			expand_rule(&r, 0, $4, &$8.nat, &$8.rdr, &$8.rroute, $6,
 			    $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
-			    $8.uid, $8.gid, $8.rcv, $8.icmpspec, "");
+			    $8.uid, $8.gid, $8.rcv, $8.icmpspec);
 		}
 		;
 
@@ -3932,7 +3957,7 @@ disallow_alias(struct node_host *h, const char *fmt)
 }
 
 int
-rule_consistent(struct pf_rule *r, int anchor_call)
+rule_consistent(struct pf_rule *r)
 {
 	int	problems = 0;
 
@@ -4629,7 +4654,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
     struct node_uid *uids, struct node_gid *gids, struct node_if *rcv,
-    struct node_icmp *icmp_types, const char *anchor_call)
+    struct node_icmp *icmp_types)
 {
 	sa_family_t		 af = r->af;
 	int			 added = 0, error = 0;
@@ -4845,11 +4870,11 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 		error += apply_redirspec(&r->rdr, r, rdr, 1, dst_port);
 		error += apply_redirspec(&r->route, r, rroute, 2, dst_port);
 
-		if (rule_consistent(r, anchor_call[0]) < 0 || error)
+		if (rule_consistent(r) < 0 || error)
 			yyerror("skipping rule due to errors");
 		else {
 			r->nr = pf->astack[pf->asd]->match++;
-			pfctl_add_rule(pf, r, anchor_call);
+			pfctl_add_rule(pf, r);
 			added++;
 		}
 		r->direction = dir;
@@ -4888,7 +4913,7 @@ expand_rule(struct pf_rule *r, int keeprule, struct node_if *interfaces,
 			expand_rule(&rb, 1, interface, NULL, &binat, NULL,
 			    proto,
 			    src_os, dst_host, dst_port, dsth, src_port,
-			    uid, gid, rcv, icmp_type, anchor_call);
+			    uid, gid, rcv, icmp_type);
 		}
 
 		if (osrch && src_host->addr.type == PF_ADDR_DYNIFTL) {
@@ -5875,7 +5900,7 @@ int
 filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 {
 	if (opts->marker & FOM_ONCE) {
-		if (r->action != PF_PASS && r->action != PF_MATCH) {
+		if ((r->action != PF_PASS && r->action != PF_DROP) || r->anchor) {
 			yyerror("'once' only applies to pass/block rules");
 			return (1);
 		}
