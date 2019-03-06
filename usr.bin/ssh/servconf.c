@@ -1,5 +1,5 @@
 
-/* $OpenBSD: servconf.c,v 1.348 2019/01/24 02:34:52 dtucker Exp $ */
+/* $OpenBSD: servconf.c,v 1.349 2019/03/06 22:14:23 dtucker Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -992,7 +992,7 @@ match_cfg_line(char **condition, int line, struct connection_info *ci)
 			}
 			if (ci->user == NULL)
 				match_test_missing_fatal("User", "user");
-			if (match_pattern_list(ci->user, arg, 0) != 1)
+			if (match_usergroup_pattern_list(ci->user, arg) != 1)
 				result = 0;
 			else
 				debug("user %.100s matched 'User %.100s' at "
