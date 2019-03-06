@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.31 2019/02/21 22:06:26 benno Exp $ */
+/*	$Id: main.c,v 1.32 2019/03/06 18:37:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,24 +28,6 @@
 #include <unistd.h>
 
 #include "extern.h"
-
-static void
-fargs_free(struct fargs *p)
-{
-	size_t	 i;
-
-	if (p == NULL)
-		return;
-
-	if (p->sources != NULL)
-		for (i = 0; i < p->sourcesz; i++)
-			free(p->sources[i]);
-
-	free(p->sources);
-	free(p->sink);
-	free(p->host);
-	free(p);
-}
 
 /*
  * A remote host is has a colon before the first path separator.
@@ -291,8 +273,10 @@ main(int argc, char *argv[])
 {
 	struct opts	 opts;
 	pid_t		 child;
-	int		 fds[2], rc = 0, c, st;
+	int		 fds[2], rc = 0, c, st, i;
+	struct sess	  sess;
 	struct fargs	*fargs;
+	char		**args;
 	struct option	 lopts[] = {
 		{ "port",	required_argument, NULL,		3 },
 		{ "rsh",	required_argument, NULL,		'e' },
@@ -414,11 +398,8 @@ main(int argc, char *argv[])
 	 * host by the parent.
 	 */
 
-	if (opts.server) {
-		if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
-			err(1, "pledge");
-		return rsync_server(&opts, (size_t)argc, argv);
-	}
+	if (opts.server)
+		exit(rsync_server(&opts, (size_t)argc, argv));
 
 	/*
 	 * Now we know that we're the client on the local machine
@@ -441,12 +422,7 @@ main(int argc, char *argv[])
 
 	if (fargs->remote) {
 		assert(fargs->mode == FARGS_RECEIVER);
-		if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw unveil",
-		    NULL) == -1)
-			err(1, "pledge");
-		rc = rsync_socket(&opts, fargs);
-		fargs_free(fargs);
-		return rc;
+		exit(rsync_socket(&opts, fargs));
 	}
 
 	/* Drop the dns/inet possibility. */
@@ -460,32 +436,41 @@ main(int argc, char *argv[])
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, fds) == -1)
 		err(1, "socketpair");
 
-	if ((child = fork()) == -1) {
-		close(fds[0]);
-		close(fds[1]);
+	switch ((child = fork())) {
+	case -1:
 		err(1, "fork");
-	}
-
-	/* Drop the fork possibility. */
-
-	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw exec unveil", NULL) == -1)
-		err(1, "pledge");
-
-	if (child == 0) {
+	case 0:
 		close(fds[0]);
-		fds[0] = -1;
 		if (pledge("stdio exec", NULL) == -1)
 			err(1, "pledge");
-		rsync_child(&opts, fds[1], fargs);
-		/* NOTREACHED */
-	}
 
-	close(fds[1]);
-	fds[1] = -1;
-	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1)
-		err(1, "pledge");
-	rc = rsync_client(&opts, fds[0], fargs);
-	fargs_free(fargs);
+		memset(&sess, 0, sizeof(struct sess));
+		sess.opts = &opts;
+
+		if ((args = fargs_cmdline(&sess, fargs)) == NULL) {
+			ERRX1(&sess, "fargs_cmdline");
+			_exit(1);
+		}
+
+		for (i = 0; args[i] != NULL; i++)
+			LOG2(&sess, "exec[%d] = %s", i, args[i]);
+
+		/* Make sure the child's stdin is from the sender. */
+		if (dup2(fds[1], STDIN_FILENO) == -1) {
+			ERR(&sess, "dup2");
+			_exit(1);
+		} if (dup2(fds[1], STDOUT_FILENO) == -1) {
+			ERR(&sess, "dup2");
+			_exit(1);
+		}
+		execvp(args[0], args);
+		_exit(1);
+		/* NOTREACHED */
+	default:
+		close(fds[1]);
+		rc = rsync_client(&opts, fds[0], fargs);
+		break;
+	}
 
 	/*
 	 * If the client has an error and exits, the server may be
@@ -493,22 +478,17 @@ main(int argc, char *argv[])
 	 * So close the connection here so that they don't hang.
 	 */
 
-	if (!rc) {
+	if (!rc)
 		close(fds[0]);
-		fds[0] = -1;
-	}
 
 	if (waitpid(child, &st, 0) == -1)
 		err(1, "waitpid");
 	if (!(WIFEXITED(st) && WEXITSTATUS(st) == 0))
 		rc = 0;
-
-	if (fds[0] != -1)
-		close(fds[0]);
-	return rc;
+	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s [-Daglnoprtv] "
-		"[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",
-		getprogname());
-	return 1;
+	    "[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",
+	    getprogname());
+	exit(1);
 }

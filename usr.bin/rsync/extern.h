@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.23 2019/02/22 09:54:36 benno Exp $ */
+/*	$Id: extern.h,v 1.24 2019/03/06 18:37:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -301,8 +301,6 @@ int		  io_unbuffer_size(struct sess *, const void *,
 void		  io_unbuffer_buf(struct sess *, const void *,
 			size_t *, size_t, void *, size_t);
 
-void		  rsync_child(const struct opts *, int, const struct fargs *)
-			__attribute__((noreturn));
 int		  rsync_receiver(struct sess *, int, int, const char *);
 int		  rsync_sender(struct sess *, int, int, size_t, char **);
 int		  rsync_client(const struct opts *, int, const struct fargs *);

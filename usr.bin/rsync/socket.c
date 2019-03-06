@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.18 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: socket.c,v 1.19 2019/03/06 18:37:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "extern.h"
 
@@ -242,9 +243,13 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	struct sess	  sess;
 	struct source	 *src = NULL;
 	size_t		  i, srcsz = 0;
-	int		  sd = -1, rc = 0, c;
+	int		  sd = -1, rc = 0;
 	char		**args, buf[BUFSIZ];
 	uint8_t		  byte;
+
+	if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw unveil",
+	    NULL) == -1)
+		err(1, "pledge");
 
 	memset(&sess, 0, sizeof(struct sess));
 	sess.lver = RSYNC_PROTOCOL;
@@ -255,7 +260,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	if ((args = fargs_cmdline(&sess, f)) == NULL) {
 		ERRX1(&sess, "fargs_cmdline");
-		return 0;
+		exit(1);
 	}
 
 	/* Resolve all IP addresses from the host. */
@@ -263,14 +268,15 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	if ((src = inet_resolve(&sess, f->host, &srcsz)) == NULL) {
 		ERRX1(&sess, "inet_resolve");
 		free(args);
-		return 0;
+		exit(1);
 	}
 
 	/* Drop the DNS pledge. */
 
-	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw inet unveil", NULL) == -1) {
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw inet unveil",
+	    NULL) == -1) {
 		ERR(&sess, "pledge");
-		goto out;
+		exit(1);
 	}
 
 	/*
@@ -280,16 +286,17 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	assert(srcsz);
 	for (i = 0; i < srcsz; i++) {
-		c = inet_connect(&sess, &sd, &src[i], f->host);
-		if (c < 0) {
+		rc = inet_connect(&sess, &sd, &src[i], f->host);
+		if (rc < 0) {
 			ERRX1(&sess, "inet_connect");
 			goto out;
-		} else if (c > 0)
+		} else if (rc > 0)
 			break;
 	}
 
 	/* Drop the inet pledge. */
-	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1) {
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil",
+	    NULL) == -1) {
 		ERR(&sess, "pledge");
 		goto out;
 	}
@@ -350,10 +357,10 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 		if (buf[i - 1] == '\r')
 			buf[i - 1] = '\0';
 
-		if ((c = protocol_line(&sess, f->host, buf)) < 0) {
+		if ((rc = protocol_line(&sess, f->host, buf)) < 0) {
 			ERRX1(&sess, "protocol_line");
 			goto out;
-		} else if (c > 0)
+		} else if (rc > 0)
 			break;
 	}
 

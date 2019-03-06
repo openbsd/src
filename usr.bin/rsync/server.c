@@ -1,4 +1,4 @@
-/*	$Id: server.c,v 1.7 2019/02/18 21:55:27 benno Exp $ */
+/*	$Id: server.c,v 1.8 2019/03/06 18:37:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "extern.h"
 
@@ -56,6 +57,10 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 	struct sess	 sess;
 	int		 fdin = STDIN_FILENO,
 			 fdout = STDOUT_FILENO, rc = 0;
+
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil",
+	    NULL) == -1)
+		err(1, "pledge");
 
 	memset(&sess, 0, sizeof(struct sess));
 	sess.opts = opts;

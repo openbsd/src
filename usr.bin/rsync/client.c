@@ -1,4 +1,4 @@
-/*	$Id: client.c,v 1.10 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: client.c,v 1.11 2019/03/06 18:37:22 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "extern.h"
 
@@ -42,6 +43,10 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 	int		 rc = 0;
 
 	/* Standard rsync preamble, sender side. */
+
+	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil",
+	    NULL) == -1)
+		err(1, "pledge");
 
 	memset(&sess, 0, sizeof(struct sess));
 	sess.opts = opts;
