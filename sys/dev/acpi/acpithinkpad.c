@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.61 2018/07/01 19:40:49 mlarkin Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.62 2019/03/06 15:32:38 jcs Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -161,8 +161,8 @@ int	thinkpad_activate(struct device *, int);
 /* wscons hook functions */
 void	thinkpad_get_thinklight(struct acpithinkpad_softc *);
 void	thinkpad_set_thinklight(void *, int);
-int	thinkpad_get_backlight(struct wskbd_backlight *);
-int	thinkpad_set_backlight(struct wskbd_backlight *);
+int	thinkpad_get_kbd_backlight(struct wskbd_backlight *);
+int	thinkpad_set_kbd_backlight(struct wskbd_backlight *);
 extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
 void	thinkpad_get_brightness(struct acpithinkpad_softc *);
@@ -299,14 +299,14 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	    0, NULL, &sc->sc_thinklight) == 0) {
 		sc->sc_thinklight_get = "KLCG";
 		sc->sc_thinklight_set = "KLCS";
-		wskbd_get_backlight = thinkpad_get_backlight;
-		wskbd_set_backlight = thinkpad_set_backlight;
+		wskbd_get_backlight = thinkpad_get_kbd_backlight;
+		wskbd_set_backlight = thinkpad_set_kbd_backlight;
 	} else if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MLCG",
 	    0, NULL, &sc->sc_thinklight) == 0) {
 		sc->sc_thinklight_get = "MLCG";
 		sc->sc_thinklight_set = "MLCS";
-		wskbd_get_backlight = thinkpad_get_backlight;
-		wskbd_set_backlight = thinkpad_set_backlight;
+		wskbd_get_backlight = thinkpad_get_kbd_backlight;
+		wskbd_set_backlight = thinkpad_set_kbd_backlight;
 	}
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "PBLG",
@@ -620,7 +620,7 @@ thinkpad_set_thinklight(void *arg0, int arg1)
 }
 
 int
-thinkpad_get_backlight(struct wskbd_backlight *kbl)
+thinkpad_get_kbd_backlight(struct wskbd_backlight *kbl)
 {
 	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
 
@@ -637,7 +637,7 @@ thinkpad_get_backlight(struct wskbd_backlight *kbl)
 }
 
 int
-thinkpad_set_backlight(struct wskbd_backlight *kbl)
+thinkpad_set_kbd_backlight(struct wskbd_backlight *kbl)
 {
 	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
 	int maxval;
