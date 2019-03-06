@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.62 2019/03/06 15:32:38 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.63 2019/03/06 15:36:30 jcs Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -124,6 +124,10 @@
 #define	THINKPAD_ADAPTIVE_MODE_HOME	1
 #define	THINKPAD_ADAPTIVE_MODE_FUNCTION	3
 
+#define THINKPAD_MASK_BRIGHTNESS_UP	(1 << 15)
+#define THINKPAD_MASK_BRIGHTNESS_DOWN	(1 << 16)
+#define THINKPAD_MASK_KBD_BACKLIGHT	(1 << 17)
+
 struct acpithinkpad_softc {
 	struct device		 sc_dev;
 
@@ -133,6 +137,8 @@ struct acpithinkpad_softc {
 
 	struct ksensor		 sc_sens[THINKPAD_NSENSORS];
 	struct ksensordev	 sc_sensdev;
+
+	uint64_t		 sc_hkey_version;
 
 	uint64_t		 sc_thinklight;
 	const char		*sc_thinklight_get;
@@ -284,6 +290,10 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKV", 0, NULL,
+	    &sc->sc_hkey_version))
+		sc->sc_hkey_version = THINKPAD_HKEY_VERSION1;
+
 #if NAUDIO > 0 && NWSKBD > 0
 	/* Defer speaker mute */
 	if (thinkpad_get_volume_mute(sc) == 1)
@@ -327,12 +337,18 @@ thinkpad_enable_events(struct acpithinkpad_softc *sc)
 	int64_t	mask;
 	int i;
 
-	/* Get the supported event mask */
+	/* Get the default event mask */
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKA",
 	    0, NULL, &mask)) {
 		printf("%s: no MHKA\n", DEVNAME(sc));
 		return (1);
 	}
+
+	/* Enable events we need to know about */
+	mask |= (THINKPAD_MASK_BRIGHTNESS_UP | THINKPAD_MASK_BRIGHTNESS_DOWN |
+	    THINKPAD_MASK_KBD_BACKLIGHT);
+
+	DPRINTF(("%s: setting event mask to 0x%llx\n", DEVNAME(sc), mask));
 
 	/* Update hotkey mask */
 	bzero(args, sizeof(args));
@@ -380,6 +396,8 @@ thinkpad_hotkey(struct aml_node *node, int notify_type, void *arg)
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "MHKP",
 		    0, NULL, &event))
 			break;
+
+		DPRINTF(("%s: event 0x%03llx\n", DEVNAME(sc), event));
 		if (event == 0)
 			break;
 
@@ -535,13 +553,37 @@ thinkpad_volume_mute(struct acpithinkpad_softc *sc)
 int
 thinkpad_brightness_up(struct acpithinkpad_softc *sc)
 {
-	return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_UP));
+	int b;
+
+	if (sc->sc_hkey_version == THINKPAD_HKEY_VERSION2) {
+		thinkpad_get_brightness(sc);
+		b = sc->sc_brightness & 0xff;
+		if (b < ((sc->sc_brightness >> 8) & 0xff)) {
+			sc->sc_brightness = b + 1;
+			thinkpad_set_brightness(sc, 0);
+		}
+
+		return (0);
+	} else
+		return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_UP));
 }
 
 int
 thinkpad_brightness_down(struct acpithinkpad_softc *sc)
 {
-	return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN));
+	int b;
+
+	if (sc->sc_hkey_version == THINKPAD_HKEY_VERSION2) {
+		thinkpad_get_brightness(sc);
+		b = sc->sc_brightness & 0xff;
+		if (b > 0) {
+			sc->sc_brightness = b - 1;
+			thinkpad_set_brightness(sc, 0);
+		}
+
+		return (0);
+	} else
+		return (thinkpad_cmos(sc, THINKPAD_CMOS_BRIGHTNESS_DOWN));
 }
 
 int
@@ -664,6 +706,8 @@ thinkpad_get_brightness(struct acpithinkpad_softc *sc)
 {
 	aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
 	    "PBLG", 0, NULL, &sc->sc_brightness);
+
+	DPRINTF(("%s: %s: 0x%llx\n", DEVNAME(sc), __func__, sc->sc_brightness));
 }
 
 void
@@ -672,11 +716,15 @@ thinkpad_set_brightness(void *arg0, int arg1)
 	struct acpithinkpad_softc *sc = arg0;
 	struct aml_value arg;
 
+	DPRINTF(("%s: %s: 0x%llx\n", DEVNAME(sc), __func__, sc->sc_brightness));
+
 	memset(&arg, 0, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
 	arg.v_integer = sc->sc_brightness & 0xff;
 	aml_evalname(sc->sc_acpi, sc->sc_devnode,
 	    "PBLS", 1, &arg, NULL);
+
+	thinkpad_get_brightness(sc);
 }
 
 int
