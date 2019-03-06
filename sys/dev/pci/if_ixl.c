@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.24 2019/03/01 09:45:40 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.25 2019/03/06 11:00:49 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2644,6 +2644,9 @@ ixl_rxeof(struct ixl_softc *sc, struct ifiqueue *ifiq)
 	unsigned int len;
 	unsigned int mask;
 	int done = 0;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return (0);
 
 	prod = rxr->rxr_prod;
 	cons = rxr->rxr_cons;
