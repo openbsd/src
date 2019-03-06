@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2019/03/05 09:44:42 jsg Exp $
+# $OpenBSD: Makefile,v 1.16 2019/03/06 14:35:29 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,11 +18,9 @@ CPPFLAGS+=	-I${.CURDIR}/../../../llvm/tools/lld/include
 .PATH:	${.CURDIR}/../../../llvm/tools/lld/tools/lld
 .PATH:	${.CURDIR}/../../../llvm/tools/lld/docs
 
-LLVM_LIBDEPS=	lldELF \
+LLVM_LIBDEPS=	LLVM \
+		lldELF \
 		lldCommon \
 		lldCore
-
-DPADD+= ${.OBJDIR}/../libLLVM/libLLVM.a
-LDADD+= ${.OBJDIR}/../libLLVM/libLLVM.a
 
 .include <bsd.prog.mk>
