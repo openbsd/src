@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgi.c,v 1.103 2019/01/31 23:00:18 schwarze Exp $ */
+/*	$OpenBSD: cgi.c,v 1.104 2019/03/06 12:32:10 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015, 2016, 2017, 2018 Ingo Schwarze <schwarze@usta.de>
@@ -320,7 +320,7 @@ http_encode(const char *p)
 	for (; *p != '\0'; p++) {
 		if (isalnum((unsigned char)*p) == 0 &&
 		    strchr("-._~", *p) == NULL)
-			printf("%%%02.2X", (unsigned char)*p);
+			printf("%%%2.2X", (unsigned char)*p);
 		else
 			putchar(*p);
 	}
