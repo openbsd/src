@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.165 2018/11/19 13:35:41 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.166 2019/03/07 19:01:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1552,7 +1552,8 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "scroll_region_upper", "%u", wp->base.rupper);
 	format_add(ft, "scroll_region_lower", "%u", wp->base.rlower);
 
-	window_copy_add_formats(wp, ft);
+	if (wp->mode != NULL && wp->mode->formats != NULL)
+		wp->mode->formats(wp, ft);
 
 	format_add(ft, "alternate_on", "%d", wp->saved_grid ? 1 : 0);
 	format_add(ft, "alternate_saved_x", "%u", wp->saved_cx);

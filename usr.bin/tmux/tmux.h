@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.853 2019/02/16 11:42:08 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.854 2019/03/07 19:01:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,6 +43,7 @@ struct cmdq_item;
 struct cmdq_list;
 struct environ;
 struct format_job_tree;
+struct format_tree;
 struct input_ctx;
 struct job;
 struct mode_tree_data;
@@ -707,6 +708,7 @@ struct window_mode {
 	void		 (*command)(struct window_pane *, struct client *,
 			     struct session *, struct winlink *, struct args *,
 			     struct mouse_event *);
+	void		 (*formats)(struct window_pane *, struct format_tree *);
 };
 #define WINDOW_MODE_TIMEOUT 180
 
@@ -2304,8 +2306,6 @@ void printflike(2, 3) window_copy_add(struct window_pane *, const char *, ...);
 void		 window_copy_vadd(struct window_pane *, const char *, va_list);
 void		 window_copy_pageup(struct window_pane *, int);
 void		 window_copy_start_drag(struct client *, struct mouse_event *);
-void		 window_copy_add_formats(struct window_pane *,
-		     struct format_tree *);
 
 /* names.c */
 void	 check_window_name(struct window *);
