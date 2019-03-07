@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.58 2017/08/30 10:33:57 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.59 2019/03/07 19:34:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -426,12 +426,7 @@ cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 		server_client_push_stdout(c);
 	} else {
 		w = c->session->curw->window;
-		if (w->active->mode != &window_copy_mode) {
-			window_pane_reset_mode(w->active);
-			window_pane_set_mode(w->active, &window_copy_mode, NULL,
-			    NULL);
-			window_copy_init_for_output(w->active);
-		}
+		window_copy_init_for_output(w->active);
 		window_copy_vadd(w->active, fmt, ap);
 	}
 

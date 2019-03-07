@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.63 2019/02/16 11:42:08 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.64 2019/03/07 19:34:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -348,7 +348,6 @@ cfg_show_causes(struct session *s)
 		return;
 	wp = s->curw->window->active;
 
-	window_pane_set_mode(wp, &window_copy_mode, NULL, NULL);
 	window_copy_init_for_output(wp);
 	for (i = 0; i < cfg_ncauses; i++) {
 		window_copy_add(wp, "%s", cfg_causes[i]);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.55 2018/08/27 11:03:34 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.56 2019/03/07 19:34:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -75,10 +75,8 @@ cmd_run_shell_print(struct job *job, const char *msg)
 			return;
 	}
 
-	if (window_pane_set_mode(wp, &window_copy_mode, NULL, NULL) == 0)
-		window_copy_init_for_output(wp);
-	if (wp->mode == &window_copy_mode)
-		window_copy_add(wp, "%s", msg);
+	window_copy_init_for_output(wp);
+	window_copy_add(wp, "%s", msg);
 }
 
 static enum cmd_retval
