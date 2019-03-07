@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.47 2018/12/10 16:52:02 jsing Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.48 2019/03/07 10:46:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -34,6 +34,7 @@
 #include <lib/libsa/loadfile.h>
 #include <machine/biosvar.h>
 #include <machine/specialreg.h>
+#include <machine/psl.h>
 #include <stand/boot/bootarg.h>
 
 #include "cmd.h"
@@ -163,7 +164,40 @@ ucode_load(void)
 	char path[128];
 	size_t buflen;
 	char *buf;
-	int fd;
+	int fd, psl_check;
+
+	/*
+	 * The following is a simple check to see if cpuid is supported.
+	 * We try to toggle bit 21 (PSL_ID) in eflags.  If it works, then
+	 * cpuid is supported.  If not, there's no cpuid, and we don't
+	 * try it (don't want /boot to get an invalid opcode exception).
+	 *
+	 * XXX The NexGen Nx586 does not support this bit, so this is not
+	 *     a good method to detect the presence of cpuid on this
+	 *     processor.  That's fine: the purpose here is to detect the
+	 *     absence of cpuid.  We don't mind if the instruction's not
+	 *     there - this is not intended to determine exactly what
+	 *     processor is there, just whether it's i386 or amd64.
+	 *
+	 *     The only thing that would cause us grief is a processor which
+	 *     does not support cpuid but which does allow the PSL_ID bit
+	 *     in eflags to be toggled.
+	 */
+	__asm volatile(
+	    "pushfl\n\t"
+	    "popl	%2\n\t"
+	    "xorl	%2, %0\n\t"
+	    "pushl	%0\n\t"
+	    "popfl\n\t"
+	    "pushfl\n\t"
+	    "popl	%0\n\t"
+	    "xorl	%2, %0\n\t"		/* If %2 == %0, no cpuid */
+	    : "=r" (psl_check)
+	    : "0" (PSL_ID), "r" (0)
+	    : "cc");
+
+	if (psl_check != PSL_ID)
+		return;
 
 	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);
 	vendor[3] = 0; /* NULL-terminate */
