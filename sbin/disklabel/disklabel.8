@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.130 2018/12/04 14:45:29 claudio Exp $
+.\"	$OpenBSD: disklabel.8,v 1.131 2019/03/07 14:22:18 jmc Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: December 4 2018 $
+.Dd $Mdocdate: March 7 2019 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -504,7 +504,7 @@ is left unallocated.
 The sizes below are approximations,
 and may vary from architecture to architecture.
 .Pp
-.Sy Disks \*(Ge 10 Gigabytes
+.Sy Disks >= 10 Gigabytes
 .Bd -literal -offset indent -compact
 /		 5% of disk.  150M \(en 1G
 swap		10% of disk.   80M \(en 2x max physical memory
@@ -518,7 +518,7 @@ swap		10% of disk.   80M \(en 2x max physical memory
 /home		35% of disk.    1G \(en 300G
 .Ed
 .Pp
-.Sy Disks \*(Gt 2 Gigabytes
+.Sy Disks > 2 Gigabytes
 .Bd -literal -offset indent -compact
 /		 5% of disk. 800M \(en 2G
 swap		10% of disk.  80M \(en 2x max physical memory
@@ -526,7 +526,7 @@ swap		10% of disk.  80M \(en 2x max physical memory
 /home		 7% of disk. 256M \(en 2G
 .Ed
 .Pp
-.Sy Disks \*(Gt 700 Megabytes
+.Sy Disks > 700 Megabytes
 .Bd -literal -offset indent -compact
 /		95% of disk. 700M \(en 4G
 swap		 5% of disk.   1M \(en 2x max physical memory
@@ -568,17 +568,17 @@ Display the in-core label for sd0 as obtained via
 Create a label for sd0 based on information for
 .Dq sd2212
 found in
-.Pa /etc/disktab .
+.Pa /etc/disktab :
 .Pp
 .Dl # disklabel -w /dev/rsd0c sd2212 foo
 .Pp
 Read the on-disk label from a disk with DUID 3eb7f9da875cb9ee,
-edit it and reinstall in-core as well as on-disk.
+edit it and reinstall in-core as well as on-disk:
 .Pp
 .Dl # disklabel -E 3eb7f9da875cb9ee
 .Pp
 Restore the on-disk and in-core label for sd0 from information in
-.Pa mylabel .
+.Pa mylabel :
 .Pp
 .Dl # disklabel -R sd0 mylabel
 .Sh DIAGNOSTICS
