@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.114 2019/03/06 19:49:05 kn Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.115 2019/03/07 08:01:52 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -219,9 +219,6 @@ int     add_opt_table(struct pfctl *, struct pf_opt_tbl **, sa_family_t,
             struct pf_rule_addr *, char *);
 
 void	pfctl_add_rule(struct pfctl *, struct pf_rule *);
-int	pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t, int);
-void	pfctl_move_pool(struct pf_pool *, struct pf_pool *);
-void	pfctl_clear_pool(struct pf_pool *);
 
 int	pfctl_set_timeout(struct pfctl *, const char *, int, int);
 int	pfctl_set_reassembly(struct pfctl *, int, int);
