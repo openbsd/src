@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.265 2019/02/16 11:42:08 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.266 2019/03/07 20:24:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -928,6 +928,7 @@ server_client_handle_key(struct client *c, key_code key)
 	struct window_pane	*wp;
 	struct timeval		 tv;
 	struct key_table	*table, *first;
+	const char		*tablename;
 	struct key_binding	*bd;
 	int			 xtimeout, flags;
 	struct cmd_find_state	 fs;
@@ -1009,8 +1010,10 @@ server_client_handle_key(struct client *c, key_code key)
 	if (server_client_is_default_key_table(c, c->keytable) &&
 	    wp != NULL &&
 	    wp->mode != NULL &&
-	    wp->mode->key_table != NULL)
-		table = key_bindings_get_table(wp->mode->key_table(wp), 1);
+	    wp->mode->mode->key_table != NULL) {
+		tablename = wp->mode->mode->key_table(wp->mode);
+		table = key_bindings_get_table(tablename, 1);
+	}
 	else
 		table = c->keytable;
 	first = table;
