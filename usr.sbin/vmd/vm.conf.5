@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.41 2018/11/21 13:48:20 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.42 2019/03/07 18:54:06 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2018 $
+.Dd $Mdocdate: March 7 2019 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -127,9 +127,11 @@ section starts with a declaration of the virtual machine
 .Ar name :
 .Bl -tag -width Ds
 .It Ic vm Ar name Brq ...
-The name can be any alphanumeric string along with '.', '-', and '_' characters.
-However, it cannot start with '.', '-', or '_'.
-Typically the name is a hostname.
+The
+.Ar name
+can only consist of alphanumeric characters, as well as '.', '-', and '_',
+and must start with a letter.
+Typically this is a hostname.
 .El
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:

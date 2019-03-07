@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.60 2018/12/18 08:04:58 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.61 2019/03/07 18:54:05 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2018 $
+.Dd $Mdocdate: March 7 2019 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -46,6 +46,12 @@ The
 .Ar id
 argument can be either a numeric, non-zero identifier or alternatively
 the name of a virtual machine.
+.Pp
+The
+.Ar name
+argument can only consist of alphanumeric characters, as well as '.', '-',
+and '_',
+and must start with a letter.
 .Pp
 The
 .Ar disk
@@ -227,10 +233,6 @@ The instance will inherit settings from the parent VM,
 except for exclusive options such as disk, interface lladdr, or
 interface names.
 .El
-.Pp
-Note that the VM name supplied to the 'start' command can only consist of
-alphanumeric characters, including '.', '-', and '_'. The name cannot start
-with '.', '-' or '_'.
 .It Cm status Op Ar id
 Lists VMs running on the host, optionally listing just the selected VM
 .Ar id .
