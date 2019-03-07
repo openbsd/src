@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.93 2019/02/27 04:31:56 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.94 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -995,7 +995,7 @@ mrt_get(struct mrt_head *c, struct mrt *m)
 	return (NULL);
 }
 
-int
+void
 mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 {
 	struct mrt	*m, *xm;
@@ -1031,6 +1031,4 @@ mrt_mergeconfig(struct mrt_head *xconf, struct mrt_head *nconf)
 		LIST_REMOVE(m, entry);
 		free(m);
 	}
-
-	return (0);
 }

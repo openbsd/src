@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.189 2019/01/21 02:07:56 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.190 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -236,6 +236,13 @@ rib_shutdown(void)
 			    ribs[id].name);
 		rib_free(&ribs[id].rib);
 	}
+	for (id = 0; id <= RIB_LOC_START; id++) {
+		struct rib_desc *rd = &ribs[id];
+		filterlist_free(rd->in_rules_tmp);
+		filterlist_free(rd->in_rules);
+		bzero(rd, sizeof(struct rib_desc));
+	}
+	free(ribs);
 }
 
 struct rib_entry *

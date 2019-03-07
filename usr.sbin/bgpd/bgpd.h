@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.376 2019/02/27 04:31:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.377 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1160,14 +1160,18 @@ int	control_imsg_relay(struct imsg *);
 
 /* config.c */
 struct bgpd_config	*new_config(void);
-void			 free_config(struct bgpd_config *);
-void	free_prefixsets(struct prefixset_head *);
-void	free_prefixtree(struct prefixset_tree *);
-void	filterlist_free(struct filter_head *);
-int	host(const char *, struct bgpd_addr *, u_int8_t *);
-void	copy_filterset(struct filter_set_head *, struct filter_set_head *);
-void	expand_networks(struct bgpd_config *);
-int	prefixset_cmp(struct prefixset_item *, struct prefixset_item *);
+void		copy_config(struct bgpd_config *, struct bgpd_config *);
+void		free_config(struct bgpd_config *);
+void		free_prefixsets(struct prefixset_head *);
+void		free_rde_prefixsets(struct rde_prefixset_head *);
+void		free_prefixtree(struct prefixset_tree *);
+void		filterlist_free(struct filter_head *);
+int		host(const char *, struct bgpd_addr *, u_int8_t *);
+u_int32_t	get_bgpid(void);
+void		copy_filterset(struct filter_set_head *,
+		    struct filter_set_head *);
+void		expand_networks(struct bgpd_config *);
+int		prefixset_cmp(struct prefixset_item *, struct prefixset_item *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 
 /* kroute.c */
@@ -1213,7 +1217,7 @@ time_t		 mrt_timeout(struct mrt_head *);
 void		 mrt_reconfigure(struct mrt_head *);
 void		 mrt_handler(struct mrt_head *);
 struct mrt	*mrt_get(struct mrt_head *, struct mrt *);
-int		 mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
+void		 mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
 
 /* name2id.c */
 u_int16_t	 rib_name2id(const char *);
@@ -1264,6 +1268,18 @@ void			 set_prep(struct set_table *);
 void			*set_match(const struct set_table *, u_int32_t);
 int			 set_equal(const struct set_table *,
 			    const struct set_table *);
+
+/* rde_trie.c */
+int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t, u_int8_t,
+	    u_int8_t);
+int	trie_roa_add(struct trie_head *, struct bgpd_addr *, u_int8_t,
+	    struct set_table *);
+void	trie_free(struct trie_head *);
+int	trie_match(struct trie_head *, struct bgpd_addr *, u_int8_t, int);
+int	trie_roa_check(struct trie_head *, struct bgpd_addr *, u_int8_t,
+	    u_int32_t);
+void	trie_dump(struct trie_head *);
+int	trie_equal(struct trie_head *, struct trie_head *);
 
 /* util.c */
 const char	*log_addr(const struct bgpd_addr *);

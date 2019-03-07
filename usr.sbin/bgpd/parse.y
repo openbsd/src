@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.381 2019/02/27 04:16:02 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.382 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3242,6 +3242,24 @@ popfile(void)
 	return (file ? 0 : EOF);
 }
 
+static void
+init_config(struct bgpd_config *c)
+{
+	u_int rdomid;
+
+	c->min_holdtime = MIN_HOLDTIME;
+	c->bgpid = get_bgpid();
+	c->fib_priority = RTP_BGP;
+	c->default_tableid = getrtable();
+	ktable_exists(c->default_tableid, &rdomid);
+	if (rdomid != c->default_tableid)
+		fatalx("current routing table %u is not a routing domain",
+		    c->default_tableid);
+
+	if (asprintf(&c->csock, "%s.%d", SOCKET_NAME, c->default_tableid) == -1)
+		fatal(NULL);
+}
+
 int
 parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 {
@@ -3252,6 +3270,7 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 	int			 errors = 0;
 
 	conf = new_config();
+	init_config(conf);
 
 	if ((filter_l = calloc(1, sizeof(struct filter_head))) == NULL)
 		fatal(NULL);
@@ -3277,10 +3296,8 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 	    F_RIB_NOFIB | F_RIB_NOEVALUATE);
 	add_rib("Loc-RIB", conf->default_tableid, F_RIB_LOCAL);
 
-	if ((file = pushfile(filename, 1)) == NULL) {
-		free(conf);
-		return (-1);
-	}
+	if ((file = pushfile(filename, 1)) == NULL)
+		goto errors;
 	topfile = file;
 
 	yyparse();
@@ -3309,7 +3326,13 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 		}
 	}
 
+	if (!conf->as) {
+		log_warnx("configuration error: AS not given");
+		errors++;
+	}
+
 	if (errors) {
+errors:
 		for (p = peer_l; p != NULL; p = pnext) {
 			pnext = p->next;
 			free(p);
@@ -3325,6 +3348,7 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 		filterlist_free(groupfilter_l);
 
 		free_config(conf);
+		return -1;
 	} else {
 		/*
 		 * Concatenate filter list and static group and peer filtersets
@@ -3337,8 +3361,8 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 
 		optimize_filters(conf->filters);
 
-		errors += mrt_mergeconfig(xconf->mrt, conf->mrt);
-		errors += merge_config(xconf, conf, peer_l);
+		mrt_mergeconfig(xconf->mrt, conf->mrt);
+		merge_config(xconf, conf, peer_l);
 		*xpeers = peer_l;
 
 		for (p = peer_l_old; p != NULL; p = pnext) {
@@ -3349,9 +3373,8 @@ parse_config(char *filename, struct bgpd_config *xconf, struct peer **xpeers)
 		free(filter_l);
 		free(peerfilter_l);
 		free(groupfilter_l);
+		return 0;
 	}
-
-	return (errors ? -1 : 0);
 }
 
 int

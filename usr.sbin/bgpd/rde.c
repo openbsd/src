@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.464 2019/02/27 04:31:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.465 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -86,7 +86,6 @@ int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
 struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
-void		 rde_free_prefixsets(struct rde_prefixset_head *);
 void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
 		     struct rde_prefixset_head *);
 u_int8_t	 rde_roa_validity(struct rde_prefixset *,
@@ -232,8 +231,7 @@ rde_main(int debug, int verbose)
 		fatal(NULL);
 	SIMPLEQ_INIT(l3vpns_l);
 
-	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
-		fatal(NULL);
+	conf = new_config();
 	log_info("route decision engine ready");
 
 	while (rde_quit == 0) {
@@ -324,6 +322,9 @@ rde_main(int debug, int verbose)
 	if (debug)
 		rde_shutdown();
 
+	free_config(conf);
+	free(pfd);
+
 	/* close pipes */
 	if (ibuf_se) {
 		msgbuf_clear(&ibuf_se->w);
@@ -345,7 +346,6 @@ rde_main(int debug, int verbose)
 		LIST_REMOVE(mctx, entry);
 		free(mctx);
 	}
-
 
 	log_info("route decision engine exiting");
 	exit(0);
@@ -768,18 +768,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (newdomains == NULL)
 				fatal(NULL);
 			SIMPLEQ_INIT(newdomains);
-			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
-			    NULL)
-				fatal(NULL);
-			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
+			nconf = new_config();
+			copy_config(nconf, imsg.data);
+
 			for (rid = 0; rid < rib_size; rid++) {
 				if (!rib_valid(rid))
 					continue;
 				ribs[rid].state = RECONF_DELETE;
 			}
-			SIMPLEQ_INIT(&nconf->rde_prefixsets);
-			SIMPLEQ_INIT(&nconf->rde_originsets);
-			memset(&nconf->rde_roa, 0, sizeof(nconf->rde_roa));
 			break;
 		case IMSG_RECONF_RIB:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -2903,15 +2899,12 @@ rde_reload_done(void)
 	roa_old = conf->rde_roa;
 	as_sets_old = conf->as_sets;
 
-	memcpy(conf, nconf, sizeof(struct bgpd_config));
-	conf->listen_addrs = NULL;
-	conf->csock = NULL;
-	conf->rcsock = NULL;
+	copy_config(conf, nconf);
 	SIMPLEQ_INIT(&conf->rde_prefixsets);
 	SIMPLEQ_INIT(&conf->rde_originsets);
 	SIMPLEQ_CONCAT(&conf->rde_prefixsets, &nconf->rde_prefixsets);
 	SIMPLEQ_CONCAT(&conf->rde_originsets, &nconf->rde_originsets);
-	free(nconf);
+	free_config(nconf);
 	nconf = NULL;
 
 	/* sync peerself with conf */
@@ -3127,8 +3120,8 @@ rde_softreconfig_done(void)
 		ribs[rid].state = RECONF_NONE;
 	}
 
-	rde_free_prefixsets(&prefixsets_old);
-	rde_free_prefixsets(&originsets_old);
+	free_rde_prefixsets(&prefixsets_old);
+	free_rde_prefixsets(&originsets_old);
 	as_sets_free(as_sets_old);
 	as_sets_old = NULL;
 
@@ -3925,6 +3918,7 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 void
 rde_shutdown(void)
 {
+	struct l3vpn		*vpn;
 	struct rde_peer		*p;
 	u_int32_t		 i;
 
@@ -3944,6 +3938,15 @@ rde_shutdown(void)
 	/* free filters */
 	filterlist_free(out_rules);
 	filterlist_free(out_rules_tmp);
+
+	/* kill the VPN configs */
+	while ((vpn = SIMPLEQ_FIRST(l3vpns_l)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(l3vpns_l, entry);
+		filterset_free(&vpn->import);
+		filterset_free(&vpn->export);
+		free(vpn);
+	}
+	free(l3vpns_l);
 
 	/* now check everything */
 	rib_shutdown();
@@ -4003,22 +4006,6 @@ rde_find_prefixset(char *name, struct rde_prefixset_head *p)
 			return (ps);
 	}
 	return (NULL);
-}
-
-void
-rde_free_prefixsets(struct rde_prefixset_head *psh)
-{
-	struct rde_prefixset	*ps;
-
-	if (psh == NULL)
-		return;
-
-	while (!SIMPLEQ_EMPTY(psh)) {
-		ps = SIMPLEQ_FIRST(psh);
-		trie_free(&ps->th);
-		SIMPLEQ_REMOVE_HEAD(psh, entry);
-		free(ps);
-	}
 }
 
 void

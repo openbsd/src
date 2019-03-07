@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.212 2019/02/14 14:34:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.213 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,7 @@ main(int argc, char *argv[])
 {
 	struct bgpd_config	*conf;
 	struct peer		*peer_l, *p;
+	struct rde_rib		*rr;
 	struct pollfd		 pfd[POLL_MAX];
 	time_t			 timeout;
 	pid_t			 se_pid = 0, rde_pid = 0, pid;
@@ -124,7 +125,6 @@ main(int argc, char *argv[])
 	if (saved_argv0 == NULL)
 		saved_argv0 = "bgpd";
 
-	conf = new_config();
 	peer_l = NULL;
 
 	while ((ch = getopt(argc, argv, "cdD:f:nRSv")) != -1) {
@@ -169,6 +169,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (cmd_opts & BGPD_OPT_NOACTION) {
+		conf = new_config();
 		if (parse_config(conffile, conf, &peer_l))
 			exit(1);
 
@@ -177,6 +178,16 @@ main(int argc, char *argv[])
 			    conf->filters, conf->mrt, &conf->l3vpns);
 		else
 			fprintf(stderr, "configuration OK\n");
+
+		while ((p = peer_l) != NULL) {
+			peer_l = p->next;
+			free(p);
+		}
+		while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
+			free(rr);
+		}
+		free_config(conf);
 		exit(0);
 	}
 
@@ -249,6 +260,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 
 	if (imsg_send_sockets(ibuf_se, ibuf_rde))
 		fatal("could not establish imsg links");
+	conf = new_config();
 	quit = reconfigure(conffile, conf, &peer_l);
 	if (pftable_clear_all() != 0)
 		quit = 1;
@@ -337,16 +349,22 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		msgbuf_clear(&ibuf_se->w);
 		close(ibuf_se->fd);
 		free(ibuf_se);
+		ibuf_se = NULL;
 	}
 	if (ibuf_rde) {
 		msgbuf_clear(&ibuf_rde->w);
 		close(ibuf_rde->fd);
 		free(ibuf_rde);
+		ibuf_rde = NULL;
 	}
 
 	while ((p = peer_l) != NULL) {
 		peer_l = p->next;
 		free(p);
+	}
+	while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
+		free(rr);
 	}
 
 	carp_demote_shutdown();
@@ -895,6 +913,8 @@ send_imsg_session(int type, pid_t pid, void *data, u_int16_t datalen)
 int
 send_network(int type, struct network_config *net, struct filter_set_head *h)
 {
+	if (quit)
+		return (0);
 	if (imsg_compose(ibuf_rde, type, 0, 0, -1, net,
 	    sizeof(struct network_config)) == -1)
 		return (-1);

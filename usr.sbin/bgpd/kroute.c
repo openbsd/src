@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.234 2019/03/01 09:24:56 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.235 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,7 @@ int	krVPN6_delete(struct ktable *, struct kroute_full *, u_int8_t);
 void	kr_net_delete(struct network *);
 int	kr_net_match(struct ktable *, struct network_config *, u_int16_t);
 struct network *kr_net_find(struct ktable *, struct network *);
+void	kr_net_clear(struct ktable *);
 void	kr_redistribute(int, struct ktable *, struct kroute *);
 void	kr_redistribute6(int, struct ktable *, struct kroute6 *);
 struct kroute_full *kr_tofull(struct kroute *);
@@ -353,6 +354,7 @@ ktable_destroy(struct ktable *kt, u_int8_t fib_prio)
 	knexthop_clear(kt);
 	kroute_clear(kt);
 	kroute6_clear(kt);
+	kr_net_clear(kt);
 
 	krt[kt->rtableid] = NULL;
 	free(kt);
@@ -855,6 +857,7 @@ kr_shutdown(u_int8_t fib_prio, u_int rdomain)
 	for (i = krt_size; i > 0; i--)
 		ktable_free(i - 1, fib_prio);
 	kif_clear(rdomain);
+	free(krt);
 }
 
 void
@@ -1356,6 +1359,19 @@ kr_net_reload(u_int rtableid, u_int64_t rd, struct network_head *nh)
 			kr_net_delete(n);
 		} else
 			TAILQ_INSERT_TAIL(&kt->krn, n, entry);
+	}
+}
+
+void
+kr_net_clear(struct ktable *kt)
+{
+	struct network *n, *xn;
+
+	TAILQ_FOREACH_SAFE(n, &kt->krn, entry, xn) {
+		TAILQ_REMOVE(&kt->krn, n, entry);
+		if (n->net.type == NETWORK_DEFAULT)
+			kr_net_redist_del(kt, &n->net, 0);
+		kr_net_delete(n);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.133 2019/02/27 04:31:56 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.134 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -247,7 +247,7 @@ int	 carp_demote_get(char *);
 int	 carp_demote_set(char *, int);
 
 /* config.c */
-int	 merge_config(struct bgpd_config *, struct bgpd_config *,
+void	 merge_config(struct bgpd_config *, struct bgpd_config *,
 	    struct peer *);
 int	 prepare_listeners(struct bgpd_config *);
 

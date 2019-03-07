@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.374 2019/02/27 04:31:56 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.375 2019/03/07 07:42:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -247,13 +247,7 @@ session_main(int debug, int verbose)
 	peer_cnt = 0;
 	ctl_cnt = 0;
 
-	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
-		fatal(NULL);
-	if ((conf->listen_addrs = calloc(1, sizeof(struct listen_addrs))) ==
-	    NULL)
-		fatal(NULL);
-	TAILQ_INIT(conf->listen_addrs);
-
+	conf = new_config();
 	log_info("session engine ready");
 
 	while (session_quit == 0) {
@@ -551,6 +545,7 @@ session_main(int debug, int verbose)
 		    "bgpd shutting down",
 		    sizeof(p->conf.shutcomm));
 		session_stop(p, ERR_CEASE_ADMIN_DOWN);
+		timer_remove_all(p);
 		pfkey_remove(p);
 		free(p);
 	}
@@ -561,11 +556,7 @@ session_main(int debug, int verbose)
 		free(m);
 	}
 
-	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
-		TAILQ_REMOVE(conf->listen_addrs, la, entry);
-		free(la);
-	}
-	free(conf->listen_addrs);
+	free_config(conf);
 	free(peer_l);
 	free(mrt_l);
 	free(pfd);
@@ -2624,15 +2615,10 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 		case IMSG_RECONF_CONF:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("reconf request not from parent");
-			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
-			    NULL)
-				fatal(NULL);
-			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
-			if ((nconf->listen_addrs = calloc(1,
-			    sizeof(struct listen_addrs))) == NULL)
-				fatal(NULL);
-			TAILQ_INIT(nconf->listen_addrs);
+			nconf = new_config();
 			npeers = NULL;
+
+			copy_config(nconf, imsg.data); 
 			init_conf(nconf);
 			pending_reconf = 1;
 			break;
@@ -2747,15 +2733,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				fatalx("reconf request not from parent");
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
-			conf->flags = nconf->flags;
-			conf->log = nconf->log;
-			conf->bgpid = nconf->bgpid;
-			conf->clusterid = nconf->clusterid;
-			conf->as = nconf->as;
-			conf->short_as = nconf->short_as;
-			conf->holdtime = nconf->holdtime;
-			conf->min_holdtime = nconf->min_holdtime;
-			conf->connectretry = nconf->connectretry;
+			copy_config(conf, nconf);
 
 			/* add new peers */
 			for (p = npeers; p != NULL; p = next) {
@@ -2798,8 +2776,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			}
 
 			setup_listeners(listener_cnt);
-			free(nconf->listen_addrs);
-			free(nconf);
+			free_config(nconf);
 			nconf = NULL;
 			pending_reconf = 0;
 			log_info("SE reconfigured");
