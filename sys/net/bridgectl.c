@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.16 2019/02/20 17:11:51 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.17 2019/03/08 17:48:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -291,10 +291,11 @@ want:
 	return (error);
 }
 
-struct bridge_rtnode *
-bridge_rtlookup(struct bridge_softc *sc, struct ether_addr *ea)
+struct ifnet *
+bridge_rtlookup(struct bridge_softc *sc, struct ether_addr *ea, struct mbuf *m)
 {
 	struct bridge_rtnode *p = NULL;
+	struct ifnet *ifp = NULL;
 	u_int32_t h;
 	int dir;
 
@@ -309,9 +310,20 @@ bridge_rtlookup(struct bridge_softc *sc, struct ether_addr *ea)
 			break;
 		}
 	}
+	if (p != NULL) {
+		ifp = p->brt_if;
+
+		if (p->brt_family != AF_UNSPEC && m != NULL) {
+			struct bridge_tunneltag *brtag;
+
+			brtag = bridge_tunneltag(m);
+			if (brtag != NULL)
+				bridge_copytag(&p->brt_tunnel, brtag);
+		}
+	}
 	mtx_leave(&sc->sc_mtx);
 
-	return (p);
+	return (ifp);
 }
 
 u_int32_t
@@ -795,5 +807,64 @@ bridge_flushrule(struct bridge_iflist *bif)
 		pf_tag_unref(p->brl_tag);
 #endif
 		free(p, M_DEVBUF, sizeof *p);
+	}
+}
+
+struct bridge_tunneltag *
+bridge_tunnel(struct mbuf *m)
+{
+	struct m_tag    *mtag;
+
+	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) == NULL)
+		return (NULL);
+
+	return ((struct bridge_tunneltag *)(mtag + 1));
+}
+
+struct bridge_tunneltag *
+bridge_tunneltag(struct mbuf *m)
+{
+	struct m_tag	*mtag;
+
+	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) == NULL) {
+		mtag = m_tag_get(PACKET_TAG_TUNNEL,
+		    sizeof(struct bridge_tunneltag), M_NOWAIT);
+		if (mtag == NULL)
+			return (NULL);
+		bzero(mtag + 1, sizeof(struct bridge_tunneltag));
+		m_tag_prepend(m, mtag);
+	}
+
+	return ((struct bridge_tunneltag *)(mtag + 1));
+}
+
+void
+bridge_tunneluntag(struct mbuf *m)
+{
+	struct m_tag    *mtag;
+	if ((mtag = m_tag_find(m, PACKET_TAG_TUNNEL, NULL)) != NULL)
+		m_tag_delete(m, mtag);
+}
+
+void
+bridge_copyaddr(struct sockaddr *src, struct sockaddr *dst)
+{
+	if (src != NULL && src->sa_family != AF_UNSPEC)
+		memcpy(dst, src, src->sa_len);
+	else {
+		dst->sa_family = AF_UNSPEC;
+		dst->sa_len = 0;
+	}
+}
+
+void
+bridge_copytag(struct bridge_tunneltag *src, struct bridge_tunneltag *dst)
+{
+	if (src == NULL) {
+		memset(dst, 0, sizeof(*dst));
+	} else {
+		bridge_copyaddr(&src->brtag_peer.sa, &dst->brtag_peer.sa);
+		bridge_copyaddr(&src->brtag_local.sa, &dst->brtag_local.sa);
+		dst->brtag_id = src->brtag_id;
 	}
 }

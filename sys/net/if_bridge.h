@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.62 2019/02/20 17:11:51 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.63 2019/03/08 17:48:35 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -518,8 +518,8 @@ void	bstp_ifsflags(struct bstp_port *, u_int);
 int	bridgectl_ioctl(struct ifnet *, u_long, caddr_t);
 int	bridge_rtupdate(struct bridge_softc *,
     struct ether_addr *, struct ifnet *ifp, int, u_int8_t, struct mbuf *);
-struct bridge_rtnode *bridge_rtlookup(struct bridge_softc *,
-    struct ether_addr *);
+struct ifnet *bridge_rtlookup(struct bridge_softc *,
+    struct ether_addr *, struct mbuf *);
 void	bridge_rtflush(struct bridge_softc *, int);
 void	bridge_rtage(void *);
 
