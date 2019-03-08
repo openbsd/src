@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.855 2019/03/07 20:24:21 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.856 2019/03/08 10:34:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2310,8 +2310,7 @@ extern const struct window_mode window_client_mode;
 
 /* window-copy.c */
 extern const struct window_mode window_copy_mode;
-void		 window_copy_init_from_pane(struct window_pane *, int);
-void		 window_copy_init_for_output(struct window_pane *);
+extern const struct window_mode window_view_mode;
 void printflike(2, 3) window_copy_add(struct window_pane *, const char *, ...);
 void		 window_copy_vadd(struct window_pane *, const char *, va_list);
 void		 window_copy_pageup(struct window_pane *, int);

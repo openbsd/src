@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.56 2019/03/07 19:34:22 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.57 2019/03/08 10:34:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -75,7 +75,10 @@ cmd_run_shell_print(struct job *job, const char *msg)
 			return;
 	}
 
-	window_copy_init_for_output(wp);
+	if (wp->mode == NULL || wp->mode->mode != &window_view_mode) {
+		window_pane_reset_mode(wp);
+		window_pane_set_mode(wp, &window_view_mode, NULL, NULL);
+	}
 	window_copy_add(wp, "%s", msg);
 }
 
