@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.208 2019/03/07 20:24:21 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.209 2019/03/08 10:29:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -997,11 +997,12 @@ window_copy_command(struct window_mode_entry *wme, struct client *c,
 		data->searchx = data->searchy = -1;
 	}
 
+	wme->prefix = 1;
+
 	if (cancel)
 		window_pane_reset_mode(wp);
 	else if (redraw)
 		window_copy_redraw_screen(wme);
-	wme->prefix = 1;
 }
 
 static void
