@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.323 2019/03/08 17:48:35 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.324 2019/03/08 17:49:36 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -779,7 +779,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	 * get there, send to all interfaces.
 	 */
 	if (dst_if == NULL) {
-		struct bridge_iflist *bif, *bif0;
 		struct mbuf *mc;
 		int used = 0;
 
@@ -813,9 +812,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 				}
 			}
 
-			bif0 = (struct bridge_iflist *)dst_if->if_bridgeport;
-			KASSERT(bif0 != NULL);
-			if (bridge_filterrule(&bif0->bif_brlout, eh, mc) ==
+			if (bridge_filterrule(&bif->bif_brlout, eh, mc) ==
 			    BRL_ACTION_BLOCK)
 				continue;
 
