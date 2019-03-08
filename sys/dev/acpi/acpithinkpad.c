@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.63 2019/03/06 15:36:30 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.64 2019/03/08 16:33:23 jcs Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -124,6 +124,7 @@
 #define	THINKPAD_ADAPTIVE_MODE_HOME	1
 #define	THINKPAD_ADAPTIVE_MODE_FUNCTION	3
 
+#define THINKPAD_MASK_MIC_MUTE		(1 << 14)
 #define THINKPAD_MASK_BRIGHTNESS_UP	(1 << 15)
 #define THINKPAD_MASK_BRIGHTNESS_DOWN	(1 << 16)
 #define THINKPAD_MASK_KBD_BACKLIGHT	(1 << 17)
@@ -171,8 +172,8 @@ int	thinkpad_get_kbd_backlight(struct wskbd_backlight *);
 int	thinkpad_set_kbd_backlight(struct wskbd_backlight *);
 extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
-void	thinkpad_get_brightness(struct acpithinkpad_softc *);
-void	thinkpad_set_brightness(void *, int);
+int	thinkpad_get_brightness(struct acpithinkpad_softc *);
+int	thinkpad_set_brightness(void *, int);
 int	thinkpad_get_param(struct wsdisplay_param *);
 int	thinkpad_set_param(struct wsdisplay_param *);
 extern int (*ws_get_param)(struct wsdisplay_param *);
@@ -345,7 +346,9 @@ thinkpad_enable_events(struct acpithinkpad_softc *sc)
 	}
 
 	/* Enable events we need to know about */
-	mask |= (THINKPAD_MASK_BRIGHTNESS_UP | THINKPAD_MASK_BRIGHTNESS_DOWN |
+	mask |= (THINKPAD_MASK_MIC_MUTE	|
+	    THINKPAD_MASK_BRIGHTNESS_UP |
+	    THINKPAD_MASK_BRIGHTNESS_DOWN |
 	    THINKPAD_MASK_KBD_BACKLIGHT);
 
 	DPRINTF(("%s: setting event mask to 0x%llx\n", DEVNAME(sc), mask));
@@ -555,8 +558,7 @@ thinkpad_brightness_up(struct acpithinkpad_softc *sc)
 {
 	int b;
 
-	if (sc->sc_hkey_version == THINKPAD_HKEY_VERSION2) {
-		thinkpad_get_brightness(sc);
+	if (thinkpad_get_brightness(sc) == 0) {
 		b = sc->sc_brightness & 0xff;
 		if (b < ((sc->sc_brightness >> 8) & 0xff)) {
 			sc->sc_brightness = b + 1;
@@ -573,8 +575,7 @@ thinkpad_brightness_down(struct acpithinkpad_softc *sc)
 {
 	int b;
 
-	if (sc->sc_hkey_version == THINKPAD_HKEY_VERSION2) {
-		thinkpad_get_brightness(sc);
+	if (thinkpad_get_brightness(sc) == 0) {
 		b = sc->sc_brightness & 0xff;
 		if (b > 0) {
 			sc->sc_brightness = b - 1;
@@ -701,30 +702,39 @@ thinkpad_set_kbd_backlight(struct wskbd_backlight *kbl)
 	return 0;
 }
 
-void
+int
 thinkpad_get_brightness(struct acpithinkpad_softc *sc)
 {
-	aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
-	    "PBLG", 0, NULL, &sc->sc_brightness);
+	int ret;
+
+	ret = aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "PBLG", 0, NULL,
+	    &sc->sc_brightness);
 
 	DPRINTF(("%s: %s: 0x%llx\n", DEVNAME(sc), __func__, sc->sc_brightness));
+
+	return ret;
 }
 
-void
+int
 thinkpad_set_brightness(void *arg0, int arg1)
 {
 	struct acpithinkpad_softc *sc = arg0;
 	struct aml_value arg;
+	int ret;
 
 	DPRINTF(("%s: %s: 0x%llx\n", DEVNAME(sc), __func__, sc->sc_brightness));
 
 	memset(&arg, 0, sizeof(arg));
 	arg.type = AML_OBJTYPE_INTEGER;
 	arg.v_integer = sc->sc_brightness & 0xff;
-	aml_evalname(sc->sc_acpi, sc->sc_devnode,
-	    "PBLS", 1, &arg, NULL);
+	ret = aml_evalname(sc->sc_acpi, sc->sc_devnode, "PBLS", 1, &arg, NULL);
+
+	if (ret)
+		return ret;
 
 	thinkpad_get_brightness(sc);
+
+	return 0;
 }
 
 int
@@ -765,7 +775,8 @@ thinkpad_set_param(struct wsdisplay_param *dp)
 			dp->curval = maxval;
 		sc->sc_brightness &= ~0xff;
 		sc->sc_brightness |= dp->curval;
-		acpi_addtask(sc->sc_acpi, thinkpad_set_brightness, sc, 0);
+		acpi_addtask(sc->sc_acpi, (void *)thinkpad_set_brightness, sc,
+		    0);
 		acpi_wakeup(sc->sc_acpi);
 		return 0;
 	default:
