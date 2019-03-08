@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11.c,v 1.42 2019/02/04 23:37:54 djm Exp $ */
+/* $OpenBSD: ssh-pkcs11.c,v 1.43 2019/03/08 17:24:43 markus Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
@@ -1107,6 +1107,7 @@ pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
 			break;
 		default:
 			/* XXX print key type? */
+			key = NULL;
 			error("skipping unsupported certificate type");
 		}
 
@@ -1206,6 +1207,7 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
 			break;
 		default:
 			/* XXX print key type? */
+			key = NULL;
 			error("skipping unsupported key type");
 		}
 
