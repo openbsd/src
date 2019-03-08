@@ -1,4 +1,4 @@
-.\" $OpenBSD: dirname.3,v 1.22 2019/01/25 00:19:25 millert Exp $
+.\" $OpenBSD: dirname.3,v 1.23 2019/03/08 17:33:23 benno Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: March 8 2019 $
 .Dt DIRNAME 3
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ function first appeared in
 .Sh CAVEATS
 .Fn dirname
 returns a pointer to internal static storage space that will be overwritten
-by subsequent calls (each function has its own separate storage).
+by subsequent calls.
 .Pp
 Other vendor implementations of
 .Fn dirname
