@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.42 2019/01/29 16:38:29 benno Exp $ */
+/*	$Id: main.c,v 1.43 2019/03/08 18:42:44 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,6 +41,7 @@ main(int argc, char *argv[])
 	char		 *acctkey = NULL;
 	char		 *chngdir = NULL, *auth = NULL;
 	char		 *conffile = CONF_FILE;
+	char		 *tmps, *tmpsd;
 	int		  key_fds[2], acct_fds[2], chng_fds[2], cert_fds[2];
 	int		  file_fds[2], dns_fds[2], rvk_fds[2];
 	int		  force = 0;
@@ -103,21 +104,15 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	if (domain->cert != NULL) {
-		if ((certdir = dirname(domain->cert)) != NULL) {
-			if ((certdir = strdup(certdir)) == NULL)
-				err(EXIT_FAILURE, "strdup");
-		} else
-			err(EXIT_FAILURE, "dirname");
-	} else {
-		/* the parser enforces that at least cert or fullchain is set */
-		if ((certdir = dirname(domain->fullchain)) != NULL) {
-			if ((certdir = strdup(certdir)) == NULL)
-				err(EXIT_FAILURE, "strdup");
-		} else
-			err(EXIT_FAILURE, "dirname");
-
-	}
+	/* the parser enforces that at least cert or fullchain is set */
+	tmps = domain->cert ? domain->cert : domain->fullchain;
+	if ((tmps = strdup(tmps)) == NULL)
+		err(EXIT_FAILURE, "strdup");
+	if ((tmpsd = dirname(tmps)) == NULL)
+		err(EXIT_FAILURE, "dirname");
+	if ((certdir = strdup(tmpsd)) == NULL)
+		err(EXIT_FAILURE, "strdup");	
+	free(tmps);
 
 	if (domain->cert != NULL) {
 		if ((certfile = basename(domain->cert)) != NULL) {
@@ -239,6 +234,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_NET] == 0) {
 		proccomp = COMP_NET;
+		free(certdir);
 		close(key_fds[0]);
 		close(acct_fds[0]);
 		close(chng_fds[0]);
@@ -270,6 +266,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_KEY] == 0) {
 		proccomp = COMP_KEY;
+		free(certdir);
 		close(cert_fds[0]);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
@@ -292,6 +289,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_ACCOUNT] == 0) {
 		proccomp = COMP_ACCOUNT;
+		free(certdir);
 		free(alts);
 		close(cert_fds[0]);
 		close(dns_fds[0]);
@@ -312,6 +310,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_CHALLENGE] == 0) {
 		proccomp = COMP_CHALLENGE;
+		free(certdir);
 		free(alts);
 		close(cert_fds[0]);
 		close(dns_fds[0]);
@@ -331,6 +330,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_CERT] == 0) {
 		proccomp = COMP_CERT;
+		free(certdir);
 		free(alts);
 		close(dns_fds[0]);
 		close(rvk_fds[0]);
@@ -354,6 +354,7 @@ main(int argc, char *argv[])
 		close(rvk_fds[0]);
 		c = fileproc(file_fds[1], certdir, certfile, chainfile,
 		    fullchainfile);
+		free(certdir);
 		/*
 		 * This is different from the other processes in that it
 		 * can return 2 if the certificates were updated.
@@ -370,6 +371,7 @@ main(int argc, char *argv[])
 
 	if (pids[COMP_DNS] == 0) {
 		proccomp = COMP_DNS;
+		free(certdir);
 		free(alts);
 		close(rvk_fds[0]);
 		c = dnsproc(dns_fds[0]);
@@ -389,6 +391,7 @@ main(int argc, char *argv[])
 		    certfile != NULL ? certfile : fullchainfile,
 		    force, revocate,
 		    (const char *const *)alts, altsz);
+		free(certdir);
 		free(alts);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
@@ -414,6 +417,7 @@ main(int argc, char *argv[])
 	    checkexit(pids[COMP_DNS], COMP_DNS) +
 	    checkexit(pids[COMP_REVOKE], COMP_REVOKE);
 
+	free(certdir);
 	free(alts);
 	return rc != COMP__MAX ? EXIT_FAILURE : (c == 2 ? EXIT_SUCCESS : 2);
 usage:
