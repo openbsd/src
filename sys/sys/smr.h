@@ -1,4 +1,4 @@
-/*	$OpenBSD: smr.h,v 1.1 2019/02/26 14:24:21 visa Exp $	*/
+/*	$OpenBSD: smr.h,v 1.2 2019/03/09 06:15:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -62,30 +62,13 @@ smr_init(struct smr_entry *smr)
 #define SMR_ASSERT_NONCRITICAL()	do {} while (0)
 #endif
 
-/*
- * Force any preceding reads to happen before any subsequent reads that
- * depend on the value returned by the preceding reads.
- */
-static inline void
-smr_datadep_consumer(void)
-{
-#ifdef __alpha__
-	membar_consumer();
-#endif
-}
+#define SMR_PTR_GET(pptr)		READ_ONCE(*pptr)
 
-#define SMR_PTR_GET(pptr) ({						\
-	typeof(*pptr) __smr_ptr = *(volatile typeof(pptr))(pptr);	\
-	if (__smr_ptr != NULL)						\
-		smr_datadep_consumer();					\
-	__smr_ptr;							\
-})
-
-#define SMR_PTR_GET_LOCKED(pptr) (*(pptr))
+#define SMR_PTR_GET_LOCKED(pptr)	(*(pptr))
 
 #define SMR_PTR_SET_LOCKED(pptr, val) do {				\
 	membar_producer();						\
-	*(volatile typeof(pptr))(pptr) = (val);				\
+	WRITE_ONCE(*pptr, val);						\
 } while (0)
 
 /*
