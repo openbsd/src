@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.43 2019/03/08 18:42:44 benno Exp $ */
+/*	$Id: main.c,v 1.44 2019/03/09 10:11:53 benno Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -113,29 +113,33 @@ main(int argc, char *argv[])
 	if ((certdir = strdup(tmpsd)) == NULL)
 		err(EXIT_FAILURE, "strdup");	
 	free(tmps);
+	tmps = tmpsd = NULL;
 
 	if (domain->cert != NULL) {
-		if ((certfile = basename(domain->cert)) != NULL) {
-			if ((certfile = strdup(certfile)) == NULL)
-				err(EXIT_FAILURE, "strdup");
-		} else
+		if ((tmps = strdup(domain->cert)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+		if ((certfile = basename(tmps)) == NULL)
 			err(EXIT_FAILURE, "basename");
+		if ((certfile = strdup(certfile)) == NULL)
+			err(EXIT_FAILURE, "strdup");
 	}
 
 	if (domain->chain != NULL) {
-		if ((chainfile = basename(domain->chain)) != NULL) {
-			if ((chainfile = strdup(chainfile)) == NULL)
-				err(EXIT_FAILURE, "strdup");
-		} else
+		if ((tmps = strdup(domain->chain)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+		if ((chainfile = basename(tmps)) == NULL)
 			err(EXIT_FAILURE, "basename");
+		if ((chainfile = strdup(chainfile)) == NULL)
+			err(EXIT_FAILURE, "strdup");
 	}
 
 	if (domain->fullchain != NULL) {
-		if ((fullchainfile = basename(domain->fullchain)) != NULL) {
-			if ((fullchainfile = strdup(fullchainfile)) == NULL)
-				err(EXIT_FAILURE, "strdup");
-		} else
+		if ((tmps = strdup(domain->fullchain)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+		if ((fullchainfile = basename(tmps)) == NULL)
 			err(EXIT_FAILURE, "basename");
+		if ((fullchainfile = strdup(fullchainfile)) == NULL)
+			err(EXIT_FAILURE, "strdup");
 	}
 
 	if ((auth = domain->auth) == NULL) {
@@ -419,6 +423,9 @@ main(int argc, char *argv[])
 
 	free(certdir);
 	free(alts);
+	free(certfile);
+	free(chainfile);
+	free(fullchainfile);
 	return rc != COMP__MAX ? EXIT_FAILURE : (c == 2 ? EXIT_SUCCESS : 2);
 usage:
 	fprintf(stderr,
