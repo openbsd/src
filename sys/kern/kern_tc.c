@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.37 2019/01/31 05:00:18 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.38 2019/03/09 23:04:56 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -447,12 +447,15 @@ void
 tc_windup(void)
 {
 	struct bintime bt;
+	struct timecounter *active_tc;
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
 	int i;
 
 	MUTEX_ASSERT_LOCKED(&timecounter_mtx);
+
+	active_tc = timecounter;
 
 	/*
 	 * Make the next timehands a copy of the current one, but do not
@@ -472,8 +475,8 @@ tc_windup(void)
 	 * Update the offset fields accordingly.
 	 */
 	delta = tc_delta(th);
-	if (th->th_counter != timecounter)
-		ncount = timecounter->tc_get_timecount(timecounter);
+	if (th->th_counter != active_tc)
+		ncount = active_tc->tc_get_timecount(active_tc);
 	else
 		ncount = 0;
 	th->th_offset_count += delta;
@@ -516,8 +519,8 @@ tc_windup(void)
 	bintime2timespec(&bt, &th->th_nanotime);
 
 	/* Now is a good time to change timecounters. */
-	if (th->th_counter != timecounter) {
-		th->th_counter = timecounter;
+	if (th->th_counter != active_tc) {
+		th->th_counter = active_tc;
 		th->th_offset_count = ncount;
 	}
 
