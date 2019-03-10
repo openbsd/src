@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.229 2019/02/20 06:59:16 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.230 2019/03/10 07:35:33 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2567,7 +2567,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		if (msr & IA32_EPT_VPID_CAP_WB) {
 			/* WB cache type supported */
 			eptp |= IA32_EPT_PAGING_CACHE_TYPE_WB;
-		}
+		} else
+			DPRINTF("%s: no WB cache type available, guest VM "
+			    "will run uncached\n", __func__);
 
 		DPRINTF("Guest EPTP = 0x%llx\n", eptp);
 		if (vmwrite(VMCS_GUEST_IA32_EPTP, eptp)) {
