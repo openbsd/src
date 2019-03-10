@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.231 2019/03/10 07:44:17 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.232 2019/03/10 08:27:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1313,7 +1313,7 @@ vm_impl_init(struct vm *vm, struct proc *p)
 /*
  * vm_impl_deinit_vmx
  *
- * Intel VMX specific VM initialization routine
+ * Intel VMX specific VM deinitialization routine
  *
  * Parameters:
  *  vm: VM to deinit
@@ -1327,7 +1327,7 @@ vm_impl_deinit_vmx(struct vm *vm)
 /*
  * vm_impl_deinit_svm
  *
- * AMD SVM specific VM initialization routine
+ * AMD SVM specific VM deinitialization routine
  *
  * Parameters:
  *  vm: VM to deinit
