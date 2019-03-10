@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.110 2019/01/31 18:23:27 tedu Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.111 2019/03/10 21:16:15 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -48,9 +48,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-
-int64_t adjtimedelta;		/* unapplied time correction (microseconds) */
-
 /* 
  * Time of day and interval timer support.
  *
@@ -96,11 +93,6 @@ settime(const struct timespec *ts)
 		return (EPERM);
 	}
 
-	/*
-	 * Adjtime in progress is meaningless or harmful after
-	 * setting the clock. Cancel adjtime and then set new time.
-	 */
-	adjtimedelta = 0;
 	tc_setrealtimeclock(ts);
 	resettodr();
 
@@ -421,9 +413,10 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
+	struct timeval atv;
 	const struct timeval *delta = SCARG(uap, delta);
 	struct timeval *olddelta = SCARG(uap, olddelta);
-	struct timeval atv;
+	int64_t adjustment, remaining;	
 	int error;
 
 	error = pledge_adjtime(p, delta);
@@ -431,9 +424,10 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		return error;
 
 	if (olddelta) {
+		tc_adjtime(&remaining, NULL);
 		memset(&atv, 0, sizeof(atv));
-		atv.tv_sec = adjtimedelta / 1000000;
-		atv.tv_usec = adjtimedelta % 1000000;
+		atv.tv_sec =  remaining / 1000000;
+		atv.tv_usec = remaining % 1000000;
 		if (atv.tv_usec < 0) {
 			atv.tv_usec += 1000000;
 			atv.tv_sec--;
@@ -454,7 +448,8 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 			return (EINVAL);
 
 		/* XXX Check for overflow? */
-		adjtimedelta = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
+		adjustment = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
+		tc_adjtime(NULL, &adjustment);
 	}
 
 	return (0);

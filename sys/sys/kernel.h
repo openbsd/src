@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.18 2019/01/19 01:53:44 cheloha Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.19 2019/03/10 21:16:15 cheloha Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-
@@ -61,5 +61,4 @@ extern int lbolt;		/* once a second sleep address */
 extern int tickdelta;
 extern long timedelta;
 
-extern int64_t adjtimedelta;	/* unapplied time correction */
 extern struct bintime naptime;	/* time spent suspended */

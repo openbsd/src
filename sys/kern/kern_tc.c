@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.38 2019/03/09 23:04:56 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.39 2019/03/10 21:16:15 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -115,6 +115,8 @@ static struct timecounter *timecounters = &dummy_timecounter;
 
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
+
+int64_t adjtimedelta;		/* unapplied time correction (microseconds) */
 
 struct bintime naptime;
 static int timestepwarnings;
@@ -358,6 +360,12 @@ tc_setrealtimeclock(const struct timespec *ts)
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
 	bintime_add(&bt2, &timehands->th_boottime);
+
+	/*
+	 * Adjtime in progress is meaningless or harmful after
+	 * setting the clock. Cancel adjtime and then set new time.
+	 */
+	adjtimedelta = 0;
 	timehands->th_boottime = bt;
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
@@ -723,4 +731,13 @@ tc_adjfreq(int64_t *old, int64_t *new)
 		timecounter->tc_freq_adj = *new;
 	}
 	return 0;
+}
+
+void
+tc_adjtime(int64_t *old, int64_t *new)
+{
+	if (old != NULL)
+		*old = adjtimedelta;
+	if (new != NULL)
+		adjtimedelta = *new;
 }
