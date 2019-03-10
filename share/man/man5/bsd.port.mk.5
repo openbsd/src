@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.505 2019/01/11 15:49:08 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.506 2019/03/10 21:31:49 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 11 2019 $
+.Dd $Mdocdate: March 10 2019 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2319,7 +2319,7 @@ Full list of options used while applying distribution patches.
 .It Ev PATCH_DIST_STRIP
 Patch option used to strip directory levels while applying distribution
 patches.
-Defaults to -p0 .
+Defaults to -p0.
 .It Ev PATCH_LIST
 Wildcard pattern of patches to select under ${PATCHDIR}.
 Defaults to patch-*.
@@ -2333,7 +2333,7 @@ PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .Ed
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
-Defaults to -p0 .
+Defaults to -p0.
 .It Ev PERMIT_DISTFILES_FTP , PERMIT_PACKAGE_CDROM , PERMIT_PACKAGE_FTP
 Set to
 .Sq Yes
@@ -4203,7 +4203,7 @@ if platform did not support shared libraries.
 All ports should have a working directory, as this is necessary to store
 cookies and keep state.
 .It Ev NO_WRKSUBDIR
-The same functionality is obtained by setting WRKDIST=${WRKDIR} .
+The same functionality is obtained by setting WRKDIST=${WRKDIR}.
 .It Ev NOCLEANDEPENDS
 Use CLEANDEPENDS instead.
 .It Ev NOMANCOMPRESS
@@ -4294,7 +4294,7 @@ Used to refer to the full package name, has been superseded by
 .Ev FULLPKGNAME-foo ,
 for
 .Ev SUBPACKAGE
--foo .
+-foo.
 .Ev PKGNAME
 now holds the package name, not taking multi-packages or flavors
 into account.
