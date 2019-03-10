@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcrypto.c,v 1.2 2018/12/16 14:43:38 visa Exp $	*/
+/*	$OpenBSD: octcrypto.c,v 1.3 2019/03/10 14:20:44 visa Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -26,6 +26,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/pool.h>
+#include <sys/smr.h>
 #include <sys/tree.h>
 
 #include <crypto/cryptodev.h>
@@ -56,10 +57,10 @@ struct octcrypto_hmac {
 
 struct octcrypto_session {
 	uint32_t		 ses_sid;		/* RB key, keep first */
-	unsigned int		 ses_refs;
 	RBT_ENTRY(octrcypto_session)
 				 ses_entry;
 	struct octcrypto_softc	*ses_sc;
+	struct smr_entry	 ses_smr;
 
 	/* AES parameters */
 	uint64_t		 ses_key[4];
@@ -102,7 +103,8 @@ int	octcrypto_process(struct cryptop *);
 
 struct octcrypto_session *
 	octcrypto_get(struct octcrypto_softc *, uint32_t);
-void	octcrypto_put(struct octcrypto_session *);
+void	octcrypto_free(struct octcrypto_session *);
+void	octcrypto_free_smr(void *);
 
 void	octcrypto_hmac(struct cryptodesc *, uint8_t *, size_t,
 	    struct octcrypto_session *, uint64_t *);
@@ -285,23 +287,20 @@ octcrypto_get(struct octcrypto_softc *sc, uint32_t sid)
 {
 	struct octcrypto_session *ses;
 
+	SMR_ASSERT_CRITICAL();
+
 	mtx_enter(&sc->sc_mtx);
 	ses = RBT_FIND(octcrypto_tree, &sc->sc_sessions,
 	    (struct octcrypto_session *)&sid);
-	if (ses != NULL)
-		atomic_inc_int(&ses->ses_refs);
 	mtx_leave(&sc->sc_mtx);
 	return ses;
 }
 
 void
-octcrypto_put(struct octcrypto_session *ses)
+octcrypto_free(struct octcrypto_session *ses)
 {
 	struct auth_hash *axf;
 	struct swcr_data *swd;
-
-	if (atomic_dec_int_nv(&ses->ses_refs) > 0)
-		return;
 
 	if (ses->ses_swd != NULL) {
 		swd = ses->ses_swd;
@@ -320,6 +319,14 @@ octcrypto_put(struct octcrypto_session *ses)
 
 	explicit_bzero(ses, sizeof(*ses));
 	pool_put(&octcryptopl, ses);
+}
+
+void
+octcrypto_free_smr(void *arg)
+{
+	struct octcrypto_session *ses = arg;
+
+	octcrypto_free(ses);
 }
 
 int
@@ -344,7 +351,7 @@ octcrypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 	if (ses == NULL)
 		return ENOMEM;
 	ses->ses_sc = sc;
-	ses->ses_refs = 1;
+	smr_init(&ses->ses_smr);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
@@ -454,7 +461,7 @@ octcrypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 			swd = malloc(sizeof(struct swcr_data), M_CRYPTO_DATA,
 			    M_NOWAIT | M_ZERO);
 			if (swd == NULL) {
-				octcrypto_put(ses);
+				octcrypto_free(ses);
 				return ENOMEM;
 			}
 			ses->ses_swd = swd;
@@ -462,14 +469,14 @@ octcrypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 			swd->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
 			if (swd->sw_ictx == NULL) {
-				octcrypto_put(ses);
+				octcrypto_free(ses);
 				return ENOMEM;
 			}
 
 			swd->sw_octx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
 			if (swd->sw_octx == NULL) {
-				octcrypto_put(ses);
+				octcrypto_free(ses);
 				return ENOMEM;
 			}
 
@@ -503,7 +510,7 @@ octcrypto_newsession(uint32_t *sidp, struct cryptoini *cri)
 			break;
 
 		default:
-			octcrypto_put(ses);
+			octcrypto_free(ses);
 			return EINVAL;
 		}
 	}
@@ -542,7 +549,7 @@ octcrypto_freesession(uint64_t tid)
 	if (ses == NULL)
 		return EINVAL;
 
-	octcrypto_put(ses);
+	smr_call(&ses->ses_smr, octcrypto_free_smr, ses);
 
 	return 0;
 }
@@ -595,6 +602,7 @@ octcrypto_process(struct cryptop *crp)
 
 	KASSERT(crp->crp_ndesc >= 1);
 
+	smr_read_enter();
 	ses = octcrypto_get(sc, (uint32_t)crp->crp_sid);
 	if (ses == NULL) {
 		error = EINVAL;
@@ -650,8 +658,8 @@ octcrypto_process(struct cryptop *crp)
 	}
 
 out:
-	if (ses != NULL)
-		octcrypto_put(ses);
+	smr_read_leave();
+
 	crp->crp_etype = error;
 	crypto_done(crp);
 	return error;
