@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.25 2018/12/31 13:49:52 bluhm Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.26 2019/03/10 20:49:24 schwarze Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -42,20 +42,19 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <locale.h>
+#include <limits.h>
 #include <pwd.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
 static const char *infile, *outfile;
 static FILE *infp, *outfp;
 static int base64, cflag, iflag, oflag, pflag, rflag, sflag;
 
-static void	usage(void);
+static void __dead	usage(void);
 static int	decode(void);
 static int	decode2(void);
 static int	uu_decode(void);
@@ -82,7 +81,6 @@ main(int argc, char *argv[])
 		pmode = MODE_B64DECODE;
 	}
 
-	setlocale(LC_ALL, "");
 	while ((ch = getopt(argc, argv, optstr[pmode])) != -1) {
 		switch(ch) {
 		case 'c':
@@ -153,7 +151,7 @@ main(int argc, char *argv[])
 		infp = stdin;
 		rval = decode();
 	}
-	exit(rval);
+	return (rval);
 }
 
 static int
@@ -448,7 +446,7 @@ base64_decode(void)
 		    "error decoding base64 input stream"));
 }
 
-static void
+static void __dead
 usage(void)
 {
 	switch (pmode) {
