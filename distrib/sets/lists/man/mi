@@ -1625,6 +1625,7 @@
 ./usr/share/man/man4/mpe.4
 ./usr/share/man/man4/mpi.4
 ./usr/share/man/man4/mpii.4
+./usr/share/man/man4/mpip.4
 ./usr/share/man/man4/mpu.4
 ./usr/share/man/man4/mpw.4
 ./usr/share/man/man4/msk.4
