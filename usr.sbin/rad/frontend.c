@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.22 2019/03/02 03:40:45 pamela Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.23 2019/03/11 16:03:20 pamela Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -507,7 +507,7 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 		switch (imsg.hdr.type) {
 		case IMSG_SEND_RA:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(send_ra))
-				fatal("%s: IMSG_SEND_RA wrong length: %lu",
+				fatalx("%s: IMSG_SEND_RA wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&send_ra, imsg.data, sizeof(send_ra));
 			ra_iface = find_ra_iface_by_id(send_ra.if_index);
@@ -516,7 +516,7 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			break;
 		case IMSG_REMOVE_IF:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(if_index))
-				fatal("%s: IMSG_REMOVE_IF wrong length: %lu",
+				fatalx("%s: IMSG_REMOVE_IF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&if_index, imsg.data, sizeof(if_index));
 			ra_iface = find_ra_iface_by_id(if_index);
@@ -966,7 +966,7 @@ build_packet(struct ra_iface *ra_iface)
 		    ((ra_iface_conf->ra_options.dnssl_len + 7) & ~7);
 
 	if (len > sizeof(ra_iface->data))
-		fatal("%s: packet too big", __func__); /* XXX send multiple */
+		fatalx("%s: packet too big", __func__); /* XXX send multiple */
 
 	p = buf;
 
