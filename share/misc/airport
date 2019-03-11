@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.71 2019/02/25 21:21:45 deraadt Exp $
+#	$OpenBSD: airport,v 1.72 2019/03/11 16:43:56 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -332,8 +332,9 @@ CID:Cedar Rapids/Iowa City, Iowa, USA
 CIU:Chippewa County International, Sault Ste Marie, Michigan, USA
 CIX:Cornel Ruiz, Chiclayo, Peru
 CJB:Peelamedu, Coimbatore, India
+CJJ:Cheongju International, South Korea
 CJS:International Abraham Gonzalez, Ciudad Juarez, Chihuahua, Mexico
-CJU:Cheju, Cheju, South Korea
+CJU:Jeju International, South Korea
 CKB:North Central West Virginia, Bridgeport, West Virginia, USA
 CKC:Cherkasy International, Cherkasy, Ukraine
 CKS:International / Brasilia Brazil, Carajas, Para, Brazil
@@ -603,6 +604,7 @@ GLD:Renner Field, Goodland, Kansas, USA
 GLF:Golfito, Costa Rica
 GLS:Scholes Field, Galveston, Texas, USA
 GLV:Golovin, Alaska, USA
+GMP:Gimpo International, Seoul, South Korea
 GNB:St Geoirs, Grenoble, France
 GND:Pt Saline, St Georges/Grenada, Grenada
 GNV:Jr Alison Municipal, Gainesville, Florida, USA
@@ -668,6 +670,7 @@ HGR:Washington County Regional, Hagerstown, Maryland, USA
 HHH:Municipal, Hilton Head, South Carolina, USA
 HHN:Frankfurt-Hahn, Kirchberg, Germany
 HIJ:Hiroshima, Japan
+HIN:Sacheon, South Korea
 HIR:Henderson International, Honiara/Guadalcanal, Solomon Islands
 HIS:Hayman Island, Queensland, Australia
 HKD:Hakodate, Japan
@@ -728,6 +731,7 @@ IAD:Washington Dulles, Virginia, USA
 IAH:Houston Intercontinental, Texas, USA
 IAS:Iasi, Romania
 IBZ:Ibiza, Spain
+ICN:Incheon International, Seoul, South Korea
 ICT:Wichita Mid-Continent, Kansas, USA
 IDA:Idaho Falls, Idaho, USA
 IEV:Kyiv Zhulyany International, Kyiv, Ukraine
@@ -880,7 +884,7 @@ KOI:Kirkwall / Orkney Island, Scotland, United Kingdom
 KOJ:Kagoshima, Japan
 KOK:Kruunupyy, Kokkola/Pietarsaari, Finland
 KPN:Kipnuk, Alaska, USA
-KPO:Na, Pohang, South Korea
+KPO:Pohang, South Korea
 KRE:Kirundo, Burundi
 KRF:Kramfors, Sweden
 KRK:Balice, Krakow, Poland
@@ -908,12 +912,13 @@ KUM:Yakushima, Japan
 KUN:Kaunas, Lithuania
 KUO:Kuopio, Finland
 KUS:Kulusuk Metropolitan Area, Greenland
-KUV:Kunsan, South Korea
+KUV:Gunsan, South Korea
 KVA:Kavala, Greece
 KVB:Skovde, Sweden
 KWA:Kwajalein, Marshall Islands
 KWG:Kryvyi Rih International, Dnipropetrovs'k, Ukraine
 KWI:Kuwait International
+KWJ:Gwangju, South Korea
 KWL:Guilin, China
 KXK:Khurba, Komsomolsk-on-Amur, Russia
 KZI:Kozani, Greece
@@ -1157,6 +1162,7 @@ MVD:Carrasco, Montevideo, Uruguay
 MVN:Mount Vernon Outland, Illinois, USA
 MVY:Marthas Vineyard, Massachusetts, USA
 MWA:Marion, Illinois, USA
+MWX:Muan International, South Korea
 MXL:Rodolfo Sanchez Taboada, Mexicali, Baja California, Mexico
 MXP:Malpensa, Milan, Italy
 MXX:Mora, Dalecarlia, Sweden
@@ -1378,7 +1384,7 @@ PUB:Pueblo, Colorado, USA
 PUF:Pau Pyrenees, Pau, France
 PUJ:Punta Cana, Dominican Republic
 PUQ:Presidente Ibanez, Punta Arenas, Chile
-PUS:Kimhae, Pusan, South Korea
+PUS:Gimhae International, Busan, South Korea
 PUW:Pullman, Washington, USA
 PUY:Pula, Croatia (Hrvatska)
 PUZ:Puerto Cabezas, Nicaragua
@@ -1455,7 +1461,7 @@ RRG:Rodrigues Island, Mauritius
 RSA:Santa Rosa, La Pampa, Argentina
 RSD:Rock Sound, Bahamas
 RST:Rochester Municipal, Minnesota, USA
-RSU:Yosu, South Korea
+RSU:Yeosu, South Korea
 RSW:Southwest Florida International, Florida, USA
 RTB:Roatan, Roatan, Honduras
 RTM:Rotterdam The Hague, Rotterdam, Netherlands
@@ -1496,7 +1502,6 @@ SDU:Santos Dumont, Rio De Janeiro, Rio De Janeiro, Brazil
 SDX:Sedona, Arizona, USA
 SDY:Sidney, Montana, USA
 SEA:Seattle-Tacoma International, Washington, USA
-SEL:Kimpo International, Seoul, South Korea
 SEN:Southend, London, England, United Kingdom
 SEZ:Mahe Island Seychelles Intl, Mahe Island, Seychelles
 SFA:Sfax, Tunisia
@@ -1632,7 +1637,7 @@ SZX:Shenzhen, China
 SZZ:Goleniow, Szczecin, Poland
 TAB:Crown Point, Tobago, Trinidad And Tobago
 TAC:Dz Romualdez, Tacloban, Philippines
-TAE:Taegu, South Korea
+TAE:Daegu International, South Korea
 TAG:Tagbilaran, Philippines
 TAM:Tampico, Tamaulipas, Mexico
 TAP:Tapachula International, Chiapas, Mexico
@@ -1823,6 +1828,7 @@ WGE:Walgett, New South Wales, Australia
 WIC:Wick, Scotland, United Kingdom
 WIL:Wilson, Nairobi, Kenya
 WIN:Winton, Queensland, Australia
+WJU:Wonju, South Korea
 WLG:Wellington International, New Zealand
 WMH:Mountain Home, Arkansas, USA
 WMI:Nowy Dwor Mazowiecki, Warsaw, Poland
@@ -1866,7 +1872,6 @@ YDL:Dease Lake, British Columbia, Canada
 YDN:Dauphin, Manitoba, Canada
 YDQ:Dawson Creek, British Columbia, Canada
 YEA:All Airports around Edmonton, Alberta, Canada
-YEC:Yechon, South Korea
 YEG:Edmonton International, Alberta, Canada
 YEL:Elliot Lake, Ontario, Canada
 YEV:Inuvik, Northwest Territories, Canada
@@ -1912,6 +1917,7 @@ YMY:Victoria STOLport, Montreal, Quebec, Canada
 YNA:Natashquan, Quebec, Canada
 YND:Gatineau, Quebec, Canada
 YNG:Youngstown, Ohio, USA
+YNY:Yangyang International, South Korea
 YOJ:Footner Lake Muncpl, High Level, Alberta, Canada
 YOO:Oshawa, Ontario, Canada
 YOP:Rainbow Lake, Rainbow Lake, Alberta, Canada
