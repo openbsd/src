@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwnvar.h,v 1.14 2018/12/04 10:47:32 jmatthew Exp $	*/
+/*	$OpenBSD: rtwnvar.h,v 1.15 2019/03/11 06:19:33 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -32,6 +32,7 @@ struct rtwn_ops {
 	int		(*dma_init)(void *);
 	int		(*fw_loadpage)(void *, int, uint8_t *, int);
 	int		(*load_firmware)(void *, u_char **fw, size_t *);
+	void		(*aggr_init)(void *);
 	void		(*mac_init)(void *);
 	void		(*bb_init)(void *);
 	int		(*alloc_buffers)(void *);

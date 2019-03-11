@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.82 2019/01/14 06:25:26 jmatthew Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.83 2019/03/11 06:19:33 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -396,8 +396,10 @@ int		urtwn_llt_init(struct urtwn_softc *, int);
 int		urtwn_fw_loadpage(void *, int, uint8_t *, int);
 int		urtwn_load_firmware(void *, u_char **, size_t *);
 int		urtwn_dma_init(void *);
+void		urtwn_aggr_init(void *);
 void		urtwn_mac_init(void *);
 void		urtwn_bb_init(void *);
+void		urtwn_burstlen_init(struct urtwn_softc *);
 int		urtwn_init(void *);
 void		urtwn_stop(void *);
 int		urtwn_is_oactive(void *);
@@ -463,6 +465,7 @@ urtwn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sc.sc_ops.dma_init = urtwn_dma_init;
 	sc->sc_sc.sc_ops.fw_loadpage = urtwn_fw_loadpage;
 	sc->sc_sc.sc_ops.load_firmware = urtwn_load_firmware;
+	sc->sc_sc.sc_ops.aggr_init = urtwn_aggr_init;
 	sc->sc_sc.sc_ops.mac_init = urtwn_mac_init;
 	sc->sc_sc.sc_ops.bb_init = urtwn_bb_init;
 	sc->sc_sc.sc_ops.alloc_buffers = urtwn_alloc_buffers;
@@ -2061,6 +2064,55 @@ urtwn_dma_init(void *cookie)
 }
 
 void
+urtwn_aggr_init(void *cookie)
+{
+	struct urtwn_softc *sc = cookie;
+	uint32_t reg = 0;
+	int dmasize, dmatiming, ndesc;
+
+	/* Set burst packet length. */
+	if (sc->sc_sc.chip & RTWN_CHIP_92E)
+		urtwn_burstlen_init(sc);
+
+	if (sc->sc_sc.chip & RTWN_CHIP_92E) {
+		dmasize = 6;
+		dmatiming = 32;
+		ndesc = 3;
+	} else {
+		dmasize = 48;
+		dmatiming = 4;
+		ndesc = (sc->sc_sc.chip & RTWN_CHIP_88E) ? 1 : 6;
+	}
+
+	/* Tx aggregation setting. */
+	if (sc->sc_sc.chip & RTWN_CHIP_92E) {
+		urtwn_write_1(sc, R92E_DWBCN1_CTRL, ndesc << 1);
+	} else {
+		reg = urtwn_read_4(sc, R92C_TDECTRL);
+		reg = RW(reg, R92C_TDECTRL_BLK_DESC_NUM, ndesc);
+		urtwn_write_4(sc, R92C_TDECTRL, reg);
+	}
+
+	/* Rx aggregation setting. */
+	if (!(sc->sc_sc.chip & RTWN_CHIP_92E)) {
+		urtwn_write_1(sc, R92C_TRXDMA_CTRL,
+		    urtwn_read_1(sc, R92C_TRXDMA_CTRL) |
+		    R92C_TRXDMA_CTRL_RXDMA_AGG_EN);
+	}
+
+	urtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH, dmasize);
+	if (sc->sc_sc.chip & (RTWN_CHIP_92C | RTWN_CHIP_88C))
+		urtwn_write_1(sc, R92C_USB_DMA_AGG_TO, dmatiming);
+	else
+		urtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH + 1, dmatiming);
+
+	/* Drop incorrect bulk out. */ 
+	urtwn_write_4(sc, R92C_TXDMA_OFFSET_CHK,
+	    urtwn_read_4(sc, R92C_TXDMA_OFFSET_CHK) |
+	    R92C_TXDMA_OFFSET_CHK_DROP_DATA_EN);
+}
+
+void
 urtwn_mac_init(void *cookie)
 {
 	struct urtwn_softc *sc = cookie;
@@ -2214,6 +2266,23 @@ urtwn_bb_init(void *cookie)
 
 	if (urtwn_bb_read(sc, R92C_HSSI_PARAM2(0)) & R92C_HSSI_PARAM2_CCK_HIPWR)
 		sc->sc_sc.sc_flags |= RTWN_FLAG_CCK_HIPWR;
+}
+
+void
+urtwn_burstlen_init(struct urtwn_softc *sc)
+{
+	uint8_t reg;
+
+	reg = urtwn_read_1(sc, R92E_RXDMA_PRO);
+	reg &= ~0x30;
+	switch (sc->sc_udev->speed) {
+	case USB_SPEED_HIGH:
+		urtwn_write_1(sc, R92E_RXDMA_PRO, reg | 0x1e);
+		break;
+	default:
+		urtwn_write_1(sc, R92E_RXDMA_PRO, reg | 0x2e);
+		break;
+	}
 }
 
 int
