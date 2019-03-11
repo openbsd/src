@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.325 2019/01/18 20:25:35 phessler Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.326 2019/03/11 11:26:37 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: January 18 2019 $
+.Dd $Mdocdate: March 11 2019 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1287,67 +1287,59 @@ If
 .Ar number
 is omitted, it is decreased by 1.
 .El
-.Sh MPE
+.Sh MPLS
 .Nm ifconfig
-.Ar mpe-interface
+.Ar mpls-interface
 .Op Cm mplslabel Ar mpls-label
+.Op Cm pweneighbor Ar mpls-label Ar neighbor
+.Op Oo Fl Oc Ns Cm pwecw
+.Op Oo Fl Oc Ns Cm pwefat
+.Op Cm tunneldomain Ar rdomain
 .Pp
-The following options are available for an
-.Xr mpe 4
-interface:
+The following options are available for
+.Xr mpe 4 ,
+.Xr mpip 4 ,
+and
+.Xr mpw 4
+interfaces:
 .Bl -tag -width Ds
 .It Cm mplslabel Ar mpls-label
-Set the MPLS label to
+Set the local MPLS label to
 .Ar mpls-label .
-This value is a 20-bit number which will be used as the MPLS header for
-packets entering the MPLS domain.
+MPLS packets sent to this label on the local system will be
+decapsulated for input.
+An MPLS label is a 20-bit number.
+Labels 0 to 15 inclusive are reserved labels and cannot be used.
+.It Cm tunneldomain Ar rdomain
+Use the route domain
+.Ar rdomain
+for MPLS transit.
+The MPLS encapsulated traffic does not need to terminate in the same
+routing domain as the interface itself.
 .El
-.Sh MPW
-.nr nS 1
-.Bk -words
-.Nm ifconfig
-.Ar mpw-interface
-.Op Oo Fl Oc Ns Cm controlword
-.Op Cm encap Ar encapsulation
-.Op Cm mpwlabel Ar local-label remote-label Cm neighbor Ar dest-address
-.Ek
-.nr Ns 0
 .Pp
-The following options are available for an
+The following options are availble for the
+.Xr mpip 4 ,
+and
 .Xr mpw 4
-interface:
+interfaces that provide MPLS Pseudowire Emulation Edge-to-Edge (PWE3)
+functionality:
 .Bl -tag -width Ds
-.It Cm controlword
-Configure the mpw interface to use control-word.
-.It Cm -controlword
-Remove control-word configuration from the interface.
-.It Cm encap Ar encapsulation
-Configures the mpw encapsulation type with value
-.Ar encapsulation
-which can be
-.Cm ethernet
-or
-.Cm ethernet-tagged .
-By default it's assumed to be
-.Cm ethernet
-mode.
-.It Cm mpwlabel Ar local-label remote-label
-Set mpw local label to
-.Ar local-label
-and remote label to
-.Ar remote-label .
-The
-.Ar local-label
-is a 20-bit number which will be used to create a local label route to
-the mpw interface and the
-.Ar remote-label
-is another 20-bit number which will be used to create the output label header.
-.It Cm neighbor Ar dest-address
-Sets the destination address where this mpw should output.
-The
-.Ar dest-address
-is an IPv4 address that will be used to find the nexthop in the MPLS
-network.
+.It Cm pweneighbor Ar mpls-label Ar neighbor
+Use
+.Ar mpls-label
+and
+.Ar neighbor
+as the remote MPLS label and neighbor respectively.
+Remote MPLS labels have the same restrictions on values as local MPLS labels.
+.It Cm pwecw
+Enable the use of the PWE3 Control Word.
+.It Fl Ns Cm pwecw
+Disable the use of the PWE3 Control Word.
+.It Cm pwefat
+Enable the use of the Flow-Aware Transport (FAT) flow label.
+.It Fl Ns Cm pwefat
+Disable the use of the Flow-Aware Transport (FAT) flow label.
 .El
 .Sh PAIR
 .nr nS 1
