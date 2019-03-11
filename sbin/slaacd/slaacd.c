@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.35 2019/03/11 15:27:07 pamela Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.36 2019/03/11 22:53:29 pamela Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -412,7 +412,9 @@ main_dispatch_frontend(int fd, short event, void *bula)
 			break;
 #ifndef	SMALL
 		case IMSG_CTL_LOG_VERBOSE:
-			/* Already checked by frontend. */
+			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
+				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.5 2019/03/02 05:34:59 pamela Exp $	*/
+/*	$OpenBSD: control.c,v 1.6 2019/03/11 22:53:29 pamela Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -252,11 +252,15 @@ control_dispatch_imsg(int fd, short event, void *bula)
 			log_setverbose(verbose);
 			break;
 		case IMSG_CTL_SHOW_INTERFACE_INFO:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(uint32_t))
+				break;
 			c->iev.ibuf.pid = imsg.hdr.pid;
 			frontend_imsg_compose_engine(imsg.hdr.type, 0,
 			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
 			break;
 		case IMSG_CTL_SEND_SOLICITATION:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(uint32_t))
+				break;
 			c->iev.ibuf.pid = imsg.hdr.pid;
 			frontend_imsg_compose_engine(imsg.hdr.type, 0,
 			    imsg.hdr.pid, imsg.data, IMSG_DATA_SIZE(imsg));
