@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpip.4,v 1.1 2019/03/11 10:48:45 dlg Exp $
+.\"	$OpenBSD: mpip.4,v 1.2 2019/03/11 18:55:29 jmc Exp $
 .\"
 .\" Copyright (C) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm mpip
-.Nd MPLS IP Layer 2 pseudowire
+.Nd MPLS IP layer 2 pseudowire
 .Sh SYNOPSIS
 .Cd "pseudo-device mpip"
 .Sh DESCRIPTION
@@ -46,7 +46,7 @@ but it is also possible to configure them manually using
 .Xr ifconfig 8 .
 .Sh EXAMPLES
 Create a pseudowire with local label 20 and remote label 21 on
-neighbor 10.254.0.1.
+neighbor 10.254.0.1:
 .Bd -literal -offset indent
 # ifconfig mpip5 create
 # ifconfig mpip5 mplslabel 20 pweneighbor 21 10.254.0.1
@@ -55,7 +55,7 @@ neighbor 10.254.0.1.
 .Pp
 Disable the use of the Pseudowire Emulation Edge-to-Edge (PWE3)
 Control Word, and enable the use of a Flow label for Flow-Aware
-Transport of Pseudowires.
+Transport of Pseudowires:
 .Bd -literal -offset indent
 # ifconfig mpip5 -pwecw pwefat
 .Ed

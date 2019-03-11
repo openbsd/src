@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpw.4,v 1.4 2019/03/11 10:54:57 dlg Exp $
+.\"	$OpenBSD: mpw.4,v 1.5 2019/03/11 18:55:29 jmc Exp $
 .\"
 .\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
 .\"
@@ -28,7 +28,7 @@ The
 interface is used to create an MPLS Ethernet layer 2 tunnel between
 two points.
 .Pp
-A
+An
 .Nm
 interface can be created at runtime using the
 .Sy ifconfig Nm Ns Ar N Cm create
@@ -47,7 +47,7 @@ but it is also possible to configure them manually using
 .Xr ifconfig 8 .
 .Sh EXAMPLES
 Create a pseudowire with local label 20 and remote label 21 on
-neighbor 10.254.0.1.
+neighbor 10.254.0.1:
 .Bd -literal -offset indent
 # ifconfig mpw5 create
 # ifconfig mpw5 mplslabel 20 pweneighbor 21 10.254.0.1
@@ -56,7 +56,7 @@ neighbor 10.254.0.1.
 .Pp
 Enable the use of the Pseudowire Emulation Edge-to-Edge (PWE3)
 Control Word, and disable the use of a Flow label for Flow-Aware
-Transport of Pseudowires.
+Transport of Pseudowires:
 .Bd -literal -offset indent
 # ifconfig mpw5 pwecw -pwefat
 .Ed
