@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.93 2019/03/01 19:15:59 patrick Exp $ */
+/* $OpenBSD: xhci.c,v 1.94 2019/03/11 17:50:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1986,7 +1986,7 @@ const usb_config_descriptor_t xhci_confd = {
 	1,
 	1,
 	0,
-	UC_SELF_POWERED,
+	UC_BUS_POWERED | UC_SELF_POWERED,
 	0                      /* max power */
 };
 

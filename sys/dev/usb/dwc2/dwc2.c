@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.46 2017/06/29 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.47 2019/03/11 17:50:09 mpi Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -642,7 +642,7 @@ STATIC const struct dwc2_config_desc dwc2_confd = {
 		.bNumInterface = 1,
 		.bConfigurationValue = 1,
 		.iConfiguration = 0,
-		.bmAttributes = UC_SELF_POWERED,
+		.bmAttributes = UC_BUS_POWERED | UC_SELF_POWERED,
 		.bMaxPower = 0,
 	},
 	.ifcd = {

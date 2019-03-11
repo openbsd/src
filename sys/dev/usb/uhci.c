@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.145 2019/01/31 18:01:14 millert Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.146 2019/03/11 17:50:09 mpi Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2708,7 +2708,7 @@ usb_config_descriptor_t uhci_confd = {
 	1,
 	1,
 	0,
-	UC_SELF_POWERED,
+	UC_BUS_POWERED | UC_SELF_POWERED,
 	0			/* max power */
 };
 
