@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.50 2019/03/11 01:06:38 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.51 2019/03/11 01:16:16 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -722,7 +722,7 @@ dump(int bus, int dev, int func)
 	    pci_class_name(class));
 	printf(" Subclass: %02x %s", subclass,
 	    pci_subclass_name(class, subclass));
-	printf(" Interface: %02x Revision: %02x\n",
+	printf("\n\t\tInterface: %02x Revision: %02x\n",
 	    PCI_INTERFACE(reg), PCI_REVISION(reg));
 
 	if (pci_read(bus, dev, func, PCI_BHLC_REG, &reg) != 0)
