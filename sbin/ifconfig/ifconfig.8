@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.327 2019/03/11 18:55:29 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.328 2019/03/11 21:56:29 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -1293,9 +1293,9 @@ is omitted, it is decreased by 1.
 .Nm ifconfig
 .Ar mpls-interface
 .Op Cm mplslabel Ar mpls-label
-.Op Cm pweneighbor Ar mpls-label Ar neighbor
 .Op Oo Fl Oc Ns Cm pwecw
 .Op Oo Fl Oc Ns Cm pwefat
+.Op Cm pweneighbor Ar mpls-label Ar neighbor
 .Op Cm tunneldomain Ar rdomain
 .Ek
 .nr nS 0
@@ -1329,13 +1329,6 @@ and
 interfaces that provide MPLS Pseudowire Emulation Edge-to-Edge (PWE3)
 functionality:
 .Bl -tag -width Ds
-.It Cm pweneighbor Ar mpls-label Ar neighbor
-Use
-.Ar mpls-label
-and
-.Ar neighbor
-as the remote MPLS label and neighbor respectively.
-Remote MPLS labels have the same restrictions on values as local MPLS labels.
 .It Cm pwecw
 Enable the use of the PWE3 Control Word.
 .It Fl Ns Cm pwecw
@@ -1344,6 +1337,13 @@ Disable the use of the PWE3 Control Word.
 Enable the use of the Flow-Aware Transport (FAT) flow label.
 .It Fl Ns Cm pwefat
 Disable the use of the Flow-Aware Transport (FAT) flow label.
+.It Cm pweneighbor Ar mpls-label Ar neighbor
+Use
+.Ar mpls-label
+and
+.Ar neighbor
+as the remote MPLS label and neighbor respectively.
+Remote MPLS labels have the same restrictions on values as local MPLS labels.
 .El
 .Sh PAIR
 .nr nS 1
