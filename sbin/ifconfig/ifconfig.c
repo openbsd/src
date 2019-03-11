@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.396 2019/02/26 03:57:55 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.397 2019/03/11 11:25:48 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3986,7 +3986,7 @@ setpwe3neighbor(const char *label, const char *neighbor)
 {
 	struct if_laddrreq req;
 	struct addrinfo hints, *res;
-	struct sockaddr_mpls *smpls = (struct sockaddr_mpls *)&req.dstaddr;;
+	struct sockaddr_mpls *smpls = (struct sockaddr_mpls *)&req.dstaddr;
 	const char *errstr;
 	int error;
 
