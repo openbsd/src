@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.h,v 1.6 2018/07/12 10:15:44 mlarkin Exp $ */
+/* $OpenBSD: ns8250.h,v 1.7 2019/03/11 17:08:52 anton Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -48,6 +48,7 @@ struct ns8250_dev {
 	struct ns8250_regs regs;
 	struct event event;
 	struct event rate;
+	struct event wake;
 	struct timeval rate_tv;
 	int fd;
 	int irq;

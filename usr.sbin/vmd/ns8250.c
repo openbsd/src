@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.19 2018/10/04 16:21:59 mlarkin Exp $ */
+/* $OpenBSD: ns8250.c,v 1.20 2019/03/11 17:08:52 anton Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -97,7 +97,15 @@ ns8250_init(int fd, uint32_t vmid)
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
 	    com_rcv_event, (void *)(intptr_t)vmid);
-	event_add(&com1_dev.event, NULL);
+
+	/*
+	 * Whenever fd is writable implies that the pty slave is connected.
+	 * Until then, avoid waiting for read events since EOF would constantly
+	 * be reached.
+	 */
+	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
+	    com_rcv_event, (void *)(intptr_t)vmid);
+	event_add(&com1_dev.wake, NULL);
 
 	/* Rate limiter for simulating baud rate */
 	timerclear(&com1_dev.rate_tv);
@@ -109,6 +117,12 @@ static void
 com_rcv_event(int fd, short kind, void *arg)
 {
 	mutex_lock(&com1_dev.mutex);
+
+	if (kind == EV_WRITE) {
+		event_add(&com1_dev.event, NULL);
+		mutex_unlock(&com1_dev.mutex);
+		return;
+	}
 
 	/*
 	 * We already have other data pending to be received. The data that
@@ -185,6 +199,10 @@ com_rcv(struct ns8250_dev *com, uint32_t vm_id, uint32_t vcpu_id)
 		 */
 		if (errno != EAGAIN)
 			log_warn("unexpected read error on com device");
+	} else if (sz == 0) {
+		event_del(&com->event);
+		event_add(&com->wake, NULL);
+		return;
 	} else if (sz != 1 && sz != 2)
 		log_warnx("unexpected read return value %zd on com device", sz);
 	else {
@@ -640,6 +658,10 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 
 	event_set(&com1_dev.event, com1_dev.fd, EV_READ | EV_PERSIST,
 	    com_rcv_event, (void *)(intptr_t)vmid);
-	event_add(&com1_dev.event, NULL);
+
+	event_set(&com1_dev.wake, com1_dev.fd, EV_WRITE,
+	    com_rcv_event, (void *)(intptr_t)vmid);
+	event_add(&com1_dev.wake, NULL);
+
 	return (0);
 }
