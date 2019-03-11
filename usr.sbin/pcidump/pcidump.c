@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.49 2019/02/19 21:32:42 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.50 2019/03/11 01:06:38 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -57,6 +57,11 @@ void dump_pcie_linkspeed(int, int, int, uint8_t);
 void print_pcie_ls(uint8_t);
 int dump_rom(int, int, int);
 int dump_vga_bios(void);
+
+static const char *
+	pci_class_name(pci_class_t);
+static const char *
+	pci_subclass_name(pci_class_t, pci_subclass_t);
 
 void	dump_type0(int bus, int dev, int func);
 void	dump_type1(int bus, int dev, int func);
@@ -696,6 +701,8 @@ dump(int bus, int dev, int func)
 {
 	u_int32_t reg;
 	u_int8_t capptr = PCI_CAPLISTPTR_REG;
+	pci_class_t class;
+	pci_subclass_t subclass;
 
 	if (pci_read(bus, dev, func, PCI_ID_REG, &reg) != 0)
 		warn("unable to read PCI_ID_REG");
@@ -709,9 +716,14 @@ dump(int bus, int dev, int func)
 
 	if (pci_read(bus, dev, func, PCI_CLASS_REG, &reg) != 0)
 		warn("unable to read PCI_CLASS_REG");
-	printf("\t0x%04x: Class: %02x Subclass: %02x Interface: %02x "
-	    "Revision: %02x\n", PCI_CLASS_REG, PCI_CLASS(reg),
-	    PCI_SUBCLASS(reg), PCI_INTERFACE(reg), PCI_REVISION(reg));
+	class = PCI_CLASS(reg);
+	subclass = PCI_SUBCLASS(reg);
+	printf("\t0x%04x:\tClass: %02x %s", PCI_CLASS_REG, class,
+	    pci_class_name(class));
+	printf(" Subclass: %02x %s", subclass,
+	    pci_subclass_name(class, subclass));
+	printf(" Interface: %02x Revision: %02x\n",
+	    PCI_INTERFACE(reg), PCI_REVISION(reg));
 
 	if (pci_read(bus, dev, func, PCI_BHLC_REG, &reg) != 0)
 		warn("unable to read PCI_BHLC_REG");
@@ -879,4 +891,275 @@ dump_vga_bios(void)
 #else
 	return (ENODEV);
 #endif
+}
+
+struct pci_subclass {
+	pci_subclass_t	 subclass;
+	const char	*name;
+};
+
+struct pci_class {
+	pci_class_t	 class;
+	const char	*name;
+	const struct pci_subclass
+			*subclass;
+	size_t		 nsubclass;
+};
+
+static const struct pci_subclass pci_subclass_prehistoric[] = {
+	{ PCI_SUBCLASS_PREHISTORIC_MISC,	"Miscellaneous"	},
+	{ PCI_SUBCLASS_PREHISTORIC_VGA,		"VGA"		},
+};
+
+static const struct pci_subclass pci_subclass_mass_storage[] = {
+	{ PCI_SUBCLASS_MASS_STORAGE_SCSI,	"SCSI"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_IDE,	"IDE"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	"Floppy"	},
+	{ PCI_SUBCLASS_MASS_STORAGE_IPI,	"IPI"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_RAID,	"RAID"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_ATA,	"ATA"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_SATA,	"SATA"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_SAS,	"SAS"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_UFS,	"UFS"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_NVM,	"NVM"		},
+	{ PCI_SUBCLASS_MASS_STORAGE_MISC,	"Miscellaneous"	},
+};
+
+static const struct pci_subclass pci_subclass_network[] = {
+	{ PCI_SUBCLASS_NETWORK_ETHERNET,	"Ethernet"	},
+	{ PCI_SUBCLASS_NETWORK_TOKENRING,	"Token Ring"	},
+	{ PCI_SUBCLASS_NETWORK_FDDI,		"FDDI"		},
+	{ PCI_SUBCLASS_NETWORK_ATM,		"ATM"		},
+	{ PCI_SUBCLASS_NETWORK_ISDN,		"ISDN"		},
+	{ PCI_SUBCLASS_NETWORK_WORLDFIP,	"WorldFip"	},
+	{ PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP,	"PCMIG Multi Computing"	},
+	{ PCI_SUBCLASS_NETWORK_INFINIBAND,	"InfiniBand"	},
+	{ PCI_SUBCLASS_NETWORK_MISC,		"Miscellaneous"	},
+};
+
+static const struct pci_subclass pci_subclass_display[] = {
+	{ PCI_SUBCLASS_DISPLAY_VGA,		"VGA"		},
+	{ PCI_SUBCLASS_DISPLAY_XGA,		"XGA"		},
+	{ PCI_SUBCLASS_DISPLAY_3D,		"3D"		},
+	{ PCI_SUBCLASS_DISPLAY_MISC,		"Miscellaneous"	},
+};
+
+static const struct pci_subclass pci_subclass_memory[] = {
+	{ PCI_SUBCLASS_MEMORY_RAM,		"RAM"		},
+	{ PCI_SUBCLASS_MEMORY_FLASH,		"Flash"		},
+	{ PCI_SUBCLASS_MEMORY_MISC,		"Miscellaneous" },
+};
+
+static const struct pci_subclass pci_subclass_bridge[] = {
+	{ PCI_SUBCLASS_BRIDGE_HOST,		"Host"		},
+	{ PCI_SUBCLASS_BRIDGE_ISA,		"ISA"		},
+	{ PCI_SUBCLASS_BRIDGE_EISA,		"EISA"		},
+	{ PCI_SUBCLASS_BRIDGE_MC,		"MicroChannel"	},
+	{ PCI_SUBCLASS_BRIDGE_PCI,		"PCI"		},
+	{ PCI_SUBCLASS_BRIDGE_PCMCIA,		"PCMCIA"	},
+	{ PCI_SUBCLASS_BRIDGE_NUBUS,		"NuBus"		},
+	{ PCI_SUBCLASS_BRIDGE_RACEWAY,		"RACEway"	},
+	{ PCI_SUBCLASS_BRIDGE_STPCI,		"Semi-transparent PCI" },
+	{ PCI_SUBCLASS_BRIDGE_INFINIBAND,	"InfiniBand"	},
+	{ PCI_SUBCLASS_BRIDGE_MISC,		"Miscellaneous"	},
+	{ PCI_SUBCLASS_BRIDGE_AS,		"advanced switching" },
+};
+
+static const struct pci_subclass pci_subclass_communications[] = {
+	{ PCI_SUBCLASS_COMMUNICATIONS_SERIAL,	"Serial"	},
+	{ PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	"Parallel"	},
+	{ PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	"Multi-port Serial" },
+	{ PCI_SUBCLASS_COMMUNICATIONS_MODEM,	"Modem"		},
+	{ PCI_SUBCLASS_COMMUNICATIONS_GPIB,	"GPIB"		},
+	{ PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,
+						"Smartcard"	},
+	{ PCI_SUBCLASS_COMMUNICATIONS_MISC,	"Miscellaneous" },
+};
+
+static const struct pci_subclass pci_subclass_system[] = {
+	{ PCI_SUBCLASS_SYSTEM_PIC,		"Interrupt"	},
+	{ PCI_SUBCLASS_SYSTEM_DMA,		"8237 DMA"	},
+	{ PCI_SUBCLASS_SYSTEM_TIMER,		"8254 Timer"	},
+	{ PCI_SUBCLASS_SYSTEM_RTC,		"RTC"		},
+	{ PCI_SUBCLASS_SYSTEM_SDHC,		"SDHC"		},
+	{ PCI_SUBCLASS_SYSTEM_IOMMU,		"IOMMU"		},
+	{ PCI_SUBCLASS_SYSTEM_ROOTCOMPEVENT,	"Root Complex Event" },
+	{ PCI_SUBCLASS_SYSTEM_MISC,		"Miscellaneous" },
+};
+
+static const struct pci_subclass pci_subclass_input[] = {
+	{ PCI_SUBCLASS_INPUT_KEYBOARD,		"Keyboard"	},
+	{ PCI_SUBCLASS_INPUT_DIGITIZER,		"Digitizer"	},
+	{ PCI_SUBCLASS_INPUT_MOUSE,		"Mouse"		},
+	{ PCI_SUBCLASS_INPUT_SCANNER,		"Scanner"	},
+	{ PCI_SUBCLASS_INPUT_GAMEPORT,		"Game Port"	},
+	{ PCI_SUBCLASS_INPUT_MISC,		"Miscellaneous"	},
+};
+
+static const struct pci_subclass pci_subclass_dock[] = {
+	{ PCI_SUBCLASS_DOCK_GENERIC,		"Generic"	},
+	{ PCI_SUBCLASS_DOCK_MISC,		"Miscellaneous"	},
+};
+
+static const struct pci_subclass pci_subclass_processor[] = {
+	{ PCI_SUBCLASS_PROCESSOR_386,		"386"		},
+	{ PCI_SUBCLASS_PROCESSOR_486,		"486"		},
+	{ PCI_SUBCLASS_PROCESSOR_PENTIUM,	"Pentium"	},
+	{ PCI_SUBCLASS_PROCESSOR_ALPHA,		"Alpha"		},
+	{ PCI_SUBCLASS_PROCESSOR_POWERPC,	"PowerPC"	},
+	{ PCI_SUBCLASS_PROCESSOR_MIPS,		"MIPS"		},
+	{ PCI_SUBCLASS_PROCESSOR_COPROC,	"Co-Processor"	},
+};
+
+static const struct pci_subclass pci_subclass_serialbus[] = {
+	{ PCI_SUBCLASS_SERIALBUS_FIREWIRE,	"FireWire"	},
+	{ PCI_SUBCLASS_SERIALBUS_ACCESS,	"ACCESS.bus"	},
+	{ PCI_SUBCLASS_SERIALBUS_SSA,		"SSA"		},
+	{ PCI_SUBCLASS_SERIALBUS_USB,		"USB"		},
+	{ PCI_SUBCLASS_SERIALBUS_FIBER,		"Fiber Channel"	},
+	{ PCI_SUBCLASS_SERIALBUS_SMBUS,		"SMBus"		},
+	{ PCI_SUBCLASS_SERIALBUS_INFINIBAND,	"InfiniBand"	},
+	{ PCI_SUBCLASS_SERIALBUS_IPMI,		"IPMI"		},
+	{ PCI_SUBCLASS_SERIALBUS_SERCOS,	"SERCOS"	},
+	{ PCI_SUBCLASS_SERIALBUS_CANBUS,	"CANbus"	},
+};
+
+static const struct pci_subclass pci_subclass_wireless[] = {
+	{ PCI_SUBCLASS_WIRELESS_IRDA,		"IrDA"		},
+	{ PCI_SUBCLASS_WIRELESS_CONSUMERIR,	"Consumer IR"	},
+	{ PCI_SUBCLASS_WIRELESS_RF,		"RF"		},
+	{ PCI_SUBCLASS_WIRELESS_BLUETOOTH,	"Bluetooth"	},
+	{ PCI_SUBCLASS_WIRELESS_BROADBAND,	"Broadband"	},
+	{ PCI_SUBCLASS_WIRELESS_802_11A,	"802.11a"	},
+	{ PCI_SUBCLASS_WIRELESS_802_11B,	"802.11b"	},
+	{ PCI_SUBCLASS_WIRELESS_MISC,		"Miscellaneous"	},
+};
+
+static const struct pci_subclass pci_subclass_i2o[] = {
+	{ PCI_SUBCLASS_I2O_STANDARD,		"Standard"	},
+};
+
+static const struct pci_subclass pci_subclass_satcom[] = {
+	{ PCI_SUBCLASS_SATCOM_TV,		"TV"		},
+	{ PCI_SUBCLASS_SATCOM_AUDIO,		"Audio"		},
+	{ PCI_SUBCLASS_SATCOM_VOICE,		"Voice"		},
+	{ PCI_SUBCLASS_SATCOM_DATA,		"Data"		},
+};
+
+static const struct pci_subclass pci_subclass_crypto[] = {
+	{ PCI_SUBCLASS_CRYPTO_NETCOMP,		"Network/Computing" },
+	{ PCI_SUBCLASS_CRYPTO_ENTERTAINMENT,	"Entertainment"	},
+	{ PCI_SUBCLASS_CRYPTO_MISC,		"Miscellaneous"	},
+};
+
+static const struct pci_subclass pci_subclass_dasp[] = {
+	{ PCI_SUBCLASS_DASP_DPIO,		"DPIO"		},
+	{ PCI_SUBCLASS_DASP_TIMEFREQ,		"Time and Frequency" },
+	{ PCI_SUBCLASS_DASP_SYNC,		"Synchronization" },
+	{ PCI_SUBCLASS_DASP_MGMT,		"Management"	},
+	{ PCI_SUBCLASS_DASP_MISC,		"Miscellaneous"	},
+};
+
+#define CLASS(_c, _n, _s) { \
+	.class = _c, \
+	.name = _n, \
+	.subclass = _s, \
+	.nsubclass = nitems(_s), \
+}
+
+static const struct pci_class pci_classes[] = {
+	CLASS(PCI_CLASS_PREHISTORIC,	"Prehistoric",
+	    pci_subclass_prehistoric),
+	CLASS(PCI_CLASS_MASS_STORAGE,	"Mass Storage",
+	    pci_subclass_mass_storage),
+	CLASS(PCI_CLASS_NETWORK,	"Network",
+	    pci_subclass_network),
+	CLASS(PCI_CLASS_DISPLAY,	"Display",
+	    pci_subclass_display),
+	CLASS(PCI_CLASS_MEMORY,		"Memory",
+	    pci_subclass_memory),
+	CLASS(PCI_CLASS_BRIDGE,		"Bridge",
+	    pci_subclass_bridge),
+	CLASS(PCI_CLASS_COMMUNICATIONS,	"Communications",
+	    pci_subclass_communications),
+	CLASS(PCI_CLASS_SYSTEM,		"System",
+	    pci_subclass_system),
+	CLASS(PCI_CLASS_INPUT,		"Input",
+	    pci_subclass_input),
+	CLASS(PCI_CLASS_DOCK,		"Dock",
+	    pci_subclass_dock),
+	CLASS(PCI_CLASS_PROCESSOR,	"Processor",
+	    pci_subclass_processor),
+	CLASS(PCI_CLASS_SERIALBUS,	"Serial Bus",
+	    pci_subclass_serialbus),
+	CLASS(PCI_CLASS_WIRELESS,	"Wireless",
+	    pci_subclass_wireless),
+	CLASS(PCI_CLASS_I2O,		"I2O",
+	    pci_subclass_i2o),
+	CLASS(PCI_CLASS_SATCOM,		"Satellite Comm",
+	    pci_subclass_satcom),
+	CLASS(PCI_CLASS_CRYPTO,		"Crypto",
+	    pci_subclass_crypto),
+	CLASS(PCI_CLASS_DASP,		"DASP",
+	    pci_subclass_dasp),
+};
+
+static const struct pci_class *
+pci_class(pci_class_t class)
+{
+	const struct pci_class *pc;
+	size_t i;
+
+	for (i = 0; i < nitems(pci_classes); i++) {
+		pc = &pci_classes[i];
+		if (pc->class == class)
+			return (pc);
+	}
+
+	return (NULL);
+}
+
+static const struct pci_subclass *
+pci_subclass(const struct pci_class *pc, pci_subclass_t subclass)
+{
+	const struct pci_subclass *ps;
+	size_t i;
+
+	for (i = 0; i < pc->nsubclass; i++) {
+		ps = &pc->subclass[i];
+		if (ps->subclass == subclass)
+			return (ps);
+	}
+
+	return (NULL);
+}
+
+static const char *
+pci_class_name(pci_class_t class)
+{
+	const struct pci_class *pc;
+
+	pc = pci_class(class);
+	if (pc == NULL)
+		return ("(unknown)");
+
+	return (pc->name);
+}
+
+
+static const char *
+pci_subclass_name(pci_class_t class, pci_subclass_t subclass)
+{
+	const struct pci_class *pc;
+	const struct pci_subclass *ps;
+
+	pc = pci_class(class);
+	if (pc == NULL)
+		return ("(unknown)");
+
+	ps = pci_subclass(pc, subclass);
+	if (ps == NULL)
+		return ("(unknown)");
+
+	return (ps->name);
 }
