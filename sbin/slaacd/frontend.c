@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.23 2019/03/01 16:34:58 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.24 2019/03/11 14:51:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -872,13 +872,13 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			    argv[3] == NULL) {
 				id = strtonum(argv[1], 0, INT64_MAX, &errstr);
 				if (errstr != NULL) {
-					log_warn("%s: proposal seq is %s: %s",
+					log_warnx("%s: proposal seq is %s: %s",
 					    __func__, errstr, argv[1]);
 					break;
 				}
 				pid = strtonum(argv[2], 0, INT32_MAX, &errstr);
 				if (errstr != NULL) {
-					log_warn("%s: pid is %s: %s",
+					log_warnx("%s: pid is %s: %s",
 					    __func__, errstr, argv[2]);
 					break;
 				}
