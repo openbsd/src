@@ -1766,7 +1766,7 @@
 ./usr/share/man/man3/CONF_modules_load_file.3
 ./usr/share/man/man3/CRYPTO_get_mem_functions.3
 ./usr/share/man/man3/CRYPTO_set_ex_data.3
-./usr/share/man/man3/CRYPTO_set_locking_callback.3
+./usr/share/man/man3/CRYPTO_lock.3
 ./usr/share/man/man3/DES_set_key.3
 ./usr/share/man/man3/DH_generate_key.3
 ./usr/share/man/man3/DH_generate_parameters.3
