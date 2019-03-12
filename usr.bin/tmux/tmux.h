@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.858 2019/03/12 11:16:50 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.859 2019/03/12 13:56:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1393,8 +1393,7 @@ struct client {
 	 CLIENT_REDRAWSTATUSALWAYS|	\
 	 CLIENT_REDRAWBORDERS)
 #define CLIENT_NOSIZEFLAGS	\
-	(CLIENT_EXIT|		\
-	 CLIENT_DEAD|		\
+	(CLIENT_DEAD|		\
 	 CLIENT_SUSPENDED|	\
 	 CLIENT_DETACHING)
 	int		 flags;

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.114 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.115 2019/03/12 13:56:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -222,9 +222,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	if (!detached && !is_control) {
 		sx = c->tty.sx;
 		sy = c->tty.sy;
-		if (!is_control &&
-		    sy > 0 &&
-		    options_get_number(global_s_options, "status"))
+		if (sy > 0 && options_get_number(global_s_options, "status"))
 			sy--;
 	} else {
 		value = options_get_string(global_s_options, "default-size");

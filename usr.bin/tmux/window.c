@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.218 2019/03/12 11:16:50 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.219 2019/03/12 13:56:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -503,8 +503,8 @@ window_get_active_at(struct window *w, u_int x, u_int y)
 	struct window_pane	*wp;
 
 	TAILQ_FOREACH(wp, &w->panes, entry) {
-                if (!window_pane_visible(wp))
-                        continue;
+		if (!window_pane_visible(wp))
+			continue;
 		if (x < wp->xoff || x > wp->xoff + wp->sx)
 			continue;
 		if (y < wp->yoff || y > wp->yoff + wp->sy)
