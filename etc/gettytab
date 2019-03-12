@@ -1,4 +1,4 @@
-#	$OpenBSD: gettytab,v 1.6 2018/05/02 21:06:14 kettenis Exp $
+#	$OpenBSD: gettytab,v 1.7 2019/03/12 11:01:25 nicm Exp $
 #
 # Most of the table entries here are just copies of the old getty table.
 # It is by no means certain, or even likely, that any of them are optimal
@@ -28,27 +28,27 @@ b|std.134|134.5-baud:\
 1|std.150|150-baud:\
 	:ep:nd#1:cd#2:td#1:fd#1:sp#150:ht:nl:lm=\E\72\6\6\17login\72 :
 c|std.300|300-baud:\
-	:nd#1:cd#1:sp#300:
+	:nd#1:cd#1:sp#300:ht:
 d|std.600|600-baud:\
-	:nd#1:cd#1:sp#600:
+	:nd#1:cd#1:sp#600:ht:
 f|std.1200|1200-baud:\
-	:fd#1:sp#1200:
+	:fd#1:sp#1200:ht:
 6|std.2400|2400-baud:\
-	:sp#2400:
+	:sp#2400:ht:
 7|std.4800|4800-baud:\
-	:sp#4800:
+	:sp#4800:ht:
 2|std.9600|9600-baud:\
-	:sp#9600:
+	:sp#9600:ht:
 g|std.19200|19200-baud:\
-	:sp#19200:
+	:sp#19200:ht:
 std.38400|38400-baud:\
-	:sp#38400:
+	:sp#38400:ht:
 std.57600|57600-baud:\
-	:sp#57600:
+	:sp#57600:ht:
 std.115200|115200-baud:\
-	:sp#115200:
+	:sp#115200:ht:
 std.1500000|1500000-baud:\
-	:sp#1500000:
+	:sp#1500000:ht:
 
 #
 # Dial in rotary tables, speed selection via 'break'
