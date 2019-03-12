@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.94 2019/03/11 17:50:09 mpi Exp $ */
+/* $OpenBSD: xhci.c,v 1.95 2019/03/12 18:13:40 patrick Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -721,11 +721,11 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 	switch (code) {
 	case XHCI_CODE_RING_UNDERRUN:
-		DPRINTF(("%s: slot %u underrun wih %zu TRB\n", DEVNAME(sc),
+		DPRINTF(("%s: slot %u underrun with %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
 		return;
 	case XHCI_CODE_RING_OVERRUN:
-		DPRINTF(("%s: slot %u overrun wih %zu TRB\n", DEVNAME(sc),
+		DPRINTF(("%s: slot %u overrun with %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
 		return;
 	default:
