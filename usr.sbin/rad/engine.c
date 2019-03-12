@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.13 2019/03/12 18:47:57 pamela Exp $	*/
+/*	$OpenBSD: engine.c,v 1.14 2019/03/12 19:40:01 pamela Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -319,7 +319,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 			break;
 		case IMSG_RECONF_CONF:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(struct rad_conf))
-				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",				    __func__, IMSG_DATA_SIZE(imsg));
+				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
 			if ((nconf = malloc(sizeof(struct rad_conf))) == NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct rad_conf));
