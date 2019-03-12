@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.175 2018/12/31 17:12:34 kettenis Exp $	*/
+/*	$OpenBSD: audio.c,v 1.176 2019/03/12 08:16:29 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -401,12 +401,17 @@ audio_pintr(void *addr)
 	}
 
 	sc->play.pos += sc->play.blksz;
-	audio_fill_sil(sc, sc->play.data + sc->play.start, sc->play.blksz);
+	if (!sc->ops->underrun) {
+		audio_fill_sil(sc, sc->play.data + sc->play.start,
+		    sc->play.blksz);
+	}
 	audio_buf_rdiscard(&sc->play, sc->play.blksz);
 	if (sc->play.used < sc->play.blksz) {
 		DPRINTFN(1, "%s: play underrun\n", DEVNAME(sc));
 		sc->play.xrun += sc->play.blksz;
 		audio_buf_wcommit(&sc->play, sc->play.blksz);
+		if (sc->ops->underrun)
+			sc->ops->underrun(sc->arg);
 	}
 
 	DPRINTFN(1, "%s: play intr, used -> %zu, start -> %zu\n",
@@ -1469,7 +1474,6 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		ptr = audio_buf_rgetblk(&sc->rec, &count);
 		if (count > uio->uio_resid)
 			count = uio->uio_resid;
-		audio_buf_rdiscard(&sc->rec, count);
 		mtx_leave(&audio_lock);
 		DPRINTFN(1, "%s: read: start = %zu, count = %zu\n",
 		    DEVNAME(sc), ptr - sc->rec.data, count);
@@ -1479,6 +1483,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		if (error)
 			return error;
 		mtx_enter(&audio_lock);
+		audio_buf_rdiscard(&sc->rec, count);
 	}
 	mtx_leave(&audio_lock);
 	return 0;
@@ -1538,7 +1543,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		}
 		if (count > uio->uio_resid)
 			count = uio->uio_resid;
-		audio_buf_wcommit(&sc->play, count);
 		mtx_leave(&audio_lock);
 		error = uiomove(ptr, count, uio);
 		if (error)
@@ -1548,6 +1552,8 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			DPRINTFN(1, "audio_write: converted count = %zu\n",
 			    count);
 		}
+		if (sc->ops->copy_output)
+			sc->ops->copy_output(sc->arg, count);
 
 		/* start automatically if audio_ioc_start() was never called */
 		if (audio_canstart(sc)) {
@@ -1555,7 +1561,9 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 			if (error)
 				return error;
 		}
+
 		mtx_enter(&audio_lock);
+		audio_buf_wcommit(&sc->play, count);
 	}
 	mtx_leave(&audio_lock);
 	return 0;
