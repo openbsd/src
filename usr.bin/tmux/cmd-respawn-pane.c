@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-pane.c,v 1.26 2017/07/21 09:17:19 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-pane.c,v 1.27 2019/03/12 11:16:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -67,7 +67,7 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 	}
 
-	window_pane_reset_mode(wp);
+	window_pane_reset_mode_all(wp);
 	screen_reinit(&wp->base);
 	input_init(wp);
 

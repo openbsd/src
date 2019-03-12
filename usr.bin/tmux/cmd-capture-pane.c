@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.45 2019/03/07 20:24:21 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.46 2019/03/12 11:16:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -199,8 +199,7 @@ cmd_capture_pane_exec(struct cmd *self, struct cmdq_item *item)
 	size_t			 len;
 
 	if (self->entry == &cmd_clear_history_entry) {
-		if (wp->mode != NULL && wp->mode->mode == &window_copy_mode)
-			window_pane_reset_mode(wp);
+		window_pane_reset_mode_all(wp);
 		grid_clear_history(wp->base.grid);
 		return (CMD_RETURN_NORMAL);
 	}

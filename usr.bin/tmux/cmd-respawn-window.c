@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-respawn-window.c,v 1.36 2017/07/21 09:17:19 nicm Exp $ */
+/* $OpenBSD: cmd-respawn-window.c,v 1.37 2019/03/12 11:16:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -99,7 +99,7 @@ cmd_respawn_window_exec(struct cmd *self, struct cmdq_item *item)
 	free(cwd);
 
 	layout_init(w, wp);
-	window_pane_reset_mode(wp);
+	window_pane_reset_mode_all(wp);
 	screen_reinit(&wp->base);
 	input_init(wp);
 	window_set_active_pane(w, wp);

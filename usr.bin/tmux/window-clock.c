@@ -1,4 +1,4 @@
-/* $OpenBSD: window-clock.c,v 1.26 2019/03/07 20:24:21 nicm Exp $ */
+/* $OpenBSD: window-clock.c,v 1.27 2019/03/12 11:16:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -136,6 +136,9 @@ window_clock_timer_callback(__unused int fd, __unused short events, void *arg)
 	evtimer_del(&data->timer);
 	evtimer_add(&data->timer, &tv);
 
+	if (TAILQ_FIRST(&wp->modes) != wme)
+		return;
+
 	t = time(NULL);
 	gmtime_r(&t, &now);
 	gmtime_r(&data->tim, &then);
@@ -144,7 +147,7 @@ window_clock_timer_callback(__unused int fd, __unused short events, void *arg)
 	data->tim = t;
 
 	window_clock_draw_screen(wme);
-	server_redraw_window(wp->window);
+	wp->flags |= PANE_REDRAW;
 }
 
 static struct screen *
