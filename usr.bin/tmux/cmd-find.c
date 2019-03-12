@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.69 2019/03/12 12:49:46 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.70 2019/03/12 13:14:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -454,6 +454,7 @@ cmd_find_get_window_with_session(struct cmd_find_state *fs, const char *window)
 		if (errstr == NULL) {
 			fs->wl = winlink_find_by_index(&fs->s->windows, idx);
 			if (fs->wl != NULL) {
+				fs->idx = fs->wl->idx;
 				fs->w = fs->wl->window;
 				return (0);
 			}
