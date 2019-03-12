@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.h,v 1.2 2017/01/11 00:18:22 patrick Exp $	*/
+/*	$OpenBSD: fenv.h,v 1.3 2019/03/12 22:14:50 patrick Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -31,13 +31,14 @@
 #define	FE_OVERFLOW		0x04
 #define	FE_UNDERFLOW		0x08
 #define	FE_INEXACT		0x10
+#define	FE_DENORMAL		0x80
 
 /*
  * The following symbol is simply the bitwise-inclusive OR of all floating-point
  * exception constants defined above.
  */
 #define	FE_ALL_EXCEPT		(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW | \
-				 FE_UNDERFLOW | FE_INEXACT)
+				 FE_UNDERFLOW | FE_INEXACT | FE_DENORMAL)
 
 /*
  * Each symbol representing the rounding direction, expands to an integer
