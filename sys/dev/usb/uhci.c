@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.146 2019/03/11 17:50:09 mpi Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.147 2019/03/12 08:13:50 ratchov Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -2188,7 +2188,7 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Find the last TD */
-	i = ux->curframe + xfer->nframes;
+	i = ux->curframe + (xfer->nframes - 1);
 	if (i >= UHCI_VFRAMELIST_COUNT)
 		i -= UHCI_VFRAMELIST_COUNT;
 	end = upipe->u.iso.stds[i];
