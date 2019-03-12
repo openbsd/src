@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.51 2019/03/11 01:16:16 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.52 2019/03/12 01:46:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -388,12 +388,13 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 	swidth = (sreg >> 4) & 0x3f;
 	sspeed = sreg & 0x0f;
 
-	printf("\t        Link Speed: ");
+	printf("\t\tLink Speed: ");
 	print_pcie_ls(sspeed);
 	printf(" / ");
 	print_pcie_ls(cspeed);
+	printf(" GT/s, ");
 
-	printf(" GT/s Link Width: x%d / x%d\n", swidth, cwidth);
+	printf("Link Width: x%d / x%d\n", swidth, cwidth);
 }
 
 void
@@ -571,25 +572,25 @@ dump_type1(int bus, int dev, int func)
 
 	if (pci_read(bus, dev, func, PCI_PRIBUS_1, &reg) != 0)
 		warn("unable to read PCI_PRIBUS_1");
-	printf("\t0x%04x: Primary Bus: %d Secondary Bus: %d "
-	    "Subordinate Bus: %d \n\t        Secondary Latency Timer: %02x\n",
+	printf("\t0x%04x: Primary Bus: %d, Secondary Bus: %d, "
+	    "Subordinate Bus: %d,\n\t\tSecondary Latency Timer: %02x\n",
 	    PCI_PRIBUS_1, (reg >> 0) & 0xff, (reg >> 8) & 0xff,
 	    (reg >> 16) & 0xff, (reg >> 24) & 0xff);
 
 	if (pci_read(bus, dev, func, PCI_IOBASEL_1, &reg) != 0)
 		warn("unable to read PCI_IOBASEL_1");
-	printf("\t0x%04x: I/O Base: %02x I/O Limit: %02x "
+	printf("\t0x%04x: I/O Base: %02x, I/O Limit: %02x, "
 	    "Secondary Status: %04x\n", PCI_IOBASEL_1, (reg >> 0 ) & 0xff,
 	    (reg >> 8) & 0xff, (reg >> 16) & 0xffff);
 
 	if (pci_read(bus, dev, func, PCI_MEMBASE_1, &reg) != 0)
 		warn("unable to read PCI_MEMBASE_1");
-	printf("\t0x%04x: Memory Base: %04x Memory Limit: %04x\n",
+	printf("\t0x%04x: Memory Base: %04x, Memory Limit: %04x\n",
 	    PCI_MEMBASE_1, (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
 
 	if (pci_read(bus, dev, func, PCI_PMBASEL_1, &reg) != 0)
 		warn("unable to read PCI_PMBASEL_1");
-	printf("\t0x%04x: Prefetch Memory Base: %04x "
+	printf("\t0x%04x: Prefetch Memory Base: %04x, "
 	    "Prefetch Memory Limit: %04x\n", PCI_PMBASEL_1,
 	    (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
 
@@ -611,7 +612,7 @@ dump_type1(int bus, int dev, int func)
 #define PCI_IOBASEH_1	0x30
 	if (pci_read(bus, dev, func, PCI_IOBASEH_1, &reg) != 0)
 		warn("unable to read PCI_IOBASEH_1");
-	printf("\t0x%04x: I/O Base Upper 16 Bits: %04x "
+	printf("\t0x%04x: I/O Base Upper 16 Bits: %04x, "
 	    "I/O Limit Upper 16 Bits: %04x\n", PCI_IOBASEH_1,
 	    (reg >> 0) & 0xffff, (reg >> 16) & 0xffff);
 
@@ -623,7 +624,7 @@ dump_type1(int bus, int dev, int func)
 
 	if (pci_read(bus, dev, func, PCI_INTERRUPT_REG, &reg) != 0)
 		warn("unable to read PCI_INTERRUPT_REG");
-	printf("\t0x%04x: Interrupt Pin: %02x Line: %02x "
+	printf("\t0x%04x: Interrupt Pin: %02x, Line: %02x, "
 	    "Bridge Control: %04x\n",
 	    PCI_INTERRUPT_REG, PCI_INTERRUPT_PIN(reg),
 	    PCI_INTERRUPT_LINE(reg), reg >> 16);
@@ -706,30 +707,31 @@ dump(int bus, int dev, int func)
 
 	if (pci_read(bus, dev, func, PCI_ID_REG, &reg) != 0)
 		warn("unable to read PCI_ID_REG");
-	printf("\t0x%04x: Vendor ID: %04x Product ID: %04x\n", PCI_ID_REG,
+	printf("\t0x%04x: Vendor ID: %04x, Product ID: %04x\n", PCI_ID_REG,
 	    PCI_VENDOR(reg), PCI_PRODUCT(reg));
 
 	if (pci_read(bus, dev, func, PCI_COMMAND_STATUS_REG, &reg) != 0)
 		warn("unable to read PCI_COMMAND_STATUS_REG");
-	printf("\t0x%04x: Command: %04x Status: %04x\n",
+	printf("\t0x%04x: Command: %04x, Status: %04x\n",
 	    PCI_COMMAND_STATUS_REG, reg & 0xffff, (reg  >> 16) & 0xffff);
 
 	if (pci_read(bus, dev, func, PCI_CLASS_REG, &reg) != 0)
 		warn("unable to read PCI_CLASS_REG");
 	class = PCI_CLASS(reg);
 	subclass = PCI_SUBCLASS(reg);
-	printf("\t0x%04x:\tClass: %02x %s", PCI_CLASS_REG, class,
+	printf("\t0x%04x:\tClass: %02x %s,", PCI_CLASS_REG, class,
 	    pci_class_name(class));
-	printf(" Subclass: %02x %s", subclass,
+	printf(" Subclass: %02x %s,", subclass,
 	    pci_subclass_name(class, subclass));
-	printf("\n\t\tInterface: %02x Revision: %02x\n",
+	printf("\n\t\tInterface: %02x, Revision: %02x\n",
 	    PCI_INTERFACE(reg), PCI_REVISION(reg));
 
 	if (pci_read(bus, dev, func, PCI_BHLC_REG, &reg) != 0)
 		warn("unable to read PCI_BHLC_REG");
-	printf("\t0x%04x: BIST: %02x Header Type: %02x Latency Timer: %02x "
-	    "Cache Line Size: %02x\n", PCI_BHLC_REG, PCI_BIST(reg),
-	    PCI_HDRTYPE(reg), PCI_LATTIMER(reg), PCI_CACHELINE(reg));
+	printf("\t0x%04x: BIST: %02x, Header Type: %02x, "
+	    "Latency Timer: %02x,\n\t\tCache Line Size: %02x\n", PCI_BHLC_REG,
+	    PCI_BIST(reg), PCI_HDRTYPE(reg),
+	    PCI_LATTIMER(reg), PCI_CACHELINE(reg));
 
 	switch (PCI_HDRTYPE_TYPE(reg)) {
 	case 2:
