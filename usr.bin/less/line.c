@@ -437,23 +437,51 @@ pwidth(wchar_t ch, int a, wchar_t prev_ch)
 static int
 backc(void)
 {
-	LWCHAR prev_ch;
-	char *p = linebuf + curr;
-	LWCHAR ch = step_char(&p, -1, linebuf + lmargin);
-	int width;
+	wchar_t	 ch, prev_ch;
+	int	 i, len, width;
+
+	i = curr - 1;
+	if (utf_mode) {
+		while (i >= lmargin && IS_UTF8_TRAIL(linebuf[i]))
+			i--;
+	}
+	if (i < lmargin)
+		return (0);
+	if (utf_mode) {
+		len = mbtowc(&ch, linebuf + i, curr - i);
+		if (len == -1 || i + len < curr) {
+			(void)mbtowc(NULL, NULL, MB_CUR_MAX);
+			return (0);
+		}
+	} else
+		ch = linebuf[i];
 
 	/* This assumes that there is no '\b' in linebuf.  */
 	while (curr > lmargin && column > lmargin &&
 	    (!(attr[curr - 1] & (AT_ANSI|AT_BINARY)))) {
-		curr = p - linebuf;
-		prev_ch = step_char(&p, -1, linebuf + lmargin);
+		curr = i--;
+		if (utf_mode) {
+			while (i >= lmargin && IS_UTF8_TRAIL(linebuf[i]))
+				i--;
+		}
+		if (i < lmargin)
+			prev_ch = L'\0';
+		else if (utf_mode) {
+			len = mbtowc(&prev_ch, linebuf + i, curr - i);
+			if (len == -1 || i + len < curr) {
+				(void)mbtowc(NULL, NULL, MB_CUR_MAX);
+				prev_ch = L'\0';
+			}
+		} else
+			prev_ch = linebuf[i];
 		width = pwidth(ch, attr[curr], prev_ch);
 		column -= width;
 		if (width > 0)
 			return (1);
+		if (prev_ch == L'\0')
+			return (0);
 		ch = prev_ch;
 	}
-
 	return (0);
 }
 
@@ -536,8 +564,10 @@ store_char(LWCHAR ch, char a, char *rep, off_t pos)
 					break;
 			if (i >= 0) {
 				w = mbtowc(&prev_ch, linebuf + i, curr - i);
-				if (w == -1 || i + w < curr)
+				if (w == -1 || i + w < curr) {
+					(void)mbtowc(NULL, NULL, MB_CUR_MAX);
 					prev_ch = L' ';
+				}
 			} else
 				prev_ch = L' ';
 		} else
