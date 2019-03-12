@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.146 2019/03/12 18:30:08 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.147 2019/03/12 20:02:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1034,11 +1034,12 @@ screen_write_clearstartofline(struct screen_write_ctx *ctx, u_int bg)
 
 /* Move cursor to px,py. */
 void
-screen_write_cursormove(struct screen_write_ctx *ctx, int px, int py)
+screen_write_cursormove(struct screen_write_ctx *ctx, int px, int py,
+    int origin)
 {
 	struct screen	*s = ctx->s;
 
-	if (py != -1 && (s->mode & MODE_ORIGIN)) {
+	if (origin && py != -1 && (s->mode & MODE_ORIGIN)) {
 		if ((u_int)py > s->rlower - s->rupper)
 			py = s->rlower;
 		else

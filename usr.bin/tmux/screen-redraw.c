@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.55 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.56 2019/03/12 20:02:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -300,7 +300,7 @@ screen_redraw_make_pane_status(struct client *c, struct window *w,
 	screen_resize(&wp->status_screen, outlen, 1, 0);
 
 	screen_write_start(&ctx, NULL, &wp->status_screen);
-	screen_write_cursormove(&ctx, 0, 0);
+	screen_write_cursormove(&ctx, 0, 0, 0);
 	screen_write_clearline(&ctx, 8);
 	screen_write_cnputs(&ctx, outlen, &gc, "%s", out);
 	screen_write_stop(&ctx);

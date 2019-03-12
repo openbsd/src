@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.15 2019/03/07 20:24:21 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.16 2019/03/12 20:02:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -226,7 +226,7 @@ window_buffer_draw(__unused void *modedata, void *itemdata,
 		line[at] = '\0';
 
 		if (*line != '\0') {
-			screen_write_cursormove(ctx, cx, cy + i);
+			screen_write_cursormove(ctx, cx, cy + i, 0);
 			screen_write_puts(ctx, &grid_default_cell, "%s", line);
 		}
 

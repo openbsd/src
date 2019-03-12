@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.25 2018/11/12 14:18:10 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.26 2019/03/12 20:02:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -530,7 +530,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		line = &mtd->line_list[i];
 		mti = line->item;
 
-		screen_write_cursormove(&ctx, 0, i - mtd->offset);
+		screen_write_cursormove(&ctx, 0, i - mtd->offset, 0);
 
 		if (i < 10)
 			snprintf(key, sizeof key, "(%c)  ", '0' + i);
@@ -605,13 +605,13 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	line = &mtd->line_list[mtd->current];
 	mti = line->item;
 
-	screen_write_cursormove(&ctx, 0, h);
+	screen_write_cursormove(&ctx, 0, h, 0);
 	screen_write_box(&ctx, w, sy - h);
 
 	xasprintf(&text, " %s (sort: %s)", mti->name,
 	    mtd->sort_list[mtd->sort_type]);
 	if (w - 2 >= strlen(text)) {
-		screen_write_cursormove(&ctx, 1, h);
+		screen_write_cursormove(&ctx, 1, h, 0);
 		screen_write_puts(&ctx, &gc0, "%s", text);
 
 		if (mtd->no_matches)
@@ -633,7 +633,7 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	box_y = sy - h - 2;
 
 	if (box_x != 0 && box_y != 0) {
-		screen_write_cursormove(&ctx, 2, h + 1);
+		screen_write_cursormove(&ctx, 2, h + 1, 0);
 		mtd->drawcb(mtd->modedata, mti->itemdata, &ctx, box_x, box_y);
 	}
 

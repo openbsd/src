@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.118 2018/11/30 08:44:40 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.119 2019/03/12 20:02:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -320,7 +320,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 
 		screen_write_start(&ctx, wp, &wp->base);
 		screen_write_scrollregion(&ctx, 0, screen_size_y(ctx.s) - 1);
-		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1);
+		screen_write_cursormove(&ctx, 0, screen_size_y(ctx.s) - 1, 0);
 		screen_write_linefeed(&ctx, 1, 8);
 		memcpy(&gc, &grid_default_cell, sizeof gc);
 
