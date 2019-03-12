@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.25 2019/03/06 11:00:49 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.26 2019/03/12 01:07:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1129,7 +1129,9 @@ struct ixl_softc {
 
 #define delaymsec(_ms)	delay(1000 * (_ms))
 
+#ifdef notyet
 static void	ixl_clear_hw(struct ixl_softc *);
+#endif
 static int	ixl_pf_reset(struct ixl_softc *);
 
 static int	ixl_dmamem_alloc(struct ixl_softc *, struct ixl_dmamem *,
@@ -1405,7 +1407,9 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	    I40E_PFLAN_QALLOC_FIRSTQ_MASK) >>
 	    I40E_PFLAN_QALLOC_FIRSTQ_SHIFT;
 
+#ifdef notyet
 	ixl_clear_hw(sc);
+#endif
 
 	if (ixl_pf_reset(sc) == -1) {
 		/* error printed by ixl_pf_reset */
@@ -4011,6 +4015,7 @@ ixl_arq_unfill(struct ixl_softc *sc)
 	}
 }
 
+#ifdef notyet
 static void
 ixl_clear_hw(struct ixl_softc *sc)
 {
@@ -4096,6 +4101,7 @@ ixl_clear_hw(struct ixl_softc *sc)
 	/* short wait for all queue disables to settle */
 	delaymsec(50);
 }
+#endif
 
 static int
 ixl_pf_reset(struct ixl_softc *sc)
