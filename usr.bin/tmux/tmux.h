@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.859 2019/03/12 13:56:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.860 2019/03/12 18:30:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2100,7 +2100,7 @@ void	 screen_write_deleteline(struct screen_write_ctx *, u_int, u_int);
 void	 screen_write_clearline(struct screen_write_ctx *, u_int);
 void	 screen_write_clearendofline(struct screen_write_ctx *, u_int);
 void	 screen_write_clearstartofline(struct screen_write_ctx *, u_int);
-void	 screen_write_cursormove(struct screen_write_ctx *, u_int, u_int);
+void	 screen_write_cursormove(struct screen_write_ctx *, int, int);
 void	 screen_write_reverseindex(struct screen_write_ctx *, u_int);
 void	 screen_write_scrollregion(struct screen_write_ctx *, u_int, u_int);
 void	 screen_write_linefeed(struct screen_write_ctx *, int, u_int);
