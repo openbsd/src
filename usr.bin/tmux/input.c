@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.140 2018/12/17 21:52:59 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.141 2019/03/12 07:39:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1572,6 +1572,10 @@ input_csi_dispatch_rm_private(struct input_ctx *ictx)
 			screen_write_clearscreen(&ictx->ctx,
 			    ictx->cell.cell.bg);
 			break;
+		case 6:		/* DECOM */
+			screen_write_mode_clear(&ictx->ctx, MODE_ORIGIN);
+			screen_write_cursormove(&ictx->ctx, 0, 0);
+			break;
 		case 7:		/* DECAWM */
 			screen_write_mode_clear(&ictx->ctx, MODE_WRAP);
 			break;
@@ -1654,6 +1658,10 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 			screen_write_cursormove(&ictx->ctx, 0, 0);
 			screen_write_clearscreen(&ictx->ctx,
 			    ictx->cell.cell.bg);
+			break;
+		case 6:		/* DECOM */
+			screen_write_mode_set(&ictx->ctx, MODE_ORIGIN);
+			screen_write_cursormove(&ictx->ctx, 0, 0);
 			break;
 		case 7:		/* DECAWM */
 			screen_write_mode_set(&ictx->ctx, MODE_WRAP);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.856 2019/03/08 10:34:20 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.857 2019/03/12 07:39:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -517,6 +517,7 @@ struct msg_stderr_data {
 #define MODE_BRACKETPASTE 0x400
 #define MODE_FOCUSON 0x800
 #define MODE_MOUSE_ALL 0x1000
+#define MODE_ORIGIN 0x2000
 
 #define ALL_MODES 0xffffff
 #define ALL_MOUSE_MODES (MODE_MOUSE_STANDARD|MODE_MOUSE_BUTTON|MODE_MOUSE_ALL)
