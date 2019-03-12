@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.18 2019/01/29 15:43:33 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.19 2019/03/12 18:47:57 pamela Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -427,7 +427,9 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				log_warnx("configuration reloaded");
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
-			/* Already checked by frontend. */
+			if (IMSG_DATA_SIZE(imsg) != sizeof(verbose))
+				fatalx("%s: IMSG_CTL_LOG_VERBOSE wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));	
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
 			break;
