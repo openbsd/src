@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.19 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.20 2019/03/13 20:34:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -374,7 +374,7 @@ PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	 * things the ugly way. */
 	ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
 	if (!(p7i->issuer_and_serial->serial =
-	    ASN1_STRING_dup(X509_get_serialNumber(x509))))
+	    ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
 		goto err;
 
 	/* lets keep the pkey around for a while */
@@ -534,7 +534,7 @@ PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 
 	ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
 	if (!(p7i->issuer_and_serial->serial =
-	    ASN1_STRING_dup(X509_get_serialNumber(x509))))
+	    ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
 		return 0;
 
 	pkey = X509_get_pubkey(x509);

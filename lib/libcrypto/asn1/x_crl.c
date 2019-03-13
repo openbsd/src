@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.33 2018/08/24 19:55:58 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.34 2019/03/13 20:34:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -527,9 +527,7 @@ X509_CRL_dup(X509_CRL *x)
 static int
 X509_REVOKED_cmp(const X509_REVOKED * const *a, const X509_REVOKED * const *b)
 {
-	return(ASN1_STRING_cmp(
-	    (ASN1_STRING *)(*a)->serialNumber,
-	    (ASN1_STRING *)(*b)->serialNumber));
+	return(ASN1_INTEGER_cmp((*a)->serialNumber, (*b)->serialNumber));
 }
 
 int

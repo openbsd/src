@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_sxnet.c,v 1.21 2018/05/13 15:03:01 tb Exp $ */
+/* $OpenBSD: v3_sxnet.c,v 1.22 2019/03/13 20:34:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -376,7 +376,7 @@ SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
 
 	for (i = 0; i < sk_SXNETID_num(sx->ids); i++) {
 		id = sk_SXNETID_value(sx->ids, i);
-		if (!ASN1_STRING_cmp(id->zone, zone))
+		if (!ASN1_INTEGER_cmp(id->zone, zone))
 			return id->user;
 	}
 	return NULL;
