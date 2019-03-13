@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.12 2019/01/11 08:00:34 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.13 2019/03/13 09:41:12 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -993,11 +993,10 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 		}
 	}
 
-	if ((idx < sc->sc_ndivs && sc->sc_divs[idx].reg != 0) ||
-	    (idx < sc->sc_nmuxs && sc->sc_muxs[idx].reg != 0))
-		return;
-
 	if (idx >= sc->sc_ngates || sc->sc_gates[idx].reg == 0) {
+		if ((idx < sc->sc_ndivs && sc->sc_divs[idx].reg != 0) ||
+		    (idx < sc->sc_nmuxs && sc->sc_muxs[idx].reg != 0))
+			return;
 		printf("%s: 0x%08x\n", __func__, idx);
 		return;
 	}
