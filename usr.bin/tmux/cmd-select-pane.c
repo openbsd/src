@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.45 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.46 2019/03/13 21:39:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "tmux.h"
 
@@ -143,6 +144,8 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(self->args, 'P') || args_has(self->args, 'g')) {
 		if (args_has(args, 'P')) {
 			style = args_get(args, 'P');
+			memcpy(&wp->colgc, &grid_default_cell,
+			    sizeof wp->colgc);
 			if (style_parse(&grid_default_cell, &wp->colgc,
 			    style) == -1) {
 				cmdq_error(item, "bad style: %s", style);

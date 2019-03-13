@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.16 2018/10/25 15:13:38 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.17 2019/03/13 21:39:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -160,7 +160,7 @@ colour_tostring(int c)
 	case 97:
 		return ("brightwhite");
 	}
-	return (NULL);
+	return ("invalid");
 }
 
 /* Convert colour from string. */
