@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.170 2019/03/13 14:19:54 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.171 2019/03/13 14:27:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1293,6 +1293,7 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 			value = xstrdup("");
 	}
 
+done:
 	/* Expand again if required. */
 	if (modifiers & FORMAT_EXPAND) {
 		new = format_expand(ft, value);
@@ -1318,7 +1319,6 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 		value = new;
 	}
 
-done:
 	/* Expand the buffer and copy in the value. */
 	valuelen = strlen(value);
 	while (*len - *off < valuelen + 1) {
