@@ -773,7 +773,6 @@
 ./usr/include/dev/usb/mbim.h
 ./usr/include/dev/usb/ohcireg.h
 ./usr/include/dev/usb/ohcivar.h
-./usr/include/dev/usb/uaudioreg.h
 ./usr/include/dev/usb/ucomvar.h
 ./usr/include/dev/usb/udl.h
 ./usr/include/dev/usb/udlio.h
