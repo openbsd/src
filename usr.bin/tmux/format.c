@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.172 2019/03/13 15:37:28 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.173 2019/03/13 18:09:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1256,6 +1256,7 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 
 	/* Make a copy of the key. */
 	copy = copy0 = xstrndup(key, keylen);
+	log_debug("%s: format = '%s'", __func__, copy);
 
 	/* Process modifier list. */
 	list = format_build_modifiers(ft, &copy, &count);
@@ -1322,7 +1323,6 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 				cmp = fm;
 		}
 	}
-	log_debug("%s: remaining = '%s'", __func__, copy);
 
 	/* Is this a literal string? */
 	if (modifiers & FORMAT_LITERAL) {
@@ -1452,6 +1452,7 @@ done:
 	}
 
 	/* Expand the buffer and copy in the value. */
+	log_debug("%s: '%s' -> '%s'", __func__, copy0, value);
 	valuelen = strlen(value);
 	while (*len - *off < valuelen + 1) {
 		*buf = xreallocarray(*buf, 2, *len);
