@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.219 2019/03/12 13:56:30 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.220 2019/03/14 09:50:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1179,7 +1179,7 @@ window_pane_reset_palette(struct window_pane *wp)
 }
 
 int
-window_pane_get_palette(const struct window_pane *wp, int c)
+window_pane_get_palette(struct window_pane *wp, int c)
 {
 	int	new;
 
