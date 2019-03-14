@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.173 2019/03/13 18:09:12 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.174 2019/03/14 21:27:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1482,6 +1482,8 @@ format_expand_time(struct format_tree *ft, const char *fmt, time_t t)
 	if (fmt == NULL || *fmt == '\0')
 		return (xstrdup(""));
 
+	if (t == 0)
+		t = time(NULL);
 	tm = localtime(&t);
 
 	if (strftime(s, sizeof s, fmt, tm) == 0)
