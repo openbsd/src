@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.10 2018/02/24 11:42:31 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.11 2019/03/14 16:01:02 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -231,7 +231,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 #ifdef MULTIPROCESSOR
 	/* Span work queue interrupts across CPUs. */
 	if (IS_WORKQ_IRQ(irq))
-		cpuid = irq % ncpusfound;
+		cpuid = irq % ncpus;
 #endif
 
 	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
