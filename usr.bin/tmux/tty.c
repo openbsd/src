@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.318 2019/03/14 09:53:52 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.319 2019/03/14 17:58:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1672,7 +1672,7 @@ tty_cmd_clearstartofscreen(struct tty *tty, const struct tty_ctx *ctx)
 	px = 0;
 	nx = screen_size_x(wp->screen);
 	py = 0;
-	ny = ctx->ocy - 1;
+	ny = ctx->ocy;
 
 	tty_clear_pane_area(tty, ctx, py, ny, px, nx, ctx->bg);
 
