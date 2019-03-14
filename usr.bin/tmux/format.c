@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.176 2019/03/14 21:41:30 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.177 2019/03/14 23:14:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -121,6 +121,7 @@ struct format_tree {
 	struct client		*client;
 	u_int			 tag;
 	int			 flags;
+	time_t			 time;
 
 	RB_HEAD(format_entry_tree, format_entry) tree;
 };
@@ -682,6 +683,7 @@ format_create(struct client *c, struct cmdq_item *item, int tag, int flags)
 
 	ft->tag = tag;
 	ft->flags = flags;
+	ft->time = time(NULL);
 
 	format_add_cb(ft, "host", format_cb_host);
 	format_add_cb(ft, "host_short", format_cb_host_short);
@@ -1437,7 +1439,7 @@ done:
 		value = new;
 	}
 	else if (modifiers & FORMAT_EXPANDTIME) {
-		new = format_expand_time(ft, value, 0);
+		new = format_expand_time(ft, value);
 		free(value);
 		value = new;
 	}
@@ -1483,7 +1485,7 @@ fail:
 
 /* Expand keys in a template, passing through strftime first. */
 char *
-format_expand_time(struct format_tree *ft, const char *fmt, time_t t)
+format_expand_time(struct format_tree *ft, const char *fmt)
 {
 	struct tm	*tm;
 	char		 s[2048];
@@ -1491,10 +1493,7 @@ format_expand_time(struct format_tree *ft, const char *fmt, time_t t)
 	if (fmt == NULL || *fmt == '\0')
 		return (xstrdup(""));
 
-	if (t == 0)
-		t = time(NULL);
-	tm = localtime(&t);
-
+	tm = localtime(&ft->time);
 	if (strftime(s, sizeof s, fmt, tm) == 0)
 		return (xstrdup(""));
 

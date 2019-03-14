@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.268 2019/03/14 21:27:26 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.269 2019/03/14 23:14:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1537,7 +1537,7 @@ server_client_set_title(struct client *c)
 	ft = format_create(c, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
 
-	title = format_expand_time(ft, template, 0);
+	title = format_expand_time(ft, template);
 	if (c->title == NULL || strcmp(title, c->title) != 0) {
 		free(c->title);
 		c->title = xstrdup(title);
