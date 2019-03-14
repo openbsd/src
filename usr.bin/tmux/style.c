@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.15 2019/03/14 09:53:52 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.16 2019/03/14 10:19:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,23 +39,22 @@ static struct style style_default = {
 int
 style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 {
-	struct grid_cell	*gc = &sy->gc;
-	struct grid_cell	 saved;
-	const char		 delimiters[] = " ,";
-	char			 tmp[32];
-	int			 value, fg, bg, attr, flags;
-	size_t			 end;
+	struct style	 saved;
+	const char	 delimiters[] = " ,";
+	char		 tmp[32];
+	int		 value, fg, bg, attr, flags;
+	size_t		 end;
 
 	if (*in == '\0')
 		return (0);
 	if (strchr(delimiters, in[strlen(in) - 1]) != NULL)
 		return (-1);
-	memcpy(&saved, base, sizeof saved);
+	style_copy(&saved, sy);
 
-	fg = gc->fg;
-	bg = gc->bg;
-	attr = gc->attr;
-	flags = gc->flags;
+	fg = sy->gc.fg;
+	bg = sy->gc.bg;
+	attr = sy->gc.attr;
+	flags = sy->gc.flags;
 
 	do {
 		end = strcspn(in, delimiters);
@@ -99,15 +98,15 @@ style_parse(struct style *sy, const struct grid_cell *base, const char *in)
 		in += end + strspn(in + end, delimiters);
 	} while (*in != '\0');
 
-	gc->fg = fg;
-	gc->bg = bg;
-	gc->attr = attr;
-	gc->flags = flags;
+	sy->gc.fg = fg;
+	sy->gc.bg = bg;
+	sy->gc.attr = attr;
+	sy->gc.flags = flags;
 
 	return (0);
 
 error:
-	memcpy(gc, &saved, sizeof *gc);
+	style_copy(sy, &saved);
 	return (-1);
 }
 
