@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.863 2019/03/14 09:50:09 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.864 2019/03/14 09:53:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -634,6 +634,11 @@ struct grid {
 	struct grid_line	*linedata;
 };
 
+/* Style option. */
+struct style {
+	struct grid_cell	 gc;
+};
+
 /* Hook data structures. */
 struct hook {
 	const char	*name;
@@ -778,8 +783,7 @@ struct window_pane {
 
 	struct input_ctx *ictx;
 
-	struct grid_cell colgc;
-
+	struct style	 style;
 	int		*palette;
 
 	int		 pipe_fd;
@@ -847,8 +851,8 @@ struct window {
 
 	struct options	*options;
 
-	struct grid_cell style;
-	struct grid_cell active_style;
+	struct style	 style;
+	struct style	 active_style;
 
 	u_int		 references;
 	TAILQ_HEAD(, winlink) winlinks;
@@ -1649,7 +1653,7 @@ struct options_entry *options_match_get(struct options *, const char *, int *,
 		     int, int *);
 const char	*options_get_string(struct options *, const char *);
 long long	 options_get_number(struct options *, const char *);
-const struct grid_cell *options_get_style(struct options *, const char *);
+struct style	*options_get_style(struct options *, const char *);
 struct options_entry * printflike(4, 5) options_set_string(struct options *,
 		     const char *, int, const char *, ...);
 struct options_entry *options_set_number(struct options *, const char *,
@@ -2420,14 +2424,16 @@ __dead void printflike(1, 2) fatal(const char *, ...);
 __dead void printflike(1, 2) fatalx(const char *, ...);
 
 /* style.c */
-int		 style_parse(const struct grid_cell *,
-		     struct grid_cell *, const char *);
-const char	*style_tostring(struct grid_cell *);
+int		 style_parse(struct style *,const struct grid_cell *,
+		     const char *);
+const char	*style_tostring(struct style *);
 void		 style_apply(struct grid_cell *, struct options *,
 		     const char *);
 void		 style_apply_update(struct grid_cell *, struct options *,
 		     const char *);
-int		 style_equal(const struct grid_cell *,
-		     const struct grid_cell *);
+int		 style_equal(struct style *, struct style *);
+void		 style_set(struct style *, const struct grid_cell *);
+void		 style_copy(struct style *, struct style *);
+int		 style_is_default(struct style *);
 
 #endif /* TMUX_H */

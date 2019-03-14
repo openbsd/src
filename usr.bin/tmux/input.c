@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.148 2019/03/14 06:33:43 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.149 2019/03/14 09:53:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2340,7 +2340,7 @@ input_osc_10(struct input_ctx *ictx, const char *p)
 	if (sscanf(p, "rgb:%2x/%2x/%2x", &r, &g, &b) != 3)
 	    goto bad;
 
-	wp->colgc.fg = colour_join_rgb(r, g, b);
+	wp->style.gc.fg = colour_join_rgb(r, g, b);
 	wp->flags |= PANE_REDRAW;
 
 	return;
@@ -2359,7 +2359,7 @@ input_osc_11(struct input_ctx *ictx, const char *p)
 	if (sscanf(p, "rgb:%2x/%2x/%2x", &r, &g, &b) != 3)
 	    goto bad;
 
-	wp->colgc.bg = colour_join_rgb(r, g, b);
+	wp->style.gc.bg = colour_join_rgb(r, g, b);
 	wp->flags |= PANE_REDRAW;
 
 	return;

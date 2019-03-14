@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.317 2019/03/14 09:50:09 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.318 2019/03/14 09:53:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2498,28 +2498,28 @@ tty_default_colours(struct grid_cell *gc, struct window_pane *wp)
 {
 	struct window		*w = wp->window;
 	struct options		*oo = w->options;
-	const struct grid_cell	*agc, *pgc, *wgc;
+	struct style		*active, *pane, *window;
 	int			 c;
 
 	if (w->flags & WINDOW_STYLECHANGED) {
 		w->flags &= ~WINDOW_STYLECHANGED;
-		agc = options_get_style(oo, "window-active-style");
-		memcpy(&w->active_style, agc, sizeof w->active_style);
-		wgc = options_get_style(oo, "window-style");
-		memcpy(&w->style, wgc, sizeof w->style);
+		active = options_get_style(oo, "window-active-style");
+		style_copy(&w->active_style, active);
+		window = options_get_style(oo, "window-style");
+		style_copy(&w->style, window);
 	} else {
-		agc = &w->active_style;
-		wgc = &w->style;
+		active = &w->active_style;
+		window = &w->style;
 	}
-	pgc = &wp->colgc;
+	pane = &wp->style;
 
 	if (gc->fg == 8) {
-		if (pgc->fg != 8)
-			gc->fg = pgc->fg;
-		else if (wp == w->active && agc->fg != 8)
-			gc->fg = agc->fg;
+		if (pane->gc.fg != 8)
+			gc->fg = pane->gc.fg;
+		else if (wp == w->active && active->gc.fg != 8)
+			gc->fg = active->gc.fg;
 		else
-			gc->fg = wgc->fg;
+			gc->fg = window->gc.fg;
 
 		if (gc->fg != 8) {
 			c = window_pane_get_palette(wp, gc->fg);
@@ -2529,12 +2529,12 @@ tty_default_colours(struct grid_cell *gc, struct window_pane *wp)
 	}
 
 	if (gc->bg == 8) {
-		if (pgc->bg != 8)
-			gc->bg = pgc->bg;
-		else if (wp == w->active && agc->bg != 8)
-			gc->bg = agc->bg;
+		if (pane->gc.bg != 8)
+			gc->bg = pane->gc.bg;
+		else if (wp == w->active && active->gc.bg != 8)
+			gc->bg = active->gc.bg;
 		else
-			gc->bg = wgc->bg;
+			gc->bg = window->gc.bg;
 
 		if (gc->bg != 8) {
 			c = window_pane_get_palette(wp, gc->bg);
