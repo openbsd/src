@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2018/09/11 18:36:58 robert Exp $
+# $OpenBSD: Makefile,v 1.12 2019/03/14 08:44:46 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -50,6 +50,7 @@ SRCS+=		abort_message.cpp \
 CPPFLAGS+=	-Wall -I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR}
 CPPFLAGS+=	-D_LIBUNWIND_IS_NATIVE_ONLY
 CPPFLAGS+=	-D_LIBCXXABI_BUILDING_LIBRARY
+CPPFLAGS+=	-DNDEBUG
 CFLAGS+=	-nostdlib -funwind-tables
 CXXFLAGS+=	-nostdlib -nostdinc++ -funwind-tables
 .if empty(CXXFLAGS:M-std=*)
