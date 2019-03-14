@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.177 2019/03/14 23:14:27 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.178 2019/03/14 23:34:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -100,6 +100,9 @@ format_job_cmp(struct format_job *fj1, struct format_job *fj2)
 #define FORMAT_WINDOWS 0x100
 #define FORMAT_PANES 0x200
 
+/* Limit on recursion. */
+#define FORMAT_LOOP_LIMIT 10
+
 /* Entry in format tree. */
 struct format_entry {
 	char			*key;
@@ -122,6 +125,7 @@ struct format_tree {
 	u_int			 tag;
 	int			 flags;
 	time_t			 time;
+	u_int			 loop;
 
 	RB_HEAD(format_entry_tree, format_entry) tree;
 };
@@ -1512,6 +1516,10 @@ format_expand(struct format_tree *ft, const char *fmt)
 	if (fmt == NULL)
 		return (xstrdup(""));
 
+	if (ft->loop == FORMAT_LOOP_LIMIT)
+		return (xstrdup(""));
+	ft->loop++;
+
 	len = 64;
 	buf = xmalloc(len);
 	off = 0;
@@ -1606,6 +1614,8 @@ format_expand(struct format_tree *ft, const char *fmt)
 	buf[off] = '\0';
 
 	log_debug("%s: '%s' -> '%s'", __func__, saved, buf);
+
+	ft->loop--;
 	return (buf);
 }
 
