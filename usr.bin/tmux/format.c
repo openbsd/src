@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.175 2019/03/14 21:31:43 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.176 2019/03/14 21:41:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1796,6 +1796,11 @@ format_defaults_winlink(struct format_tree *ft, struct winlink *wl)
 	format_add_cb(ft, "window_stack_index", format_cb_window_stack_index);
 	format_add(ft, "window_flags", "%s", window_printable_flags(wl));
 	format_add(ft, "window_active", "%d", wl == s->curw);
+
+	format_add(ft, "window_start_flag", "%d",
+	    !!(wl == RB_MIN(winlinks, &s->windows)));
+	format_add(ft, "window_end_flag", "%d",
+	    !!(wl == RB_MAX(winlinks, &s->windows)));
 
 	format_add(ft, "window_bell_flag", "%d",
 	    !!(wl->flags & WINLINK_BELL));
