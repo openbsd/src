@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.619 2019/03/14 06:36:21 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.620 2019/03/14 21:31:43 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3719,6 +3719,12 @@ will expand the format twice, for example
 is the result of expanding the content of the
 .Ic status-left
 option rather than the content itself.
+.Ql T:
+is like
+.Ql E:
+but also expands
+.Xr strftime 3
+specifiers.
 .Ql S: ,
 .Ql W:
 or
