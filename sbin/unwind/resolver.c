@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.21 2019/03/01 08:02:25 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.22 2019/03/15 16:48:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -584,6 +584,9 @@ resolver_dispatch_main(int fd, short event, void *bula)
 				fatal("pledge");
 			break;
 		case IMSG_RECONF_CONF:
+			if (nconf != NULL)
+				fatalx("%s: IMSG_RECONF_CONF already in "
+				    "progress", __func__);
 			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_conf))
 				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
@@ -643,6 +646,9 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			    uw_forwarder, entry);
 			break;
 		case IMSG_RECONF_END:
+			if (nconf == NULL)
+				fatalx("%s: IMSG_RECONF_END without "
+				    "IMSG_RECONF_CONF", __func__);
 			forwarders_changed = check_forwarders_changed(
 			    &resolver_conf->uw_forwarder_list,
 			    &nconf->uw_forwarder_list);
