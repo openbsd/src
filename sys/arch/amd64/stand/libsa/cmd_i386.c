@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.12 2017/10/11 04:07:50 yasuoka Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.13 2019/03/15 06:53:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -56,8 +56,8 @@ int bootbuf(void *, int);
 const struct cmd_table cmd_machine[] = {
 #ifndef EFIBOOT
 	{ "boot",	CMDT_CMD, Xboot },
-	{ "comaddr",	CMDT_CMD, Xcomaddr },
 #endif
+	{ "comaddr",	CMDT_CMD, Xcomaddr },
 	{ "diskinfo",	CMDT_CMD, Xdiskinfo },
 	{ "memory",	CMDT_CMD, Xmemory },
 #ifdef EFIBOOT
@@ -226,7 +226,6 @@ Xmemory(void)
 	return 0;
 }
 
-#ifndef EFIBOOT
 int
 Xcomaddr(void)
 {
@@ -237,4 +236,3 @@ Xcomaddr(void)
 
 	return 0;
 }
-#endif
