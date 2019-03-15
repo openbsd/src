@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.95 2019/03/12 18:13:40 patrick Exp $ */
+/* $OpenBSD: xhci.c,v 1.96 2019/03/15 23:09:23 patrick Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1083,8 +1083,8 @@ xhci_get_txinfo(struct xhci_softc *sc, struct usbd_pipe *pipe)
 			/*  XXX Read the companion descriptor */
 		}
 
-		mep = (UE_GET_TRANS(mps) | 0x1) * UE_GET_SIZE(mps);
-		atl = min(sc->sc_pagesize, mep);
+		mep = (UE_GET_TRANS(mps) + 1) * UE_GET_SIZE(mps);
+		atl = mep;
 		break;
 	case UE_BULK:
 	default:
