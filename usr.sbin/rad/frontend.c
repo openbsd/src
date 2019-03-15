@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.26 2019/03/15 16:47:19 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.27 2019/03/15 16:49:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -145,7 +145,7 @@ struct rad_conf	*frontend_conf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_engine;
 struct event		 ev_route;
-int			 icmp6sock = -1, ioctlsock = -1;
+int			 icmp6sock = -1, ioctlsock = -1, routesock = -1;
 struct ipv6_mreq	 all_routers;
 struct sockaddr_in6	 all_nodes;
 struct msghdr		 sndmhdr;
@@ -456,14 +456,21 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			nconf = NULL;
 			break;
 		case IMSG_ICMP6SOCK:
+			if (icmp6sock != -1)
+				fatalx("%s: received unexpected icmp6 fd",
+				    __func__);
 			if ((icmp6sock = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "ICMPv6 fd but didn't receive any",
 				    __func__);
 			event_set(&icmp6ev.ev, icmp6sock, EV_READ | EV_PERSIST,
 			    icmp6_receive, NULL);
+			break;
 		case IMSG_ROUTESOCK:
-			if ((fd = imsg.fd) == -1)
+			if (routesock != -1)
+				fatalx("%s: received unexpected routesock fd",
+				    __func__);
+			if ((routesock = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "routesocket fd but didn't receive any",
 				    __func__);
