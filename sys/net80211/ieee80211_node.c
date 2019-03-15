@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.162 2019/03/01 08:13:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.163 2019/03/15 11:05:29 phessler Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ ieee80211_ess_setnwkeys(struct ieee80211_ess *ess,
     const struct ieee80211_nwkey *nwkey)
 {
 	struct ieee80211_key *k;
-	int i;
+	int error, i;
 
 	if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN) {
 		if (!(ess->flags & IEEE80211_F_WEPON))
@@ -242,6 +242,9 @@ ieee80211_ess_setnwkeys(struct ieee80211_ess *ess,
 			k->k_cipher = IEEE80211_CIPHER_WEP104;
 		k->k_len = ieee80211_cipher_keylen(k->k_cipher);
 		k->k_flags = IEEE80211_KEY_GROUP | IEEE80211_KEY_TX;
+		error = copyin(nwkey->i_key[i].i_keydat, k->k_key, k->k_len);
+		if (error != 0)
+			return error;
 	}
 	ess->def_txkey = nwkey->i_defkid - 1;
 	ess->flags |= IEEE80211_F_WEPON;
