@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.11 2019/03/14 16:01:02 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.12 2019/03/15 14:55:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -69,6 +69,20 @@ struct intrbank {
 
 #define IS_WORKQ_IRQ(x)	((unsigned int)(x) < 16)
 
+struct octciu_intrhand {
+	struct octciu_intrhand	*ih_next;
+	int			(*ih_fun)(void *);
+	void			*ih_arg;
+	int			 ih_level;
+	int			 ih_irq;
+	struct evcount		 ih_count;
+	int			 ih_flags;
+	cpuid_t			 ih_cpuid;
+};
+
+/* ih_flags */
+#define CIH_MPSAFE	0x01
+
 struct octciu_cpu {
 	struct intrbank		 scpu_ibank[NBANKS];
 	uint64_t		 scpu_intem[NBANKS];
@@ -80,7 +94,7 @@ struct octciu_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 	struct octciu_cpu	 sc_cpu[MAXCPUS];
-	struct intrhand		*sc_intrhand[OCTCIU_NINTS];
+	struct octciu_intrhand	*sc_intrhand[OCTCIU_NINTS];
 	unsigned int		 sc_nbanks;
 
 	int			(*sc_ipi_handler)(void *);
@@ -218,7 +232,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
     void *ih_arg, const char *ih_what)
 {
 	struct octciu_softc *sc = octciu_sc;
-	struct intrhand **p, *q, *ih;
+	struct octciu_intrhand **p, *q, *ih;
 	int cpuid = cpu_number();
 	int flags;
 	int s;
@@ -234,7 +248,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 		cpuid = irq % ncpus;
 #endif
 
-	flags = (level & IPL_MPSAFE) ? IH_MPSAFE : 0;
+	flags = (level & IPL_MPSAFE) ? CIH_MPSAFE : 0;
 	level &= ~IPL_MPSAFE;
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
@@ -297,8 +311,8 @@ octciu_intr_establish_fdt_idx(void *cookie, int node, int idx, int level,
 void
 octciu_intr_disestablish(void *_ih)
 {
-	struct intrhand *ih = _ih;
-	struct intrhand *p;
+	struct octciu_intrhand *ih = _ih;
+	struct octciu_intrhand *p;
 	struct octciu_softc *sc = octciu_sc;
 	unsigned int irq = ih->ih_irq;
 	int cpuid = cpu_number();
@@ -340,7 +354,7 @@ octciu_intr_makemasks(struct octciu_softc *sc)
 {
 	cpuid_t cpuid = cpu_number();
 	struct octciu_cpu *scpu = &sc->sc_cpu[cpuid];
-	struct intrhand *q;
+	struct octciu_intrhand *q;
 	uint intrlevel[OCTCIU_NINTS];
 	int irq, level;
 
@@ -425,7 +439,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
     struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
-	struct intrhand *ih;
+	struct octciu_intrhand *ih;
 	struct octciu_cpu *scpu = &sc->sc_cpu[ci->ci_cpuid];
 	uint64_t imr, isr, mask;
 	int handled, ipl, irq;
@@ -474,7 +488,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 				sr = getsr();
 				ENABLEIPI();
 			}
-			if (ih->ih_flags & IH_MPSAFE)
+			if (ih->ih_flags & CIH_MPSAFE)
 				need_lock = 0;
 			else
 				need_lock = 1;
