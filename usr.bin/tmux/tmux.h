@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.868 2019/03/15 14:46:58 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.869 2019/03/15 21:54:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1497,6 +1497,7 @@ struct options_table_entry {
 
 	const char		 *default_str;
 	long long		  default_num;
+	const char		**default_arr;
 
 	const char		 *separator;
 	const char		 *style;
