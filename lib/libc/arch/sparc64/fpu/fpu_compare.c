@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_compare.c,v 1.2 2012/12/05 23:19:59 deraadt Exp $	*/
+/*	$OpenBSD: fpu_compare.c,v 1.3 2019/03/15 05:42:38 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,6 @@
  *	@(#)fpu_compare.c	8.1 (Berkeley) 6/11/93
  *	$NetBSD: fpu_compare.c,v 1.3 2001/08/26 05:46:31 eeh Exp $
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_compare.c,v 1.4 2002/03/22 21:52:58 obrien Exp $");
-#endif
 
 /*
  * CMP and CMPE instructions.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_implode.c,v 1.5 2015/11/15 22:41:43 guenther Exp $	*/
+/*	$OpenBSD: fpu_implode.c,v 1.6 2019/03/15 05:42:38 kevlo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,10 +44,6 @@
  *	@(#)fpu_implode.c	8.1 (Berkeley) 6/11/93
  *	$NetBSD: fpu_implode.c,v 1.8 2001/08/26 05:44:46 eeh Exp $
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_implode.c,v 1.5 2002/04/27 21:56:28 jake Exp $");
-#endif
 
 /*
  * FPU subroutines: `implode' internal format numbers into the machine's

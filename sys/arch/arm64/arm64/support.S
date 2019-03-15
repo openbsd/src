@@ -1,4 +1,4 @@
-/* $OpenBSD: support.S,v 1.8 2018/09/07 01:32:01 mortimer Exp $ */
+/* $OpenBSD: support.S,v 1.9 2019/03/15 05:42:38 kevlo Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014-2015 The FreeBSD Foundation
@@ -27,13 +27,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 #include <machine/asm.h>
-#if 0
-__FBSDID("$FreeBSD: head/sys/arm64/arm64/support.S 297615 2016-04-06 14:08:10Z andrew $");
-#endif
 
 #include <machine/setjmp.h>
 #include <machine/param.h>

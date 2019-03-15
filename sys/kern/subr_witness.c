@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.29 2019/02/07 15:11:38 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.30 2019/03/15 05:42:38 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -85,10 +85,6 @@
  * execute.  Thus, acquiring Giant both before and after a sleepable lock
  * will not result in a lock order reversal.
  */
-
-#if 0
-__FBSDID("$FreeBSD: head/sys/kern/subr_witness.c 313261 2017-02-05 02:27:04Z markj $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.6 2016/05/07 19:05:21 guenther Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.7 2019/03/15 05:42:38 kevlo Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -27,9 +27,6 @@
  */
 
 #include <machine/asm.h>
-#if 0
-__FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libc/amd64/gen/rfork_thread.S,v 1.1 2003/10/13 20:32:33 alc Exp $");
-#endif
 
 /*
  * With thanks to John Dyson for the original version of this.

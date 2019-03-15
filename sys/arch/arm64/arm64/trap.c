@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.21 2018/10/08 15:57:53 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.22 2019/03/15 05:42:38 kevlo Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -23,12 +23,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
-
-#if 0
-__FBSDID("$FreeBSD: head/sys/arm64/arm64/trap.c 281654 2015-04-17 12:58:09Z andrew $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

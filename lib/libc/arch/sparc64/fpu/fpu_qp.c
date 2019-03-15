@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_qp.c,v 1.6 2016/05/08 18:41:17 guenther Exp $	*/
+/*	$OpenBSD: fpu_qp.c,v 1.7 2019/03/15 05:42:38 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jake Burkholder.
@@ -25,10 +25,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/lib/libc/sparc64/fpu/fpu_qp.c,v 1.3 2002/09/02 02:30:20 jake Exp $");
-#endif
 
 #include <sys/types.h>
 #include <machine/fsr.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: ufs_dirhash.c,v 1.41 2019/03/06 00:34:08 tedu Exp $	*/
+/* $OpenBSD: ufs_dirhash.c,v 1.42 2019/03/15 05:42:38 kevlo Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
  *
@@ -27,10 +27,6 @@
 /*
  * This implements a hash-based lookup scheme for UFS directories.
  */
-
-#if 0
-__FBSDID("$FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.18 2004/02/15 21:39:35 dwmalone Exp $");
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
