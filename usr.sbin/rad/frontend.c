@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.25 2019/03/15 16:46:25 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.26 2019/03/15 16:47:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -362,6 +362,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_engine->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
+			if (nconf != NULL)
+				fatalx("%s: IMSG_RECONF_CONF already in "
+				    "progress", __func__);
 			if (IMSG_DATA_SIZE(imsg) != sizeof(struct rad_conf))
 				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
@@ -445,6 +448,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    ra_dnssl_conf, entry);
 			break;
 		case IMSG_RECONF_END:
+			if (nconf == NULL)
+				fatalx("%s: IMSG_RECONF_END without "
+				    "IMSG_RECONF_CONF", __func__);
 			merge_config(frontend_conf, nconf);
 			merge_ra_interfaces();
 			nconf = NULL;

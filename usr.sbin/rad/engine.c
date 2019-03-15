@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.14 2019/03/12 19:40:01 pamela Exp $	*/
+/*	$OpenBSD: engine.c,v 1.15 2019/03/15 16:47:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -318,6 +318,9 @@ engine_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_frontend->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
+			if (nconf != NULL)
+				fatalx("%s: IMSG_RECONF_CONF already in "
+				    "progress", __func__);
 			if (IMSG_DATA_SIZE(imsg) != sizeof(struct rad_conf))
 				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
@@ -400,6 +403,9 @@ engine_dispatch_main(int fd, short event, void *bula)
 			    ra_dnssl_conf, entry);
 			break;
 		case IMSG_RECONF_END:
+			if (nconf == NULL)
+				fatalx("%s: IMSG_RECONF_END without "
+				    "IMSG_RECONF_CONF", __func__);
 			merge_config(engine_conf, nconf);
 			nconf = NULL;
 			break;
