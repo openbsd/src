@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.24 2019/03/12 18:47:57 pamela Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.25 2019/03/15 16:46:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -470,6 +470,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			frontend_startup();
 			break;
 		case IMSG_CONTROLFD:
+			if (control_state.fd != -1)
+				fatalx("%s: received unexpected controlsock",
+				    __func__);
 			if ((fd = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "control fd but didn't receive any",
