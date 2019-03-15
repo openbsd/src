@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.866 2019/03/15 10:04:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.867 2019/03/15 10:48:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1433,8 +1433,6 @@ struct client {
 
 	struct session	*session;
 	struct session	*last_session;
-
-	int		 wlmouse;
 
 	int		 references;
 
