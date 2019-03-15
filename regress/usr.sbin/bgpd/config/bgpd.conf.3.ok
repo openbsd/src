@@ -4,8 +4,6 @@ somemore_v6 = "{ 		2001:DB8:400::/64 		2001:DB8:500::/64 		}"
 AS 1
 router-id 127.0.0.1
 socket "/var/run/bgpd.sock.0"
-holdtime min 3
-fib-priority 48
 
 
 rde rib Adj-RIB-In no evaluate

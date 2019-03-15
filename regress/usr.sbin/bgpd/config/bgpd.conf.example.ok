@@ -4,8 +4,6 @@ peer2 = "10.1.0.3"
 AS 65001
 router-id 127.0.0.1
 socket "/var/run/bgpd.sock.0"
-holdtime min 3
-fib-priority 48
 
 
 prefix-set "mynetworks" { 192.0.2.0/24  }

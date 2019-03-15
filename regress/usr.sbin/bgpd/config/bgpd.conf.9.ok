@@ -1,8 +1,6 @@
 AS 1
 router-id 127.0.0.1
 socket "/var/run/bgpd.sock.0"
-holdtime min 3
-fib-priority 48
 
 roa-set {
 	1.2.3.0/24 source-as 0
