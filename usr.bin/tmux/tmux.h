@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.867 2019/03/15 10:48:05 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.868 2019/03/15 14:46:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1970,6 +1970,7 @@ void	 status_update_saved(struct session *);
 int	 status_at_line(struct client *);
 u_int	 status_line_size(struct client *);
 struct window *status_get_window_at(struct client *, u_int);
+void	 status_free(struct client *);
 int	 status_redraw(struct client *);
 void printflike(2, 3) status_message_set(struct client *, const char *, ...);
 void	 status_message_clear(struct client *);

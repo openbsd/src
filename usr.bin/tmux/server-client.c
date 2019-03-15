@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.269 2019/03/14 23:14:27 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.270 2019/03/15 14:46:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -281,13 +281,7 @@ server_client_lost(struct client *c)
 	if (c->stderr_data != c->stdout_data)
 		evbuffer_free(c->stderr_data);
 
-	if (event_initialized(&c->status.timer))
-		evtimer_del(&c->status.timer);
-	screen_free(&c->status.status);
-	if (c->status.old_status != NULL) {
-		screen_free(c->status.old_status);
-		free(c->status.old_status);
-	}
+	status_free(c);
 
 	free(c->title);
 	free((void *)c->cwd);
