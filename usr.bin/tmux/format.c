@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.180 2019/03/15 10:07:24 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.181 2019/03/15 10:22:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -231,7 +231,7 @@ format_log1(struct format_tree *ft, const char *from, const char *fmt, ...)
 	va_end(ap);
 
 	log_debug("%s: %s", from, s);
-	if (ft->item != NULL)
+	if (ft->item != NULL && (ft->flags & FORMAT_VERBOSE))
 		cmdq_print(ft->item, "#%.*s%s", ft->loop, spaces, s);
 
 	free(s);
