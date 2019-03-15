@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.375 2019/03/07 07:42:36 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.376 2019/03/15 09:54:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -57,7 +57,6 @@
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
-void	init_conf(struct bgpd_config *);
 void	init_peer(struct peer *);
 void	start_timer_holdtime(struct peer *);
 void	start_timer_keepalive(struct peer *);
@@ -582,15 +581,6 @@ session_main(int debug, int verbose)
 	control_shutdown(rcsock);
 	log_info("session engine exiting");
 	exit(0);
-}
-
-void
-init_conf(struct bgpd_config *c)
-{
-	if (!c->holdtime)
-		c->holdtime = INTERVAL_HOLD;
-	if (!c->connectretry)
-		c->connectretry = INTERVAL_CONNECTRETRY;
 }
 
 void
@@ -2619,7 +2609,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			npeers = NULL;
 
 			copy_config(nconf, imsg.data); 
-			init_conf(nconf);
 			pending_reconf = 1;
 			break;
 		case IMSG_RECONF_PEER:

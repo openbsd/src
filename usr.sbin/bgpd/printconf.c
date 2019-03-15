@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.132 2019/02/26 10:49:15 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.133 2019/03/15 09:54:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -378,11 +378,11 @@ print_mainconf(struct bgpd_config *conf)
 	printf("socket \"%s\"\n", conf->csock);
 	if (conf->rcsock)
 		printf("socket \"%s\" restricted\n", conf->rcsock);
-	if (conf->holdtime)
+	if (conf->holdtime != INTERVAL_HOLD)
 		printf("holdtime %u\n", conf->holdtime);
-	if (conf->min_holdtime)
+	if (conf->min_holdtime != MIN_HOLDTIME)
 		printf("holdtime min %u\n", conf->min_holdtime);
-	if (conf->connectretry)
+	if (conf->connectretry != INTERVAL_CONNECTRETRY)
 		printf("connect-retry %u\n", conf->connectretry);
 
 	if (conf->flags & BGPD_FLAG_NO_EVALUATE)
@@ -405,8 +405,9 @@ print_mainconf(struct bgpd_config *conf)
 		printf("nexthop qualify via bgp\n");
 	if (conf->flags & BGPD_FLAG_NEXTHOP_DEFAULT)
 		printf("nexthop qualify via default\n");
-	printf("fib-priority %hhu", conf->fib_priority);
-	printf("\n\n");
+	if (conf->fib_priority != RTP_BGP)
+		printf("fib-priority %hhu\n", conf->fib_priority);
+	printf("\n");
 }
 
 void
@@ -732,7 +733,8 @@ print_announce(struct peer_config *p, const char *c)
 			printf("%s\tannounce %s\n", c, aid2str(aid));
 }
 
-void print_as(struct filter_rule *r)
+void
+print_as(struct filter_rule *r)
 {
 	if (r->match.as.flags & AS_FLAG_AS_SET_NAME) {
 		printf("as-set \"%s\" ", r->match.as.name);

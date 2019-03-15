@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.85 2019/03/07 07:42:36 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.86 2019/03/15 09:54:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -200,7 +200,6 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
 		conf->clusterid = conf->bgpid;
 
-
 	/* adjust FIB priority if changed */
 	/* if xconf is uninitialized we get RTP_NONE */
 	if (xconf->fib_priority != conf->fib_priority) {
@@ -225,6 +224,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 	filterlist_free(xconf->filters);
 	xconf->filters = conf->filters;
 	conf->filters = NULL;
+
+	/* merge mrt config */
+	mrt_mergeconfig(xconf->mrt, conf->mrt);
 
 	/* switch the roa, first remove the old one */
 	free_prefixtree(&xconf->roa);
