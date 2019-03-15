@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.181 2019/03/15 10:22:57 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.182 2019/03/15 15:02:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1187,6 +1187,7 @@ format_loop_sessions(struct format_tree *ft, const char *fmt)
 	RB_FOREACH(s, sessions, &sessions) {
 		format_log(ft, "session loop: $%u", s->id);
 		nft = format_create(c, item, FORMAT_NONE, ft->flags);
+		nft->loop = ft->loop;
 		format_defaults(nft, ft->c, s, NULL, NULL);
 		expanded = format_expand(nft, fmt);
 		format_free(nft);
@@ -1234,6 +1235,7 @@ format_loop_windows(struct format_tree *ft, const char *fmt)
 		else
 			use = all;
 		nft = format_create(c, item, FORMAT_WINDOW|w->id, ft->flags);
+		nft->loop = ft->loop;
 		format_defaults(nft, ft->c, ft->s, wl, NULL);
 		expanded = format_expand(nft, use);
 		format_free(nft);
@@ -1282,6 +1284,7 @@ format_loop_panes(struct format_tree *ft, const char *fmt)
 		else
 			use = all;
 		nft = format_create(c, item, FORMAT_PANE|wp->id, ft->flags);
+		nft->loop = ft->loop;
 		format_defaults(nft, ft->c, ft->s, ft->wl, wp);
 		expanded = format_expand(nft, use);
 		format_free(nft);
