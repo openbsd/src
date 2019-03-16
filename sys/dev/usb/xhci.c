@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.97 2019/03/15 23:20:35 patrick Exp $ */
+/* $OpenBSD: xhci.c,v 1.98 2019/03/16 19:35:35 mglocker Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -78,6 +78,8 @@ int	xhci_reset(struct xhci_softc *);
 int	xhci_intr1(struct xhci_softc *);
 void	xhci_event_dequeue(struct xhci_softc *);
 void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
+int	xhci_event_xfer_isoc(struct usbd_xfer *, struct xhci_pipe *,
+	    uint32_t, int);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
 void	xhci_event_port_change(struct xhci_softc *, uint64_t, uint32_t);
 int	xhci_pipe_init(struct xhci_softc *, struct usbd_pipe *);
@@ -701,8 +703,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	struct xhci_xfer *xx;
 	uint8_t dci, slot, code;
 	uint32_t remain;
-	int trb_idx, trb0_idx;
-	int frame_idx;
+	int trb_idx;
 
 	slot = XHCI_TRB_GET_SLOT(flags);
 	dci = XHCI_TRB_GET_EP(flags);
@@ -763,46 +764,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 			 * Complete the transfer if this is the last TRB
 			 * in a TD
 			 */
-			xx = (struct xhci_xfer *)xfer;
-			KASSERT(xx->index >= 0);
-			trb0_idx = ((xx->index + xp->ring.ntrb) -
-			    xx->ntrb) % (xp->ring.ntrb - 1);
-
-			/* Find the according frame index for this TRB. */
-			frame_idx = 0;
-			while (trb0_idx != trb_idx) {
-				if ((xp->ring.trbs[trb0_idx].trb_flags &
-				    XHCI_TRB_TYPE_MASK) == XHCI_TRB_TYPE_ISOCH)
-					frame_idx++;
-				if (trb0_idx++ == (xp->ring.ntrb - 1))
-					trb0_idx = 0;
-			}
-
-			/*
-			 * If we queued two TRBs for a frame and this is
-			 * the second TRB, check if the first TRB needs
-			 * accounting since it might not have raised an
-			 * interrupt in case of full data received.
-			 */
-			if ((xp->ring.trbs[trb_idx].trb_flags &
-			    XHCI_TRB_TYPE_MASK) == XHCI_TRB_TYPE_NORMAL) {
-				frame_idx--;
-				if (trb_idx == 0)
-					trb0_idx = xp->ring.ntrb - 2;
-				else
-					trb0_idx = trb_idx - 1;
-				if (xfer->frlengths[frame_idx] == 0) {
-					xfer->frlengths[frame_idx] =
-					    XHCI_TRB_LEN(
-					    xp->ring.trbs[trb0_idx].trb_status);
-				}
-			}
-
-			xfer->frlengths[frame_idx] += XHCI_TRB_LEN(
-			    xp->ring.trbs[trb_idx].trb_status) - remain;
-			xfer->actlen += xfer->frlengths[frame_idx];
-
-			if (xx->index != trb_idx)
+			if (xhci_event_xfer_isoc(xfer, xp, remain, trb_idx))
 				return;
 		}
 		xfer->status = USBD_NORMAL_COMPLETION;
@@ -823,46 +785,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 				return;
 			}
 		} else {
-			xx = (struct xhci_xfer *)xfer;
-			KASSERT(xx->index >= 0);
-			trb0_idx = ((xx->index + xp->ring.ntrb) -
-			    xx->ntrb) % (xp->ring.ntrb - 1);
-
-			/* Find the according frame index for this TRB. */
-			frame_idx = 0;
-			while (trb0_idx != trb_idx) {
-				if ((xp->ring.trbs[trb0_idx].trb_flags &
-				    XHCI_TRB_TYPE_MASK) == XHCI_TRB_TYPE_ISOCH)
-					frame_idx++;
-				if (trb0_idx++ == (xp->ring.ntrb - 1))
-					trb0_idx = 0;
-			}
-
-			/*
-			 * If we queued two TRBs for a frame and this is
-			 * the second TRB, check if the first TRB needs
-			 * accounting since it might not have raised an
-			 * interrupt in case of full data received.
-			 */
-			if ((xp->ring.trbs[trb_idx].trb_flags &
-			    XHCI_TRB_TYPE_MASK) == XHCI_TRB_TYPE_NORMAL) {
-				frame_idx--;
-				if (trb_idx == 0)
-					trb0_idx = xp->ring.ntrb - 2;
-				else
-					trb0_idx = trb_idx - 1;
-				if (xfer->frlengths[frame_idx] == 0) {
-					xfer->frlengths[frame_idx] =
-					    XHCI_TRB_LEN(
-					    xp->ring.trbs[trb0_idx].trb_status);
-				}
-			}
-
-			xfer->frlengths[frame_idx] += XHCI_TRB_LEN(
-			    xp->ring.trbs[trb_idx].trb_status) - remain;
-			xfer->actlen += xfer->frlengths[frame_idx];
-
-			if (xx->index != trb_idx)
+			if (xhci_event_xfer_isoc(xfer, xp, remain, trb_idx))
 				return;
 		}
 		xfer->status = USBD_NORMAL_COMPLETION;
@@ -909,6 +832,54 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	}
 
 	xhci_xfer_done(xfer);
+}
+
+int
+xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
+    uint32_t remain, int trb_idx)
+{
+	struct xhci_xfer *xx = (struct xhci_xfer *)xfer;
+	int trb0_idx, frame_idx = 0;
+
+	KASSERT(xx->index >= 0);
+	trb0_idx =
+	    ((xx->index + xp->ring.ntrb) - xx->ntrb) % (xp->ring.ntrb - 1);
+
+	/* Find the according frame index for this TRB. */
+	while (trb0_idx != trb_idx) {
+		if ((xp->ring.trbs[trb0_idx].trb_flags & XHCI_TRB_TYPE_MASK) ==
+		    XHCI_TRB_TYPE_ISOCH)
+			frame_idx++;
+		if (trb0_idx++ == (xp->ring.ntrb - 1))
+			trb0_idx = 0;
+	}
+
+	/*
+	 * If we queued two TRBs for a frame and this is the second TRB,
+	 * check if the first TRB needs accounting since it might not have
+	 * raised an interrupt in case of full data received.
+	 */
+	if ((xp->ring.trbs[trb_idx].trb_flags & XHCI_TRB_TYPE_MASK) ==
+	    XHCI_TRB_TYPE_NORMAL) {
+		frame_idx--;
+		if (trb_idx == 0)
+			trb0_idx = xp->ring.ntrb - 2;
+		else
+			trb0_idx = trb_idx - 1;
+		if (xfer->frlengths[frame_idx] == 0) {
+			xfer->frlengths[frame_idx] =
+			    XHCI_TRB_LEN(xp->ring.trbs[trb0_idx].trb_status);
+		}
+	}
+
+	xfer->frlengths[frame_idx] +=
+	    XHCI_TRB_LEN(xp->ring.trbs[trb_idx].trb_status) - remain;
+	xfer->actlen += xfer->frlengths[frame_idx];
+
+	if (xx->index != trb_idx)
+		return (1);
+
+	return (0);
 }
 
 void
