@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.12 2019/03/15 14:55:36 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.13 2019/03/16 06:23:03 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -38,6 +38,7 @@
 #include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 

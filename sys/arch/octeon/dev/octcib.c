@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcib.c,v 1.2 2017/07/31 14:46:14 visa Exp $	*/
+/*	$OpenBSD: octcib.c,v 1.3 2019/03/16 06:23:03 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -23,6 +23,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
