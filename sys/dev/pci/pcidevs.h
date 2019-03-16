@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1878 2019/02/20 03:55:49 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1879 2019/03/16 22:38:47 sthen Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2033,6 +2033,8 @@
 #define	PCI_PRODUCT_ATTANSIC_L2C_1	0x2060		/* L2C */
 #define	PCI_PRODUCT_ATTANSIC_L2C_2	0x2062		/* L2C */
 #define	PCI_PRODUCT_ATTANSIC_E2200	0xe091		/* E2200 */
+#define	PCI_PRODUCT_ATTANSIC_E2400	0xe0a1		/* E2400 */
+#define	PCI_PRODUCT_ATTANSIC_E2500	0xe0b1		/* E2500 */
 
 /* Aureal products */
 #define	PCI_PRODUCT_AUREAL_AU8820	0x0001		/* Vortex 1 */
