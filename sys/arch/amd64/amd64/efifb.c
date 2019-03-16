@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.20 2019/03/15 10:38:14 fcambus Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.21 2019/03/16 13:16:49 fcambus Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -114,8 +114,8 @@ const struct cfattach efifb_ca = {
 	sizeof(struct efifb_softc), efifb_match, efifb_attach, NULL
 };
 
-#define	EFIFB_WIDTH	100
-#define	EFIFB_HEIGHT	31
+#define	EFIFB_WIDTH	160
+#define	EFIFB_HEIGHT	160
 
 struct wsscreen_descr efifb_std_descr = { "std" };
 
