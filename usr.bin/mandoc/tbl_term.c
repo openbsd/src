@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.56 2019/02/09 21:01:24 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.57 2019/03/16 21:35:11 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -44,7 +44,8 @@ static	void	tbl_fill_border(struct termp *, int, size_t);
 static	void	tbl_fill_char(struct termp *, char, size_t);
 static	void	tbl_fill_string(struct termp *, const char *, size_t);
 static	void	tbl_hrule(struct termp *, const struct tbl_span *,
-			const struct tbl_span *, int);
+			const struct tbl_span *, const struct tbl_span *,
+			int);
 static	void	tbl_literal(struct termp *, const struct tbl_dat *,
 			const struct roffcol *);
 static	void	tbl_number(struct termp *, const struct tbl_opts *,
@@ -220,9 +221,9 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		if (tp->enc == TERMENC_ASCII &&
 		    sp->opts->opts & TBL_OPT_DBOX)
-			tbl_hrule(tp, NULL, sp, TBL_OPT_DBOX);
+			tbl_hrule(tp, NULL, sp, sp, TBL_OPT_DBOX);
 		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX))
-			tbl_hrule(tp, NULL, sp, TBL_OPT_BOX);
+			tbl_hrule(tp, NULL, sp, sp, TBL_OPT_BOX);
 	}
 
 	/* Set up the columns. */
@@ -340,7 +341,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 		more = 0;
 		if (horiz)
-			tbl_hrule(tp, sp->prev, sp, 0);
+			tbl_hrule(tp, sp->prev, sp, sp->next, 0);
 		else {
 			cp = sp->layout->first;
 			cpn = sp->next == NULL ? NULL :
@@ -555,12 +556,12 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	tp->tcol->rmargin = tp->maxrmargin;
 	if (sp->next == NULL) {
 		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX)) {
-			tbl_hrule(tp, sp, NULL, TBL_OPT_BOX);
+			tbl_hrule(tp, sp, sp, NULL, TBL_OPT_BOX);
 			tp->skipvsp = 1;
 		}
 		if (tp->enc == TERMENC_ASCII &&
 		    sp->opts->opts & TBL_OPT_DBOX) {
-			tbl_hrule(tp, sp, NULL, TBL_OPT_DBOX);
+			tbl_hrule(tp, sp, sp, NULL, TBL_OPT_DBOX);
 			tp->skipvsp = 2;
 		}
 		assert(tp->tbl.cols);
@@ -569,7 +570,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	} else if (horiz == 0 && sp->opts->opts & TBL_OPT_ALLBOX &&
 	    (sp->next == NULL || sp->next->pos == TBL_SPAN_DATA ||
 	     sp->next->next != NULL))
-		tbl_hrule(tp, sp, sp->next, TBL_OPT_ALLBOX);
+		tbl_hrule(tp, sp, sp, sp->next, TBL_OPT_ALLBOX);
 
 	tp->tcol->offset = save_offset;
 	tp->flags &= ~TERMP_NONOSPACE;
@@ -577,9 +578,10 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 
 static void
 tbl_hrule(struct termp *tp, const struct tbl_span *spp,
-    const struct tbl_span *spn, int flags)
+    const struct tbl_span *sp, const struct tbl_span *spn, int flags)
 {
 	const struct tbl_cell	*cpp;    /* Layout cell above this line. */
+	const struct tbl_cell	*cp;     /* Layout cell in this line. */
 	const struct tbl_cell	*cpn;    /* Layout cell below this line. */
 	const struct tbl_dat	*dpn;	 /* Data cell below this line. */
 	const struct roffcol	*col;    /* Contains width and spacing. */
@@ -590,6 +592,7 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 	int			 uw, dw; /* Vertical line widths. */
 
 	cpp = spp == NULL ? NULL : spp->layout->first;
+	cp  = sp  == NULL ? NULL : sp->layout->first;
 	cpn = spn == NULL ? NULL : spn->layout->first;
 	dpn = NULL;
 	if (spn != NULL) {
@@ -598,11 +601,11 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 		else if (spn->next != NULL)
 			dpn = spn->next->first;
 	}
-	opts = spn == NULL ? spp->opts->opts : spn->opts->opts;
+	opts = sp->opts->opts;
 	bw = opts & TBL_OPT_DBOX ? (tp->enc == TERMENC_UTF8 ? 2 : 1) :
 	    opts & (TBL_OPT_BOX | TBL_OPT_ALLBOX) ? 1 : 0;
 	hw = flags == TBL_OPT_DBOX || flags == TBL_OPT_BOX ? bw :
-	    spn->pos == TBL_SPAN_DHORIZ ? 2 : 1;
+	    sp->pos == TBL_SPAN_DHORIZ ? 2 : 1;
 
 	/* Print the left end of the line. */
 
@@ -618,7 +621,7 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 		     cpn->pos != TBL_CELL_DOWN ? BRIGHT * hw : 0), 1);
 
 	for (;;) {
-		col = tp->tbl.cols + (cpn == NULL ? cpp->col : cpn->col);
+		col = tp->tbl.cols + cp->col;
 
 		/* Print the horizontal line inside this column. */
 
@@ -644,6 +647,8 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 			}
 			cpp = cpp->next;
 		}
+		if (cp != NULL)
+			cp = cp->next;
 		if (cpn != NULL) {
 			if (flags != TBL_OPT_DBOX) {
 				dw = cpn->vert;
@@ -654,7 +659,7 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 			while (dpn != NULL && dpn->layout != cpn)
 				dpn = dpn->next;
 		}
-		if (cpp == NULL && cpn == NULL)
+		if (cpp == NULL && cp == NULL && cpn == NULL)
 			break;
 
 		/* Vertical lines do not cross spanned cells. */
