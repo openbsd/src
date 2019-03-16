@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.18 2019/03/16 17:14:07 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.19 2019/03/16 19:12:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -229,10 +229,7 @@ window_client_draw(__unused void *modedata, void *itemdata,
 	screen_write_hline(ctx, sx, 0, 0);
 
 	screen_write_cursormove(ctx, cx, cy + sy - 1, 0);
-	if (c->status.old_screen != NULL)
-		screen_write_fast_copy(ctx, c->status.old_screen, 0, 0, sx, 1);
-	else
-		screen_write_fast_copy(ctx, &c->status.screen, 0, 0, sx, 1);
+	screen_write_fast_copy(ctx, &c->status.screen, 0, 0, sx, 1);
 }
 
 static struct screen *

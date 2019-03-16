@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.870 2019/03/16 17:14:07 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.871 2019/03/16 19:12:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1315,7 +1315,8 @@ struct status_line {
 	struct event	 timer;
 
 	struct screen	 screen;
-	struct screen	*old_screen;
+	struct screen	*active;
+	int		 references;
 
 	int		 window_list_offset;
 

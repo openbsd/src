@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.57 2019/03/16 17:14:07 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.58 2019/03/16 19:12:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -569,7 +569,7 @@ screen_redraw_draw_status(struct screen_redraw_ctx *ctx)
 	struct client	*c = ctx->c;
 	struct window	*w = c->session->curw->window;
 	struct tty	*tty = &c->tty;
-	struct screen	*s = &c->status.screen;
+	struct screen	*s = c->status.active;
 	u_int		 i, y;
 
 	log_debug("%s: %s @%u", __func__, c->name, w->id);
