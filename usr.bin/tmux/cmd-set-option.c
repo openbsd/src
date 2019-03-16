@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-option.c,v 1.120 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: cmd-set-option.c,v 1.121 2019/03/16 17:14:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -264,7 +264,7 @@ cmd_set_option_exec(struct cmd *self, struct cmdq_item *item)
 			layout_fix_panes(w);
 	}
 	RB_FOREACH(s, sessions, &sessions)
-		status_update_saved(s);
+		status_update_cache(s);
 
 	/*
 	 * Update sizes and redraw. May not always be necessary but do it

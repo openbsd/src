@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.29 2019/03/12 13:56:30 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.30 2019/03/16 17:14:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -162,7 +162,7 @@ recalculate_sizes(void)
 	 */
 	RB_FOREACH(s, sessions, &sessions) {
 		s->attached = 0;
-		status_update_saved(s);
+		status_update_cache(s);
 	}
 
 	/*

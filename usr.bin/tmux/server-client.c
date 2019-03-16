@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.270 2019/03/15 14:46:58 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.271 2019/03/16 17:14:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -204,7 +204,7 @@ server_client_create(int fd)
 	c->tty.sx = 80;
 	c->tty.sy = 24;
 
-	screen_init(&c->status.status, c->tty.sx, 1, 0);
+	status_init(c);
 
 	c->message_string = NULL;
 	TAILQ_INIT(&c->message_log);
