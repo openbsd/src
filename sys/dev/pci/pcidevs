@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1878 2019/02/20 03:55:49 dlg Exp $
+$OpenBSD: pcidevs,v 1.1879 2019/03/16 22:38:47 sthen Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2028,6 +2028,8 @@ product ATTANSIC L2		0x2048	L2
 product ATTANSIC L2C_1		0x2060	L2C
 product ATTANSIC L2C_2		0x2062	L2C
 product ATTANSIC E2200		0xe091	E2200
+product ATTANSIC E2400		0xe0a1	E2400
+product ATTANSIC E2500		0xe0b1	E2500
 
 /* Aureal products */
 product AUREAL AU8820		0x0001	Vortex 1
