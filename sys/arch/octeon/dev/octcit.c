@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.7 2019/03/16 06:23:03 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.8 2019/03/16 06:24:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -426,7 +426,7 @@ octcit_intr(uint32_t hwpend, struct trapframe *frame)
 			sr = getsr();
 			ENABLEIPI();
 		}
-		if (ISSET(ih->ih_flags, IH_MPSAFE))
+		if (ISSET(ih->ih_flags, CIH_MPSAFE))
 			need_lock = 0;
 		else
 			need_lock = 1;
