@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.3 2019/02/14 18:53:15 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.4 2019/03/17 17:28:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,6 +95,12 @@ DTLSv1_client_method(void)
 }
 
 const SSL_METHOD *
+DTLS_client_method(void)
+{
+	return DTLSv1_client_method();
+}
+
+const SSL_METHOD *
 dtls1_get_client_method(int ver)
 {
 	if (ver == DTLS1_VERSION)
@@ -139,6 +145,12 @@ DTLSv1_method(void)
 	return &DTLSv1_method_data;
 }
 
+const SSL_METHOD *
+DTLS_method(void)
+{
+	return DTLSv1_method();
+}
+
 static const SSL_METHOD *
 dtls1_get_method(int ver)
 {
@@ -180,6 +192,12 @@ const SSL_METHOD *
 DTLSv1_server_method(void)
 {
 	return &DTLSv1_server_method_data;
+}
+
+const SSL_METHOD *
+DTLS_server_method(void)
+{
+	return DTLSv1_server_method();
 }
 
 const SSL_METHOD *

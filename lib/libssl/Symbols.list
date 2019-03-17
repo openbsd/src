@@ -7,6 +7,9 @@ BIO_ssl_copy_session_id
 BIO_ssl_shutdown
 
 /* methods */
+DTLS_client_method
+DTLS_method
+DTLS_server_method
 DTLSv1_client_method
 DTLSv1_method
 DTLSv1_server_method
