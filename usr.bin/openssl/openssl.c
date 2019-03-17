@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.28 2018/11/11 07:10:57 tb Exp $ */
+/* $OpenBSD: openssl.c,v 1.29 2019/03/17 17:46:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -321,6 +321,13 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_RC4
 	{ FUNC_TYPE_CIPHER, "rc4", enc_main },
 	{ FUNC_TYPE_CIPHER, "rc4-40", enc_main },
+#endif
+#ifndef OPENSSL_NO_SM4
+	{ FUNC_TYPE_CIPHER, "sm4", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-ecb", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-cbc", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-ofb", enc_main },
+	{ FUNC_TYPE_CIPHER, "sm4-cfb", enc_main },
 #endif
 #ifdef ZLIB
 	{ FUNC_TYPE_CIPHER, "zlib", enc_main },
