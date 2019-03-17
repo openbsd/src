@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.99 2019/03/17 08:13:48 mglocker Exp $ */
+/* $OpenBSD: xhci.c,v 1.100 2019/03/17 11:28:07 mglocker Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -78,6 +78,8 @@ int	xhci_reset(struct xhci_softc *);
 int	xhci_intr1(struct xhci_softc *);
 void	xhci_event_dequeue(struct xhci_softc *);
 void	xhci_event_xfer(struct xhci_softc *, uint64_t, uint32_t, uint32_t);
+int	xhci_event_xfer_generic(struct usbd_xfer *, struct xhci_pipe *,
+	    uint32_t, int, uint8_t);
 int	xhci_event_xfer_isoc(struct usbd_xfer *, struct xhci_pipe *,
 	    uint32_t, int);
 void	xhci_event_command(struct xhci_softc *, uint64_t);
@@ -700,8 +702,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 {
 	struct xhci_pipe *xp;
 	struct usbd_xfer *xfer;
-	struct xhci_xfer *xx;
-	uint8_t dci, slot, code;
+	uint8_t dci, slot, code, xfertype;
 	uint32_t remain;
 	int trb_idx;
 
@@ -752,49 +753,15 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 
 	switch (code) {
 	case XHCI_CODE_SUCCESS:
-		if (xp->pipe.methods != &xhci_device_isoc_methods) {
-			/*
-			 * This might be the last TRB of a TD that ended up
-			 * with a Short Transfer condition, see below.
-			 */
-			if (xfer->actlen == 0)
-				xfer->actlen = xfer->length - remain;
-		} else {
-			/*
-			 * Complete the transfer if this is the last TRB
-			 * in a TD
-			 */
-			if (xhci_event_xfer_isoc(xfer, xp, remain, trb_idx))
-				return;
-		}
-		xfer->status = USBD_NORMAL_COMPLETION;
-		break;
 	case XHCI_CODE_SHORT_XFER:
-		if (xp->pipe.methods != &xhci_device_isoc_methods) {
-			xfer->actlen = xfer->length - remain;
-			/*
-			 * If this is not the last TRB of a transfer, we should
-			 * theoretically clear the IOC at the end of the chain
-			 * but the HC might have already processed it before we
-			 * had a chance to schedule the softinterrupt.
-			 */
-			xx = (struct xhci_xfer *)xfer;
-			if (xx->index != trb_idx) {
-				DPRINTF(("%s: short xfer %p for %u\n",
-				    DEVNAME(sc), xfer, xx->index));
-				return;
-			}
-		} else {
-			if (xhci_event_xfer_isoc(xfer, xp, remain, trb_idx))
-				return;
-		}
-		xfer->status = USBD_NORMAL_COMPLETION;
+		/* Handled per xfer type. */
 		break;
 	case XHCI_CODE_TXERR:
 	case XHCI_CODE_SPLITERR:
 		DPRINTF(("%s: txerr? code %d\n", DEVNAME(sc), code));
 		xfer->status = USBD_IOERROR;
-		break;
+		xhci_xfer_done(xfer);
+		return;
 	case XHCI_CODE_STALL:
 	case XHCI_CODE_BABBLE:
 		DPRINTF(("%s: babble code %d\n", DEVNAME(sc), code));
@@ -828,10 +795,67 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		DPRINTF(("%s: unhandled code %d\n", DEVNAME(sc), code));
 		xfer->status = USBD_IOERROR;
 		xp->halted = 1;
+		xhci_xfer_done(xfer);
+		return;
+	}
+
+	xfertype = UE_GET_XFERTYPE(xfer->pipe->endpoint->edesc->bmAttributes);
+
+	switch (xfertype) {
+	case UE_BULK:
+	case UE_INTERRUPT:
+	case UE_CONTROL:
+		if (xhci_event_xfer_generic(xfer, xp, remain, trb_idx, code))
+			return;
 		break;
+	case UE_ISOCHRONOUS:
+		if (xhci_event_xfer_isoc(xfer, xp, remain, trb_idx))
+			return;
+		break;
+	default:
+		panic("xhci_event_xfer: unknown xfer type %u", xfertype);
 	}
 
 	xhci_xfer_done(xfer);
+}
+
+int
+xhci_event_xfer_generic(struct usbd_xfer *xfer, struct xhci_pipe *xp,
+    uint32_t remain, int trb_idx, uint8_t code)
+{
+	struct xhci_xfer *xx = (struct xhci_xfer *)xfer;
+
+	switch (code) {
+	case XHCI_CODE_SUCCESS:
+		/*
+		 * This might be the last TRB of a TD that ended up
+		 * with a Short Transfer condition, see below.
+		 */
+		if (xfer->actlen == 0)
+			xfer->actlen = xfer->length - remain;
+		break;
+	case XHCI_CODE_SHORT_XFER:
+		xfer->actlen = xfer->length - remain;
+		/*
+		 * If this is not the last TRB of a transfer, we should
+		 * theoretically clear the IOC at the end of the chain
+		 * but the HC might have already processed it before we
+		 * had a chance to schedule the softinterrupt.
+		 */
+		if (xx->index != trb_idx) {
+			DPRINTF(("%s: short xfer %p for %u\n",
+			    DEVNAME(sc), xfer, xx->index));
+			return (1);
+		}
+		break;
+	default:
+		panic("xhci_event_xfer_generic: unexpected completion code %u",
+		    code);
+	}
+
+	xfer->status = USBD_NORMAL_COMPLETION;
+
+	return (0);
 }
 
 int
@@ -878,6 +902,8 @@ xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
 
 	if (xx->index != trb_idx)
 		return (1);
+
+	xfer->status = USBD_NORMAL_COMPLETION;
 
 	return (0);
 }
