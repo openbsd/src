@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.24 2018/12/26 15:11:04 tb Exp $ */
+/* $OpenBSD: c_all.c,v 1.25 2019/03/17 17:42:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,6 +226,16 @@ OpenSSL_add_all_ciphers_internal(void)
 	EVP_add_cipher(EVP_gost2814789_ecb());
 	EVP_add_cipher(EVP_gost2814789_cfb64());
 	EVP_add_cipher(EVP_gost2814789_cnt());
+#endif
+
+#ifndef OPENSSL_NO_SM4
+	EVP_add_cipher(EVP_sm4_ecb());
+	EVP_add_cipher(EVP_sm4_cbc());
+	EVP_add_cipher(EVP_sm4_cfb());
+	EVP_add_cipher(EVP_sm4_ofb());
+	EVP_add_cipher(EVP_sm4_ctr());
+	EVP_add_cipher_alias(SN_sm4_cbc, "SM4");
+	EVP_add_cipher_alias(SN_sm4_cbc, "sm4");
 #endif
 }
 

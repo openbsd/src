@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2019/01/23 00:50:39 tb Exp $
+# $OpenBSD: Makefile,v 1.33 2019/03/17 17:42:37 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -166,6 +166,7 @@ SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c
 SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
 SRCS+= e_chacha.c evp_aead.c e_chacha20poly1305.c
 SRCS+= e_gost2814789.c m_gost2814789.c m_gostr341194.c m_streebog.c
+SRCS+= e_sm4.c
 SRCS+= m_md5_sha1.c
 
 # gost/
@@ -238,6 +239,9 @@ SRCS+= sha1dgst.c sha1_one.c sha256.c sha512.c
 
 # sm3/
 SRCS+= sm3.c
+
+# sm4/
+SRCS+= sm4.c
 
 # stack/
 SRCS+= stack.c
@@ -319,6 +323,7 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/rsa \
 	${LCRYPTO_SRC}/sha \
 	${LCRYPTO_SRC}/sm3 \
+	${LCRYPTO_SRC}/sm4 \
 	${LCRYPTO_SRC}/stack \
 	${LCRYPTO_SRC}/threads \
 	${LCRYPTO_SRC}/ts \
@@ -380,6 +385,7 @@ HDRS=\
 	${LCRYPTO_SRC}/rsa/rsa.h \
 	${LCRYPTO_SRC}/sha/sha.h \
 	${LCRYPTO_SRC}/sm3/sm3.h \
+	${LCRYPTO_SRC}/sm4/sm4.h \
 	${LCRYPTO_SRC}/stack/safestack.h \
 	${LCRYPTO_SRC}/stack/stack.h \
 	${LCRYPTO_SRC}/ts/ts.h \
