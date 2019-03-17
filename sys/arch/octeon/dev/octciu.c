@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.15 2019/03/17 16:27:16 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.16 2019/03/17 16:31:26 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -342,6 +342,7 @@ octciu_intr_disestablish(void *_ih)
 		panic("%s: intrhand %p not registered", __func__, ih);
 
 	SLIST_REMOVE(&sc->sc_intrhand[irq], ih, octciu_intrhand, ih_list);
+	evcount_detach(&ih->ih_count);
 
 	if (SLIST_EMPTY(&sc->sc_intrhand[irq])) {
 		sc->sc_cpu[cpuid].scpu_intem[IRQ_TO_BANK(irq)] &=

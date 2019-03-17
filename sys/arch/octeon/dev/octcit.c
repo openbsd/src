@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.9 2019/03/17 05:25:06 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.10 2019/03/17 16:31:26 visa Exp $	*/
 
 /*
  * Copyright (c) 2017, 2019 Visa Hankala
@@ -360,6 +360,7 @@ octcit_intr_disestablish(void *_ih)
 	}
 
 	SLIST_REMOVE(&sc->sc_handlers[hash], ih, octcit_intrhand, ih_list);
+	evcount_detach(&ih->ih_count);
 
 	/* Recompute IPL floor if necessary. */
 	if (sc->sc_minipl[ci->ci_cpuid] == ih->ih_level) {
