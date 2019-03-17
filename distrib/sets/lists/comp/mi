@@ -1115,6 +1115,7 @@
 ./usr/include/openssl/safestack.h
 ./usr/include/openssl/sha.h
 ./usr/include/openssl/sm3.h
+./usr/include/openssl/sm4.h
 ./usr/include/openssl/srtp.h
 ./usr/include/openssl/ssl.h
 ./usr/include/openssl/ssl2.h
