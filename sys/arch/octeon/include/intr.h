@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2018/08/20 15:02:07 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.19 2019/03/17 05:25:06 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -187,6 +187,7 @@ struct intr_controller {
 	void	*(*ic_establish_fdt_idx)(void *, int, int, int,
 		    int (*)(void *), void *, const char *);
 	void	 (*ic_disestablish)(void *);
+	void	 (*ic_intr_barrier)(void *);
 
 #ifdef MULTIPROCESSOR
 	int	 (*ic_ipi_establish)(int (*)(void *), cpuid_t);

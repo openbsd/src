@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.13 2019/03/16 06:23:03 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.14 2019/03/17 05:25:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -117,6 +117,7 @@ void	*octciu_intr_establish(int, int, int (*)(void *), void *,
 void	*octciu_intr_establish_fdt_idx(void *, int, int, int,
 	    int (*)(void *), void *, const char *);
 void	 octciu_intr_disestablish(void *);
+void	 octciu_intr_barrier(void *);
 void	 octciu_splx(int);
 
 uint32_t octciu_ipi_intr(uint32_t, struct trapframe *);
@@ -173,6 +174,7 @@ octciu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_establish = octciu_intr_establish;
 	sc->sc_ic.ic_establish_fdt_idx = octciu_intr_establish_fdt_idx;
 	sc->sc_ic.ic_disestablish = octciu_intr_disestablish;
+	sc->sc_ic.ic_intr_barrier = octciu_intr_barrier;
 #ifdef MULTIPROCESSOR
 	sc->sc_ic.ic_ipi_establish = octciu_ipi_establish;
 	sc->sc_ic.ic_ipi_set = octciu_ipi_set;
@@ -345,6 +347,20 @@ octciu_intr_disestablish(void *_ih)
 
 	octciu_intr_makemasks(sc);
 	splx(s);	/* causes hw mask update */
+}
+
+void
+octciu_intr_barrier(void *_ih)
+{
+	struct cpu_info *ci = NULL;
+#ifdef MULTIPROCESSOR
+	struct octciu_intrhand *ih = _ih;
+
+	if (IS_WORKQ_IRQ(ih->ih_irq))
+		ci = get_cpu_info(ih->ih_irq % ncpus);
+#endif
+
+	sched_barrier(ci);
 }
 
 /*

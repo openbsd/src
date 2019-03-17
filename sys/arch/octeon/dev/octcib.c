@@ -1,7 +1,7 @@
-/*	$OpenBSD: octcib.c,v 1.3 2019/03/16 06:23:03 visa Exp $	*/
+/*	$OpenBSD: octcib.c,v 1.4 2019/03/17 05:25:06 visa Exp $	*/
 
 /*
- * Copyright (c) 2017 Visa Hankala
+ * Copyright (c) 2017, 2019 Visa Hankala
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -80,6 +80,7 @@ void	 octcib_attach(struct device *, struct device *, void *);
 void	*octcib_establish(void *, int, int, int, int (*func)(void *),
 	    void *, const char *);
 void	 octcib_disestablish(void *);
+void	 octcib_intr_barrier(void *);
 int	 octcib_intr(void *);
 
 const struct cfattach octcib_ca = {
@@ -145,6 +146,7 @@ octcib_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_establish_fdt_idx = octcib_establish;
 	sc->sc_ic.ic_disestablish = octcib_disestablish;
+	sc->sc_ic.ic_intr_barrier = octcib_intr_barrier;
 	octeon_intr_register(&sc->sc_ic);
 	return;
 
@@ -257,6 +259,15 @@ octcib_disestablish(void *cookie)
 	splx(s);
 
 	free(cih, M_DEVBUF, sizeof(*cih));
+}
+
+void
+octcib_intr_barrier(void *cookie)
+{
+	struct octcib_intrhand *cih = cookie;
+	struct octcib_softc *sc = cih->cih_sc;
+
+	intr_barrier(sc->sc_ih);
 }
 
 int
