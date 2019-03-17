@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2018/11/11 07:13:03 tb Exp $
+#	$OpenBSD: Makefile,v 1.36 2019/03/17 17:49:12 tb Exp $
 
 SUBDIR += aead
 SUBDIR += aeswrap
@@ -43,6 +43,7 @@ SUBDIR += sha2
 SUBDIR += sha256
 SUBDIR += sha512
 SUBDIR += sm3
+SUBDIR += sm4
 SUBDIR += utf8
 SUBDIR += wycheproof
 SUBDIR += x509
