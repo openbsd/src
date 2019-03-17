@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.10 2019/03/04 16:46:44 millert Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.11 2019/03/17 15:13:23 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -62,7 +62,7 @@ tls13_cipher_hash(const SSL_CIPHER *cipher)
 }
 
 static void
-tls13_alert_received_cb(uint8_t alert_level, uint8_t alert_desc, void *arg)
+tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
 	SSL *s = ctx->ssl;

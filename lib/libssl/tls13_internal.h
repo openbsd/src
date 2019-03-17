@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.25 2019/02/28 17:56:43 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.26 2019/03/17 15:13:23 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -36,8 +36,7 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_IO_WANT_POLLIN	-2
 #define TLS13_IO_WANT_POLLOUT	-3
 
-typedef void (*tls13_alert_cb)(uint8_t _alert_level, uint8_t _alert_desc,
-    void *_cb_arg);
+typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef int (*tls13_post_handshake_cb)(void *_cb_arg);
 typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
