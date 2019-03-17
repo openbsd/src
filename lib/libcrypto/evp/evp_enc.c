@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.39 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.40 2019/03/17 18:07:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,7 +153,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 			ctx->cipher_data = NULL;
 		}
 		ctx->key_len = cipher->key_len;
-		ctx->flags = 0;
+		ctx->flags &= EVP_CIPHER_CTX_FLAG_WRAP_ALLOW;
 		if (ctx->cipher->flags & EVP_CIPH_CTRL_INIT) {
 			if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL)) {
 				EVPerror(EVP_R_INITIALIZATION_ERROR);
@@ -172,6 +172,12 @@ skip_to_init:
 	    ctx->cipher->block_size != 8 &&
 	    ctx->cipher->block_size != 16) {
 		EVPerror(EVP_R_BAD_BLOCK_LENGTH);
+		return 0;
+	}
+
+	if (!(ctx->flags & EVP_CIPHER_CTX_FLAG_WRAP_ALLOW) &&
+	    EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_WRAP_MODE) {
+		EVPerror(EVP_R_WRAP_MODE_NOT_ALLOWED);
 		return 0;
 	}
 

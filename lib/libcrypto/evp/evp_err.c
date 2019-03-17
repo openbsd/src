@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: evp_err.c,v 1.23 2019/03/17 18:07:41 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -147,6 +147,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_UNSUPPORTED_PRF)       , "unsupported prf"},
 	{ERR_REASON(EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM), "unsupported private key algorithm"},
 	{ERR_REASON(EVP_R_UNSUPPORTED_SALT_TYPE) , "unsupported salt type"},
+	{ERR_REASON(EVP_R_WRAP_MODE_NOT_ALLOWED), "wrap mode not allowed"},
 	{ERR_REASON(EVP_R_WRONG_FINAL_BLOCK_LENGTH), "wrong final block length"},
 	{ERR_REASON(EVP_R_WRONG_PUBLIC_KEY_TYPE) , "wrong public key type"},
 	{0, NULL}

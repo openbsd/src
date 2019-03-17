@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.25 2019/03/17 17:42:37 tb Exp $ */
+/* $OpenBSD: c_all.c,v 1.26 2019/03/17 18:07:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,6 +159,7 @@ OpenSSL_add_all_ciphers_internal(void)
 	EVP_add_cipher(EVP_aes_128_ofb());
 	EVP_add_cipher(EVP_aes_128_ctr());
 	EVP_add_cipher(EVP_aes_128_gcm());
+	EVP_add_cipher(EVP_aes_128_wrap());
 	EVP_add_cipher(EVP_aes_128_xts());
 	EVP_add_cipher_alias(SN_aes_128_cbc, "AES128");
 	EVP_add_cipher_alias(SN_aes_128_cbc, "aes128");
@@ -171,6 +172,7 @@ OpenSSL_add_all_ciphers_internal(void)
 	EVP_add_cipher(EVP_aes_192_ofb());
 	EVP_add_cipher(EVP_aes_192_ctr());
 	EVP_add_cipher(EVP_aes_192_gcm());
+	EVP_add_cipher(EVP_aes_192_wrap());
 	EVP_add_cipher_alias(SN_aes_192_cbc, "AES192");
 	EVP_add_cipher_alias(SN_aes_192_cbc, "aes192");
 	EVP_add_cipher(EVP_aes_256_ecb());
@@ -182,6 +184,7 @@ OpenSSL_add_all_ciphers_internal(void)
 	EVP_add_cipher(EVP_aes_256_ofb());
 	EVP_add_cipher(EVP_aes_256_ctr());
 	EVP_add_cipher(EVP_aes_256_gcm());
+	EVP_add_cipher(EVP_aes_256_wrap());
 	EVP_add_cipher(EVP_aes_256_xts());
 	EVP_add_cipher_alias(SN_aes_256_cbc, "AES256");
 	EVP_add_cipher_alias(SN_aes_256_cbc, "aes256");
