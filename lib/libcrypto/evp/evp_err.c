@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.23 2019/03/17 18:07:41 tb Exp $ */
+/* $OpenBSD: evp_err.c,v 1.24 2019/03/17 18:17:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -100,6 +100,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_ERROR_LOADING_SECTION) , "error loading section"},
 	{ERR_REASON(EVP_R_ERROR_SETTING_FIPS_MODE), "error setting fips mode"},
 	{ERR_REASON(EVP_R_EVP_PBE_CIPHERINIT_ERROR), "evp pbe cipherinit error"},
+	{ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_AN_HMAC_KEY), "expecting an hmac key"},
 	{ERR_REASON(EVP_R_EXPECTING_AN_RSA_KEY)  , "expecting an rsa key"},
 	{ERR_REASON(EVP_R_EXPECTING_A_DH_KEY)    , "expecting a dh key"},
 	{ERR_REASON(EVP_R_EXPECTING_A_DSA_KEY)   , "expecting a dsa key"},

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.24 2018/05/30 15:40:50 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.25 2019/03/17 18:17:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -280,6 +280,22 @@ void *
 EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
 	return pkey->pkey.ptr;
+}
+
+const unsigned char *
+EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
+{
+	ASN1_OCTET_STRING *os;
+
+	if (pkey->type != EVP_PKEY_HMAC) {
+		EVPerror(EVP_R_EXPECTING_AN_HMAC_KEY);
+		return NULL;
+	}
+
+	os = EVP_PKEY_get0(pkey);
+	*len = os->length;
+
+	return os->data;
 }
 
 #ifndef OPENSSL_NO_RSA

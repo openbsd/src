@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.74 2019/03/17 18:07:41 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.75 2019/03/17 18:17:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -902,6 +902,7 @@ int EVP_PKEY_set_type(EVP_PKEY *pkey, int type);
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key);
 void *EVP_PKEY_get0(const EVP_PKEY *pkey);
+const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
 
 #ifndef OPENSSL_NO_RSA
 struct rsa_st;
@@ -1487,6 +1488,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_ERROR_LOADING_SECTION			 165
 #define EVP_R_ERROR_SETTING_FIPS_MODE			 166
 #define EVP_R_EVP_PBE_CIPHERINIT_ERROR			 119
+#define EVP_R_EXPECTING_AN_HMAC_KEY			 174
 #define EVP_R_EXPECTING_AN_RSA_KEY			 127
 #define EVP_R_EXPECTING_A_DH_KEY			 128
 #define EVP_R_EXPECTING_A_DSA_KEY			 129
