@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.70 2019/03/16 06:23:03 visa Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.71 2019/03/17 05:06:36 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -179,12 +179,6 @@ set_intr(int pri, uint32_t mask,
 	cpu_int_tab[pri].int_hand = int_hand;
 	cpu_int_tab[pri].int_mask = mask;
 	idle_mask |= mask;
-}
-
-void
-intr_barrier(void *cookie)
-{
-	sched_barrier(NULL);
 }
 
 void

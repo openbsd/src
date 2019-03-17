@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_intr.c,v 1.23 2019/03/16 16:35:49 visa Exp $	*/
+/*	$OpenBSD: octeon_intr.c,v 1.24 2019/03/17 05:06:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -167,6 +167,12 @@ void
 octeon_intr_disestablish_fdt(void *cookie)
 {
 	octeon_intr_disestablish(cookie);
+}
+
+void
+intr_barrier(void *cookie)
+{
+	sched_barrier(NULL);
 }
 
 #ifdef MULTIPROCESSOR
