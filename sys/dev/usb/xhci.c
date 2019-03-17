@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.98 2019/03/16 19:35:35 mglocker Exp $ */
+/* $OpenBSD: xhci.c,v 1.99 2019/03/17 08:13:48 mglocker Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -732,7 +732,7 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 		return;
 	default:
 		break;
-	};
+	}
 
 	trb_idx = (paddr - xp->ring.dma.paddr) / sizeof(struct xhci_trb);
 	if (trb_idx < 0 || trb_idx >= xp->ring.ntrb) {
