@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2018/11/13 12:48:23 visa Exp $
+#	$OpenBSD: Makefile,v 1.30 2019/03/17 16:32:27 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -30,7 +30,7 @@ all: ${CDROM}
 # The following values need to be consistent with the `cdroot' layout in
 # /etc/disktab
 SGIVOLSZ=8320	# oa, pp (size of volume header in 2048 byte sectors)
-CDROMSZ=460	# nt     (size of the iso image in megabytes)
+CDROMSZ=489	# nt     (size of the iso image in megabytes)
 
 # Creating an IP27 bootable CD-ROM image with a usable FFS filesystem on it
 # is extremely tricky. We are facing the following challenges:
