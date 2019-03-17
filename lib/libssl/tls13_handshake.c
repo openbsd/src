@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.31 2019/02/28 17:56:43 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.32 2019/03/17 15:48:02 jsing Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -382,7 +382,9 @@ tls13_handshake_recv_action(struct tls13_ctx *ctx,
 	}
 
 	/* XXX provide CBS and check all consumed. */
-	ret = action->recv(ctx);
+	ret = TLS13_IO_FAILURE;
+	if (action->recv(ctx))
+		ret = TLS13_IO_SUCCESS;
 
 	tls13_handshake_msg_free(ctx->hs_msg);
 	ctx->hs_msg = NULL;
