@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.65 2018/02/03 13:37:37 mpi Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.66 2019/03/17 23:57:12 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -125,6 +125,13 @@ struct bpf_version {
  */
 #define BPF_DIRECTION_IN	1
 #define BPF_DIRECTION_OUT	(1<<1)
+
+/*
+ * Values for BIOCGFILDROP/BIOCSFILDROP
+ */
+#define BPF_FILDROP_PASS	0 /* capture, pass */
+#define BPF_FILDROP_CAPTURE	1 /* capture, drop */
+#define BPF_FILDROP_DROP	2 /* no capture, drop */
 
 struct bpf_timeval {
 	u_int32_t	tv_sec;
