@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.41 2019/02/03 14:09:58 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.42 2019/03/17 15:16:39 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -525,7 +525,7 @@ tlsext_ri_client_parse(SSL *s, CBS *cbs, int *alert)
 int
 tlsext_sigalgs_client_needs(SSL *s)
 {
-	return (TLS1_get_client_version(s) >= TLS1_2_VERSION);
+	return (s->client_version >= TLS1_2_VERSION);
 }
 
 int
@@ -535,7 +535,7 @@ tlsext_sigalgs_client_build(SSL *s, CBB *cbb)
 	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
 
-	if (TLS1_get_client_version(s) >= TLS1_3_VERSION &&
+	if (s->client_version >= TLS1_3_VERSION &&
 	    S3I(s)->hs_tls13.min_version >= TLS1_3_VERSION) {
 		tls_sigalgs = tls13_sigalgs;
 		tls_sigalgs_len = tls13_sigalgs_len;
@@ -1892,7 +1892,7 @@ tlsext_build(SSL *s, CBB *cbb, int is_server, uint16_t msg_type)
 	if (is_server)
 		version = s->version;
 	else
-		version = TLS1_get_client_version(s);
+		version = s->client_version;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &extensions))
 		return 0;
@@ -1944,7 +1944,7 @@ tlsext_parse(SSL *s, CBS *cbs, int *alert, int is_server, uint16_t msg_type)
 	if (is_server)
 		version = s->version;
 	else
-		version = TLS1_get_client_version(s);
+		version = s->client_version;
 
 	/* An empty extensions block is valid. */
 	if (CBS_len(cbs) == 0)
