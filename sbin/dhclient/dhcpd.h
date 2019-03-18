@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.273 2019/02/12 16:50:44 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.274 2019/03/18 22:26:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -159,10 +159,7 @@ int			 pack_options(unsigned char *, int,
 struct option_data	*unpack_options(struct dhcp_packet *);
 char			*pretty_print_option(unsigned int, struct option_data *,
     int);
-char			*pretty_print_domain_search(unsigned char *, size_t);
 char			*pretty_print_string(unsigned char *, size_t, int);
-void			 pretty_print_classless_routes(unsigned char *, size_t,
-    unsigned char *, size_t);
 char			*code_to_name(int);
 char			*code_to_format(int);
 int			 name_to_code(char *);

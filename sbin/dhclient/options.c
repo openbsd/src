@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.113 2018/07/22 21:32:04 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.114 2019/03/18 22:26:56 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -61,7 +61,11 @@
 #include "dhcpd.h"
 #include "log.h"
 
-int parse_option_buffer(struct option_data *, unsigned char *, int);
+int	parse_option_buffer(struct option_data *, unsigned char *, int);
+void	pretty_print_classless_routes(unsigned char *, size_t, unsigned char *,
+    size_t);
+void	pretty_print_domain_search(unsigned char *, size_t, unsigned char *,
+    size_t);
 int expand_search_domain_name(unsigned char *, size_t, int *, unsigned char *);
 
 /*
@@ -699,10 +703,11 @@ expand_search_domain_name(unsigned char *src, size_t srclen, int *offset,
  * Must special case DHO_DOMAIN_SEARCH because it is encoded as described
  * in RFC 1035 section 4.1.4.
  */
-char *
-pretty_print_domain_search(unsigned char *src, size_t srclen)
+void
+pretty_print_domain_search(unsigned char *src, size_t srclen,
+    unsigned char *buf, size_t buflen)
 {
-	static char	 domain_search[DHCP_DOMAIN_SEARCH_LEN];
+	char		 domain_search[DHCP_DOMAIN_SEARCH_LEN];
 	unsigned char	*cursor;
 	unsigned int	 offset;
 	int		 len, expanded_len, domains;
@@ -722,14 +727,15 @@ pretty_print_domain_search(unsigned char *src, size_t srclen)
 		len = expand_search_domain_name(src, srclen, &offset,
 		    domain_search);
 		if (len == -1)
-			return NULL;
+			return;
 		domains++;
 		expanded_len += len;
 		if (domains > DHCP_DOMAIN_SEARCH_CNT)
-			return NULL;
+			return;
 	}
 
-	return domain_search;
+	if (strlcpy(buf, domain_search, buflen) >= buflen)
+		memset(buf, 0, buflen);
 }
 
 /*
@@ -772,8 +778,10 @@ pretty_print_option(unsigned int code, struct option_data *option,
 	switch (code) {
 	case DHO_CLASSLESS_STATIC_ROUTES:
 	case DHO_CLASSLESS_MS_STATIC_ROUTES:
-		pretty_print_classless_routes(dp, len, optbuf,
-		    sizeof(optbuf));
+		pretty_print_classless_routes(dp, len, optbuf, sizeof(optbuf));
+		goto done;
+	case DHO_DOMAIN_SEARCH:
+		pretty_print_domain_search(dp, len, optbuf, sizeof(optbuf));
 		goto done;
 	default:
 		break;

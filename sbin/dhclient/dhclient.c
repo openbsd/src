@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.626 2019/03/18 16:47:18 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.627 2019/03/18 22:26:56 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1113,7 +1113,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	char			 ifname[IF_NAMESIZE];
 	struct dhcp_packet	*packet = &ifi->recv_packet;
 	struct client_lease	*lease;
-	char			*pretty, *buf, *name;
+	char			*pretty, *name;
 	int			 i;
 
 	lease = calloc(1, sizeof(*lease));
@@ -1132,10 +1132,7 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 			continue;
 		switch (i) {
 		case DHO_DOMAIN_SEARCH:
-			/* Must decode the option into text to check names. */
-			buf = pretty_print_domain_search(options[i].data,
-			    options[i].len);
-			if (buf == NULL || res_hnok_list(buf) == 0) {
+			if (strlen(pretty) == 0 || res_hnok_list(pretty) == 0) {
 				log_debug("%s: invalid host name in %s",
 				    log_procname, name);
 				continue;
@@ -1868,7 +1865,7 @@ lease_as_proposal(struct client_lease *lease)
 {
 	struct proposal		*proposal;
 	struct option_data	*opt;
-	char			*buf;
+	char			*pretty;
 
 	proposal = calloc(1, sizeof(*proposal));
 	if (proposal == NULL)
@@ -1926,10 +1923,12 @@ lease_as_proposal(struct client_lease *lease)
 
 	if (lease->options[DHO_DOMAIN_SEARCH].len != 0) {
 		opt = &lease->options[DHO_DOMAIN_SEARCH];
-		buf = pretty_print_domain_search(opt->data, opt->len);
-		if (buf != NULL && strlen(buf) < sizeof(proposal->rtsearch)) {
-			proposal->rtsearch_len = strlen(buf);
-			memcpy(proposal->rtsearch, buf, proposal->rtsearch_len);
+		pretty = pretty_print_option(DHO_DOMAIN_SEARCH, opt, 0);
+		if (strlen(pretty) > 0 && strlen(pretty) <
+		    sizeof(proposal->rtsearch)) {
+			proposal->rtsearch_len = strlen(pretty);
+			memcpy(proposal->rtsearch, pretty,
+			    proposal->rtsearch_len);
 			proposal->addrs |= RTA_SEARCH;
 		} else
 			log_warnx("%s: DOMAIN_SEARCH too long", log_procname);
