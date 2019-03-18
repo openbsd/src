@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.27 2019/03/18 05:56:24 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.28 2019/03/18 11:38:16 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 16cfc2c9 Mar 8 22:30:28 2018 +0100
 .\"
@@ -138,26 +138,6 @@
 .Nm EVP_cast5_ecb ,
 .Nm EVP_cast5_cfb ,
 .Nm EVP_cast5_ofb ,
-.Nm EVP_aes_128_cbc ,
-.Nm EVP_aes_128_ecb ,
-.Nm EVP_aes_128_cfb ,
-.Nm EVP_aes_128_ofb ,
-.Nm EVP_aes_192_cbc ,
-.Nm EVP_aes_192_ecb ,
-.Nm EVP_aes_192_cfb ,
-.Nm EVP_aes_192_ofb ,
-.Nm EVP_aes_256_cbc ,
-.Nm EVP_aes_256_ecb ,
-.Nm EVP_aes_256_cfb ,
-.Nm EVP_aes_256_ofb ,
-.Nm EVP_aes_128_gcm ,
-.Nm EVP_aes_192_gcm ,
-.Nm EVP_aes_256_gcm ,
-.Nm EVP_aes_128_ccm ,
-.Nm EVP_aes_192_ccm ,
-.Nm EVP_aes_256_ccm ,
-.Nm EVP_aes_128_cbc_hmac_sha1 ,
-.Nm EVP_aes_256_cbc_hmac_sha1 ,
 .Nm EVP_chacha20
 .Nd EVP cipher routines
 .Sh SYNOPSIS
@@ -471,7 +451,7 @@ points to an unused object on the stack, it must be initialized with
 before calling this function.
 .Fa type
 is normally supplied by a function such as
-.Fn EVP_aes_256_cbc .
+.Xr EVP_aes_256_cbc 3 .
 If
 .Fa impl
 is
@@ -905,27 +885,6 @@ All algorithms have a fixed key length unless otherwise stated.
 .It Fn EVP_enc_null
 Null cipher: does nothing.
 .It Xo
-.Fn EVP_aes_128_cbc ,
-.Fn EVP_aes_128_ecb ,
-.Fn EVP_aes_128_cfb ,
-.Fn EVP_aes_128_ofb
-.Xc
-AES with a 128-bit key in CBC, ECB, CFB and OFB modes respectively.
-.It Xo
-.Fn EVP_aes_192_cbc ,
-.Fn EVP_aes_192_ecb ,
-.Fn EVP_aes_192_cfb ,
-.Fn EVP_aes_192_ofb
-.Xc
-AES with a 192-bit key in CBC, ECB, CFB and OFB modes respectively.
-.It Xo
-.Fn EVP_aes_256_cbc ,
-.Fn EVP_aes_256_ecb ,
-.Fn EVP_aes_256_cfb ,
-.Fn EVP_aes_256_ofb
-.Xc
-AES with a 256-bit key in CBC, ECB, CFB and OFB modes respectively.
-.It Xo
 .Fn EVP_des_cbc ,
 .Fn EVP_des_ecb ,
 .Fn EVP_des_cfb ,
@@ -1004,29 +963,13 @@ This is a variable key length cipher.
 .Xc
 CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher.
-.It Xo
-.Fn EVP_aes_128_gcm ,
-.Fn EVP_aes_192_gcm ,
-.Fn EVP_aes_256_gcm
-.Xc
-AES Galois Counter Mode (GCM) for 128, 192 and 256 bit keys respectively.
-These ciphers require additional control operations to function
-correctly: see the GCM mode section below for details.
-.It Xo
-.Fn EVP_aes_128_ccm ,
-.Fn EVP_aes_192_ccm ,
-.Fn EVP_aes_256_ccm
-.Xc
-AES Counter with CBC-MAC Mode (CCM) for 128, 192 and 256 bit keys
-respectively.
-These ciphers require additional control operations to function
-correctly: see CCM mode section below for details.
-.It Fn EVP_chacha20
 The ChaCha20 stream cipher.
 The key length is 256 bits, the IV is 96 bits long.
 .El
 .Pp
 See also
+.Xr EVP_aes_128_cbc 3
+and
 .Xr EVP_sm4_cbc 3 .
 .Ss GCM mode
 For GCM mode ciphers, the behaviour of the EVP interface
@@ -1231,6 +1174,7 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Ed
 .Sh SEE ALSO
 .Xr evp 3 ,
+.Xr EVP_aes_128_cbc 3 ,
 .Xr EVP_sm4_cbc 3
 .Sh HISTORY
 .Fn EVP_EncryptInit ,
@@ -1343,17 +1287,8 @@ first appeared in OpenSSL 0.9.8b.
 These functions have been available since
 .Ox 4.5 .
 .Pp
-.Fn EVP_rc4_hmac_md5 ,
-.Fn EVP_aes_128_gcm ,
-.Fn EVP_aes_192_gcm ,
-.Fn EVP_aes_256_gcm ,
-.Fn EVP_aes_128_ccm ,
-.Fn EVP_aes_192_ccm ,
-.Fn EVP_aes_256_ccm ,
-.Fn EVP_aes_128_cbc_hmac_sha1 ,
-and
-.Fn EVP_aes_256_cbc_hmac_sha1
-first appeared in OpenSSL 1.0.1 and have been available since
+.Fn EVP_rc4_hmac_md5
+first appeared in OpenSSL 1.0.1 and has been available since
 .Ox 5.3 .
 .Pp
 .Fn EVP_CIPHER_CTX_reset
