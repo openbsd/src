@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.257 2018/12/20 23:00:55 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.258 2019/03/18 04:12:02 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -94,6 +94,7 @@ pseudo-device	mobileip	# MobileIP encapsulation interface
 pseudo-device	loop		# network loopback
 pseudo-device	mpe		# MPLS PE interface
 pseudo-device	mpw		# MPLS pseudowire support
+pseudo-device	mpip		# MPLS IP Layer2 pseudowire support
 pseudo-device	bpe		# Provider Backbone Bridge edge interface
 pseudo-device	pair		# Virtual Ethernet interface pair
 pseudo-device	ppp		# PPP
