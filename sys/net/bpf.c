@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.170 2018/07/13 08:51:15 bluhm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.171 2019/03/18 00:05:52 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -926,9 +926,20 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		*(u_int *)addr = d->bd_fildrop;
 		break;
 
-	case BIOCSFILDROP:	/* set "filter-drop" flag */
-		d->bd_fildrop = *(u_int *)addr ? 1 : 0;
+	case BIOCSFILDROP: {	/* set "filter-drop" flag */
+		unsigned int fildrop = *(u_int *)addr;
+		switch (fildrop) {
+		case BPF_FILDROP_PASS:
+		case BPF_FILDROP_CAPTURE:
+		case BPF_FILDROP_DROP:
+			d->bd_fildrop = fildrop;
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
 		break;
+	}
 
 	case BIOCGDIRFILT:	/* get direction filter */
 		*(u_int *)addr = d->bd_dirfilt;
@@ -1261,23 +1272,26 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 		pktlen += m0->m_len;
 
 	SRPL_FOREACH(d, &sr, &bp->bif_dlist, bd_next) {
+		struct srp_ref bsr;
+		struct bpf_program *bf;
+		struct bpf_insn *fcode = NULL;
+
 		atomic_inc_long(&d->bd_rcount);
 
-		if ((direction & d->bd_dirfilt) != 0)
-			slen = 0;
-		else {
-			struct srp_ref bsr;
-			struct bpf_program *bf;
-			struct bpf_insn *fcode = NULL;
+		if (ISSET(d->bd_dirfilt, direction))
+			continue;
 
-			bf = srp_enter(&bsr, &d->bd_rfilter);
-			if (bf != NULL)
-				fcode = bf->bf_insns;
-			slen = bpf_mfilter(fcode, m, pktlen);
-			srp_leave(&bsr);
-		}
+		bf = srp_enter(&bsr, &d->bd_rfilter);
+		if (bf != NULL)
+			fcode = bf->bf_insns;
+		slen = bpf_mfilter(fcode, m, pktlen);
+		srp_leave(&bsr);
 
-		if (slen > 0) {
+		if (slen == 0)
+			continue;
+		if (d->bd_fildrop != BPF_FILDROP_PASS)
+			drop = 1;
+		if (d->bd_fildrop != BPF_FILDROP_DROP) {
 			if (!gottime++)
 				microtime(&tv);
 
@@ -1285,9 +1299,6 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 			bpf_catchpacket(d, (u_char *)m, pktlen, slen, cpfn,
 			    &tv);
 			mtx_leave(&d->bd_mtx);
-
-			if (d->bd_fildrop)
-				drop = 1;
 		}
 	}
 	SRPL_LEAVE(&sr);

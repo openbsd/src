@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.38 2016/04/28 19:07:19 natano Exp $
+.\"	$OpenBSD: bpf.4,v 1.39 2019/03/18 00:05:53 dlg Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: April 28 2016 $
+.Dd $Mdocdate: March 18 2019 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -391,11 +391,24 @@ This flag is initialized to zero by default.
 .Pp
 .It Dv BIOCSFILDROP Fa "u_int *"
 .It Dv BIOCGFILDROP Fa "u_int *"
-Sets or gets the status of the
+Sets or gets the
 .Dq filter drop
-flag.
-If non-zero, packets matching any filters will be reported to the
-associated interface so that they can be dropped.
+action.
+The supported actions for packets matching the filter are:
+.Pp
+.Bl -tag -width "BPF_FILDROP_CAPTURE" -compact
+.It Dv BPF_FILDROP_PASS
+Accept and capture
+.It Dv BPF_FILDROP_CAPTURE
+Drop and capture
+.It Dv BPF_FILDROP_DROP
+Drop and do not capture
+.El
+.Pp
+Packets matching any filter configured to drop packets will be
+reported to the associated interface so that they can be dropped.
+The default action is
+.Dv BPF_FILDROP_PASS .
 .Pp
 .It Dv BIOCSDIRFILT Fa "u_int *"
 .It Dv BIOCGDIRFILT Fa "u_int *"
