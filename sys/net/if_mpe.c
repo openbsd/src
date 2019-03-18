@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.86 2019/02/26 03:23:04 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.87 2019/03/18 03:21:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -341,6 +341,10 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGETLABEL:
 		shim.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
+		if (shim.shim_label == 0) {
+			error = EADDRNOTAVAIL;
+			break;
+		}
 		error = copyout(&shim, ifr->ifr_data, sizeof(shim));
 		break;
 	case SIOCSETLABEL:
@@ -358,6 +362,15 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			    sc->sc_rdomain);
 		}
 		break;
+	case SIOCDELLABEL:
+		if (sc->sc_smpls.smpls_label != MPLS_LABEL2SHIM(0)) {
+			rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
+			    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
+		
+		}
+		shim.shim_label = MPLS_LABEL2SHIM(0);
+		break;
+
 	case SIOCSLIFPHYRTABLE:
 		if (ifr->ifr_rdomainid < 0 ||
 		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
