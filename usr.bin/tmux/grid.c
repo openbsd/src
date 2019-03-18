@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.89 2019/03/12 23:21:45 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.90 2019/03/18 15:25:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -481,11 +481,10 @@ void
 grid_get_cell(struct grid *gd, u_int px, u_int py, struct grid_cell *gc)
 {
 	if (grid_check_y(gd, __func__, py) != 0 ||
-	    px >= gd->linedata[py].cellsize) {
+	    px >= gd->linedata[py].cellsize)
 		memcpy(gc, &grid_default_cell, sizeof *gc);
-		return;
-	}
-	return (grid_get_cell1(&gd->linedata[py], px, gc));
+	else
+		grid_get_cell1(&gd->linedata[py], px, gc);
 }
 
 /* Set cell at relative position. */
