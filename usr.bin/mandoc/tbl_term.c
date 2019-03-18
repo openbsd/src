@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.57 2019/03/16 21:35:11 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.58 2019/03/18 08:00:26 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -627,7 +627,8 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 
 		lw = cpp == NULL || cpn == NULL ||
 		    (cpn->pos != TBL_CELL_DOWN &&
-		     (dpn == NULL || strcmp(dpn->string, "\\^") != 0))
+		     (dpn == NULL || dpn->string == NULL ||
+		      strcmp(dpn->string, "\\^") != 0))
 		    ? hw : 0;
 		tbl_direct_border(tp, BHORIZ * lw,
 		    col->width + col->spacing / 2);
@@ -673,7 +674,8 @@ tbl_hrule(struct termp *tp, const struct tbl_span *spp,
 
 		rw = cpp == NULL || cpn == NULL ||
 		    (cpn->pos != TBL_CELL_DOWN &&
-		     (dpn == NULL || strcmp(dpn->string, "\\^") != 0))
+		     (dpn == NULL || dpn->string == NULL ||
+		      strcmp(dpn->string, "\\^") != 0))
 		    ? hw : 0;
 
 		/* The line crossing at the end of this column. */
