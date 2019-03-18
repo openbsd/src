@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.110 2019/02/03 10:58:51 dlg Exp $
+#	$OpenBSD: Makefile.amd64,v 1.111 2019/03/18 17:30:08 anton Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -96,6 +96,11 @@ LINKFLAGS+=	-S
 
 .if ${SYSTEM_OBJ:Mkcov.o} && ${COMPILER_VERSION:Mclang}
 PROF=		-fsanitize-coverage=trace-pc,trace-cmp
+.endif
+
+.if ${IDENT:M-DKUBSAN} && ${COMPILER_VERSION:Mclang}
+CFLAGS+=	-fsanitize=undefined
+CFLAGS+=	-fno-wrapv
 .endif
 
 %LOAD

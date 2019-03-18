@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.669 2019/02/28 06:06:28 dlg Exp $
+#	$OpenBSD: files,v 1.670 2019/03/18 17:30:08 anton Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -711,6 +711,7 @@ file kern/subr_disk.c
 file kern/subr_evcount.c
 file kern/subr_extent.c
 file kern/subr_hibernate.c		hibernate
+file kern/subr_kubsan.c			kubsan
 file kern/subr_log.c
 file kern/subr_percpu.c
 file kern/subr_poison.c			diagnostic
