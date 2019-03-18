@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.224 2019/03/18 20:53:33 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.225 2019/03/18 21:55:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -863,6 +863,8 @@ window_pane_destroy(struct window_pane *wp)
 	}
 
 	input_free(wp);
+
+	screen_free(&wp->status_screen);
 
 	screen_free(&wp->base);
 	if (wp->saved_grid != NULL)

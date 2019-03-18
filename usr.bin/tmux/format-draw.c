@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.1 2019/03/18 20:53:33 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.2 2019/03/18 21:55:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -694,8 +694,10 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 	}
 	free(fr);
 
-	for (i = 0; i < TOTAL; i++)
+	for (i = 0; i < TOTAL; i++) {
+		screen_write_stop(&ctx[i]);
 		log_debug("%s: width %s is %u", __func__, names[i], width[i]);
+	}
 	if (focus_start != -1 && focus_end != -1)
 		log_debug("focus is %d-%d", focus_start, focus_end);
 	TAILQ_FOREACH(fr, &frs, entry) {
@@ -747,6 +749,10 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 		format_free_range(&frs, fr);
 	}
+
+	/* Free the screens. */
+	for (i = 0; i < TOTAL; i++)
+		screen_free(&s[i]);
 
 	/* Restore the original cursor position. */
 	screen_write_cursormove(octx, ocx, ocy, 0);
