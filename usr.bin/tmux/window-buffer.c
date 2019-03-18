@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.16 2019/03/12 20:02:47 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.17 2019/03/18 14:10:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -41,6 +41,7 @@ static void		 window_buffer_key(struct window_mode_entry *,
 
 const struct window_mode window_buffer_mode = {
 	.name = "buffer-mode",
+	.default_format = WINDOW_BUFFER_DEFAULT_FORMAT,
 
 	.init = window_buffer_init,
 	.free = window_buffer_free,

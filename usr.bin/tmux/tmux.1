@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.623 2019/03/17 19:33:12 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.624 2019/03/18 14:10:25 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2019 $
+.Dd $Mdocdate: March 18 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4177,7 +4177,7 @@ option.
 This command works only from inside
 .Nm .
 .It Xo Ic display-message
-.Op Fl pv
+.Op Fl apv
 .Op Fl c Ar target-client
 .Op Fl t Ar target-pane
 .Op Ar message
@@ -4200,9 +4200,10 @@ if
 is given, otherwise the active pane for the session attached to
 .Ar target-client .
 .Pp
-With
-.Fl v ,
-verbose logging is printed as the format is parsed.
+.Fl v
+prints verbose logging as the format is parsed and
+.Fl a
+lists the format variables and their values.
 .El
 .Sh BUFFERS
 .Nm

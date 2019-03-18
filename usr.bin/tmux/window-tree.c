@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.34 2019/03/12 20:02:47 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.35 2019/03/18 14:10:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -55,6 +55,7 @@ static void		 window_tree_key(struct window_mode_entry *,
 
 const struct window_mode window_tree_mode = {
 	.name = "tree-mode",
+	.default_format = WINDOW_TREE_DEFAULT_FORMAT,
 
 	.init = window_tree_init,
 	.free = window_tree_free,

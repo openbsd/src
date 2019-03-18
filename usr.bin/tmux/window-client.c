@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.19 2019/03/16 19:12:13 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.20 2019/03/18 14:10:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -42,6 +42,7 @@ static void		 window_client_key(struct window_mode_entry *,
 
 const struct window_mode window_client_mode = {
 	.name = "client-mode",
+	.default_format = WINDOW_CLIENT_DEFAULT_FORMAT,
 
 	.init = window_client_init,
 	.free = window_client_free,
