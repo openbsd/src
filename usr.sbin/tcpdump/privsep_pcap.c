@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.23 2018/11/17 16:52:02 brynet Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.24 2019/03/18 00:09:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -173,7 +173,7 @@ priv_pcap_setfilter(pcap_t *hpcap, int oflag, u_int32_t netmask)
 /* privileged part of priv_pcap_live */
 int
 pcap_live(const char *device, int snaplen, int promisc, u_int dlt,
-    u_int dirfilt)
+    u_int dirfilt, u_int fildrop)
 {
 	int		fd;
 	struct ifreq	ifr;
@@ -201,6 +201,9 @@ pcap_live(const char *device, int snaplen, int promisc, u_int dlt,
 	if (ioctl(fd, BIOCSDIRFILT, &dirfilt) < 0)
 		goto error;
 
+	if (ioctl(fd, BIOCSFILDROP, &fildrop) < 0)
+		goto error;
+
 	/* lock the descriptor */
 	if (ioctl(fd, BIOCLOCK, NULL) < 0)
 		goto error;
@@ -218,7 +221,7 @@ pcap_live(const char *device, int snaplen, int promisc, u_int dlt,
  */
 pcap_t *
 priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
-    char *ebuf, u_int dlt, u_int dirfilt)
+    char *ebuf, u_int dlt, u_int dirfilt, u_int fildrop)
 {
 	int fd, err;
 	struct bpf_version bv;
@@ -247,6 +250,7 @@ priv_pcap_live(const char *dev, int slen, int prom, int to_ms,
 	must_write(priv_fd, &prom, sizeof(int));
 	must_write(priv_fd, &dlt, sizeof(u_int));
 	must_write(priv_fd, &dirfilt, sizeof(u_int));
+	must_write(priv_fd, &fildrop, sizeof(fildrop));
 	write_string(priv_fd, dev);
 
 	fd = receive_fd(priv_fd);
