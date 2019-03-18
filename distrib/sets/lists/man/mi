@@ -1527,6 +1527,7 @@
 ./usr/share/man/man4/keynote.4
 ./usr/share/man/man4/km.4
 ./usr/share/man/man4/ksyms.4
+./usr/share/man/man4/kubsan.4
 ./usr/share/man/man4/kue.4
 ./usr/share/man/man4/landisk/intro.4
 ./usr/share/man/man4/landisk/mem.4
