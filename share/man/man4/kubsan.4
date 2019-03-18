@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kubsan.4,v 1.1 2019/03/18 17:30:07 anton Exp $
+.\"	$OpenBSD: kubsan.4,v 1.2 2019/03/18 18:46:13 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -38,12 +38,12 @@ option KUBSAN
 The following undefined behavior is detected:
 .Bl -tag -width 4n
 .It Integer overflow
-The result of an aritmetic computation on two integer operands cannot be
+The result of an arithmetic computation on two integer operands cannot be
 represented by the destination type.
 .It Negate overflow
 Negation of an integer cannot be represented by the destination type.
 .It Pointer overflow
-Pointer aritmetic overflow.
+Pointer arithmetic overflow.
 .It Out of bounds
 Array indexing out of bounds, limited to cases where the size of the array
 can be statically determined.
