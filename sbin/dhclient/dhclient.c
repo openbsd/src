@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.625 2019/02/13 21:18:32 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.626 2019/03/18 16:47:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1911,28 +1911,28 @@ lease_as_proposal(struct client_lease *lease)
 		} else
 			log_warnx("%s: MS_CLASSLESS_STATIC_ROUTES too long",
 			    log_procname);
-	} else {
+	} else if (lease->options[DHO_ROUTERS].len != 0) {
 		opt = &lease->options[DHO_ROUTERS];
-		if (opt->len >= sizeof(in_addr_t)) {
+		if (opt->len >= sizeof(in_addr_t) &&
+		    (1 + sizeof(in_addr_t)) < sizeof(proposal->rtstatic)) {
 			proposal->rtstatic_len = 1 + sizeof(in_addr_t);
 			proposal->rtstatic[0] = 0;
 			memcpy(&proposal->rtstatic[1], opt->data,
 			    sizeof(in_addr_t));
 			proposal->addrs |= RTA_STATIC;
-		}
+		} else
+			log_warnx("%s: DHO_ROUTERS invalid", log_procname);
 	}
 
 	if (lease->options[DHO_DOMAIN_SEARCH].len != 0) {
 		opt = &lease->options[DHO_DOMAIN_SEARCH];
 		buf = pretty_print_domain_search(opt->data, opt->len);
-		if (buf == NULL )
-			log_warnx("%s: DOMAIN_SEARCH too long",
-			    log_procname);
-		else {
+		if (buf != NULL && strlen(buf) < sizeof(proposal->rtsearch)) {
 			proposal->rtsearch_len = strlen(buf);
 			memcpy(proposal->rtsearch, buf, proposal->rtsearch_len);
 			proposal->addrs |= RTA_SEARCH;
-		}
+		} else
+			log_warnx("%s: DOMAIN_SEARCH too long", log_procname);
 	} else if (lease->options[DHO_DOMAIN_NAME].len != 0) {
 		opt = &lease->options[DHO_DOMAIN_NAME];
 		if (opt->len < sizeof(proposal->rtsearch)) {
@@ -1942,6 +1942,7 @@ lease_as_proposal(struct client_lease *lease)
 		} else
 			log_warnx("%s: DOMAIN_NAME too long", log_procname);
 	}
+
 	if (lease->options[DHO_DOMAIN_NAME_SERVERS].len != 0) {
 		int servers;
 		opt = &lease->options[DHO_DOMAIN_NAME_SERVERS];
