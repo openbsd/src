@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.1 2019/02/28 03:27:57 dlg Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.2 2019/03/18 03:20:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -205,7 +205,7 @@ mpip_get_label(struct mpip_softc *sc, struct ifreq *ifr)
 
 	label.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
 
-	if (label.shim_label == MPLS_LABEL2SHIM(0))
+	if (label.shim_label == 0)
 		return (EADDRNOTAVAIL);
 
 	return (copyout(&label, ifr->ifr_data, sizeof(label)));

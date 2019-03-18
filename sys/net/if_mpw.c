@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.46 2019/02/26 03:44:50 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.47 2019/03/18 03:20:36 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -304,7 +304,8 @@ mpw_get_label(struct mpw_softc *sc, struct ifreq *ifr)
 	struct shim_hdr label;
 
 	label.shim_label = MPLS_SHIM2LABEL(sc->sc_smpls.smpls_label);
-	if (label.shim_label == MPLS_LABEL2SHIM(0))
+
+	if (label.shim_label == 0)
 		return (EADDRNOTAVAIL);
 
 	return (copyout(&label, ifr->ifr_data, sizeof(label)));
