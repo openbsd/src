@@ -1,6 +1,6 @@
-.\" $OpenBSD: SSL_CTX_new.3,v 1.10 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_new.3,v 1.11 2019/03/18 06:23:38 schwarze Exp $
 .\" full merge up to: OpenSSL 21cd6e00 Oct 21 14:40:15 2015 +0100
-.\" selective merge up to: OpenSSL eb43101f Dec 9 18:07:09 2016 +0100
+.\" selective merge up to: OpenSSL 1212818e Sep 11 13:22:14 2018 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
 .\" Copyright (c) 2000, 2005, 2012, 2013, 2015, 2016 The OpenSSL Project.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: March 18 2019 $
 .Dt SSL_CTX_NEW 3
 .Os
 .Sh NAME
@@ -71,6 +71,9 @@
 .Nm TLSv1_2_method ,
 .Nm TLSv1_2_server_method ,
 .Nm TLSv1_2_client_method ,
+.Nm DTLS_method ,
+.Nm DTLS_server_method ,
+.Nm DTLS_client_method ,
 .Nm DTLSv1_method ,
 .Nm DTLSv1_server_method ,
 .Nm DTLSv1_client_method
@@ -111,6 +114,12 @@
 .Fn TLSv1_2_server_method void
 .Ft const SSL_METHOD *
 .Fn TLSv1_2_client_method void
+.Ft const SSL_METHOD *
+.Fn DTLS_method void
+.Ft const SSL_METHOD *
+.Fn DTLS_server_method void
+.Ft const SSL_METHOD *
+.Fn DTLS_client_method void
 .Ft const SSL_METHOD *
 .Fn DTLSv1_method void
 .Ft const SSL_METHOD *
@@ -199,6 +208,13 @@ understand the TLSv1.1 protocol.
 A TLS/SSL connection established with these methods will only
 understand the TLSv1.2 protocol.
 .It Xo
+.Fn DTLS_method ,
+.Fn DTLS_server_method ,
+.Fn DTLS_client_method
+.Xc
+These are the version-flexible DTLS methods.
+The currently supported protocol is DTLS 1.0.
+.It Xo
 .Fn DTLSv1_method ,
 .Fn DTLSv1_server_method ,
 .Fn DTLSv1_client_method
@@ -270,6 +286,13 @@ and
 .Fn TLSv1_2_client_method
 first appeared in OpenSSL 1.0.1 and have been available since
 .Ox 5.3 .
+.Pp
+.Fn DTLS_method ,
+.Fn DTLS_server_method ,
+and
+.Fn DTLS_client_method
+first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 6.5 .
 .Pp
 .Fn TLS_method ,
 .Fn TLS_server_method ,
