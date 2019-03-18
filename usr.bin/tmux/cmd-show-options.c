@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.43 2019/03/18 11:58:40 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.44 2019/03/18 21:46:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -173,10 +173,6 @@ cmd_show_options_all(struct cmd *self, struct cmdq_item *item,
 	o = options_first(oo);
 	while (o != NULL) {
 		oe = options_table_entry(o);
-		if (oe != NULL && oe->style != NULL) {
-			o = options_next(o);
-			continue;
-		}
 		if (!options_isarray(o))
 			cmd_show_options_print(self, item, o, -1);
 		else {
