@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.32 2019/03/06 18:37:22 deraadt Exp $ */
+/*	$Id: main.c,v 1.33 2019/03/18 08:11:11 jmc Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -487,8 +487,11 @@ main(int argc, char *argv[])
 		rc = 0;
 	exit(rc);
 usage:
-	fprintf(stderr, "usage: %s [-Daglnoprtv] "
-	    "[-e ssh-prog] [--delete] [--rsync-path=prog] src ... dst\n",
+	fprintf(stderr, "usage: %s [-aDglnoprtv] [-e program] [--archive] [--delete] [--devices]\n"
+	    "\t[--group] [--links] [--dry-run] [--owner] [--perms]\n"
+	    "\t[--port=portnumber] [--recursive] [--rsh=program]\n"
+	    "\t[--rsync-path=program] [--specials] [--times] [--verbose]\n"
+	    "\t[--version] source ... directory\n",
 	    getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.9 2019/02/17 18:11:50 deraadt Exp $
+.\"	$OpenBSD: rsync.1,v 1.10 2019/03/18 08:11:11 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2019 $
+.Dd $Mdocdate: March 18 2019 $
 .Dt RSYNC 1
 .Os
 .Sh NAME
@@ -22,9 +22,24 @@
 .Nd synchronise local and remote files
 .Sh SYNOPSIS
 .Nm rsync
-.Op Fl glnoprtv
+.Op Fl aDglnoprtv
+.Op Fl e Ar program
+.Op Fl -archive
 .Op Fl -delete
-.Op Fl -rsync-path Ar prog
+.Op Fl -devices
+.Op Fl -group
+.Op Fl -links
+.Op Fl -dry-run
+.Op Fl -owner
+.Op Fl -perms
+.Op Fl -port Ns = Ns Ar portnumber
+.Op Fl -recursive
+.Op Fl -rsh Ns = Ns Ar program
+.Op Fl -rsync-path Ns = Ns Ar program
+.Op Fl -specials
+.Op Fl -times
+.Op Fl -verbose
+.Op Fl -version
 .Ar source ...
 .Ar directory
 .Sh DESCRIPTION
@@ -46,23 +61,22 @@ The arguments are as follows:
 .It Fl a , Fl -archive
 Archive mode.
 Shorthand for
-.Fl D ,
-.Fl g ,
-.Fl l ,
-.Fl o ,
-.Fl p ,
-.Fl r ,
-and
-.Fl t .
+.Fl Dgloprt .
 .It Fl D
 Transfer device and special files.
 Shorthand for
-.Fl -devices
-and
-.Fl specials .
+.Fl -devices -specials
+.It Fl -delete
+Delete files in
+.Ar directory
+not found in
+.Ar source
+directories.
+Only applicable with
+.Fl r .
 .It Fl -devices
 Transfer device files.
-.It Fl e Ar program , Fl -rsh Ns = Ns program
+.It Fl e Ar program , Fl -rsh Ns = Ns Ar program
 Specify alternative program, defaults to
 .Xr ssh 1 .
 .It Fl g , Fl -group
@@ -89,6 +103,8 @@ and only works if run as root.
 .It Fl p , Fl -perms
 Set destination file or directory permissions to match the source when
 it is updated.
+.It Fl -port Ns = Ns Ar portnumber
+Specify alternative port number.
 .It Fl r , Fl -recursive
 If
 .Ar source
@@ -101,6 +117,11 @@ directory.
 If
 .Ar source
 is a file, this has no effect.
+.It Fl -rsync-path Ns = Ns Ar program
+Run
+.Ar prog
+on the remote host instead of the default
+.Ar rsync .
 .It Fl -specials
 Transfer fifo and unix domain socket files.
 .It Fl t , Fl -times
@@ -111,21 +132,6 @@ Increase verbosity.
 Specify once for files being transferred, twice for specific status,
 thrice for per-file transfer information, and four times for per-file
 breakdowns.
-.It Fl -port Ns = Ns portnumber
-Specify alternative port number.
-.It Fl -delete
-Delete files in
-.Ar directory
-not found in
-.Ar source
-directories.
-Only applicable with
-.Fl r .
-.It Fl -rsync-path Ns = Ns Ar prog
-Run
-.Ar prog
-on the remote host instead of the default
-.Ar rsync .
 .It Fl -version
 Print version and exit.
 .El
@@ -179,8 +185,7 @@ must be a directory and is created if not found.
 .Pp
 .Nm
 is compatible with the GPL-licensed
-.Xr rsync 1
-protocol version 27.
+rsync protocol version 27.
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh CONTEXT
 .\" For section 9 functions only.
@@ -237,7 +242,7 @@ To update the out-of-date remote files in
 on a remote host running
 .Nm
 with the local host running
-.Xr rsync 1 :
+.Nm :
 .Pp
 .Dl % rsync --rsync-path rsync -t ../dest/* host:dest
 .\" .Sh DIAGNOSTICS
