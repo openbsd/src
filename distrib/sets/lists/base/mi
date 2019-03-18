@@ -476,6 +476,7 @@
 ./usr/bin/nohup
 ./usr/bin/od
 ./usr/bin/opencvs
+./usr/bin/openrsync
 ./usr/bin/openssl
 ./usr/bin/otp-md5
 ./usr/bin/otp-rmd160
