@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.60 2018/10/18 07:57:57 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.61 2019/03/18 11:58:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -416,7 +416,8 @@ tty_term_find(char *name, int fd, char **cause)
 	const struct tty_term_code_entry	*ent;
 	struct tty_code				*code;
 	struct options_entry			*o;
-	u_int					 size, i;
+	struct options_array_item		*a;
+	u_int					 i;
 	int		 			 n, error;
 	const char				*s, *acs;
 
@@ -491,12 +492,12 @@ tty_term_find(char *name, int fd, char **cause)
 
 	/* Apply terminal overrides. */
 	o = options_get_only(global_options, "terminal-overrides");
-	if (options_array_size(o, &size) != -1) {
-		for (i = 0; i < size; i++) {
-			s = options_array_get(o, i);
-			if (s != NULL)
-				tty_term_override(term, s);
-		}
+	a = options_array_first(o);
+	while (a != NULL) {
+		s = options_array_item_value(a);
+		if (s != NULL)
+			tty_term_override(term, s);
+		a = options_array_next(a);
 	}
 
 	/* Delete curses data. */
