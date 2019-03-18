@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.74 2019/01/05 21:40:44 krw Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.75 2019/03/18 00:00:59 dlg Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -183,6 +183,7 @@ configure_bpf_sock(int bpffd)
 	struct bpf_version	 v;
 	struct bpf_program	 p;
 	int			 flag = 1, sz;
+	int			 fildrop = BPF_FILDROP_CAPTURE;
 
 	/* Make sure the BPF version is in range. */
 	if (ioctl(bpffd, BIOCVERSION, &v) == -1)
@@ -201,7 +202,7 @@ configure_bpf_sock(int bpffd)
 	if (ioctl(bpffd, BIOCIMMEDIATE, &flag) == -1)
 		fatal("BIOCIMMEDIATE");
 
-	if (ioctl(bpffd, BIOCSFILDROP, &flag) == -1)
+	if (ioctl(bpffd, BIOCSFILDROP, &fildrop) == -1)
 		fatal("BIOCSFILDROP");
 
 	/* Get the required BPF buffer length from the kernel. */
