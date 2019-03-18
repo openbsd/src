@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.182 2019/03/15 15:02:25 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.183 2019/03/18 09:46:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -346,7 +346,9 @@ format_job_get(struct format_tree *ft, const char *cmd)
 		force = (ft->flags & FORMAT_FORCE);
 
 	t = time(NULL);
-	if (fj->job == NULL && (force || fj->last != t)) {
+	if (force && fj->job != NULL)
+	       job_free(fj->job);
+	if (force || (fj->job == NULL && fj->last != t)) {
 		fj->job = job_run(expanded, NULL,
 		    server_client_get_cwd(ft->client, NULL), format_job_update,
 		    format_job_complete, NULL, fj, JOB_NOWAIT);
