@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.62 2019/03/18 20:27:12 kn Exp $
+.\"	$OpenBSD: vmctl.8,v 1.63 2019/03/18 21:00:09 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -74,7 +74,7 @@ Using
 connect to the console of the VM with the specified
 .Ar id .
 .It Cm create Ar disk Oo Fl b Ar base | Fl i Ar disk Oc Op Fl s Ar size
-Creates a VM disk image file with the specified
+Create a VM disk image file with the specified
 .Ar disk
 path.
 .Bl -tag -width "-i input"
@@ -238,10 +238,10 @@ except for exclusive options such as disk, interface lladdr, or
 interface names.
 .El
 .It Cm status Op Ar id
-Lists VMs running on the host, optionally listing just the selected VM
+List VMs running on the host, optionally listing just the selected VM
 .Ar id .
 .It Cm stop Oo Ar id | Fl a Oc Op Fl fw
-Stops (terminates) a VM defined by the specified VM
+Stop (terminate) a VM defined by the specified VM
 .Ar id
 or all running VMs
 .Pq Fl a .
