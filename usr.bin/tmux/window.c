@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.223 2019/03/18 15:25:36 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.224 2019/03/18 20:53:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -217,7 +217,6 @@ winlink_remove(struct winlinks *wwl, struct winlink *wl)
 	}
 
 	RB_REMOVE(winlinks, wwl, wl);
-	free(wl->status_text);
 	free(wl);
 }
 
