@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.19 2019/02/21 22:12:48 benno Exp $ */
+/*	$Id: flist.c,v 1.20 2019/03/18 15:33:21 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -925,7 +925,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 
 		/* Our path defaults to "." for the root. */
 
-		if ('\0' == ent->fts_path[stripdir]) {
+		if (ent->fts_path[stripdir] == '\0') {
 			if (asprintf(&f->path, "%s.", ent->fts_path) < 0) {
 				ERR(sess, "asprintf");
 				f->path = NULL;
@@ -1021,7 +1021,7 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 	}
 
 	for (i = 0; i < argc; i++) {
-		if ('\0' == argv[i][0])
+		if (argv[i][0] == '\0')
 			continue;
 		if (lstat(argv[i], &st) == -1) {
 			ERR(sess, "%s: lstat", argv[i]);
