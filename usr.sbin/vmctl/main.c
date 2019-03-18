@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2019/03/01 12:47:36 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2019/03/18 20:27:12 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -81,7 +81,7 @@ struct ctl_command ctl_commands[] = {
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all | switches | vms]" },
 	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
-	{ "start",	CMD_START,	ctl_start,	"name"
+	{ "start",	CMD_START,	ctl_start,	"id | name"
 	    " [-cL] [-B device] [-b path] [-d disk] [-i count]\n"
 	    "\t\t[-m size] [-n switch] [-r path] [-t name]" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },

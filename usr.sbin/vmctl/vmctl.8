@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.61 2019/03/07 18:54:05 kn Exp $
+.\"	$OpenBSD: vmctl.8,v 1.62 2019/03/18 20:27:12 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2019 $
+.Dd $Mdocdate: March 18 2019 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -144,7 +144,7 @@ under the same path.
 An alias for the
 .Cm status
 command.
-.It Xo Cm start Ar name
+.It Xo Cm start Ar id | name
 .Op Fl cL
 .Bk -words
 .Op Fl B Ar device
@@ -157,7 +157,11 @@ command.
 .Op Fl t Ar name
 .Ek
 .Xc
-Starts a VM defined by the specified name and parameters:
+Start a new VM
+.Ar name
+with the specified parameters.
+An existing VM may be started by referencing its
+.Ar id .
 .Bl -tag -width "-I parent"
 .It Fl B Ar device
 Force system to boot from the specified device for this boot.
