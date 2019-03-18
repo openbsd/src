@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.26 2019/03/10 21:31:49 jmc Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.27 2019/03/18 05:56:24 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 16cfc2c9 Mar 8 22:30:28 2018 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 10 2019 $
+.Dd $Mdocdate: March 18 2019 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -1025,6 +1025,9 @@ correctly: see CCM mode section below for details.
 The ChaCha20 stream cipher.
 The key length is 256 bits, the IV is 96 bits long.
 .El
+.Pp
+See also
+.Xr EVP_sm4_cbc 3 .
 .Ss GCM mode
 For GCM mode ciphers, the behaviour of the EVP interface
 is subtly altered and several additional ctrl operations are
@@ -1227,7 +1230,8 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 }
 .Ed
 .Sh SEE ALSO
-.Xr evp 3
+.Xr evp 3 ,
+.Xr EVP_sm4_cbc 3
 .Sh HISTORY
 .Fn EVP_EncryptInit ,
 .Fn EVP_EncryptUpdate ,
