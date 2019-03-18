@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.100 2019/03/18 00:09:22 dlg Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.101 2019/03/18 06:41:52 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,8 +28,8 @@
 .Sh SYNOPSIS
 .Nm tcpdump
 .Op Fl AadefILlNnOopqStvXx
-.Op Fl c Ar count
 .Op Fl B Ar fildrop
+.Op Fl c Ar count
 .Op Fl D Ar direction
 .Op Fl E Oo Ar espalg : Oc Ns Ar espkey
 .Op Fl F Ar file
@@ -61,7 +61,7 @@ bytes will be printed.
 Attempt to convert network and broadcast addresses to names.
 .It Fl B Ar fildrop
 Configure the drop action specified by
-.A fildrop
+.Ar fildrop
 to be used when the filter expression matches a packet.
 The actions are:
 .Pp
@@ -71,7 +71,7 @@ Matching packets are accepted and captured.
 .It Cm capture
 Matching packets are dropped and captured.
 .It Cm drop
-Matching packets are dropped and not captured.
+Matching packets are dropped but not captured.
 .El
 .Pp
 The default action is
