@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.58 2019/01/09 11:23:32 fcambus Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.59 2019/03/18 16:10:39 fcambus Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1898,10 +1898,6 @@ int
 rasops_list_font_cb(void *cbarg, struct wsdisplay_font *font)
 {
 	struct rasops_list_font_ctx *ctx = cbarg;
-
-	if (font->fontheight != ctx->ri->ri_font->fontheight ||
-	    font->fontwidth != ctx->ri->ri_font->fontwidth)
-		return 0;
 
 	if (ctx->cnt-- == 0) {
 		ctx->font = font;
