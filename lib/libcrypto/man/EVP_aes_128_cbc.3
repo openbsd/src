@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_aes_128_cbc.3,v 1.1 2019/03/18 11:38:16 schwarze Exp $
+.\" $OpenBSD: EVP_aes_128_cbc.3,v 1.2 2019/03/19 19:50:03 schwarze Exp $
 .\" selective merge up to: OpenSSL 7c6d372a Nov 20 13:20:01 2018 +0000
 .\"
 .\" This file was written by Ronald Tse <ronald.tse@ribose.com>
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2019 $
+.Dd $Mdocdate: March 19 2019 $
 .Dt EVP_AES_128_CBC 3
 .Os
 .Sh NAME
@@ -237,6 +237,31 @@ and
 .Fn EVP_aes_256_wrap
 provide AES key wrap with 128, 192 and 256 bit keys
 according to RFC 3394 section 2.2.1 ("wrap").
+When the returned
+.Vt EVP_CIPHER
+object is later passed to
+.Xr EVP_CipherInit_ex 3 ,
+.Xr EVP_EncryptInit_ex 3 ,
+or
+.Xr EVP_DecryptInit_ex 3
+together with an
+.Vt EVP_CIPHER_CTX
+object, the flag
+.Dv EVP_CIPHER_CTX_FLAG_WRAP_ALLOW
+must have been set in the
+.Vt EVP_CIPHER_CTX
+using
+.Xr EVP_CIPHER_CTX_set_flags 3 .
+Otherwise, or when passing the returned
+.Vt EVP_CIPHER
+object to
+.Xr EVP_CipherInit 3 ,
+.Xr EVP_EncryptInit 3 ,
+or
+.Xr EVP_DecryptInit 3 ,
+initialization fails with a
+.Dq wrap not allowed
+error.
 .Pp
 .Fn EVP_aes_128_xts
 and

@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.28 2019/03/18 11:38:16 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.29 2019/03/19 19:50:03 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 16cfc2c9 Mar 8 22:30:28 2018 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2019 $
+.Dd $Mdocdate: March 19 2019 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -75,6 +75,9 @@
 .Nm EVP_DecryptFinal ,
 .Nm EVP_CipherInit ,
 .Nm EVP_CipherFinal ,
+.Nm EVP_CIPHER_CTX_set_flags ,
+.Nm EVP_CIPHER_CTX_clear_flags ,
+.Nm EVP_CIPHER_CTX_test_flags ,
 .Nm EVP_CIPHER_CTX_set_padding ,
 .Nm EVP_CIPHER_CTX_set_key_length ,
 .Nm EVP_CIPHER_CTX_ctrl ,
@@ -266,6 +269,21 @@
 .Fa "EVP_CIPHER_CTX *ctx"
 .Fa "unsigned char *outm"
 .Fa "int *outl"
+.Fc
+.Ft void
+.Fo EVP_CIPHER_CTX_set_flags
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fa "int flags"
+.Fc
+.Ft void
+.Fo EVP_CIPHER_CTX_clear_flags
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fa "int flags"
+.Fc
+.Ft int
+.Fo EVP_CIPHER_CTX_test_flags
+.Fa "EVP_CIPHER_CTX *ctx"
+.Fa "int flags"
 .Fc
 .Ft int
 .Fo EVP_CIPHER_CTX_set_padding
@@ -594,6 +612,30 @@ or
 structure.
 The actual NID value is an internal value which may not have a
 corresponding OBJECT IDENTIFIER.
+.Pp
+.Fn EVP_CIPHER_CTX_set_flags
+enables the given
+.Fa flags
+in
+.Fa ctx .
+.Fn EVP_CIPHER_CTX_clear_flags
+disables the given
+.Fa flags
+in
+.Fa ctx .
+.Fn EVP_CIPHER_CTX_test_flags
+checks whether any of the given
+.Fa flags
+are currently set in
+.Fa ctx ,
+returning the subset of the
+.Fa flags
+that are set, or 0 if none of them are set.
+Currently, the only supported cipher context flag is
+.Dv EVP_CIPHER_CTX_FLAG_WRAP_ALLOW ;
+see
+.Xr EVP_aes_128_wrap 3
+for details.
 .Pp
 .Fn EVP_CIPHER_CTX_set_padding
 enables or disables padding.
