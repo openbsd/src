@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.159 2018/11/12 00:26:30 dlg Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.160 2019/03/19 23:27:50 tedu Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*
@@ -366,9 +366,9 @@ main(int argc, char *argv[])
 		uid = getuid();
 		gid = getgid();
 	}
-	if (setgroups(1, &gid) ||
+	if (ouid && (setgroups(1, &gid) ||
 	    setresgid(gid, gid, gid) ||
-	    setresuid(uid, uid, uid))
+	    setresuid(uid, uid, uid)))
 		err(1, "unable to revoke privs");
 
 	if (strcmp("traceroute6", __progname) == 0) {
@@ -559,6 +559,12 @@ main(int argc, char *argv[])
 		default:
 			usage(v6flag);
 		}
+
+	if (ouid == 0 && (setgroups(1, &gid) ||
+	    setresgid(gid, gid, gid) ||
+	    setresuid(uid, uid, uid)))
+		err(1, "unable to revoke privs");
+
 	argc -= optind;
 	argv += optind;
 

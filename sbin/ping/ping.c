@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.234 2018/11/13 14:30:36 dhill Exp $	*/
+/*	$OpenBSD: ping.c,v 1.235 2019/03/19 23:27:49 tedu Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -283,9 +283,9 @@ main(int argc, char *argv[])
 		uid = getuid();
 		gid = getgid();
 	}
-	if (setgroups(1, &gid) ||
+	if (ouid && (setgroups(1, &gid) ||
 	    setresgid(gid, gid, gid) ||
-	    setresuid(uid, uid, uid))
+	    setresuid(uid, uid, uid)))
 		err(1, "unable to revoke privs");
 
 	preload = 0;
@@ -428,6 +428,11 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	if (ouid == 0 && (setgroups(1, &gid) ||
+	    setresgid(gid, gid, gid) ||
+	    setresuid(uid, uid, uid)))
+		err(1, "unable to revoke privs");
 
 	argc -= optind;
 	argv += optind;
