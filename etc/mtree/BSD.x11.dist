@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.51 2019/02/10 23:09:25 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.52 2019/03/19 21:40:16 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -45,8 +45,6 @@
                 ..
                 X11
                     ICE
-                    ..
-                    PM
                     ..
                     SM
                     ..
@@ -338,27 +336,9 @@
                 aclocal
                 ..
                 doc
-                    bigreqsproto
-                    ..
-                    compositeproto
-                    ..
-                    damageproto
-                    ..
-                    dri2proto
-                    ..
-                    dri3proto
-                    ..
-                    fixesproto
-                    ..
                     fontconfig
                         fontconfig-devel
                         ..
-                    ..
-                    fontsproto
-                    ..
-                    inputproto
-                    ..
-                    kbproto
                     ..
                     libFS
                     ..
@@ -385,24 +365,6 @@
                     libXtst
                     ..
                     libXvMC
-                    ..
-                    randrproto
-                    ..
-                    recordproto
-                    ..
-                    renderproto
-                    ..
-                    resproto
-                    ..
-                    scrnsaverproto
-                    ..
-                    x11proto
-                        SIAddresses
-                        ..
-                    ..
-                    xcmiscproto
-                    ..
-                    xextproto
                     ..
                     xorgproto
                         inputproto
