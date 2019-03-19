@@ -34,7 +34,7 @@
 #include "_libelf.h"
 #include "_libelf_ar.h"
 
-ELFTC_VCSID("$Id: libelf_ar.c,v 1.1 2019/02/01 05:27:38 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_ar.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
 
 #define	LIBELF_NALLOC_SIZE	16
 
@@ -124,8 +124,16 @@ _libelf_ar_gethdr(Elf *e)
 	arh = (struct ar_hdr *) (uintptr_t) e->e_hdr.e_rawhdr;
 
 	assert((uintptr_t) arh >= (uintptr_t) parent->e_rawfile + SARMAG);
-	assert((uintptr_t) arh <= (uintptr_t) parent->e_rawfile +
-	    parent->e_rawsize - sizeof(struct ar_hdr));
+
+	/*
+	 * There needs to be enough space remaining in the file for the
+	 * archive header.
+	 */
+	if ((uintptr_t) arh > (uintptr_t) parent->e_rawfile +
+	    (uintptr_t) parent->e_rawsize - sizeof(struct ar_hdr)) {
+		LIBELF_SET_ERROR(ARCHIVE, 0);
+		return (NULL);
+	}
 
 	if ((eh = malloc(sizeof(Elf_Arhdr))) == NULL) {
 		LIBELF_SET_ERROR(RESOURCE, 0);
@@ -200,8 +208,8 @@ Elf *
 _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 {
 	Elf *e;
-	off_t next;
 	size_t nsz, sz;
+	off_t next, end;
 	struct ar_hdr *arh;
 	char *member, *namelen;
 
@@ -218,6 +226,17 @@ _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 
 	assert((next & 1) == 0);
 
+	/*
+	 * There needs to be enough space in the file to contain an
+	 * ar(1) header.
+	 */
+	end = next + (off_t) sizeof(struct ar_hdr);
+	if ((uintmax_t) end < (uintmax_t) next || /* Overflow. */
+	    end > (off_t) elf->e_rawsize) {
+		LIBELF_SET_ERROR(ARCHIVE, 0);
+		return (NULL);
+	}
+
 	arh = (struct ar_hdr *) (elf->e_rawfile + next);
 
 	/*
@@ -225,6 +244,17 @@ _libelf_ar_open_member(int fd, Elf_Cmd c, Elf *elf)
 	 */
 	if (_libelf_ar_get_number(arh->ar_size, sizeof(arh->ar_size), 10,
 	    &sz) == 0) {
+		LIBELF_SET_ERROR(ARCHIVE, 0);
+		return (NULL);
+	}
+
+	/*
+	 * Check if the archive member that follows will fit in the
+	 * containing archive.
+	 */
+	end += (off_t) sz;
+	if (end < next || /* Overflow. */
+	    end > (off_t) elf->e_rawsize) {
 		LIBELF_SET_ERROR(ARCHIVE, 0);
 		return (NULL);
 	}
@@ -287,7 +317,8 @@ Elf_Arsym *
 _libelf_ar_process_bsd_symtab(Elf *e, size_t *count)
 {
 	Elf_Arsym *symtab, *sym;
-	unsigned int n, nentries;
+	unsigned int n;
+	size_t nentries;
 	unsigned char *end, *p, *p0, *s, *s0;
 	const size_t entrysize = 2 * sizeof(long);
 	long arraysize, fileoffset, stroffset, strtabsize;
@@ -344,7 +375,7 @@ _libelf_ar_process_bsd_symtab(Elf *e, size_t *count)
 		GET_LONG(p, fileoffset);
 
 		if (stroffset < 0 || fileoffset <  0 ||
-		    (size_t) fileoffset >= e->e_rawsize)
+		    (off_t) fileoffset >= e->e_rawsize)
 			goto symtaberror;
 
 		s = s0 + stroffset;

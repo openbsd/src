@@ -41,7 +41,7 @@
 #include <sys/mman.h>
 #endif
 
-ELFTC_VCSID("$Id: elf_update.c,v 1.1 2019/02/01 05:27:37 jsg Exp $");
+ELFTC_VCSID("$Id: elf_update.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
 
 /*
  * Layout strategy:
@@ -142,7 +142,7 @@ _libelf_compute_section_extents(Elf *e, Elf_Scn *s, off_t rc)
 	assert(sh_type != SHT_NULL && sh_type != SHT_NOBITS);
 
 	elftype = _libelf_xlate_shtype(sh_type);
-	if (elftype > ELF_T_LAST) {
+	if (elftype < ELF_T_FIRST || elftype > ELF_T_LAST) {
 		LIBELF_SET_ERROR(SECTION, 0);
 		return (0);
 	}
@@ -1084,7 +1084,7 @@ _libelf_write_elf(Elf *e, off_t newsize, struct _Elf_Extent_List *extents)
 		if (e->e_flags & LIBELF_F_RAWFILE_MMAP) {
 			assert(e->e_rawfile != NULL);
 			assert(e->e_cmd == ELF_C_RDWR);
-			if (munmap(e->e_rawfile, e->e_rawsize) < 0) {
+			if (munmap(e->e_rawfile, (size_t) e->e_rawsize) < 0) {
 				LIBELF_SET_ERROR(IO, errno);
 				goto error;
 			}
@@ -1125,7 +1125,7 @@ _libelf_write_elf(Elf *e, off_t newsize, struct _Elf_Extent_List *extents)
 #endif	/* ELFTC_HAVE_MMAP */
 
 		/* Record the new size of the file. */
-		e->e_rawsize = (size_t) newsize;
+		e->e_rawsize = newsize;
 	} else {
 		/* File opened in ELF_C_WRITE mode. */
 		assert(e->e_rawfile == NULL);

@@ -28,15 +28,13 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: elf_rawfile.c,v 1.1 2019/02/01 05:27:37 jsg Exp $");
+ELFTC_VCSID("$Id: elf_rawfile.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
 
 char *
 elf_rawfile(Elf *e, size_t *sz)
 {
-	size_t size;
 	unsigned char *ptr;
 
-	size = e ? e->e_rawsize : 0;
 	ptr = NULL;
 
 	if (e == NULL)
@@ -45,7 +43,7 @@ elf_rawfile(Elf *e, size_t *sz)
 		LIBELF_SET_ERROR(SEQUENCE, 0);
 
 	if (sz)
-		*sz = size;
+		*sz = e ? (size_t) e->e_rawsize : 0;
 
 	return ((char *) ptr);
 }

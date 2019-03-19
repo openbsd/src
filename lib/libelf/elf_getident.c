@@ -30,7 +30,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: elf_getident.c,v 1.1 2019/02/01 05:27:37 jsg Exp $");
+ELFTC_VCSID("$Id: elf_getident.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
 
 char *
 elf_getident(Elf *e, size_t *sz)
@@ -54,7 +54,7 @@ elf_getident(Elf *e, size_t *sz)
 		else if (e->e_kind == ELF_K_ELF)
 			*sz = EI_NIDENT;
 		else
-			*sz = e->e_rawsize;
+			*sz = (size_t) e->e_rawsize;
 	}
 
 	return ((char *) e->e_rawfile);

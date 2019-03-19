@@ -36,32 +36,25 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_allocate.c,v 1.1 2019/02/01 05:27:38 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_allocate.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
 
 Elf *
 _libelf_allocate_elf(void)
 {
 	Elf *e;
 
-	if ((e = malloc(sizeof(*e))) == NULL) {
+	if ((e = calloc((size_t) 1, sizeof(*e))) == NULL) {
 		LIBELF_SET_ERROR(RESOURCE, errno);
 		return NULL;
 	}
 
 	e->e_activations = 1;
-	e->e_hdr.e_rawhdr = NULL;
 	e->e_byteorder   = ELFDATANONE;
 	e->e_class       = ELFCLASSNONE;
 	e->e_cmd         = ELF_C_NULL;
 	e->e_fd          = -1;
-	e->e_flags	 = 0;
 	e->e_kind        = ELF_K_NONE;
-	e->e_parent      = NULL;
-	e->e_rawfile     = NULL;
-	e->e_rawsize     = 0;
 	e->e_version     = LIBELF_PRIVATE(version);
-
-	(void) memset(&e->e_u, 0, sizeof(e->e_u));
 
 	return (e);
 }
@@ -83,12 +76,6 @@ _libelf_init_elf(Elf *e, Elf_Kind kind)
 	}
 }
 
-#define	FREE(P)		do {				\
-		if (P)					\
-			free(P);			\
-	} while (0)
-
-
 Elf *
 _libelf_release_elf(Elf *e)
 {
@@ -96,18 +83,18 @@ _libelf_release_elf(Elf *e)
 
 	switch (e->e_kind) {
 	case ELF_K_AR:
-		FREE(e->e_u.e_ar.e_symtab);
+		free(e->e_u.e_ar.e_symtab);
 		break;
 
 	case ELF_K_ELF:
 		switch (e->e_class) {
 		case ELFCLASS32:
-			FREE(e->e_u.e_elf.e_ehdr.e_ehdr32);
-			FREE(e->e_u.e_elf.e_phdr.e_phdr32);
+			free(e->e_u.e_elf.e_ehdr.e_ehdr32);
+			free(e->e_u.e_elf.e_phdr.e_phdr32);
 			break;
 		case ELFCLASS64:
-			FREE(e->e_u.e_elf.e_ehdr.e_ehdr64);
-			FREE(e->e_u.e_elf.e_phdr.e_phdr64);
+			free(e->e_u.e_elf.e_ehdr.e_ehdr64);
+			free(e->e_u.e_elf.e_phdr.e_phdr64);
 			break;
 		}
 
@@ -115,8 +102,8 @@ _libelf_release_elf(Elf *e)
 
 		if (e->e_flags & LIBELF_F_AR_HEADER) {
 			arh = e->e_hdr.e_arhdr;
-			FREE(arh->ar_name);
-			FREE(arh->ar_rawname);
+			free(arh->ar_name);
+			free(arh->ar_rawname);
 			free(arh);
 		}
 

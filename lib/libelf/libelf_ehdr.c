@@ -31,7 +31,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_ehdr.c,v 1.1 2019/02/01 05:27:38 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_ehdr.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
 
 /*
  * Retrieve counts for sections, phdrs and the section string table index
@@ -51,7 +51,12 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 	fsz = _libelf_fsize(ELF_T_SHDR, ec, e->e_version, 1);
 	assert(fsz > 0);
 
-	if (e->e_rawsize < shoff + fsz) { /* raw file too small */
+	if (shoff + fsz < shoff) {	/* Numeric overflow. */
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (0);
+	}
+
+	if ((uint64_t) e->e_rawsize < shoff + fsz) {
 		LIBELF_SET_ERROR(HEADER, 0);
 		return (0);
 	}
@@ -138,7 +143,7 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 	fsz = _libelf_fsize(ELF_T_EHDR, ec, e->e_version, (size_t) 1);
 	assert(fsz > 0);
 
-	if (e->e_cmd != ELF_C_WRITE && e->e_rawsize < fsz) {
+	if (e->e_cmd != ELF_C_WRITE && e->e_rawsize < (off_t) fsz) {
 		LIBELF_SET_ERROR(HEADER, 0);
 		return (NULL);
 	}

@@ -21,9 +21,9 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf_next.3,v 1.1 2019/02/01 05:27:37 jsg Exp $
+.\" $Id: elf_next.3,v 1.2 2019/03/19 02:31:35 jsg Exp $
 .\"
-.Dd June 17, 2006
+.Dd February 27, 2019
 .Dt ELF_NEXT 3
 .Os
 .Sh NAME
@@ -88,6 +88,9 @@ Argument
 was not associated with a containing
 .Xr ar 1
 archive.
+.It Bq Er ELF_E_ARGUMENT
+An error was encountered while parsing the archive containing argument
+.Ar elf .
 .El
 .Sh SEE ALSO
 .Xr elf 3 ,

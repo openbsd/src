@@ -31,7 +31,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_phdr.c,v 1.1 2019/02/01 05:27:38 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_phdr.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
 
 void *
 _libelf_getphdr(Elf *e, int ec)
@@ -76,6 +76,11 @@ _libelf_getphdr(Elf *e, int ec)
 	fsz = gelf_fsize(e, ELF_T_PHDR, phnum, e->e_version);
 
 	assert(fsz > 0);
+
+	if (phoff + fsz < phoff) {	/* Numeric overflow. */
+		LIBELF_SET_ERROR(HEADER, 0);
+		return (NULL);
+	}
 
 	if ((uint64_t) e->e_rawsize < (phoff + fsz)) {
 		LIBELF_SET_ERROR(HEADER, 0);

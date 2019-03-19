@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: _libelf.h,v 1.1 2019/02/01 05:27:37 jsg Exp $
+ * $Id: _libelf.h,v 1.2 2019/03/19 02:31:35 jsg Exp $
  */
 
 #ifndef	__LIBELF_H_
@@ -90,7 +90,7 @@ struct _Elf {
 	Elf_Kind	e_kind;		/* ELF_K_* */
 	Elf		*e_parent; 	/* non-NULL for archive members */
 	unsigned char	*e_rawfile;	/* uninterpreted bytes */
-	size_t		e_rawsize;	/* size of uninterpreted bytes */
+	off_t		e_rawsize;	/* size of uninterpreted bytes */
 	unsigned int	e_version;	/* file version */
 
 	/*
