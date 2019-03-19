@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.182 2019/01/11 17:03:43 schwarze Exp $ */
+/*	$OpenBSD: read.c,v 1.183 2019/03/19 16:25:38 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -253,6 +253,8 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 		/* XXX Ugly hack to mark the end of the input. */
 
 		if (i == blk.sz || blk.buf[i] == '\0') {
+			if (pos + 2 > ln.sz)
+				resize_buf(&ln, 256);
 			ln.buf[pos++] = '\n';
 			ln.buf[pos] = '\0';
 		}
