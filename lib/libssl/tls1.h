@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.38 2019/03/17 15:16:39 jsing Exp $ */
+/* $OpenBSD: tls1.h,v 1.39 2019/03/19 16:53:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -177,10 +177,11 @@ extern "C" {
 #define TLS1_VERSION_MAJOR		0x03
 #define TLS1_VERSION_MINOR		0x01
 
-#ifndef LIBRESSL_INTERNAL
-#define TLS1_get_version(s) (s->version)
-#define TLS1_get_client_version(s) (s->client_version)
-#endif
+#define TLS1_get_version(s) \
+		((s->version >> 8) == TLS1_VERSION_MAJOR ? s->version : 0)
+
+#define TLS1_get_client_version(s) \
+		((s->client_version >> 8) == TLS1_VERSION_MAJOR ? s->client_version : 0)
 
 /*
  * TLS Alert codes.

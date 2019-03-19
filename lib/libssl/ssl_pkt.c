@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.15 2019/03/17 15:16:39 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.16 2019/03/19 16:53:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -729,7 +729,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	 * bytes and record version number > TLS 1.0
 	 */
 	if (S3I(s)->hs.state == SSL3_ST_CW_CLNT_HELLO_B && !s->internal->renegotiate &&
-	    s->version > TLS1_VERSION)
+	    TLS1_get_version(s) > TLS1_VERSION)
 		*(p++) = 0x1;
 	else
 		*(p++) = s->version&0xff;

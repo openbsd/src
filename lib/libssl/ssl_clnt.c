@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.57 2019/03/17 15:16:39 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.58 2019/03/19 16:53:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -950,7 +950,7 @@ ssl3_get_server_hello(SSL *s)
 
 	/* TLS v1.2 only ciphersuites require v1.2 or later. */
 	if ((cipher->algorithm_ssl & SSL_TLSV1_2) &&
-	    (s->version < TLS1_2_VERSION)) {
+	    (TLS1_get_version(s) < TLS1_2_VERSION)) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_WRONG_CIPHER_RETURNED);
 		goto f_err;
