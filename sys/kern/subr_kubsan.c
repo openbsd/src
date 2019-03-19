@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.1 2019/03/18 17:30:08 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.2 2019/03/19 20:13:54 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -23,7 +23,7 @@
 
 #define NUMBER_BUFSIZ		32
 #define LOCATION_BUFSIZ		(PATH_MAX + 32)	/* filename:line:column */
-#define LOCATION_REPORTED	(1U << 30)
+#define LOCATION_REPORTED	(1U << 31)
 
 #define NBITS(typ)	(1 << ((typ)->t_info >> 1))
 #define SIGNED(typ)	((typ)->t_info & 1)
