@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.100 2019/03/18 21:46:02 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.101 2019/03/19 21:09:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -74,25 +74,43 @@ static const char *options_table_window_size_list[] = {
 	"#[list=on align=#{status-justify}]" \
 	"#[list=left-marker]<#[list=right-marker]>#[list=on]" \
 	"#{W:" \
-		"#[range=window|#{window_index}" \
-			"#{?window_last_flag, #{window-status-last-style},}" \
-			"#{?window_bell_flag," \
-				" #{window-status-bell-style}," \
-				"#{?window_activity_flag," \
-					" #{window-status-activity-style},}" \
+		"#[range=window|#{window_index} " \
+			"#{window-status-style}" \
+			"#{?#{&&:#{window_last_flag}," \
+				"#{!=:#{window-status-last-style},default}}, " \
+				"#{window-status-last-style}," \
+			"}" \
+			"#{?#{&&:#{window_bell_flag}," \
+				"#{!=:#{window-status-bell-style},default}}, " \
+				"#{window-status-bell-style}," \
+				"#{?#{&&:#{window_activity_flag}," \
+					"#{!=:" \
+					"#{window-status-activity-style}," \
+					"default}}, " \
+					"#{window-status-activity-style}," \
 				"}" \
+			"}" \
 		"]" \
 		"#{T:window-status-format}" \
 		"#[norange default]" \
 		"#{?window_end_flag,,#{window-status-separator}}" \
 	"," \
-		"#[range=window|#{window_index} list=focus" \
-			"#{?window_last_flag, #{window-status-last-style},}" \
-			"#{?window_bell_flag," \
-				" #{window-status-bell-style}," \
-				"#{?window_activity_flag," \
-					" #{window-status-activity-style},}" \
+		"#[range=window|#{window_index} list=focus " \
+			"#{window-status-current-style}" \
+			"#{?#{&&:#{window_last_flag}," \
+				"#{!=:#{window-status-last-style},default}}, " \
+				"#{window-status-last-style}," \
+			"}" \
+			"#{?#{&&:#{window_bell_flag}," \
+				"#{!=:#{window-status-bell-style},default}}, " \
+				"#{window-status-bell-style}," \
+				"#{?#{&&:#{window_activity_flag}," \
+					"#{!=:" \
+					"#{window-status-activity-style}," \
+					"default}}, " \
+					"#{window-status-activity-style}," \
 				"}" \
+			"}" \
 		"]" \
 		"#{T:window-status-current-format}" \
 		"#[norange list=on default]" \
