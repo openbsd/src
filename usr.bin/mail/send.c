@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.24 2015/01/20 16:59:07 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.25 2019/03/19 13:26:27 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ mail1(struct header *hp, int printheaders)
 		(void)savemail(expand(cp), mtf);
 	
 	/* Setup sendmail arguments. */
-        *ap++ = "send-mail";
+        *ap++ = "sendmail";
         *ap++ = "-i";
         *ap++ = "-t";
 	cp = hp->h_from ? hp->h_from : value("from");
