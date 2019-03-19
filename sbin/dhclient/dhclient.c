@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.627 2019/03/18 22:26:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.628 2019/03/19 00:50:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1890,7 +1890,6 @@ lease_as_proposal(struct client_lease *lease)
 
 	if (lease->options[DHO_CLASSLESS_STATIC_ROUTES].len != 0) {
 		opt = &lease->options[DHO_CLASSLESS_STATIC_ROUTES];
-		/* XXX */
 		if (opt->len < sizeof(proposal->rtstatic)) {
 			proposal->rtstatic_len = opt->len;
 			memcpy(&proposal->rtstatic, opt->data, opt->len);
@@ -1900,7 +1899,6 @@ lease_as_proposal(struct client_lease *lease)
 			    log_procname);
 	} else if (lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES].len != 0) {
 		opt = &lease->options[DHO_CLASSLESS_MS_STATIC_ROUTES];
-		/* XXX */
 		if (opt->len < sizeof(proposal->rtstatic)) {
 			proposal->rtstatic_len = opt->len;
 			memcpy(&proposal->rtstatic[1], opt->data, opt->len);
