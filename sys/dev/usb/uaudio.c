@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.134 2019/03/12 08:32:06 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.135 2019/03/19 09:19:16 claudio Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3196,7 +3196,7 @@ uaudio_pdata_intr(struct usbd_xfer *usb_xfer, void *arg, usbd_status status)
 	uint32_t size;
 	int nintr;
 
-	if (status != 0) {
+	if (status != 0 && status != USBD_IOERROR) {
 		DPRINTF("%s: xfer status = %d\n", __func__, status);
 		return;
 	}
