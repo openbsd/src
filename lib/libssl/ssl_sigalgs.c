@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.16 2019/01/24 00:07:58 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.17 2019/03/19 16:56:04 jsing Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -209,16 +209,11 @@ ssl_sigalg_lookup(uint16_t sigalg)
 const struct ssl_sigalg *
 ssl_sigalg(uint16_t sigalg, uint16_t *values, size_t len)
 {
-	const struct ssl_sigalg *sap;
 	int i;
 
 	for (i = 0; i < len; i++) {
 		if (values[i] == sigalg)
-			break;
-	}
-	if (values[i] == sigalg) {
-		if ((sap = ssl_sigalg_lookup(sigalg)) != NULL)
-			return sap;
+			return ssl_sigalg_lookup(sigalg);
 	}
 
 	return NULL;
