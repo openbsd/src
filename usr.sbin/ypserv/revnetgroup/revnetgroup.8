@@ -1,4 +1,4 @@
-.\"	$OpenBSD: revnetgroup.8,v 1.13 2013/08/14 06:32:37 jmc Exp $
+.\"	$OpenBSD: revnetgroup.8,v 1.14 2019/03/20 04:52:28 schwarze Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	$FreeBSD: revnetgroup.8,v 1.4 1997/02/22 14:22:03 peter Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: March 20 2019 $
 .Dt REVNETGROUP 8
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ The
 .Nm
 command prints its results on the standard output.
 It is usually called only by
-.Pa /var/yp/\<domain\>/Makefile
+.Pa /var/yp/<domain>/Makefile
 when rebuilding the YP netgroup maps.
 .Pp
 The options are as follows:
@@ -120,7 +120,7 @@ original netgroup file is processed.
 .El
 .Sh FILES
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxxxxxx -compact
-.It Pa /var/yp/\<domain\>Makefile
+.It Pa /var/yp/<domain>/Makefile
 The Makefile that calls
 .Xr makedbm 8
 and
