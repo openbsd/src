@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.2 2019/03/18 21:55:04 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.3 2019/03/20 07:13:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -527,6 +527,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 	style_set(&sy, base);
 	TAILQ_INIT(&frs);
+	log_debug("%s: %s", __func__, expanded);
 
 	/*
 	 * We build three screens for left, right, centre alignment, one for
@@ -574,10 +575,13 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 		/* This is a style. Work out where the end is and parse it. */
 		end = format_skip(cp + 2, "]");
-		if (end == NULL)
+		if (end == NULL) {
+			log_debug("no terminating ] at '%s'", cp + 2);
 			return;
+		}
 		tmp = xstrndup(cp + 2, end - (cp + 2));
 		if (style_parse(&sy, base, tmp) != 0) {
+			log_debug("invalid style '%s'", tmp);
 			free(tmp);
 			return;
 		}
