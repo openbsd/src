@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.274 2019/03/18 22:26:56 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.275 2019/03/20 20:10:00 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -162,7 +162,10 @@ char			*pretty_print_option(unsigned int, struct option_data *,
 char			*pretty_print_string(unsigned char *, size_t, int);
 char			*code_to_name(int);
 char			*code_to_format(int);
+int			 code_to_action(int, int);
 int			 name_to_code(char *);
+void			 merge_option_data(struct option_data *,
+    struct option_data *, struct option_data *);
 
 /* conflex.c */
 extern int	 lexline, lexchar;

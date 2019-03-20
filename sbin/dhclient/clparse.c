@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.183 2019/02/12 16:50:44 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.184 2019/03/20 20:10:00 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -257,7 +257,7 @@ parse_conf_decl(FILE *cfile, char *name)
 {
 	uint8_t			 list[DHO_COUNT];
 	char			*val;
-	int			 i, count, token;
+	int			 action, count, i, token;
 	uint32_t		 t;
 
 	token = next_token(NULL, cfile);
@@ -265,7 +265,10 @@ parse_conf_decl(FILE *cfile, char *name)
 	switch (token) {
 	case TOK_APPEND:
 		if (parse_option(cfile, &i, config->defaults) == 1) {
-			config->default_actions[i] = ACTION_APPEND;
+			action = code_to_action(i, ACTION_APPEND);
+			if (action == ACTION_DEFAULT)
+				parse_warn("'append' treated as 'default'");
+			config->default_actions[i] = action;
 			parse_semi(cfile);
 		}
 		break;
@@ -356,7 +359,10 @@ parse_conf_decl(FILE *cfile, char *name)
 		break;
 	case TOK_PREPEND:
 		if (parse_option(cfile, &i, config->defaults) == 1) {
-			config->default_actions[i] = ACTION_PREPEND;
+			action = code_to_action(i, ACTION_PREPEND);
+			if (action == ACTION_SUPERSEDE)
+				parse_warn("'prepend' treated as 'supersede'");
+			config->default_actions[i] = action;
 			parse_semi(cfile);
 		}
 		break;

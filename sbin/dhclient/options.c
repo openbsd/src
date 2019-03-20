@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.114 2019/03/18 22:26:56 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.115 2019/03/20 20:10:00 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -83,6 +83,7 @@ int expand_search_domain_name(unsigned char *, size_t, int *, unsigned char *);
  * f - flag (true or false)
  * A - array of whatever precedes (e.g., IA means array of IP addresses)
  * C - CIDR description
+ * X - hex octets
  */
 
 static const struct {
@@ -398,6 +399,41 @@ code_to_format(int code)
 		return "X";
 
 	return dhcp_options[code].format;
+}
+
+/*
+ * Some option data types cannot be appended or prepended to. For
+ * such options change ACTION_PREPEND to ACTION_SUPERSEDE and
+ * ACTION_APPEND to ACTION_DEFAULT.
+ */
+int
+code_to_action(int code, int action)
+{
+	char	*fmt;
+
+	fmt = code_to_format(code);
+	if (fmt == NULL || strchr(fmt, 'A') != NULL || fmt[0] == 't')
+		return action;
+
+	if (fmt[0] == 'X' && code != DHO_DOMAIN_SEARCH)
+		return action;
+
+	/*
+	 * For our protection all formats which have been excluded shall be
+	 * deemed included.
+	 */
+	switch (action) {
+	case ACTION_APPEND:
+		action = ACTION_DEFAULT;
+		break;
+	case ACTION_PREPEND: 
+		action = ACTION_SUPERSEDE;
+		break;
+	default:
+		break;
+	}
+
+	return action;
 }
 
 /*
@@ -994,4 +1030,18 @@ unpack_options(struct dhcp_packet *packet)
 	}
 
 	return options;
+}
+
+void
+merge_option_data(struct option_data *first,
+    struct option_data *second, struct option_data *dest)
+{
+	free(dest->data);
+	dest->len = first->len + second->len;
+	dest->data = calloc(1, dest->len);
+	if (dest->data == NULL)
+		fatal("merged option data");
+
+	memcpy(dest->data, first->data, first->len);
+	memcpy(dest->data + first->len, second->data, second->len);
 }
