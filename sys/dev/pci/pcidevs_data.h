@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1879 2019/03/16 22:38:47 sthen Exp 
+ *	OpenBSD: pcidevs,v 1.1880 2019/03/20 03:31:55 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -4032,12 +4032,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Oland",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_3,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_4,
+	    "Oland",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8790M,
 	    "Radeon HD 8790M",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8530M,
 	    "Radeon HD 8530M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_5,
+	    "Oland",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8600,
@@ -4052,20 +4064,68 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 8500",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_3,
-	    "Oland",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_4,
-	    "Oland",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_5,
-	    "Oland",
-	},
-	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_6,
 	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_7,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_8,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_9,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_OLAND_10,
+	    "Oland",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_1,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_2,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_3,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_4,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_5,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_6,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_7,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_8,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_9,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_10,
+	    "Bonaire",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_BONAIRE_11,
+	    "Bonaire",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8670M,
@@ -4388,6 +4448,54 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Tahiti",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_1,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_2,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_3,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_4,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_5,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_6,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_7,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_8,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_9,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_10,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_11,
+	    "Hawaii",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_HAWAII_12,
+	    "Hawaii",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_PROWX4130,
 	    "Radeon Pro WX 4130/4150",
 	},
@@ -4448,7 +4556,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 8800M",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_4,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_1,
 	    "Cape Verde",
 	},
 	{
@@ -4476,16 +4584,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "FirePro W600",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_1,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_2,
 	    "Cape Verde",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_5,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_3,
 	    "Cape Verde",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8800M,
 	    "Radeon HD 8800M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_4,
+	    "Cape Verde",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREPRO_M4000,
@@ -4504,7 +4616,7 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 7700M",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_6,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_5,
 	    "Cape Verde",
 	},
 	{
@@ -4512,11 +4624,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 7730",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_2,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_6,
 	    "Cape Verde",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_3,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VERDE_7,
 	    "Cape Verde",
 	},
 	{
@@ -5404,12 +5516,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Mobility Radeon HD 4650",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV730_1,
+	    "RV730",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4670_M,
 	    "Mobility Radeon HD 4670",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV730_2,
+	    "RV730",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4670_M_2,
 	    "Mobility Radeon HD 4670",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV730_3,
+	    "RV730",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4670,
@@ -5472,6 +5596,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "FirePro M5750",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV610_1,
+	    "RV610",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2400_XT,
 	    "Radeon HD 2400 XT",
 	},
@@ -5486,6 +5614,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V4000,
 	    "FireGL V4000",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV610_2,
+	    "RV610",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2350,
@@ -5512,6 +5644,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "FireMV 2260",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV670_1,
+	    "RV670",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870,
 	    "Radeon HD 3870",
 	},
@@ -5526,6 +5662,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3850_X2_M,
 	    "Mobility Radeon HD 3850 X2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV670_2,
+	    "RV670",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3870_M,
@@ -5560,6 +5700,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 4550",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV710_1,
+	    "RV710",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV710_2,
+	    "RV710",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV710_3,
+	    "RV710",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4350,
 	    "Radeon HD 4350",
 	},
@@ -5582,6 +5734,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD4330_M,
 	    "Mobility Radeon HD 4330",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV630_1,
+	    "RV630",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_M76,
@@ -5608,12 +5764,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 2600 Pro",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV630_2,
+	    "RV630",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV630_3,
+	    "RV630",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5600,
 	    "FireGL V5600",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V3600,
 	    "FireGL V3600",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV630_4,
+	    "RV630",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV630_5,
+	    "RV630",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3600,
@@ -5636,8 +5808,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 3650 AGP",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV635_1,
+	    "RV635",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3650,
 	    "Radeon HD 3650",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV635_2,
+	    "RV635",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIREGL_V5725_M,
@@ -5710,6 +5890,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3300,
 	    "Radeon HD 3300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3200_3,
+	    "Radeon HD 3200",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD3000,
@@ -5836,11 +6020,135 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon HD 7290",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_1,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_2,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_3,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_4,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_5,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_6,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_7,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_8,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_9,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_10,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_11,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_12,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_13,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_14,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_15,
+	    "Kabini",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_KABINI_16,
+	    "Kabini",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HDA,
 	    "Radeon HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_1,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_2,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_3,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_4,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_5,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_6,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_7,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_8,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_9,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_10,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_11,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_12,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_13,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_14,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_15,
+	    "Mullins",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MULLINS_16,
 	    "Mullins",
 	},
 	{
