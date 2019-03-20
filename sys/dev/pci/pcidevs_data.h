@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1880 2019/03/20 03:31:55 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1881 2019/03/20 10:51:25 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -12324,11 +12324,19 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Iris 540/550",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_U_GT3E,
+	    "Iris Graphics 550",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_S_GT4_1,
+	    "Iris Pro P580",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_H_GT4,
 	    "Iris Pro 580",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONE3_1500V5_GT4,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE6G_S_GT4_2,
 	    "Iris Pro P580",
 	},
 	{
@@ -15356,6 +15364,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Dual Band Wireless AC 3165",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GLK_UHD_605,
+	    "UHD Graphics 605",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GLK_UHD_600,
+	    "UHD Graphics 600",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
 	    "31244 SATA",
 	},
@@ -16368,6 +16384,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 8G Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_U_GT2_1,
+	    "UHD Graphics 620",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_U_GT1,
+	    "UHD Graphics 610",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_U_GT3_1,
 	    "Iris Plus Graphics 655",
 	},
@@ -16417,6 +16441,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_S_GT2_1,
+	    "UHD Graphics 630",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_H_GT2,
 	    "UHD Graphics 630",
 	},
 	{
@@ -16802,6 +16830,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_H_GT2,
 	    "HD Graphics 630",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_Y_GT2,
+	    "UHD Graphics 615",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE7G_U_GT2_2,
@@ -17550,6 +17582,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454NX,
 	    "82454NX PXB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_Y_GT2_2,
+	    "UHD Graphics 617",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EG20T_PCIE,
