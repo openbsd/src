@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.24 2019/01/22 06:49:17 jmc Exp $
+.\"	$OpenBSD: qsort.3,v 1.25 2019/03/20 04:02:06 schwarze Exp $
 .\"
-.Dd $Mdocdate: January 22 2019 $
+.Dd $Mdocdate: March 20 2019 $
 .Dt QSORT 3
 .Os
 .Sh NAME
@@ -179,7 +179,7 @@ main()
 
 	qsort(array, N, sizeof(array[0]), cmp);
 	for (i =  0; i < N; i++)
-		printf("%s\n", array[i]);
+		printf("%s\en", array[i]);
 }
 
 
