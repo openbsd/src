@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.875 2019/03/18 21:46:02 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.876 2019/03/20 19:19:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2088,6 +2088,8 @@ void	 grid_get_cell(struct grid *, u_int, u_int, struct grid_cell *);
 void	 grid_set_cell(struct grid *, u_int, u_int, const struct grid_cell *);
 void	 grid_set_cells(struct grid *, u_int, u_int, const struct grid_cell *,
 	     const char *, size_t);
+struct grid_line *grid_get_line(struct grid *, u_int);
+void	 grid_adjust_lines(struct grid *, u_int);
 void	 grid_clear(struct grid *, u_int, u_int, u_int, u_int, u_int);
 void	 grid_clear_lines(struct grid *, u_int, u_int, u_int);
 void	 grid_move_lines(struct grid *, u_int, u_int, u_int, u_int);
@@ -2096,9 +2098,9 @@ char	*grid_string_cells(struct grid *, u_int, u_int, u_int,
 	     struct grid_cell **, int, int, int);
 void	 grid_duplicate_lines(struct grid *, u_int, struct grid *, u_int,
 	     u_int);
-void	 grid_reflow(struct grid *, u_int, u_int *);
-struct grid_line *grid_get_line(struct grid *, u_int);
-void	 grid_adjust_lines(struct grid *, u_int);
+void	 grid_reflow(struct grid *, u_int);
+u_int	 grid_to_offset(struct grid *, u_int, u_int);
+void	 grid_from_offset(struct grid *, u_int, u_int *, u_int *);
 
 /* grid-view.c */
 void	 grid_view_get_cell(struct grid *, u_int, u_int, struct grid_cell *);
