@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2019/01/29 20:10:26 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 2019/03/21 19:31:57 millert Exp $
 
 FILES?!=	ls ${.CURDIR}/[0-9]*.out
 
@@ -15,7 +15,7 @@ ${f:C|.*/||}:
 	@${CALENDAR} -f ${IN} -t ${f:C|.*/||:C/\..*//} | diff -u ${OUT} -
 .endfor
 
-REGRESS_TARGETS+=before after
+REGRESS_TARGETS+=before after noweekend
 
 before:
 	@echo ${*}
@@ -24,6 +24,10 @@ before:
 after:
 	@echo ${*}
 	@${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190111 -A 5 | diff -U 7 ${.CURDIR}/after.out -
+
+noweekend:
+	@echo ${*}
+	@${CALENDAR} -f ${.CURDIR}/beforeafter.in -t 20190111 -A 0 | diff -U 7 ${.CURDIR}/noweekend.out -
 
 .PHONY:	${REGRESS_TARGETS}
 
