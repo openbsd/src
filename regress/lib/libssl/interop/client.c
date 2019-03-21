@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.7 2019/02/21 23:06:33 bluhm Exp $	*/
+/*	$OpenBSD: client.c,v 1.8 2019/03/21 17:52:26 bluhm Exp $	*/
 /*
  * Copyright (c) 2018-2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -35,7 +35,7 @@ void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: client [-Lsv] [-C CA] [-c crt -k key] "
-	    "[-l cipers] host port\n");
+	    "[-l ciphers] host port\n");
 	exit(2);
 }
 

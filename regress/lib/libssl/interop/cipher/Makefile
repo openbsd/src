@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2019/02/21 23:06:33 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2019/03/21 17:52:26 bluhm Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create lists of supported ciphers
@@ -94,7 +94,7 @@ client-${clib}-server-${slib}.ciphers: \
 	# get ciphers shared between client and server
 	sort client-${clib}.ciphers server-${slib}.ciphers >$@.tmp
 	uniq -d <$@.tmp >$@
-	# we are only interested in cipers supported by libressl
+	# we are only interested in ciphers supported by libressl
 	sort $@ client-libressl.ciphers >$@.tmp
 	uniq -d <$@.tmp >$@
 	rm $@.tmp
