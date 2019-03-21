@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.29 2019/03/19 19:50:03 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.30 2019/03/21 03:16:12 tb Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\" selective merge up to: OpenSSL 16cfc2c9 Mar 8 22:30:28 2018 +0100
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 19 2019 $
+.Dd $Mdocdate: March 21 2019 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -1005,6 +1005,7 @@ This is a variable key length cipher.
 .Xc
 CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher.
+.It Fn EVP_chacha20
 The ChaCha20 stream cipher.
 The key length is 256 bits, the IV is 96 bits long.
 .El
