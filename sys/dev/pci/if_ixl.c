@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.27 2019/03/21 11:50:20 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.28 2019/03/21 12:30:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1952,8 +1952,7 @@ ixl_iff(struct ixl_softc *sc)
 	iaq->iaq_opcode = htole16(IXL_AQ_OP_SET_VSI_PROMISC);
 
 	param = (struct ixl_aq_vsi_promisc_param *)&iaq->iaq_param;
-	param->flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_BCAST |
-	    IXL_AQ_VSI_PROMISC_FLAG_VLAN);
+	param->flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_BCAST);
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
 		SET(ifp->if_flags, IFF_ALLMULTI);
 		param->flags |= htole16(IXL_AQ_VSI_PROMISC_FLAG_UCAST |
@@ -1962,8 +1961,7 @@ ixl_iff(struct ixl_softc *sc)
 		param->flags |= htole16(IXL_AQ_VSI_PROMISC_FLAG_MCAST);
 	}
 	param->valid_flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_UCAST |
-	    IXL_AQ_VSI_PROMISC_FLAG_MCAST | IXL_AQ_VSI_PROMISC_FLAG_BCAST |
-	    IXL_AQ_VSI_PROMISC_FLAG_VLAN);
+	    IXL_AQ_VSI_PROMISC_FLAG_MCAST | IXL_AQ_VSI_PROMISC_FLAG_BCAST);
 	param->seid = sc->sc_seid;
 
 	ixl_atq_exec(sc, &iatq, "ixliff");
