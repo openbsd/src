@@ -1,6 +1,9 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.30 2019/03/21 03:16:12 tb Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.31 2019/03/21 11:21:40 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
+.\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
+.\"   7c6d372a Nov 20 13:20:01 2018 +0000
 .\" selective merge up to: OpenSSL 16cfc2c9 Mar 8 22:30:28 2018 +0100
+.\"   EVP_chacha20.pod 8fa4d95e Oct 21 11:59:09 2017 +0900
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>
 .\" and Richard Levitte <levitte@openssl.org>.
@@ -125,20 +128,24 @@
 .Nm EVP_rc4_hmac_md5 ,
 .Nm EVP_idea_cbc ,
 .Nm EVP_idea_ecb ,
+.Nm EVP_idea_cfb64 ,
 .Nm EVP_idea_cfb ,
 .Nm EVP_idea_ofb ,
 .Nm EVP_rc2_cbc ,
 .Nm EVP_rc2_ecb ,
+.Nm EVP_rc2_cfb64 ,
 .Nm EVP_rc2_cfb ,
 .Nm EVP_rc2_ofb ,
 .Nm EVP_rc2_40_cbc ,
 .Nm EVP_rc2_64_cbc ,
 .Nm EVP_bf_cbc ,
 .Nm EVP_bf_ecb ,
+.Nm EVP_bf_cfb64 ,
 .Nm EVP_bf_cfb ,
 .Nm EVP_bf_ofb ,
 .Nm EVP_cast5_cbc ,
 .Nm EVP_cast5_ecb ,
+.Nm EVP_cast5_cfb64 ,
 .Nm EVP_cast5_cfb ,
 .Nm EVP_cast5_ofb ,
 .Nm EVP_chacha20
@@ -962,20 +969,28 @@ function.
 .It Xo
 .Fn EVP_idea_cbc ,
 .Fn EVP_idea_ecb ,
-.Fn EVP_idea_cfb ,
+.Fn EVP_idea_cfb64 ,
 .Fn EVP_idea_ofb
 .Xc
 IDEA encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
+.Fn EVP_idea_cfb
+is an alias for
+.Fn EVP_idea_cfb64 ,
+implemented as a macro.
 .It Xo
 .Fn EVP_rc2_cbc ,
 .Fn EVP_rc2_ecb ,
-.Fn EVP_rc2_cfb ,
+.Fn EVP_rc2_cfb64 ,
 .Fn EVP_rc2_ofb
 .Xc
 RC2 encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher with an additional parameter called
 "effective key bits" or "effective key length".
 By default both are set to 128 bits.
+.Fn EVP_rc2_cfb
+is an alias for
+.Fn EVP_rc2_cfb64 ,
+implemented as a macro.
 .It Xo
 .Fn EVP_rc2_40_cbc ,
 .Fn EVP_rc2_64_cbc
@@ -991,20 +1006,28 @@ to set the key length and effective key length.
 .It Xo
 .Fn EVP_bf_cbc ,
 .Fn EVP_bf_ecb ,
-.Fn EVP_bf_cfb ,
+.Fn EVP_bf_cfb64 ,
 .Fn EVP_bf_ofb
 .Xc
 Blowfish encryption algorithm in CBC, ECB, CFB and OFB modes
 respectively.
 This is a variable key length cipher.
+.Fn EVP_bf_cfb
+is an alias for
+.Fn EVP_bf_cfb64 ,
+implemented as a macro.
 .It Xo
 .Fn EVP_cast5_cbc ,
 .Fn EVP_cast5_ecb ,
-.Fn EVP_cast5_cfb ,
+.Fn EVP_cast5_cfb64 ,
 .Fn EVP_cast5_ofb
 .Xc
 CAST encryption algorithm in CBC, ECB, CFB and OFB modes respectively.
 This is a variable key length cipher.
+.Fn EVP_cast5_cfb
+is an alias for
+.Fn EVP_cast5_cfb64 ,
+implemented as a macro.
 .It Fn EVP_chacha20
 The ChaCha20 stream cipher.
 The key length is 256 bits, the IV is 96 bits long.
@@ -1293,6 +1316,8 @@ first appeared in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
 .Pp
+.Fn EVP_rc2_40_cbc
+and
 .Fn EVP_rc2_64_cbc
 first appeared in SSL_eay 0.9.1.
 .Fn EVP_CIPHER_CTX_type
@@ -1320,6 +1345,14 @@ and
 .Fn EVP_CIPHER_CTX_set_padding
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
+.Pp
+.Fn EVP_bf_cfb64 ,
+.Fn EVP_cast5_cfb64 ,
+.Fn EVP_idea_cfb64 ,
+and
+.Fn EVP_rc2_cfb64
+first appeared in OpenSSL 0.9.7e and have been available since
+.Ox 3.8 .
 .Pp
 .Fn EVP_CIPHER_CTX_rand_key
 first appeared in OpenSSL 0.9.8.
