@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.31 2019/03/21 11:21:40 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.32 2019/03/21 12:54:37 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -110,19 +110,6 @@
 .Nm EVP_CIPHER_param_to_asn1 ,
 .Nm EVP_CIPHER_asn1_to_param ,
 .Nm EVP_enc_null ,
-.Nm EVP_des_cbc ,
-.Nm EVP_des_ecb ,
-.Nm EVP_des_cfb ,
-.Nm EVP_des_ofb ,
-.Nm EVP_des_ede_cbc ,
-.Nm EVP_des_ede ,
-.Nm EVP_des_ede_ofb ,
-.Nm EVP_des_ede_cfb ,
-.Nm EVP_des_ede3_cbc ,
-.Nm EVP_des_ede3 ,
-.Nm EVP_des_ede3_ofb ,
-.Nm EVP_des_ede3_cfb ,
-.Nm EVP_desx_cbc ,
 .Nm EVP_rc4 ,
 .Nm EVP_rc4_40 ,
 .Nm EVP_rc4_hmac_md5 ,
@@ -933,29 +920,6 @@ All algorithms have a fixed key length unless otherwise stated.
 .Bl -tag -width Ds
 .It Fn EVP_enc_null
 Null cipher: does nothing.
-.It Xo
-.Fn EVP_des_cbc ,
-.Fn EVP_des_ecb ,
-.Fn EVP_des_cfb ,
-.Fn EVP_des_ofb
-.Xc
-DES in CBC, ECB, CFB and OFB modes respectively.
-.It Xo
-.Fn EVP_des_ede_cbc ,
-.Fn EVP_des_ede ,
-.Fn EVP_des_ede_ofb ,
-.Fn EVP_des_ede_cfb
-.Xc
-Two key triple DES in CBC, ECB, CFB and OFB modes respectively.
-.It Xo
-.Fn EVP_des_ede3_cbc ,
-.Fn EVP_des_ede3 ,
-.Fn EVP_des_ede3_ofb ,
-.Fn EVP_des_ede3_cfb
-.Xc
-Three key triple DES in CBC, ECB, CFB and OFB modes respectively.
-.It Fn EVP_desx_cbc
-DESX algorithm in CBC mode.
 .It Fn EVP_rc4
 RC4 stream cipher.
 This is a variable key length cipher with default key length 128 bits.
@@ -1034,7 +998,8 @@ The key length is 256 bits, the IV is 96 bits long.
 .El
 .Pp
 See also
-.Xr EVP_aes_128_cbc 3
+.Xr EVP_aes_128_cbc 3 ,
+.Xr EVP_des_cbc 3 ,
 and
 .Xr EVP_sm4_cbc 3 .
 .Ss GCM mode
@@ -1241,6 +1206,7 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Sh SEE ALSO
 .Xr evp 3 ,
 .Xr EVP_aes_128_cbc 3 ,
+.Xr EVP_des_cbc 3 ,
 .Xr EVP_sm4_cbc 3
 .Sh HISTORY
 .Fn EVP_EncryptInit ,
@@ -1253,18 +1219,6 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Fn EVP_CipherUpdate ,
 .Fn EVP_CipherFinal ,
 .Fn EVP_get_cipherbyname ,
-.Fn EVP_des_cbc ,
-.Fn EVP_des_ecb ,
-.Fn EVP_des_cfb ,
-.Fn EVP_des_ofb ,
-.Fn EVP_des_ede_cbc ,
-.Fn EVP_des_ede ,
-.Fn EVP_des_ede_ofb ,
-.Fn EVP_des_ede_cfb ,
-.Fn EVP_des_ede3_cbc ,
-.Fn EVP_des_ede3 ,
-.Fn EVP_des_ede3_ofb ,
-.Fn EVP_des_ede3_cfb ,
 .Fn EVP_rc4 ,
 .Fn EVP_idea_cbc ,
 .Fn EVP_idea_ecb ,
@@ -1278,8 +1232,6 @@ first appeared in SSLeay 0.5.1.
 and
 .Fn EVP_rc2_ofb
 first appeared in SSLeay 0.5.2.
-.Fn EVP_desx_cbc
-first appeared in SSLeay 0.6.2.
 .Fn EVP_CIPHER_block_size ,
 .Fn EVP_CIPHER_key_length ,
 .Fn EVP_CIPHER_iv_length ,
