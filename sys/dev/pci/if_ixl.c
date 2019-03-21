@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.26 2019/03/12 01:07:37 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.27 2019/03/21 11:50:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1061,7 +1061,6 @@ struct ixl_rx_ring {
 };
 
 struct ixl_atq {
-	SIMPLEQ_ENTRY(ixl_atq)	  iatq_entry;
 	struct ixl_aq_desc	  iatq_desc;
 	void			 *iatq_arg;
 	void			(*iatq_fn)(struct ixl_softc *, void *);
@@ -3009,7 +3008,6 @@ ixl_atq_post(struct ixl_softc *sc, struct ixl_atq *iatq)
 static void
 ixl_atq_done(struct ixl_softc *sc)
 {
-	struct ixl_atq_list cmds = SIMPLEQ_HEAD_INITIALIZER(cmds);
 	struct ixl_aq_desc *atq, *slot;
 	struct ixl_atq *iatq;
 	unsigned int cons;
@@ -3032,9 +3030,10 @@ ixl_atq_done(struct ixl_softc *sc)
 
 		iatq = (struct ixl_atq *)slot->iaq_cookie;
 		iatq->iatq_desc = *slot;
-		SIMPLEQ_INSERT_TAIL(&cmds, iatq, iatq_entry);
 
 		memset(slot, 0, sizeof(*slot));
+
+		(*iatq->iatq_fn)(sc, iatq->iatq_arg);
 
 		cons++;
 		cons &= IXL_AQ_MASK;
@@ -3045,12 +3044,6 @@ ixl_atq_done(struct ixl_softc *sc)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	sc->sc_atq_cons = cons;
-
-	while ((iatq = SIMPLEQ_FIRST(&cmds)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&cmds, iatq_entry);
-
-		(*iatq->iatq_fn)(sc, iatq->iatq_arg);
-	}
 }
 
 struct ixl_wakeup {
