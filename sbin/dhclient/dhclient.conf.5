@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.46 2019/03/20 20:10:00 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.47 2019/03/21 01:02:53 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 20 2019 $
+.Dd $Mdocdate: March 21 2019 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -113,7 +113,7 @@ or
 for
 .Ar option .
 .Pp
-If the option's data cannot be appended to,  e.g. it is an integer value,
+If the option's data cannot be appended to, i.e. it has a fixed size,
 then
 .Ic append
 will be treated as
@@ -173,7 +173,7 @@ or
 for
 .Ar option .
 .Pp
-If the option's data cannot be prepended to,  e.g. it is an integer value,
+If the option's data cannot be prepended to, i.e. it has a fixed size,
 then
 .Ic prepend
 will be treated as
