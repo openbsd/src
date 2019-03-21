@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.33 2019/03/21 13:37:25 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.34 2019/03/21 14:15:13 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -986,6 +986,7 @@ The key length is 256 bits, the IV is 96 bits long.
 .Pp
 See also
 .Xr EVP_aes_128_cbc 3 ,
+.Xr EVP_camellia_128_cbc 3 ,
 .Xr EVP_des_cbc 3 ,
 .Xr EVP_rc4 3 ,
 and
@@ -1194,6 +1195,7 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Sh SEE ALSO
 .Xr evp 3 ,
 .Xr EVP_aes_128_cbc 3 ,
+.Xr EVP_camellia_128_cbc 3 ,
 .Xr EVP_des_cbc 3 ,
 .Xr EVP_rc4 3 ,
 .Xr EVP_sm4_cbc 3
