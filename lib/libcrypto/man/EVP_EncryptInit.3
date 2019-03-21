@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.32 2019/03/21 12:54:37 schwarze Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.33 2019/03/21 13:37:25 schwarze Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -110,9 +110,6 @@
 .Nm EVP_CIPHER_param_to_asn1 ,
 .Nm EVP_CIPHER_asn1_to_param ,
 .Nm EVP_enc_null ,
-.Nm EVP_rc4 ,
-.Nm EVP_rc4_40 ,
-.Nm EVP_rc4_hmac_md5 ,
 .Nm EVP_idea_cbc ,
 .Nm EVP_idea_ecb ,
 .Nm EVP_idea_cfb64 ,
@@ -920,16 +917,6 @@ All algorithms have a fixed key length unless otherwise stated.
 .Bl -tag -width Ds
 .It Fn EVP_enc_null
 Null cipher: does nothing.
-.It Fn EVP_rc4
-RC4 stream cipher.
-This is a variable key length cipher with default key length 128 bits.
-.It Fn EVP_rc4_40
-RC4 stream cipher with 40-bit key length.
-This is obsolete and new code should use
-.Fn EVP_rc4
-and the
-.Fn EVP_CIPHER_CTX_set_key_length
-function.
 .It Xo
 .Fn EVP_idea_cbc ,
 .Fn EVP_idea_ecb ,
@@ -1000,6 +987,7 @@ The key length is 256 bits, the IV is 96 bits long.
 See also
 .Xr EVP_aes_128_cbc 3 ,
 .Xr EVP_des_cbc 3 ,
+.Xr EVP_rc4 3 ,
 and
 .Xr EVP_sm4_cbc 3 .
 .Ss GCM mode
@@ -1207,6 +1195,7 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Xr evp 3 ,
 .Xr EVP_aes_128_cbc 3 ,
 .Xr EVP_des_cbc 3 ,
+.Xr EVP_rc4 3 ,
 .Xr EVP_sm4_cbc 3
 .Sh HISTORY
 .Fn EVP_EncryptInit ,
@@ -1219,7 +1208,6 @@ do_crypt(FILE *in, FILE *out, int do_encrypt)
 .Fn EVP_CipherUpdate ,
 .Fn EVP_CipherFinal ,
 .Fn EVP_get_cipherbyname ,
-.Fn EVP_rc4 ,
 .Fn EVP_idea_cbc ,
 .Fn EVP_idea_ecb ,
 .Fn EVP_idea_cfb ,
@@ -1314,10 +1302,6 @@ and
 first appeared in OpenSSL 0.9.8b.
 These functions have been available since
 .Ox 4.5 .
-.Pp
-.Fn EVP_rc4_hmac_md5
-first appeared in OpenSSL 1.0.1 and has been available since
-.Ox 5.3 .
 .Pp
 .Fn EVP_CIPHER_CTX_reset
 first appeared in OpenSSL 1.1.0 and has been available since
