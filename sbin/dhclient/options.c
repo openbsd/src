@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.115 2019/03/20 20:10:00 krw Exp $	*/
+/*	$OpenBSD: options.c,v 1.116 2019/03/21 00:45:46 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -412,7 +412,7 @@ code_to_action(int code, int action)
 	char	*fmt;
 
 	fmt = code_to_format(code);
-	if (fmt == NULL || strchr(fmt, 'A') != NULL || fmt[0] == 't')
+	if (fmt == NULL || strpbrk(fmt, "At") != NULL)
 		return action;
 
 	if (fmt[0] == 'X' && code != DHO_DOMAIN_SEARCH)
@@ -426,7 +426,7 @@ code_to_action(int code, int action)
 	case ACTION_APPEND:
 		action = ACTION_DEFAULT;
 		break;
-	case ACTION_PREPEND: 
+	case ACTION_PREPEND:
 		action = ACTION_SUPERSEDE;
 		break;
 	default:
