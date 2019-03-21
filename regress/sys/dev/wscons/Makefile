@@ -1,13 +1,15 @@
-# $OpenBSD: Makefile,v 1.8 2019/02/12 22:26:15 bluhm Exp $
+# $OpenBSD: Makefile,v 1.9 2019/03/21 11:58:33 bluhm Exp $
 
 WARNINGS=	yes
 
+.if ! (make(clean) || make(cleandir) || make(obj))
 DEVICES=	wskbd0 wsmouse0 wskbd
 .for d in ${DEVICES}
 HAVE_${d} ?!= if dd if=/dev/${d} count=0 status=none; \
     then echo yes; else echo no; fi
 MAKE := HAVE_${d}="${HAVE_${d}}" ${MAKE}
 .endfor
+.endif
 
 PROG_sigio=	sigio
 PROGS+=		${PROG_sigio}
