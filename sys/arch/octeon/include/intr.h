@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2019/03/17 05:25:06 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.20 2019/03/21 16:51:21 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -137,26 +137,6 @@ void	register_splx_handler(void (*)(int));
 int	splraise(int);
 void	splx(int);
 int	spllower(int);
-
-/*
- * Interrupt control struct used by interrupt dispatchers
- * to hold interrupt handler info.
- */
-
-#include <sys/evcount.h>
-
-struct intrhand {
-	struct	intrhand	*ih_next;
-	int			(*ih_fun)(void *);
-	void			*ih_arg;
-	int			 ih_level;
-	int			 ih_irq;
-	struct evcount		 ih_count;
-	int			 ih_flags;
-#define	IH_ALLOCATED		0x01
-#define	IH_MPSAFE		0x02
-	cpuid_t			 ih_cpuid;
-};
 
 void	intr_barrier(void *);
 
