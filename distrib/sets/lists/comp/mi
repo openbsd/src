@@ -1850,6 +1850,9 @@
 ./usr/share/man/man3/EVP_SignInit.3
 ./usr/share/man/man3/EVP_VerifyInit.3
 ./usr/share/man/man3/EVP_aes_128_cbc.3
+./usr/share/man/man3/EVP_camellia_128_cbc.3
+./usr/share/man/man3/EVP_des_cbc.3
+./usr/share/man/man3/EVP_rc4.3
 ./usr/share/man/man3/EVP_sm4_cbc.3
 ./usr/share/man/man3/EXTENDED_KEY_USAGE_new.3
 ./usr/share/man/man3/GENERAL_NAME_new.3
