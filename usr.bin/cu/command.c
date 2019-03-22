@@ -1,4 +1,4 @@
-/* $OpenBSD: command.c,v 1.16 2017/12/10 01:03:46 deraadt Exp $ */
+/* $OpenBSD: command.c,v 1.17 2019/03/22 07:03:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "cu.h"
 
@@ -223,6 +224,8 @@ start_record(void)
 void
 do_command(char c)
 {
+	char esc[4 + 1];
+
 	if (restricted && strchr("CRX$>", c) != NULL) {
 		cu_warnx("~%c command is not allowed in restricted mode", c);
 		return;
@@ -266,20 +269,23 @@ do_command(char c)
 		sleep(1);
 		ioctl(line_fd, TIOCCBRK, NULL);
 		break;
-	case '~':
-		bufferevent_write(line_ev, "~", 1);
+	default:
+		if ((u_char)c == escape_char)
+			bufferevent_write(line_ev, &c, 1);
 		break;
 	case '?':
+		vis(esc, escape_char, VIS_WHITE | VIS_NOSLASH, 0);
 		printf("\r\n"
-		    "~#      send break\r\n"
-		    "~$      pipe local command to remote host\r\n"
-		    "~>      send file to remote host\r\n"
-		    "~C      connect program to remote host\r\n"
-		    "~D      de-assert DTR line briefly\r\n"
-		    "~R      start recording to file\r\n"
-		    "~S      set speed\r\n"
-		    "~X      send file with XMODEM\r\n"
-		    "~?      get this summary\r\n"
+		    "%s#      send break\r\n"
+		    "%s$      pipe local command to remote host\r\n"
+		    "%s>      send file to remote host\r\n"
+		    "%sC      connect program to remote host\r\n"
+		    "%sD      de-assert DTR line briefly\r\n"
+		    "%sR      start recording to file\r\n"
+		    "%sS      set speed\r\n"
+		    "%sX      send file with XMODEM\r\n"
+		    "%s?      get this summary\r\n",
+		    esc, esc, esc, esc, esc, esc, esc, esc, esc
 		);
 		break;
 	}
