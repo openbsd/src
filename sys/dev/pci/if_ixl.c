@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.29 2019/03/22 02:18:31 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.30 2019/03/22 02:20:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -51,6 +51,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
@@ -3046,41 +3047,25 @@ ixl_atq_done(struct ixl_softc *sc)
 	sc->sc_atq_cons = cons;
 }
 
-struct ixl_wakeup {
-	struct mutex mtx;
-	int notdone;
-};
-
 static void
 ixl_wakeup(struct ixl_softc *sc, void *arg)
 {
-	struct ixl_wakeup *wake = arg;
+	struct cond *c = arg;
 
-	mtx_enter(&wake->mtx);
-	wake->notdone = 0;
-	mtx_leave(&wake->mtx);
-
-	wakeup(wake);
+	cond_signal(c);
 }
 
 static void
 ixl_atq_exec(struct ixl_softc *sc, struct ixl_atq *iatq, const char *wmesg)
 {
-	struct ixl_wakeup wake = { MUTEX_INITIALIZER(IPL_NET), 1 };
+	struct cond c = COND_INITIALIZER(); 
 
 	KASSERT(iatq->iatq_desc.iaq_cookie == 0);
 
-	ixl_atq_set(iatq, ixl_wakeup, &wake);
+	ixl_atq_set(iatq, ixl_wakeup, &c);
 	ixl_atq_post(sc, iatq);
 
-	mtx_enter(&wake.mtx);
-	while (wake.notdone) {
-		mtx_leave(&wake.mtx);
-		ixl_atq_done(sc);
-		mtx_enter(&wake.mtx);
-		msleep(&wake, &wake.mtx, 0, wmesg, 1);
-	}
-	mtx_leave(&wake.mtx);
+	cond_wait(&c, wmesg);
 }
 
 static int
