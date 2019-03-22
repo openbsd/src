@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.28 2019/03/21 12:30:58 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.29 2019/03/22 02:18:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3025,6 +3025,8 @@ ixl_atq_done(struct ixl_softc *sc)
 
 	do {
 		slot = &atq[cons];
+		if (!ISSET(slot->iaq_flags, htole16(IXL_AQ_DD)))
+			break;
 
 		iatq = (struct ixl_atq *)slot->iaq_cookie;
 		iatq->iatq_desc = *slot;
