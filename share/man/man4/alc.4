@@ -1,4 +1,4 @@
-.\"	$OpenBSD: alc.4,v 1.4 2013/07/16 16:05:48 schwarze Exp $
+.\"	$OpenBSD: alc.4,v 1.5 2019/03/22 09:04:45 kevlo Exp $
 .\"
 .\" Copyright (c) 2009 Kevin Lo <kevlo@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 22 2019 $
 .Dt ALC 4
 .Os
 .Sh NAME
 .Nm alc
-.Nd Atheros AR813x/AR815x 10/100/Gigabit Ethernet device
+.Nd Atheros AR813x/AR815x/AR816x/AR817x 10/100/Gigabit Ethernet device
 .Sh SYNOPSIS
 .Cd "alc* at pci?"
 .Cd "atphy* at mii?"
@@ -27,7 +27,7 @@
 The
 .Nm
 driver provides support for Ethernet interfaces based on the
-Atheros AR813x/AR815x Ethernet chipset.
+Atheros AR813x/AR815x/AR816x/AR817x Ethernet chipset.
 .Pp
 The
 .Nm

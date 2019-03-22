@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.42 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.43 2019/03/22 09:04:46 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-/* Driver for Atheros AR8131/AR8132 PCIe Ethernet. */
+/* Driver for Atheros AR813x/AR815x/AR816x/AR817x PCIe Ethernet. */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -76,12 +76,17 @@ void	alc_watchdog(struct ifnet *);
 int	alc_mediachange(struct ifnet *);
 void	alc_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	alc_aspm(struct alc_softc *, uint64_t);
+void	alc_aspm(struct alc_softc *, int, uint64_t);
+void	alc_aspm_813x(struct alc_softc *, uint64_t);
+void	alc_aspm_816x(struct alc_softc *, int);
 void	alc_disable_l0s_l1(struct alc_softc *);
 int	alc_dma_alloc(struct alc_softc *);
 void	alc_dma_free(struct alc_softc *);
 int	alc_encap(struct alc_softc *, struct mbuf *);
 void	alc_get_macaddr(struct alc_softc *);
+void	alc_get_macaddr_813x(struct alc_softc *);
+void	alc_get_macaddr_816x(struct alc_softc *);
+void	alc_get_macaddr_par(struct alc_softc *);
 void	alc_init_cmb(struct alc_softc *);
 void	alc_init_rr_ring(struct alc_softc *);
 int	alc_init_rx_ring(struct alc_softc *);
@@ -89,15 +94,28 @@ void	alc_init_smb(struct alc_softc *);
 void	alc_init_tx_ring(struct alc_softc *);
 int	alc_intr(void *);
 void	alc_mac_config(struct alc_softc *);
+int	alc_mii_readreg_813x(struct device *, int, int);
+int	alc_mii_readreg_816x(struct device *, int, int);
+void	alc_mii_writereg_813x(struct device *, int, int, int);
+void	alc_mii_writereg_816x(struct device *, int, int, int);
+void	alc_dsp_fixup(struct alc_softc *, int);
 int	alc_miibus_readreg(struct device *, int, int);
 void	alc_miibus_statchg(struct device *);
 void	alc_miibus_writereg(struct device *, int, int, int);
+int	alc_miidbg_readreg(struct alc_softc *, int);
+void	alc_miidbg_writereg(struct alc_softc *, int, int);
+int	alc_miiext_readreg(struct alc_softc *, int, int);
+void	alc_miiext_writereg(struct alc_softc *, int, int, int);
+void	alc_phy_reset_813x(struct alc_softc *);
+void	alc_phy_reset_816x(struct alc_softc *);
+void	alc_setwol_813x(struct alc_softc *);
+void	alc_setwol_816x(struct alc_softc *);
 int	alc_newbuf(struct alc_softc *, struct alc_rxdesc *);
 void	alc_phy_down(struct alc_softc *);
 void	alc_phy_reset(struct alc_softc *);
 void	alc_reset(struct alc_softc *);
 void	alc_rxeof(struct alc_softc *, struct rx_rdesc *);
-void	alc_rxintr(struct alc_softc *);
+int	alc_rxintr(struct alc_softc *);
 void	alc_iff(struct alc_softc *);
 void	alc_rxvlan(struct alc_softc *);
 void	alc_start_queue(struct alc_softc *);
@@ -108,6 +126,12 @@ void	alc_stop_mac(struct alc_softc *);
 void	alc_stop_queue(struct alc_softc *);
 void	alc_tick(void *);
 void	alc_txeof(struct alc_softc *);
+void	alc_init_pcie(struct alc_softc *, int);
+void	alc_config_msi(struct alc_softc *);
+int	alc_dma_alloc(struct alc_softc *);
+void	alc_dma_free(struct alc_softc *);
+int	alc_encap(struct alc_softc *, struct mbuf *);
+void	alc_osc_reset(struct alc_softc *);
 
 uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0 };
 
@@ -117,11 +141,18 @@ const struct pci_matchid alc_devices[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1D },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1D_1 },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2C_1 },
-	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2C_2 }
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L2C_2 },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8161 },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8162 },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8171 },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8172 },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2200 },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2400 },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2500 }
 };
 
 struct cfattach alc_ca = {
-	sizeof (struct alc_softc), alc_match, alc_attach, NULL,
+	sizeof (struct alc_softc), alc_match, alc_attach, alc_detach,
 	alc_activate
 };
 
@@ -136,6 +167,23 @@ int alcdebug = 0;
 
 int
 alc_miibus_readreg(struct device *dev, int phy, int reg)
+{
+	struct alc_softc *sc = (struct alc_softc *)dev;
+	uint32_t v = 0;
+
+	if (phy != sc->alc_phyaddr)
+		return (0);
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+		v = alc_mii_readreg_816x(dev, phy, reg);
+	else
+		v = alc_mii_readreg_813x(dev, phy, reg);
+
+	return (v);
+}
+
+int
+alc_mii_readreg_813x(struct device *dev, int phy, int reg)
 {
 	struct alc_softc *sc = (struct alc_softc *)dev;
 	uint32_t v;
@@ -172,15 +220,49 @@ alc_miibus_readreg(struct device *dev, int phy, int reg)
 	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
 }
 
+int
+alc_mii_readreg_816x(struct device *dev, int phy, int reg)
+{
+	struct alc_softc *sc = (struct alc_softc *)dev;
+	uint32_t clk, v;
+	int i;
+
+	if ((sc->alc_flags & ALC_FLAG_LINK) != 0)
+		clk = MDIO_CLK_25_128;
+	else
+		clk = MDIO_CLK_25_4;
+	CSR_WRITE_4(sc, ALC_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
+		MDIO_SUP_PREAMBLE | clk | MDIO_REG_ADDR(reg));
+	for (i = ALC_PHY_TIMEOUT; i > 0; i--) {
+		DELAY(5);
+		v = CSR_READ_4(sc, ALC_MDIO);
+		if ((v & MDIO_OP_BUSY) == 0)
+			break;
+	}
+
+	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
+}
+
 void
 alc_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct alc_softc *sc = (struct alc_softc *)dev;
-	uint32_t v;
-	int i;
 
 	if (phy != sc->alc_phyaddr)
 		return;
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+		alc_mii_writereg_816x(dev, phy, reg, val);
+	else
+		alc_mii_writereg_813x(dev, phy, reg, val);
+}
+
+void
+alc_mii_writereg_813x(struct device *dev, int phy, int reg, int val)
+{
+	struct alc_softc *sc = (struct alc_softc *)dev;
+	uint32_t v;
+	int i;
 
 	CSR_WRITE_4(sc, ALC_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
 	    (val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
@@ -192,6 +274,31 @@ alc_miibus_writereg(struct device *dev, int phy, int reg, int val)
 			break;
 	}
 
+	if (i == 0)
+		printf("%s: phy write timeout: phy %d, reg %d\n",
+		    sc->sc_dev.dv_xname, phy, reg);
+}
+
+void
+alc_mii_writereg_816x(struct device *dev, int phy, int reg, int val)
+{
+	struct alc_softc *sc = (struct alc_softc *)dev;
+	uint32_t clk, v;
+	int i;
+
+	if ((sc->alc_flags & ALC_FLAG_LINK) != 0)
+		clk = MDIO_CLK_25_128;
+	else
+		clk = MDIO_CLK_25_4;
+	CSR_WRITE_4(sc, ALC_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
+	    ((val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT) | MDIO_REG_ADDR(reg) |
+	    MDIO_SUP_PREAMBLE | clk);
+	for (i = ALC_PHY_TIMEOUT; i > 0; i--) {
+		DELAY(5);
+		v = CSR_READ_4(sc, ALC_MDIO);
+		if ((v & MDIO_OP_BUSY) == 0)
+			break;
+	}
 	if (i == 0)
 		printf("%s: phy write timeout: phy %d, reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
@@ -236,7 +343,146 @@ alc_miibus_statchg(struct device *dev)
 		reg = CSR_READ_4(sc, ALC_MAC_CFG);
 		reg |= MAC_CFG_TX_ENB | MAC_CFG_RX_ENB;
 		CSR_WRITE_4(sc, ALC_MAC_CFG, reg);
-		alc_aspm(sc, IFM_SUBTYPE(mii->mii_media_active));
+	}
+
+	alc_aspm(sc, 0, IFM_SUBTYPE(mii->mii_media_active));
+	alc_dsp_fixup(sc, IFM_SUBTYPE(mii->mii_media_active));
+}
+
+int
+alc_miidbg_readreg(struct alc_softc *sc, int reg)
+{
+	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_ADDR,
+	    reg);
+	return (alc_miibus_readreg(&sc->sc_dev, sc->alc_phyaddr,
+	    ALC_MII_DBG_DATA));
+}
+
+
+void
+alc_miidbg_writereg(struct alc_softc *sc, int reg, int val)
+{
+	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_ADDR,
+	    reg);
+	alc_miibus_writereg(&sc->sc_dev, sc->alc_phyaddr, ALC_MII_DBG_DATA,
+	    val);
+}
+
+int
+alc_miiext_readreg(struct alc_softc *sc, int devaddr, int reg)
+{
+	uint32_t clk, v;
+	int i;
+
+	CSR_WRITE_4(sc, ALC_EXT_MDIO, EXT_MDIO_REG(reg) |
+	    EXT_MDIO_DEVADDR(devaddr));
+	if ((sc->alc_flags & ALC_FLAG_LINK) != 0)
+		clk = MDIO_CLK_25_128;
+	else
+		clk = MDIO_CLK_25_4;
+	CSR_WRITE_4(sc, ALC_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
+	    MDIO_SUP_PREAMBLE | clk | MDIO_MODE_EXT);
+	for (i = ALC_PHY_TIMEOUT; i > 0; i--) {
+		DELAY(5);
+		v = CSR_READ_4(sc, ALC_MDIO);
+		if ((v & MDIO_OP_BUSY) == 0)
+			break;
+	}
+
+	return ((v & MDIO_DATA_MASK) >> MDIO_DATA_SHIFT);
+}
+
+void
+alc_miiext_writereg(struct alc_softc *sc, int devaddr, int reg, int val)
+{
+	uint32_t clk, v;
+	int i;
+
+	CSR_WRITE_4(sc, ALC_EXT_MDIO, EXT_MDIO_REG(reg) |
+			EXT_MDIO_DEVADDR(devaddr));
+	if ((sc->alc_flags & ALC_FLAG_LINK) != 0)
+		clk = MDIO_CLK_25_128;
+	else
+		clk = MDIO_CLK_25_4;
+	CSR_WRITE_4(sc, ALC_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
+			((val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT) |
+			MDIO_SUP_PREAMBLE | clk | MDIO_MODE_EXT);
+	for (i = ALC_PHY_TIMEOUT; i > 0; i--) {
+		DELAY(5);
+		v = CSR_READ_4(sc, ALC_MDIO);
+		if ((v & MDIO_OP_BUSY) == 0)
+			break;
+	}
+}
+
+void
+alc_dsp_fixup(struct alc_softc *sc, int media)
+{
+	uint16_t agc, len, val;
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+		return;
+	if (AR816X_REV(sc->alc_rev) >= AR816X_REV_C0)
+		return;
+	/*
+	 * Vendor PHY magic.
+	 * 1000BT/AZ, wrong cable length
+	 */
+	if ((sc->alc_flags & ALC_FLAG_LINK) != 0) {
+		len = alc_miiext_readreg(sc, MII_EXT_PCS, MII_EXT_CLDCTL6);
+		len = (len >> EXT_CLDCTL6_CAB_LEN_SHIFT) &
+			EXT_CLDCTL6_CAB_LEN_MASK;
+		agc = alc_miidbg_readreg(sc, MII_DBG_AGC);
+		agc = (agc >> DBG_AGC_2_VGA_SHIFT) & DBG_AGC_2_VGA_MASK;
+		if ((media == IFM_1000_T && len > EXT_CLDCTL6_CAB_LEN_SHORT1G &&
+			agc > DBG_AGC_LONG1G_LIMT) ||
+			(media == IFM_100_TX && len > DBG_AGC_LONG100M_LIMT &&
+			agc > DBG_AGC_LONG1G_LIMT)) {
+				alc_miidbg_writereg(sc, MII_DBG_AZ_ANADECT,
+				    DBG_AZ_ANADECT_LONG);
+				val = alc_miiext_readreg(sc, MII_EXT_ANEG,
+				    MII_EXT_ANEG_AFE);
+				val |= ANEG_AFEE_10BT_100M_TH;
+				alc_miiext_writereg(sc, MII_EXT_ANEG,
+				    MII_EXT_ANEG_AFE, val);
+		} else {
+			alc_miidbg_writereg(sc, MII_DBG_AZ_ANADECT,
+			    DBG_AZ_ANADECT_DEFAULT);
+			val = alc_miiext_readreg(sc, MII_EXT_ANEG,
+			    MII_EXT_ANEG_AFE);
+			val &= ~ANEG_AFEE_10BT_100M_TH;
+			alc_miiext_writereg(sc, MII_EXT_ANEG, MII_EXT_ANEG_AFE,
+			    val);
+		}
+		if ((sc->alc_flags & ALC_FLAG_LINK_WAR) != 0 &&
+			AR816X_REV(sc->alc_rev) == AR816X_REV_B0)
+		{
+			if (media == IFM_1000_T) {
+			/*
+			 * Giga link threshold, raise the tolerance of
+			 * noise 50%.
+			 */
+			val = alc_miidbg_readreg(sc, MII_DBG_MSE20DB);
+			val &= ~DBG_MSE20DB_TH_MASK;
+			val |= (DBG_MSE20DB_TH_HI << DBG_MSE20DB_TH_SHIFT);
+			alc_miidbg_writereg(sc, MII_DBG_MSE20DB, val);
+			}
+			else if (media == IFM_100_TX)
+				alc_miidbg_writereg(sc, MII_DBG_MSE16DB,
+							DBG_MSE16DB_UP);
+		}
+	} else {
+		val = alc_miiext_readreg(sc, MII_EXT_ANEG, MII_EXT_ANEG_AFE);
+		val &= ~ANEG_AFEE_10BT_100M_TH;
+		alc_miiext_writereg(sc, MII_EXT_ANEG, MII_EXT_ANEG_AFE, val);
+		if ((sc->alc_flags & ALC_FLAG_LINK_WAR) != 0 &&
+			AR816X_REV(sc->alc_rev) == AR816X_REV_B0) {
+			alc_miidbg_writereg(sc, MII_DBG_MSE16DB,
+					DBG_MSE16DB_DOWN);
+			val = alc_miidbg_readreg(sc, MII_DBG_MSE20DB);
+			val &= ~DBG_MSE20DB_TH_MASK;
+			val |= (DBG_MSE20DB_TH_DEFAULT << DBG_MSE20DB_TH_SHIFT);
+			alc_miidbg_writereg(sc, MII_DBG_MSE20DB, val);
+		}
 	}
 }
 
@@ -282,7 +528,16 @@ alc_match(struct device *dev, void *match, void *aux)
 void
 alc_get_macaddr(struct alc_softc *sc)
 {
-	uint32_t ea[2], opt;
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+		alc_get_macaddr_816x(sc);
+	else
+		alc_get_macaddr_813x(sc);
+}
+
+void
+alc_get_macaddr_813x(struct alc_softc *sc)
+{
+	uint32_t opt;
 	uint16_t val;
 	int eeprom, i;
 
@@ -376,6 +631,63 @@ alc_get_macaddr(struct alc_softc *sc)
 			break;
 		}
 	}
+	alc_get_macaddr_par(sc);
+}
+
+void
+alc_get_macaddr_816x(struct alc_softc *sc)
+{
+	uint32_t reg;
+	int i, reloaded = 0;
+
+	/* Try to reload station address via TWSI. */
+	for (i = 100; i > 0; i--) {
+		reg = CSR_READ_4(sc, ALC_SLD);
+		if ((reg & (SLD_PROGRESS | SLD_START)) == 0)
+			break;
+		DELAY(1000);
+	}
+	if (i != 0) {
+		CSR_WRITE_4(sc, ALC_SLD, reg | SLD_START);
+		for (i = 100; i > 0; i--) {
+			DELAY(1000);
+			reg = CSR_READ_4(sc, ALC_SLD);
+			if ((reg & SLD_START) == 0)
+				break;
+		}
+	}
+
+	/* Try to reload station address from EEPROM or FLASH. */
+	if (reloaded == 0) {
+		reg = CSR_READ_4(sc, ALC_EEPROM_LD);
+		if ((reg & (EEPROM_LD_EEPROM_EXIST |
+			EEPROM_LD_FLASH_EXIST)) != 0) {
+			for (i = 100; i > 0; i--) {
+				reg = CSR_READ_4(sc, ALC_EEPROM_LD);
+				if ((reg & (EEPROM_LD_PROGRESS |
+				    EEPROM_LD_START)) == 0)
+					break;
+				DELAY(1000);
+			}
+			if (i != 0) {
+				CSR_WRITE_4(sc, ALC_EEPROM_LD, reg |
+				EEPROM_LD_START);
+				for (i = 100; i > 0; i--) {
+					DELAY(1000);
+					reg = CSR_READ_4(sc, ALC_EEPROM_LD);
+					if ((reg & EEPROM_LD_START) == 0)
+						break;
+				}
+			}
+		}
+	}
+	alc_get_macaddr_par(sc);
+}
+
+void
+alc_get_macaddr_par(struct alc_softc *sc)
+{
+	uint32_t ea[2];
 
 	ea[0] = CSR_READ_4(sc, ALC_PAR0);
 	ea[1] = CSR_READ_4(sc, ALC_PAR1);
@@ -404,6 +716,15 @@ alc_disable_l0s_l1(struct alc_softc *sc)
 
 void
 alc_phy_reset(struct alc_softc *sc)
+{
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+		alc_phy_reset_816x(sc);
+	else
+		alc_phy_reset_813x(sc);
+}
+
+void
+alc_phy_reset_813x(struct alc_softc *sc)
 {
 	uint16_t data;
 
@@ -517,9 +838,83 @@ alc_phy_reset(struct alc_softc *sc)
 }
 
 void
+alc_phy_reset_816x(struct alc_softc *sc)
+{
+	uint32_t val;
+
+	val = CSR_READ_4(sc, ALC_GPHY_CFG);
+	val &= ~(GPHY_CFG_EXT_RESET | GPHY_CFG_LED_MODE |
+	    GPHY_CFG_GATE_25M_ENB | GPHY_CFG_PHY_IDDQ | GPHY_CFG_PHY_PLL_ON |
+	    GPHY_CFG_PWDOWN_HW | GPHY_CFG_100AB_ENB);
+	val |= GPHY_CFG_SEL_ANA_RESET;
+	/* Disable PHY hibernation. */
+	val &= ~(GPHY_CFG_HIB_PULSE | GPHY_CFG_HIB_EN);
+	CSR_WRITE_4(sc, ALC_GPHY_CFG, val);
+	DELAY(10);
+	CSR_WRITE_4(sc, ALC_GPHY_CFG, val | GPHY_CFG_EXT_RESET);
+	DELAY(800);
+	/* Vendor PHY magic. */
+	/* Disable PHY hibernation. */
+	alc_miidbg_writereg(sc, MII_DBG_LEGCYPS,
+	    DBG_LEGCYPS_DEFAULT & ~DBG_LEGCYPS_ENB);
+	alc_miidbg_writereg(sc, MII_DBG_HIBNEG, DBG_HIBNEG_DEFAULT &
+	    ~(DBG_HIBNEG_PSHIB_EN | DBG_HIBNEG_HIB_PULSE));
+	alc_miidbg_writereg(sc, MII_DBG_GREENCFG, DBG_GREENCFG_DEFAULT);
+	/* XXX Disable EEE. */
+	val = CSR_READ_4(sc, ALC_LPI_CTL);
+	val &= ~LPI_CTL_ENB;
+	CSR_WRITE_4(sc, ALC_LPI_CTL, val);
+	alc_miiext_writereg(sc, MII_EXT_ANEG, MII_EXT_ANEG_LOCAL_EEEADV, 0);
+	/* PHY power saving. */
+	alc_miidbg_writereg(sc, MII_DBG_TST10BTCFG, DBG_TST10BTCFG_DEFAULT);
+	alc_miidbg_writereg(sc, MII_DBG_SRDSYSMOD, DBG_SRDSYSMOD_DEFAULT);
+	alc_miidbg_writereg(sc, MII_DBG_TST100BTCFG, DBG_TST100BTCFG_DEFAULT);
+	alc_miidbg_writereg(sc, MII_DBG_ANACTL, DBG_ANACTL_DEFAULT);
+	val = alc_miidbg_readreg(sc, MII_DBG_GREENCFG2);
+	val &= ~DBG_GREENCFG2_GATE_DFSE_EN;
+	alc_miidbg_writereg(sc, MII_DBG_GREENCFG2, val);
+	/* RTL8139C, 120m issue. */
+	alc_miiext_writereg(sc, MII_EXT_ANEG, MII_EXT_ANEG_NLP78,
+	    ANEG_NLP78_120M_DEFAULT);
+	alc_miiext_writereg(sc, MII_EXT_ANEG, MII_EXT_ANEG_S3DIG10,
+	    ANEG_S3DIG10_DEFAULT);
+	if ((sc->alc_flags & ALC_FLAG_LINK_WAR) != 0) {
+		/* Turn off half amplitude. */
+		val = alc_miiext_readreg(sc, MII_EXT_PCS, MII_EXT_CLDCTL3);
+		val |= EXT_CLDCTL3_BP_CABLE1TH_DET_GT;
+		alc_miiext_writereg(sc, MII_EXT_PCS, MII_EXT_CLDCTL3, val);
+		/* Turn off Green feature. */
+		val = alc_miidbg_readreg(sc, MII_DBG_GREENCFG2);
+		val |= DBG_GREENCFG2_BP_GREEN;
+		alc_miidbg_writereg(sc, MII_DBG_GREENCFG2, val);
+		/* Turn off half bias. */
+		val = alc_miiext_readreg(sc, MII_EXT_PCS, MII_EXT_CLDCTL5);
+		val |= EXT_CLDCTL5_BP_VD_HLFBIAS;
+		alc_miiext_writereg(sc, MII_EXT_PCS, MII_EXT_CLDCTL5, val);
+	}
+}
+
+void
 alc_phy_down(struct alc_softc *sc)
 {
+	uint32_t gphy;
+
 	switch (sc->sc_product) {
+	case PCI_PRODUCT_ATTANSIC_AR8161:
+	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
+	case PCI_PRODUCT_ATTANSIC_AR8162:
+	case PCI_PRODUCT_ATTANSIC_AR8171:
+	case PCI_PRODUCT_ATTANSIC_AR8172:
+		gphy = CSR_READ_4(sc, ALC_GPHY_CFG);
+		gphy &= ~(GPHY_CFG_EXT_RESET | GPHY_CFG_LED_MODE |
+		    GPHY_CFG_100AB_ENB | GPHY_CFG_PHY_PLL_ON);
+		gphy |= GPHY_CFG_HIB_EN | GPHY_CFG_HIB_PULSE |
+		    GPHY_CFG_SEL_ANA_RESET;
+		gphy |= GPHY_CFG_PHY_IDDQ | GPHY_CFG_PWDOWN_HW;
+		CSR_WRITE_4(sc, ALC_GPHY_CFG, gphy);
+		break;
 	case PCI_PRODUCT_ATTANSIC_L1D:
 	case PCI_PRODUCT_ATTANSIC_L1D_1:
 		/*
@@ -547,7 +942,16 @@ alc_phy_down(struct alc_softc *sc)
 }
 
 void
-alc_aspm(struct alc_softc *sc, uint64_t media)
+alc_aspm(struct alc_softc *sc, int init, uint64_t media)
+{
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+		alc_aspm_816x(sc, init);
+	else
+		alc_aspm_813x(sc, media);
+}
+
+void
+alc_aspm_813x(struct alc_softc *sc, uint64_t media)
 {
 	uint32_t pmcfg;
 	uint16_t linkcfg;
@@ -555,8 +959,7 @@ alc_aspm(struct alc_softc *sc, uint64_t media)
 	pmcfg = CSR_READ_4(sc, ALC_PM_CFG);
 	if ((sc->alc_flags & (ALC_FLAG_APS | ALC_FLAG_PCIE)) ==
 	    (ALC_FLAG_APS | ALC_FLAG_PCIE))
-		linkcfg = CSR_READ_2(sc, sc->alc_expcap +
-		    PCI_PCIE_LCSR);
+		linkcfg = CSR_READ_2(sc, sc->alc_expcap + PCI_PCIE_LCSR);
 	else
 		linkcfg = 0;
 	pmcfg &= ~PM_CFG_SERDES_PD_EX_L1;
@@ -571,8 +974,7 @@ alc_aspm(struct alc_softc *sc, uint64_t media)
 		if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_1 &&
 		    sc->alc_rev == ATHEROS_AR8152_B_V10)
 			linkcfg |= 0x80;
-		CSR_WRITE_2(sc, sc->alc_expcap + PCI_PCIE_LCSR,
-		    linkcfg);
+		CSR_WRITE_2(sc, sc->alc_expcap + PCI_PCIE_LCSR, linkcfg);
 		pmcfg &= ~(PM_CFG_EN_BUFS_RX_L0S | PM_CFG_SA_DLY_ENB |
 		    PM_CFG_HOTRST);
 		pmcfg |= (PM_CFG_L1_ENTRY_TIMER_DEFAULT <<
@@ -631,97 +1033,60 @@ alc_aspm(struct alc_softc *sc, uint64_t media)
 }
 
 void
-alc_attach(struct device *parent, struct device *self, void *aux)
+alc_aspm_816x(struct alc_softc *sc, int init)
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	uint32_t pmcfg;
 
-	struct alc_softc *sc = (struct alc_softc *)self;
-	struct pci_attach_args *pa = aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr;
-	struct ifnet *ifp;
-	pcireg_t memtype;
-	char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
-	uint16_t burst;
-	int base, state, error = 0;
+	pmcfg = CSR_READ_4(sc, ALC_PM_CFG);
+	pmcfg &= ~PM_CFG_L1_ENTRY_TIMER_816X_MASK;
+	pmcfg |= PM_CFG_L1_ENTRY_TIMER_816X_DEFAULT;
+	pmcfg &= ~PM_CFG_PM_REQ_TIMER_MASK;
+	pmcfg |= PM_CFG_PM_REQ_TIMER_816X_DEFAULT;
+	pmcfg &= ~PM_CFG_LCKDET_TIMER_MASK;
+	pmcfg |= PM_CFG_LCKDET_TIMER_DEFAULT;
+	pmcfg |= PM_CFG_SERDES_PD_EX_L1 | PM_CFG_CLK_SWH_L1 | PM_CFG_PCIE_RECV;
+	pmcfg &= ~(PM_CFG_RX_L1_AFTER_L0S | PM_CFG_TX_L1_AFTER_L0S |
+	    PM_CFG_ASPM_L1_ENB | PM_CFG_ASPM_L0S_ENB |
+	    PM_CFG_SERDES_L1_ENB | PM_CFG_SERDES_PLL_L1_ENB |
+	    PM_CFG_SERDES_BUDS_RX_L1_ENB | PM_CFG_SA_DLY_ENB |
+	    PM_CFG_MAC_ASPM_CHK | PM_CFG_HOTRST);
+	if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
+	    (sc->alc_rev & 0x01) != 0)
+	pmcfg |= PM_CFG_SERDES_L1_ENB | PM_CFG_SERDES_PLL_L1_ENB;
+	if ((sc->alc_flags & ALC_FLAG_LINK) != 0) {
+	/* Link up, enable both L0s, L1s. */
+		pmcfg |= PM_CFG_ASPM_L0S_ENB | PM_CFG_ASPM_L1_ENB |
+		    PM_CFG_MAC_ASPM_CHK;
+	} else {
+		if (init != 0)
+			pmcfg |= PM_CFG_ASPM_L0S_ENB | PM_CFG_ASPM_L1_ENB |
+			    PM_CFG_MAC_ASPM_CHK;
+		else if ((ifp->if_flags & IFF_RUNNING) != 0)
+			pmcfg |= PM_CFG_ASPM_L1_ENB | PM_CFG_MAC_ASPM_CHK;
+	}
+	CSR_WRITE_4(sc, ALC_PM_CFG, pmcfg);
+}
+
+void
+alc_init_pcie(struct alc_softc *sc, int base)
+{
+	const char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
 	uint32_t cap, ctl, val;
+	int state;
 
-	/*
-	 * Allocate IO memory
-	 */
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, ALC_PCIR_BAR);
-	if (pci_mapreg_map(pa, ALC_PCIR_BAR, memtype, 0, &sc->sc_mem_bt,
-	    &sc->sc_mem_bh, NULL, &sc->sc_mem_size, 0)) {
-		printf(": can't map mem space\n");
-		return;
-	}
-
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
-		printf(": can't map interrupt\n");
-		goto fail;
-	}
-
-	/*
-	 * Allocate IRQ
-	 */
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, alc_intr, sc,
-	    sc->sc_dev.dv_xname);
-	if (sc->sc_irq_handle == NULL) {
-		printf(": could not establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto fail;
-	}
-	printf(": %s", intrstr);
-
-	sc->sc_dmat = pa->pa_dmat;
-	sc->sc_pct = pa->pa_pc;
-	sc->sc_pcitag = pa->pa_tag;
-	
-	/* Set PHY address. */
-	sc->alc_phyaddr = ALC_PHY_ADDR;
-
-	/* Get PCI and chip id/revision. */
-	sc->sc_product = PCI_PRODUCT(pa->pa_id);
-	sc->alc_rev = PCI_REVISION(pa->pa_class);
-
-	/* Initialize DMA parameters. */
-	sc->alc_dma_rd_burst = 0;
-	sc->alc_dma_wr_burst = 0;
-	sc->alc_rcb = DMA_CFG_RCB_64;
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
-	    &base, NULL)) {
-		sc->alc_flags |= ALC_FLAG_PCIE;
-		sc->alc_expcap = base;
-		burst = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-		    base + PCI_PCIE_DCSR) >> 16;
-		sc->alc_dma_rd_burst = (burst & 0x7000) >> 12;
-		sc->alc_dma_wr_burst = (burst & 0x00e0) >> 5;
-		if (alcdebug) {
-			printf("%s: Read request size : %u bytes.\n",
-			    sc->sc_dev.dv_xname, 
-			    alc_dma_burst[sc->alc_dma_rd_burst]);
-			printf("%s: TLP payload size : %u bytes.\n",
-			    sc->sc_dev.dv_xname,
-			    alc_dma_burst[sc->alc_dma_wr_burst]);
-		}
-		if (alc_dma_burst[sc->alc_dma_rd_burst] > 1024)
-			sc->alc_dma_rd_burst = 3;
-		if (alc_dma_burst[sc->alc_dma_wr_burst] > 1024)
-			sc->alc_dma_wr_burst = 3;
-		/* Clear data link and flow-control protocol error. */
-		val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
-		val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
-		CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
+	/* Clear data link and flow-control protocol error. */
+	val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
+	val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
+	CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
 		CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
-		    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
+		CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
 		CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
-		    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
-		    PCIE_PHYMISC_FORCE_RCV_DET);
-		if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_1 &&
-		    sc->alc_rev == ATHEROS_AR8152_B_V10) {
+		CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
+		PCIE_PHYMISC_FORCE_RCV_DET);
+		if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_1  &&
+			sc->alc_rev == ATHEROS_AR8152_B_V10) {
 			val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
 			val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
 			    PCIE_PHYMISC2_SERDES_TH_MASK);
@@ -751,15 +1116,79 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 				    sc->sc_dev.dv_xname,
 				    aspm_state[state],
 				    state == 0 ? "disabled" : "enabled");
-			alc_disable_l0s_l1(sc);
+			if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0)
+				alc_disable_l0s_l1(sc);
+		}
+	} else {
+		val = CSR_READ_4(sc, ALC_PDLL_TRNS1);
+		val &= ~PDLL_TRNS1_D3PLLOFF_ENB;
+		CSR_WRITE_4(sc, ALC_PDLL_TRNS1, val);
+		val = CSR_READ_4(sc, ALC_MASTER_CFG);
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
+		    (sc->alc_rev & 0x01) != 0) {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) == 0) {
+				val |= MASTER_WAKEN_25M | MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
+		} else {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) != 0) {
+				val |= MASTER_WAKEN_25M;
+				val &= ~MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
 		}
 	}
+}
 
-	/* Reset PHY. */
-	alc_phy_reset(sc);
+void
+alc_config_msi(struct alc_softc *sc)
+{
+	uint32_t ctl, mod;
 
-	/* Reset the ethernet controller. */
-	alc_reset(sc);
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0)
+		return;
+
+	/*
+	* It seems interrupt moderation is controlled by
+	* ALC_MSI_RETRANS_TIMER register if MSI/MSIX is active.
+	* Driver uses RX interrupt moderation parameter to
+	* program ALC_MSI_RETRANS_TIMER register.
+	*/
+	ctl = CSR_READ_4(sc, ALC_MSI_RETRANS_TIMER);
+	ctl &= ~MSI_RETRANS_TIMER_MASK;
+	ctl &= ~MSI_RETRANS_MASK_SEL_LINE;
+	mod = ALC_USECS(sc->alc_int_rx_mod);
+	if (mod == 0)
+		mod = 1;
+	ctl |= mod;
+	if ((sc->alc_flags & ALC_FLAG_MSI) != 0)
+		CSR_WRITE_4(sc, ALC_MSI_RETRANS_TIMER, ctl |
+		    MSI_RETRANS_MASK_SEL_LINE);
+	else
+		CSR_WRITE_4(sc, ALC_MSI_RETRANS_TIMER, 0);
+}
+
+void
+alc_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct alc_softc *sc = (struct alc_softc *)self;
+	struct pci_attach_args *pa = aux;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pci_intr_handle_t ih;
+	const char *intrstr;
+	struct ifnet *ifp;
+	pcireg_t memtype;
+	uint16_t burst;
+	int base, error = 0;
+
+	/* Set PHY address. */
+	sc->alc_phyaddr = ALC_PHY_ADDR;
+
+	/* Get PCI and chip id/revision. */
+	sc->sc_product = PCI_PRODUCT(pa->pa_id);
+	sc->alc_rev = PCI_REVISION(pa->pa_class);
 
 	/*
 	 * One odd thing is AR8132 uses the same PHY hardware(F1
@@ -769,6 +1198,22 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	 * shows the same PHY model/revision number of AR8131.
 	 */
 	switch (sc->sc_product) {
+	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
+		sc->alc_flags |= ALC_FLAG_E2X00;
+		/* FALLTHROUGH */
+	case PCI_PRODUCT_ATTANSIC_AR8161:
+		if (AR816X_REV(sc->alc_rev) == 0)
+			sc->alc_flags |= ALC_FLAG_LINK_WAR;
+		/* FALLTHROUGH */
+	case PCI_PRODUCT_ATTANSIC_AR8171:
+		sc->alc_flags |= ALC_FLAG_AR816X_FAMILY;
+		break;
+	case PCI_PRODUCT_ATTANSIC_AR8162:
+	case PCI_PRODUCT_ATTANSIC_AR8172:
+		sc->alc_flags |= ALC_FLAG_FASTETHER | ALC_FLAG_AR816X_FAMILY;
+		break;
 	case PCI_PRODUCT_ATTANSIC_L2C_1:
 	case PCI_PRODUCT_ATTANSIC_L2C_2:
 		sc->alc_flags |= ALC_FLAG_APS;
@@ -783,18 +1228,56 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	default:
 		break;
 	}
-	sc->alc_flags |= ALC_FLAG_ASPM_MON | ALC_FLAG_JUMBO;
+
+	/*
+	 * Allocate IO memory
+	 */
+	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, ALC_PCIR_BAR);
+	if (pci_mapreg_map(pa, ALC_PCIR_BAR, memtype, 0, &sc->sc_mem_bt,
+	    &sc->sc_mem_bh, NULL, &sc->sc_mem_size, 0)) {
+		printf(": can't map mem space\n");
+		return;
+	}
+	
+	sc->alc_flags |= ALC_FLAG_MSI;
+	if (pci_intr_map_msi(pa, &ih) != 0) {
+		if (pci_intr_map(pa, &ih) != 0) {
+			printf(": can't map interrupt\n");
+			goto fail;
+		}
+		sc->alc_flags &= ~ALC_FLAG_MSI;
+	}
+
+	/*
+	 * Allocate IRQ
+	 */
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_irq_handle = pci_intr_establish(pc, ih, IPL_NET, alc_intr, sc,
+	    sc->sc_dev.dv_xname);
+	if (sc->sc_irq_handle == NULL) {
+		printf(": could not establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto fail;
+	}
+	printf(": %s", intrstr);
+
+	alc_config_msi(sc);
+
+	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_pct = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
 
 	switch (sc->sc_product) {
-	case PCI_PRODUCT_ATTANSIC_L1C:
-	case PCI_PRODUCT_ATTANSIC_L2C:
-		sc->alc_max_framelen = 9 * 1024;
-		break;
 	case PCI_PRODUCT_ATTANSIC_L1D:
 	case PCI_PRODUCT_ATTANSIC_L1D_1:
 	case PCI_PRODUCT_ATTANSIC_L2C_1:
 	case PCI_PRODUCT_ATTANSIC_L2C_2:
 		sc->alc_max_framelen = 6 * 1024;
+		break;
+	default:
+		sc->alc_max_framelen = 9 * 1024;
 		break;
 	}
 
@@ -821,6 +1304,47 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 		    CSR_READ_4(sc, ALC_SRAM_TX_FIFO_LEN) * 8,
 		    CSR_READ_4(sc, ALC_SRAM_RX_FIFO_LEN) * 8);
 	}
+	sc->alc_flags |= ALC_FLAG_JUMBO;
+
+	/* Initialize DMA parameters. */
+	sc->alc_dma_rd_burst = 0;
+	sc->alc_dma_wr_burst = 0;
+	sc->alc_rcb = DMA_CFG_RCB_64;
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	    &base, NULL)) {
+		sc->alc_flags |= ALC_FLAG_PCIE;
+		sc->alc_expcap = base;
+		burst = CSR_READ_2(sc, base + PCI_PCIE_DCSR);
+		sc->alc_dma_rd_burst = (burst & 0x7000) >> 12;
+		sc->alc_dma_wr_burst = (burst & 0x00e0) >> 5;
+		if (alcdebug) {
+			printf("%s: Read request size : %u bytes.\n",
+			    sc->sc_dev.dv_xname, 
+			    alc_dma_burst[sc->alc_dma_rd_burst]);
+			printf("%s: TLP payload size : %u bytes.\n",
+			    sc->sc_dev.dv_xname,
+			    alc_dma_burst[sc->alc_dma_wr_burst]);
+		}
+		if (alc_dma_burst[sc->alc_dma_rd_burst] > 1024)
+			sc->alc_dma_rd_burst = 3;
+		if (alc_dma_burst[sc->alc_dma_wr_burst] > 1024)
+			sc->alc_dma_wr_burst = 3;
+		/*
+		 * Force maximum payload size to 128 bytes for
+		 * E2200/E2400/E2500.
+		 * Otherwise it triggers DMA write error.
+		 */
+		if ((sc->alc_flags & ALC_FLAG_E2X00) != 0)
+			sc->alc_dma_wr_burst = 0;
+		alc_init_pcie(sc, base);
+	}
+
+	/* Reset PHY. */
+	alc_phy_reset(sc);
+
+	/* Reset the ethernet controller. */
+	alc_stop_mac(sc);
+	alc_reset(sc);
 
 	error = alc_dma_alloc(sc);
 	if (error)
@@ -861,7 +1385,7 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_miibus.mii_media, 0, alc_mediachange,
 	    alc_mediastatus);
 	mii_attach(self, &sc->sc_miibus, 0xffffffff, MII_PHY_ANY,
-		MII_OFFSET_ANY, MIIF_DOPAUSE);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 
 	if (LIST_FIRST(&sc->sc_miibus.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
@@ -960,7 +1484,7 @@ alc_dma_alloc(struct alc_softc *sc)
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring.\n",
 		    sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->alc_rdata.alc_tx_ring_seg,
@@ -977,7 +1501,7 @@ alc_dma_alloc(struct alc_softc *sc)
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, 
 		    (bus_dma_segment_t *)&sc->alc_rdata.alc_tx_ring, 1);
-		return error;
+		return (error);
 	}
 
 	sc->alc_rdata.alc_tx_ring_paddr = 
@@ -998,7 +1522,7 @@ alc_dma_alloc(struct alc_softc *sc)
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx ring.\n",
 		    sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->alc_rdata.alc_rx_ring_seg,
@@ -1015,7 +1539,7 @@ alc_dma_alloc(struct alc_softc *sc)
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)sc->alc_rdata.alc_rx_ring, 1);
-		return error;
+		return (error);
 	}
 
 	sc->alc_rdata.alc_rx_ring_paddr =
@@ -1036,7 +1560,7 @@ alc_dma_alloc(struct alc_softc *sc)
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx "
 		    "return ring.\n", sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->alc_rdata.alc_rr_ring_seg,
@@ -1053,7 +1577,7 @@ alc_dma_alloc(struct alc_softc *sc)
 		    "\n", sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)&sc->alc_rdata.alc_rr_ring, 1);
-		return error;
+		return (error);
 	}
 
 	sc->alc_rdata.alc_rr_ring_paddr = 
@@ -1075,7 +1599,7 @@ alc_dma_alloc(struct alc_softc *sc)
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
 		    "CMB block\n", sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->alc_rdata.alc_cmb_seg,
@@ -1093,7 +1617,7 @@ alc_dma_alloc(struct alc_softc *sc)
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)&sc->alc_rdata.alc_cmb, 1);
-		return error;
+		return (error);
 	}
 
 	sc->alc_rdata.alc_cmb_paddr = 
@@ -1115,7 +1639,7 @@ alc_dma_alloc(struct alc_softc *sc)
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
 		    "SMB block\n", sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->alc_rdata.alc_smb_seg,
@@ -1133,7 +1657,7 @@ alc_dma_alloc(struct alc_softc *sc)
 		    sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat,
 		    (bus_dma_segment_t *)&sc->alc_rdata.alc_smb, 1);
-		return error;
+		return (error);
 	}
 
 	sc->alc_rdata.alc_smb_paddr = 
@@ -1151,7 +1675,7 @@ alc_dma_alloc(struct alc_softc *sc)
 		if (error) {
 			printf("%s: could not create Tx dmamap.\n",
 			    sc->sc_dev.dv_xname);
-			return error;
+			return (error);
 		}
 	}
 
@@ -1161,7 +1685,7 @@ alc_dma_alloc(struct alc_softc *sc)
 	if (error) {
 		printf("%s: could not create spare Rx dmamap.\n",
 		    sc->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 
 	for (i = 0; i < ALC_RX_RING_CNT; i++) {
@@ -1173,13 +1697,12 @@ alc_dma_alloc(struct alc_softc *sc)
 		if (error) {
 			printf("%s: could not create Rx dmamap.\n",
 			    sc->sc_dev.dv_xname);
-			return error;
+			return (error);
 		}
 	}
 
 	return (0);
 }
-
 
 void
 alc_dma_free(struct alc_softc *sc)
@@ -1339,7 +1862,7 @@ alc_encap(struct alc_softc *sc, struct mbuf *m)
 
 	return (0);
 
- drop:
+drop:
 	m_freem(m);
 	return (error);
 }
@@ -1395,10 +1918,14 @@ alc_start(struct ifnet *ifp)
 		    sc->alc_cdata.alc_tx_ring_map->dm_mapsize, 
 		    BUS_DMASYNC_PREWRITE);
 		/* Kick. Assume we're using normal Tx priority queue. */
-		CSR_WRITE_4(sc, ALC_MBOX_TD_PROD_IDX,
-		    (sc->alc_cdata.alc_tx_prod <<
-		    MBOX_TD_PROD_LO_IDX_SHIFT) &
-		    MBOX_TD_PROD_LO_IDX_MASK);
+		if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+			CSR_WRITE_2(sc, ALC_MBOX_TD_PRI0_PROD_IDX,
+			    (uint16_t)sc->alc_cdata.alc_tx_prod);
+		else
+			CSR_WRITE_4(sc, ALC_MBOX_TD_PROD_IDX,
+			    (sc->alc_cdata.alc_tx_prod <<
+			    MBOX_TD_PROD_LO_IDX_SHIFT) &
+			    MBOX_TD_PROD_LO_IDX_MASK);
 		/* Set a timeout in case the chip goes out to lunch. */
 		ifp->if_timer = ALC_TX_TIMEOUT;
 	}
@@ -1482,9 +2009,10 @@ alc_mac_config(struct alc_softc *sc)
 	reg = CSR_READ_4(sc, ALC_MAC_CFG);
 	reg &= ~(MAC_CFG_FULL_DUPLEX | MAC_CFG_TX_FC | MAC_CFG_RX_FC |
 	    MAC_CFG_SPEED_MASK);
-	if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D ||
+	if ((sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D ||
 	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D_1 ||
-	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_2)
+	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_2 ||
+	    sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
 		reg |= MAC_CFG_HASH_ALG_CRC32 | MAC_CFG_SPEED_MODE_SW;
 	/* Reprogram MAC with resolved speed/duplex. */
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -1668,9 +2196,15 @@ alc_intr(void *arg)
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, status | INTR_DIS_INT);
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		if (status & INTR_RX_PKT)
-			alc_rxintr(sc);
+		int error = 0;
 
+		if (status & INTR_RX_PKT) {
+			error = alc_rxintr(sc);
+			if (error) {
+				alc_init(ifp);
+				return (0);
+			}
+		}
 		if (status & (INTR_DMA_RD_TO_RST | INTR_DMA_WR_TO_RST |
 		    INTR_TXQ_TO_RST)) {
 			if (status & INTR_DMA_RD_TO_RST)
@@ -1686,15 +2220,14 @@ alc_intr(void *arg)
 			return (0);
 		}
 
-		if (status & INTR_TX_PKT)
-			alc_txeof(sc);
-
+		alc_txeof(sc);
 		alc_start(ifp);
 	}
 
 	claimed = 1;
 back:
 	/* Re-enable interrupts. */
+
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, 0x7FFFFFFF);
 	return (claimed);
 }
@@ -1717,11 +2250,16 @@ alc_txeof(struct alc_softc *sc)
 		    sc->alc_cdata.alc_cmb_map->dm_mapsize, 
 		    BUS_DMASYNC_POSTREAD);
 		prod = sc->alc_rdata.alc_cmb->cons;
-	} else
-		prod = CSR_READ_4(sc, ALC_MBOX_TD_CONS_IDX);
-	/* Assume we're using normal Tx priority queue. */
-	prod = (prod & MBOX_TD_CONS_LO_IDX_MASK) >>
-	    MBOX_TD_CONS_LO_IDX_SHIFT;
+	} else {
+		if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+			prod = CSR_READ_2(sc, ALC_MBOX_TD_PRI0_CONS_IDX);
+		else {
+			prod = CSR_READ_4(sc, ALC_MBOX_TD_CONS_IDX);
+			/* Assume we're using normal Tx priority queue. */
+			prod = (prod & MBOX_TD_CONS_LO_IDX_MASK) >>
+			    MBOX_TD_CONS_LO_IDX_SHIFT;
+		}
+	}
 	cons = sc->alc_cdata.alc_tx_cons;
 	/*
 	 * Go through our Tx list and free mbufs for those
@@ -1799,7 +2337,7 @@ alc_newbuf(struct alc_softc *sc, struct alc_rxdesc *rxd)
 	return (0);
 }
 
-void
+int
 alc_rxintr(struct alc_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1825,7 +2363,7 @@ alc_rxintr(struct alc_softc *sc)
 			if (alcdebug)
 				printf("%s: unexpected segment count -- "
 				    "resetting\n", sc->sc_dev.dv_xname);
-			break;
+			return (EIO);
 		}
 		alc_rxeof(sc, rrd);
 		/* Clear Rx return status. */
@@ -1860,9 +2398,15 @@ alc_rxintr(struct alc_softc *sc)
 		 * it still seems that pre-fetching needs more
 		 * experimentation.
 		 */
-		CSR_WRITE_4(sc, ALC_MBOX_RD0_PROD_IDX,
-		    sc->alc_cdata.alc_rx_cons);
+		if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+			CSR_WRITE_2(sc, ALC_MBOX_RD0_PROD_IDX,
+			    (uint16_t)sc->alc_cdata.alc_rx_cons);
+		else
+			CSR_WRITE_4(sc, ALC_MBOX_RD0_PROD_IDX,
+			    sc->alc_cdata.alc_rx_cons);
 	}
+
+	return (0);
 }
 
 /* Receive a frame. */
@@ -1908,7 +2452,8 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 		if (alc_newbuf(sc, rxd) != 0) {
 			ifp->if_iqdrops++;
 			/* Reuse Rx buffers. */
-			m_freem(sc->alc_cdata.alc_rxhead);
+			if (sc->alc_cdata.alc_rxhead != NULL)
+				m_freem(sc->alc_cdata.alc_rxhead);
 			break;
 		}
 
@@ -1996,14 +2541,76 @@ alc_tick(void *xsc)
 }
 
 void
-alc_reset(struct alc_softc *sc)
+alc_osc_reset(struct alc_softc *sc)
 {
 	uint32_t reg;
+
+	reg = CSR_READ_4(sc, ALC_MISC3);
+	reg &= ~MISC3_25M_BY_SW;
+	reg |= MISC3_25M_NOTO_INTNL;
+	CSR_WRITE_4(sc, ALC_MISC3, reg);
+	reg = CSR_READ_4(sc, ALC_MISC);
+	if (AR816X_REV(sc->alc_rev) >= AR816X_REV_B0) {
+		/*
+		 * Restore over-current protection default value.
+		 * This value could be reset by MAC reset.
+		 */
+		reg &= ~MISC_PSW_OCP_MASK;
+		reg |= (MISC_PSW_OCP_DEFAULT << MISC_PSW_OCP_SHIFT);
+		reg &= ~MISC_INTNLOSC_OPEN;
+		CSR_WRITE_4(sc, ALC_MISC, reg);
+		CSR_WRITE_4(sc, ALC_MISC, reg | MISC_INTNLOSC_OPEN);
+		reg = CSR_READ_4(sc, ALC_MISC2);
+		reg &= ~MISC2_CALB_START;
+		CSR_WRITE_4(sc, ALC_MISC2, reg);
+		CSR_WRITE_4(sc, ALC_MISC2, reg | MISC2_CALB_START);
+	} else {
+		reg &= ~MISC_INTNLOSC_OPEN;
+		/* Disable isolate for revision A devices. */
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1)
+			reg &= ~MISC_ISO_ENB;
+		CSR_WRITE_4(sc, ALC_MISC, reg | MISC_INTNLOSC_OPEN);
+		CSR_WRITE_4(sc, ALC_MISC, reg);
+	}
+	DELAY(20);
+}
+
+void
+alc_reset(struct alc_softc *sc)
+{
+	uint32_t reg, pmcfg = 0;
 	int i;
 
-	reg = CSR_READ_4(sc, ALC_MASTER_CFG) & 0xFFFF;
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		/* Reset workaround. */
+		CSR_WRITE_4(sc, ALC_MBOX_RD0_PROD_IDX, 1);
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
+		    (sc->alc_rev & 0x01) != 0)
+		{
+			/* Disable L0s/L1s before reset. */
+			pmcfg = CSR_READ_4(sc, ALC_PM_CFG);
+			if ((pmcfg & (PM_CFG_ASPM_L0S_ENB |
+			    PM_CFG_ASPM_L1_ENB))!= 0)
+			{
+				pmcfg &= ~(PM_CFG_ASPM_L0S_ENB |
+				    PM_CFG_ASPM_L1_ENB);
+				CSR_WRITE_4(sc, ALC_PM_CFG, pmcfg);
+			}
+		}
+	}
+	reg = CSR_READ_4(sc, ALC_MASTER_CFG);
 	reg |= MASTER_OOB_DIS_OFF | MASTER_RESET;
 	CSR_WRITE_4(sc, ALC_MASTER_CFG, reg);
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		for (i = ALC_RESET_TIMEOUT; i > 0; i--) {
+			DELAY(10);
+			if (CSR_READ_4(sc, ALC_MBOX_RD0_PROD_IDX) == 0)
+				break;
+		}
+		if (i == 0)
+			printf("MAC reset timeout!\n");
+	}
 	for (i = ALC_RESET_TIMEOUT; i > 0; i--) {
 		DELAY(10);
 		if ((CSR_READ_4(sc, ALC_MASTER_CFG) & MASTER_RESET) == 0)
@@ -2013,7 +2620,9 @@ alc_reset(struct alc_softc *sc)
 		printf("%s: master reset timeout!\n", sc->sc_dev.dv_xname);
 
 	for (i = ALC_RESET_TIMEOUT; i > 0; i--) {
-		if ((reg = CSR_READ_4(sc, ALC_IDLE_STATUS)) == 0)
+		reg = CSR_READ_4(sc, ALC_IDLE_STATUS);
+		if ((reg & (IDLE_STATUS_RXMAC | IDLE_STATUS_TXMAC |
+		    IDLE_STATUS_RXQ | IDLE_STATUS_TXQ)) == 0)
 			break;
 		DELAY(10);
 	}
@@ -2021,13 +2630,42 @@ alc_reset(struct alc_softc *sc)
 	if (i == 0)
 		printf("%s: reset timeout(0x%08x)!\n", sc->sc_dev.dv_xname, 
 		    reg);
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
+		    (sc->alc_rev & 0x01) != 0) {
+			reg = CSR_READ_4(sc, ALC_MASTER_CFG);
+			reg |= MASTER_CLK_SEL_DIS;
+			CSR_WRITE_4(sc, ALC_MASTER_CFG, reg);
+			/* Restore L0s/L1s config. */
+			if ((pmcfg & (PM_CFG_ASPM_L0S_ENB |
+			    PM_CFG_ASPM_L1_ENB)) != 0)
+				CSR_WRITE_4(sc, ALC_PM_CFG, pmcfg);
+		}
+		alc_osc_reset(sc);
+		reg = CSR_READ_4(sc, ALC_MISC3);
+		reg &= ~MISC3_25M_BY_SW;
+		reg |= MISC3_25M_NOTO_INTNL;
+		CSR_WRITE_4(sc, ALC_MISC3, reg);
+		reg = CSR_READ_4(sc, ALC_MISC);
+		reg &= ~MISC_INTNLOSC_OPEN;
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1)
+			reg &= ~MISC_ISO_ENB;
+		CSR_WRITE_4(sc, ALC_MISC, reg);
+		DELAY(20);
+	}
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0 ||
+	    sc->sc_product ==  PCI_PRODUCT_ATTANSIC_L2C_1 ||
+	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_2)
+		CSR_WRITE_4(sc, ALC_SERDES_LOCK,
+		    CSR_READ_4(sc, ALC_SERDES_LOCK) |
+		    SERDES_MAC_CLK_SLOWDOWN | SERDES_PHY_CLK_SLOWDOWN);
 }
 
 int
 alc_init(struct ifnet *ifp)
 {
 	struct alc_softc *sc = ifp->if_softc;
-	struct mii_data *mii;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	bus_addr_t paddr;
 	uint32_t reg, rxf_hi, rxf_lo;
@@ -2055,7 +2693,16 @@ alc_init(struct ifnet *ifp)
 	alc_init_smb(sc);
 
 	/* Enable all clocks. */
-	CSR_WRITE_4(sc, ALC_CLK_GATING_CFG, 0);
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		CSR_WRITE_4(sc, ALC_CLK_GATING_CFG, CLK_GATING_DMAW_ENB |
+		    CLK_GATING_DMAR_ENB | CLK_GATING_TXQ_ENB |
+		    CLK_GATING_RXQ_ENB | CLK_GATING_TXMAC_ENB |
+		    CLK_GATING_RXMAC_ENB);
+		if (AR816X_REV(sc->alc_rev) >= AR816X_REV_B0)
+			CSR_WRITE_4(sc, ALC_IDLE_DECISN_TIMER,
+			    IDLE_DECISN_TIMER_DEFAULT_1MS);
+	} else
+		CSR_WRITE_4(sc, ALC_CLK_GATING_CFG, 0);
 
 	/* Reprogram the station address. */
 	bcopy(LLADDR(ifp->if_sadl), eaddr, ETHER_ADDR_LEN);
@@ -2081,10 +2728,12 @@ alc_init(struct ifnet *ifp)
 	paddr = sc->alc_rdata.alc_rx_ring_paddr;
 	CSR_WRITE_4(sc, ALC_RX_BASE_ADDR_HI, ALC_ADDR_HI(paddr));
 	CSR_WRITE_4(sc, ALC_RD0_HEAD_ADDR_LO, ALC_ADDR_LO(paddr));
-	/* We use one Rx ring. */
-	CSR_WRITE_4(sc, ALC_RD1_HEAD_ADDR_LO, 0);
-	CSR_WRITE_4(sc, ALC_RD2_HEAD_ADDR_LO, 0);
-	CSR_WRITE_4(sc, ALC_RD3_HEAD_ADDR_LO, 0);
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		/* We use one Rx ring. */
+		CSR_WRITE_4(sc, ALC_RD1_HEAD_ADDR_LO, 0);
+		CSR_WRITE_4(sc, ALC_RD2_HEAD_ADDR_LO, 0);
+		CSR_WRITE_4(sc, ALC_RD3_HEAD_ADDR_LO, 0);
+	}
 	/* Set Rx descriptor counter. */
 	CSR_WRITE_4(sc, ALC_RD_RING_CNT,
 	    (ALC_RX_RING_CNT << RD_RING_CNT_SHIFT) & RD_RING_CNT_MASK);
@@ -2105,10 +2754,12 @@ alc_init(struct ifnet *ifp)
 	paddr = sc->alc_rdata.alc_rr_ring_paddr;
 	/* Set Rx return descriptor base addresses. */
 	CSR_WRITE_4(sc, ALC_RRD0_HEAD_ADDR_LO, ALC_ADDR_LO(paddr));
-	/* We use one Rx return ring. */
-	CSR_WRITE_4(sc, ALC_RRD1_HEAD_ADDR_LO, 0);
-	CSR_WRITE_4(sc, ALC_RRD2_HEAD_ADDR_LO, 0);
-	CSR_WRITE_4(sc, ALC_RRD3_HEAD_ADDR_LO, 0);
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		/* We use one Rx return ring. */
+		CSR_WRITE_4(sc, ALC_RRD1_HEAD_ADDR_LO, 0);
+		CSR_WRITE_4(sc, ALC_RRD2_HEAD_ADDR_LO, 0);
+		CSR_WRITE_4(sc, ALC_RRD3_HEAD_ADDR_LO, 0);
+	}
 	/* Set Rx return descriptor counter. */
 	CSR_WRITE_4(sc, ALC_RRD_RING_CNT,
 	    (ALC_RR_RING_CNT << RRD_RING_CNT_SHIFT) & RRD_RING_CNT_MASK);
@@ -2137,16 +2788,20 @@ alc_init(struct ifnet *ifp)
 	sc->alc_int_rx_mod = ALC_IM_RX_TIMER_DEFAULT;
 	sc->alc_int_tx_mod = ALC_IM_TX_TIMER_DEFAULT;
 	reg = ALC_USECS(sc->alc_int_rx_mod) << IM_TIMER_RX_SHIFT;
-	reg |= ALC_USECS(sc->alc_int_tx_mod) << IM_TIMER_TX_SHIFT;
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0)
+	    reg |= ALC_USECS(sc->alc_int_tx_mod) << IM_TIMER_TX_SHIFT;
 	CSR_WRITE_4(sc, ALC_IM_TIMER, reg);
 	/*
 	 * We don't want to automatic interrupt clear as task queue
 	 * for the interrupt should know interrupt status.
 	 */
-	reg = MASTER_SA_TIMER_ENB;
+	reg = CSR_READ_4(sc, ALC_MASTER_CFG);
+	reg &= ~(MASTER_IM_RX_TIMER_ENB | MASTER_IM_TX_TIMER_ENB);
+	reg |= MASTER_SA_TIMER_ENB;
 	if (ALC_USECS(sc->alc_int_rx_mod) != 0)
 		reg |= MASTER_IM_RX_TIMER_ENB;
-	if (ALC_USECS(sc->alc_int_tx_mod) != 0)
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0 &&
+	    ALC_USECS(sc->alc_int_tx_mod) != 0)
 		reg |= MASTER_IM_TX_TIMER_ENB;
 	CSR_WRITE_4(sc, ALC_MASTER_CFG, reg);
 	/*
@@ -2155,11 +2810,17 @@ alc_init(struct ifnet *ifp)
 	 */
 	CSR_WRITE_4(sc, ALC_INTR_RETRIG_TIMER, ALC_USECS(0));
 	/* Configure CMB. */
-	if ((sc->alc_flags & ALC_FLAG_CMB_BUG) == 0) {
-		CSR_WRITE_4(sc, ALC_CMB_TD_THRESH, 4);
-		CSR_WRITE_4(sc, ALC_CMB_TX_TIMER, ALC_USECS(5000));
-	} else
-		CSR_WRITE_4(sc, ALC_CMB_TX_TIMER, ALC_USECS(0));
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		CSR_WRITE_4(sc, ALC_CMB_TD_THRESH, ALC_TX_RING_CNT / 3);
+		CSR_WRITE_4(sc, ALC_CMB_TX_TIMER,
+		    ALC_USECS(sc->alc_int_tx_mod));
+	} else {
+		if ((sc->alc_flags & ALC_FLAG_CMB_BUG) == 0) {
+			CSR_WRITE_4(sc, ALC_CMB_TD_THRESH, 4);
+			CSR_WRITE_4(sc, ALC_CMB_TX_TIMER, ALC_USECS(5000));
+		} else
+			CSR_WRITE_4(sc, ALC_CMB_TX_TIMER, ALC_USECS(0));
+	}
 	/*
 	 * Hardware can be configured to issue SMB interrupt based
 	 * on programmed interval. Since there is a callout that is
@@ -2186,33 +2847,40 @@ alc_init(struct ifnet *ifp)
 	 */
 	CSR_WRITE_4(sc, ALC_FRAME_SIZE, sc->alc_max_framelen);
 
-	/* Disable header split(?) */
-	CSR_WRITE_4(sc, ALC_HDS_CFG, 0);
-
-	/* Configure IPG/IFG parameters. */
-	CSR_WRITE_4(sc, ALC_IPG_IFG_CFG,
-	    ((IPG_IFG_IPGT_DEFAULT << IPG_IFG_IPGT_SHIFT) & IPG_IFG_IPGT_MASK) |
-	    ((IPG_IFG_MIFG_DEFAULT << IPG_IFG_MIFG_SHIFT) & IPG_IFG_MIFG_MASK) |
-	    ((IPG_IFG_IPG1_DEFAULT << IPG_IFG_IPG1_SHIFT) & IPG_IFG_IPG1_MASK) |
-	    ((IPG_IFG_IPG2_DEFAULT << IPG_IFG_IPG2_SHIFT) & IPG_IFG_IPG2_MASK));
-	/* Set parameters for half-duplex media. */
-	CSR_WRITE_4(sc, ALC_HDPX_CFG,
-	    ((HDPX_CFG_LCOL_DEFAULT << HDPX_CFG_LCOL_SHIFT) &
-	    HDPX_CFG_LCOL_MASK) |
-	    ((HDPX_CFG_RETRY_DEFAULT << HDPX_CFG_RETRY_SHIFT) &
-	    HDPX_CFG_RETRY_MASK) | HDPX_CFG_EXC_DEF_EN |
-	    ((HDPX_CFG_ABEBT_DEFAULT << HDPX_CFG_ABEBT_SHIFT) &
-	    HDPX_CFG_ABEBT_MASK) |
-	    ((HDPX_CFG_JAMIPG_DEFAULT << HDPX_CFG_JAMIPG_SHIFT) &
-	    HDPX_CFG_JAMIPG_MASK));
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		/* Disable header split(?) */
+		CSR_WRITE_4(sc, ALC_HDS_CFG, 0);
+		/* Configure IPG/IFG parameters. */
+		CSR_WRITE_4(sc, ALC_IPG_IFG_CFG,
+			((IPG_IFG_IPGT_DEFAULT << IPG_IFG_IPGT_SHIFT) &
+			 IPG_IFG_IPGT_MASK) |
+			((IPG_IFG_MIFG_DEFAULT << IPG_IFG_MIFG_SHIFT) &
+			 IPG_IFG_MIFG_MASK) |
+			((IPG_IFG_IPG1_DEFAULT << IPG_IFG_IPG1_SHIFT) &
+			 IPG_IFG_IPG1_MASK) |
+			((IPG_IFG_IPG2_DEFAULT << IPG_IFG_IPG2_SHIFT) &
+			 IPG_IFG_IPG2_MASK));
+		/* Set parameters for half-duplex media. */
+		CSR_WRITE_4(sc, ALC_HDPX_CFG,
+			((HDPX_CFG_LCOL_DEFAULT << HDPX_CFG_LCOL_SHIFT) &
+			 HDPX_CFG_LCOL_MASK) |
+			((HDPX_CFG_RETRY_DEFAULT << HDPX_CFG_RETRY_SHIFT) &
+			 HDPX_CFG_RETRY_MASK) | HDPX_CFG_EXC_DEF_EN |
+			((HDPX_CFG_ABEBT_DEFAULT << HDPX_CFG_ABEBT_SHIFT) &
+			 HDPX_CFG_ABEBT_MASK) |
+			((HDPX_CFG_JAMIPG_DEFAULT << HDPX_CFG_JAMIPG_SHIFT) &
+			 HDPX_CFG_JAMIPG_MASK));
+	}
 	/*
 	 * Set TSO/checksum offload threshold. For frames that is
 	 * larger than this threshold, hardware wouldn't do
 	 * TSO/checksum offloading.
 	 */
-	CSR_WRITE_4(sc, ALC_TSO_OFFLOAD_THRESH,
-	    (sc->alc_max_framelen >> TSO_OFFLOAD_THRESH_UNIT_SHIFT) &
-	    TSO_OFFLOAD_THRESH_MASK);
+	reg = (sc->alc_max_framelen >> TSO_OFFLOAD_THRESH_UNIT_SHIFT) &
+	    TSO_OFFLOAD_THRESH_MASK;
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+		reg |= TSO_OFFLOAD_ERRLGPKT_DROP_ENB;
+	CSR_WRITE_4(sc, ALC_TSO_OFFLOAD_THRESH, reg);
 	/* Configure TxQ. */
 	reg = (alc_dma_burst[sc->alc_dma_rd_burst] <<
 	    TXQ_CFG_TX_FIFO_BURST_SHIFT) & TXQ_CFG_TX_FIFO_BURST_MASK;
@@ -2221,23 +2889,53 @@ alc_init(struct ifnet *ifp)
 		reg >>= 1;
 	reg |= (TXQ_CFG_TD_BURST_DEFAULT << TXQ_CFG_TD_BURST_SHIFT) &
 	    TXQ_CFG_TD_BURST_MASK;
+	reg |= TXQ_CFG_IP_OPTION_ENB | TXQ_CFG_8023_ENB;
 	CSR_WRITE_4(sc, ALC_TXQ_CFG, reg | TXQ_CFG_ENHANCED_MODE);
-
-	/* Configure Rx free descriptor pre-fetching. */
-	CSR_WRITE_4(sc, ALC_RX_RD_FREE_THRESH,
-	    ((RX_RD_FREE_THRESH_HI_DEFAULT << RX_RD_FREE_THRESH_HI_SHIFT) &
-	    RX_RD_FREE_THRESH_HI_MASK) |
-	    ((RX_RD_FREE_THRESH_LO_DEFAULT << RX_RD_FREE_THRESH_LO_SHIFT) &
-	    RX_RD_FREE_THRESH_LO_MASK));
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		reg = (TXQ_CFG_TD_BURST_DEFAULT << HQTD_CFG_Q1_BURST_SHIFT |
+		    TXQ_CFG_TD_BURST_DEFAULT << HQTD_CFG_Q2_BURST_SHIFT |
+		    TXQ_CFG_TD_BURST_DEFAULT << HQTD_CFG_Q3_BURST_SHIFT |
+		    HQTD_CFG_BURST_ENB);
+		CSR_WRITE_4(sc, ALC_HQTD_CFG, reg);
+		reg = WRR_PRI_RESTRICT_NONE;
+		reg |= (WRR_PRI_DEFAULT << WRR_PRI0_SHIFT |
+		    WRR_PRI_DEFAULT << WRR_PRI1_SHIFT |
+		    WRR_PRI_DEFAULT << WRR_PRI2_SHIFT |
+		    WRR_PRI_DEFAULT << WRR_PRI3_SHIFT);
+		CSR_WRITE_4(sc, ALC_WRR, reg);
+	} else {
+		/* Configure Rx free descriptor pre-fetching. */
+		CSR_WRITE_4(sc, ALC_RX_RD_FREE_THRESH,
+		    ((RX_RD_FREE_THRESH_HI_DEFAULT <<
+		    RX_RD_FREE_THRESH_HI_SHIFT) & RX_RD_FREE_THRESH_HI_MASK) |
+		    ((RX_RD_FREE_THRESH_LO_DEFAULT <<
+		    RX_RD_FREE_THRESH_LO_SHIFT) & RX_RD_FREE_THRESH_LO_MASK));
+	}
 
 	/*
 	 * Configure flow control parameters.
 	 * XON  : 80% of Rx FIFO
 	 * XOFF : 30% of Rx FIFO
 	 */
-	if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L1C ||
-	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C) {
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
 		reg = CSR_READ_4(sc, ALC_SRAM_RX_FIFO_LEN);
+		reg &= SRAM_RX_FIFO_LEN_MASK;
+		reg *= 8;
+		if (reg > 8 * 1024)
+			reg -= RX_FIFO_PAUSE_816X_RSVD;
+		else
+		    reg -= RX_BUF_SIZE_MAX;
+		reg /= 8;
+		CSR_WRITE_4(sc, ALC_RX_FIFO_PAUSE_THRESH,
+			((reg << RX_FIFO_PAUSE_THRESH_LO_SHIFT) &
+			 RX_FIFO_PAUSE_THRESH_LO_MASK) |
+			(((RX_FIFO_PAUSE_816X_RSVD / 8) <<
+			  RX_FIFO_PAUSE_THRESH_HI_SHIFT) &
+			 RX_FIFO_PAUSE_THRESH_HI_MASK));
+	} else if ( sc->sc_product == PCI_PRODUCT_ATTANSIC_L1C||
+	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C) {
+	    reg = CSR_READ_4(sc, ALC_SRAM_RX_FIFO_LEN);
 		rxf_hi = (reg * 8) / 10;
 		rxf_lo = (reg * 3) / 10;
 		CSR_WRITE_4(sc, ALC_RX_FIFO_PAUSE_THRESH,
@@ -2246,22 +2944,27 @@ alc_init(struct ifnet *ifp)
 		    ((rxf_hi << RX_FIFO_PAUSE_THRESH_HI_SHIFT) &
 		    RX_FIFO_PAUSE_THRESH_HI_MASK));
 	}
-	if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D_1 ||
+	/* patch	if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D_1 ||
 	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_1)
 		CSR_WRITE_4(sc, ALC_SERDES_LOCK,
 		    CSR_READ_4(sc, ALC_SERDES_LOCK) | SERDES_MAC_CLK_SLOWDOWN |
-		    SERDES_PHY_CLK_SLOWDOWN);
-
+		    SERDES_PHY_CLK_SLOWDOWN); */
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
 	/* Disable RSS until I understand L1C/L2C's RSS logic. */
 	CSR_WRITE_4(sc, ALC_RSS_IDT_TABLE0, 0);
 	CSR_WRITE_4(sc, ALC_RSS_CPU, 0);
-
+	}
 	/* Configure RxQ. */
 	reg = (RXQ_CFG_RD_BURST_DEFAULT << RXQ_CFG_RD_BURST_SHIFT) &
 	    RXQ_CFG_RD_BURST_MASK;
 	reg |= RXQ_CFG_RSS_MODE_DIS;
-	if ((sc->alc_flags & ALC_FLAG_ASPM_MON) != 0)
-		reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+	    reg |= (RXQ_CFG_816X_IDT_TBL_SIZE_DEFAULT <<
+	    RXQ_CFG_816X_IDT_TBL_SIZE_SHIFT) &
+	    RXQ_CFG_816X_IDT_TBL_SIZE_MASK;
+	if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
+	    sc->sc_product != PCI_PRODUCT_ATTANSIC_L1D_1)
+	    reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
 	CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 
 	/* Configure DMA parameters. */
@@ -2281,6 +2984,20 @@ alc_init(struct ifnet *ifp)
 	    DMA_CFG_RD_DELAY_CNT_MASK;
 	reg |= (DMA_CFG_WR_DELAY_CNT_DEFAULT << DMA_CFG_WR_DELAY_CNT_SHIFT) &
 	    DMA_CFG_WR_DELAY_CNT_MASK;
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		switch (AR816X_REV(sc->alc_rev)) {
+		case AR816X_REV_A0:
+		case AR816X_REV_A1:
+			reg |= DMA_CFG_RD_CHNL_SEL_1;
+			break;
+		case AR816X_REV_B0:
+			reg |= DMA_CFG_RD_CHNL_SEL_3;
+			break;
+		default:
+			break;
+		}
+	}
 	CSR_WRITE_4(sc, ALC_DMA_CFG, reg);
 
 	/*
@@ -2299,7 +3016,8 @@ alc_init(struct ifnet *ifp)
 	reg = MAC_CFG_TX_CRC_ENB | MAC_CFG_TX_AUTO_PAD | MAC_CFG_FULL_DUPLEX |
 	    ((MAC_CFG_PREAMBLE_DEFAULT << MAC_CFG_PREAMBLE_SHIFT) &
 	    MAC_CFG_PREAMBLE_MASK);
-	if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D ||
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0 ||
+	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D ||
 	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L1D_1 ||
 	    sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_2)
 		reg |= MAC_CFG_HASH_ALG_CRC32 | MAC_CFG_SPEED_MODE_SW;
@@ -2319,15 +3037,16 @@ alc_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, 0);
 
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 	sc->alc_flags &= ~ALC_FLAG_LINK;
 	/* Switch to the current media. */
-	mii = &sc->sc_miibus;
-	mii_mediachg(mii);
-
+	alc_mediachange(ifp);
 	timeout_add_sec(&sc->alc_tick_ch, 1);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return (0);
 }
@@ -2356,7 +3075,6 @@ alc_stop(struct alc_softc *sc)
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, ALC_INTR_MASK, 0);
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, 0xFFFFFFFF);
-	alc_stop_queue(sc);
 
 	/* Disable DMA. */
 	reg = CSR_READ_4(sc, ALC_DMA_CFG);
@@ -2370,6 +3088,13 @@ alc_stop(struct alc_softc *sc)
 
 	/* Disable interrupts which might be touched in taskq handler. */
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, 0xFFFFFFFF);
+
+	/* Disable L0s/L1s */
+	reg = CSR_READ_4(sc, ALC_PM_CFG);
+	if ((reg & (PM_CFG_ASPM_L0S_ENB | PM_CFG_ASPM_L1_ENB))!= 0) {
+		reg &= ~(PM_CFG_ASPM_L0S_ENB | PM_CFG_ASPM_L1_ENB);
+		CSR_WRITE_4(sc, ALC_PM_CFG, reg);
+	}
 
 	/* Reclaim Rx buffers that have been processed. */
 	m_freem(sc->alc_cdata.alc_rxhead);
@@ -2404,7 +3129,7 @@ alc_stop_mac(struct alc_softc *sc)
 {
 	uint32_t reg;
 	int i;
-
+	alc_stop_queue(sc);
 	/* Disable Rx/Tx MAC. */
 	reg = CSR_READ_4(sc, ALC_MAC_CFG);
 	if ((reg & (MAC_CFG_TX_ENB | MAC_CFG_RX_ENB)) != 0) {
@@ -2413,7 +3138,7 @@ alc_stop_mac(struct alc_softc *sc)
 	}
 	for (i = ALC_TIMEOUT; i > 0; i--) {
 		reg = CSR_READ_4(sc, ALC_IDLE_STATUS);
-		if (reg == 0)
+		if ((reg & (IDLE_STATUS_RXMAC | IDLE_STATUS_TXMAC)) == 0)
 			break;
 		DELAY(10);
 	}
@@ -2436,8 +3161,12 @@ alc_start_queue(struct alc_softc *sc)
 
 	/* Enable RxQ. */
 	cfg = CSR_READ_4(sc, ALC_RXQ_CFG);
-	cfg &= ~RXQ_CFG_ENB;
-	cfg |= qcfg[1];
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		cfg &= ~RXQ_CFG_ENB;
+		cfg |= qcfg[1];
+	} else
+		cfg |= RXQ_CFG_QUEUE0_ENB;
+
 	CSR_WRITE_4(sc, ALC_RXQ_CFG, cfg);
 	/* Enable TxQ. */
 	cfg = CSR_READ_4(sc, ALC_TXQ_CFG);
@@ -2459,10 +3188,18 @@ alc_stop_queue(struct alc_softc *sc)
 	}
 	/* Disable TxQ. */
 	reg = CSR_READ_4(sc, ALC_TXQ_CFG);
-	if ((reg & TXQ_CFG_ENB) != 0) {
-		reg &= ~TXQ_CFG_ENB;
-		CSR_WRITE_4(sc, ALC_TXQ_CFG, reg);
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		if ((reg & RXQ_CFG_ENB) != 0) {
+			reg &= ~RXQ_CFG_ENB;
+			CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
+		}
+	} else {
+		if ((reg & RXQ_CFG_QUEUE0_ENB) != 0) {
+			reg &= ~RXQ_CFG_QUEUE0_ENB;
+			CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
+		}
 	}
+	DELAY(40);
 	for (i = ALC_TIMEOUT; i > 0; i--) {
 		reg = CSR_READ_4(sc, ALC_IDLE_STATUS);
 		if ((reg & (IDLE_STATUS_RXQ | IDLE_STATUS_TXQ)) == 0)
