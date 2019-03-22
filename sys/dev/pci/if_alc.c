@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.43 2019/03/22 09:04:46 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.44 2019/03/22 15:33:30 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -3038,15 +3038,12 @@ alc_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, ALC_INTR_STATUS, 0);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
+	ifq_clr_oactive(&ifp->if_snd);
 
 	sc->alc_flags &= ~ALC_FLAG_LINK;
 	/* Switch to the current media. */
 	alc_mediachange(ifp);
 	timeout_add_sec(&sc->alc_tick_ch, 1);
-
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return (0);
 }
@@ -3182,12 +3179,6 @@ alc_stop_queue(struct alc_softc *sc)
 
 	/* Disable RxQ. */
 	reg = CSR_READ_4(sc, ALC_RXQ_CFG);
-	if ((reg & RXQ_CFG_ENB) != 0) {
-		reg &= ~RXQ_CFG_ENB;
-		CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
-	}
-	/* Disable TxQ. */
-	reg = CSR_READ_4(sc, ALC_TXQ_CFG);
 	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
 		if ((reg & RXQ_CFG_ENB) != 0) {
 			reg &= ~RXQ_CFG_ENB;
@@ -3198,6 +3189,12 @@ alc_stop_queue(struct alc_softc *sc)
 			reg &= ~RXQ_CFG_QUEUE0_ENB;
 			CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 		}
+	}
+	/* Disable TxQ. */
+	reg = CSR_READ_4(sc, ALC_TXQ_CFG);
+	if ((reg & TXQ_CFG_ENB) != 0) {
+		reg &= ~TXQ_CFG_ENB;
+		CSR_WRITE_4(sc, ALC_TXQ_CFG, reg);
 	}
 	DELAY(40);
 	for (i = ALC_TIMEOUT; i > 0; i--) {
