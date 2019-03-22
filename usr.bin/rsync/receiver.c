@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.19 2019/02/18 21:55:27 benno Exp $ */
+/*	$Id: receiver.c,v 1.20 2019/03/22 19:56:47 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -47,7 +47,7 @@ rsync_set_metadata(struct sess *sess, int newfile,
 {
 	uid_t		 uid = (uid_t)-1;
 	gid_t		 gid = (gid_t)-1;
-	struct timespec	 tv[2];
+	struct timespec	 ts[2];
 
 	/*
 	 * Conditionally adjust identifiers.
@@ -76,13 +76,10 @@ rsync_set_metadata(struct sess *sess, int newfile,
 	/* Conditionally adjust file modification time. */
 
 	if (sess->opts->preserve_times) {
-		struct timeval now;
-
-		gettimeofday(&now, NULL);
-		TIMEVAL_TO_TIMESPEC(&now, &tv[0]);
-		tv[1].tv_sec = f->st.mtime;
-		tv[1].tv_nsec = 0;
-		if (futimens(fd, tv) == -1) {
+		ts[0].tv_nsec = UTIME_NOW;
+		ts[1].tv_sec = f->st.mtime;
+		ts[1].tv_nsec = 0;
+		if (futimens(fd, ts) == -1) {
 			ERR(sess, "%s: futimens", path);
 			return 0;
 		}
@@ -108,7 +105,7 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 {
 	uid_t		 uid = (uid_t)-1;
 	gid_t		 gid = (gid_t)-1;
-	struct timespec	 tv[2];
+	struct timespec	 ts[2];
 
 	/*
 	 * Conditionally adjust identifiers.
@@ -138,13 +135,10 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 	/* Conditionally adjust file modification time. */
 
 	if (sess->opts->preserve_times) {
-		struct timeval now;
-
-		gettimeofday(&now, NULL);
-		TIMEVAL_TO_TIMESPEC(&now, &tv[0]);
-		tv[1].tv_sec = f->st.mtime;
-		tv[1].tv_nsec = 0;
-		if (utimensat(rootfd, path, tv, AT_SYMLINK_NOFOLLOW) == -1) {
+		ts[0].tv_nsec = UTIME_NOW;
+		ts[1].tv_sec = f->st.mtime;
+		ts[1].tv_nsec = 0;
+		if (utimensat(rootfd, path, ts, AT_SYMLINK_NOFOLLOW) == -1) {
 			ERR(sess, "%s: utimensat", path);
 			return 0;
 		}
