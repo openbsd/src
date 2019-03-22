@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.40 2019/03/17 01:06:15 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.41 2019/03/22 16:21:21 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -104,10 +104,11 @@ static struct timehands th0 = {
 };
 
 /*
- * Protects writes to anything accessed during tc_windup().
+ * Serializes writes to the members of the next active timehands.
+ *
  * tc_windup() must be called before leaving this mutex.
  */
-struct mutex timecounter_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
+struct mutex windup_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
 
 static struct timehands *volatile timehands = &th0;
 struct timecounter *timecounter = &dummy_timecounter;
@@ -355,7 +356,7 @@ tc_setrealtimeclock(const struct timespec *ts)
 	struct timespec ts2;
 	struct bintime bt, bt2;
 
-	mtx_enter(&timecounter_mtx);
+	mtx_enter(&windup_mtx);
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
@@ -363,7 +364,7 @@ tc_setrealtimeclock(const struct timespec *ts)
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup(&bt, NULL);
-	mtx_leave(&timecounter_mtx);
+	mtx_leave(&windup_mtx);
 
 	enqueue_randomness(ts->tv_sec);
 
@@ -401,7 +402,7 @@ tc_setclock(const struct timespec *ts)
 
 	enqueue_randomness(ts->tv_sec);
 
-	mtx_enter(&timecounter_mtx);
+	mtx_enter(&windup_mtx);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &timehands->th_boottime);
 
@@ -411,7 +412,7 @@ tc_setclock(const struct timespec *ts)
 	if (bt.sec < timehands->th_offset.sec ||
 	    (bt.sec == timehands->th_offset.sec &&
 	    bt.frac < timehands->th_offset.frac)) {
-		mtx_leave(&timecounter_mtx);
+		mtx_leave(&windup_mtx);
 		bintime2timespec(&bt, &earlier);
 		printf("%s: cannot rewind uptime to %lld.%09ld\n",
 		    __func__, (long long)earlier.tv_sec, earlier.tv_nsec);
@@ -422,7 +423,7 @@ tc_setclock(const struct timespec *ts)
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup(NULL, &bt);
-	mtx_leave(&timecounter_mtx);
+	mtx_leave(&windup_mtx);
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
@@ -453,7 +454,7 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset)
 	u_int delta, ncount, ogen;
 	int i;
 
-	MUTEX_ASSERT_LOCKED(&timecounter_mtx);
+	MUTEX_ASSERT_LOCKED(&windup_mtx);
 
 	active_tc = timecounter;
 
@@ -655,11 +656,11 @@ tc_ticktock(void)
 
 	if (++count < tc_tick)
 		return;
-	if (!mtx_enter_try(&timecounter_mtx))
+	if (!mtx_enter_try(&windup_mtx))
 		return;
 	count = 0;
 	tc_windup(NULL, NULL);
-	mtx_leave(&timecounter_mtx);
+	mtx_leave(&windup_mtx);
 }
 
 void
