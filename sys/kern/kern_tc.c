@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.41 2019/03/22 16:21:21 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.42 2019/03/22 18:27:12 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -43,7 +43,6 @@
 
 u_int dummy_get_timecount(struct timecounter *);
 
-void ntp_update_second(int64_t *);
 int sysctl_tc_hardware(void *, size_t *, void *, size_t);
 int sysctl_tc_choice(void *, size_t *, void *, size_t);
 
@@ -68,6 +67,7 @@ static struct timecounter dummy_timecounter = {
 struct timehands {
 	/* These fields must be initialized by the driver. */
 	struct timecounter	*th_counter;
+	int64_t			th_adjtimedelta;
 	int64_t			th_adjustment;
 	u_int64_t		th_scale;
 	u_int	 		th_offset_count;
@@ -81,17 +81,18 @@ struct timehands {
 };
 
 static struct timehands th0;
-static struct timehands th9 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th0};
-static struct timehands th8 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th9};
-static struct timehands th7 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th8};
-static struct timehands th6 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th7};
-static struct timehands th5 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th6};
-static struct timehands th4 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th5};
-static struct timehands th3 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th4};
-static struct timehands th2 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th3};
-static struct timehands th1 = { NULL, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th2};
+static struct timehands th9 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th0};
+static struct timehands th8 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th9};
+static struct timehands th7 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th8};
+static struct timehands th6 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th7};
+static struct timehands th5 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th6};
+static struct timehands th4 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th5};
+static struct timehands th3 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th4};
+static struct timehands th2 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th3};
+static struct timehands th1 = { NULL, 0, 0, 0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0}, 0, &th2};
 static struct timehands th0 = {
 	&dummy_timecounter,
+	0,
 	0,
 	(uint64_t)-1 / 1000000,
 	0,
@@ -117,12 +118,11 @@ static struct timecounter *timecounters = &dummy_timecounter;
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
 
-int64_t adjtimedelta;		/* unapplied time correction (microseconds) */
-
 struct bintime naptime;
 static int timestepwarnings;
 
-void tc_windup(struct bintime *, struct bintime *);
+void ntp_update_second(struct timehands *);
+void tc_windup(struct bintime *, struct bintime *, int64_t *);
 
 /*
  * Return the difference between the timehands' counter value now and what
@@ -349,12 +349,16 @@ tc_getfrequency(void)
 /*
  * Step our concept of UTC, aka the realtime clock.
  * This is done by modifying our estimate of when we booted.
+ *
+ * Any ongoing adjustment is meaningless after a clock jump,
+ * so we zero adjtimedelta here as well.
  */
 void
 tc_setrealtimeclock(const struct timespec *ts)
 {
 	struct timespec ts2;
 	struct bintime bt, bt2;
+	int64_t zero = 0;
 
 	mtx_enter(&windup_mtx);
 	binuptime(&bt2);
@@ -363,7 +367,7 @@ tc_setrealtimeclock(const struct timespec *ts)
 	bintime_add(&bt2, &timehands->th_boottime);
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup(&bt, NULL);
+	tc_windup(&bt, NULL, &zero);
 	mtx_leave(&windup_mtx);
 
 	enqueue_randomness(ts->tv_sec);
@@ -422,7 +426,7 @@ tc_setclock(const struct timespec *ts)
 	bt2 = timehands->th_offset;
 
 	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup(NULL, &bt);
+	tc_windup(NULL, &bt, NULL);
 	mtx_leave(&windup_mtx);
 
 #ifndef SMALL_KERNEL
@@ -445,7 +449,8 @@ tc_setclock(const struct timespec *ts)
  * timecounter and/or do seconds processing in NTP.  Slightly magic.
  */
 void
-tc_windup(struct bintime *new_boottime, struct bintime *new_offset)
+tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
+    int64_t *new_adjtimedelta)
 {
 	struct bintime bt;
 	struct timecounter *active_tc;
@@ -505,16 +510,13 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset)
 #endif
 
 	/*
-	 * If changing the boot time, do so before NTP processing.
+	 * If changing the boot time or clock adjustment, do so before
+	 * NTP processing.
 	 */
-	if (new_boottime != NULL) {
-		/*
-		 * Adjtime in progress is meaningless or harmful after
-		 * setting the clock. Cancel adjtime and then set new time.
-		 */
-		adjtimedelta = 0;
+	if (new_boottime != NULL)
 		th->th_boottime = *new_boottime;
-	}
+	if (new_adjtimedelta != NULL)
+		th->th_adjtimedelta = *new_adjtimedelta;
 
 	/*
 	 * Deal with NTP second processing.  The for loop normally
@@ -531,7 +533,7 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset)
 	if (i > LARGE_STEP)
 		i = 2;
 	for (; i > 0; i--)
-		ntp_update_second(&th->th_adjustment);
+		ntp_update_second(th);
 
 	/* Update the UTC timestamps used by the get*() functions. */
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
@@ -659,7 +661,7 @@ tc_ticktock(void)
 	if (!mtx_enter_try(&windup_mtx))
 		return;
 	count = 0;
-	tc_windup(NULL, NULL);
+	tc_windup(NULL, NULL, NULL);
 	mtx_leave(&windup_mtx);
 }
 
@@ -718,19 +720,23 @@ sysctl_tc(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* NOTREACHED */
 }
 
+/*
+ * Skew the timehands according to any adjfreq(2)/adjtime(2) adjustments.
+ */
 void
-ntp_update_second(int64_t *adjust)
+ntp_update_second(struct timehands *th)
 {
 	int64_t adj;
 
-	/* Skew time according to any adjtime(2) adjustments. */
-	if (adjtimedelta > 0)
-		adj = MIN(5000, adjtimedelta);
+	MUTEX_ASSERT_LOCKED(&windup_mtx);
+
+	if (th->th_adjtimedelta > 0)
+		adj = MIN(5000, th->th_adjtimedelta);
 	else
-		adj = MAX(-5000, adjtimedelta);
-	adjtimedelta -= adj;
-	*adjust = (adj * 1000) << 32;
-	*adjust += timecounter->tc_freq_adj;
+		adj = MAX(-5000, th->th_adjtimedelta);
+	th->th_adjtimedelta -= adj;
+	th->th_adjustment = (adj * 1000) << 32;
+	th->th_adjustment += th->th_counter->tc_freq_adj;
 }
 
 int
@@ -748,8 +754,21 @@ tc_adjfreq(int64_t *old, int64_t *new)
 void
 tc_adjtime(int64_t *old, int64_t *new)
 {
-	if (old != NULL)
-		*old = adjtimedelta;
-	if (new != NULL)
-		adjtimedelta = *new;
+	struct timehands *th;
+	u_int gen;
+
+	if (old != NULL) {
+		do {
+			th = timehands;
+			gen = th->th_generation;
+			membar_consumer();
+			*old = th->th_adjtimedelta;
+			membar_consumer();
+		} while (gen == 0 || gen != th->th_generation);
+	}
+	if (new != NULL) {
+		mtx_enter(&windup_mtx);
+		tc_windup(NULL, NULL, new);
+		mtx_leave(&windup_mtx);
+	}
 }
