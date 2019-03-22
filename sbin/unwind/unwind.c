@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.18 2019/03/02 16:11:10 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.19 2019/03/22 10:42:26 jca Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -882,7 +882,8 @@ open_dhcp_lease(int if_idx)
 	log_debug("lease file name: %s", lease_filename);
 
 	if ((fd = open(lease_filename, O_RDONLY)) == -1) {
-		log_warn(NULL);
+		if (errno != ENOENT)
+			log_warn("cannot open lease file %s", lease_filename);
 		return;
 	}
 
