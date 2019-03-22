@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.309 2019/01/29 02:43:05 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.310 2019/03/22 12:07:00 sthen Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -247,7 +247,7 @@ udsbr*	at uhub?		# D-Link DSB-R100 radio
 radio*	at udsbr?		# USB radio
 ugen*	at uhub?		# USB Generic driver
 udcf*	at uhub?		# Gude Expert mouseCLOCK
-umbg*	at uhub?		# Meinberg Funkuhren USB5131
+umbg*	at uhub?		# Meinberg Funkuhren USB5131/DCF600USB
 uthum*	at uhidev?		# TEMPerHUM sensor
 ugold*	at uhidev?		# gold TEMPer sensor
 utwitch* at uhidev?		# UYUREX BBU sensor
