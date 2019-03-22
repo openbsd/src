@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.466 2019/01/19 03:24:18 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.467 2019/03/22 12:05:45 sthen Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -306,6 +306,7 @@ urtw*	at uhub?		# Realtek 8187
 rsu*	at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*	at uhub?		# Realtek RTL8188CU/RTL8192CU
 udcf*	at uhub?		# Gude Expert mouseCLOCK
+umbg*	at uhub?		# Meinberg Funkuhren USB5131/DCF600USB
 umb*	at uhub?		# Mobile Broadband Interface Model
 uthum*	at uhidev?		# TEMPerHUM sensor
 ugold*	at uhidev?		# gold TEMPer sensor
