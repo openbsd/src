@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.25 2017/12/30 20:47:00 guenther Exp $ */
+/*	$OpenBSD: umbg.c,v 1.26 2019/03/22 12:04:25 sthen Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -156,8 +156,9 @@ umbg_match(struct device *parent, void *match, void *aux)
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
-	return uaa->vendor == USB_VENDOR_MEINBERG &&
-	    uaa->product == USB_PRODUCT_MEINBERG_USB5131 ?
+	return uaa->vendor == USB_VENDOR_MEINBERG && (
+	    uaa->product == USB_PRODUCT_MEINBERG_USB5131 ||
+	    uaa->product == USB_PRODUCT_MEINBERG_DCF600USB) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -172,6 +173,7 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
 	int signal;
+	const char *desc;
 #ifdef UMBG_DEBUG
 	char fw_id[MBG_ID_LEN];
 #endif
@@ -182,7 +184,18 @@ umbg_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_timedelta.type = SENSOR_TIMEDELTA;
 	sc->sc_timedelta.status = SENSOR_S_UNKNOWN;
-	strlcpy(sc->sc_timedelta.desc, "USB5131",
+	
+	switch (uaa->product) {
+	case USB_PRODUCT_MEINBERG_DCF600USB:
+		desc = "DCF600USB";
+		break;
+	case USB_PRODUCT_MEINBERG_USB5131:
+		desc = "USB5131";
+		break;
+	default:
+		desc = "Unspecified Radio clock";
+	}
+	strlcpy(sc->sc_timedelta.desc, desc,
 	    sizeof(sc->sc_timedelta.desc));
 	sensor_attach(&sc->sc_sensordev, &sc->sc_timedelta);
 
