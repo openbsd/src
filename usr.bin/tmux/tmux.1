@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.629 2019/03/22 09:33:04 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.630 2019/03/22 10:45:17 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -3899,7 +3899,7 @@ and
 A style may be the single term
 .Ql default
 to specify the default style (which may inherit from another option) or a space
-separated list of the following:
+or comma separated list of the following:
 .Bl -tag -width Ds
 .It Ic fg=colour
 Set the foreground colour.
@@ -4000,7 +4000,7 @@ is a window index.
 .Pp
 Examples are:
 .Bd -literal -offset indent
-fg=yellow,bold,underscore,blink
+fg=yellow bold underscore blink
 bg=black,fg=default,noreverse
 .Ed
 .Sh NAMES AND TITLES
