@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.695 2019/02/24 17:35:29 patrick Exp $
+$OpenBSD: usbdevs,v 1.696 2019/03/22 12:02:38 sthen Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2924,6 +2924,7 @@ product MEI S2000		0x1101	Series 2000
 
 /* Meinberg Funkuhren products */
 product MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
+product MEINBERG DCF600USB	0x0302	DCF600USB - Radio Clock
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
