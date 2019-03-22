@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.44 2019/03/22 15:33:30 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.45 2019/03/22 17:43:18 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -133,7 +133,7 @@ void	alc_dma_free(struct alc_softc *);
 int	alc_encap(struct alc_softc *, struct mbuf *);
 void	alc_osc_reset(struct alc_softc *);
 
-uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0 };
+uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
 
 const struct pci_matchid alc_devices[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1C },
@@ -2958,13 +2958,17 @@ alc_init(struct ifnet *ifp)
 	reg = (RXQ_CFG_RD_BURST_DEFAULT << RXQ_CFG_RD_BURST_SHIFT) &
 	    RXQ_CFG_RD_BURST_MASK;
 	reg |= RXQ_CFG_RSS_MODE_DIS;
-	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
-	    reg |= (RXQ_CFG_816X_IDT_TBL_SIZE_DEFAULT <<
-	    RXQ_CFG_816X_IDT_TBL_SIZE_SHIFT) &
-	    RXQ_CFG_816X_IDT_TBL_SIZE_MASK;
-	if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
-	    sc->sc_product != PCI_PRODUCT_ATTANSIC_L1D_1)
-	    reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
+		reg |= (RXQ_CFG_816X_IDT_TBL_SIZE_DEFAULT <<
+		    RXQ_CFG_816X_IDT_TBL_SIZE_SHIFT) &
+		    RXQ_CFG_816X_IDT_TBL_SIZE_MASK;
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	} else {
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
+		    sc->sc_product != PCI_PRODUCT_ATTANSIC_L1D_1)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	}
 	CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 
 	/* Configure DMA parameters. */
@@ -2984,17 +2988,16 @@ alc_init(struct ifnet *ifp)
 	    DMA_CFG_RD_DELAY_CNT_MASK;
 	reg |= (DMA_CFG_WR_DELAY_CNT_DEFAULT << DMA_CFG_WR_DELAY_CNT_SHIFT) &
 	    DMA_CFG_WR_DELAY_CNT_MASK;
-
 	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
 		switch (AR816X_REV(sc->alc_rev)) {
 		case AR816X_REV_A0:
 		case AR816X_REV_A1:
-			reg |= DMA_CFG_RD_CHNL_SEL_1;
+			reg |= DMA_CFG_RD_CHNL_SEL_2;
 			break;
 		case AR816X_REV_B0:
-			reg |= DMA_CFG_RD_CHNL_SEL_3;
-			break;
+			/* FALLTHROUGH */
 		default:
+			reg |= DMA_CFG_RD_CHNL_SEL_4;
 			break;
 		}
 	}
