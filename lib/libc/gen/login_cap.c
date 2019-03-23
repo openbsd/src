@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.35 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.36 2019/03/23 17:03:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -80,20 +80,14 @@ static	int gsetrl(login_cap_t *, int, char *, int);
 login_cap_t *
 login_getclass(char *class)
 {
-	char *classfiles[2] = {NULL, NULL};
+	char *classfiles[2] = {_PATH_LOGIN_CONF, NULL};
 	login_cap_t *lc;
 	int res;
 
-	if (secure_path(_PATH_LOGIN_CONF) == 0)
-		classfiles[0] = _PATH_LOGIN_CONF;
-
-	if ((lc = malloc(sizeof(login_cap_t))) == NULL) {
+	if ((lc = calloc(1, sizeof(login_cap_t))) == NULL) {
 		syslog(LOG_ERR, "%s:%d malloc: %m", __FILE__, __LINE__);
 		return (0);
 	}
-
-	lc->lc_cap = 0;
-	lc->lc_style = 0;
 
 	if (class == NULL || class[0] == '\0')
 		class = LOGIN_DEFCLASS;
@@ -103,14 +97,6 @@ login_getclass(char *class)
 		free(lc);
 		return (0);
 	}
-
-	/*
-	 * Not having a login.conf file is not an error condition.
-	 * The individual routines deal reasonably with missing
-	 * capabilities and use default values.
-	 */
-	if (classfiles[0] == NULL)
-		return(lc);
 
 	if ((res = cgetent(&lc->lc_cap, classfiles, lc->lc_class)) != 0) {
 		lc->lc_cap = 0;
@@ -128,8 +114,15 @@ login_getclass(char *class)
 			syslog(LOG_ERR, "%s: unknown class", lc->lc_class);
 			break;
 		case -2:
+			/*
+			 * A missing login.conf file is not an error condition.
+			 * The individual routines deal reasonably with missing
+			 * capabilities and use default values.
+			 */
+			if (errno == ENOENT)
+				return (lc);
 			syslog(LOG_ERR, "%s: getting class information: %m",
-				lc->lc_class);
+			    lc->lc_class);
 			break;
 		case -3:
 			syslog(LOG_ERR, "%s: 'tc' reference loop",

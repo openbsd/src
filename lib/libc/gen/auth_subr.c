@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.51 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.52 2019/03/23 17:03:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <millert@openbsd.org>
@@ -847,12 +847,6 @@ auth_call(auth_session_t *as, char *path, ...)
 	}
 
 	argv[argc] = NULL;
-
-	if (secure_path(path) < 0) {
-		syslog(LOG_ERR, "%s: path not secure", path);
-		warnx("invalid script: %s", path);
-		goto fail;
-	}
 
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, pfd) < 0) {
 		syslog(LOG_ERR, "unable to create backchannel %m");
