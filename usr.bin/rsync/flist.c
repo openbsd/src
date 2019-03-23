@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.21 2019/03/23 16:04:28 deraadt Exp $ */
+/*	$Id: flist.c,v 1.22 2019/03/23 23:22:57 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -595,6 +595,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 	char		 last[MAXPATHLEN];
 	uint64_t	 lval; /* temporary values... */
 	int32_t		 ival;
+	uint32_t	 uival;
 	struct ident	*gids = NULL, *uids = NULL;
 
 	last[0] = '\0';
@@ -632,11 +633,11 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		/* Read the modification time. */
 
 		if (!(FLIST_TIME_SAME & flag)) {
-			if (!io_read_int(sess, fd, &ival)) {
+			if (!io_read_int(sess, fd, &uival)) {
 				ERRX1(sess, "io_read_int");
 				goto out;
 			}
-			ff->st.mtime = ival;
+			ff->st.mtime = uival;	/* beyond 2038 */
 		} else if (fflast == NULL) {
 			ERRX(sess, "same time without last entry");
 			goto out;
