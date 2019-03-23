@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.15 2017/08/11 20:13:31 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.16 2019/03/23 15:29:55 visa Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -61,7 +61,7 @@
 	".section "#sect",\"ax\",@progbits	\n"	\
 	".align 2				\n"	\
 	".globl "#entry_pt"			\n"	\
-	".type "#entry_pt"@function		\n"	\
+	".type "#entry_pt",@function		\n"	\
 	".ent "#entry_pt"			\n"	\
 	#entry_pt":				\n"	\
 	MD_FUNCTION_PROLOGUE(entry_pt)			\
