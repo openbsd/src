@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.64 2018/12/05 10:28:21 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.65 2019/03/23 05:27:53 visa Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -408,6 +408,18 @@ ppc_intr_disable(void)
 	dmsr = emsr & ~PSL_EE;
 	ppc_mtmsr(dmsr);
 	return (emsr & PSL_EE);
+}
+
+static __inline u_long
+intr_disable(void)
+{
+	return ppc_intr_disable();
+}
+
+static __inline void
+intr_restore(u_long s)
+{
+	ppc_intr_enable(s);
 }
 
 int ppc_cpuspeed(int *);
