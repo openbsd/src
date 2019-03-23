@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.67 2019/02/25 04:50:25 visa Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.68 2019/03/23 05:30:16 visa Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -367,6 +367,58 @@ __mtx_leave(struct mutex *mtx)
 	if (mtx->mtx_wantipl != IPL_NONE)
 		splx(s);
 }
+
+#ifdef DDB
+void
+db_mtx_enter(struct db_mutex *mtx)
+{
+	struct cpu_info *ci = curcpu(), *owner;
+	unsigned long s;
+
+#ifdef DIAGNOSTIC
+	if (__predict_false(mtx->mtx_owner == ci))
+		panic("%s: mtx %p: locking against myself", __func__, mtx);
+#endif
+
+	s = intr_disable();
+
+	for (;;) {
+		owner = atomic_cas_ptr(&mtx->mtx_owner, NULL, ci);
+		if (owner == NULL)
+			break;
+		CPU_BUSY_CYCLE();
+	}
+	membar_enter_after_atomic();
+
+	mtx->mtx_intr_state = s;
+
+#ifdef DIAGNOSTIC
+	ci->ci_mutex_level++;
+#endif
+}
+
+void
+db_mtx_leave(struct db_mutex *mtx)
+{
+#ifdef DIAGNOSTIC
+	struct cpu_info *ci = curcpu();
+#endif
+	unsigned long s;
+
+#ifdef DIAGNOSTIC
+	if (__predict_false(mtx->mtx_owner != ci))
+		panic("%s: mtx %p: not owned by this CPU", __func__, mtx);
+	ci->ci_mutex_level--;
+#endif
+
+	s = mtx->mtx_intr_state;
+#ifdef MULTIPROCESSOR
+	membar_exit();
+#endif
+	mtx->mtx_owner = NULL;
+	intr_restore(s);
+}
+#endif /* DDB */
 #endif /* __USE_MI_MUTEX */
 
 #ifdef WITNESS
