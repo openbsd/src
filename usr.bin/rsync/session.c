@@ -1,4 +1,4 @@
-/*	$Id: session.c,v 1.4 2019/02/11 21:41:22 deraadt Exp $ */
+/*	$Id: session.c,v 1.5 2019/03/23 16:04:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -86,12 +86,10 @@ stats_log(struct sess *sess,
 		ts = tsize;
 
 	LOG1(sess, "Transfer complete: "
-		"%.*lf %s sent, "
-		"%.*lf %s read, "
-		"%.*lf %s file size",
-		trsz, tr, tru,
-		twsz, tw, twu,
-		tssz, ts, tsu);
+	    "%.*lf %s sent, %.*lf %s read, %.*lf %s file size",
+	    trsz, tr, tru,
+	    twsz, tw, twu,
+	    tssz, ts, tsu);
 }
 
 /*

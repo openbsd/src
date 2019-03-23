@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.17 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: downloader.c,v 1.18 2019/03/23 16:04:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,7 +103,7 @@ log_file(struct sess *sess,
 	}
 
 	LOG1(sess, "%s (%.*f %s, %.1f%% downloaded)",
-		f->path, prec, tot, unit, frac);
+	    f->path, prec, tot, unit, frac);
 }
 
 /*
@@ -489,9 +489,9 @@ again:
 	} else if (rawtok < 0) {
 		tok = -rawtok - 1;
 		if (tok >= p->blk.blksz) {
-			ERRX(sess, "%s: token not in block "
-				"set: %zu (have %zu blocks)",
-				p->fname, tok, p->blk.blksz);
+			ERRX(sess,
+			    "%s: token not in block set: %zu (have %zu blocks)",
+			    p->fname, tok, p->blk.blksz);
 			goto out;
 		}
 		sz = tok == p->blk.blksz - 1 ? p->blk.rem : p->blk.len;

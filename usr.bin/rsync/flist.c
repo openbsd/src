@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.20 2019/03/18 15:33:21 deraadt Exp $ */
+/*	$Id: flist.c,v 1.21 2019/03/23 16:04:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -467,8 +467,7 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	/* FIXME: maximum pathname length. */
 
 	if ((len = pathlen + partial) == 0) {
-		ERRX(sess, "security violation: "
-			"zero-length pathname");
+		ERRX(sess, "security violation: zero-length pathname");
 		return 0;
 	}
 
@@ -487,8 +486,8 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	}
 
 	if (f->path[0] == '/') {
-		ERRX(sess, "security violation: "
-			"absolute pathname: %s", f->path);
+		ERRX(sess, "security violation: absolute pathname: %s",
+		    f->path);
 		return 0;
 	}
 
@@ -496,8 +495,8 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	    (len > 2 && strcmp(f->path + len - 3, "/..") == 0) ||
 	    (len > 2 && strncmp(f->path, "../", 3) == 0) ||
 	    strcmp(f->path, "..") == 0) {
-		ERRX(sess, "%s: security violation: "
-			"backtracking pathname", f->path);
+		ERRX(sess, "%s: security violation: backtracking pathname",
+		    f->path);
 		return 0;
 	}
 
@@ -668,8 +667,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 				}
 				ff->st.uid = ival;
 			} else if (fflast == NULL) {
-				ERRX(sess, "same uid "
-					"without last entry");
+				ERRX(sess, "same uid without last entry");
 				goto out;
 			} else
 				ff->st.uid = fflast->st.uid;
@@ -685,8 +683,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 				}
 				ff->st.gid = ival;
 			} else if (fflast == NULL) {
-				ERRX(sess, "same gid "
-					"without last entry");
+				ERRX(sess, "same gid without last entry");
 				goto out;
 			} else
 				ff->st.gid = fflast->st.gid;
@@ -909,8 +906,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		assert(ent->fts_statp != NULL);
 		if (S_ISLNK(ent->fts_statp->st_mode) &&
 		    !sess->opts->preserve_links) {
-			WARNX(sess, "%s: skipping "
-				"symlink", ent->fts_path);
+			WARNX(sess, "%s: skipping symlink", ent->fts_path);
 			continue;
 		}
 
@@ -1040,8 +1036,7 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 			continue;
 		} else if (S_ISLNK(st.st_mode)) {
 			if (!sess->opts->preserve_links) {
-				WARNX(sess, "%s: skipping "
-					"symlink", argv[i]);
+				WARNX(sess, "%s: skipping symlink", argv[i]);
 				continue;
 			}
 		} else if (!S_ISREG(st.st_mode)) {

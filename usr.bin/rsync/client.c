@@ -1,4 +1,4 @@
-/*	$Id: client.c,v 1.13 2019/03/23 00:20:55 deraadt Exp $ */
+/*	$Id: client.c,v 1.14 2019/03/23 16:04:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -68,9 +68,8 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 		goto out;
 	}
 
-	LOG2(&sess, "client detected client version %" PRId32
-		", server version %" PRId32 ", seed %" PRId32,
-		sess.lver, sess.rver, sess.seed);
+	LOG2(&sess, "client detected client version %d, server version %d, seed %d",
+	    sess.lver, sess.rver, sess.seed);
 
 	sess.mplex_reads = 1;
 

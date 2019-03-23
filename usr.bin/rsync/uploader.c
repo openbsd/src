@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.18 2019/03/18 15:33:21 deraadt Exp $ */
+/*	$Id: uploader.c,v 1.19 2019/03/23 16:04:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -223,8 +223,7 @@ pre_link(struct upload *p, struct sess *sess)
 		if (strcmp(f->link, b)) {
 			free(b);
 			b = NULL;
-			LOG3(sess, "%s: updating "
-				"symlink: %s", f->path, f->link);
+			LOG3(sess, "%s: updating symlink: %s", f->path, f->link);
 			updatelink = 1;
 		}
 		free(b);
@@ -237,8 +236,7 @@ pre_link(struct upload *p, struct sess *sess)
 	 */
 
 	if (rc == -1 || updatelink) {
-		LOG3(sess, "%s: creating "
-			"symlink: %s", f->path, f->link);
+		LOG3(sess, "%s: creating symlink: %s", f->path, f->link);
 		if (mktemplate(sess, &temp,
 		    f->path, sess->opts->recursive) == -1) {
 			ERRX1(sess, "mktemplate");
@@ -948,8 +946,8 @@ rsync_uploader(struct upload *u, int *fileinfd,
 		close(*fileinfd);
 		*fileinfd = -1;
 		LOG3(sess, "%s: mapped %jd B with %zu blocks",
-			u->fl[u->idx].path, (intmax_t)blk.size,
-			blk.blksz);
+		    u->fl[u->idx].path, (intmax_t)blk.size,
+		    blk.blksz);
 	} else {
 		if (*fileinfd != -1) {
 			close(*fileinfd);

@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.13 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: blocks.c,v 1.14 2019/03/23 16:04:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -69,11 +69,11 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 		have_md = 1;
 		if (memcmp(md, blks->blks[hint].chksum_long, blks->csum) == 0) {
 			LOG4(sess, "%s: found matching hinted match: "
-				"position %jd, block %zu "
-				"(position %jd, size %zu)", path,
-				(intmax_t)offs, blks->blks[hint].idx,
-				(intmax_t)blks->blks[hint].offs,
-				blks->blks[hint].len);
+			    "position %jd, block %zu (position %jd, size %zu)",
+			    path,
+			    (intmax_t)offs, blks->blks[hint].idx,
+			    (intmax_t)blks->blks[hint].offs,
+			    blks->blks[hint].len);
 			return &blks->blks[hint];
 		}
 	}
@@ -90,11 +90,11 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 			continue;
 
 		LOG4(sess, "%s: found matching fast match: "
-			"position %jd, block %zu "
-			"(position %jd, size %zu)", path,
-			(intmax_t)offs, blks->blks[i].idx,
-			(intmax_t)blks->blks[i].offs,
-			blks->blks[i].len);
+		    "position %jd, block %zu (position %jd, size %zu)",
+		    path,
+		    (intmax_t)offs, blks->blks[i].idx,
+		    (intmax_t)blks->blks[i].offs,
+		    blks->blks[i].len);
 
 		/* Compute slow hash on demand. */
 
@@ -155,9 +155,10 @@ blk_match(struct sess *sess, const struct blkset *blks,
 			sz = st->offs - last;
 			st->dirty += sz;
 			st->total += sz;
-			LOG4(sess, "%s: flushing %jd B before %zu B "
-				"block %zu", path, (intmax_t)sz,
-				blk->len, blk->idx);
+			LOG4(sess,
+			    "%s: flushing %jd B before %zu B block %zu",
+			    path, (intmax_t)sz,
+			    blk->len, blk->idx);
 			tok = -(blk->idx + 1);
 
 			/*
@@ -180,7 +181,7 @@ blk_match(struct sess *sess, const struct blkset *blks,
 
 		sz = st->mapsz - last;
 		LOG4(sess, "%s: flushing remaining %jd B",
-			path, (intmax_t)sz);
+		    path, (intmax_t)sz);
 
 		st->total += sz;
 		st->dirty += sz;
@@ -196,7 +197,7 @@ blk_match(struct sess *sess, const struct blkset *blks,
 		st->dirty = st->total = st->mapsz;
 
 		LOG4(sess, "%s: flushing whole file %zu B",
-			path, st->mapsz);
+		    path, st->mapsz);
 	}
 }
 
@@ -269,8 +270,8 @@ blk_recv(struct sess *sess, int fd, const char *path)
 	}
 
 	LOG3(sess, "%s: read block prologue: %zu blocks of "
-		"%zu B, %zu B remainder, %zu B checksum", path,
-		s->blksz, s->len, s->rem, s->csum);
+	    "%zu B, %zu B remainder, %zu B checksum", path,
+	    s->blksz, s->len, s->rem, s->csum);
 
 	if (s->blksz) {
 		s->blks = calloc(s->blksz, sizeof(struct blk));
@@ -311,13 +312,13 @@ blk_recv(struct sess *sess, int fd, const char *path)
 			s->rem : s->len;
 		offs += b->len;
 
-		LOG4(sess, "%s: read block %zu, "
-			"length %zu B", path, b->idx, b->len);
+		LOG4(sess, "%s: read block %zu, length %zu B",
+		    path, b->idx, b->len);
 	}
 
 	s->size = offs;
-	LOG3(sess, "%s: read blocks: %zu blocks, %jd B total "
-		"blocked data", path, s->blksz, (intmax_t)s->size);
+	LOG3(sess, "%s: read blocks: %zu blocks, %jd B total blocked data",
+	    path, s->blksz, (intmax_t)s->size);
 	return s;
 out:
 	free(s->blks);
@@ -415,8 +416,8 @@ blk_send(struct sess *sess, int fd, size_t idx,
 	}
 
 	LOG3(sess, "%s: sent block prologue: %zu blocks of %zu B, "
-		"%zu B remainder, %zu B checksum", path,
-		p->blksz, p->len, p->rem, p->csum);
+	    "%zu B remainder, %zu B checksum",
+	    path, p->blksz, p->len, p->rem, p->csum);
 	rc = 1;
 out:
 	free(buf);

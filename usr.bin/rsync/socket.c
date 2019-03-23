@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.20 2019/03/23 00:20:55 deraadt Exp $ */
+/*	$Id: socket.c,v 1.21 2019/03/23 16:04:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -402,10 +402,9 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	/* Now we've completed the handshake. */
 
 	if (sess.rver < sess.lver) {
-		ERRX(&sess, "remote protocol is older "
-			"than our own (%" PRId32 " < %" PRId32 "): "
-			"this is not supported",
-			sess.rver, sess.lver);
+		ERRX(&sess, "remote protocol is older than our own (%d < %d): "
+		    "this is not supported",
+		    sess.rver, sess.lver);
 		rc = 2;
 		goto out;
 	}
@@ -413,9 +412,8 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	sess.mplex_reads = 1;
 	LOG2(&sess, "read multiplexing enabled");
 
-	LOG2(&sess, "socket detected client version %" PRId32
-		", server version %" PRId32 ", seed %" PRId32,
-		sess.lver, sess.rver, sess.seed);
+	LOG2(&sess, "socket detected client version %d, server version %d, seed %d",
+	    sess.lver, sess.rver, sess.seed);
 
 	assert(f->mode == FARGS_RECEIVER);
 
