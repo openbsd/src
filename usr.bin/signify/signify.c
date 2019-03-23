@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.130 2019/01/17 05:40:10 tedu Exp $ */
+/* $OpenBSD: signify.c,v 1.131 2019/03/23 07:10:06 tedu Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -80,7 +80,7 @@ usage(const char *error)
 #ifndef VERIFYONLY
 	    "\t%1$s -C [-q] -p pubkey -x sigfile [file ...]\n"
 	    "\t%1$s -G [-n] [-c comment] -p pubkey -s seckey\n"
-	    "\t%1$s -S [-ez] [-x sigfile] -s seckey -m message\n"
+	    "\t%1$s -S [-enz] [-x sigfile] -s seckey -m message\n"
 #endif
 	    "\t%1$s -V [-eqz] [-p pubkey] [-t keytype] [-x sigfile] -m message\n",
 	    getprogname());
@@ -754,7 +754,8 @@ main(int argc, char **argv)
 	char sigfilebuf[PATH_MAX];
 	const char *comment = "signify";
 	char *keytype = NULL;
-	int ch, rounds;
+	int ch;
+	int none = 0;
 	int embedded = 0;
 	int quiet = 0;
 	int gzip = 0;
@@ -768,8 +769,6 @@ main(int argc, char **argv)
 
 	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
 		err(1, "pledge");
-
-	rounds = 42;
 
 	while ((ch = getopt(argc, argv, "CGSVzc:em:np:qs:t:x:")) != -1) {
 		switch (ch) {
@@ -808,7 +807,7 @@ main(int argc, char **argv)
 			msgfile = optarg;
 			break;
 		case 'n':
-			rounds = 0;
+			none = 1;
 			break;
 		case 'p':
 			pubkeyfile = optarg;
@@ -871,14 +870,14 @@ main(int argc, char **argv)
 		if (!pubkeyfile || !seckeyfile)
 			usage("must specify pubkey and seckey");
 		check_keyname_compliance(pubkeyfile, seckeyfile);
-		generate(pubkeyfile, seckeyfile, rounds, comment);
+		generate(pubkeyfile, seckeyfile, none ? 0 : 42, comment);
 		break;
 	case SIGN:
 		/* no pledge */
 		if (gzip) {
 			if (!msgfile || !seckeyfile || !sigfile)
 				usage("must specify message sigfile seckey");
-			zsign(seckeyfile, msgfile, sigfile);
+			zsign(seckeyfile, msgfile, sigfile, none);
 		} else {
 			if (!msgfile || !seckeyfile)
 				usage("must specify message and seckey");

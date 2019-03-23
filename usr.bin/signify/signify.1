@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.45 2019/02/26 22:24:41 deraadt Exp $
+.\" $OpenBSD: signify.1,v 1.46 2019/03/23 07:10:06 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: February 26 2019 $
+.Dd $Mdocdate: March 23 2019 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Fl s Ar seckey
 .Nm signify
 .Fl S
-.Op Fl ez
+.Op Fl enz
 .Op Fl x Ar sigfile
 .Fl s Ar seckey
 .Fl m Ar message
@@ -91,10 +91,15 @@ When verifying with
 .Fl e ,
 the file to create.
 .It Fl n
-Do not ask for a passphrase during key generation.
+When generating a key pair, do not ask for a passphrase.
 Otherwise,
 .Nm
 will prompt the user for a passphrase to protect the secret key.
+When signing with
+.Fl z ,
+store a zero time stamp in the
+.Xr gzip 1
+header.
 .It Fl p Ar pubkey
 Public key produced by
 .Fl G ,

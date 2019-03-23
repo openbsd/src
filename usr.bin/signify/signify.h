@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.h,v 1.1 2016/09/02 16:10:56 espie Exp $ */
+/* $OpenBSD: signify.h,v 1.2 2019/03/23 07:10:06 tedu Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -19,7 +19,7 @@
 #ifndef signify_h
 #define signify_h
 extern void zverify(const char *, const char *, const char *, const char *);
-extern void zsign(const char *, const char *, const char *);
+extern void zsign(const char *, const char *, const char *, int);
 
 extern void *xmalloc(size_t);
 extern void writeall(int, const void *, size_t, const char *);
