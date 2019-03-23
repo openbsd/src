@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.466 2019/03/13 14:35:39 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.467 2019/03/23 13:09:56 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2899,7 +2899,7 @@ rde_reload_done(void)
 	roa_old = conf->rde_roa;
 	as_sets_old = conf->as_sets;
 
-	copy_config(conf, nconf);
+	memcpy(conf, nconf, sizeof(struct bgpd_config));
 	SIMPLEQ_INIT(&conf->rde_prefixsets);
 	SIMPLEQ_INIT(&conf->rde_originsets);
 	SIMPLEQ_CONCAT(&conf->rde_prefixsets, &nconf->rde_prefixsets);
