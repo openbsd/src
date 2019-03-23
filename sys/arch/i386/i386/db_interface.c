@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.40 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.41 2019/03/23 05:47:22 visa Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -127,10 +127,10 @@ db_ktrap(int type, int code, db_regs_t *regs)
 	}
 
 #ifdef MULTIPROCESSOR
-	mtx_enter(&ddb_mp_mutex);
+	db_mtx_enter(&ddb_mp_mutex);
 	if (ddb_state == DDB_STATE_EXITING)
 		ddb_state = DDB_STATE_NOT_RUNNING;
-	mtx_leave(&ddb_mp_mutex);
+	db_mtx_leave(&ddb_mp_mutex);
 	while (db_enter_ddb()) {
 #endif /* MULTIPROCESSOR */
 

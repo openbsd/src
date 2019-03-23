@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_mp.c,v 1.10 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: db_mp.c,v 1.11 2019/03/23 05:47:22 visa Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Andreas Gunnarsson <andreas@openbsd.org>
@@ -23,8 +23,7 @@
 
 #include <ddb/db_output.h>
 
-struct mutex ddb_mp_mutex =
-    MUTEX_INITIALIZER_FLAGS(IPL_HIGH, "ddb_mp_mutex", MTX_NOWITNESS);
+struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
 
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;	/* protected by ddb_mp_mutex */
 volatile cpuid_t ddb_active_cpu;		/* protected by ddb_mp_mutex */
@@ -46,14 +45,14 @@ db_enter_ddb(void)
 {
 	int i;
 
-	mtx_enter(&ddb_mp_mutex);
+	db_mtx_enter(&ddb_mp_mutex);
 
 	/* If we are first in, grab ddb and stop all other CPUs */
 	if (ddb_state == DDB_STATE_NOT_RUNNING) {
 		ddb_active_cpu = cpu_number();
 		ddb_state = DDB_STATE_RUNNING;
 		curcpu()->ci_ddb_paused = CI_DDB_INDDB;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		for (i = 0; i < MAXCPUS; i++) {
 			if (cpu_info[i] != NULL && i != cpu_number() &&
 			    cpu_info[i]->ci_ddb_paused != CI_DDB_STOPPED) {
@@ -71,7 +70,7 @@ db_enter_ddb(void)
 				cpu_info[i]->ci_ddb_paused = CI_DDB_RUNNING;
 			}
 		}
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		return (0);
 	}
 
@@ -89,23 +88,23 @@ db_enter_ddb(void)
 	    curcpu()->ci_ddb_paused != CI_DDB_RUNNING) {
 		if (curcpu()->ci_ddb_paused == CI_DDB_SHOULDSTOP)
 			curcpu()->ci_ddb_paused = CI_DDB_STOPPED;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 
 		/* Busy wait without locking, we'll confirm with lock later */
 		while (ddb_active_cpu != cpu_number() &&
 		    curcpu()->ci_ddb_paused != CI_DDB_RUNNING)
 			;	/* Do nothing */
 
-		mtx_enter(&ddb_mp_mutex);
+		db_mtx_enter(&ddb_mp_mutex);
 	}
 
 	/* Either enter ddb or exit */
 	if (ddb_active_cpu == cpu_number() && ddb_state == DDB_STATE_RUNNING) {
 		curcpu()->ci_ddb_paused = CI_DDB_INDDB;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		return (1);
 	} else {
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		return (0);
 	}
 }
@@ -114,23 +113,23 @@ void
 db_startcpu(int cpu)
 {
 	if (cpu != cpu_number() && cpu_info[cpu] != NULL) {
-		mtx_enter(&ddb_mp_mutex);
+		db_mtx_enter(&ddb_mp_mutex);
 		cpu_info[cpu]->ci_ddb_paused = CI_DDB_RUNNING;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 	}
 }
 
 void
 db_stopcpu(int cpu)
 {
-	mtx_enter(&ddb_mp_mutex);
+	db_mtx_enter(&ddb_mp_mutex);
 	if (cpu != cpu_number() && cpu_info[cpu] != NULL &&
 	    cpu_info[cpu]->ci_ddb_paused != CI_DDB_STOPPED) {
 		cpu_info[cpu]->ci_ddb_paused = CI_DDB_SHOULDSTOP;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		i386_send_ipi(cpu_info[cpu], I386_IPI_DDB);
 	} else {
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 	}
 }
 

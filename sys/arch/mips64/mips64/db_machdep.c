@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.50 2018/06/13 14:38:42 visa Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.51 2019/03/23 05:47:23 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -69,7 +69,7 @@ void db_trap_trace_cmd(db_expr_t, int, db_expr_t, char *);
 void db_dump_tlb_cmd(db_expr_t, int, db_expr_t, char *);
 
 #ifdef MULTIPROCESSOR
-struct mutex ddb_mp_mutex = MUTEX_INITIALIZER(IPL_HIGH);
+struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
 volatile int ddb_state = DDB_STATE_NOT_RUNNING;
 volatile cpuid_t ddb_active_cpu;
 boolean_t        db_switch_cpu;
@@ -152,10 +152,10 @@ db_ktrap(int type, struct trapframe *fp)
 	}
 
 #ifdef MULTIPROCESSOR
-	mtx_enter(&ddb_mp_mutex);
+	db_mtx_enter(&ddb_mp_mutex);
 	if (ddb_state == DDB_STATE_EXITING)
 		ddb_state = DDB_STATE_NOT_RUNNING;
-	mtx_leave(&ddb_mp_mutex);
+	db_mtx_leave(&ddb_mp_mutex);
 
 	while (db_enter_ddb()) {
 #endif
@@ -182,7 +182,7 @@ db_enter_ddb(void)
 {
 	int i;
 	struct cpu_info *ci = curcpu();
-	mtx_enter(&ddb_mp_mutex);
+	db_mtx_enter(&ddb_mp_mutex);
 
 #ifdef DEBUG
 	printf("db_enter_ddb %lu: state %x pause %x\n", ci->ci_cpuid,
@@ -200,7 +200,7 @@ db_enter_ddb(void)
 				mips64_send_ipi(get_cpu_info(i)->ci_cpuid, MIPS64_IPI_DDB);
 			}
 		}
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		return (1);
 	}
 
@@ -209,7 +209,7 @@ db_enter_ddb(void)
 		for (i = 0; i < ncpus; i++) {
 			get_cpu_info(i)->ci_ddb = CI_DDB_RUNNING;
 		}
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		return (0);
 	}
 
@@ -227,21 +227,21 @@ db_enter_ddb(void)
 	    ci->ci_ddb != CI_DDB_RUNNING) {
 		if (ci->ci_ddb == CI_DDB_SHOULDSTOP)
 			ci->ci_ddb = CI_DDB_STOPPED;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		/* Busy wait without locking, we will confirm with lock later */
 		while (ddb_active_cpu != cpu_number() &&
 		    ci->ci_ddb != CI_DDB_RUNNING)
 			;	/* Do nothing */
-		mtx_enter(&ddb_mp_mutex);
+		db_mtx_enter(&ddb_mp_mutex);
 	}
 
 	/* Either enter ddb or exit */
 	if (ddb_active_cpu == cpu_number() && ddb_state == DDB_STATE_RUNNING) {
 		ci->ci_ddb = CI_DDB_INDDB;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		return (1);
 	} else {
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		return (0);
 	}
 }
@@ -604,23 +604,23 @@ void
 db_startcpu(int cpu)
 {
 	if (cpu != cpu_number() && cpu < ncpus) {
-		mtx_enter(&ddb_mp_mutex);
+		db_mtx_enter(&ddb_mp_mutex);
 		get_cpu_info(cpu)->ci_ddb = CI_DDB_RUNNING;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 	}
 }
 
 void
 db_stopcpu(int cpu)
 {
-	mtx_enter(&ddb_mp_mutex);
+	db_mtx_enter(&ddb_mp_mutex);
 	if (cpu != cpu_number() && cpu < ncpus &&
 	    get_cpu_info(cpu)->ci_ddb != CI_DDB_STOPPED) {
 		get_cpu_info(cpu)->ci_ddb = CI_DDB_SHOULDSTOP;
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 		mips64_send_ipi(cpu, MIPS64_IPI_DDB);
 	} else {
-		mtx_leave(&ddb_mp_mutex);
+		db_mtx_leave(&ddb_mp_mutex);
 	}
 }
 #endif

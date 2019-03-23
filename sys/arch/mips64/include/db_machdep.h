@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.17 2016/04/27 11:10:48 mpi Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.18 2019/03/23 05:47:23 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -69,8 +69,6 @@ void db_startcpu(int);
 void db_stopcpu(int);
 
 int	dbmd_print_insn(uint32_t, db_addr_t, int (*)(const char *, ...));
-
-extern struct mutex ddb_mp_mutex;
 
 #define DDB_STATE_NOT_RUNNING	0
 #define DDB_STATE_RUNNING	1
