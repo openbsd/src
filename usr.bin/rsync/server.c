@@ -1,4 +1,4 @@
-/*	$Id: server.c,v 1.8 2019/03/06 18:37:22 deraadt Exp $ */
+/*	$Id: server.c,v 1.9 2019/03/23 00:20:55 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,18 +45,15 @@ fcntl_nonblock(struct sess *sess, int fd)
  * The server (remote) side of the system.
  * This parses the arguments given it by the remote shell then moves
  * into receiver or sender mode depending upon those arguments.
- *
- * Pledges: unveil rpath, cpath, wpath, stdio, fattr.
- *
- * Pledges (dry-run): -cpath, -wpath, -fattr.
- * Pledges (!preserve_times): -fattr.
+ * Returns exit code 0 on success, 1 on failure, 2 on failure with
+ * incompatible protocols.
  */
 int
 rsync_server(const struct opts *opts, size_t argc, char *argv[])
 {
 	struct sess	 sess;
 	int		 fdin = STDIN_FILENO,
-			 fdout = STDOUT_FILENO, rc = 0;
+			 fdout = STDOUT_FILENO, rc = 1;
 
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil",
 	    NULL) == -1)
@@ -161,7 +158,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 		WARNX(&sess, "data remains in read pipe");
 #endif
 
-	rc = 1;
+	rc = 0;
 out:
 	return rc;
 }

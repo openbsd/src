@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.19 2019/03/06 18:37:22 deraadt Exp $ */
+/*	$Id: socket.c,v 1.20 2019/03/23 00:20:55 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -232,10 +232,9 @@ protocol_line(struct sess *sess, const char *host, const char *cp)
 }
 
 /*
- * Pledges: dns, inet, unix, unveil, rpath, cpath, wpath, stdio, fattr, chown.
- *
- * Pledges (dry-run): -unix, -cpath, -wpath, -fattr, -chown.
- * Pledges (!preserve_times): -fattr.
+ * Talk to a remote rsync://-enabled server sender.
+ * Returns exit code 0 on success, 1 on failure, 2 on failure with
+ * incompatible protocols.
  */
 int
 rsync_socket(const struct opts *opts, const struct fargs *f)
@@ -243,7 +242,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 	struct sess	  sess;
 	struct source	 *src = NULL;
 	size_t		  i, srcsz = 0;
-	int		  sd = -1, rc = 0;
+	int		  sd = -1, rc = 1, c;
 	char		**args, buf[BUFSIZ];
 	uint8_t		  byte;
 
@@ -286,11 +285,11 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 
 	assert(srcsz);
 	for (i = 0; i < srcsz; i++) {
-		rc = inet_connect(&sess, &sd, &src[i], f->host);
-		if (rc < 0) {
+		c = inet_connect(&sess, &sd, &src[i], f->host);
+		if (c < 0) {
 			ERRX1(&sess, "inet_connect");
 			goto out;
-		} else if (rc > 0)
+		} else if (c > 0)
 			break;
 	}
 
@@ -357,10 +356,10 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 		if (buf[i - 1] == '\r')
 			buf[i - 1] = '\0';
 
-		if ((rc = protocol_line(&sess, f->host, buf)) < 0) {
+		if ((c = protocol_line(&sess, f->host, buf)) < 0) {
 			ERRX1(&sess, "protocol_line");
 			goto out;
-		} else if (rc > 0)
+		} else if (c > 0)
 			break;
 	}
 
@@ -407,6 +406,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 			"than our own (%" PRId32 " < %" PRId32 "): "
 			"this is not supported",
 			sess.rver, sess.lver);
+		rc = 2;
 		goto out;
 	}
 
@@ -431,7 +431,7 @@ rsync_socket(const struct opts *opts, const struct fargs *f)
 		WARNX(&sess, "data remains in read pipe");
 #endif
 
-	rc = 1;
+	rc = 0;
 out:
 	free(src);
 	free(args);

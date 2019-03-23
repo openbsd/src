@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.33 2019/03/18 08:11:11 jmc Exp $ */
+/*	$Id: main.c,v 1.34 2019/03/23 00:20:55 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -273,7 +273,7 @@ main(int argc, char *argv[])
 {
 	struct opts	 opts;
 	pid_t		 child;
-	int		 fds[2], rc = 0, c, st, i;
+	int		 fds[2], rc, c, st, i;
 	struct sess	  sess;
 	struct fargs	*fargs;
 	char		**args;
@@ -478,13 +478,23 @@ main(int argc, char *argv[])
 	 * So close the connection here so that they don't hang.
 	 */
 
-	if (!rc)
+	if (rc)
 		close(fds[0]);
 
 	if (waitpid(child, &st, 0) == -1)
 		err(1, "waitpid");
-	if (!(WIFEXITED(st) && WEXITSTATUS(st) == 0))
-		rc = 0;
+
+	/*
+	 * If we don't already have an error (rc == 0), then inherit the
+	 * error code of rsync_server() if it has exited.
+	 * If it hasn't exited, it overrides our return value.
+	 */
+
+	if (WIFEXITED(st) && rc == 0)
+		rc = WEXITSTATUS(st);
+	else if (!WIFEXITED(st))
+		rc = 1;
+
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s [-aDglnoprtv] [-e program] [--archive] [--delete] [--devices]\n"
