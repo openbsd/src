@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.45 2018/07/23 18:14:32 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.46 2019/03/23 18:48:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -578,6 +578,8 @@ BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	BN_ULONG l;
 	BIGNUM *bn = NULL;
 
+	if (len < 0)
+		return (NULL);
 	if (ret == NULL)
 		ret = bn = BN_new();
 	if (ret == NULL)
