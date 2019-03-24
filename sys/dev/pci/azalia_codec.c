@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.172 2017/03/28 04:54:44 ratchov Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.173 2019/03/24 14:37:44 jcs Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -152,6 +152,12 @@ azalia_codec_init_vtbl(codec_t *this)
 		    this->subid == 0x503617aa ||
 		    this->subid == 0x503c17aa)
 			this->qrks |= AZ_QRK_WID_TPDOCK2;
+		break;
+	case 0x10ec0298:
+		this->name = "Realtek ALC298";
+		if (this->subid == 0x320019e5 ||
+		    this->subid == 0x320119e5)		/* Huawei Matebook X */
+			this->qrks |= AZ_QRK_WID_DOLBY_ATMOS;
 		break;
 	case 0x10ec0660:
 		this->name = "Realtek ALC660";
@@ -2593,4 +2599,80 @@ azalia_codec_widget_quirks(codec_t *this, nid_t nid)
 	}
 
 	return(0);
+}
+
+/* Magic init sequence to make the right speaker work (reverse-engineered) */
+void
+azalia_codec_init_dolby_atmos(codec_t *this)
+{
+	static uint16_t atmos_init[] = {
+		0x06, 0x73e, 0x00, 0x06, 0x73e, 0x80,
+		0x20, 0x500, 0x26, 0x20, 0x4f0, 0x00,
+		0x20, 0x500, 0x22, 0x20, 0x400, 0x31,
+		0x20, 0x500, 0x23, 0x20, 0x400, 0x0b,
+		0x20, 0x500, 0x25, 0x20, 0x400, 0x00,
+		0x20, 0x500, 0x26, 0x20, 0x4b0, 0x10,
+	};
+	static struct {
+		unsigned char v23;
+		unsigned char v25;
+	} atmos_v23_v25[] = {
+		{ 0x0c, 0x00 }, { 0x0d, 0x00 }, { 0x0e, 0x00 }, { 0x0f, 0x00 },
+		{ 0x10, 0x00 }, { 0x1a, 0x40 }, { 0x1b, 0x82 }, { 0x1c, 0x00 },
+		{ 0x1d, 0x00 }, { 0x1e, 0x00 }, { 0x1f, 0x00 }, { 0x20, 0xc2 },
+		{ 0x21, 0xc8 }, { 0x22, 0x26 }, { 0x23, 0x24 }, { 0x27, 0xff },
+		{ 0x28, 0xff }, { 0x29, 0xff }, { 0x2a, 0x8f }, { 0x2b, 0x02 },
+		{ 0x2c, 0x48 }, { 0x2d, 0x34 }, { 0x2e, 0x00 }, { 0x2f, 0x00 },
+		{ 0x30, 0x00 }, { 0x31, 0x00 }, { 0x32, 0x00 }, { 0x33, 0x00 },
+		{ 0x34, 0x00 }, { 0x35, 0x01 }, { 0x36, 0x93 }, { 0x37, 0x0c },
+		{ 0x38, 0x00 }, { 0x39, 0x00 }, { 0x3a, 0xf8 }, { 0x38, 0x80 },
+	};
+	int i;
+
+	for (i = 0; i < nitems(atmos_init) / 3; i++) {
+		if (azalia_comresp(this, atmos_init[i * 3],
+		    atmos_init[(i * 3) + 1], atmos_init[(i * 3) + 2], NULL))
+			return;
+	}
+
+	for (i = 0; i < nitems(atmos_v23_v25); i++) {
+		if (azalia_comresp(this, 0x06, 0x73e, 0x00, NULL))
+			return;
+		if (azalia_comresp(this, 0x20, 0x500, 0x26, NULL))
+			return;
+		if (azalia_comresp(this, 0x20, 0x4b0, 0x00, NULL))
+			return;
+		if (i == 0) {
+			if (azalia_comresp(this, 0x21, 0xf09, 0x00, NULL))
+				return;
+		}
+		if (i != 20) {
+			if (azalia_comresp(this, 0x06, 0x73e, 0x80, NULL))
+				return;
+		}
+
+		if (azalia_comresp(this, 0x20, 0x500, 0x26, NULL))
+			return;
+		if (azalia_comresp(this, 0x20, 0x4f0, 0x00, NULL))
+			return;
+		if (azalia_comresp(this, 0x20, 0x500, 0x23, NULL))
+			return;
+
+		if (azalia_comresp(this, 0x20, 0x400,
+		    atmos_v23_v25[i].v23, NULL))
+			return;
+
+		if (atmos_v23_v25[i].v23 != 0x1e) {
+			if (azalia_comresp(this, 0x20, 0x500, 0x25, NULL))
+				return;
+			if (azalia_comresp(this, 0x20, 0x400,
+			    atmos_v23_v25[i].v25, NULL))
+				return;
+		}
+
+		if (azalia_comresp(this, 0x20, 0x500, 0x26, NULL))
+			return;
+		if (azalia_comresp(this, 0x20, 0x4b0, 0x10, NULL))
+			return;
+	}
 }

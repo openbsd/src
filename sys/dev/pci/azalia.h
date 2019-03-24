@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.h,v 1.65 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: azalia.h,v 1.66 2019/03/24 14:37:44 jcs Exp $	*/
 /*	$NetBSD: azalia.h,v 1.6 2006/01/16 14:15:26 kent Exp $	*/
 
 /*-
@@ -513,6 +513,7 @@
 #define AZ_QRK_WID_TPDOCK1	0x00010000
 #define AZ_QRK_WID_TPDOCK2	0x00020000
 #define AZ_QRK_WID_TPDOCK3	0x00040000
+#define AZ_QRK_WID_DOLBY_ATMOS	0x00100000
 
 /* memory-mapped types */
 typedef struct {
@@ -730,3 +731,5 @@ int	azalia_mixer_get(const codec_t *, nid_t, int, mixer_ctrl_t *);
 int	azalia_mixer_set(codec_t *, nid_t, int, const mixer_ctrl_t *);
 
 int	azalia_codec_enable_unsol(codec_t *);
+
+void	azalia_codec_init_dolby_atmos(codec_t *);
