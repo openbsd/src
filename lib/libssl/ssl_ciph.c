@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.106 2018/11/07 01:53:36 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.107 2019/03/24 17:10:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -921,6 +921,9 @@ ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
 
 		cp = curr->cipher;
 
+		if (cipher_id && cp->id != cipher_id)
+			continue;
+
 		/*
 		 * Selection criteria is either the value of strength_bits
 		 * or the algorithms used.
@@ -929,7 +932,6 @@ ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
 			if (strength_bits != cp->strength_bits)
 				continue;
 		} else {
-
 			if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
 				continue;
 			if (alg_auth && !(alg_auth & cp->algorithm_auth))
@@ -943,7 +945,6 @@ ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long alg_mkey,
 			if ((algo_strength & SSL_STRONG_MASK) && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
 				continue;
 		}
-
 
 		/* add the cipher if it has not been added yet. */
 		if (rule == CIPHER_ADD) {
