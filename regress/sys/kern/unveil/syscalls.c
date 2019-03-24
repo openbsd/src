@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.21 2019/02/10 16:42:35 phessler Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.22 2019/03/24 18:14:20 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -248,7 +248,7 @@ test_opendir(int do_uv)
 	(void) snprintf(filename, sizeof(filename), "/%s/.", uv_dir1);
 	UV_SHOULD_SUCCEED((opendir(filename) == NULL), "opendir");
 	(void) snprintf(filename, sizeof(filename), "/%s/..", uv_dir1);
-	UV_SHOULD_EACCES((opendir(filename) == NULL), "opendir");
+	UV_SHOULD_ENOENT((opendir(filename) == NULL), "opendir");
 	(void) snprintf(filename, sizeof(filename), "/%s/subdir", uv_dir1);
 	UV_SHOULD_SUCCEED((opendir(filename) == NULL), "opendir");
 	(void) snprintf(filename, sizeof(filename), "/%s/subdir/../subdir", uv_dir1);
@@ -318,7 +318,7 @@ test_x(int do_uv)
 		if (unveil("/", "") == -1)
 			err(1, "%s:%d - unveil", __FILE__, __LINE__);
 	}
-	UV_SHOULD_SUCCEED((lstat(uv_file1, &sb) == -1), "lstat");
+	UV_SHOULD_EACCES((lstat(uv_file1, &sb) == -1), "lstat");
 	UV_SHOULD_EACCES((open(uv_file1, O_RDONLY) == -1), "open");
 	UV_SHOULD_EACCES((open(uv_file1, O_RDONLY) == -1), "open");
 	UV_SHOULD_ENOENT((open(uv_file2, O_RDWR) == -1), "open");
@@ -488,7 +488,7 @@ test_parent_dir(int do_uv)
 	UV_SHOULD_SUCCEED((chdir("../../doof/subdir1") == -1), "chdir");
 	UV_SHOULD_SUCCEED((access("poop", R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((access("../subdir1/poop", R_OK) == -1), "access");
-	UV_SHOULD_EACCES((chdir("../../../") == -1), "chdir");
+	UV_SHOULD_ENOENT((chdir("../../../") == -1), "chdir");
 	UV_SHOULD_ENOENT((chdir(uv_dir2) == -1), "chdir");
 	return(0);
 }
@@ -553,7 +553,7 @@ test_access(int do_uv)
 	UV_SHOULD_ENOENT((access("/etc/passwd", R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((access(uv_dir1, R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access(uv_dir2, R_OK) == -1), "access");
-	UV_SHOULD_SUCCEED((access("/", R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access("/", R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access("/home", F_OK) == -1), "access");
 
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
@@ -561,7 +561,7 @@ test_access(int do_uv)
 	UV_SHOULD_ENOENT((access(uv_file2, R_OK) == -1), "access");
 	UV_SHOULD_SUCCEED((access(uv_dir1, R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access(uv_dir2, R_OK) == -1), "access");
-	UV_SHOULD_SUCCEED((access("/", R_OK) == -1), "access");
+	UV_SHOULD_ENOENT((access("/", R_OK) == -1), "access");
 	UV_SHOULD_ENOENT((access("/home", F_OK) == -1), "access");
 
 	return 0;
@@ -596,7 +596,7 @@ test_stat(int do_uv)
 	UV_SHOULD_ENOENT((stat(uv_file2, &sb) == -1), "stat");
 	UV_SHOULD_SUCCEED((stat(uv_dir1, &sb) == -1), "stat");
 	UV_SHOULD_ENOENT((stat(uv_dir2, &sb) == -1), "stat");
-	UV_SHOULD_SUCCEED((stat("/", &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat("/", &sb) == -1), "stat");
 
 	return 0;
 }
@@ -612,10 +612,10 @@ test_stat2(int do_uv)
 	struct stat sb;
 
 	UV_SHOULD_SUCCEED((pledge("stdio fattr rpath", NULL) == -1), "pledge");
-	UV_SHOULD_SUCCEED((stat("/", &sb) == -1), "stat");
-	UV_SHOULD_SUCCEED((stat("/usr", &sb) == -1), "stat");
-	UV_SHOULD_SUCCEED((stat("/usr/share", &sb) == -1), "stat");
-	UV_SHOULD_SUCCEED((stat("/usr/share/man", &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat("/", &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat("/usr", &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat("/usr/share", &sb) == -1), "stat");
+	UV_SHOULD_ENOENT((stat("/usr/share/man", &sb) == -1), "stat");
 	UV_SHOULD_ENOENT((stat("/usr/share/man/nonexistent", &sb) == -1), "stat");
 	return 0;
 }

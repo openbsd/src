@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.23 2019/01/21 20:46:52 tedu Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.24 2019/03/24 18:14:20 beck Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -818,7 +818,11 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 			    " vnode %p\n",
 			    p->p_p->ps_comm, p->p_p->ps_pid, ni->ni_vp);
 #endif
-			return EACCES;
+			if (uv->uv_flags & UNVEIL_USERSET)
+				return EACCES;
+			else
+				return ENOENT;
+
 		}
 		/* directry and flags match, update match */
 		ni->ni_unveil_match = uv;
@@ -872,6 +876,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 		printf("unveil: %s(%d) flag mismatch for terminal '%s'\n",
 		    p->p_p->ps_comm, p->p_p->ps_pid, tname->un_name);
 #endif
+		KASSERT(tname->un_flags & UNVEIL_USERSET);
 		return EACCES;
 	}
 	/* name and flags match in this dir. update match*/
