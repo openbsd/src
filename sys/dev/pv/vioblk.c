@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.10 2019/01/08 16:23:01 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.11 2019/03/24 18:21:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -168,7 +168,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	struct vioblk_softc *sc = (struct vioblk_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	struct scsibus_attach_args saa;
-	uint32_t features;
+	uint64_t features;
 	int qsize;
 
 	vsc->sc_vqs = &sc->sc_vq[0];

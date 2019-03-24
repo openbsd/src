@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.22 2019/03/24 18:17:24 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.23 2019/03/24 18:21:12 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ void		virtio_pci_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_pci_read_queue_size(struct virtio_softc *, uint16_t);
 void		virtio_pci_setup_queue(struct virtio_softc *, struct virtqueue *, uint64_t);
 void		virtio_pci_set_status(struct virtio_softc *, int);
-uint32_t	virtio_pci_negotiate_features(struct virtio_softc *, uint32_t,
+uint64_t	virtio_pci_negotiate_features(struct virtio_softc *, uint64_t,
 					      const struct virtio_feature_name *);
 int		virtio_pci_msix_establish(struct virtio_pci_softc *, struct pci_attach_args *, int, int (*)(void *), void *);
 int		virtio_pci_setup_msix(struct virtio_pci_softc *, struct pci_attach_args *, int);
@@ -317,12 +317,12 @@ virtio_pci_detach(struct device *self, int flags)
  * Prints available / negotiated features if guest_feature_names != NULL and
  * VIRTIO_DEBUG is 1
  */
-uint32_t
-virtio_pci_negotiate_features(struct virtio_softc *vsc, uint32_t guest_features,
+uint64_t
+virtio_pci_negotiate_features(struct virtio_softc *vsc, uint64_t guest_features,
     const struct virtio_feature_name *guest_feature_names)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	uint32_t host, neg;
+	uint64_t host, neg;
 
 	/*
 	 * indirect descriptors can be switched off by setting bit 1 in the

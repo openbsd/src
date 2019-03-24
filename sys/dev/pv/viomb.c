@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.3 2019/01/19 16:21:00 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.4 2019/03/24 18:21:12 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -68,8 +68,8 @@
 #define VIRTIO_BALLOON_CONFIG_ACTUAL	4	/* 32bit */
 
 /* Feature bits */
-#define VIRTIO_BALLOON_F_MUST_TELL_HOST (1<<0)
-#define VIRTIO_BALLOON_F_STATS_VQ	(1<<1)
+#define VIRTIO_BALLOON_F_MUST_TELL_HOST (1ULL<<0)
+#define VIRTIO_BALLOON_F_STATS_VQ	(1ULL<<1)
 
 static const struct virtio_feature_name viomb_feature_names[] = {
 #if VIRTIO_DEBUG

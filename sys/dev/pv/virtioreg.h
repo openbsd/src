@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtioreg.h,v 1.3 2019/01/10 18:22:17 sf Exp $	*/
+/*	$OpenBSD: virtioreg.h,v 1.4 2019/03/24 18:21:12 sf Exp $	*/
 /*	$NetBSD: virtioreg.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -83,11 +83,11 @@
 #define PCI_PRODUCT_VIRTIO_VMMCI	65535	/* private id */
 
 /* device-independent feature bits */
-#define  VIRTIO_F_NOTIFY_ON_EMPTY		(1<<24)
-#define  VIRTIO_F_RING_INDIRECT_DESC		(1<<28)
-#define  VIRTIO_F_RING_EVENT_IDX		(1<<29)
-#define  VIRTIO_F_BAD_FEATURE			(1<<30)
-#define  VIRTIO_F_VERSION_1			(1<<32)
+#define  VIRTIO_F_NOTIFY_ON_EMPTY		(1ULL<<24)
+#define  VIRTIO_F_RING_INDIRECT_DESC		(1ULL<<28)
+#define  VIRTIO_F_RING_EVENT_IDX		(1ULL<<29)
+#define  VIRTIO_F_BAD_FEATURE			(1ULL<<30)
+#define  VIRTIO_F_VERSION_1			(1ULL<<32)
 
 /* device status bits */
 #define  VIRTIO_CONFIG_DEVICE_STATUS_RESET		0

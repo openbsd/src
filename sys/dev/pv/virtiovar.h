@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.11 2019/03/24 18:17:24 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.12 2019/03/24 18:21:12 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ struct virtio_ops {
 	uint16_t	(*read_queue_size)(struct virtio_softc *, uint16_t);
 	void		(*setup_queue)(struct virtio_softc *, struct virtqueue *, uint64_t);
 	void		(*set_status)(struct virtio_softc *, int);
-	uint32_t	(*neg_features)(struct virtio_softc *, uint32_t, const struct virtio_feature_name *);
+	uint64_t	(*neg_features)(struct virtio_softc *, uint64_t, const struct virtio_feature_name *);
 	int		(*poll_intr)(void *);
 };
 
@@ -164,7 +164,7 @@ struct virtio_softc {
 
 	int			 sc_ipl;		/* set by child */
 
-	uint32_t		 sc_features;
+	uint64_t		 sc_features;
 	int			 sc_indirect;
 
 	int			 sc_nvqs;	/* set by child */
@@ -224,7 +224,7 @@ int virtio_start_vq_intr(struct virtio_softc *, struct virtqueue *);
 
 const char *virtio_device_string(int);
 #if VIRTIO_DEBUG
-void virtio_log_features(uint32_t, uint32_t, const struct virtio_feature_name *);
+void virtio_log_features(uint64_t, uint64_t, const struct virtio_feature_name *);
 void virtio_vq_dump(struct virtqueue *vq);
 #endif
 int virtio_nused(struct virtqueue *vq);

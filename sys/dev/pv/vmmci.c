@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.3 2017/05/02 09:50:38 mlarkin Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.4 2019/03/24 18:21:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -72,9 +72,9 @@ struct cfattach vmmci_ca = {
 #define VMMCI_CONFIG_TIME_USEC	12
 
 /* Feature bits */
-#define VMMCI_F_TIMESYNC	(1<<0)
-#define VMMCI_F_ACK		(1<<1)
-#define VMMCI_F_SYNCRTC		(1<<2)
+#define VMMCI_F_TIMESYNC	(1ULL<<0)
+#define VMMCI_F_ACK		(1ULL<<1)
+#define VMMCI_F_SYNCRTC		(1ULL<<2)
 
 struct cfdriver vmmci_cd = {
 	NULL, "vmmci", DV_DULL
@@ -94,7 +94,7 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmmci_softc *sc = (struct vmmci_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
-	uint32_t features;
+	uint64_t features;
 
 	if (vsc->sc_child != NULL)
 		panic("already attached to something else");

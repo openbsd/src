@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.14 2019/03/24 18:17:24 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.15 2019/03/24 18:21:12 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ static const struct virtio_feature_name transport_feature_names[] = {
 };
 
 void
-virtio_log_features(uint32_t host, uint32_t neg,
+virtio_log_features(uint64_t host, uint64_t neg,
     const struct virtio_feature_name *guest_feature_names)
 {
 	const struct virtio_feature_name *namep;
@@ -92,7 +92,7 @@ virtio_log_features(uint32_t host, uint32_t neg,
 	char c;
 	uint32_t bit;
 
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 64; i++) {
 		if (i == 30) {
 			/*
 			 * VIRTIO_F_BAD_FEATURE is only used for
@@ -103,7 +103,7 @@ virtio_log_features(uint32_t host, uint32_t neg,
 		bit = 1 << i;
 		if ((host&bit) == 0)
 			continue;
-		namep = (i < 24) ? guest_feature_names :
+		namep = (i < 24 || i > 37) ? guest_feature_names :
 		    transport_feature_names;
 		while (namep->bit && namep->bit != bit)
 			namep++;

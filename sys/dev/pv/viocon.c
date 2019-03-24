@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.5 2019/01/08 16:24:09 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.6 2019/03/24 18:21:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -30,9 +30,9 @@
 
 
 /* features */
-#define	VIRTIO_CONSOLE_F_SIZE		(1<<0)
-#define	VIRTIO_CONSOLE_F_MULTIPORT	(1<<1)
-#define	VIRTIO_CONSOLE_F_EMERG_WRITE 	(1<<2)
+#define	VIRTIO_CONSOLE_F_SIZE		(1ULL<<0)
+#define	VIRTIO_CONSOLE_F_MULTIPORT	(1ULL<<1)
+#define	VIRTIO_CONSOLE_F_EMERG_WRITE 	(1ULL<<2)
 
 /* config space */
 #define VIRTIO_CONSOLE_COLS		0	/* 16 bits */

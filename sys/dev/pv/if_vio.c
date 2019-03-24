@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.8 2019/01/19 16:23:46 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.9 2019/03/24 18:21:12 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -68,25 +68,25 @@
 #define VIRTIO_NET_CONFIG_STATUS	6 /* 16bit */
 
 /* Feature bits */
-#define VIRTIO_NET_F_CSUM		(1<<0)
-#define VIRTIO_NET_F_GUEST_CSUM		(1<<1)
-#define VIRTIO_NET_F_MAC		(1<<5)
-#define VIRTIO_NET_F_GSO		(1<<6)
-#define VIRTIO_NET_F_GUEST_TSO4		(1<<7)
-#define VIRTIO_NET_F_GUEST_TSO6		(1<<8)
-#define VIRTIO_NET_F_GUEST_ECN		(1<<9)
-#define VIRTIO_NET_F_GUEST_UFO		(1<<10)
-#define VIRTIO_NET_F_HOST_TSO4		(1<<11)
-#define VIRTIO_NET_F_HOST_TSO6		(1<<12)
-#define VIRTIO_NET_F_HOST_ECN		(1<<13)
-#define VIRTIO_NET_F_HOST_UFO		(1<<14)
-#define VIRTIO_NET_F_MRG_RXBUF		(1<<15)
-#define VIRTIO_NET_F_STATUS		(1<<16)
-#define VIRTIO_NET_F_CTRL_VQ		(1<<17)
-#define VIRTIO_NET_F_CTRL_RX		(1<<18)
-#define VIRTIO_NET_F_CTRL_VLAN		(1<<19)
-#define VIRTIO_NET_F_CTRL_RX_EXTRA	(1<<20)
-#define VIRTIO_NET_F_GUEST_ANNOUNCE	(1<<21)
+#define VIRTIO_NET_F_CSUM		(1ULL<<0)
+#define VIRTIO_NET_F_GUEST_CSUM		(1ULL<<1)
+#define VIRTIO_NET_F_MAC		(1ULL<<5)
+#define VIRTIO_NET_F_GSO		(1ULL<<6)
+#define VIRTIO_NET_F_GUEST_TSO4		(1ULL<<7)
+#define VIRTIO_NET_F_GUEST_TSO6		(1ULL<<8)
+#define VIRTIO_NET_F_GUEST_ECN		(1ULL<<9)
+#define VIRTIO_NET_F_GUEST_UFO		(1ULL<<10)
+#define VIRTIO_NET_F_HOST_TSO4		(1ULL<<11)
+#define VIRTIO_NET_F_HOST_TSO6		(1ULL<<12)
+#define VIRTIO_NET_F_HOST_ECN		(1ULL<<13)
+#define VIRTIO_NET_F_HOST_UFO		(1ULL<<14)
+#define VIRTIO_NET_F_MRG_RXBUF		(1ULL<<15)
+#define VIRTIO_NET_F_STATUS		(1ULL<<16)
+#define VIRTIO_NET_F_CTRL_VQ		(1ULL<<17)
+#define VIRTIO_NET_F_CTRL_RX		(1ULL<<18)
+#define VIRTIO_NET_F_CTRL_VLAN		(1ULL<<19)
+#define VIRTIO_NET_F_CTRL_RX_EXTRA	(1ULL<<20)
+#define VIRTIO_NET_F_GUEST_ANNOUNCE	(1ULL<<21)
 
 /*
  * Config(8) flags. The lowest byte is reserved for generic virtio stuff.
@@ -507,7 +507,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
-	uint32_t features;
+	uint64_t features;
 	int i;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
