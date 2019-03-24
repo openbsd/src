@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.23 2019/03/24 18:04:02 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.24 2019/03/24 20:45:34 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -485,7 +485,7 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, int mag, u_int *cmds)
 		}
 		dz = -dy * 4096 / (tp->scroll.vdist * n);
 		if (tp->scroll.dz) {
-			if (dy < 0 != tp->scroll.dz > 0)
+			if ((dy < 0) != (tp->scroll.dz > 0))
 				tp->scroll.dz = -tp->scroll.dz;
 			dz = (dz + 3 * tp->scroll.dz) / 4;
 		}
@@ -500,8 +500,11 @@ wstpad_scroll(struct wstpad *tp, int dx, int dy, int mag, u_int *cmds)
 			return;
 		}
 		dw = dx * 4096 / (tp->scroll.hdist * n);
-		if (tp->scroll.dw && (dx > 0 == tp->scroll.dw > 0))
+		if (tp->scroll.dw) {
+			if ((dx > 0) != (tp->scroll.dw > 0))
+				tp->scroll.dw = -tp->scroll.dw;
 			dw = (dw + 3 * tp->scroll.dw) / 4;
+		}
 		if (dw) {
 			tp->scroll.dw = dw;
 			*cmds |= 1 << HSCROLL;
