@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.90 2018/11/10 14:27:51 bru Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.91 2019/03/24 17:55:39 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -110,6 +110,12 @@ struct wscons_event {
 
 #define	WSCONS_EVENT_TOUCH_WIDTH	24	/* contact width */
 #define	WSCONS_EVENT_TOUCH_RESET	25	/* (no value) */
+
+/*
+ * Precision Scrolling
+ */
+#define WSCONS_EVENT_HSCROLL		26	/* dx * 4096 / scroll_unit */
+#define WSCONS_EVENT_VSCROLL		27	/* dy * 4096 / scroll_unit */
 
 /*
  * Keyboard ioctls (0 - 31)
