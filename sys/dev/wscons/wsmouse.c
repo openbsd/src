@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.51 2019/02/19 07:01:02 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.52 2019/03/24 18:04:02 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1034,10 +1034,18 @@ wsmouse_motion_sync(struct wsmouseinput *input, struct evq_access *evq)
 			wsmouse_evq_put(evq, DELTA_X_EV(input), dx);
 		if (dy)
 			wsmouse_evq_put(evq, DELTA_Y_EV(input), dy);
-		if (motion->dz)
-			wsmouse_evq_put(evq, DELTA_Z_EV, motion->dz);
-		if (motion->dw)
-			wsmouse_evq_put(evq, DELTA_W_EV, motion->dw);
+		if (motion->dz) {
+			if (IS_TOUCHPAD(input))
+				wsmouse_evq_put(evq, VSCROLL_EV, motion->dz);
+			else
+				wsmouse_evq_put(evq, DELTA_Z_EV, motion->dz);
+		}
+		if (motion->dw) {
+			if (IS_TOUCHPAD(input))
+				wsmouse_evq_put(evq, HSCROLL_EV, motion->dw);
+			else
+				wsmouse_evq_put(evq, DELTA_W_EV, motion->dw);
+		}
 	}
 	if (motion->sync & SYNC_POSITION) {
 		if (motion->sync & SYNC_X) {

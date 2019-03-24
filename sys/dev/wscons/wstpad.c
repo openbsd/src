@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.22 2018/12/29 21:03:58 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.23 2019/03/24 18:04:02 bru Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -167,8 +167,6 @@ struct wstpad {
 	u_int mtcycle;
 	u_int ignore;
 
-	int dx;
-	int dy;
 	int contacts;
 	int prev_contacts;
 	u_int btns;
@@ -223,12 +221,11 @@ struct wstpad {
 	} tap;
 
 	struct {
-		int acc_dx;
-		int acc_dy;
 		int dz;
 		int dw;
 		int hdist;
 		int vdist;
+		int mag;
 	} scroll;
 };
 
@@ -435,8 +432,8 @@ set_freeze_ts(struct wstpad *tp, int sec, int ms)
 
 
 /* Return TRUE if two-finger- or edge-scrolling would be valid. */
-static inline int
-chk_scroll_state(struct wsmouseinput *input)
+int
+wstpad_scroll_coords(struct wsmouseinput *input, int *dx, int *dy)
 {
 	struct wstpad *tp = input->tp;
 
@@ -445,44 +442,68 @@ chk_scroll_state(struct wsmouseinput *input)
 		tp->scroll.dw = 0;
 		return (0);
 	}
+	if ((input->motion.sync & SYNC_POSITION) == 0)
+		return (0);
 	/*
 	 * Try to exclude accidental scroll events by checking whether the
 	 * pointer-controlling touch is stable.  The check, which may cause
 	 * a short delay, is only applied initially, a touch that stops and
 	 * resumes scrolling is not affected.
 	 */
-	if (tp->scroll.dz || tp->scroll.dw || wstpad_is_stable(input, tp->t))
-		return (tp->dx || tp->dy);
+	if (tp->scroll.dz || tp->scroll.dw || wstpad_is_stable(input, tp->t)) {
+		*dx = normalize_rel(&input->filter.h, input->motion.pos.dx);
+		*dy = normalize_rel(&input->filter.v, input->motion.pos.dy);
+		return (*dx || *dy);
+	}
 
 	return (0);
 }
 
 void
-wstpad_scroll(struct wstpad *tp, int dx, int dy, u_int *cmds)
+wstpad_scroll(struct wstpad *tp, int dx, int dy, int mag, u_int *cmds)
 {
-	int sign;
+	int dz, dw, n = 1;
 
-	/* Scrolling is either horizontal or vertical, but not both. */
+	/*
+	 * The function applies strong deceleration, but only to input with
+	 * very low speeds.  A higher threshold might make applications
+	 * without support for precision scrolling appear unresponsive.
+	 */
+	mag = tp->scroll.mag = imin(MAG_MEDIUM,
+	    (mag + 3 * tp->scroll.mag) / 4);
+	if (mag < MAG_LOW)
+		n = (MAG_LOW - mag) / 4096 + 1;
 
-	sign = (dy > 0) - (dy < 0);
-	if (sign) {
-		if (tp->scroll.dz != -sign) {
-			tp->scroll.dz = -sign;
-			tp->scroll.acc_dy = -tp->scroll.vdist;
+	if (dy && tp->scroll.vdist) {
+		if (tp->scroll.dw) {
+			/*
+			 * Before switching the axis, wstpad_scroll_coords()
+			 * should check again whether the movement is stable.
+			 */
+			tp->scroll.dw = 0;
+			return;
 		}
-		tp->scroll.acc_dy += abs(dy);
-		if (tp->scroll.acc_dy >= 0) {
-			tp->scroll.acc_dy -= tp->scroll.vdist;
+		dz = -dy * 4096 / (tp->scroll.vdist * n);
+		if (tp->scroll.dz) {
+			if (dy < 0 != tp->scroll.dz > 0)
+				tp->scroll.dz = -tp->scroll.dz;
+			dz = (dz + 3 * tp->scroll.dz) / 4;
+		}
+		if (dz) {
+			tp->scroll.dz = dz;
 			*cmds |= 1 << VSCROLL;
 		}
-	} else if ((sign = (dx > 0) - (dx < 0))) {
-		if (tp->scroll.dw != sign) {
-			tp->scroll.dw = sign;
-			tp->scroll.acc_dx = -tp->scroll.hdist;
+
+	} else if (dx && tp->scroll.hdist) {
+		if (tp->scroll.dz) {
+			tp->scroll.dz = 0;
+			return;
 		}
-		tp->scroll.acc_dx += abs(dx);
-		if (tp->scroll.acc_dx >= 0) {
-			tp->scroll.acc_dx -= tp->scroll.hdist;
+		dw = dx * 4096 / (tp->scroll.hdist * n);
+		if (tp->scroll.dw && (dx > 0 == tp->scroll.dw > 0))
+			dw = (dw + 3 * tp->scroll.dw) / 4;
+		if (dw) {
+			tp->scroll.dw = dw;
 			*cmds |= 1 << HSCROLL;
 		}
 	}
@@ -502,12 +523,14 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 		return;
 	}
 
-	if (!chk_scroll_state(input))
+	if (!wstpad_scroll_coords(input, &dx, &dy))
 		return;
 
 	dir = tp->t->dir;
-	dy = NORTH(dir) || SOUTH(dir) ? tp->dy : 0;
-	dx = EAST(dir) || WEST(dir) ? tp->dx : 0;
+	if (!(NORTH(dir) || SOUTH(dir)))
+		dy = 0;
+	if (!(EAST(dir) || WEST(dir)))
+		dx = 0;
 
 	if (dx || dy) {
 		centered = CENTERED(tp->t);
@@ -526,7 +549,8 @@ wstpad_f2scroll(struct wsmouseinput *input, u_int *cmds)
 			centered |= CENTERED(t2);
 		}
 		if (centered) {
-			wstpad_scroll(tp, dx, dy, cmds);
+			wstpad_scroll(tp, dx, dy,
+			    magnitude(input, dx, dy), cmds);
 			set_freeze_ts(tp, 0, FREEZE_MS);
 		}
 	}
@@ -540,17 +564,19 @@ wstpad_edgescroll(struct wsmouseinput *input, u_int *cmds)
 	u_int v_edge, b_edge;
 	int dx, dy;
 
-	if (tp->contacts != 1 || !chk_scroll_state(input))
+	if (!wstpad_scroll_coords(input, &dx, &dy) || tp->contacts != 1)
 		return;
 
 	v_edge = (tp->features & WSTPAD_SWAPSIDES) ? L_EDGE : R_EDGE;
 	b_edge = (tp->features & WSTPAD_HORIZSCROLL) ? B_EDGE : 0;
 
-	dy = (t->flags & v_edge) ? tp->dy : 0;
-	dx = (t->flags & b_edge) ? tp->dx : 0;
+	if ((t->flags & v_edge) == 0)
+		dy = 0;
+	if ((t->flags & b_edge) == 0)
+		dx = 0;
 
 	if (dx || dy)
-		wstpad_scroll(tp, dx, dy, cmds);
+		wstpad_scroll(tp, dx, dy, magnitude(input, dx, dy), cmds);
 }
 
 static inline u_int
@@ -1121,20 +1147,7 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 {
 	struct wstpad *tp = input->tp;
 	struct tpad_touch *t;
-	int slot;
-
-	/*
-	 * Use the normalized, hysteresis-filtered, but otherwise untransformed
-	 * relative coordinates of the pointer-controlling touch for filtering
-	 * and scrolling.
-	 */
-	if ((input->motion.sync & SYNC_POSITION)
-	    && !wsmouse_hysteresis(input, &input->motion.pos)) {
-		tp->dx = normalize_rel(&input->filter.h, input->motion.pos.dx);
-		tp->dy = normalize_rel(&input->filter.v, input->motion.pos.dy);
-	} else {
-		tp->dx = tp->dy = 0;
-	}
+	int slot, x, y, dx, dy;
 
 	tp->btns = input->btn.buttons;
 	tp->btns_sync = input->btn.sync;
@@ -1158,8 +1171,6 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 		wstpad_mt_masks(input);
 	} else {
 		t = tp->t;
-		t->x = normalize_abs(&input->filter.h, t->pos->x);
-		t->y = normalize_abs(&input->filter.v, t->pos->y);
 		if (tp->contacts)
 			t->state = (tp->prev_contacts ?
 			    TOUCH_UPDATE : TOUCH_BEGIN);
@@ -1167,17 +1178,25 @@ wstpad_touch_inputs(struct wsmouseinput *input)
 			t->state = (tp->prev_contacts ?
 			    TOUCH_END : TOUCH_NONE);
 
+		dx = dy = 0;
+		x = normalize_abs(&input->filter.h, t->pos->x);
+		y = normalize_abs(&input->filter.v, t->pos->y);
 		if (t->state == TOUCH_BEGIN) {
-			t->orig.x = t->x;
-			t->orig.y = t->y;
+			t->x = t->orig.x = x;
+			t->y = t->orig.y = y;
 			memcpy(&t->orig.time, &tp->time,
 			    sizeof(struct timespec));
-			t->flags = edge_flags(tp, t->x, t->y);
-		} else {
-			t->flags &= (~EDGES | edge_flags(tp, t->x, t->y));
+			t->flags = edge_flags(tp, x, y);
+		} else if (input->motion.sync & SYNC_POSITION) {
+			if (!wsmouse_hysteresis(input, t->pos)) {
+				dx = x - t->x;
+				dy = y - t->y;
+			}
+			t->x = x;
+			t->y = y;
+			t->flags &= (~EDGES | edge_flags(tp, x, y));
 		}
-
-		wstpad_set_direction(tp, t, tp->dx, tp->dy);
+		wstpad_set_direction(tp, t, dx, dy);
 	}
 }
 
