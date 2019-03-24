@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.25 2019/03/24 17:55:58 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.26 2019/03/24 17:56:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -476,8 +476,10 @@ resolver_dispatch_captiveportal(int fd, short event, void *bula)
 			log_debug("%s: IMSG_CAPTIVEPORTAL_STATE: %s", __func__,
 			    captive_portal_state_str[captive_portal_state]);
 
-			if (captive_portal_state == NOT_BEHIND)
+			if (captive_portal_state == NOT_BEHIND) {
 				evtimer_del(&captive_portal_check_ev);
+				schedule_recheck_all_resolvers();
+			}
 
 			break;
 		default:
