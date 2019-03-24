@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.20 2018/08/13 16:37:56 schwarze Exp $
+.\" $OpenBSD: ber.3,v 1.21 2019/03/24 04:54:30 rob Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 13 2018 $
+.Dd $Mdocdate: March 24 2019 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -33,9 +33,11 @@
 .Nm ber_get_boolean ,
 .Nm ber_add_string ,
 .Nm ber_add_nstring ,
+.Nm ber_add_ostring ,
 .Nm ber_add_bitstring ,
 .Nm ber_get_string ,
 .Nm ber_get_nstring ,
+.Nm ber_get_ostring ,
 .Nm ber_get_bitstring ,
 .Nm ber_add_null ,
 .Nm ber_get_null ,
@@ -93,15 +95,18 @@
 .Ft "struct ber_element *"
 .Fn "ber_add_string" "struct ber_element *prev" "const char *string"
 .Ft "struct ber_element *"
-.Fo "ber_add_nstring"
+.Fn "ber_add_nstring" "struct ber_element *prev" "const char *string" "size_t size"
+.Ft "struct ber_element *"
+.Fo "ber_add_ostring"
 .Fa "struct ber_element *prev"
-.Fa "const char *string"
-.Fa "size_t size"
+.Fa "struct ber_octetstring *ostring"
 .Fc
 .Ft "int"
 .Fn "ber_get_string" "struct ber_element *root" "char **charbuf"
 .Ft "int"
 .Fn "ber_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
+.Ft "int"
+.Fn "ber_get_ostring" "struct ber_element *root" "struct ber_octetstring *ostring"
 .Ft "struct ber_element *"
 .Fo "ber_add_bitstring"
 .Fa "struct ber_element *prev"
@@ -328,9 +333,11 @@ or
 .Fn ber_get_boolean ,
 .Fn ber_add_string ,
 .Fn ber_add_nstring ,
+.Fn ber_add_ostring ,
 .Fn ber_add_bitstring ,
 .Fn ber_get_string ,
 .Fn ber_get_nstring ,
+.Fn ber_get_ostring ,
 .Fn ber_get_bitstring ,
 .Fn ber_add_null ,
 .Fn ber_get_null ,
@@ -369,6 +376,7 @@ Upon successful completion
 .Fn ber_get_boolean ,
 .Fn ber_get_string ,
 .Fn ber_get_nstring ,
+.Fn ber_get_ostring ,
 .Fn ber_get_bitstring ,
 .Fn ber_get_null ,
 .Fn ber_get_eoc ,
