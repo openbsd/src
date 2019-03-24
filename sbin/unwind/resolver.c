@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.22 2019/03/15 16:48:37 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.23 2019/03/24 17:54:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1133,7 +1133,6 @@ check_forwarders_changed(struct uw_forwarder_head *list_a,
 	b = SIMPLEQ_FIRST(list_b);
 
 	while(a != NULL && b != NULL) {
-		log_debug("a: %s, b: %s", a->name, b->name);
 		if (strcmp(a->name, b->name) != 0)
 			return 1;
 		a = SIMPLEQ_NEXT(a, entry);
