@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.5 2019/01/19 16:23:46 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.6 2019/03/24 18:17:24 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ void		virtio_mmio_write_device_config_2(struct virtio_softc *, int, uint16_t);
 void		virtio_mmio_write_device_config_4(struct virtio_softc *, int, uint32_t);
 void		virtio_mmio_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_mmio_read_queue_size(struct virtio_softc *, uint16_t);
-void		virtio_mmio_setup_queue(struct virtio_softc *, uint16_t, uint32_t);
+void		virtio_mmio_setup_queue(struct virtio_softc *, struct virtqueue *, uint64_t);
 void		virtio_mmio_set_status(struct virtio_softc *, int);
 uint32_t	virtio_mmio_negotiate_features(struct virtio_softc *, uint32_t,
 					      const struct virtio_feature_name *);
@@ -151,15 +151,18 @@ virtio_mmio_read_queue_size(struct virtio_softc *vsc, uint16_t idx)
 }
 
 void
-virtio_mmio_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
+virtio_mmio_setup_queue(struct virtio_softc *vsc, struct virtqueue *vq,
+    uint64_t addr)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_SEL, idx);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_SEL,
+	    vq->vq_index);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_NUM,
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_NUM_MAX));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_ALIGN,
 	    PAGE_SIZE);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_PFN, addr);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_MMIO_QUEUE_PFN,
+	    addr / VIRTIO_PAGE_SIZE);
 }
 
 void

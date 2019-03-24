@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.13 2019/01/10 18:06:56 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.14 2019/03/24 18:17:24 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -154,8 +154,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 			    sc->sc_dev.dv_xname, vq->vq_index);
 		}
 		virtio_init_vq(sc, vq, 1);
-		virtio_setup_queue(sc, vq->vq_index,
-		    vq->vq_dmamap->dm_segs[0].ds_addr / VIRTIO_PAGE_SIZE);
+		virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 	}
 }
 
@@ -345,9 +344,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		goto err;
 	}
 
-	virtio_setup_queue(sc, index,
-	    vq->vq_dmamap->dm_segs[0].ds_addr / VIRTIO_PAGE_SIZE);
-
 	/* remember addresses and offsets for later use */
 	vq->vq_owner = sc;
 	vq->vq_num = vq_size;
@@ -367,6 +363,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	}
 	vq->vq_bytesize = allocsize;
 	vq->vq_maxnsegs = maxnsegs;
+	virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 
 	/* free slot management */
 	vq->vq_entries = mallocarray(vq_size, sizeof(struct vq_entry),
@@ -388,7 +385,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	return 0;
 
 err:
-	virtio_setup_queue(sc, index, 0);
+	virtio_setup_queue(sc, vq, 0);
 	if (vq->vq_dmamap)
 		bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	if (vq->vq_vaddr)
@@ -418,7 +415,7 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	}
 
 	/* tell device that there's no virtqueue any longer */
-	virtio_setup_queue(sc, vq->vq_index, 0);
+	virtio_setup_queue(sc, vq, 0);
 
 	free(vq->vq_entries, M_DEVBUF, 0);
 	bus_dmamap_unload(sc->sc_dmat, vq->vq_dmamap);

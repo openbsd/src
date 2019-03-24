@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.21 2019/01/19 16:23:46 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.22 2019/03/24 18:17:24 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ void		virtio_pci_write_device_config_2(struct virtio_softc *, int, uint16_t);
 void		virtio_pci_write_device_config_4(struct virtio_softc *, int, uint32_t);
 void		virtio_pci_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_pci_read_queue_size(struct virtio_softc *, uint16_t);
-void		virtio_pci_setup_queue(struct virtio_softc *, uint16_t, uint32_t);
+void		virtio_pci_setup_queue(struct virtio_softc *, struct virtqueue *, uint64_t);
 void		virtio_pci_set_status(struct virtio_softc *, int);
 uint32_t	virtio_pci_negotiate_features(struct virtio_softc *, uint32_t,
 					      const struct virtio_feature_name *);
@@ -134,13 +134,14 @@ virtio_pci_read_queue_size(struct virtio_softc *vsc, uint16_t idx)
 }
 
 void
-virtio_pci_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
+virtio_pci_setup_queue(struct virtio_softc *vsc, struct virtqueue *vq,
+    uint64_t addr)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, VIRTIO_CONFIG_QUEUE_SELECT,
-	    idx);
+	    vq->vq_index);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, VIRTIO_CONFIG_QUEUE_ADDRESS,
-	    addr);
+	    addr / VIRTIO_PAGE_SIZE);
 
 	/*
 	 * This path is only executed if this function is called after
@@ -150,7 +151,7 @@ virtio_pci_setup_queue(struct virtio_softc *vsc, uint16_t idx, uint32_t addr)
 	if (sc->sc_irq_type != IRQ_NO_MSIX) {
 		int vec = 1;
 		if (sc->sc_irq_type == IRQ_MSIX_PER_VQ)
-		       vec += idx;
+		       vec += vq->vq_index;
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 		    VIRTIO_MSI_QUEUE_VECTOR, vec);
 	}
