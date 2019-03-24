@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.17 2019/03/15 16:48:37 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.18 2019/03/24 17:55:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -945,6 +945,10 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		if (bufp)
 			log_debug("default route is on %s", buf);
 
+		break;
+	case RTM_IFINFO:
+		frontend_imsg_compose_resolver(IMSG_RECHECK_RESOLVERS, 0, NULL,
+		    0);
 		break;
 	default:
 		break;

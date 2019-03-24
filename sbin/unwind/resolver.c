@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.24 2019/03/24 17:55:17 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.25 2019/03/24 17:55:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -59,6 +59,9 @@
 #define	UB_LOG_VERBOSE			4
 #define	UB_LOG_BRIEF			0
 
+#define	RESOLVER_CHECK_SEC		1
+#define	RESOLVER_CHECK_MAXSEC		1024 /* ~17 minutes */
+
 #define	PORTAL_CHECK_SEC		15
 #define	PORTAL_CHECK_MAXSEC		600
 
@@ -69,6 +72,7 @@ struct uw_resolver {
 	struct event		 check_ev;
 	struct event		 free_ev;
 	struct ub_ctx		*ctx;
+	struct timeval		 check_tv;
 	int			 ref_cnt;
 	int			 stop;
 	enum uw_resolver_state	 state;
@@ -103,6 +107,7 @@ void			 resolver_free_timo(int, short, void *);
 void			 check_resolver(struct uw_resolver *);
 void			 check_resolver_done(void *, int, void *, int, int,
 			     char *, int);
+void			 schedule_recheck_all_resolvers(void);
 int			 check_forwarders_changed(struct uw_forwarder_head *,
 			     struct uw_forwarder_head *);
 void			 replace_forwarders(struct uw_forwarder_head *,
@@ -142,8 +147,6 @@ struct imsgev			*iev_main;
 struct uw_forwarder_head	 dhcp_forwarder_list;
 struct uw_resolver		*recursor, *forwarder, *static_forwarder;
 struct uw_resolver		*static_dot_forwarder;
-struct timeval			 resolver_check_pause = { 30, 0};
-
 struct timeval			 captive_portal_check_tv =
 				     {PORTAL_CHECK_SEC, 0};
 struct event			 captive_portal_check_ev;
@@ -410,6 +413,9 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				new_static_forwarders();
 				new_static_dot_forwarders();
 			}
+			break;
+		case IMSG_RECHECK_RESOLVERS:
+			schedule_recheck_all_resolvers();
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -896,6 +902,8 @@ create_resolver(enum uw_resolver_type type)
 	}
 
 	res->state = UNKNOWN;
+	res->check_tv.tv_sec = RESOLVER_CHECK_SEC;
+	res->check_tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
 
 	ub_ctx_debuglevel(res->ctx, log_getverbose() & OPT_VERBOSE2 ?
 	    UB_LOG_VERBOSE : UB_LOG_BRIEF);
@@ -1020,7 +1028,13 @@ check_resolver(struct uw_resolver *res)
 		res->state = UNKNOWN;
 		resolver_unref(check_res);
 		resolver_unref(res);
-		evtimer_add(&res->check_ev, &resolver_check_pause);
+		res->check_tv.tv_sec = RESOLVER_CHECK_SEC;
+		evtimer_add(&res->check_ev, &res->check_tv);
+
+		log_debug("%s: evtimer_add: %lld - %s: %s", __func__,
+		    data->res->check_tv.tv_sec,
+		    uw_resolver_type_str[data->res->type],
+		    uw_resolver_state_str[data->res->state]);
 	}
 }
 
@@ -1031,11 +1045,14 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
 	struct check_resolver_data	*data;
 	struct uw_resolver		*best;
 	struct timeval			 tv = {0, 1};
+	enum uw_resolver_state		 prev_state;
 	char				*str;
 
 	data = (struct check_resolver_data *)arg;
 
 	log_debug("%s: rcode: %d", __func__, rcode);
+
+	prev_state = data->res->state;
 
 	if (answer_len < LDNS_HEADER_SIZE) {
 		data->res->state = DEAD;
@@ -1067,8 +1084,22 @@ check_resolver_done(void *arg, int rcode, void *answer_packet, int answer_len,
 		data->res->state = DEAD; /* we know the root exists */
 
 out:
-	if (!data->res->stop)
-		evtimer_add(&data->res->check_ev, &resolver_check_pause);
+	if (!data->res->stop && data->res->state == DEAD) {
+		if (prev_state == DEAD)
+			data->res->check_tv.tv_sec *= 2;
+		else
+			data->res->check_tv.tv_sec = RESOLVER_CHECK_SEC;
+
+		if (data->res->check_tv.tv_sec > RESOLVER_CHECK_MAXSEC)
+			data->res->check_tv.tv_sec = RESOLVER_CHECK_MAXSEC;
+
+		evtimer_add(&data->res->check_ev, &data->res->check_tv);
+
+		log_debug("%s: evtimer_add: %lld - %s: %s", __func__,
+		    data->res->check_tv.tv_sec,
+		    uw_resolver_type_str[data->res->type],
+		    uw_resolver_state_str[data->res->state]);
+	}
 
 	log_debug("%s: %s: %s", __func__,
 	    uw_resolver_type_str[data->res->type],
@@ -1092,6 +1123,36 @@ out:
 			resolver_imsg_compose_frontend(IMSG_RESOLVER_UP, 0,
 			    NULL, 0);
 		global_state = best->state;
+	}
+}
+
+void
+schedule_recheck_all_resolvers(void)
+{
+	struct timeval	 tv;
+
+	tv.tv_sec = 0;
+
+	log_debug("%s", __func__);
+
+	if (recursor != NULL) {
+		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
+		evtimer_add(&recursor->check_ev, &tv);
+	}
+
+	if (static_forwarder != NULL) {
+		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
+		evtimer_add(&static_forwarder->check_ev, &tv);
+	}
+
+	if (static_dot_forwarder != NULL) {
+		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
+		evtimer_add(&static_dot_forwarder->check_ev, &tv);
+	}
+
+	if (forwarder != NULL) {
+		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
+		evtimer_add(&forwarder->check_ev, &tv);
 	}
 }
 
