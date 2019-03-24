@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.9 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.10 2019/03/24 18:22:36 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -68,25 +68,29 @@
 #define VIRTIO_NET_CONFIG_STATUS	6 /* 16bit */
 
 /* Feature bits */
-#define VIRTIO_NET_F_CSUM		(1ULL<<0)
-#define VIRTIO_NET_F_GUEST_CSUM		(1ULL<<1)
-#define VIRTIO_NET_F_MAC		(1ULL<<5)
-#define VIRTIO_NET_F_GSO		(1ULL<<6)
-#define VIRTIO_NET_F_GUEST_TSO4		(1ULL<<7)
-#define VIRTIO_NET_F_GUEST_TSO6		(1ULL<<8)
-#define VIRTIO_NET_F_GUEST_ECN		(1ULL<<9)
-#define VIRTIO_NET_F_GUEST_UFO		(1ULL<<10)
-#define VIRTIO_NET_F_HOST_TSO4		(1ULL<<11)
-#define VIRTIO_NET_F_HOST_TSO6		(1ULL<<12)
-#define VIRTIO_NET_F_HOST_ECN		(1ULL<<13)
-#define VIRTIO_NET_F_HOST_UFO		(1ULL<<14)
-#define VIRTIO_NET_F_MRG_RXBUF		(1ULL<<15)
-#define VIRTIO_NET_F_STATUS		(1ULL<<16)
-#define VIRTIO_NET_F_CTRL_VQ		(1ULL<<17)
-#define VIRTIO_NET_F_CTRL_RX		(1ULL<<18)
-#define VIRTIO_NET_F_CTRL_VLAN		(1ULL<<19)
-#define VIRTIO_NET_F_CTRL_RX_EXTRA	(1ULL<<20)
-#define VIRTIO_NET_F_GUEST_ANNOUNCE	(1ULL<<21)
+#define VIRTIO_NET_F_CSUM			(1ULL<<0)
+#define VIRTIO_NET_F_GUEST_CSUM			(1ULL<<1)
+#define VIRTIO_NET_F_CTRL_GUEST_OFFLOADS        (1ULL<<2)
+#define VIRTIO_NET_F_MTU                        (1ULL<<3)
+#define VIRTIO_NET_F_MAC			(1ULL<<5)
+#define VIRTIO_NET_F_GSO			(1ULL<<6)
+#define VIRTIO_NET_F_GUEST_TSO4			(1ULL<<7)
+#define VIRTIO_NET_F_GUEST_TSO6			(1ULL<<8)
+#define VIRTIO_NET_F_GUEST_ECN			(1ULL<<9)
+#define VIRTIO_NET_F_GUEST_UFO			(1ULL<<10)
+#define VIRTIO_NET_F_HOST_TSO4			(1ULL<<11)
+#define VIRTIO_NET_F_HOST_TSO6			(1ULL<<12)
+#define VIRTIO_NET_F_HOST_ECN			(1ULL<<13)
+#define VIRTIO_NET_F_HOST_UFO			(1ULL<<14)
+#define VIRTIO_NET_F_MRG_RXBUF			(1ULL<<15)
+#define VIRTIO_NET_F_STATUS			(1ULL<<16)
+#define VIRTIO_NET_F_CTRL_VQ			(1ULL<<17)
+#define VIRTIO_NET_F_CTRL_RX			(1ULL<<18)
+#define VIRTIO_NET_F_CTRL_VLAN			(1ULL<<19)
+#define VIRTIO_NET_F_CTRL_RX_EXTRA		(1ULL<<20)
+#define VIRTIO_NET_F_GUEST_ANNOUNCE		(1ULL<<21)
+#define VIRTIO_NET_F_MQ				(1ULL<<22)
+#define VIRTIO_NET_F_CTRL_MAC_ADDR		(1ULL<<23)
 
 /*
  * Config(8) flags. The lowest byte is reserved for generic virtio stuff.
@@ -97,25 +101,29 @@
 
 static const struct virtio_feature_name virtio_net_feature_names[] = {
 #if VIRTIO_DEBUG
-	{ VIRTIO_NET_F_CSUM,		"CSum" },
-	{ VIRTIO_NET_F_GUEST_CSUM,	"GuestCSum" },
-	{ VIRTIO_NET_F_MAC,		"MAC" },
-	{ VIRTIO_NET_F_GSO,		"GSO" },
-	{ VIRTIO_NET_F_GUEST_TSO4,	"GuestTSO4" },
-	{ VIRTIO_NET_F_GUEST_TSO6,	"GuestTSO6" },
-	{ VIRTIO_NET_F_GUEST_ECN,	"GuestECN" },
-	{ VIRTIO_NET_F_GUEST_UFO,	"GuestUFO" },
-	{ VIRTIO_NET_F_HOST_TSO4,	"HostTSO4" },
-	{ VIRTIO_NET_F_HOST_TSO6,	"HostTSO6" },
-	{ VIRTIO_NET_F_HOST_ECN, 	"HostECN" },
-	{ VIRTIO_NET_F_HOST_UFO, 	"HostUFO" },
-	{ VIRTIO_NET_F_MRG_RXBUF,	"MrgRXBuf" },
-	{ VIRTIO_NET_F_STATUS,		"Status" },
-	{ VIRTIO_NET_F_CTRL_VQ,		"CtrlVQ" },
-	{ VIRTIO_NET_F_CTRL_RX,		"CtrlRX" },
-	{ VIRTIO_NET_F_CTRL_VLAN,	"CtrlVLAN" },
-	{ VIRTIO_NET_F_CTRL_RX_EXTRA,	"CtrlRXExtra" },
-	{ VIRTIO_NET_F_GUEST_ANNOUNCE,	"GuestAnnounce" },
+	{ VIRTIO_NET_F_CSUM,			"CSum" },
+	{ VIRTIO_NET_F_GUEST_CSUM,		"GuestCSum" },
+	{ VIRTIO_NET_F_CTRL_GUEST_OFFLOADS,	"CtrlGuestOffl" },
+	{ VIRTIO_NET_F_MTU,			"MTU", },
+	{ VIRTIO_NET_F_MAC,			"MAC" },
+	{ VIRTIO_NET_F_GSO,			"GSO" },
+	{ VIRTIO_NET_F_GUEST_TSO4,		"GuestTSO4" },
+	{ VIRTIO_NET_F_GUEST_TSO6,		"GuestTSO6" },
+	{ VIRTIO_NET_F_GUEST_ECN,		"GuestECN" },
+	{ VIRTIO_NET_F_GUEST_UFO,		"GuestUFO" },
+	{ VIRTIO_NET_F_HOST_TSO4,		"HostTSO4" },
+	{ VIRTIO_NET_F_HOST_TSO6,		"HostTSO6" },
+	{ VIRTIO_NET_F_HOST_ECN, 		"HostECN" },
+	{ VIRTIO_NET_F_HOST_UFO, 		"HostUFO" },
+	{ VIRTIO_NET_F_MRG_RXBUF,		"MrgRXBuf" },
+	{ VIRTIO_NET_F_STATUS,			"Status" },
+	{ VIRTIO_NET_F_CTRL_VQ,			"CtrlVQ" },
+	{ VIRTIO_NET_F_CTRL_RX,			"CtrlRX" },
+	{ VIRTIO_NET_F_CTRL_VLAN,		"CtrlVLAN" },
+	{ VIRTIO_NET_F_CTRL_RX_EXTRA,		"CtrlRXExtra" },
+	{ VIRTIO_NET_F_GUEST_ANNOUNCE,		"GuestAnnounce" },
+	{ VIRTIO_NET_F_MQ,			"MQ" },
+	{ VIRTIO_NET_F_CTRL_MAC_ADDR,		"CtrlMAC" },
 #endif
 	{ 0, 				NULL }
 };

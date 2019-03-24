@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.11 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.12 2019/03/24 18:22:36 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -82,6 +82,9 @@ struct virtio_feature_name vioblk_feature_names[] = {
 	{ VIRTIO_BLK_F_SCSI,		"SCSI" },
 	{ VIRTIO_BLK_F_FLUSH,		"Flush" },
 	{ VIRTIO_BLK_F_TOPOLOGY,	"Topology" },
+	{ VIRTIO_BLK_F_CONFIG_WCE,	"ConfigWCE" },
+	{ VIRTIO_BLK_F_DISCARD,		"Discard" },
+	{ VIRTIO_BLK_F_WRITE_ZEROES,	"Write0s" },
 #endif
 	{ 0,				NULL }
 };

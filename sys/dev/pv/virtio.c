@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.15 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.16 2019/03/24 18:22:36 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ static const struct virtio_feature_name transport_feature_names[] = {
 	{ VIRTIO_F_RING_INDIRECT_DESC,	"RingIndirectDesc"},
 	{ VIRTIO_F_RING_EVENT_IDX,	"RingEventIdx"},
 	{ VIRTIO_F_BAD_FEATURE,		"BadFeature"},
+	{ VIRTIO_F_VERSION_1,		"Version1"},
 	{ 0,				NULL}
 };
 
