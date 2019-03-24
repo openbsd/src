@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.48 2018/08/20 15:02:07 visa Exp $ */
+/* $OpenBSD: intr.h,v 1.49 2019/03/24 06:19:26 visa Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -172,6 +172,7 @@ void splassert_check(int, const char *);
 
 /* IPL-raising functions/macros */
 int splraise(int);
+int spl0(void);
 
 #define splsoft()		splraise(IPL_SOFTINT)
 #define splsoftserial()		splsoft()

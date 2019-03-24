@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.60 2018/12/05 10:28:21 jsg Exp $ */
+/* $OpenBSD: cpu.h,v 1.61 2019/03/24 06:19:26 visa Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -423,6 +423,18 @@ void alpha_enable_fp(struct proc *, int);
 #ifdef MULTIPROCESSOR
 #include <sys/mplock.h>
 #endif
+
+static inline u_long
+intr_disable(void)
+{
+	return (u_long)splhigh();
+}
+
+static inline void
+intr_restore(u_long s)
+{
+	splx((int)s);
+}
 
 #endif /* _KERNEL */
 #endif /* _MACHINE_CPU_H_ */

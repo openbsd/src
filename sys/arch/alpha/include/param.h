@@ -1,4 +1,4 @@
-/* $OpenBSD: param.h,v 1.42 2018/09/14 13:58:20 claudio Exp $ */
+/* $OpenBSD: param.h,v 1.43 2019/03/24 06:19:26 visa Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,10 +83,6 @@
 
 void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
-
-/* XXX THE FOLLOWING PROTOTYPE BELONGS IN INTR.H */
-int spl0(void);			/* drop ipl to zero */
-/* XXX END INTR.H */
 
 /* XXX THE FOLLOWING PROTOTYPE SHOULD BE A BUS.H INTERFACE */
 paddr_t alpha_XXX_dmamap(vaddr_t);
