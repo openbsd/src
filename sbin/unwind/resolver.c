@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.26 2019/03/24 17:56:25 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.27 2019/03/24 17:56:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1261,32 +1261,25 @@ best_resolver(void)
 {
 	struct uw_resolver	*res = NULL;
 
-	if (recursor != NULL)
-		log_debug("%s: %s state: %s", __func__,
-		    uw_resolver_type_str[recursor->type],
-		    uw_resolver_state_str[recursor->state]);
-
-	if (static_forwarder != NULL)
-		log_debug("%s: %s state: %s", __func__,
-		    uw_resolver_type_str[static_forwarder->type],
-		    uw_resolver_state_str[static_forwarder->state]);
-
-	if (static_dot_forwarder != NULL)
-		log_debug("%s: %s state: %s", __func__,
-		    uw_resolver_type_str[static_dot_forwarder->type],
-		    uw_resolver_state_str[static_dot_forwarder->state]);
-
-	if (forwarder != NULL)
-		log_debug("%s: %s state: %s", __func__,
-		    uw_resolver_type_str[forwarder->type],
-		    uw_resolver_state_str[forwarder->state]);
-
-	log_debug("%s: %s captive portal", __func__, captive_portal_state_str[
-	    captive_portal_state]);
+	log_debug("%s: %s: %s, %s: %s, %s: %s, %s: %s, captive_portal: %s",
+	    __func__,
+	    uw_resolver_type_str[RECURSOR],
+	    recursor != NULL ? uw_resolver_state_str[recursor->state] : NULL,
+	    uw_resolver_type_str[FORWARDER],
+	    forwarder != NULL ? uw_resolver_state_str[forwarder->state] : NULL,
+	    uw_resolver_type_str[STATIC_FORWARDER],
+	    static_forwarder != NULL ?
+	    uw_resolver_state_str[static_forwarder->state] : NULL,
+	    uw_resolver_type_str[STATIC_DOT_FORWARDER],
+	    static_dot_forwarder != NULL ?
+	    uw_resolver_state_str[static_dot_forwarder->state] : NULL,
+	    captive_portal_state_str[captive_portal_state]);
 
 	if (captive_portal_state == UNKNOWN || captive_portal_state == BEHIND) {
-		if (forwarder != NULL)
-			return (forwarder);
+		if (forwarder != NULL) {
+			res = forwarder;
+			goto out;
+		}
 	}
 
 	res = recursor;
@@ -1300,6 +1293,9 @@ best_resolver(void)
 	if (resolver_cmp(res, forwarder) < 0)
 		res = forwarder;
 
+out:
+	log_debug("%s: %s state: %s", __func__, uw_resolver_type_str[res->type],
+	    uw_resolver_state_str[res->state]);
 	return (res);
 }
 
