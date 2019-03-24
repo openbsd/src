@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.23 2019/03/24 17:54:52 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.24 2019/03/24 17:55:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1017,6 +1017,7 @@ check_resolver(struct uw_resolver *res)
 	    check_resolver_done, NULL)) != 0) {
 		log_warn("%s: ub_resolve_event: err: %d, %s", __func__, err,
 		    ub_strerror(err));
+		res->state = UNKNOWN;
 		resolver_unref(check_res);
 		resolver_unref(res);
 		evtimer_add(&res->check_ev, &resolver_check_pause);
