@@ -1,4 +1,4 @@
-.\" $OpenBSD: unveil.2,v 1.16 2019/03/24 18:43:06 beck Exp $
+.\" $OpenBSD: unveil.2,v 1.17 2019/03/24 19:55:31 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Bob Beck <beck@openbsd.org>
 .\"
@@ -155,6 +155,11 @@ was not accessible, or
 .Nm
 was called after locking.
 .El
+.Sh HISTORY
+The
+.Fn unveil
+system call first appeared in
+.Ox 6.4 .
 .Sh BUGS
 .Xr readlink 2
 partially bypasses
@@ -162,9 +167,3 @@ partially bypasses
 restrictions required by
 .Xr realpath 3 .
 Future changes intend to repair this problem.
-.Pp
-.Sh HISTORY
-The
-.Fn unveil
-system call first appeared in
-.Ox 6.4 .
