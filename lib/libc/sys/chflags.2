@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.27 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: chflags.2,v 1.28 2019/03/25 21:17:01 anton Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)chflags.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: March 25 2019 $
 .Dt CHFLAGS 2
 .Os
 .Sh NAME
@@ -113,12 +113,12 @@ in the
 .Fa fd
 parameter, the current working directory is used.
 If
-.Fa flag
+.Fa atflags
 is also zero, the behavior is identical to a call to
 .Fn chflags .
 .Pp
 The
-.Fa flag
+.Fa atflags
 argument is the bitwise OR of zero or more of the following values:
 .Pp
 .Bl -tag -width AT_SYMLINK_NOFOLLOW -offset indent -compact
