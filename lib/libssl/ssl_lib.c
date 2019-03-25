@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.203 2019/03/25 17:21:18 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.204 2019/03/25 17:33:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2734,20 +2734,14 @@ SSL_get_SSL_CTX(const SSL *ssl)
 SSL_CTX *
 SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 {
-	CERT *ocert = ssl->cert;
-
 	if (ssl->ctx == ctx)
 		return (ssl->ctx);
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
+
+	ssl_cert_free(ssl->cert);
 	ssl->cert = ssl_cert_dup(ctx->internal->cert);
-	if (ocert != NULL) {
-		int i;
-		/* Copy negotiated sigalg from original certificate. */
-		for (i = 0; i < SSL_PKEY_NUM; i++)
-			ssl->cert->pkeys[i].sigalg = ocert->pkeys[i].sigalg;
-		ssl_cert_free(ocert);
-	}
+
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	SSL_CTX_free(ssl->ctx); /* decrement reference count */
 	ssl->ctx = ctx;

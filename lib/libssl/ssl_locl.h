@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.243 2019/03/25 17:27:31 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.244 2019/03/25 17:33:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -966,8 +966,6 @@ typedef struct cert_pkey_st {
 	X509 *x509;
 	EVP_PKEY *privatekey;
 	STACK_OF(X509) *chain;
-	/* sigalg to use when signing */
-	const struct ssl_sigalg *sigalg;
 } CERT_PKEY;
 
 typedef struct cert_st {
