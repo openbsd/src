@@ -1,6 +1,6 @@
-/* $OpenBSD: ssl_sigalgs.h,v 1.12 2019/01/23 23:47:13 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.h,v 1.13 2019/03/25 17:21:18 jsing Exp $ */
 /*
- * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,7 +78,9 @@ const struct ssl_sigalg *ssl_sigalg_lookup(uint16_t sigalg);
 const struct ssl_sigalg *ssl_sigalg(uint16_t sigalg, uint16_t *values, size_t len);
 int ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len);
 int ssl_sigalg_pkey_check(uint16_t sigalg, EVP_PKEY *pk);
-int ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey);
+int ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
+    int check_curve);
+const struct ssl_sigalg *ssl_sigalg_select(SSL *s, EVP_PKEY *pkey);
 
 __END_HIDDEN_DECLS
 

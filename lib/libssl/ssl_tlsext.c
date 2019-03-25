@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.43 2019/03/19 16:53:03 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.44 2019/03/25 17:21:18 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -556,19 +556,16 @@ tlsext_sigalgs_client_build(SSL *s, CBB *cbb)
 int
 tlsext_sigalgs_server_parse(SSL *s, CBS *cbs, int *alert)
 {
-	uint16_t *tls_sigalgs = tls12_sigalgs;
-	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBS sigalgs;
-
-	if (s->version >= TLS1_3_VERSION) {
-		tls_sigalgs = tls13_sigalgs;
-		tls_sigalgs_len = tls13_sigalgs_len;
-	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &sigalgs))
 		return 0;
+	if (CBS_len(&sigalgs) % 2 != 0 || CBS_len(&sigalgs) > 64)
+		return 0;
+	if (!CBS_stow(&sigalgs, &S3I(s)->hs.sigalgs, &S3I(s)->hs.sigalgs_len))
+		return 0;
 
-	return tls1_process_sigalgs(s, &sigalgs, tls_sigalgs, tls_sigalgs_len);
+	return 1;
 }
 
 int

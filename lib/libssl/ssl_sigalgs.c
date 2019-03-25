@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.17 2019/03/19 16:56:04 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.18 2019/03/25 17:21:18 jsing Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -246,7 +246,8 @@ ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len)
 }
 
 int
-ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
+ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
+    int check_curve)
 {
 	if (sigalg == NULL || pkey == NULL)
 		return 0;
@@ -266,12 +267,85 @@ ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 	if (pkey->type == EVP_PKEY_EC) {
 		if (sigalg->curve_nid == 0)
 			return 0;
-		/* Curve must match for EC keys */
-		if (EC_GROUP_get_curve_name(EC_KEY_get0_group
+		/* Curve must match for EC keys. */
+		if (check_curve && EC_GROUP_get_curve_name(EC_KEY_get0_group
 		    (EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid) {
-			return 1; /* XXX www.videolan.org curve mismatch */
+			return 0;
 		}
 	}
 
 	return 1;
+}
+
+const struct ssl_sigalg *
+ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
+{
+	uint16_t *tls_sigalgs = tls12_sigalgs;
+	size_t tls_sigalgs_len = tls12_sigalgs_len;
+	int check_curve = 0;
+	CBS cbs;
+
+	if (TLS1_get_version(s) >= TLS1_3_VERSION) {
+		tls_sigalgs = tls13_sigalgs;
+		tls_sigalgs_len = tls13_sigalgs_len;
+		check_curve = 1;
+	}
+
+	/* Pre TLS 1.2 defaults */
+	if (!SSL_USE_SIGALGS(s)) {
+		switch (pkey->type) {
+		case EVP_PKEY_RSA:
+			return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
+		case EVP_PKEY_EC:
+			return ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
+#ifndef OPENSSL_NO_GOST
+		case EVP_PKEY_GOSTR01:
+			return ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
+#endif
+		}
+		SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
+		return (NULL);
+	}
+
+	/*
+	 * RFC 5246 allows a TLS 1.2 client to send no sigalgs, in
+	 * which case the server must use the the default.
+	 */
+	if (TLS1_get_version(s) < TLS1_3_VERSION &&
+	    S3I(s)->hs.sigalgs == NULL) {
+		switch (pkey->type) {
+		case EVP_PKEY_RSA:
+			return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
+		case EVP_PKEY_EC:
+			return ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
+#ifndef OPENSSL_NO_GOST
+		case EVP_PKEY_GOSTR01:
+			return ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
+#endif
+		}
+		SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
+		return (NULL);
+	}
+
+	/*
+	 * If we get here, we have client or server sent sigalgs, use one.
+	 */
+	CBS_init(&cbs, S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
+	while (CBS_len(&cbs) > 0) {
+		uint16_t sig_alg;
+		const struct ssl_sigalg *sigalg;
+
+		if (!CBS_get_u16(&cbs, &sig_alg))
+			return 0;
+
+		if ((sigalg = ssl_sigalg(sig_alg, tls_sigalgs,
+		    tls_sigalgs_len)) == NULL)
+			continue;
+
+		if (ssl_sigalg_pkey_ok(sigalg, pkey, check_curve))
+			return sigalg;
+	}
+
+	SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
+	return NULL;
 }

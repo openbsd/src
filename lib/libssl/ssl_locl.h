@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.241 2019/03/25 16:37:52 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.242 2019/03/25 17:21:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -432,6 +432,10 @@ typedef struct ssl_handshake_st {
 
 	/* Extensions seen in this handshake. */
 	uint32_t extensions_seen;
+
+	/* sigalgs offered in this handshake in wire form */
+	size_t sigalgs_len;
+	uint8_t *sigalgs;
 } SSL_HANDSHAKE;
 
 typedef struct ssl_handshake_tls13_st {

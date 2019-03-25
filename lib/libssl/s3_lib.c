@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.184 2019/02/09 15:26:15 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.185 2019/03/25 17:21:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1559,6 +1559,7 @@ ssl3_free(SSL *s)
 	tls1_cleanup_key_block(s);
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
+	freezero(S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
 
 	DH_free(S3I(s)->tmp.dh);
 	EC_KEY_free(S3I(s)->tmp.ecdh);
@@ -1598,6 +1599,9 @@ ssl3_clear(SSL *s)
 	S3I(s)->tmp.dh = NULL;
 	EC_KEY_free(S3I(s)->tmp.ecdh);
 	S3I(s)->tmp.ecdh = NULL;
+	freezero(S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
+	S3I(s)->hs.sigalgs = NULL;
+	S3I(s)->hs.sigalgs_len = 0;
 
 	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
 	S3I(s)->tmp.x25519 = NULL;
