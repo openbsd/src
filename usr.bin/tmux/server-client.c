@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.272 2019/03/18 20:53:33 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.273 2019/03/25 09:22:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -506,14 +506,13 @@ have_event:
 	m->statusat = status_at_line(c);
 	if (m->statusat != -1 &&
 	    y >= (u_int)m->statusat &&
-	    y < m->statusat + status_line_size(c))
+	    y < m->statusat + status_line_size(c)) {
 		sr = status_get_range(c, x, y - m->statusat);
-	else
-		sr = NULL;
-	if (sr != NULL) {
+		if (sr == NULL)
+			return (KEYC_UNKNOWN);
 		switch (sr->type) {
 		case STYLE_RANGE_NONE:
-			break;
+			return (KEYC_UNKNOWN);
 		case STYLE_RANGE_LEFT:
 			where = STATUS_LEFT;
 			break;
@@ -522,10 +521,11 @@ have_event:
 			break;
 		case STYLE_RANGE_WINDOW:
 			wl = winlink_find_by_index(&s->windows, sr->argument);
-			if (wl != NULL) {
-				m->w = wl->window->id;
-				where = STATUS;
-			}
+			if (wl == NULL)
+				return (KEYC_UNKNOWN);
+			m->w = wl->window->id;
+
+			where = STATUS;
 			break;
 		}
 	}
