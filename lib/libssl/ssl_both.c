@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.14 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.15 2019/03/25 16:35:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -378,60 +378,56 @@ ssl3_add_cert(CBB *cbb, X509 *x)
 }
 
 int
-ssl3_output_cert_chain(SSL *s, CBB *cbb, X509 *x)
+ssl3_output_cert_chain(SSL *s, CBB *cbb, CERT_PKEY *cpk)
 {
-	int no_chain = 0;
+	X509_STORE_CTX *xs_ctx = NULL;
+	STACK_OF(X509) *chain;
 	CBB cert_list;
+	X509 *x;
 	int ret = 0;
 	int i;
 
 	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
 		goto err;
 
-	if ((s->internal->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
-		no_chain = 1;
+	/* Send an empty certificate list when no certificate is available. */
+	if (cpk == NULL)
+		goto done;
 
-	/* TLSv1 sends a chain with nothing in it, instead of an alert. */
-	if (x != NULL) {
-		if (no_chain) {
-			if (!ssl3_add_cert(&cert_list, x))
-				goto err;
-		} else {
-			X509_STORE_CTX xs_ctx;
+	if ((chain = cpk->chain) == NULL)
+		chain = s->ctx->extra_certs;
 
-			if (!X509_STORE_CTX_init(&xs_ctx, s->ctx->cert_store,
-			    x, NULL)) {
-				SSLerror(s, ERR_R_X509_LIB);
-				goto err;
-			}
-			X509_verify_cert(&xs_ctx);
-
-			/* Don't leave errors in the queue. */
-			ERR_clear_error();
-			for (i = 0; i < sk_X509_num(xs_ctx.chain); i++) {
-				x = sk_X509_value(xs_ctx.chain, i);
-				if (!ssl3_add_cert(&cert_list, x)) {
-					X509_STORE_CTX_cleanup(&xs_ctx);
-					goto err;
-				}
-			}
-			X509_STORE_CTX_cleanup(&xs_ctx);
+	if (chain != NULL || (s->internal->mode & SSL_MODE_NO_AUTO_CHAIN)) {
+		if (!ssl3_add_cert(&cert_list, cpk->x509))
+			goto err;
+	} else {
+		if ((xs_ctx = X509_STORE_CTX_new()) == NULL)
+			goto err;
+		if (!X509_STORE_CTX_init(xs_ctx, s->ctx->cert_store,
+		    cpk->x509, NULL)) {
+			SSLerror(s, ERR_R_X509_LIB);
+			goto err;
 		}
+		X509_verify_cert(xs_ctx);
+		ERR_clear_error();
+		chain = xs_ctx->chain;
 	}
 
-	/* Thawte special :-) */
-	for (i = 0; i < sk_X509_num(s->ctx->extra_certs); i++) {
-		x = sk_X509_value(s->ctx->extra_certs, i);
+	for (i = 0; i < sk_X509_num(chain); i++) {
+		x = sk_X509_value(chain, i);
 		if (!ssl3_add_cert(&cert_list, x))
 			goto err;
 	}
 
+ done:
 	if (!CBB_flush(cbb))
 		goto err;
 
 	ret = 1;
 
  err:
+	X509_STORE_CTX_free(xs_ctx);
+
 	return (ret);
 }
 

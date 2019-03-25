@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.239 2019/03/25 16:24:57 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.240 2019/03/25 16:35:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1154,7 +1154,7 @@ int ssl3_renegotiate_check(SSL *ssl);
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
-int ssl3_output_cert_chain(SSL *s, CBB *cbb, X509 *x);
+int ssl3_output_cert_chain(SSL *s, CBB *cbb, CERT_PKEY *cpk);
 SSL_CIPHER *ssl3_choose_cipher(SSL *ssl, STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
 int	ssl3_setup_buffers(SSL *s);

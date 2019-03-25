@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.64 2019/02/09 15:26:15 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.65 2019/03/25 16:35:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2467,7 +2467,7 @@ int
 ssl3_send_server_certificate(SSL *s)
 {
 	CBB cbb, server_cert;
-	X509 *x;
+	CERT_PKEY *cpk;
 
 	/*
 	 * Server Certificate - RFC 5246, section 7.4.2.
@@ -2476,7 +2476,7 @@ ssl3_send_server_certificate(SSL *s)
 	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_CERT_A) {
-		if ((x = ssl_get_server_send_cert(s)) == NULL) {
+		if ((cpk = ssl_get_server_send_pkey(s)) == NULL) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			return (0);
 		}
@@ -2484,7 +2484,7 @@ ssl3_send_server_certificate(SSL *s)
 		if (!ssl3_handshake_msg_start(s, &cbb, &server_cert,
 		    SSL3_MT_CERTIFICATE))
 			goto err;
-		if (!ssl3_output_cert_chain(s, &server_cert, x))
+		if (!ssl3_output_cert_chain(s, &server_cert, cpk))
 			goto err;
 		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;

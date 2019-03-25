@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.58 2019/03/19 16:53:03 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.59 2019/03/25 16:35:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2693,7 +2693,7 @@ ssl3_send_client_certificate(SSL *s)
 		    SSL3_MT_CERTIFICATE))
 			goto err;
 		if (!ssl3_output_cert_chain(s, &client_cert,
-		    (S3I(s)->tmp.cert_req == 2) ? NULL : s->cert->key->x509))
+		    (S3I(s)->tmp.cert_req == 2) ? NULL : s->cert->key))
 			goto err;
 		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
