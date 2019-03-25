@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.35 2019/03/23 16:04:28 deraadt Exp $ */
+/*	$Id: main.c,v 1.36 2019/03/25 21:09:49 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -283,6 +283,7 @@ main(int argc, char *argv[])
 		{ "version",	no_argument,	NULL,			2 },
 		{ "archive",	no_argument,	NULL,			'a' },
 		{ "help",	no_argument,	NULL,			'h' },
+		{ "compress",	no_argument,	NULL,			'z' },
 		{ "delete",	no_argument,	&opts.del,		1 },
 		{ "no-delete",	no_argument,	&opts.del,		0 },
 		{ "devices",	no_argument,	&opts.devices,		1 },
@@ -314,7 +315,7 @@ main(int argc, char *argv[])
 
 	memset(&opts, 0, sizeof(struct opts));
 
-	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtv", lopts, NULL))
+	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvz", lopts, NULL))
 	    != -1) {
 		switch (c) {
 		case 'D':
@@ -357,6 +358,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			opts.verbose++;
+			break;
+		case 'z':
+			fprintf(stderr, "%s: -z not supported yet\n", getprogname());
 			break;
 		case 0:
 			/* Non-NULL flag values (e.g., --sender). */
@@ -493,11 +497,12 @@ main(int argc, char *argv[])
 
 	exit(rc);
 usage:
-	fprintf(stderr, "usage: %s [-aDglnoprtv] [-e program] [--archive] [--delete] [--devices]\n"
-	    "\t[--group] [--links] [--dry-run] [--owner] [--perms]\n"
-	    "\t[--port=portnumber] [--recursive] [--rsh=program]\n"
-	    "\t[--rsync-path=program] [--specials] [--times] [--verbose]\n"
-	    "\t[--version] source ... directory\n",
+	fprintf(stderr,
+	    "usage: %s [-aDglnoprtvz] [-e program] [--archive] [--compress]\n"
+	    "\t[--delete] [--devices] [--group] [--links] [--dry-run]\n"
+	    "\t[--owner] [--perms] [--port=portnumber] [--recursive]\n"
+	    "\t[--rsh=program][--rsync-path=program] [--specials] [--times]\n"
+	    "\t[--verbose] [--version] source ... directory\n",
 	    getprogname());
 	exit(1);
 }
