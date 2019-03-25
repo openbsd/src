@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.22 2018/09/27 06:52:15 mestre Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.23 2019/03/25 15:45:18 robert Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -63,7 +63,7 @@ main(int argc, char *argv[])
 	if (argc != 0)
 		usage();
 
-	if (unveil(_PATH_MASTERPASSWD_LOCK, "wc") == -1)
+	if (unveil(_PATH_MASTERPASSWD_LOCK, "rwc") == -1)
 		err(1, "unveil");
 	if (unveil(_PATH_MASTERPASSWD, "r") == -1)
 		err(1, "unveil");
