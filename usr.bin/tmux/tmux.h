@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.876 2019/03/20 19:19:11 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.877 2019/03/25 18:59:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -128,12 +128,14 @@ struct winlink;
 	KEYC_ ## name ## _STATUS,				\
 	KEYC_ ## name ## _STATUS_LEFT,				\
 	KEYC_ ## name ## _STATUS_RIGHT,				\
+	KEYC_ ## name ## _STATUS_DEFAULT,			\
 	KEYC_ ## name ## _BORDER
 #define KEYC_MOUSE_STRING(name, s)				\
 	{ #s "Pane", KEYC_ ## name ## _PANE },			\
 	{ #s "Status", KEYC_ ## name ## _STATUS },		\
 	{ #s "StatusLeft", KEYC_ ## name ## _STATUS_LEFT },	\
 	{ #s "StatusRight", KEYC_ ## name ## _STATUS_RIGHT },	\
+	{ #s "StatusDefault", KEYC_ ## name ## _STATUS_DEFAULT }, \
 	{ #s "Border", KEYC_ ## name ## _BORDER }
 
 /*
