@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.30 2018/11/08 20:55:18 jsing Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.31 2019/03/25 16:46:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -611,63 +611,43 @@ SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
 static int
 ssl_ctx_use_certificate_chain_bio(SSL_CTX *ctx, BIO *in)
 {
+	X509 *ca, *x = NULL;
+	unsigned long err;
 	int ret = 0;
-	X509 *x = NULL;
 
-	ERR_clear_error(); /* clear error stack for SSL_CTX_use_certificate() */
-
-	x = PEM_read_bio_X509_AUX(in, NULL, ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata);
-	if (x == NULL) {
+	if ((x = PEM_read_bio_X509_AUX(in, NULL, ctx->default_passwd_callback,
+	    ctx->default_passwd_callback_userdata)) == NULL) {
 		SSLerrorx(ERR_R_PEM_LIB);
-		goto end;
+		goto err;
 	}
 
-	ret = SSL_CTX_use_certificate(ctx, x);
+	if (!SSL_CTX_use_certificate(ctx, x))
+		goto err;
 
-	if (ERR_peek_error() != 0)
-		ret = 0;
-	/* Key/certificate mismatch doesn't imply ret==0 ... */
-	if (ret) {
-		/*
-		 * If we could set up our certificate, now proceed to
-		 * the CA certificates.
-		 */
-		X509 *ca;
-		int r;
-		unsigned long err;
+	if (!ssl_cert_set0_chain(ctx->internal->cert, NULL))
+		goto err;
 
-		sk_X509_pop_free(ctx->extra_certs, X509_free);
-		ctx->extra_certs = NULL;
-
-		while ((ca = PEM_read_bio_X509(in, NULL,
-		    ctx->default_passwd_callback,
-		    ctx->default_passwd_callback_userdata)) != NULL) {
-			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
-			if (!r) {
-				X509_free(ca);
-				ret = 0;
-				goto end;
-			}
-			/*
-			 * Note that we must not free r if it was successfully
-			 * added to the chain (while we must free the main
-			 * certificate, since its reference count is increased
-			 * by SSL_CTX_use_certificate).
-			 */
+	/* Process any additional CA certificates. */
+	while ((ca = PEM_read_bio_X509(in, NULL,
+	    ctx->default_passwd_callback,
+	    ctx->default_passwd_callback_userdata)) != NULL) {
+		if (!ssl_cert_add0_chain_cert(ctx->internal->cert, ca)) {
+			X509_free(ca);
+			goto err;
 		}
-
-		/* When the while loop ends, it's usually just EOF. */
-		err = ERR_peek_last_error();
-		if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
-		    ERR_GET_REASON(err) == PEM_R_NO_START_LINE)
-			ERR_clear_error();
-		else
-			ret = 0; /* some real error */
 	}
 
-end:
+	/* When the while loop ends, it's usually just EOF. */
+	err = ERR_peek_last_error();
+	if (ERR_GET_LIB(err) == ERR_LIB_PEM &&
+	    ERR_GET_REASON(err) == PEM_R_NO_START_LINE) {
+		ERR_clear_error();
+		ret = 1;
+	}
+
+ err:
 	X509_free(x);
+
 	return (ret);
 }
 
