@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.8 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.9 2019/03/25 18:48:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007 Mike Belopuhov
@@ -29,8 +29,10 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioccom.h>
+#include <sys/mutex.h>
 #include <sys/systm.h>
 
+#include <machine/intr.h>
 #include <machine/pctr.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
@@ -48,8 +50,12 @@ int			pctr_isamd;
 int			pctr_isintel;
 uint32_t		pctr_intel_cap;
 
+struct mutex		pctr_conf_lock = MUTEX_INITIALIZER(IPL_HIGH);
+uint32_t		pctr_fn[PCTR_NUM];
+
 static void		pctrrd(struct pctrst *);
-static int		pctrsel(int, u_int32_t, u_int32_t);
+static int		pctrsel(int, uint32_t, uint32_t);
+static void		pctr_enable(struct cpu_info *);
 
 static void
 pctrrd(struct pctrst *st)
@@ -80,7 +86,11 @@ pctrattach(int num)
 		pctr_isintel = (strcmp(cpu_vendor, "GenuineIntel") == 0);
 		CPUID(0xa, pctr_intel_cap, dummy, dummy, dummy);
 	}
+}
 
+void
+pctr_enable(struct cpu_info *ci)
+{
 	if (usepctr) {
 		/* Enable RDTSC and RDPMC instructions from user-level. */
 		__asm volatile("movq %%cr4,%%rax\n"
@@ -114,9 +124,9 @@ pctrclose(dev_t dev, int oflags, int devtype, struct proc *p)
 }
 
 static int
-pctrsel(int fflag, u_int32_t cmd, u_int32_t fn)
+pctrsel(int fflag, uint32_t cmd, uint32_t fn)
 {
-	int msrsel, msrval;
+	int msrsel, msrval, changed;
 
 	cmd -= PCIOCS0;
 	if (pctr_isamd) {
@@ -136,9 +146,22 @@ pctrsel(int fflag, u_int32_t cmd, u_int32_t fn)
 	if (fn & 0x380000)
 		return (EINVAL);
 
-	wrmsr(msrval, 0);
-	wrmsr(msrsel, fn);
-	wrmsr(msrval, 0);
+	if (fn != 0)
+		pctr_enable(curcpu());
+
+	mtx_enter(&pctr_conf_lock);
+	changed = fn != pctr_fn[cmd];
+	if (changed) {
+		pctr_fn[cmd] = fn;
+		wrmsr(msrval, 0);
+		wrmsr(msrsel, fn);
+		wrmsr(msrval, 0);
+	}
+	mtx_leave(&pctr_conf_lock);
+#ifdef MULTIPROCESSOR
+	if (changed)
+		x86_broadcast_ipi(X86_IPI_PCTR);
+#endif
 
 	return (0);
 }
@@ -167,4 +190,47 @@ pctrioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 	default:
 		return (EINVAL);
 	}
+}
+
+void
+pctr_reload(struct cpu_info *ci)
+{
+	int num, i, msrsel, msrval, anyset;
+	uint32_t fn;
+
+	if (pctr_isamd) {
+		num = PCTR_AMD_NUM;
+		msrsel = MSR_K7_EVNTSEL0;
+		msrval = MSR_K7_PERFCTR0;
+	} else {
+		num = PCTR_INTEL_NUM;
+		msrsel = MSR_EVNTSEL0;
+		msrval = MSR_PERFCTR0;
+	}
+
+	anyset = 0;
+	mtx_enter(&pctr_conf_lock);
+	for (i = 0; i < num; i++) {
+		/* only update the ones that don't match */
+		/* XXX generation numbers for zeroing? */
+		fn = rdmsr(msrsel + i);
+		if (fn != pctr_fn[i]) {
+			wrmsr(msrval + i, 0);
+			wrmsr(msrsel + i, pctr_fn[i]);
+			wrmsr(msrval + i, 0);
+		}
+		if (fn)
+			anyset = 1;
+	}
+	mtx_leave(&pctr_conf_lock);
+
+	if (! anyset)
+		pctr_enable(curcpu());
+}
+
+void
+pctr_resume(struct cpu_info *ci)
+{
+	if (usepctr)
+		pctr_reload(ci);
 }

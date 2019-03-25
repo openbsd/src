@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.32 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.33 2019/03/25 18:48:12 guenther Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -71,6 +71,14 @@ void x86_64_ipi_halt_realmode(struct cpu_info *);
 extern void hibernate_drop_to_real_mode(void);
 #endif /* HIBERNATE */
 
+#include "pctr.h"
+#if NPCTR > 0
+#include <machine/pctr.h>
+#define x86_64_ipi_reload_pctr pctr_reload
+#else
+#define x86_64_ipi_reload_pctr NULL
+#endif
+
 #ifdef MTRR
 void x86_64_ipi_reload_mtrr(struct cpu_info *);
 #else
@@ -83,7 +91,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_64_ipi_nop,
 	NULL,
 	NULL,
-	NULL,
+	x86_64_ipi_reload_pctr,
 	x86_64_ipi_reload_mtrr,
 	x86_setperf_ipi,
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.132 2019/01/20 23:07:51 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.133 2019/03/25 18:48:12 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -67,6 +67,7 @@
 #include "lapic.h"
 #include "ioapic.h"
 #include "vmm.h"
+#include "pctr.h"
 #include "pvbus.h"
 
 #include <sys/param.h>
@@ -103,6 +104,10 @@
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
+#endif
+
+#if NPCTR > 0
+#include <machine/pctr.h>
 #endif
 
 #if NPVBUS > 0
@@ -990,6 +995,9 @@ cpu_activate(struct device *self, int act)
 	case DVACT_RESUME:
 		if (sc->sc_info->ci_cpuid == 0)
 			rdrand(NULL);
+#if NPCTR > 0
+		pctr_resume(sc->sc_info);
+#endif
 		break;
 	}
 
