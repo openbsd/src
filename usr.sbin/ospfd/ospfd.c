@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.105 2019/01/15 22:18:10 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.106 2019/03/25 20:38:54 jca Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -642,6 +642,13 @@ ospf_reload(void)
 	if ((xconf = parse_config(conffile, ospfd_conf->opts)) == NULL)
 		return (-1);
 
+	/* Abort the reload if rtr_id changed */
+	if (ospfd_conf->rtr_id.s_addr != xconf->rtr_id.s_addr) {
+		log_warnx("router-id changed in new configuration, "
+		    "this requires ospfd to be restarted.");
+		return (-1);
+	}
+
 	/* send config to childs */
 	if (ospf_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
 		return (-1);
@@ -693,7 +700,6 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 	struct redistribute	*r;
 	int			 rchange = 0;
 
-	/* change of rtr_id needs a restart */
 	conf->flags = xconf->flags;
 	conf->spf_delay = xconf->spf_delay;
 	conf->spf_hold_time = xconf->spf_hold_time;
