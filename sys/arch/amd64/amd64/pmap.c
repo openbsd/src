@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.128 2019/02/01 21:48:48 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.129 2019/03/25 20:29:25 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1259,7 +1259,7 @@ pmap_create(void)
 		pmap->pm_stats.resident_count++;
 		if (!pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir_intel,
 		    &pmap->pm_pdirpa_intel))
-			panic("%s: unknown PA mapping for meltdown PML4\n",
+			panic("%s: unknown PA mapping for meltdown PML4",
 			    __func__);
 	} else {
 		pmap->pm_pdir_intel = 0;
@@ -2190,7 +2190,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pd = pmap->pm_pdir_intel;
 
 	if (!pd)
-		panic("%s: PML4 not initialized for pmap @ %p\n", __func__,
+		panic("%s: PML4 not initialized for pmap @ %p", __func__,
 		    pmap);
 
 	/* npa = physaddr of PDPT */
@@ -2203,7 +2203,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		ptp = pool_get(&pmap_pdp_pool, PR_WAITOK | PR_ZERO);
 
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
-			panic("%s: can't locate PDPT page\n", __func__);
+			panic("%s: can't locate PDPT page", __func__);
 
 		pd[l4idx] = (npa | PG_RW | PG_V);
 
@@ -2214,7 +2214,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
 	if (!pd)
-		panic("%s: can't locate PDPT @ pa=0x%llx\n", __func__,
+		panic("%s: can't locate PDPT @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
 	/* npa = physaddr of PD page */
@@ -2227,7 +2227,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		ptp = pool_get(&pmap_pdp_pool, PR_WAITOK | PR_ZERO);
 
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
-			panic("%s: can't locate PD page\n", __func__);
+			panic("%s: can't locate PD page", __func__);
 
 		pd[l3idx] = (npa | PG_RW | PG_V);
 
@@ -2238,7 +2238,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
 	if (!pd)
-		panic("%s: can't locate PD page @ pa=0x%llx\n", __func__,
+		panic("%s: can't locate PD page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
 	/* npa = physaddr of PT page */
@@ -2251,7 +2251,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		ptp = pool_get(&pmap_pdp_pool, PR_WAITOK | PR_ZERO);
 
 		if (!pmap_extract(pmap, (vaddr_t)ptp, &npa))
-			panic("%s: can't locate PT page\n", __func__);
+			panic("%s: can't locate PT page", __func__);
 
 		pd[l2idx] = (npa | PG_RW | PG_V);
 
@@ -2262,7 +2262,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
 	if (!pd)
-		panic("%s: can't locate PT page @ pa=0x%llx\n", __func__,
+		panic("%s: can't locate PT page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
 	DPRINTF("%s: setting PTE, PT page @ phys 0x%llx virt 0x%llx prot "
@@ -2437,7 +2437,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
 	if (!pd)
-		panic("%s: can't locate PDPT @ pa=0x%llx\n", __func__,
+		panic("%s: can't locate PDPT @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
 	/* npa = physaddr of PD page */
@@ -2478,7 +2478,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
 	if (!pd)
-		panic("%s: can't locate PD page @ pa=0x%llx\n", __func__,
+		panic("%s: can't locate PD page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
 	/* npa = physaddr of PT page */
@@ -2515,7 +2515,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
 	if (!pd)
-		panic("%s: can't locate PT page @ pa=0x%llx\n", __func__,
+		panic("%s: can't locate PT page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
 	npte = hpa | EPT_WB;
@@ -2648,7 +2648,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 #ifdef DIAGNOSTIC
 				if (PHYS_TO_VM_PAGE(pa) != NULL)
 					panic("%s: same pa, managed "
-					    "page, no PG_VLIST pa: 0x%lx\n",
+					    "page, no PG_VLIST pa: 0x%lx",
 					    __func__, pa);
 #endif
 			}
