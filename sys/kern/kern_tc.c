@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.42 2019/03/22 18:27:12 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.43 2019/03/25 23:32:00 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -25,6 +25,7 @@
 #include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/timeout.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
@@ -64,20 +65,27 @@ static struct timecounter dummy_timecounter = {
 	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000
 };
 
+/*
+ * Locks used to protect struct members, global variables in this file:
+ *	I	immutable after initialization
+ *	t	tc_lock
+ *	w	windup_mtx
+ */
+
 struct timehands {
 	/* These fields must be initialized by the driver. */
-	struct timecounter	*th_counter;
-	int64_t			th_adjtimedelta;
-	int64_t			th_adjustment;
-	u_int64_t		th_scale;
-	u_int	 		th_offset_count;
-	struct bintime		th_boottime;
-	struct bintime		th_offset;
-	struct timeval		th_microtime;
-	struct timespec		th_nanotime;
+	struct timecounter	*th_counter;		/* [w] */
+	int64_t			th_adjtimedelta;	/* [tw] */
+	int64_t			th_adjustment;		/* [w] */
+	u_int64_t		th_scale;		/* [w] */
+	u_int	 		th_offset_count;	/* [w] */
+	struct bintime		th_boottime;		/* [tw] */
+	struct bintime		th_offset;		/* [w] */
+	struct timeval		th_microtime;		/* [w] */
+	struct timespec		th_nanotime;		/* [w] */
 	/* Fields not to be copied in tc_windup start with th_generation. */
-	volatile u_int		th_generation;
-	struct timehands	*th_next;
+	volatile u_int		th_generation;		/* [w] */
+	struct timehands	*th_next;		/* [I] */
 };
 
 static struct timehands th0;
@@ -104,15 +112,15 @@ static struct timehands th0 = {
 	&th1
 };
 
+struct rwlock tc_lock = RWLOCK_INITIALIZER("tc_lock");
+
 /*
- * Serializes writes to the members of the next active timehands.
- *
  * tc_windup() must be called before leaving this mutex.
  */
 struct mutex windup_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
 
-static struct timehands *volatile timehands = &th0;
-struct timecounter *timecounter = &dummy_timecounter;
+static struct timehands *volatile timehands = &th0;		/* [w] */
+struct timecounter *timecounter = &dummy_timecounter;		/* [t] */
 static struct timecounter *timecounters = &dummy_timecounter;
 
 volatile time_t time_second = 1;
@@ -360,6 +368,7 @@ tc_setrealtimeclock(const struct timespec *ts)
 	struct bintime bt, bt2;
 	int64_t zero = 0;
 
+	rw_enter_write(&tc_lock);
 	mtx_enter(&windup_mtx);
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
@@ -369,6 +378,7 @@ tc_setrealtimeclock(const struct timespec *ts)
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup(&bt, NULL, &zero);
 	mtx_leave(&windup_mtx);
+	rw_exit_write(&tc_lock);
 
 	enqueue_randomness(ts->tv_sec);
 
@@ -459,6 +469,8 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	u_int delta, ncount, ogen;
 	int i;
 
+	if (new_boottime != NULL || new_adjtimedelta != NULL)
+		rw_assert_wrlock(&tc_lock);
 	MUTEX_ASSERT_LOCKED(&windup_mtx);
 
 	active_tc = timecounter;
@@ -612,7 +624,10 @@ sysctl_tc_hardware(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 		(void)newtc->tc_get_timecount(newtc);
 		(void)newtc->tc_get_timecount(newtc);
 
+		rw_enter_write(&tc_lock);
 		timecounter = newtc;
+		rw_exit_write(&tc_lock);
+
 		return (0);
 	}
 	return (EINVAL);
@@ -739,16 +754,20 @@ ntp_update_second(struct timehands *th)
 	th->th_adjustment += th->th_counter->tc_freq_adj;
 }
 
-int
+void
 tc_adjfreq(int64_t *old, int64_t *new)
 {
 	if (old != NULL) {
+		rw_assert_anylock(&tc_lock);
 		*old = timecounter->tc_freq_adj;
 	}
 	if (new != NULL) {
+		rw_assert_wrlock(&tc_lock);
+		mtx_enter(&windup_mtx);
 		timecounter->tc_freq_adj = *new;
+		tc_windup(NULL, NULL, NULL);
+		mtx_leave(&windup_mtx);
 	}
-	return 0;
 }
 
 void
@@ -767,6 +786,7 @@ tc_adjtime(int64_t *old, int64_t *new)
 		} while (gen == 0 || gen != th->th_generation);
 	}
 	if (new != NULL) {
+		rw_assert_wrlock(&tc_lock);
 		mtx_enter(&windup_mtx);
 		tc_windup(NULL, NULL, new);
 		mtx_leave(&windup_mtx);
