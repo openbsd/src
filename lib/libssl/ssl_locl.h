@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.238 2019/02/25 19:40:05 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.239 2019/03/25 16:24:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -961,6 +961,7 @@ typedef struct dtls1_state_internal_st {
 typedef struct cert_pkey_st {
 	X509 *x509;
 	EVP_PKEY *privatekey;
+	STACK_OF(X509) *chain;
 	/* sigalg to use when signing */
 	const struct ssl_sigalg *sigalg;
 } CERT_PKEY;
@@ -1081,9 +1082,15 @@ void ssl_clear_cipher_state(SSL *s);
 void ssl_clear_cipher_read_state(SSL *s);
 void ssl_clear_cipher_write_state(SSL *s);
 int ssl_clear_bad_session(SSL *s);
+
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_free(CERT *c);
+int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain);
+int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain);
+int ssl_cert_add0_chain_cert(CERT *c, X509 *cert);
+int ssl_cert_add1_chain_cert(CERT *c, X509 *cert);
+
 SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);
 int ssl_get_new_session(SSL *s, int session);
