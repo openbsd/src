@@ -1,4 +1,4 @@
-/*	$OpenBSD: intrdefs.h,v 1.18 2018/06/05 06:39:11 guenther Exp $	*/
+/*	$OpenBSD: intrdefs.h,v 1.19 2019/03/25 18:45:27 guenther Exp $	*/
 /*	$NetBSD: intrdefs.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 #ifndef _AMD64_INTRDEFS_H
@@ -84,11 +84,6 @@
 #define X86_IPI_STOP_VMM		0x00000200
 
 #define X86_NIPI			10
-
-#define X86_IPI_NAMES { "halt IPI", "nop IPI", NULL, \
-			 NULL, "TLB shootdown IPI", \
-			 "MTRR update IPI", "setperf IPI", "ddb IPI", \
-			 "VMM start IPI", "VMM stop IPI" }
 
 #define IREENT_MAGIC	0x18041969
 

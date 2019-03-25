@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.51 2018/01/22 09:08:43 mpi Exp $	*/
+/*	$OpenBSD: intr.c,v 1.52 2019/03/25 18:45:27 guenther Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -551,10 +551,6 @@ struct intrhand fake_xen_intrhand;
 #endif
 #if NHYPERV > 0
 struct intrhand fake_hyperv_intrhand;
-#endif
-
-#if NLAPIC > 0 && defined(MULTIPROCESSOR) && 0
-static char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 #endif
 
 /*
