@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.153 2019/01/23 18:39:28 beck Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.154 2019/03/25 17:27:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -998,58 +998,4 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	/* For session parse failure, indicate that we need to send a new
 	 * ticket. */
 	return 2;
-}
-
-/* Set preferred digest for each key type */
-int
-tls1_process_sigalgs(SSL *s, CBS *cbs, uint16_t *sigalgs, size_t sigalgs_len)
-{
-	CERT *c = s->cert;
-
-	/* Extension ignored for inappropriate versions */
-	/* XXX get rid of this? */
-	if (!SSL_USE_SIGALGS(s))
-		return 1;
-
-	c->pkeys[SSL_PKEY_RSA_SIGN].sigalg = NULL;
-	c->pkeys[SSL_PKEY_RSA_ENC].sigalg = NULL;
-	c->pkeys[SSL_PKEY_ECC].sigalg = NULL;
-#ifndef OPENSSL_NO_GOST
-	c->pkeys[SSL_PKEY_GOST01].sigalg = NULL;
-#endif
-	while (CBS_len(cbs) > 0) {
-		uint16_t sig_alg;
-		const struct ssl_sigalg *sigalg;
-
-		if (!CBS_get_u16(cbs, &sig_alg))
-			return 0;
-
-		if ((sigalg = ssl_sigalg(sig_alg, sigalgs, sigalgs_len)) !=
-		    NULL && c->pkeys[sigalg->pkey_idx].sigalg == NULL) {
-			c->pkeys[sigalg->pkey_idx].sigalg = sigalg;
-			if (sigalg->pkey_idx == SSL_PKEY_RSA_SIGN)
-				c->pkeys[SSL_PKEY_RSA_ENC].sigalg = sigalg;
-		}
-	}
-
-	/*
-	 * Set any remaining keys to default values. NOTE: if alg is not
-	 * supported it stays as NULL.
-	 */
-	if (c->pkeys[SSL_PKEY_RSA_SIGN].sigalg == NULL)
-		c->pkeys[SSL_PKEY_RSA_SIGN].sigalg =
-		    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
-	if (c->pkeys[SSL_PKEY_RSA_ENC].sigalg == NULL)
-		c->pkeys[SSL_PKEY_RSA_ENC].sigalg =
-		    ssl_sigalg_lookup(SIGALG_RSA_PKCS1_SHA1);
-	if (c->pkeys[SSL_PKEY_ECC].sigalg == NULL)
-		c->pkeys[SSL_PKEY_RSA_ENC].sigalg =
-		    ssl_sigalg_lookup(SIGALG_ECDSA_SHA1);
-
-#ifndef OPENSSL_NO_GOST
-	if (c->pkeys[SSL_PKEY_GOST01].sigalg == NULL)
-		c->pkeys[SSL_PKEY_GOST01].sigalg =
-		    ssl_sigalg_lookup(SIGALG_GOSTR01_GOST94);
-#endif
-	return 1;
 }
