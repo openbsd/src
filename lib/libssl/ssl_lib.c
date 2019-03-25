@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.201 2019/01/22 01:15:37 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.202 2019/03/25 16:37:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2091,17 +2091,6 @@ ssl_get_server_send_pkey(const SSL *s)
 	}
 
 	return (c->pkeys + i);
-}
-
-X509 *
-ssl_get_server_send_cert(const SSL *s)
-{
-	CERT_PKEY	*cpk;
-
-	cpk = ssl_get_server_send_pkey(s);
-	if (!cpk)
-		return (NULL);
-	return (cpk->x509);
 }
 
 EVP_PKEY *

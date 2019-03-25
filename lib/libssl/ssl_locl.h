@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.240 2019/03/25 16:35:48 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.241 2019/03/25 16:37:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1117,7 +1117,6 @@ int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 CERT_PKEY *ssl_get_server_send_pkey(const SSL *s);
-X509 *ssl_get_server_send_cert(const SSL *);
 EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd,
     const struct ssl_sigalg **sap);
 DH *ssl_get_auto_dh(SSL *s);
