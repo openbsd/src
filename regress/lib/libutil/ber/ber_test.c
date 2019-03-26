@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.1 2019/03/26 22:20:54 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.2 2019/03/26 23:09:48 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -321,10 +321,10 @@ test(int i)
 
 		ber.br_wbuf = NULL;
 		len = ber_write_elements(&ber, elm);
-			if (len != test_vectors[i].length) {
-				printf("failed length check (was %zd want "
-				    "%zd)\n", len, test_vectors[i].length);
-				return 1;
+		if (len != test_vectors[i].length) {
+			printf("failed length check (was %zd want "
+			    "%zd)\n", len, test_vectors[i].length);
+			return 1;
 		}
 
 		if (memcmp(ber.br_wbuf, test_vectors[i].input,
