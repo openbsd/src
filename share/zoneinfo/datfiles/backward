@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.35 2018/10/22 21:44:28 millert Exp $
+# $OpenBSD: backward,v 1.36 2019/03/26 17:06:58 millert Exp $
 # tzdb links for backward compatibility
 
 # This file is in the public domain, so clarified as of
@@ -78,6 +78,7 @@ Link	Pacific/Easter		Chile/EasterIsland
 Link	America/Havana		Cuba
 Link	Africa/Cairo		Egypt
 Link	Europe/Dublin		Eire
+Link	Etc/UTC			Etc/UCT
 Link	Europe/London		Europe/Belfast
 Link	Europe/Chisinau		Europe/Tiraspol
 Link	Europe/London		GB
@@ -112,7 +113,7 @@ Link	Asia/Taipei		ROC
 Link	Asia/Seoul		ROK
 Link	Asia/Singapore		Singapore
 Link	Europe/Istanbul		Turkey
-Link	Etc/UCT			UCT
+Link	Etc/UTC			UCT
 Link	America/Anchorage	US/Alaska
 Link	America/Adak		US/Aleutian
 Link	America/Phoenix		US/Arizona

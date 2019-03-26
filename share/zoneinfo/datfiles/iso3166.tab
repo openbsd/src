@@ -1,4 +1,4 @@
-# $OpenBSD: iso3166.tab,v 1.28 2017/03/23 14:07:40 millert Exp $
+# $OpenBSD: iso3166.tab,v 1.29 2019/03/26 17:06:58 millert Exp $
 # ISO 3166 alpha-2 country codes
 #
 # This file is in the public domain, so clarified as of
@@ -10,8 +10,8 @@
 # All text uses UTF-8 encoding.  The columns of the table are as follows:
 #
 # 1.  ISO 3166-1 alpha-2 country code, current as of
-#     ISO 3166-1 N905 (2016-11-15).  See: Updates on ISO 3166-1
-#     http://isotc.iso.org/livelink/livelink/Open/16944257
+#     ISO 3166-1 N976 (2018-11-06).  See: Updates on ISO 3166-1
+#     https://isotc.iso.org/livelink/livelink/Open/16944257
 # 2.  The usual English name for the coded region,
 #     chosen so that alphabetic sorting of subsets produces helpful lists.
 #     This is not the same as the English name in the ISO 3166 tables.
@@ -167,7 +167,7 @@ ME	Montenegro
 MF	St Martin (French)
 MG	Madagascar
 MH	Marshall Islands
-MK	Macedonia
+MK	North Macedonia
 ML	Mali
 MM	Myanmar (Burma)
 MN	Mongolia
@@ -236,7 +236,7 @@ ST	Sao Tome & Principe
 SV	El Salvador
 SX	St Maarten (Dutch)
 SY	Syria
-SZ	Swaziland
+SZ	Eswatini (Swaziland)
 TC	Turks & Caicos Is
 TD	Chad
 TF	French Southern & Antarctic Lands

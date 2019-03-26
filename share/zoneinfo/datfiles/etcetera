@@ -1,4 +1,4 @@
-# $OpenBSD: etcetera,v 1.17 2018/10/22 21:44:28 millert Exp $
+# $OpenBSD: etcetera,v 1.18 2019/03/26 17:06:58 millert Exp $
 # tzdb data for ships at sea and other miscellany
 
 # This file is in the public domain, so clarified as of
@@ -20,7 +20,6 @@
 
 Zone	Etc/GMT		0	-	GMT
 Zone	Etc/UTC		0	-	UTC
-Zone	Etc/UCT		0	-	UCT
 
 # The following link uses older naming conventions,
 # but it belongs here, not in the file 'backward',
