@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.55 2019/02/26 14:24:21 visa Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.56 2019/03/26 04:24:22 visa Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -94,6 +94,7 @@ sched_init_cpu(struct cpu_info *ci)
 	kthread_create_deferred(sched_kthreads_create, ci);
 
 	LIST_INIT(&spc->spc_deadproc);
+	SIMPLEQ_INIT(&spc->spc_deferred);
 
 	/*
 	 * Slight hack here until the cpuset code handles cpu_info
@@ -106,8 +107,6 @@ sched_init_cpu(struct cpu_info *ci)
 		return;
 #endif
 	cpuset_add(&sched_all_cpus, ci);
-
-	SIMPLEQ_INIT(&spc->spc_deferred);
 }
 
 void
