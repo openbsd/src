@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.113 2019/03/26 16:02:54 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.114 2019/03/26 16:43:56 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/ktrace.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
+#include <sys/stdint.h>
 #include <sys/pledge.h>
 #include <sys/task.h>
 #include <sys/timeout.h>
