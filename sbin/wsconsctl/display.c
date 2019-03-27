@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.20 2015/05/08 19:12:51 miod Exp $	*/
+/*	$OpenBSD: display.c,v 1.21 2019/03/27 17:24:17 fcambus Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -41,7 +41,7 @@
 #include "wsconsctl.h"
 
 u_int dpytype;
-u_int width, height, depth;
+u_int width, height, depth, fontwidth, fontheight;
 int focus;
 struct field_pc brightness, contrast, backlight;
 int burnon, burnoff, vblank, kbdact, msact, outact;
@@ -54,6 +54,8 @@ struct field display_field_tab[] = {
     { "width",		&width,		FMT_UINT,	FLG_RDONLY },
     { "height",		&height,	FMT_UINT,	FLG_RDONLY },
     { "depth",		&depth,		FMT_UINT,	FLG_RDONLY },
+    { "fontwidth",	&fontwidth,	FMT_UINT,	FLG_RDONLY },
+    { "fontheight",	&fontheight,	FMT_UINT,	FLG_RDONLY },
     { "emulations",	&emuls,		FMT_EMUL,	FLG_RDONLY },
     { "screentypes",	&screens,	FMT_SCREEN,	FLG_RDONLY },
     { "focus",		&focus,		FMT_INT,	FLG_NORDBACK },
@@ -84,7 +86,7 @@ display_get_values(int fd)
 	const char *cmd_str;
 	void *ptr;
 	unsigned long cmd;
-	int bon = 0, fbon = 0;
+	int bon = 0, fbon = 0, son = 0;
 
 	focus = gscr.idx = -1;
 	for (pf = display_field_tab; pf->name; pf++) {
@@ -102,6 +104,10 @@ display_get_values(int fd)
 		} else if (ptr == &emuls) {
 			fillioctl(WSDISPLAYIO_GETEMULTYPE);
 			emuls.idx=0;
+		} else if (ptr == &fontwidth || ptr == &fontheight) {
+			fillioctl(WSDISPLAYIO_GETSCREENTYPE);
+			ptr = &screens;
+			screens.idx = 0;
 		} else if (ptr == &screens) {
 			fillioctl(WSDISPLAYIO_GETSCREENTYPE);
 			screens.idx=0;
@@ -168,6 +174,11 @@ display_get_values(int fd)
 			emuls.idx=fd;
 		} else if (ptr == &screens) {
 			screens.idx=fd;
+			if (!son) {
+				fontwidth = screens.fontwidth;
+				fontheight = screens.fontheight;
+			}
+			son++;
 		} else if (ptr == &param) {
 			struct field_pc *pc = pf->valp;
 
