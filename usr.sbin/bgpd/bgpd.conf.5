@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.186 2019/02/26 10:49:15 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.187 2019/03/27 21:23:13 benno Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2019 $
+.Dd $Mdocdate: March 27 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -735,23 +735,6 @@ message.
 There are several neighbor properties:
 .Pp
 .Bl -tag -width Ds -compact
-.It Xo
-.Ic announce
-.Pq Ic all | default-route | none
-.Xc
-.Ic announce all
-is a no-op.
-.Ic announce none
-and
-.Ic announce default-route
-are aliases for
-.Ic export none
-and
-.Ic export default-route ,
-respectively.
-These three directives are provided for backward compatibility, but will
-eventually be removed.
-.Pp
 .It Xo
 .Ic announce
 .Pq Ic IPv4 Ns | Ns Ic IPv6
