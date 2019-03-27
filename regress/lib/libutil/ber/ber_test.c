@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.6 2019/03/27 16:49:10 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.7 2019/03/27 17:58:48 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -231,7 +231,7 @@ test(int i)
 		printf("expected failure of ber_read_elements did not occur\n");
 		return 1;
 	} else if (elm == NULL) {
-		printf("failed ber_read_elements\n");
+		printf("unexpectedly failed ber_read_elements\n");
 		return 1;
 	}
 
@@ -315,7 +315,7 @@ test(int i)
 		break;
 	case BER_TYPE_OBJECT:	/* OID */
 		if (ber_get_oid(elm, &oid) == -1) {
-			printf("failed (object identifier) encoding check\n");
+			printf("failed (oid) encoding check\n");
 			return 1;
 		}
 		if (ber_scanf_elements(elm, "o", &oid) == -1) {
@@ -382,7 +382,7 @@ test_ber_printf_elements_integer(void) {
 
 	elm = ber_printf_elements(elm, "d", val);
 	if (elm == NULL) {
-		printf("failed ber_read_elements\n");
+		printf("failed ber_printf_elements\n");
 		return 1;
 	}
 
@@ -437,7 +437,7 @@ test_ber_printf_elements_ldap_bind(void) {
 	    BER_CLASS_CONTEXT, LDAP_AUTH_SIMPLE);
 
 	if (elm == NULL) {
-		printf("failed ber_read_elements\n");
+		printf("failed ber_printf_elements\n");
 		return 1;
 	}
 
@@ -469,7 +469,7 @@ test_ber_printf_elements_ldap_search(void) {
 	long long		 scope = 0, deref = 0;
 	char			*basedn = "ou=people";
 	char			*filter = "cn";
-	struct ber_element	*root = NULL, *elm = NULL;
+	struct ber_element	*root = NULL, *elm = NULL, *felm = NULL;
 	struct ber		 ber;
 
 	unsigned char		 exp[] = {
@@ -489,14 +489,23 @@ test_ber_printf_elements_ldap_search(void) {
 	elm = ber_printf_elements(root, "d{t", msgid, BER_CLASS_APP,
 	    LDAP_REQ_SEARCH);
 	if (elm == NULL) {
-		printf("failed ber_read_elements\n");
 		return 1;
 	}
 
-	elm = ber_printf_elements(root, "sEEddbs", basedn, scope, deref,
-	    sizelimit, timelimit, typesonly, filter);
+	/*
+	 * put search filter in an element so we can test using embedded
+	 * elements in ber_printf_elements().
+	 */
+	felm = ber_add_string(felm, filter);
+	if (felm == NULL) {
+		printf("failed ber_add_string\n");
+		return 1;
+	}
+
+	elm = ber_printf_elements(root, "sEEddbe", basedn, scope, deref,
+	    sizelimit, timelimit, typesonly, felm);
 	if (elm == NULL) {
-		printf("failed ber_read_elements\n");
+		printf("failed ber_printf_elements\n");
 		return 1;
 	}
 
@@ -540,7 +549,7 @@ test_ber_printf_elements_snmp_v3_encode(void) {
 	elm = ber_printf_elements(elm, "{iixi}", msgid, max_msg_size,
 	    &f, sizeof(f), secmodel);
 	if (elm == NULL) {
-		printf("failed ber_read_elements\n");
+		printf("failed ber_printf_elements\n");
 		return 1;
 	}
 
