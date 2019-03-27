@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.20 2019/03/24 12:04:12 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.21 2019/03/27 15:34:01 jsing Exp $ */
 
 /*
  * Copyright (c) 2015 Reyk Floter <reyk@openbsd.org>
@@ -221,8 +221,8 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 		return 0;
 	}
 
-	ctr = (uint64_t)(nonce[0] | nonce[1] << 8 |
-	    nonce[2] << 16 | nonce[3] << 24) << 32;
+	ctr = (uint64_t)((uint32_t)(nonce[0]) | (uint32_t)(nonce[1]) << 8 |
+	    (uint32_t)(nonce[2]) << 16 | (uint32_t)(nonce[3]) << 24) << 32;
 	iv = nonce + CHACHA20_CONSTANT_LEN;
 
 	memset(poly1305_key, 0, sizeof(poly1305_key));
