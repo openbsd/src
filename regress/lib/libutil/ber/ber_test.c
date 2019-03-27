@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.7 2019/03/27 17:58:48 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.8 2019/03/27 18:15:11 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -242,7 +242,7 @@ test(int i)
 		pos = ber_getpos(elm);
 		if (pos != 2) {
 			printf("unexpected element position within "
-			    "byte stream (1)\n");
+			    "byte stream\n");
 			return 1;
 		}
 	}
@@ -344,7 +344,7 @@ test(int i)
 	}
 
 	/*
-	 * additional testing on short form tagged encoding
+	 * additional testing on short form encoding
 	 */
 	if (test_vectors[i].memcheck) {
 		len = ber_calc_len(elm);
