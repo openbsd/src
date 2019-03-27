@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.4 2019/03/27 13:28:13 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.5 2019/03/27 16:22:33 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -224,10 +224,11 @@ test(int i)
 	ber_set_readbuf(&ber, test_vectors[i].input, test_vectors[i].length);
 
 	elm = ber_read_elements(&ber, elm);
-	if (elm == NULL && test_vectors[i].fail)
+	if (elm == NULL && test_vectors[i].fail &&
+	    (errno == EINVAL || errno == ERANGE || errno == ECANCELED))
 		return 0;
 	else if (elm != NULL && test_vectors[i].fail) {
-		printf("expected failure of ber_read_elements succeeded\n");
+		printf("expected failure of ber_read_elements did not occur\n");
 		return 1;
 	} else if (elm == NULL) {
 		printf("failed ber_read_elements\n");
