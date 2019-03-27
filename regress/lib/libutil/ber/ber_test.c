@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.2 2019/03/26 23:09:48 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.3 2019/03/27 02:27:41 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -553,39 +553,30 @@ main(void)
 	 * run standalone functions for ber byte stream creation, etc.
 	 * (e.g. ldap, snmpd)
 	 */
-	if (test_ber_printf_elements_integer() != 0)
+	if (test_ber_printf_elements_integer() != 0) {
+		printf("FAILED: test_ber_printf_elements_integer\n");
 		ret = 1;
-	else
+	} else
 		printf("SUCCESS: test_ber_printf_elements_integer\n");
 
-	if (ret != 0) {
-		printf("FAILED: %s\n", __progname);
-		return 1;
-	}
-
-	if (test_ber_printf_elements_ldap_bind() != 0)
+	if (test_ber_printf_elements_ldap_bind() != 0) {
+		printf("FAILED: test_ber_printf_elements_ldap_bind\n");
 		ret = 1;
-	else
+	} else
 		printf("SUCCESS: test_ber_printf_elements_ldap_bind\n");
 
-	if (ret != 0) {
-		printf("FAILED: %s\n", __progname);
-		return 1;
-	}
-
-	if (test_ber_printf_elements_ldap_search() != 0)
+	if (test_ber_printf_elements_ldap_search() != 0) {
+		printf("FAILED: test_ber_printf_elements_ldap_search\n");
 		ret = 1;
-	else
+	} else
 		printf("SUCCESS: test_ber_printf_elements_ldap_search\n");
-	if (ret != 0) {
-		printf("FAILED: %s\n", __progname);
-		return 1;
-	}
 
-	if (test_ber_printf_elements_snmp_v3_encode() != 0)
+	if (test_ber_printf_elements_snmp_v3_encode() != 0) {
+		printf("FAILED: test_ber_printf_elements_snmpd_v3_encode\n");
 		ret = 1;
-	else
+	} else
 		printf("SUCCESS: test_ber_printf_elements_snmpd_v3_encode\n");
+
 	if (ret != 0) {
 		printf("FAILED: %s\n", __progname);
 		return 1;
