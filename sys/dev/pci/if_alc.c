@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.46 2019/03/25 02:28:20 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.47 2019/03/27 07:55:24 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -921,6 +921,8 @@ alc_phy_down(struct alc_softc *sc)
 		break;
 	case PCI_PRODUCT_ATTANSIC_L1D:
 	case PCI_PRODUCT_ATTANSIC_L1D_1:
+	case PCI_PRODUCT_ATTANSIC_L2C_1:
+	case PCI_PRODUCT_ATTANSIC_L2C_2:
 		/*
 		 * GPHY power down caused more problems on AR8151 v2.0.
 		 * When driver is reloaded after GPHY power down,
