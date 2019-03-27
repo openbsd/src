@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.3 2019/03/27 02:27:41 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.4 2019/03/27 13:28:13 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -20,17 +20,15 @@
 
 #include <ber.h>
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-
-#define BER_TAG_MASK	0x1f
 
 #define SUCCEED	0
 #define FAIL	1
 
 struct test_vector {
-	bool		 fail;		/* 1 means test is expected to fail */
+	int		 fail;		/* 1 means test is expected to fail */
+	int		 memcheck;	/* 1 when short forms used */
 	char		 title[128];
 	size_t		 length;
 	unsigned char	 input[1024];
@@ -39,6 +37,7 @@ struct test_vector {
 struct test_vector test_vectors[] = {
 	{
 		SUCCEED,
+		1,
 		"boolean",
 		3,
 		{
@@ -47,6 +46,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"integer (zero)",
 		3,
 		{
@@ -55,6 +55,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"positive integer",
 		3,
 		{
@@ -63,6 +64,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"large positive integer",
 		5,
 		{
@@ -71,6 +73,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"negative integer",
 		4,
 		{
@@ -79,6 +82,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"bit string",
 		6,
 		{
@@ -87,6 +91,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"octet string",
 		10,
 		{
@@ -96,6 +101,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"null",
 		2,
 		{
@@ -104,6 +110,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"object identifier",
 		8,
 		{
@@ -112,6 +119,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"sequence",	/* ldap */
 		14,
 		{
@@ -121,6 +129,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		1,
 		"set with integer and boolean",
 		8,
 		{
@@ -129,7 +138,8 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		FAIL,
-		"indefinite encoding (expected failure - unsupported)",
+		0,
+		"indefinite encoding (expected failure)",
 		4,
 		{
 			0x30, 0x80, 0x00, 0x00
@@ -137,6 +147,7 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		0,
 		"maximum long form tagging (i.e. 4 byte tag id)",
 		7,
 		{
@@ -145,15 +156,37 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		FAIL,
-		"overflow long form tagging (expected failure - unsupported)",
+		0,
+		"overflow long form tagging (expected failure)",
 		8,
 		{
 			0x1f, 0x80, 0x80, 0x80, 0x80, 0x02, 0x01, 0x01
 		},
 	},
 	{
+		SUCCEED,
+		0,
+		"max long form length octets (i.e. 8 bytes)", 
+		12,
+		{
+			0x02, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x01, 0x01
+		},
+	},
+	{
 		FAIL,
-		"garbage (expected failure - unsupported)",
+		0,
+		"overflow long form length octets (expected failure)",
+		13,
+		{
+			0x02, 0x89, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x01, 0x01
+		},
+	},
+	{
+		FAIL,
+		0,
+		"garbage (expected failure)",
 		4,
 		{
 			0x99, 0x53, 0x22, 0x66
@@ -204,7 +237,7 @@ test(int i)
 	/*
 	 * short form tagged elements start at the 3rd octet (i.e. position 2).
 	 */
-	if ((test_vectors[i].input[0] & BER_TAG_MASK) != BER_TAG_MASK) {
+	if (test_vectors[i].memcheck) {
 		pos = ber_getpos(elm);
 		if (pos != 2) {
 			printf("unexpected element position within "
@@ -312,7 +345,7 @@ test(int i)
 	/*
 	 * additional testing on short form tagged encoding
 	 */
-	if ((test_vectors[i].input[0] & BER_TAG_MASK) != BER_TAG_MASK) {
+	if (test_vectors[i].memcheck) {
 		len = ber_calc_len(elm);
 		if (len != test_vectors[i].length) {
 			printf("failed to calculate length\n");
