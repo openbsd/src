@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.136 2018/08/25 20:31:31 jcs Exp $
+#	$OpenBSD: files.usb,v 1.137 2019/03/27 22:08:51 kettenis Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -341,6 +341,11 @@ file	dev/usb/umcs.c			umcs
 device	uscom: ucombus
 attach	uscom at uhub
 file	dev/usb/uscom.c			uscom
+
+# Exar XR21V1410
+device	uxrcom: ucombus
+attach	uxrcom at uhub
+file	dev/usb/uxrcom.c		uxrcom
 
 # iPAQ PDAs
 # Generic ipaq support
