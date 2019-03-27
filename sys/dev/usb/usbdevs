@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.696 2019/03/22 12:02:38 sthen Exp $
+$OpenBSD: usbdevs,v 1.697 2019/03/27 22:04:20 kettenis Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -143,6 +143,7 @@ vendor HOLTEK		0x04d9	Holtek
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHARP		0x04dd	Sharp
 vendor IIYAMA		0x04e1	Iiyama
+vendor EXAR		0x04e2	Exar
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor SAMSUNG2		0x04e8	Samsung Electronics
 vendor ANNABOOKS	0x04ed	Annabooks
@@ -1759,6 +1760,9 @@ product EVOLUTION RCM4_2	0x0303	RCM4 interface
 
 /* Extended Systems products */
 product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
+
+/* Exar products */
+product EXAR XR21V1410		0x1410	XR21V1410
 
 /* Falcom Wireless Communications GmbH products */
 product FALCOM TWIST		0x0001	Twist
