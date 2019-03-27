@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.213 2019/03/26 21:01:19 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.214 2019/03/27 13:25:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -637,6 +637,7 @@ window_copy_cmd_stop_selection(struct window_copy_cmd_state *cs)
 	struct window_copy_mode_data	*data = wme->data;
 
 	data->cursordrag = CURSORDRAG_NONE;
+	data->lineflag = LINE_SEL_NONE;
 	return (WINDOW_COPY_CMD_NOTHING);
 }
 
