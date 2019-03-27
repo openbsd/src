@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.5 2019/03/27 16:22:33 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.6 2019/03/27 16:49:10 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -186,10 +186,10 @@ struct test_vector test_vectors[] = {
 	{
 		FAIL,
 		0,
-		"garbage (expected failure)",
-		4,
+		"incorrect length - not enough data (expected failure)",
+		3,
 		{
-			0x99, 0x53, 0x22, 0x66
+			0x02, 0x02, 0x01
 		}
 	}
 };
