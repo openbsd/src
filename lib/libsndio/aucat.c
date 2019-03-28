@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.73 2018/09/26 08:33:22 miko Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.74 2019/03/28 11:11:18 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -512,7 +512,8 @@ _aucat_open(struct aucat *hdl, const char *str, unsigned int mode)
 void
 _aucat_close(struct aucat *hdl, int eof)
 {
-	char dummy[1];
+	char dummy[sizeof(struct amsg)];
+	ssize_t n;
 
 	if (!eof) {
 		AMSG_INIT(&hdl->wmsg);
@@ -520,8 +521,20 @@ _aucat_close(struct aucat *hdl, int eof)
 		hdl->wtodo = sizeof(struct amsg);
 		if (!_aucat_wmsg(hdl, &eof))
 			goto bad_close;
-		while (read(hdl->fd, dummy, 1) < 0 && errno == EINTR)
-			; /* nothing */
+
+		/*
+		 * block until the peer disconnects
+		 */
+		while (1) {
+			n = read(hdl->fd, dummy, sizeof(dummy));
+			if (n < 0) {
+				if (errno == EINTR)
+					continue;
+				break;
+			}
+			if (n == 0)
+				break;
+		}
 	}
  bad_close:
 	while (close(hdl->fd) < 0 && errno == EINTR)
