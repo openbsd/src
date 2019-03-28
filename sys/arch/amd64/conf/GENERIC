@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.467 2019/03/22 12:05:45 sthen Exp $
+#	$OpenBSD: GENERIC,v 1.468 2019/03/28 09:41:35 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -248,6 +248,8 @@ uchcom*	at uhub?		# WinChipHead CH341/340 serial
 ucom*	at uchcom?
 uticom*	at uhub?		# TI serial
 ucom*	at uticom?
+uxrcom*	at uhub?		# Exar XR21V1410 serial
+ucom*	at uxrcom?
 uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
 umidi*	at uhub?		# USB MIDI
