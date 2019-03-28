@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.6 2019/03/20 07:30:05 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.7 2019/03/28 22:18:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -85,6 +85,9 @@ format_update_ranges(struct format_ranges *frs, struct screen *s, u_int offset,
 			format_free_range(frs, fr);
 			continue;
 		}
+
+		fr->start -= start;
+		fr->end -= start;
 
 		fr->start += offset;
 		fr->end += offset;
