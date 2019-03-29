@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.204 2019/03/01 08:09:00 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.205 2019/03/29 11:05:46 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -210,11 +210,29 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 		tid = 0;
 	}
 
-	if (type == IEEE80211_FC0_TYPE_DATA && hasqos &&
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    type == IEEE80211_FC0_TYPE_DATA && hasqos &&
 	    (subtype & IEEE80211_FC0_SUBTYPE_NODATA) == 0 &&
-	    !(rxi->rxi_flags & IEEE80211_RXI_AMPDU_DONE)) {
+	    !(rxi->rxi_flags & IEEE80211_RXI_AMPDU_DONE)
+#ifndef IEEE80211_STA_ONLY
+	    && (ic->ic_opmode == IEEE80211_M_STA || ni != ic->ic_bss)
+#endif
+	    ) {
 		int ba_state = ni->ni_rx_ba[tid].ba_state;
 
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+			if (!IEEE80211_ADDR_EQ(wh->i_addr1,
+			    ic->ic_bss->ni_bssid)) {
+				ic->ic_stats.is_rx_wrongbss++;
+				goto err;
+			}
+			if (ni->ni_state != IEEE80211_S_ASSOC) {
+				ic->ic_stats.is_rx_notassoc++;
+				goto err;
+			}
+		}
+#endif
 		/* 
 		 * If Block Ack was explicitly requested, check
 		 * if we have a BA agreement for this RA/TID.
