@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.31 2019/03/22 02:23:06 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.32 2019/03/29 02:56:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2011,7 +2011,6 @@ ixl_down(struct ixl_softc *sc)
 
 		ixl_txr_qdis(sc, txr, 0);
 
-		ifiq_barrier(ifp->if_iqs[i]);
 		ifq_barrier(ifp->if_ifqs[i]);
 
 		if (!timeout_del(&rxr->rxr_refill))
