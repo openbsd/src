@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.65 2018/07/15 10:44:49 phessler Exp $
+.\"	$OpenBSD: ath.4,v 1.66 2019/03/29 07:07:05 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -42,7 +42,7 @@
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath.4,v 1.16 2004/02/18 08:30:08 maxim Exp $
 .\" parts from $FreeBSD: /repoman/r/ncvs/src/share/man/man4/ath_hal.4,v 1.7 2004/01/07 20:49:51 blackend Exp $
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt ATH 4
 .Os
 .Sh NAME
@@ -129,6 +129,11 @@ due to serious weaknesses in it.
 AR5211 and AR5212 support the AES, TKIP, and Michael cryptographic
 operations required for WPA in hardware but at this time the driver
 does not support them.
+.Pp
+In BSS mode,
+the driver supports powersave mode,
+which can be enabled via
+.Xr ifconfig 8 .
 .Pp
 The
 .Nm

@@ -1,4 +1,4 @@
-.\" $OpenBSD: wpi.4,v 1.40 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: wpi.4,v 1.41 2019/03/29 07:07:05 jmc Exp $
 .\"
 .\" Copyright (c) 2006, 2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt WPI 4
 .Os
 .Sh NAME
@@ -71,6 +71,11 @@ The
 .Nm
 driver offloads both encryption and decryption of unicast data frames to the
 hardware for the CCMP cipher.
+.Pp
+In BSS mode,
+the driver supports powersave mode,
+which can be enabled via
+.Xr ifconfig 8 .
 .Pp
 The
 .Nm

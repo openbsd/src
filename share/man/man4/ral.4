@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.113 2018/10/02 02:05:34 kevlo Exp $
+.\" $OpenBSD: ral.4,v 1.114 2019/03/29 07:07:05 jmc Exp $
 .\"
 .\" Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 2 2018 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt RAL 4
 .Os
 .Sh NAME
@@ -126,6 +126,10 @@ hardware for the WEP40, WEP104, TKIP(+MIC) and CCMP ciphers.
 .Pp
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
+.Pp
+In Host AP mode,
+devices with the RT2700, RT2800, RT3090, and RT3900E chipsets
+are compatible with clients using powersave.
 .Pp
 The
 .Nm
@@ -347,7 +351,7 @@ before those features can be supported.
 On the RT2500, RT2501 and RT2600 chipsets, host AP mode doesn't
 support power saving.
 Clients attempting to use power saving mode may experience significant
-packet loss (disabling power saving on the client will fix this).
+packet loss.
 .Pp
 Some PCI
 .Nm

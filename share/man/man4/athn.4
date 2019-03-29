@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.36 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: athn.4,v 1.37 2019/03/29 07:07:05 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt ATHN 4
 .Os
 .Sh NAME
@@ -160,6 +160,13 @@ of data frames.
 .Pp
 The transmit speed is user-selectable or can be adapted automatically by the
 driver depending on the number of hardware transmission retries.
+.Pp
+In BSS mode,
+the driver supports powersave mode,
+which can be enabled via
+.Xr ifconfig 8 .
+In Host AP mode,
+the driver is compatible with clients using powersave.
 .Sh FILES
 For USB devices, the driver needs at least version 1.1p4 of the following
 firmware files, which are loaded when an interface is attached:
