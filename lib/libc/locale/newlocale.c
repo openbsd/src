@@ -1,4 +1,4 @@
-/*	$OpenBSD: newlocale.c,v 1.1 2017/09/05 03:16:13 schwarze Exp $ */
+/*	$OpenBSD: newlocale.c,v 1.2 2019/03/29 12:34:44 schwarze Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -22,8 +22,7 @@
 #include "rune.h"
 
 locale_t
-newlocale(int mask, const char *locname,
-    locale_t oldloc __attribute__((__unused__)))
+newlocale(int mask, const char *locname, locale_t oldloc)
 {
 	int	 ic, flag;
 
@@ -45,7 +44,7 @@ newlocale(int mask, const char *locname,
 
 	/* Only character encoding has thread-specific effects. */
 	if ((mask & LC_CTYPE_MASK) == 0)
-		return _LOCALE_C;
+		return oldloc == _LOCALE_UTF8 ? _LOCALE_UTF8 : _LOCALE_C;
 
 	/* The following may initialize UTF-8 for later use. */
 	if ((locname = _get_locname(LC_CTYPE, locname)) == NULL) {
