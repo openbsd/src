@@ -1,4 +1,4 @@
-.\" $OpenBSD: athn.4,v 1.37 2019/03/29 07:07:05 jmc Exp $
+.\" $OpenBSD: athn.4,v 1.38 2019/03/29 22:09:26 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>.
 .\"
@@ -167,6 +167,13 @@ which can be enabled via
 .Xr ifconfig 8 .
 In Host AP mode,
 the driver is compatible with clients using powersave.
+.Pp
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5 .
 .Sh FILES
 For USB devices, the driver needs at least version 1.1p4 of the following
 firmware files, which are loaded when an interface is attached:
