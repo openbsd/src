@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.28 2019/03/04 21:57:16 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.29 2019/03/29 04:12:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -543,13 +543,6 @@ ifiq_add_data(struct ifiqueue *ifiq, struct if_data *data)
 	data->ifi_ibytes += ifiq->ifiq_bytes;
 	data->ifi_iqdrops += ifiq->ifiq_qdrops;
 	mtx_leave(&ifiq->ifiq_mtx);
-}
-
-void
-ifiq_barrier(struct ifiqueue *ifiq)
-{
-	if (!task_del(ifiq->ifiq_softnet, &ifiq->ifiq_task))
-		taskq_barrier(ifiq->ifiq_softnet);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.23 2019/03/01 04:47:33 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.24 2019/03/29 04:12:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -477,7 +477,6 @@ void		 ifiq_destroy(struct ifiqueue *);
 int		 ifiq_input(struct ifiqueue *, struct mbuf_list *);
 int		 ifiq_enqueue(struct ifiqueue *, struct mbuf *);
 void		 ifiq_add_data(struct ifiqueue *, struct if_data *);
-void		 ifiq_barrier(struct ifiqueue *);
 
 #define	ifiq_len(_ifiq)			ml_len(&(_ifiq)->ifiq_ml)
 #define	ifiq_empty(_ifiq)		ml_empty(&(_ifiq)->ifiq_ml)
