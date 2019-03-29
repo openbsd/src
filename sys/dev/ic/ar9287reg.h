@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287reg.h,v 1.5 2019/02/01 16:15:07 stsp Exp $	*/
+/*	$OpenBSD: ar9287reg.h,v 1.6 2019/03/29 11:04:40 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -60,6 +60,7 @@
  * ROM layout used by AR9287 (2GHz only).
  */
 #define AR9287_EEP_START_LOC		128
+#define AR9287_HTC_EEP_START_LOC	256
 #define AR9287_NUM_2G_CAL_PIERS		3
 #define AR9287_NUM_2G_CCK_TARGET_POWERS	3
 #define AR9287_NUM_2G_20_TARGET_POWERS	3
