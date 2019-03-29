@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.8 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.9 2019/03/29 07:05:58 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,7 +58,9 @@ struct file	*pushfile(const char *);
 int		 popfile(void);
 int		 yyparse(void);
 int		 yylex(void);
-int		 yyerror(const char *, ...);
+int		 yyerror(const char *, ...)
+    __attribute__((__format__ (printf, 1, 2)))
+    __attribute__((__nonnull__ (1)));
 int		 kw_cmp(const void *, const void *);
 int		 lookup(char *);
 int		 lgetc(int);
@@ -223,8 +225,8 @@ prefix		: STRING '/' NUMBER {
 			switch (res->ai_family) {
 			case AF_INET:
 				if ($3 < 0 || 32 < $3) {
-					yyerror("mask len %d is out of range",
-					    $3);
+					yyerror("mask len %lld is out of range",
+					    (long long)$3);
 					YYERROR;
 				}
 				$$.addr.addr.ipv4 = ((struct sockaddr_in *)
@@ -234,8 +236,8 @@ prefix		: STRING '/' NUMBER {
 				break;
 			case AF_INET6:
 				if ($3 < 0 || 128 < $3) {
-					yyerror("mask len %d is out of range",
-					    $3);
+					yyerror("mask len %lld is out of range",
+					    (long long)$3);
 					YYERROR;
 				}
 				$$.addr.addr.ipv6 = ((struct sockaddr_in6 *)
