@@ -1,4 +1,4 @@
-.\" $OpenBSD: run.4,v 1.52 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: run.4,v 1.53 2019/03/29 17:16:35 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt RUN 4
 .Os
 .Sh NAME
@@ -233,3 +233,5 @@ RT2800 and RT3000 chipsets.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
+.Pp
+This driver does not support powersave mode.

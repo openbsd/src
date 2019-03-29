@@ -1,4 +1,4 @@
-.\" $OpenBSD: rum.4,v 1.59 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: rum.4,v 1.60 2019/03/29 17:16:35 jmc Exp $
 .\"
 .\" Copyright (c) 2005-2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt RUM 4
 .Os
 .Sh NAME
@@ -217,6 +217,4 @@ Therefore the use of a
 .Nm
 adapter in Host AP mode is discouraged.
 .Pp
-Host AP mode doesn't support power saving.
-Clients attempting to use power saving mode may experience significant
-packet loss (disabling power saving on the client will fix this).
+This driver does not support powersave mode.

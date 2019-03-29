@@ -1,4 +1,4 @@
-.\" $OpenBSD: rsu.4,v 1.20 2018/07/15 10:44:49 phessler Exp $
+.\" $OpenBSD: rsu.4,v 1.21 2019/03/29 17:16:35 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 15 2018 $
+.Dd $Mdocdate: March 29 2019 $
 .Dt RSU 4
 .Os
 .Sh NAME
@@ -151,3 +151,5 @@ adapters.
 Additional work is required in
 .Xr ieee80211 9
 before those features can be supported.
+.Pp
+This driver does not support powersave mode.
