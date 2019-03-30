@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.9 2019/03/23 16:04:28 deraadt Exp $ */
+/*	$Id: ids.c,v 1.10 2019/03/30 07:24:02 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -236,7 +236,7 @@ idents_send(struct sess *sess,
 			ERRX1(sess, "io_write_byte");
 			return 0;
 		} else if (!io_write_buf(sess, fd, ids[i].name, sz)) {
-			ERRX1(sess, "io_write_byte");
+			ERRX1(sess, "io_write_buf");
 			return 0;
 		}
 	}
