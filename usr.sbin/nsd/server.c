@@ -740,13 +740,55 @@ server_init_ifs(struct nsd *nsd, size_t from, size_t to, int* reuseport_works)
 #endif
 #if defined(AF_INET)
 		if (addr->ai_family == AF_INET) {
-#  if defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
-			int action = IP_PMTUDISC_DONT;
-			if (setsockopt(nsd->udp[i].s, IPPROTO_IP, 
-				IP_MTU_DISCOVER, &action, sizeof(action)) < 0)
-			{
-				log_msg(LOG_ERR, "setsockopt(..., IP_MTU_DISCOVER, IP_PMTUDISC_DONT...) failed: %s",
-					strerror(errno));
+#  if defined(IP_MTU_DISCOVER)
+			int mtudisc_disabled = 0;
+#   if defined(IP_PMTUDISC_OMIT)
+		/* Try IP_PMTUDISC_OMIT first */
+
+		/*
+		 * Linux 3.15 has IP_PMTUDISC_OMIT which makes sockets
+		 * ignore PMTU information and send packets with DF=0.
+		 * Fragmentation is allowed if and only if the packet
+		 * size exceeds the outgoing interface MTU or the packet
+		 * encounters smaller MTU link in network.
+		 * This mitigates DNS fragmentation attacks by preventing
+		 * forged PMTU information.
+		 * FreeBSD already has same semantics without setting
+		 * the option.
+		 */
+			int action_omit = IP_PMTUDISC_OMIT;
+			if (!mtudisc_disabled) {
+				if(setsockopt(nsd->udp[i].s, IPPROTO_IP,
+					IP_MTU_DISCOVER, &action_omit,
+					sizeof(action_omit)) < 0)
+				{
+					log_msg(LOG_ERR, "setsockopt(..., IP_MTU_DISCOVER, IP_PMTUDISC_OMIT...) failed: %s",
+						strerror(errno));
+				} else {
+					mtudisc_disabled = 1;
+				}
+			}	
+#   endif /* IP_PMTUDISC_OMIT */
+#   if defined(IP_PMTUDISC_DONT)
+			/* 
+			 * Use IP_PMTUDISC_DONT
+			 * if IP_PMTUDISC_OMIT failed / undefined
+			 */
+			if (!mtudisc_disabled) {
+				int action_dont = IP_PMTUDISC_DONT;
+				if (setsockopt(nsd->udp[i].s, IPPROTO_IP, 
+					IP_MTU_DISCOVER, &action_dont,
+					sizeof(action_dont)) < 0)
+				{
+					log_msg(LOG_ERR, "setsockopt(..., IP_MTU_DISCOVER, IP_PMTUDISC_DONT...) failed: %s",
+						strerror(errno));
+				} else {
+					mtudisc_disabled = 1;
+				}
+			}
+#   endif /* IP_PMTUDISC_DONT */
+			/* exit if all methods to disable PMTUD failed */
+			if(!mtudisc_disabled) {
 				return -1;
 			}
 #  elif defined(IP_DONTFRAG)

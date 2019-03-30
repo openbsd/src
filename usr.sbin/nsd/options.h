@@ -337,6 +337,8 @@ struct key_options* key_options_find(struct nsd_options* opt, const char* name);
 void key_options_remove(struct nsd_options* opt, const char* name);
 int key_options_equal(struct key_options* p, struct key_options* q);
 void key_options_add_modify(struct nsd_options* opt, struct key_options* key);
+void key_options_setup(region_type* region, struct key_options* key);
+void key_options_desetup(region_type* region, struct key_options* key);
 /* read in zone list file. Returns false on failure */
 int parse_zone_list_file(struct nsd_options* opt);
 /* create zone entry and add to the zonelist file */

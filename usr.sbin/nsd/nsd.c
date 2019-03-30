@@ -21,7 +21,9 @@
 #include <grp.h>
 #endif /* HAVE_GRP_H */
 #ifdef HAVE_SETUSERCONTEXT
+#ifdef HAVE_LOGIN_CAP_H
 #include <login_cap.h>
+#endif /* HAVE_LOGIN_CAP_H */
 #endif /* HAVE_SETUSERCONTEXT */
 
 #include <assert.h>
@@ -952,7 +954,7 @@ main(int argc, char *argv[])
 		int fd;
 
 		/* Take off... */
-		switch ((nsd.pid = fork())) {
+		switch (fork()) {
 		case 0:
 			/* Child */
 			break;

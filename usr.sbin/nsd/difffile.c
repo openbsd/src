@@ -1381,6 +1381,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 #endif /* NSEC3 */
 		zonedb->is_changed = 1;
 		if(nsd->db->udb) {
+			assert(z.base);
 			ZONE(&z)->is_changed = 1;
 			ZONE(&z)->mtime = time_end_0;
 			ZONE(&z)->mtime_nsec = time_end_1*1000;

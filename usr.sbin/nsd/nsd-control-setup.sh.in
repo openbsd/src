@@ -43,7 +43,7 @@ SERVERNAME=nsd
 CLIENTNAME=nsd-control
 
 # validity period for certificates
-DAYS=7200
+DAYS=3650
 
 # size of keys in bits
 BITS=3072

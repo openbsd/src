@@ -101,6 +101,11 @@ usage()
 	printf("  zonestatus [<zone>]		print state, serial, activity\n");
 	printf("  serverpid			get pid of server process\n");
 	printf("  verbosity <number>		change logging detail\n");
+	printf("  print_tsig [<key_name>]	print tsig with <name> the secret and algo\n");
+	printf("  update_tsig <name> <secret>	change existing tsig with <name> to a new <secret>\n");
+	printf("  add_tsig <name> <secret> [algo] add new key with the given parameters\n");
+	printf("  assoc_tsig <zone> <key_name>	associate <zone> with given tsig <key_name> name\n");
+	printf("  del_tsig <key_name>		delete tsig <key_name> from configuration\n");
 	exit(1);
 }
 

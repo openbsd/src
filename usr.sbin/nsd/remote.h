@@ -50,7 +50,6 @@ struct nsd_options;
 
 /* private, defined in remote.c to keep ssl.h out of this header */
 struct daemon_remote;
-struct rc_state;
 
 /* the remote control needs less backlog than the tcp53 service */
 #define TCP_BACKLOG_REMOTE 16 /* listen() tcp backlog */

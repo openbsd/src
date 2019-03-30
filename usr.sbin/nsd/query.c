@@ -693,7 +693,8 @@ answer_needs_ns(struct query* query)
 	assert(query);
 	/* Currently, only troublesome for DNSKEY and DS,
          * cuz their RRSETs are quite large. */
-	return (query->qtype != TYPE_DNSKEY && query->qtype != TYPE_DS);
+	return (query->qtype != TYPE_DNSKEY && query->qtype != TYPE_DS
+		&& query->qtype != TYPE_ANY);
 }
 
 static int
@@ -969,6 +970,9 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 			{
 				add_rrset(q, answer, ANSWER_SECTION, domain, rrset);
 				++added;
+				/* minimize response size with one RR,
+				 * according to RFC 8482(4.1). */
+				break;
 			}
 		}
 		if (added == 0) {
@@ -1182,8 +1186,10 @@ answer_authoritative(struct nsd   *nsd,
 			 * No match and no wildcard.  Include NSEC
 			 * proving there is no wildcard.
 			 */
-			nsec_domain = find_covering_nsec(closest_encloser->wildcard_child_closest_match, q->zone, &nsec_rrset);
-			if (nsec_domain) {
+			if(closest_encloser && (nsec_domain =
+				find_covering_nsec(closest_encloser->
+					wildcard_child_closest_match, q->zone,
+					&nsec_rrset)) != NULL) {
 				add_rrset(q, answer, AUTHORITY_SECTION, nsec_domain, nsec_rrset);
 			}
 		}

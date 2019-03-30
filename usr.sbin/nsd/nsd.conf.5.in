@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Dec  4, 2018" "NLnet Labs" "nsd 4.1.26"
+.TH "nsd.conf" "5" "Mar 25, 2019" "NLnet Labs" "nsd 4.1.27"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"

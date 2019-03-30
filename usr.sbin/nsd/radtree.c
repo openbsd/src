@@ -510,7 +510,10 @@ struct radnode* radix_insert(struct radtree* rt, uint8_t* k,
 			/* add a root to point to new node */
 			n = (struct radnode*)region_alloc_zero(rt->region,
 				sizeof(*n));
-			if(!n) return NULL;
+			if(!n) {
+				region_recycle(rt->region, add, sizeof(*add));
+				return NULL;
+			}
 			if(!radnode_array_space(rt->region, n, k[0])) {
 				region_recycle(rt->region, n->array,
 					n->capacity*sizeof(struct radsel));

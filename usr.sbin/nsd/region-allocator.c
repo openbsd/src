@@ -491,7 +491,7 @@ region_dump_stats(region_type *region, FILE *out)
 		(unsigned long) region->chunk_count,
 		(unsigned long) region->cleanup_count,
 		(unsigned long) region->recycle_size);
-	if(1 && region->recycle_bin) {
+	if(region->recycle_bin) {
 		/* print details of the recycle bin */
 		size_t i;
 		for(i=0; i<region->large_object_size; i++) {
@@ -541,7 +541,7 @@ region_log_stats(region_type *region)
 	len = strlen(str);
 	str+=len;
 	strl-=len;
-	if(1 && region->recycle_bin) {
+	if(region->recycle_bin) {
 		/* print details of the recycle bin */
 		size_t i;
 		for(i=0; i<region->large_object_size; i++) {
