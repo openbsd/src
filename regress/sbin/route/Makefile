@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.30 2018/06/04 19:22:13 kn Exp $
+# $OpenBSD: Makefile,v 1.31 2019/03/30 04:10:34 asou Exp $
 
 ROUTE?=		/sbin/route
 RDOMAIN?=	5
@@ -394,6 +394,74 @@ rttest${n}:
 	${SUDO} ifconfig vether99 192.168.178.53 delete
 	${RCMD} show -inet 2>&1 | \
 		sed -e "s,link\#[0-9 ]*U,link#              U," | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Check that add default route.
+n=	34
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${SUDO} ifconfig vether99 rdomain ${RDOMAIN} lladdr fe:e1:ba:d4:c8:1d up
+	${SUDO} ifconfig vether99 192.168.71.10
+	${RCMD} add default 192.168.71.1
+	${RCMD} show -inet 2>&1 | \
+		sed -e "s,link\#[0-9 ]*U,link#              U," | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Check that add 0.0.0.0/0 (default) route.
+n=	35
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${SUDO} ifconfig vether99 rdomain ${RDOMAIN} lladdr fe:e1:ba:d4:c8:1d up
+	${SUDO} ifconfig vether99 192.168.3.23
+	${RCMD} add 0.0.0.0/0 192.168.3.1
+	${RCMD} show -inet 2>&1 | \
+		sed -e "s,link\#[0-9 ]*U,link#              U," | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# Check that add 0.0.0.0 (not specified "/0", not default) route.
+n=	36
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${SUDO} ifconfig vether99 rdomain ${RDOMAIN} lladdr fe:e1:ba:d4:c8:1d up
+	${SUDO} ifconfig vether99 192.168.89.5
+	${RCMD} add 0.0.0.0 192.168.89.1
+	${RCMD} show -inet 2>&1 | \
+		sed -e "s,link\#[0-9 ]*U,link#              U," | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# check that specified mask.
+n=	37
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add 10.1.0.2/24 192.0.2.1
+	${RCMD} add 10.2.1.8/16 192.0.2.2
+	${RCMD} add 10.3.5.7/8 192.0.2.3
+	${RCMD} add 172.25.8.3/24 192.0.2.1
+	${RCMD} add 172.30.2.5/16 192.0.2.2
+	${RCMD} add 172.21.4.7/8 192.0.2.3
+	${RCMD} add 192.168.5.3/24 192.0.2.1
+	${RCMD} add 192.168.9.8/16 192.0.2.2
+	${RCMD} add 192.168.1.7/8 192.0.2.3
+	${RCMD} show -inet 2>&1 | \
+		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
+
+# check that not specified mask.
+n=	38
+RTTEST_TARGETS+:=rttest${n}
+rttest${n}:
+	${RCMD} add 10.0.0.5 192.0.2.1
+	${RCMD} add 10.4.2 192.0.2.2
+	${RCMD} add 10.5 192.0.2.3
+	${RCMD} add 10 192.0.2.4
+	${RCMD} add 172.16.1.8 192.0.2.1
+	${RCMD} add 172.17.2 192.0.2.2
+	${RCMD} add 172.28 192.0.2.3
+	${RCMD} add 172 192.0.2.4
+	${RCMD} add 192.168.7.9 192.0.2.1
+	${RCMD} add 192.168.2 192.0.2.2
+	${RCMD} add 192.168 192.0.2.3
+	${RCMD} add 192 192.0.2.4
+	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 REGRESS_TARGETS=netmask ${RTTEST_TARGETS}
