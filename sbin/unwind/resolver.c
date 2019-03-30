@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.27 2019/03/24 17:56:54 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.28 2019/03/30 02:12:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1264,15 +1264,15 @@ best_resolver(void)
 	log_debug("%s: %s: %s, %s: %s, %s: %s, %s: %s, captive_portal: %s",
 	    __func__,
 	    uw_resolver_type_str[RECURSOR],
-	    recursor != NULL ? uw_resolver_state_str[recursor->state] : NULL,
+	    recursor != NULL ? uw_resolver_state_str[recursor->state] : "NA",
 	    uw_resolver_type_str[FORWARDER],
-	    forwarder != NULL ? uw_resolver_state_str[forwarder->state] : NULL,
+	    forwarder != NULL ? uw_resolver_state_str[forwarder->state] : "NA",
 	    uw_resolver_type_str[STATIC_FORWARDER],
 	    static_forwarder != NULL ?
-	    uw_resolver_state_str[static_forwarder->state] : NULL,
+	    uw_resolver_state_str[static_forwarder->state] : "NA",
 	    uw_resolver_type_str[STATIC_DOT_FORWARDER],
 	    static_dot_forwarder != NULL ?
-	    uw_resolver_state_str[static_dot_forwarder->state] : NULL,
+	    uw_resolver_state_str[static_dot_forwarder->state] : "NA",
 	    captive_portal_state_str[captive_portal_state]);
 
 	if (captive_portal_state == UNKNOWN || captive_portal_state == BEHIND) {
