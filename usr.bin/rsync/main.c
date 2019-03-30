@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.36 2019/03/25 21:09:49 deraadt Exp $ */
+/*	$Id: main.c,v 1.37 2019/03/30 07:24:42 naddy Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -284,8 +284,8 @@ main(int argc, char *argv[])
 		{ "archive",	no_argument,	NULL,			'a' },
 		{ "help",	no_argument,	NULL,			'h' },
 		{ "compress",	no_argument,	NULL,			'z' },
+		{ "del",	no_argument,	&opts.del,		1 },
 		{ "delete",	no_argument,	&opts.del,		1 },
-		{ "no-delete",	no_argument,	&opts.del,		0 },
 		{ "devices",	no_argument,	&opts.devices,		1 },
 		{ "no-devices",	no_argument,	&opts.devices,		0 },
 		{ "group",	no_argument,	&opts.preserve_gids,	1 },
