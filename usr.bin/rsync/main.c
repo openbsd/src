@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.38 2019/03/30 09:32:54 naddy Exp $ */
+/*	$Id: main.c,v 1.39 2019/03/30 09:55:05 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -459,7 +459,8 @@ main(int argc, char *argv[])
 		if (dup2(fds[1], STDIN_FILENO) == -1) {
 			ERR(&sess, "dup2");
 			_exit(1);
-		} if (dup2(fds[1], STDOUT_FILENO) == -1) {
+		}
+		if (dup2(fds[1], STDOUT_FILENO) == -1) {
 			ERR(&sess, "dup2");
 			_exit(1);
 		}
