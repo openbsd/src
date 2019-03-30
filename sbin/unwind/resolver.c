@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.28 2019/03/30 02:12:45 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.29 2019/03/30 12:52:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -126,8 +126,6 @@ void			 send_resolver_histogram_info(struct uw_resolver *,
 			     pid_t);
 void			 check_captive_portal(int);
 void			 check_captive_portal_timo(int, short, void *);
-void			 check_captive_portal_resolve_done(void *, int, void *,
-			     int, int, char *, int);
 int			 check_captive_portal_changed(struct uw_conf *,
 			     struct uw_conf *);
 void			 trust_anchor_resolve(void);
@@ -1423,9 +1421,6 @@ check_captive_portal_timo(int fd, short events, void *arg)
 void
 check_captive_portal(int timer_reset)
 {
-	struct uw_resolver	*res;
-	int			 err;
-
 	log_debug("%s", __func__);
 
 	if (resolver_conf->captive_portal_host == NULL) {
@@ -1445,83 +1440,7 @@ check_captive_portal(int timer_reset)
 
 	captive_portal_state = PORTAL_UNKNOWN;
 
-	res = forwarder;
-
-	resolver_ref(res);
-
-	if ((err = ub_resolve_event(res->ctx,
-	    resolver_conf->captive_portal_host, LDNS_RR_TYPE_A,
-	    LDNS_RR_CLASS_IN, res, check_captive_portal_resolve_done,
-	    NULL)) != 0) {
-		log_warn("%s: ub_resolve_async: err: %d, %s", __func__, err,
-		    ub_strerror(err));
-		resolver_unref(res);
-	}
-}
-
-void
-check_captive_portal_resolve_done(void *arg, int rcode, void *answer_packet,
-    int answer_len, int sec, char *why_bogus, int was_ratelimited)
-{
-	struct uw_resolver	*res;
-	struct ub_result	*result;
-	sldns_buffer		*buf;
-	struct regional		*region;
-	struct sockaddr_in	 sin;
-	int			 i;
-	char			*str, rdata_buf[sizeof("XXX.XXX.XXX.XXX")];
-
-	res = (struct uw_resolver *)arg;
-
-	if ((result = calloc(1, sizeof(*result))) == NULL)
-		goto out;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(80);
-
-	log_debug("%s: %d", __func__, rcode);
-
-	if ((str = sldns_wire2str_pkt(answer_packet, answer_len)) != NULL) {
-		log_debug("%s", str);
-		free(str);
-	}
-
-	buf = sldns_buffer_new(answer_len);
-	region = regional_create();
-	result->rcode = LDNS_RCODE_SERVFAIL;
-	if(region && buf) {
-		sldns_buffer_clear(buf);
-		sldns_buffer_write(buf, answer_packet, answer_len);
-		sldns_buffer_flip(buf);
-		libworker_enter_result(result, buf, region, sec);
-		result->answer_packet = NULL;
-		result->answer_len = 0;
-		sldns_buffer_free(buf);
-		regional_destroy(region);
-
-		i = 0;
-		while(result->data[i] != NULL) {
-			sldns_wire2str_rdata_buf(result->data[i],
-			    result->len[i], rdata_buf, sizeof(rdata_buf),
-			    LDNS_RR_TYPE_A);
-			log_debug("%s: result[%d] = %d: %s", __func__, i,
-			    result->len[i], rdata_buf);
-
-			memcpy(&sin.sin_addr.s_addr, result->data[i],
-			    sizeof(sin.sin_addr.s_addr));
-			log_debug("%s: ip_port: %s", __func__,
-			    ip_port((struct sockaddr *)&sin));
-
-			resolver_imsg_compose_main(IMSG_OPEN_HTTP_PORT, 0,
-			    &sin, sizeof(sin));
-			i++;
-		}
-	}
-out:
-	ub_resolve_free(result);
-	resolver_unref(res);
+	resolver_imsg_compose_main(IMSG_RESOLVE_CAPTIVE_PORTAL, 0, NULL, 0);
 }
 
 int

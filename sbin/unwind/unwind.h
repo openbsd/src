@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.12 2019/03/24 17:55:59 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.13 2019/03/30 12:52:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -97,7 +97,6 @@ enum imsg_type {
 	IMSG_CTL_RESOLVER_HISTOGRAM,
 	IMSG_CTL_END,
 	IMSG_CTL_RECHECK_CAPTIVEPORTAL,
-	IMSG_OPEN_HTTP_PORT,
 	IMSG_HTTPSOCK,
 	IMSG_CAPTIVEPORTAL_STATE,
 	IMSG_TAFD,
@@ -105,6 +104,7 @@ enum imsg_type {
 	IMSG_NEW_TAS_ABORT,
 	IMSG_NEW_TAS_DONE,
 	IMSG_RECHECK_RESOLVERS,
+	IMSG_RESOLVE_CAPTIVE_PORTAL,
 };
 
 struct uw_forwarder {

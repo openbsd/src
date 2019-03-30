@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.19 2019/03/22 10:42:26 jca Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.20 2019/03/30 12:52:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -34,6 +34,7 @@
 #include <fcntl.h>
 #include <imsg.h>
 #include <netdb.h>
+#include <asr.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,6 +73,8 @@ int		main_reload(void);
 int		main_sendall(enum imsg_type, void *, uint16_t);
 void		open_dhcp_lease(int);
 void		open_ports(void);
+void		resolve_captive_portal(void);
+void		resolve_captive_portal_done(struct asr_result *, void *);
 
 struct uw_conf	*main_conf;
 struct imsgev	*iev_frontend;
@@ -477,9 +480,8 @@ main_dispatch_resolver(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf;
 	struct imsg		 imsg;
-	struct sockaddr_in	 sin;
 	ssize_t			 n;
-	int			 shut = 0, httpsock;
+	int			 shut = 0;
 
 	ibuf = &iev->ibuf;
 
@@ -503,27 +505,8 @@ main_dispatch_resolver(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_OPEN_HTTP_PORT:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(sin))
-				fatalx("%s: IMSG_OPEN_HTTP_PORT wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&sin, imsg.data, sizeof(sin));
-
-			if ((httpsock = socket(AF_INET, SOCK_STREAM |
-			    SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
-				log_warn("%s: socket", __func__);
-				break;
-			}
-			if (connect(httpsock, (struct sockaddr *)&sin,
-			    sin.sin_len) == -1) {
-				if (errno != EINPROGRESS) {
-					log_warn("%s: connect", __func__);
-					close(httpsock);
-					break;
-				}
-			}
-			main_imsg_compose_captiveportal_fd(IMSG_HTTPSOCK, 0,
-			    httpsock);
+		case IMSG_RESOLVE_CAPTIVE_PORTAL:
+			resolve_captive_portal();
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -937,4 +920,63 @@ open_ports(void)
 		main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
 	if (udp6sock != -1)
 		main_imsg_compose_frontend_fd(IMSG_UDP6SOCK, 0, udp6sock);
+}
+
+void
+resolve_captive_portal(void)
+{
+	struct addrinfo	 hints;
+	void		*as;
+
+	if (main_conf->captive_portal_host == NULL)
+		return;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET;
+	hints.ai_socktype = SOCK_STREAM;	
+
+	log_debug("%s: %s", __func__, main_conf->captive_portal_host);
+
+	if ((as = getaddrinfo_async(main_conf->captive_portal_host, "www",
+	    &hints, NULL)) != NULL)
+		event_asr_run(as, resolve_captive_portal_done, NULL);
+	else
+		log_warn("%s: getaddrinfo_async", __func__);
+
+}
+
+void
+resolve_captive_portal_done(struct asr_result *ar, void *arg)
+{
+	struct addrinfo	*res;
+	int		 httpsock;
+
+	if (ar->ar_gai_errno) {
+		log_warnx("%s: %s", __func__, gai_strerror(ar->ar_gai_errno));
+		return;
+	}
+
+	for (res = ar->ar_addrinfo; res; res = res->ai_next) {
+		if (res->ai_family != PF_INET)
+			continue;
+		log_debug("%s: ip_port: %s", __func__,
+		    ip_port(res->ai_addr));
+
+		if ((httpsock = socket(AF_INET, SOCK_STREAM |
+		    SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1) {
+			log_warn("%s: socket", __func__);
+			break;
+		}
+		if (connect(httpsock, res->ai_addr, res->ai_addrlen) == -1) {
+			if (errno != EINPROGRESS) {
+				log_warn("%s: connect", __func__);
+				close(httpsock);
+				break;
+			}
+		}
+		main_imsg_compose_captiveportal_fd(IMSG_HTTPSOCK, 0,
+		    httpsock);
+	}
+
+	freeaddrinfo(ar->ar_addrinfo);
 }
