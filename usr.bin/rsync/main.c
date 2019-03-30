@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.39 2019/03/30 09:55:05 deraadt Exp $ */
+/*	$Id: main.c,v 1.40 2019/03/30 23:48:24 schwarze Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -499,11 +499,9 @@ main(int argc, char *argv[])
 	exit(rc);
 usage:
 	fprintf(stderr,
-	    "usage: %s [-aDglnoprtvz] [-e program] [--archive] [--compress]\n"
-	    "\t[--del] [--delete] [--devices] [--group] [--links] [--dry-run]\n"
-	    "\t[--owner] [--perms] [--port=portnumber] [--recursive]\n"
-	    "\t[--rsh=program][--rsync-path=program] [--specials] [--times]\n"
-	    "\t[--verbose] [--version] source ... directory\n",
+	    "usage: %s [-aDglnoprtv] [-e program] [--del] [--devices]\n"
+	    "\t[--port=portnumber] [--rsync-path=program] [--specials]\n"
+	    "\t[--version] source ... directory\n",
 	    getprogname());
 	exit(1);
 }

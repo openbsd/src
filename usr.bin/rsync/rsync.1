@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.13 2019/03/30 09:32:54 naddy Exp $
+.\"	$OpenBSD: rsync.1,v 1.14 2019/03/30 23:48:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -24,22 +24,11 @@
 .Nm openrsync
 .Op Fl aDglnoprtv
 .Op Fl e Ar program
-.Op Fl -archive
 .Op Fl -del
-.Op Fl -delete
 .Op Fl -devices
-.Op Fl -group
-.Op Fl -links
-.Op Fl -dry-run
-.Op Fl -owner
-.Op Fl -perms
 .Op Fl -port Ns = Ns Ar portnumber
-.Op Fl -recursive
-.Op Fl -rsh Ns = Ns Ar program
 .Op Fl -rsync-path Ns = Ns Ar program
 .Op Fl -specials
-.Op Fl -times
-.Op Fl -verbose
 .Op Fl -version
 .Ar source ...
 .Ar directory
@@ -59,7 +48,7 @@ may be remote,
 but not both.
 The arguments are as follows:
 .Bl -tag -width Ds
-.It Fl a , Fl -archive
+.It Fl a , -archive
 Archive mode.
 Shorthand for
 .Fl Dgloprt .
@@ -80,7 +69,7 @@ Transfer device files.
 .It Fl e Ar program , Fl -rsh Ns = Ns Ar program
 Specify alternative program, defaults to
 .Xr ssh 1 .
-.It Fl g , Fl -group
+.It Fl g , -group
 Set group identifier to match the source.
 Groups are matched by name: group
 .Qq kristaps
@@ -89,24 +78,24 @@ with id 1000 on a remote server will be properly assigned group
 on the local machine with id 2000.
 If the sender's group is unknown on the local machine, it is used
 verbatim.
-.It Fl l , Fl -links
+.It Fl l , -links
 Transfer symbolic links.
 The link is transferred as a standalone file: if the destination does
 not exist, it will be broken.
-.It Fl n , Fl -dry-run
+.It Fl n , -dry-run
 Dry-run mode.
 Does not actually modify the destination.
-.It Fl o , Fl -owner
+.It Fl o , -owner
 Set user identifier to match the source.
 This behaves like
 .Fl g
 and only works if run as root.
-.It Fl p , Fl -perms
+.It Fl p , -perms
 Set destination file or directory permissions to match the source when
 it is updated.
 .It Fl -port Ns = Ns Ar portnumber
 Specify alternative port number.
-.It Fl r , Fl -recursive
+.It Fl r , -recursive
 If
 .Ar source
 designates a directory, synchronise the directory and the entire subtree
@@ -125,10 +114,10 @@ on the remote host instead of the default
 .Ar rsync .
 .It Fl -specials
 Transfer fifo and unix domain socket files.
-.It Fl t , Fl -times
+.It Fl t , -times
 Set destination file and directory modification time to match the source
 when it is updated or created.
-.It Fl v , Fl -verbose
+.It Fl v , -verbose
 Increase verbosity.
 Specify once for files being transferred, twice for specific status,
 thrice for per-file transfer information, and four times for per-file
