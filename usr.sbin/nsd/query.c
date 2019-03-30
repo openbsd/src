@@ -970,9 +970,11 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 			{
 				add_rrset(q, answer, ANSWER_SECTION, domain, rrset);
 				++added;
+#ifdef NOTYET
 				/* minimize response size with one RR,
 				 * according to RFC 8482(4.1). */
 				break;
+#endif
 			}
 		}
 		if (added == 0) {
