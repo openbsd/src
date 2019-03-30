@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.12 2019/03/22 20:12:23 schwarze Exp $
+.\"	$OpenBSD: rsync.1,v 1.13 2019/03/30 09:32:54 naddy Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2019 $
+.Dd $Mdocdate: March 30 2019 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Op Fl aDglnoprtv
 .Op Fl e Ar program
 .Op Fl -archive
+.Op Fl -del
 .Op Fl -delete
 .Op Fl -devices
 .Op Fl -group
@@ -66,7 +67,7 @@ Shorthand for
 Transfer device and special files.
 Shorthand for
 .Fl -devices -specials
-.It Fl -delete
+.It Fl -del , -delete
 Delete files in
 .Ar directory
 not found in
