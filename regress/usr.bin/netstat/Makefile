@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2019/03/30 05:33:39 asou Exp $
+# $OpenBSD: Makefile,v 1.2 2019/03/30 06:37:10 yasuoka Exp $
 
 ROUTE?=		/sbin/route
 RDOMAIN?=	5
@@ -23,7 +23,8 @@ NETSTAT?=	/usr/bin/netstat
 RCMD=		${SUDO} ${ROUTE} -T ${RDOMAIN} -n
 
 
-# Check that add 0.0.0.0 (not specified "/0", not default) route.
+# Check that 0.0.0.0 host route is displayed properly.
+# It was once displayed "default".
 n=	1
 NSTEST_TARGETS+:=nstest${n}
 nstest${n}:

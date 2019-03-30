@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.31 2019/03/30 04:10:34 asou Exp $
+# $OpenBSD: Makefile,v 1.32 2019/03/30 06:37:10 yasuoka Exp $
 
 ROUTE?=		/sbin/route
 RDOMAIN?=	5
@@ -396,7 +396,7 @@ rttest${n}:
 		sed -e "s,link\#[0-9 ]*U,link#              U," | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
-# Check that add default route.
+# Check that adding default route by "default" works properly
 n=	34
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -407,7 +407,7 @@ rttest${n}:
 		sed -e "s,link\#[0-9 ]*U,link#              U," | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
-# Check that add 0.0.0.0/0 (default) route.
+# Check that adding default route by "0.0.0.0/0" works properly
 n=	35
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -418,7 +418,7 @@ rttest${n}:
 		sed -e "s,link\#[0-9 ]*U,link#              U," | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
-# Check that add 0.0.0.0 (not specified "/0", not default) route.
+# Check that adding "0.0.0.0" route doesn't mean default route
 n=	36
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -429,7 +429,7 @@ rttest${n}:
 		sed -e "s,link\#[0-9 ]*U,link#              U," | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
-# check that specified mask.
+# Check that adding routes with mask works properly
 n=	37
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
@@ -445,7 +445,7 @@ rttest${n}:
 	${RCMD} show -inet 2>&1 | \
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
-# check that not specified mask.
+# Check that adding routes without mask works properly
 n=	38
 RTTEST_TARGETS+:=rttest${n}
 rttest${n}:
