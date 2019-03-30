@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.21 2019/03/23 16:04:28 deraadt Exp $ */
+/*	$Id: receiver.c,v 1.22 2019/03/30 07:28:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -47,31 +47,8 @@ rsync_set_metadata(struct sess *sess, int newfile,
 {
 	uid_t		 uid = (uid_t)-1;
 	gid_t		 gid = (gid_t)-1;
+	mode_t		 mode;
 	struct timespec	 ts[2];
-
-	/*
-	 * Conditionally adjust identifiers.
-	 * If we have an EPERM, report it but continue on: this just
-	 * means that we're mapping into an unknown (or disallowed)
-	 * group identifier.
-	 */
-
-	if (getuid() == 0 && sess->opts->preserve_uids)
-		uid = f->st.uid;
-	if (sess->opts->preserve_gids)
-		gid = f->st.gid;
-
-	if (uid != (uid_t)-1 || gid != (gid_t)-1) {
-		if (fchown(fd, uid, gid) == -1) {
-			if (errno != EPERM) {
-				ERR(sess, "%s: fchown", path);
-				return 0;
-			}
-			WARNX(sess, "%s: identity unknown or not available "
-			    "to user.group: %u.%u", f->path, uid, gid);
-		} else
-			LOG4(sess, "%s: updated uid and/or gid", f->path);
-	}
 
 	/* Conditionally adjust file modification time. */
 
@@ -86,10 +63,36 @@ rsync_set_metadata(struct sess *sess, int newfile,
 		LOG4(sess, "%s: updated date", f->path);
 	}
 
+	/*
+	 * Conditionally adjust identifiers.
+	 * If we have an EPERM, report it but continue on: this just
+	 * means that we're mapping into an unknown (or disallowed)
+	 * group identifier.
+	 */
+	if (getuid() == 0 && sess->opts->preserve_uids)
+		uid = f->st.uid;
+	if (sess->opts->preserve_gids)
+		gid = f->st.gid;
+
+	mode = f->st.mode;
+	if (uid != (uid_t)-1 || gid != (gid_t)-1) {
+		if (fchown(fd, uid, gid) == -1) {
+			if (errno != EPERM) {
+				ERR(sess, "%s: fchown", path);
+				return 0;
+			}
+			if (getuid() == 0)
+				WARNX(sess, "%s: identity unknown or not available "
+				    "to user.group: %u.%u", f->path, uid, gid);
+		} else
+			LOG4(sess, "%s: updated uid and/or gid", f->path);
+		mode &= ~(S_ISTXT | S_ISUID | S_ISGID);
+	}
+
 	/* Conditionally adjust file permissions. */
 
 	if (newfile || sess->opts->preserve_perms) {
-		if (fchmod(fd, f->st.mode) == -1) {
+		if (fchmod(fd, mode) == -1) {
 			ERR(sess, "%s: fchmod", path);
 			return 0;
 		}
@@ -105,32 +108,8 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 {
 	uid_t		 uid = (uid_t)-1;
 	gid_t		 gid = (gid_t)-1;
+	mode_t		 mode;
 	struct timespec	 ts[2];
-
-	/*
-	 * Conditionally adjust identifiers.
-	 * If we have an EPERM, report it but continue on: this just
-	 * means that we're mapping into an unknown (or disallowed)
-	 * group identifier.
-	 */
-
-	if (getuid() == 0 && sess->opts->preserve_uids)
-		uid = f->st.uid;
-	if (sess->opts->preserve_gids)
-		gid = f->st.gid;
-
-	if (uid != (uid_t)-1 || gid != (gid_t)-1) {
-		if (fchownat(rootfd, path, uid, gid, AT_SYMLINK_NOFOLLOW) ==
-		    -1) {
-			if (errno != EPERM) {
-				ERR(sess, "%s: fchownat", path);
-				return 0;
-			}
-			WARNX(sess, "%s: identity unknown or not available "
-			    "to user.group: %u.%u", f->path, uid, gid);
-		} else
-			LOG4(sess, "%s: updated uid and/or gid", f->path);
-	}
 
 	/* Conditionally adjust file modification time. */
 
@@ -145,11 +124,36 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 		LOG4(sess, "%s: updated date", f->path);
 	}
 
+	/*
+	 * Conditionally adjust identifiers.
+	 * If we have an EPERM, report it but continue on: this just
+	 * means that we're mapping into an unknown (or disallowed)
+	 * group identifier.
+	 */
+	if (getuid() == 0 && sess->opts->preserve_uids)
+		uid = f->st.uid;
+	if (sess->opts->preserve_gids)
+		gid = f->st.gid;
+
+	mode = f->st.mode;
+	if (uid != (uid_t)-1 || gid != (gid_t)-1) {
+		if (fchownat(rootfd, path, uid, gid, AT_SYMLINK_NOFOLLOW) == -1) {
+			if (errno != EPERM) {
+				ERR(sess, "%s: fchownat", path);
+				return 0;
+			}
+			if (getuid() == 0)
+				WARNX(sess, "%s: identity unknown or not available "
+				    "to user.group: %u.%u", f->path, uid, gid);
+		} else
+			LOG4(sess, "%s: updated uid and/or gid", f->path);
+		mode &= ~(S_ISTXT | S_ISUID | S_ISGID);
+	}
+
 	/* Conditionally adjust file permissions. */
 
 	if (newfile || sess->opts->preserve_perms) {
-		if (fchmodat(rootfd, path, f->st.mode, AT_SYMLINK_NOFOLLOW) ==
-		    -1) {
+		if (fchmodat(rootfd, path, mode, AT_SYMLINK_NOFOLLOW) == -1) {
 			ERR(sess, "%s: fchmodat", path);
 			return 0;
 		}
