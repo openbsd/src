@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.377 2019/03/07 07:42:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.378 2019/03/31 16:57:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -231,6 +231,9 @@ struct listen_addr {
 TAILQ_HEAD(listen_addrs, listen_addr);
 TAILQ_HEAD(filter_set_head, filter_set);
 
+struct peer;
+TAILQ_HEAD(peer_head, peer);
+
 struct l3vpn;
 SIMPLEQ_HEAD(l3vpn_head, l3vpn);
 
@@ -267,6 +270,7 @@ struct filter_rule;
 TAILQ_HEAD(filter_head, filter_rule);
 
 struct bgpd_config {
+	struct peer_head			 peers;
 	struct l3vpn_head			 l3vpns;
 	struct network_head			 networks;
 	struct filter_head			*filters;
@@ -376,7 +380,6 @@ struct peer_config {
 	enum export_type	 export_type;
 	enum enforce_as		 enforce_as;
 	enum enforce_as		 enforce_local_as;
-	enum reconf_action	 reconf_action;
 	u_int16_t		 max_prefix_restart;
 	u_int16_t		 holdtime;
 	u_int16_t		 min_holdtime;

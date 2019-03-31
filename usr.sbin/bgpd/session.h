@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.134 2019/03/07 07:42:36 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.135 2019/03/31 16:57:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -196,6 +196,7 @@ TAILQ_HEAD(peer_timer_head, peer_timer);
 struct peer {
 	struct peer_config	 conf;
 	struct peer_stats	 stats;
+	TAILQ_ENTRY(peer)	 entry;
 	struct {
 		struct capabilities	ann;
 		struct capabilities	peer;
@@ -207,13 +208,12 @@ struct peer {
 		u_int32_t		spi_out;
 		enum auth_method	method;
 		u_int8_t		established;
-	} auth;
+	}			 auth;
 	struct bgpd_addr	 local;
 	struct bgpd_addr	 remote;
 	struct peer_timer_head	 timers;
 	struct msgbuf		 wbuf;
 	struct ibuf_read	*rbuf;
-	struct peer		*next;
 	struct peer		*template;
 	int			 fd;
 	int			 lasterr;
@@ -222,6 +222,7 @@ struct peer {
 	u_int32_t		 remote_bgpid;
 	enum session_state	 state;
 	enum session_state	 prev_state;
+	enum reconf_action	 reconf_action;
 	u_int16_t		 short_as;
 	u_int16_t		 holdtime;
 	u_int16_t		 local_port;
@@ -232,7 +233,6 @@ struct peer {
 	u_int8_t		 throttled;
 };
 
-extern struct peer	*peers;
 extern time_t		 pauseaccept;
 
 struct ctl_timer {
@@ -247,8 +247,7 @@ int	 carp_demote_get(char *);
 int	 carp_demote_set(char *, int);
 
 /* config.c */
-void	 merge_config(struct bgpd_config *, struct bgpd_config *,
-	    struct peer *);
+void	 merge_config(struct bgpd_config *, struct bgpd_config *);
 int	 prepare_listeners(struct bgpd_config *);
 
 /* control.c */
@@ -256,7 +255,7 @@ int	control_check(char *);
 int	control_init(int, char *);
 int	control_listen(int);
 void	control_shutdown(int);
-int	control_dispatch_msg(struct pollfd *, u_int *);
+int	control_dispatch_msg(struct pollfd *, u_int *, struct peer_head *);
 unsigned int	control_accept(int, int);
 
 /* log.c */
@@ -276,7 +275,7 @@ void		 mrt_dump_state(struct mrt *, u_int16_t, u_int16_t,
 void		 mrt_done(struct mrt *);
 
 /* parse.y */
-int	 parse_config(char *, struct bgpd_config *, struct peer **);
+struct bgpd_config *parse_config(char *, struct peer_head *);
 
 /* pfkey.c */
 int	pfkey_read(int, struct sadb_msg *);
@@ -285,9 +284,7 @@ int	pfkey_remove(struct peer *);
 int	pfkey_init(struct bgpd_sysdep *);
 
 /* printconf.c */
-void	print_config(struct bgpd_config *, struct rib_names *,
-	    struct network_head *, struct peer *, struct filter_head *,
-	    struct mrt_head *, struct l3vpn_head *);
+void	print_config(struct bgpd_config *, struct rib_names *);
 
 /* rde.c */
 void	 rde_main(int, int);
@@ -296,8 +293,9 @@ void	 rde_main(int, int);
 void		 session_main(int, int);
 void		 bgp_fsm(struct peer *, enum session_events);
 int		 session_neighbor_rrefresh(struct peer *p);
-struct peer	*getpeerbyaddr(struct bgpd_addr *);
-struct peer	*getpeerbydesc(const char *);
+struct peer	*getpeerbydesc(struct bgpd_config *, const char *);
+struct peer	*getpeerbyip(struct bgpd_config *, struct sockaddr *);
+struct peer	*getpeerbyid(struct bgpd_config *, u_int32_t);
 int		 peer_matched(struct peer *, struct ctl_neighbor *);
 int		 imsg_ctl_parent(int, u_int32_t, pid_t, void *, u_int16_t);
 int		 imsg_ctl_rde(int, pid_t, void *, u_int16_t);

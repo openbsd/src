@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.214 2019/03/31 03:36:18 yasuoka Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.215 2019/03/31 16:57:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,7 @@ __dead void	usage(void);
 int		main(int, char *[]);
 pid_t		start_child(enum bgpd_process, char *, int, int, int);
 int		send_filterset(struct imsgbuf *, struct filter_set_head *);
-int		reconfigure(char *, struct bgpd_config *, struct peer **);
+int		reconfigure(char *, struct bgpd_config *);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
 int		imsg_send_sockets(struct imsgbuf *, struct imsgbuf *);
@@ -100,7 +100,6 @@ int
 main(int argc, char *argv[])
 {
 	struct bgpd_config	*conf;
-	struct peer		*peer_l, *p;
 	struct rde_rib		*rr;
 	struct pollfd		 pfd[POLL_MAX];
 	time_t			 timeout;
@@ -124,8 +123,6 @@ main(int argc, char *argv[])
 	saved_argv0 = argv[0];
 	if (saved_argv0 == NULL)
 		saved_argv0 = "bgpd";
-
-	peer_l = NULL;
 
 	while ((ch = getopt(argc, argv, "cdD:f:nRSv")) != -1) {
 		switch (ch) {
@@ -169,20 +166,14 @@ main(int argc, char *argv[])
 		usage();
 
 	if (cmd_opts & BGPD_OPT_NOACTION) {
-		conf = new_config();
-		if (parse_config(conffile, conf, &peer_l))
+		if ((conf = parse_config(conffile, NULL)) == NULL)
 			exit(1);
 
 		if (cmd_opts & BGPD_OPT_VERBOSE)
-			print_config(conf, &ribnames, &conf->networks, peer_l,
-			    conf->filters, conf->mrt, &conf->l3vpns);
+			print_config(conf, &ribnames);
 		else
 			fprintf(stderr, "configuration OK\n");
 
-		while ((p = peer_l) != NULL) {
-			peer_l = p->next;
-			free(p);
-		}
 		while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
 			free(rr);
@@ -261,7 +252,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 	if (imsg_send_sockets(ibuf_se, ibuf_rde))
 		fatal("could not establish imsg links");
 	conf = new_config();
-	quit = reconfigure(conffile, conf, &peer_l);
+	quit = reconfigure(conffile, conf);
 	if (pftable_clear_all() != 0)
 		quit = 1;
 
@@ -317,7 +308,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 			u_int	error;
 
 			reconfig = 0;
-			switch (reconfigure(conffile, conf, &peer_l)) {
+			switch (reconfigure(conffile, conf)) {
 			case -1:	/* fatal error */
 				quit = 1;
 				break;
@@ -358,10 +349,6 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		ibuf_rde = NULL;
 	}
 
-	while ((p = peer_l) != NULL) {
-		peer_l = p->next;
-		free(p);
-	}
 	while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
 		free(rr);
@@ -454,8 +441,9 @@ send_filterset(struct imsgbuf *i, struct filter_set_head *set)
 }
 
 int
-reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
+reconfigure(char *conffile, struct bgpd_config *conf)
 {
+	struct bgpd_config	*new_conf;
 	struct peer		*p;
 	struct filter_rule	*r;
 	struct listen_addr	*la;
@@ -472,12 +460,13 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	reconfpending = 2;	/* one per child */
 
 	log_info("rereading config");
-	if (parse_config(conffile, conf, peer_l)) {
+	if ((new_conf = parse_config(conffile, &conf->peers)) == NULL) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
 		reconfpending = 0;
 		return (1);
 	}
+	merge_config(conf, new_conf);
 
 	if (prepare_listeners(conf) == -1) {
 		reconfpending = 0;
@@ -527,7 +516,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct peer **peer_l)
 	}
 
 	/* send peer list to the SE */
-	for (p = *peer_l; p != NULL; p = p->next) {
+	TAILQ_FOREACH(p, &conf->peers, entry) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(struct peer_config)) == -1)
 			return (-1);

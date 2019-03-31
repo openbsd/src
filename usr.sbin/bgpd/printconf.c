@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.133 2019/03/15 09:54:54 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.134 2019/03/31 16:57:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -49,11 +49,11 @@ const char	*print_auth_alg(u_int8_t);
 const char	*print_enc_alg(u_int8_t);
 void		 print_announce(struct peer_config *, const char *);
 void		 print_as(struct filter_rule *);
-void		 print_rule(struct peer *, struct filter_rule *);
+void		 print_rule(struct bgpd_config *, struct filter_rule *);
 const char	*mrt_type(enum mrt_type);
 void		 print_mrt(struct bgpd_config *, u_int32_t, u_int32_t,
 		    const char *, const char *);
-void		 print_groups(struct bgpd_config *, struct peer *);
+void		 print_groups(struct bgpd_config *);
 int		 peer_compare(const void *, const void *);
 
 void
@@ -759,7 +759,7 @@ print_as(struct filter_rule *r)
 }
 
 void
-print_rule(struct peer *peer_l, struct filter_rule *r)
+print_rule(struct bgpd_config *conf, struct filter_rule *r)
 {
 	struct peer *p;
 	int i;
@@ -784,17 +784,17 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 		printf("eeeeeeeps. ");
 
 	if (r->peer.peerid) {
-		for (p = peer_l; p != NULL && p->conf.id != r->peer.peerid;
-		    p = p->next)
-			;	/* nothing */
+		TAILQ_FOREACH(p, &conf->peers, entry)
+			if (p->conf.id == r->peer.peerid)
+				break;
 		if (p == NULL)
 			printf("? ");
 		else
 			printf("%s ", log_addr(&p->conf.remote_addr));
 	} else if (r->peer.groupid) {
-		for (p = peer_l; p != NULL &&
-		    p->conf.groupid != r->peer.groupid; p = p->next)
-			;	/* nothing */
+		TAILQ_FOREACH(p, &conf->peers, entry)
+			if (p->conf.groupid == r->peer.groupid)
+				break;
 		if (p == NULL)
 			printf("group ? ");
 		else
@@ -928,7 +928,7 @@ print_mrt(struct bgpd_config *conf, u_int32_t pid, u_int32_t gid,
 }
 
 void
-print_groups(struct bgpd_config *conf, struct peer *peer_l)
+print_groups(struct bgpd_config *conf)
 {
 	struct peer_config	**peerlist;
 	struct peer		 *p;
@@ -939,14 +939,14 @@ print_groups(struct bgpd_config *conf, struct peer *peer_l)
 	const char		 *c;
 
 	peer_cnt = 0;
-	for (p = peer_l; p != NULL; p = p->next)
+	TAILQ_FOREACH(p, &conf->peers, entry)
 		peer_cnt++;
 
 	if ((peerlist = calloc(peer_cnt, sizeof(struct peer_config *))) == NULL)
 		fatal("print_groups calloc");
 
 	i = 0;
-	for (p = peer_l; p != NULL; p = p->next)
+	TAILQ_FOREACH(p, &conf->peers, entry)
 		peerlist[i++] = &p->conf;
 
 	qsort(peerlist, peer_cnt, sizeof(struct peer_config *), peer_compare);
@@ -986,10 +986,7 @@ peer_compare(const void *aa, const void *bb)
 }
 
 void
-print_config(struct bgpd_config *conf, struct rib_names *rib_l,
-    struct network_head *net_l, struct peer *peer_l,
-    struct filter_head *rules_l, struct mrt_head *mrt_l,
-    struct l3vpn_head *vpns_l)
+print_config(struct bgpd_config *conf, struct rib_names *rib_l)
 {
 	struct filter_rule	*r;
 	struct network		*n;
@@ -1001,11 +998,11 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	print_as_sets(conf->as_sets);
 	print_prefixsets(&conf->prefixsets);
 	print_originsets(&conf->originsets);
-	TAILQ_FOREACH(n, net_l, entry)
+	TAILQ_FOREACH(n, &conf->networks, entry)
 		print_network(&n->net, "");
-	if (!SIMPLEQ_EMPTY(vpns_l))
+	if (!SIMPLEQ_EMPTY(&conf->l3vpns))
 		printf("\n");
-	SIMPLEQ_FOREACH(vpn, vpns_l, entry)
+	SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry)
 		print_l3vpn(vpn);
 	printf("\n");
 	SIMPLEQ_FOREACH(rr, rib_l, entry) {
@@ -1020,7 +1017,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l,
 	}
 	printf("\n");
 	print_mrt(conf, 0, 0, "", "");
-	print_groups(conf, peer_l);
-	TAILQ_FOREACH(r, rules_l, entry)
-		print_rule(peer_l, r);
+	print_groups(conf);
+	TAILQ_FOREACH(r, conf->filters, entry)
+		print_rule(conf, r);
 }

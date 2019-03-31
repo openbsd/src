@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.95 2019/02/12 13:30:39 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.96 2019/03/31 16:57:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -220,7 +220,8 @@ control_close(int fd)
 }
 
 int
-control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
+control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt,
+    struct peer_head *peers)
 {
 	struct imsg		 imsg;
 	struct ctl_conn		*c;
@@ -294,7 +295,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			    0, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_TERSE:
-			for (p = peers; p != NULL; p = p->next)
+			TAILQ_FOREACH(p, peers, entry)
 				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_NEIGHBOR,
 				    0, 0, -1, p, sizeof(struct peer));
 			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1, NULL, 0);
@@ -309,7 +310,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			} else {
 				neighbor = NULL;
 			}
-			for (matched = 0, p = peers; p != NULL; p = p->next) {
+			matched = 0;
+			TAILQ_FOREACH(p, peers, entry) {
 				if (!peer_matched(p, neighbor))
 					continue;
 
@@ -337,7 +339,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 					}
 				}
 			}
-			if (!matched && peers != NULL) {
+			if (!matched && TAILQ_EMPTY(peers)) {
 				control_result(c, CTL_RES_NOSUCHPEER);
 			} else if (!neighbor || !neighbor->show_timers) {
 				imsg_ctl_rde(IMSG_CTL_END, imsg.hdr.pid,
@@ -362,7 +364,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			neighbor = imsg.data;
 			neighbor->descr[PEER_DESCR_LEN - 1] = 0;
 
-			for (matched = 0, p = peers; p != NULL; p = p->next) {
+			matched = 0;
+			TAILQ_FOREACH(p, peers, entry) {
 				if (!peer_matched(p, neighbor))
 					continue;
 
@@ -417,7 +420,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 						 * Mark as deleted, will be
 						 * collected on next poll loop.
 						 */
-						p->conf.reconf_action =
+						p->reconf_action =
 						    RECONF_DELETE;
 						control_result(c, CTL_RES_OK);
 					}
@@ -458,10 +461,10 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			neighbor->descr[PEER_DESCR_LEN - 1] = 0;
 
 			/* check if at least one neighbor exists */
-			for (p = peers; p != NULL; p = p->next)
+			TAILQ_FOREACH(p, peers, entry)
 				if (peer_matched(p, neighbor))
 					break;
-			if (p == NULL && peers != NULL) {
+			if (p == NULL && TAILQ_EMPTY(peers)) {
 				control_result(c, CTL_RES_NOSUCHPEER);
 				break;
 			}
