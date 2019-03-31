@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.283 2019/02/08 16:52:54 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.284 2019/03/31 15:34:02 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ struct rt_msghdr *rtm_report(struct rtentry *, u_char, int, int);
 struct mbuf	*rtm_msg1(int, struct rt_addrinfo *);
 int		 rtm_msg2(int, int, struct rt_addrinfo *, caddr_t,
 		     struct walkarg *);
-void		 rtm_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
+int		 rtm_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 int		 rtm_validate_proposal(struct rt_addrinfo *);
 void		 rtm_setmetrics(u_long, const struct rt_metrics *,
 		     struct rt_kmetrics *);
@@ -682,7 +682,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("route_output");
 	len = m->m_pkthdr.len;
-	if (len < offsetof(struct rt_msghdr, rtm_type) + 1 ||
+	if (len < offsetof(struct rt_msghdr, rtm_hdrlen) + 1 ||
 	    len != mtod(m, struct rt_msghdr *)->rtm_msglen) {
 		error = EINVAL;
 		goto fail;
@@ -705,13 +705,6 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		error = EPROTONOSUPPORT;
 		goto fail;
 	}
-	rtm->rtm_pid = curproc->p_p->ps_pid;
-	if (rtm->rtm_hdrlen == 0)	/* old client */
-		rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
-	if (len < rtm->rtm_hdrlen) {
-		error = EINVAL;
-		goto fail;
-	}
 
 	/* Verify that the caller is sending an appropriate message early */
 	switch (rtm->rtm_type) {
@@ -725,6 +718,19 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		error = EOPNOTSUPP;
 		goto fail;
 	}
+	/*
+	 * Verify that the header length is valid.
+	 * All messages from userland start with a struct rt_msghdr.
+	 */
+	if (rtm->rtm_hdrlen == 0)	/* old client */
+		rtm->rtm_hdrlen = sizeof(struct rt_msghdr);
+	if (rtm->rtm_hdrlen < sizeof(struct rt_msghdr) ||
+	    len < rtm->rtm_hdrlen) {
+		error = EINVAL;
+		goto fail;
+	}
+
+	rtm->rtm_pid = curproc->p_p->ps_pid;
 
 	/*
 	 * Verify that the caller has the appropriate privilege; RTM_GET
@@ -773,7 +779,9 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 
 	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
-	rtm_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm, len + (caddr_t)rtm, &info);
+	if ((error = rtm_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm,
+	    len + (caddr_t)rtm, &info)) != 0)
+		goto fail;
 	info.rti_flags = rtm->rtm_flags;
 	if (rtm->rtm_type != RTM_PROPOSAL &&
 	   (info.rti_info[RTAX_DST] == NULL ||
@@ -1340,19 +1348,25 @@ rtm_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
-void
+int
 rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 {
 	struct sockaddr	*sa;
 	int		 i;
 
 	bzero(rtinfo->rti_info, sizeof(rtinfo->rti_info));
-	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
+	for (i = 0; i < sizeof(i) * 8; i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
-		rtinfo->rti_info[i] = sa = (struct sockaddr *)cp;
+		if (i >= RTAX_MAX || cp + sizeof(socklen_t) > cplim)
+			return (EINVAL);
+		sa = (struct sockaddr *)cp;
+		if (cp + sa->sa_len > cplim)
+			return (EINVAL);
+		rtinfo->rti_info[i] = sa;
 		ADVANCE(cp, sa);
 	}
+	return (0);
 }
 
 struct mbuf *
