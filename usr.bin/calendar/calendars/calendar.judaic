@@ -1,13 +1,13 @@
 /*
  * Judaic
  *
- * $OpenBSD: calendar.judaic,v 1.6 2019/01/30 07:24:53 bentley Exp $
+ * $OpenBSD: calendar.judaic,v 1.7 2019/03/31 16:10:35 bcallah Exp $
  */
 
 #ifndef _calendar_judaic_
 #define _calendar_judaic_
 
-Pesach+163	First Day of Rosh Hashanah (Jewish Lunar New Year; 5741 == 1980;
+Pesach+163	First Day of Rosh Hashanah (Jewish Lunar New Year; 5779 == 2018;
 	sabbatical)
 Pesach+164	Rosh Hashanah (sabbatical)
 Pesach+166	Fast of Gedalya (Murder of Gedalya and subsequent Exile; fast day)
@@ -17,8 +17,9 @@ Pesach+179	Succot (sabbatical)
 Pesach+184	Hoshanah Rabba (7th day of Succos)
 Pesach+185	Shmini Atzeres (8th Day of Gathering; sabbatical)
 Pesach+186	Shmini Atzeres/Simchas Torah (Rejoicing of the Law; sabbatical)
-12/12*	First Day of Chanukah
-12/27*	Fast of Asara B'Tevet (Babylonians put siege on Jerusalem; fast day)
+12/03*	First Day of Chanukah
+12/18*	Fast of Asara B'Tevet (Babylonians put siege on Jerusalem; fast day)
+01/20*	Tu B'Shevat (New Year of the Trees)
 Pesach-31	Fast of Esther (Battle of Purim; fast day)
 Pesach-30	Purim (Feast of Lots)
 Pesach-29	Purim (Feast of Lots)
@@ -27,10 +28,10 @@ Pesach+1	Pesach (sabbatical)
 Pesach+6	Pesach (sabbatical)
 Pesach+7	Pesach (Last Day of Passover; 8th day of Pesach; sabbatical)
 Pesach+34	Lag Ba'omer (Commemoration of the Great Rebellion)
-05/22*	Yom Yerushalayim (Reunification of Jerusalem)
+06/01*	Yom Yerushalayim (Reunification of Jerusalem)
 Pesach+50	Shavuot (Festival of Weeks; sabbatical)
 Pesach+51	Shavuot (Festival of Weeks; sabbatical)
-07/10*	Fast of Shiv'a Asar B'Tammuz (Romans breach Wall of Jerusalem; fast day)
+07/21*	Fast of Shiv'a Asar B'Tammuz (Romans breach Wall of Jerusalem; fast day)
 Pesach+81	Fast of Tish'a B'Av (Babylon destroys Holy Temple; fast day)
 
 #endif /* !_calendar_judaic_ */
