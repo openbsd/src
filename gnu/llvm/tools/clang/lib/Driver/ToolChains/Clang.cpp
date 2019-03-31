@@ -4103,8 +4103,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_pthread);
 
-  RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext);
-
   // -ret-protector
   unsigned RetProtector = 1;
   if (Arg *A = Args.getLastArg(options::OPT_fno_ret_protector,
@@ -4120,7 +4118,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_fno_stack_protector) &&
       !Args.hasArg(options::OPT_pg)) {
     CmdArgs.push_back(Args.MakeArgString("-D_RET_PROTECTOR"));
-    CmdArgs.push_back(Args.MakeArgString(Twine("-ret-protector")));
+    CmdArgs.push_back(Args.MakeArgString("-ret-protector"));
+  } else {
+    // If we're not using retguard, then do the usual stack protector
+    RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext);
   }
 
   // -fixup-gadgets
