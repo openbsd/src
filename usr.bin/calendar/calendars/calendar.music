@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.35 2019/01/30 07:24:53 bentley Exp $
+ * $OpenBSD: calendar.music,v 1.36 2019/03/31 19:43:41 sthen Exp $
  */
 
 #ifndef _calendar_music_
@@ -19,6 +19,7 @@
 01/08	David Bowie (then David Robert Jones) is born in London, 1947
 01/08	Arcangelo Corelli dies in Italy, 1713
 01/09	James Patrick Page (Led Zeppelin) is born in Middlesex, England, 1945
+01/09	Scott Walker (born Noel Scott Engel) is born in Hamilton, Ohio, 1943
 01/10	Blues guitarist Howlin' Wolf dies in Chicago, 1976
 01/10	Jim Croce is born in Philadelphia, 1943
 01/10	Pat Benatar is born in Long Island, 1952
@@ -136,6 +137,7 @@
 03/22	Ten Years After plays their last concert, 1974
 03/22	Jean-Baptiste Lully dies, 1687
 03/22	Vaclav Nelhybel dies, 1996
+03/22	Scott Walker (born Noel Scott Engel) dies in London, England, 2019
 03/25	Aretha Franklin is born in Detroit, 1943
 03/25	Bela Bartok is born in Nagyszentmiklos, Hungary, 1881
 03/25	Claude Debussy dies in Paris, France, 1918 to the sound of World War I
