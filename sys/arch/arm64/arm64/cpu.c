@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2019/02/23 03:37:50 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2019/03/31 02:37:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -49,7 +49,6 @@
 #define CPU_PART_CORTEX_A53	0xd03
 #define CPU_PART_CORTEX_A35	0xd04
 #define CPU_PART_CORTEX_A55	0xd05
-#define CPU_PART_NEOVERSE_E1	0xd06
 #define CPU_PART_CORTEX_A57	0xd07
 #define CPU_PART_CORTEX_A72	0xd08
 #define CPU_PART_CORTEX_A73	0xd09
@@ -58,6 +57,7 @@
 #define CPU_PART_NEOVERSE_N1	0xd0c
 #define CPU_PART_CORTEX_DEIMOS	0xd0d
 #define CPU_PART_CORTEX_A76AE	0xd0e
+#define CPU_PART_NEOVERSE_E1	0xd4a
 
 #define CPU_PART_THUNDERX_T88	0x0a1
 #define CPU_PART_THUNDERX_T81	0x0a2
