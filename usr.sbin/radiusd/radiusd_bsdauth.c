@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.9 2019/03/31 04:54:20 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.10 2019/03/31 07:57:30 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -92,7 +92,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'M':
 			module_bsdauth_main();
-			/* never return, not reached here */
+			/* never return, not rearched here */
 			break;
 		default:
 			break;
@@ -101,8 +101,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC,
-	    PF_UNSPEC, pairsock) == -1)
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
+	    pairsock) == -1)
 		err(EXIT_FAILURE, "socketpair");
 
 	openlog(NULL, LOG_PID, LOG_DAEMON);
@@ -178,8 +178,8 @@ main(int argc, char *argv[])
 					break;
 				}
 				args = (struct auth_groupcheck_args *)imsg.data;
-				if (datalen < sizeof(
-					    struct auth_groupcheck_args) +
+				if (datalen <
+				    sizeof(struct auth_groupcheck_args) +
 				    args->userlen + args->grouplen) {
 					syslog(LOG_ERR, "Short message");
 					break;
