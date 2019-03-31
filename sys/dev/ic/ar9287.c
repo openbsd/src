@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.27 2019/03/29 11:04:40 stsp Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.28 2019/03/31 11:00:11 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -104,7 +104,7 @@ ar9287_attach(struct athn_softc *sc)
 	    AR9287_HTC_EEP_START_LOC : AR9287_EEP_START_LOC;
 	sc->eep_size = sizeof(struct ar9287_eeprom);
 	sc->ngpiopins = (sc->flags & ATHN_FLAG_USB) ? 16 : 11;
-	sc->led_pin = 8;
+	sc->led_pin = (sc->flags & ATHN_FLAG_USB) ? 10 : 8;
 	sc->workaround = AR9285_WA_DEFAULT;
 	sc->ops.setup = ar9287_setup;
 	sc->ops.swap_rom = ar9287_swap_rom;
