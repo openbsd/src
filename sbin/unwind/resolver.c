@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.29 2019/03/30 12:52:03 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.30 2019/03/31 00:57:41 tedu Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -30,7 +30,6 @@
 #include <imsg.h>
 #include <limits.h>
 #include <pwd.h>
-#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -133,11 +132,6 @@ void			 trust_anchor_timo(int, short, void *);
 void			 trust_anchor_resolve_done(void *, int, void *, int,
 			     int, char *, int);
 
-/* for openssl */
-void			 init_locks(void);
-unsigned long		 id_callback(void);
-void			 lock_callback(int, int, const char *, int);
-
 struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
 struct imsgev			*iev_captiveportal;
@@ -154,9 +148,6 @@ struct event			 trust_anchor_timer;
 static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 
 struct event_base		*ev_base;
-
-/* for openssl */
-pthread_mutex_t			*locks;
 
 enum uw_resolver_state		 global_state = DEAD;
 enum captive_portal_state	 captive_portal_state = PORTAL_UNCHECKED;
@@ -234,10 +225,6 @@ resolver(int debug, int verbose)
 
 	evtimer_set(&captive_portal_check_ev, check_captive_portal_timo, NULL);
 	evtimer_set(&trust_anchor_timer, trust_anchor_timo, NULL);
-
-	init_locks();
-	CRYPTO_set_id_callback(id_callback);
-	CRYPTO_set_locking_callback(lock_callback);
 
 	new_recursor();
 
@@ -1154,35 +1141,6 @@ schedule_recheck_all_resolvers(void)
 		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
 		evtimer_add(&forwarder->check_ev, &tv);
 	}
-}
-
-/* for openssl */
-void
-init_locks(void)
-{
-	int	 i;
-
-	if ((locks = calloc(CRYPTO_num_locks(), sizeof(pthread_mutex_t))) ==
-	    NULL)
-		fatal("%s", __func__);
-
-	for (i = 0; i < CRYPTO_num_locks(); i++)
-		pthread_mutex_init(&locks[i], NULL);
-
-}
-
-unsigned long
-id_callback(void) {
-	return ((unsigned long)pthread_self());
-}
-
-void
-lock_callback(int mode, int type, const char *file, int line)
-{
-	if (mode & CRYPTO_LOCK)
-		pthread_mutex_lock(&locks[type]);
-	else
-		pthread_mutex_unlock(&locks[type]);
 }
 
 int
