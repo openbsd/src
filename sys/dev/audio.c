@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.176 2019/03/12 08:16:29 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.177 2019/03/31 17:55:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -387,7 +387,7 @@ audio_pintr(void *addr)
 	 * check if record pointer wrapped, see explanation
 	 * in audio_rintr()
 	 */
-	if (sc->mode & AUMODE_RECORD) {
+	if ((sc->mode & AUMODE_RECORD) && sc->ops->underrun == NULL) {
 		sc->offs--;
 		nblk = sc->rec.len / sc->rec.blksz;
 		todo = -sc->offs;
@@ -470,7 +470,7 @@ audio_rintr(void *addr)
 	 * We fix this by advancing play position by an integer count of
 	 * full buffers, so it reaches the record position.
 	 */
-	if (sc->mode & AUMODE_PLAY) {
+	if ((sc->mode & AUMODE_PLAY) && sc->ops->underrun == NULL) {
 		sc->offs++;
 		nblk = sc->play.len / sc->play.blksz;
 		todo = sc->offs;
