@@ -43,7 +43,7 @@ public:
   /// saveReturnProtectorRegister - Allows the target to save the
   /// CalculationRegister in the CalleeSavedInfo vector if needed.
   virtual void
-  saveReturnProtectorRegister(const MachineFunction &MF,
+  saveReturnProtectorRegister(MachineFunction &MF,
                               std::vector<CalleeSavedInfo> &CSI) const override;
 };
 

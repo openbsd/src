@@ -39,7 +39,6 @@ void AArch64ReturnProtectorLowering::insertReturnProtectorPrologue(
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   unsigned REG = MF.getFrameInfo().getReturnProtectorRegister();
 
-  MBB.addLiveIn(REG);
   BuildMI(MBB, MI, MBBDL, TII->get(AArch64::ADRP), REG)
       .addGlobalAddress(cookie, 0, AArch64II::MO_PAGE);
   BuildMI(MBB, MI, MBBDL, TII->get(AArch64::LDRXui), REG)
@@ -58,7 +57,6 @@ void AArch64ReturnProtectorLowering::insertReturnProtectorEpilogue(
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   unsigned REG = MF.getFrameInfo().getReturnProtectorRegister();
 
-  MBB.addLiveIn(REG);
   MBB.addLiveIn(AArch64::X9);
   // REG holds the cookie we calculated in prologue. We use X9 as a
   // scratch reg to pull the random data. XOR REG with LR should yield
@@ -99,7 +97,7 @@ void AArch64ReturnProtectorLowering::fillTempRegisters(
 }
 
 void AArch64ReturnProtectorLowering::saveReturnProtectorRegister(
-    const MachineFunction &MF, std::vector<CalleeSavedInfo> &CSI) const {
+    MachineFunction &MF, std::vector<CalleeSavedInfo> &CSI) const {
 
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   if (!MFI.getReturnProtectorNeeded())
@@ -107,6 +105,15 @@ void AArch64ReturnProtectorLowering::saveReturnProtectorRegister(
 
   if (!MFI.hasReturnProtectorRegister())
     llvm_unreachable("Saving unset return protector register");
+
+  unsigned Reg = MFI.getReturnProtectorRegister();
+  if (!MFI.getReturnProtectorNeedsStore()) {
+    for (auto &MBB : MF) {
+      if (!MBB.isLiveIn(Reg))
+        MBB.addLiveIn(Reg);
+    }
+    return;
+  }
 
   // Put the temp reg after FP and LR to avoid layout issues
   // with the D registers later.

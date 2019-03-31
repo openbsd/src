@@ -64,7 +64,7 @@ void ReturnProtectorLowering::setupReturnProtector(MachineFunction &MF) const {
 /// saveReturnProtectorRegister - Allows the target to save the
 /// ReturnProtectorRegister in the CalleeSavedInfo vector if needed.
 void ReturnProtectorLowering::saveReturnProtectorRegister(
-    const MachineFunction &MF, std::vector<CalleeSavedInfo> &CSI) const {
+    MachineFunction &MF, std::vector<CalleeSavedInfo> &CSI) const {
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   if (!MFI.getReturnProtectorNeeded())
     return;
@@ -72,7 +72,15 @@ void ReturnProtectorLowering::saveReturnProtectorRegister(
   if (!MFI.hasReturnProtectorRegister())
     llvm_unreachable("Saving unset return protector register");
 
-  CSI.push_back(CalleeSavedInfo(MFI.getReturnProtectorRegister()));
+  unsigned Reg = MFI.getReturnProtectorRegister();
+  if (MFI.getReturnProtectorNeedsStore())
+    CSI.push_back(CalleeSavedInfo(Reg));
+  else {
+    for (auto &MBB : MF) {
+      if (!MBB.isLiveIn(Reg))
+        MBB.addLiveIn(Reg);
+    }
+  }
 }
 
 /// determineReturnProtectorTempRegister - Find a register that can be used
@@ -88,6 +96,32 @@ bool ReturnProtectorLowering::determineReturnProtectorRegister(
 
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
 
+  std::vector<unsigned> TempRegs;
+  fillTempRegisters(MF, TempRegs);
+
+  // For leaf functions, try to find a free register that is available
+  // in every BB, so we do not need to store it in the frame at all.
+  if (!MFI.hasCalls() && !MFI.hasTailCall()) {
+    SmallSet<unsigned, 16> LeafUsed;
+    SmallSet<int, 24> LeafVisited;
+    markUsedRegsInSuccessors(MF.front(), LeafUsed, LeafVisited);
+    for (unsigned Reg : TempRegs) {
+      bool canUse = true;
+      for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
+        if (LeafUsed.count(*AI)) {
+          canUse = false;
+          break;
+        }
+      }
+      if (canUse) {
+        MFI.setReturnProtectorRegister(Reg);
+        MFI.setReturnProtectorNeedsStore(false);
+        return true;
+      }
+    }
+  }
+
+  // For non-leaf functions, we only need to search save / restore blocks
   SmallSet<unsigned, 16> Used;
   SmallSet<int, 24> Visited;
 
@@ -115,9 +149,6 @@ bool ReturnProtectorLowering::determineReturnProtectorRegister(
 
   // Now we have gathered all the regs used outside the frame save / restore,
   // so we can see if we have a free reg to use for the retguard cookie.
-  std::vector<unsigned> TempRegs;
-  fillTempRegisters(MF, TempRegs);
-
   for (unsigned Reg : TempRegs) {
     bool canUse = true;
     for (MCRegAliasIterator AI(Reg, TRI, true); AI.isValid(); ++AI) {
@@ -157,12 +188,17 @@ void ReturnProtectorLowering::insertReturnProtectors(
   if (!cookie)
     llvm_unreachable("Function needs return protector but no cookie assigned");
 
+  unsigned Reg = MFI.getReturnProtectorRegister();
+
   std::vector<MachineInstr *> returns;
   for (auto &MBB : MF) {
     if (MBB.isReturnBlock()) {
       for (auto &MI : MBB.terminators()) {
-        if (opcodeIsReturn(MI.getOpcode()))
+        if (opcodeIsReturn(MI.getOpcode())) {
           returns.push_back(&MI);
+          if (!MBB.isLiveIn(Reg))
+            MBB.addLiveIn(Reg);
+        }
       }
     }
   }
@@ -174,4 +210,7 @@ void ReturnProtectorLowering::insertReturnProtectors(
     insertReturnProtectorEpilogue(MF, *MI, cookie);
 
   insertReturnProtectorPrologue(MF, MF.front(), cookie);
+
+  if (!MF.front().isLiveIn(Reg))
+    MF.front().addLiveIn(Reg);
 }

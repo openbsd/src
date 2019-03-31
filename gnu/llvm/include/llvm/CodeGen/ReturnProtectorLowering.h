@@ -28,6 +28,7 @@ class MachineInstr;
 
 class ReturnProtectorLowering {
 public:
+  virtual ~ReturnProtectorLowering() {}
   /// Subclass interface - subclasses need to implement these functions.
 
   /// insertReturnProtectorPrologue/Epilogue - insert return protector
@@ -57,7 +58,7 @@ public:
   /// saveReturnProtectorRegister - Allows the target to save the
   /// CalculationRegister in the CalleeSavedInfo vector if needed.
   virtual void
-  saveReturnProtectorRegister(const MachineFunction &MF,
+  saveReturnProtectorRegister(MachineFunction &MF,
                               std::vector<CalleeSavedInfo> &CSI) const;
 
   /// determineReturnProtectorTempRegister - Find a register that can be used

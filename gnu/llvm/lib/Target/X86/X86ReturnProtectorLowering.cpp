@@ -38,7 +38,6 @@ void X86ReturnProtectorLowering::insertReturnProtectorPrologue(
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   unsigned REG = MF.getFrameInfo().getReturnProtectorRegister();
 
-  MBB.addLiveIn(REG);
   BuildMI(MBB, MI, MBBDL, TII->get(X86::MOV64rm), REG)
       .addReg(X86::RIP)
       .addImm(0)
@@ -57,7 +56,6 @@ void X86ReturnProtectorLowering::insertReturnProtectorEpilogue(
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   unsigned REG = MF.getFrameInfo().getReturnProtectorRegister();
 
-  MBB.addLiveIn(REG);
   addDirectMem(BuildMI(MBB, MI, MBBDL, TII->get(X86::XOR64rm), REG).addReg(REG),
                X86::RSP);
   BuildMI(MBB, MI, MBBDL, TII->get(X86::CMP64rm))
@@ -102,15 +100,20 @@ void X86ReturnProtectorLowering::fillTempRegisters(
     switch (F.arg_size()) {
     case 0:
       TempRegs.push_back(X86::RDI);
+      LLVM_FALLTHROUGH;
     case 1:
       TempRegs.push_back(X86::RSI);
+      LLVM_FALLTHROUGH;
     case 2: // RDX is the 2nd return register
     case 3:
       TempRegs.push_back(X86::RCX);
+      LLVM_FALLTHROUGH;
     case 4:
       TempRegs.push_back(X86::R8);
+      LLVM_FALLTHROUGH;
     case 5:
       TempRegs.push_back(X86::R9);
+      LLVM_FALLTHROUGH;
     default:
       break;
     }
