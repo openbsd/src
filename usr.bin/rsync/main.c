@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.41 2019/03/31 08:47:46 naddy Exp $ */
+/*	$Id: main.c,v 1.42 2019/03/31 13:17:44 schwarze Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -504,10 +504,9 @@ main(int argc, char *argv[])
 
 	exit(rc);
 usage:
-	fprintf(stderr,
-	    "usage: %s [-aDglnoprtv] [-e program] [--del] [--devices]\n"
-	    "\t[--port=portnumber] [--rsync-path=program] [--specials]\n"
-	    "\t[--version] source ... directory\n",
+	fprintf(stderr, "usage: %s"
+	    " [-aDglnoprtv] [-e program] [--del] [--port=portnumber]\n"
+	    "\t[--rsync-path=program] [--version] source ... directory\n",
 	    getprogname());
 	exit(1);
 }
