@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2017/07/27 13:34:30 mpi Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2019/03/31 14:03:40 mpi Exp $
 
 TOPDIR=		${.CURDIR}/..
 
@@ -9,6 +9,6 @@ SRCS+=		art.c
 CFLAGS+=	-DART
 .endif
 
-CPPFLAGS+=	-I${TOPDIR} -Wall
+CPPFLAGS+=	-I${TOPDIR} -Wall -Wno-macro-redefined
 
 .PATH:		${TOPDIR} ${TOPDIR}/../../../../sys/net
