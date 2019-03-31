@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.229 2019/01/23 23:13:48 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.230 2019/03/31 11:30:35 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -222,7 +222,10 @@ main(int argc, char **argv)
 		}
 	}
 
-	s = socket(AF_ROUTE, SOCK_RAW, af);
+	if (tflag)
+		s = open(_PATH_DEVNULL, O_WRONLY);
+	else
+		s = socket(AF_ROUTE, SOCK_RAW, af);
 	if (s == -1)
 		err(1, "socket");
 
@@ -232,15 +235,17 @@ main(int argc, char **argv)
 			err(1, "setsockopt(ROUTE_MSGFILTER)");
 	}
 
-	/* force socket onto table user requested */
-	if (Tflag == 1 && Terr == 0) {
-		if (setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
-		    &tableid, sizeof(tableid)) == -1)
-			err(1, "setsockopt(ROUTE_TABLEFILTER)");
-	} else {
-		if (setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
-		    &rtable_any, sizeof(tableid)) == -1)
-			err(1, "setsockopt(ROUTE_TABLEFILTER)");
+	if (!tflag) {
+		/* force socket onto table user requested */
+		if (Tflag == 1 && Terr == 0) {
+			if (setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
+			    &tableid, sizeof(tableid)) == -1)
+				err(1, "setsockopt(ROUTE_TABLEFILTER)");
+		} else {
+			if (setsockopt(s, AF_ROUTE, ROUTE_TABLEFILTER,
+			    &rtable_any, sizeof(tableid)) == -1)
+				err(1, "setsockopt(ROUTE_TABLEFILTER)");
+		}
 	}
 
 	if (pledge("stdio dns route", NULL) == -1)
