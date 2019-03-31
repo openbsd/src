@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.325 2019/03/12 11:45:00 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.326 2019/03/31 13:59:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -737,8 +737,10 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	 */
 	sc = bif->bridge_sc;
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
-		dst_if = ifp;
-		goto sendunicast;
+		/* Loop prevention. */
+		m->m_flags |= M_PROTO1;
+		error = if_enqueue(ifp, m);
+		return (error);
 	}
 
 #if NBPFILTER > 0
@@ -810,7 +812,6 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 		return (0);
 	}
 
-sendunicast:
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 		m_freem(m);
 		return (ENETDOWN);
