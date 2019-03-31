@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.20 2019/03/30 12:52:03 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.21 2019/03/31 00:57:06 tedu Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -882,7 +882,7 @@ open_ports(void)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_flags = AI_PASSIVE;
+	hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
 
 	error = getaddrinfo("127.0.0.1", "domain", &hints, &res0);
 	if (!error && res0) {
