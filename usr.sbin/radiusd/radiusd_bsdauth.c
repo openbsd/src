@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.10 2019/03/31 07:57:30 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.11 2019/03/31 07:58:53 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -213,8 +213,8 @@ group_done:
 				    0, 0, -1, NULL, 0);
 				break;
 			    }
-			    imsg_free(&imsg);
 			}
+			imsg_free(&imsg);
 			imsg_flush(&ibuf);
 		}
 		imsg_flush(&ibuf);
