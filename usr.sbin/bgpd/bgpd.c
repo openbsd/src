@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.213 2019/03/07 07:42:36 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.214 2019/03/31 03:36:18 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -414,7 +414,10 @@ start_child(enum bgpd_process p, char *argv0, int fd, int debug, int verbose)
 		return (pid);
 	}
 
-	if (dup2(fd, 3) == -1)
+	if (fd != 3) {
+		if (dup2(fd, 3) == -1)
+			fatal("cannot setup imsg fd");
+	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
 	argv[argc++] = argv0;

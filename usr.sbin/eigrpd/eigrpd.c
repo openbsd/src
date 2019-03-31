@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.26 2018/09/26 14:53:34 mestre Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.27 2019/03/31 03:36:18 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -330,7 +331,10 @@ start_child(enum eigrpd_process p, char *argv0, int fd, int debug, int verbose,
 		return (pid);
 	}
 
-	if (dup2(fd, 3) == -1)
+	if (fd != 3) {
+		if (dup2(fd, 3) == -1)
+			fatal("cannot setup imsg fd");
+	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
 	argv[argc++] = argv0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.36 2019/03/11 22:53:29 pamela Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.37 2019/03/31 03:36:18 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -36,6 +36,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <event.h>
 #include <imsg.h>
 #include <netdb.h>
@@ -343,7 +344,10 @@ start_child(int p, char *argv0, int fd, int debug, int verbose)
 		return (pid);
 	}
 
-	if (dup2(fd, 3) == -1)
+	if (fd != 3) {
+		if (dup2(fd, 3) == -1)
+			fatal("cannot setup imsg fd");
+	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
 	argv[argc++] = argv0;

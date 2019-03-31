@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.63 2019/01/23 02:02:04 dlg Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.64 2019/03/31 03:36:18 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/wait.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -330,7 +331,10 @@ start_child(enum ldpd_process p, char *argv0, int fd, int debug, int verbose,
 		return (pid);
 	}
 
-	if (dup2(fd, 3) == -1)
+	if (fd != 3) {
+		if (dup2(fd, 3) == -1)
+			fatal("cannot setup imsg fd");
+	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
 	argv[argc++] = argv0;

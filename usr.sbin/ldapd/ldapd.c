@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.24 2018/05/15 11:19:21 reyk Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.25 2019/03/31 03:36:18 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -429,7 +429,10 @@ start_child(enum ldapd_process p, char *argv0, int fd, int debug,
 		return (pid);
 	}
 
-	if (dup2(fd, PROC_PARENT_SOCK_FILENO) == -1)
+	if (fd != PROC_PARENT_SOCK_FILENO) {
+		if (dup2(fd, PROC_PARENT_SOCK_FILENO) == -1)
+			fatal("cannot setup imsg fd");
+	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
 	argv[argc++] = argv0;

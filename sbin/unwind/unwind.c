@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.21 2019/03/31 00:57:06 tedu Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.22 2019/03/31 03:36:18 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -372,7 +372,10 @@ start_child(int p, char *argv0, int fd, int debug, int verbose)
 		return (pid);
 	}
 
-	if (dup2(fd, 3) == -1)
+	if (fd != 3) {
+		if (dup2(fd, 3) == -1)
+			fatal("cannot setup imsg fd");
+	} else if (fcntl(fd, F_SETFD, 0) == -1)
 		fatal("cannot setup imsg fd");
 
 	argv[argc++] = argv0;
