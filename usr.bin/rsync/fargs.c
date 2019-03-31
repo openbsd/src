@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.13 2019/02/21 22:06:26 benno Exp $ */
+/*	$Id: fargs.c,v 1.14 2019/03/31 08:47:46 naddy Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,7 +26,7 @@
 #define	RSYNC_PATH	"rsync"
 
 char **
-fargs_cmdline(struct sess *sess, const struct fargs *f)
+fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 {
 	char		**args = NULL, **new;
 	size_t		  i = 0, n = 1, j, argsz = 0;
@@ -52,8 +52,6 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 		goto out;
 
 	if (f->host != NULL) {
-		assert(f->host != NULL);
-
 		/*
 		 * Splice arguments from -e "foo bar baz" into array
 		 * elements required for execve(2).
@@ -89,6 +87,8 @@ fargs_cmdline(struct sess *sess, const struct fargs *f)
 
 		args[i++] = f->host;
 		args[i++] = rsync_path;
+		if (skip)
+			*skip = i;
 		args[i++] = "--server";
 		if (f->mode == FARGS_RECEIVER)
 			args[i++] = "--sender";

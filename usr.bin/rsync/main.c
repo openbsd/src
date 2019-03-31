@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.40 2019/03/30 23:48:24 schwarze Exp $ */
+/*	$Id: main.c,v 1.41 2019/03/31 08:47:46 naddy Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 {
 	struct opts	 opts;
 	pid_t		 child;
-	int		 fds[2], rc, c, st, i;
+	int		 fds[2], sd, rc, c, st, i;
 	struct sess	  sess;
 	struct fargs	*fargs;
 	char		**args;
@@ -417,12 +417,15 @@ main(int argc, char *argv[])
 	/*
 	 * If we're contacting an rsync:// daemon, then we don't need to
 	 * fork, because we won't start a server ourselves.
-	 * Route directly into the socket code, in that case.
+	 * Route directly into the socket code, unless a remote shell
+	 * has explicitly been specified.
 	 */
 
-	if (fargs->remote) {
+	if (fargs->remote && opts.ssh_prog == NULL) {
 		assert(fargs->mode == FARGS_RECEIVER);
-		exit(rsync_socket(&opts, fargs));
+		if ((rc = rsync_connect(&opts, &sd, fargs)) == 0)
+			rc = rsync_socket(&opts, sd, fargs);
+		exit(rc);
 	}
 
 	/* Drop the dns/inet possibility. */
@@ -447,7 +450,7 @@ main(int argc, char *argv[])
 		memset(&sess, 0, sizeof(struct sess));
 		sess.opts = &opts;
 
-		if ((args = fargs_cmdline(&sess, fargs)) == NULL) {
+		if ((args = fargs_cmdline(&sess, fargs, NULL)) == NULL) {
 			ERRX1(&sess, "fargs_cmdline");
 			_exit(1);
 		}
@@ -469,7 +472,10 @@ main(int argc, char *argv[])
 		/* NOTREACHED */
 	default:
 		close(fds[1]);
-		rc = rsync_client(&opts, fds[0], fargs);
+		if (!fargs->remote)
+			rc = rsync_client(&opts, fds[0], fargs);
+		else
+			rc = rsync_socket(&opts, fds[0], fargs);
 		break;
 	}
 
