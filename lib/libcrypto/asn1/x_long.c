@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.12 2019/03/31 14:39:15 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.13 2019/03/31 14:41:40 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -63,17 +63,20 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
-/* Custom primitive type for long handling. This converts between an ASN1_INTEGER
- * and a long directly.
+/*
+ * Custom primitive type for long handling. This converts between an
+ * ASN1_INTEGER and a long directly.
  */
-
 
 static int long_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const ASN1_ITEM *it);
-static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it);
-static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it, int indent, const ASN1_PCTX *pctx);
+static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+    const ASN1_ITEM *it);
+static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
+    int utype, char *free_cont, const ASN1_ITEM *it);
+static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+    int indent, const ASN1_PCTX *pctx);
 
 static ASN1_PRIMITIVE_FUNCS long_pf = {
 	.app_data = NULL,
