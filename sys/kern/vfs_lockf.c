@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.35 2019/02/24 09:24:52 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.36 2019/03/31 11:33:11 visa Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -69,6 +69,9 @@ int maxlockdepth = MAXDEPTH;
 
 int	lockf_debug = DEBUG_SETLOCK|DEBUG_CLEARLOCK|DEBUG_WAKELOCK;
 
+void	lf_print(const char *, struct lockf *);
+void	lf_printlist(const char *, struct lockf *);
+
 #define	DPRINTF(args, level)	if (lockf_debug & (level)) printf args
 #define	LFPRINT(args, level)	if (lockf_debug & (level)) lf_print args
 #else
@@ -76,6 +79,13 @@ int	lockf_debug = DEBUG_SETLOCK|DEBUG_CLEARLOCK|DEBUG_WAKELOCK;
 #define	LFPRINT(args, level)
 #endif
 
+int lf_clearlock(struct lockf *);
+int lf_findoverlap(struct lockf *, struct lockf *, int, struct lockf **);
+struct lockf *lf_getblock(struct lockf *);
+int lf_getlock(struct lockf *, struct flock *);
+int lf_setlock(struct lockf *);
+void lf_split(struct lockf *, struct lockf *);
+void lf_wakelock(struct lockf *, int);
 void ls_ref(struct lockf_state *);
 void ls_rele(struct lockf_state *);
 

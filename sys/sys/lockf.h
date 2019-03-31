@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.h,v 1.14 2019/01/30 17:04:04 anton Exp $	*/
+/*	$OpenBSD: lockf.h,v 1.15 2019/03/31 11:33:11 visa Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*
@@ -73,25 +73,6 @@ __BEGIN_DECLS
 void	 lf_init(void);
 int	 lf_advlock(struct lockf_state **,
 	    off_t, caddr_t, int, struct flock *, int);
-int	 lf_clearlock(struct lockf *);
-int	 lf_findoverlap(struct lockf *,
-	    struct lockf *, int, struct lockf **);
-struct lockf *
-	 lf_getblock(struct lockf *);
-int	 lf_getlock(struct lockf *, struct flock *);
-int	 lf_setlock(struct lockf *);
 void	 lf_purgelocks(struct lockf_state *);
-void	 lf_split(struct lockf *, struct lockf *);
-void	 lf_wakelock(struct lockf *, int);
 __END_DECLS
-
-#ifdef LOCKF_DEBUG
-extern int lockf_debug;
-
-__BEGIN_DECLS
-void	lf_print(const char *, struct lockf *);
-void	lf_printlist(const char *, struct lockf *);
-__END_DECLS
-#endif /* LOCKF_DEBUG */
-
 #endif /* _KERNEL */
