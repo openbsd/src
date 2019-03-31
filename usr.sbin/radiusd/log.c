@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2017/03/29 18:01:51 bluhm Exp $ */
+/*	$OpenBSD: log.c,v 1.3 2019/03/31 03:53:42 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,6 +63,7 @@ vlog(int pri, const char *fmt, va_list ap)
 	time_t			 curr;
 	struct tm		 tm;
 	u_int			 i = 0, j;
+	int			 saved_errno = errno;
 	static struct {
 		int		 v;
 		const char	*l;
@@ -101,7 +102,8 @@ vlog(int pri, const char *fmt, va_list ap)
 		if (fmt[j] == '%' && fmt[j + 1] == 'm') {
 			++j;
 			fmtbuf[i] = '\0';
-			strlcat(fmtbuf, strerror(errno), sizeof(fmtbuf) - 1);
+			strlcat(fmtbuf, strerror(saved_errno),
+			    sizeof(fmtbuf) - 1);
 			i = strlen(fmtbuf);
 		} else
 			fmtbuf[i++] = fmt[j];
@@ -118,17 +120,19 @@ log_warn(const char *emsg, ...)
 {
 	char	*nfmt;
 	va_list	 ap;
+	int	 saved_errno = errno;
 
 	/* best effort to even work in out of memory situations */
 	if (emsg == NULL)
-		logit(LOG_WARNING, "%s", strerror(errno));
+		logit(LOG_WARNING, "%s", strerror(saved_errno));
 	else {
 		va_start(ap, emsg);
 
-		if (asprintf(&nfmt, "%s: %s", emsg, strerror(errno)) == -1) {
+		if (asprintf(&nfmt, "%s: %s", emsg, strerror(saved_errno))
+		    == -1) {
 			/* we tried it... */
 			vlog(LOG_WARNING, emsg, ap);
-			logit(LOG_WARNING, "%s", strerror(errno));
+			logit(LOG_WARNING, "%s", strerror(saved_errno));
 		} else {
 			vlog(LOG_WARNING, nfmt, ap);
 			free(nfmt);

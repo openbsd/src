@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: log.h,v 1.2 2019/03/31 03:53:42 yasuoka Exp $	*/
 
 #ifndef _LOG_H
 #define	_LOG_H	1
@@ -22,8 +22,8 @@ void		 log_info(const char *, ...)
 		    __attribute__((__format__ (printf, 1, 2)));
 void		 log_debug(const char *, ...)
 		    __attribute__((__format__ (printf, 1, 2)));
-void		 fatal(const char *);
-void		 fatalx(const char *);
+__dead void	 fatal(const char *);
+__dead void	 fatalx(const char *);
 __END_DECLS
 
 #endif
