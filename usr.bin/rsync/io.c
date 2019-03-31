@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.14 2019/03/26 17:13:42 deraadt Exp $ */
+/*	$Id: io.c,v 1.15 2019/03/31 09:26:05 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -389,13 +389,14 @@ io_read_buf(struct sess *sess, int fd, void *buf, size_t sz)
  * Returns zero on failure, non-zero on success.
  */
 int
-io_write_long(struct sess *sess, int fd, int64_t val)
+io_write_ulong(struct sess *sess, int fd, uint64_t val)
 {
-	int64_t	nv;
+	uint64_t	nv;
+	int64_t		sval = (int64_t)val;
 
 	/* Short-circuit: send as an integer if possible. */
 
-	if (val <= INT32_MAX && val >= 0) {
+	if (sval <= INT32_MAX && sval >= 0) {
 		if (!io_write_int(sess, fd, (int32_t)val)) {
 			ERRX1(sess, "io_write_int");
 			return 0;
@@ -403,7 +404,7 @@ io_write_long(struct sess *sess, int fd, int64_t val)
 		return 1;
 	}
 
-	/* Otherwise, pad with max integer, then send 64-bit. */
+	/* Otherwise, pad with -1 32-bit, then send 64-bit. */
 
 	nv = htole64(val);
 
@@ -417,6 +418,30 @@ io_write_long(struct sess *sess, int fd, int64_t val)
 	return 0;
 }
 
+int
+io_write_long(struct sess *sess, int fd, int64_t val)
+{
+	return io_write_ulong(sess, fd, (uint64_t)val);
+}
+
+/*
+ * Like io_write_buf(), but for an unsigned integer.
+ * Returns zero on failure, non-zero on success.
+ */
+int
+io_write_uint(struct sess *sess, int fd, uint32_t val)
+{
+	uint32_t	nv;
+
+	nv = htole32(val);
+
+	if (!io_write_buf(sess, fd, &nv, sizeof(uint32_t))) {
+		ERRX1(sess, "io_write_buf");
+		return 0;
+	}
+	return 1;
+}
+
 /*
  * Like io_write_buf(), but for an integer.
  * Returns zero on failure, non-zero on success.
@@ -424,15 +449,7 @@ io_write_long(struct sess *sess, int fd, int64_t val)
 int
 io_write_int(struct sess *sess, int fd, int32_t val)
 {
-	int32_t	nv;
-
-	nv = htole32(val);
-
-	if (!io_write_buf(sess, fd, &nv, sizeof(int32_t))) {
-		ERRX1(sess, "io_write_buf");
-		return 0;
-	}
-	return 1;
+	return io_write_uint(sess, fd, (uint32_t)val);
 }
 
 /*
@@ -540,19 +557,19 @@ io_buffer_int(struct sess *sess, void *buf,
  * Returns zero on failure, non-zero on success.
  */
 int
-io_read_ulong(struct sess *sess, int fd, uint64_t *val)
+io_read_long(struct sess *sess, int fd, int64_t *val)
 {
-	int64_t	oval;
+	uint64_t	uoval;
 
-	if (!io_read_long(sess, fd, &oval)) {
+	if (!io_read_ulong(sess, fd, &uoval)) {
 		ERRX1(sess, "io_read_long");
 		return 0;
-	} else if (oval < 0) {
-		ERRX(sess, "io_read_size: negative value");
-		return 1;
 	}
-
-	*val = oval;
+	*val = (int64_t)uoval;
+	if (*val < 0) {
+		ERRX1(sess, "io_read_long negative");
+		return 0;
+	}
 	return 1;
 }
 
@@ -561,10 +578,10 @@ io_read_ulong(struct sess *sess, int fd, uint64_t *val)
  * Returns zero on failure, non-zero on success.
  */
 int
-io_read_long(struct sess *sess, int fd, int64_t *val)
+io_read_ulong(struct sess *sess, int fd, uint64_t *val)
 {
-	int64_t	oval;
-	int32_t sval;
+	uint64_t	 oval;
+	int32_t		 sval;
 
 	/* Start with the short-circuit: read as an int. */
 
@@ -572,13 +589,13 @@ io_read_long(struct sess *sess, int fd, int64_t *val)
 		ERRX1(sess, "io_read_int");
 		return 0;
 	} else if (sval != -1) {
-		*val = sval;
+		*val = (uint64_t)le32toh(sval);
 		return 1;
 	}
 
-	/* If the int is maximal, read as 64 bits. */
+	/* If the int is -1, read as 64 bits. */
 
-	if (!io_read_buf(sess, fd, &oval, sizeof(int64_t))) {
+	if (!io_read_buf(sess, fd, &oval, sizeof(uint64_t))) {
 		ERRX1(sess, "io_read_buf");
 		return 0;
 	}
@@ -616,17 +633,23 @@ io_read_size(struct sess *sess, int fd, size_t *val)
  * Returns zero on failure, non-zero on success.
  */
 int
-io_read_int(struct sess *sess, int fd, int32_t *val)
+io_read_uint(struct sess *sess, int fd, uint32_t *val)
 {
-	int32_t	oval;
+	uint32_t	oval;
 
-	if (!io_read_buf(sess, fd, &oval, sizeof(int32_t))) {
+	if (!io_read_buf(sess, fd, &oval, sizeof(uint32_t))) {
 		ERRX1(sess, "io_read_buf");
 		return 0;
 	}
 
 	*val = le32toh(oval);
 	return 1;
+}
+
+int
+io_read_int(struct sess *sess, int fd, int32_t *val)
+{
+	return io_read_uint(sess, fd, (uint32_t *)val);
 }
 
 /*

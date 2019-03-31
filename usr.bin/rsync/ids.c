@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.10 2019/03/30 07:24:02 deraadt Exp $ */
+/*	$Id: ids.c,v 1.11 2019/03/31 09:26:05 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,7 +103,8 @@ idents_remap(struct sess *sess, int isgid, struct ident *ids, size_t idsz)
 	size_t		 i;
 	struct group	*grp;
 	struct passwd	*usr;
-	int32_t		 id;
+	uint32_t	 id;
+	int		valid;
 
 	assert(!sess->opts->numeric_ids);
 
@@ -112,12 +113,20 @@ idents_remap(struct sess *sess, int isgid, struct ident *ids, size_t idsz)
 
 		/* Start by getting our local representation. */
 
-		if (isgid)
-			id = (grp = getgrnam(ids[i].name)) == NULL ?
-				-1 : grp->gr_gid;
-		else
-			id = (usr = getpwnam(ids[i].name)) == NULL ?
-				-1 : usr->pw_uid;
+		valid = id = 0;
+		if (isgid) {
+			grp = getgrnam(ids[i].name);
+			if (grp) {
+				id = grp->gr_gid;
+				valid = 1;
+			}
+		} else {
+			usr = getpwnam(ids[i].name);
+			if (usr) {
+				id = usr->pw_uid;
+				valid = 1;
+			}
+		}
 
 		/*
 		 * (1) Empty names inherit.
@@ -128,7 +137,7 @@ idents_remap(struct sess *sess, int isgid, struct ident *ids, size_t idsz)
 
 		if (ids[i].name[0] == '\0')
 			ids[i].mapped = ids[i].id;
-		else if (id <= 0)
+		else if (!valid)
 			ids[i].mapped = ids[i].id;
 		else
 			ids[i].mapped = id;
@@ -229,8 +238,8 @@ idents_send(struct sess *sess,
 		assert(ids[i].id != 0);
 		sz = strlen(ids[i].name);
 		assert(sz > 0 && sz <= UINT8_MAX);
-		if (!io_write_int(sess, fd, ids[i].id)) {
-			ERRX1(sess, "io_write_int");
+		if (!io_write_uint(sess, fd, ids[i].id)) {
+			ERRX1(sess, "io_write_uint");
 			return 0;
 		} else if (!io_write_byte(sess, fd, sz)) {
 			ERRX1(sess, "io_write_byte");
@@ -264,8 +273,8 @@ idents_recv(struct sess *sess,
 	void	*pp;
 
 	for (;;) {
-		if (!io_read_int(sess, fd, &id)) {
-			ERRX1(sess, "io_read_int");
+		if (!io_read_uint(sess, fd, &id)) {
+			ERRX1(sess, "io_read_uint");
 			return 0;
 		} else if (id == 0)
 			break;
