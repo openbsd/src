@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldpd.conf.5,v 1.38 2019/03/31 19:08:30 procter Exp $
+.\"	$OpenBSD: ldpd.conf.5,v 1.39 2019/03/31 20:14:14 jmc Exp $
 .\"
 .\" Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -177,9 +177,10 @@ and RFC 7552 (for the IPv6 address-family).
 Since GTSM is mandatory for LDPv6, the only effect of disabling GTSM for the
 IPv6 address-family is that
 .Xr ldpd 8
-will not discard packets with a hop limit below 255. This may be necessary
-to interoperate with older implementations. Outgoing packets will still be sent
-using a hop limit of 255 for maximum compatibility.
+will not discard packets with a hop limit below 255.
+This may be necessary to interoperate with older implementations.
+Outgoing packets will still be sent using a hop limit of 255
+for maximum compatibility.
 .Pp
 If GTSM is enabled, multi-hop neighbors should have either GTSM disabled
 individually or configured with an appropriate gtsm-hops distance.
