@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.60 2019/03/25 17:21:18 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.61 2019/03/31 15:49:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2378,9 +2378,7 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 	const EVP_MD *md;
 	const unsigned char *hdata;
 	unsigned char *signature = NULL;
-	unsigned int signature_len = 0;
-	size_t hdatalen;
-	size_t siglen;
+	size_t signature_len, hdata_len;
 	int ret = 0;
 
 	EVP_MD_CTX_init(&mctx);
@@ -2395,8 +2393,7 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 		goto err;
 	}
 
-	if (!tls1_transcript_data(s, &hdata, &hdatalen) ||
-	    !CBB_add_u16(cert_verify, sigalg->value)) {
+	if (!tls1_transcript_data(s, &hdata, &hdata_len)) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
@@ -2410,24 +2407,26 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (!EVP_DigestSignUpdate(&mctx, hdata, hdatalen)) {
+	if (!EVP_DigestSignUpdate(&mctx, hdata, hdata_len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (!EVP_DigestSignFinal(&mctx, NULL, &siglen) || siglen == 0) {
+	if (!EVP_DigestSignFinal(&mctx, NULL, &signature_len) ||
+	    signature_len == 0) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if ((signature = calloc(1, siglen)) == NULL) {
+	if ((signature = calloc(1, signature_len)) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EVP_DigestSignFinal(&mctx, signature, &siglen)) {
+	if (!EVP_DigestSignFinal(&mctx, signature, &signature_len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	signature_len = siglen; /* XXX */
 
+	if (!CBB_add_u16(cert_verify, sigalg->value))
+		goto err;
 	if (!CBB_add_u16_length_prefixed(cert_verify, &cbb_signature))
 		goto err;
 	if (!CBB_add_bytes(&cbb_signature, signature, signature_len))
@@ -2436,6 +2435,7 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 		goto err;
 
 	ret = 1;
+
  err:
 	EVP_MD_CTX_cleanup(&mctx);
 	free(signature);
@@ -2447,19 +2447,20 @@ ssl3_send_client_verify_rsa(SSL *s, CBB *cert_verify)
 {
 	CBB cbb_signature;
 	EVP_PKEY *pkey;
-	unsigned char data[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
+	unsigned char data[EVP_MAX_MD_SIZE];
 	unsigned char *signature = NULL;
-	unsigned int signature_len = 0;
+	unsigned int signature_len;
+	size_t data_len;
 	int ret = 0;
 
-	if (!tls1_transcript_hash_value(s, data, sizeof(data), NULL))
-		goto err;
-
 	pkey = s->cert->key->privatekey;
+
+	if (!tls1_transcript_hash_value(s, data, sizeof(data), &data_len))
+		goto err;
 	if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
 		goto err;
-	if (RSA_sign(NID_md5_sha1, data, MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH,
-	    signature, &signature_len, pkey->pkey.rsa) <= 0 ) {
+	if (RSA_sign(NID_md5_sha1, data, data_len, signature,
+	    &signature_len, pkey->pkey.rsa) <= 0 ) {
 		SSLerror(s, ERR_R_RSA_LIB);
 		goto err;
 	}
@@ -2482,15 +2483,15 @@ ssl3_send_client_verify_ec(SSL *s, CBB *cert_verify)
 {
 	CBB cbb_signature;
 	EVP_PKEY *pkey;
-	unsigned char data[MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH];
+	unsigned char data[EVP_MAX_MD_SIZE];
 	unsigned char *signature = NULL;
-	unsigned int signature_len = 0;
+	unsigned int signature_len;
 	int ret = 0;
+
+	pkey = s->cert->key->privatekey;
 
 	if (!tls1_transcript_hash_value(s, data, sizeof(data), NULL))
 		goto err;
-
-	pkey = s->cert->key->privatekey;
 	if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
 		goto err;
 	if (!ECDSA_sign(pkey->save_type, &data[MD5_DIGEST_LENGTH],
@@ -2522,12 +2523,9 @@ ssl3_send_client_verify_gost(SSL *s, CBB *cert_verify)
 	EVP_PKEY *pkey;
 	const EVP_MD *md;
 	const unsigned char *hdata;
-	unsigned char signbuf[128];
 	unsigned char *signature = NULL;
-	unsigned int signature_len = 0;
-	unsigned int u;
-	size_t hdatalen;
-	size_t sigsize;
+	size_t signature_len;
+	size_t hdata_len;
 	int nid;
 	int ret = 0;
 
@@ -2535,39 +2533,41 @@ ssl3_send_client_verify_gost(SSL *s, CBB *cert_verify)
 
 	pkey = s->cert->key->privatekey;
 
-	/* Create context from key and test if sha1 is allowed as digest. */
-	if ((pctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL)
-		goto err;
-	if (EVP_PKEY_sign_init(pctx) <= 0)
-		goto err;
-	/* XXX - is this needed? */
-	if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1()) <= 0)
-		ERR_clear_error();
-
-	if (!tls1_transcript_data(s, &hdata, &hdatalen)) {
+	if (!tls1_transcript_data(s, &hdata, &hdata_len)) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
 	if (!EVP_PKEY_get_default_digest_nid(pkey, &nid) ||
-	    !(md = EVP_get_digestbynid(nid))) {
+	    (md = EVP_get_digestbynid(nid)) == NULL) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (!EVP_DigestInit_ex(&mctx, md, NULL) ||
-	    !EVP_DigestUpdate(&mctx, hdata, hdatalen) ||
-	    !EVP_DigestFinal(&mctx, signbuf, &u) ||
-
-	    (EVP_PKEY_CTX_set_signature_md(pctx, md) <= 0) ||
-	    (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
-		EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE,
-		NULL) <= 0) ||
-	    (EVP_PKEY_sign(pctx, signature, &sigsize, signbuf, u) <= 0)) {
+	if (!EVP_DigestSignInit(&mctx, &pctx, md, NULL, pkey)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (sigsize > UINT_MAX)
+	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+	    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE, NULL) <= 0) {
+		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
-	signature_len = sigsize;
+	}
+	if (!EVP_DigestSignUpdate(&mctx, hdata, hdata_len)) {
+		SSLerror(s, ERR_R_EVP_LIB);
+		goto err;
+	}
+	if (!EVP_DigestSignFinal(&mctx, NULL, &signature_len) ||
+	    signature_len == 0) {
+		SSLerror(s, ERR_R_EVP_LIB);
+		goto err;
+	}
+	if ((signature = calloc(1, signature_len)) == NULL) {
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (!EVP_DigestSignFinal(&mctx, signature, &signature_len)) {
+		SSLerror(s, ERR_R_EVP_LIB);
+		goto err;
+	}
 
 	if (!CBB_add_u16_length_prefixed(cert_verify, &cbb_signature))
 		goto err;
@@ -2579,7 +2579,6 @@ ssl3_send_client_verify_gost(SSL *s, CBB *cert_verify)
 	ret = 1;
  err:
 	EVP_MD_CTX_cleanup(&mctx);
-	EVP_PKEY_CTX_free(pctx);
 	free(signature);
 	return ret;
 }
