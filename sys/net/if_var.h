@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.94 2019/01/09 01:14:21 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.95 2019/03/31 13:58:18 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -106,6 +106,9 @@ struct if_clone {
  *	c	only used in ioctl or routing socket contexts (kernel lock)
  *	k	kernel lock
  *	N	net lock
+ *
+ *  For SRP related structures that allow lock-free reads, the write lock
+ *  is indicated below.
  */
 /*
  * Structure defining a queue for a network interface.
@@ -115,7 +118,7 @@ struct if_clone {
 TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
 struct ifnet {				/* and the entries */
-	void	*if_softc;		/* lower-level data for this if */
+	void	*if_softc;		/* [I] lower-level data for this if */
 	struct	refcnt if_refcnt;
 	TAILQ_ENTRY(ifnet) if_list;	/* [k] all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* [N] list of addresses per if */
@@ -156,7 +159,7 @@ struct ifnet {				/* and the entries */
 	struct	task if_linkstatetask;	/* [I] task to do route updates */
 
 	/* procedure handles */
-	SRPL_HEAD(, ifih) if_inputs;	/* input routines (dequeue) */
+	SRPL_HEAD(, ifih) if_inputs;	/* [k] input routines (dequeue) */
 	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);	/* output routine (enqueue) */
 					/* link level output function */
