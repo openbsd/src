@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.131 2019/03/07 14:22:18 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.132 2019/03/31 18:30:49 phessler Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 7 2019 $
+.Dd $Mdocdate: March 31 2019 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -510,7 +510,7 @@ and may vary from architecture to architecture.
 swap		10% of disk.   80M \(en 2x max physical memory
 /tmp		 8% of disk.  120M \(en 4G
 /var		13% of disk.   80M \(en 2x size of crash dump
-/usr		 5% of disk.  900M \(en 2G
+/usr		 5% of disk. 1300M \(en 2G
 /usr/X11R6	 3% of disk.  384M \(en 1G
 /usr/local	15% of disk.    1G \(en 20G
 /usr/src	 2% of disk. 1300M \(en 2G
@@ -518,12 +518,12 @@ swap		10% of disk.   80M \(en 2x max physical memory
 /home		35% of disk.    1G \(en 300G
 .Ed
 .Pp
-.Sy Disks > 2 Gigabytes
+.Sy Disks > 2.5 Gigabytes
 .Bd -literal -offset indent -compact
-/		 5% of disk. 800M \(en 2G
-swap		10% of disk.  80M \(en 2x max physical memory
-/usr		78% of disk. 900M \(en 3G
-/home		 7% of disk. 256M \(en 2G
+/		 5% of disk.  800M \(en 2G
+swap		10% of disk.   80M \(en 2x max physical memory
+/usr		78% of disk. 1300M \(en 3G
+/home		 7% of disk.  256M \(en 2G
 .Ed
 .Pp
 .Sy Disks > 700 Megabytes
@@ -547,7 +547,7 @@ exact size.
 swap		80M-256M 10%
 /tmp		120M-4G	8%
 /var		80M-4G	13%
-/usr		900M-2G	5%
+/usr		1.3G-2G	5%
 /usr/X11R6	512M-1G	3%
 /usr/local	2G-10G	10%
 /usr/src	1G-2G	2%
