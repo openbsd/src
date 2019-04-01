@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.14 2019/03/13 09:49:46 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.15 2019/04/01 08:49:35 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -203,6 +203,8 @@ struct imxccm_softc {
 	int			sc_ndivs;
 	struct imxccm_mux	*sc_muxs;
 	int			sc_nmuxs;
+	struct imxccm_divider	*sc_predivs;
+	int			sc_npredivs;
 	struct clock_device	sc_cd;
 };
 
@@ -275,6 +277,8 @@ imxccm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ndivs = nitems(imx8mq_divs);
 		sc->sc_muxs = imx8mq_muxs;
 		sc->sc_nmuxs = nitems(imx8mq_muxs);
+		sc->sc_predivs = imx8mq_predivs;
+		sc->sc_npredivs = nitems(imx8mq_predivs);
 	} else if (OF_is_compatible(sc->sc_node, "fsl,imx7d-ccm")) {
 		sc->sc_gates = imx7d_gates;
 		sc->sc_ngates = nitems(imx7d_gates);
@@ -748,10 +752,10 @@ imxccm_imx8mq_usb(struct imxccm_softc *sc, uint32_t idx)
 	case 0:
 		return clock_get_frequency(sc->sc_node, "osc_25m");
 	case 1:
-		if (idx == IMX8MQ_CLK_USB_CORE_REF_SRC ||
-		    idx == IMX8MQ_CLK_USB_PHY_REF_SRC)
+		if (idx == IMX8MQ_CLK_USB_CORE_REF ||
+		    idx == IMX8MQ_CLK_USB_PHY_REF)
 			return 100 * 1000 * 1000; /* sys1_pll_100m */
-		if (idx == IMX8MQ_CLK_USB_BUS_SRC)
+		if (idx == IMX8MQ_CLK_USB_BUS)
 			return 500 * 1000 * 1000; /* sys2_pll_500m */
 		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
 		return 0;
@@ -1043,7 +1047,8 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 {
 	struct imxccm_softc *sc = cookie;
 	uint32_t idx = cells[0];
-	uint32_t div, parent;
+	uint32_t div, pre, reg, parent;
+	uint32_t freq;
 
 	/* Dummy clock. */
 	if (idx == 0)
@@ -1064,40 +1069,66 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 
 	if (sc->sc_gates == imx8mq_gates) {
 		switch (idx) {
-		case IMX8MQ_ARM_PLL:
-			return imxccm_imx8mq_get_pll(sc, idx);
-		case IMX8MQ_CLK_A53_SRC:
+		case IMX8MQ_CLK_ARM:
 			parent = IMX8MQ_ARM_PLL;
 			return imxccm_get_frequency(sc, &parent);
-		case IMX8MQ_CLK_ENET_AXI_SRC:
-			return imxccm_imx8mq_enet(sc, idx);
-		case IMX8MQ_CLK_I2C1_SRC:
-		case IMX8MQ_CLK_I2C2_SRC:
-		case IMX8MQ_CLK_I2C3_SRC:
-		case IMX8MQ_CLK_I2C4_SRC:
-			return imxccm_imx8mq_i2c(sc, idx);
-		case IMX8MQ_CLK_UART1_SRC:
-		case IMX8MQ_CLK_UART2_SRC:
-		case IMX8MQ_CLK_UART3_SRC:
-		case IMX8MQ_CLK_UART4_SRC:
-			return imxccm_imx8mq_uart(sc, idx);
-		case IMX8MQ_CLK_USDHC1_SRC:
-		case IMX8MQ_CLK_USDHC2_SRC:
-			return imxccm_imx8mq_usdhc(sc, idx);
-		case IMX8MQ_CLK_USB_BUS_SRC:
-		case IMX8MQ_CLK_USB_CORE_REF_SRC:
-		case IMX8MQ_CLK_USB_PHY_REF_SRC:
-			return imxccm_imx8mq_usb(sc, idx);
-		case IMX8MQ_CLK_ECSPI1_SRC:
-		case IMX8MQ_CLK_ECSPI2_SRC:
-		case IMX8MQ_CLK_ECSPI3_SRC:
-			return imxccm_imx8mq_ecspi(sc, idx);
-		case IMX8MQ_CLK_PWM1_SRC:
-		case IMX8MQ_CLK_PWM2_SRC:
-		case IMX8MQ_CLK_PWM3_SRC:
-		case IMX8MQ_CLK_PWM4_SRC:
-			return imxccm_imx8mq_pwm(sc, idx);
+		case IMX8MQ_ARM_PLL:
+			return imxccm_imx8mq_get_pll(sc, idx);
 		}
+
+		/* These are composite clocks. */
+		if (idx < sc->sc_ngates && sc->sc_gates[idx].reg &&
+		    idx < sc->sc_ndivs && sc->sc_divs[idx].reg &&
+		    idx < sc->sc_npredivs && sc->sc_predivs[idx].reg) {
+			switch (idx) {
+			case IMX8MQ_CLK_ENET_AXI:
+				freq = imxccm_imx8mq_enet(sc, idx);
+				break;
+			case IMX8MQ_CLK_I2C1:
+			case IMX8MQ_CLK_I2C2:
+			case IMX8MQ_CLK_I2C3:
+			case IMX8MQ_CLK_I2C4:
+				freq = imxccm_imx8mq_i2c(sc, idx);
+				break;
+			case IMX8MQ_CLK_UART1:
+			case IMX8MQ_CLK_UART2:
+			case IMX8MQ_CLK_UART3:
+			case IMX8MQ_CLK_UART4:
+				freq = imxccm_imx8mq_uart(sc, idx);
+				break;
+			case IMX8MQ_CLK_USDHC1:
+			case IMX8MQ_CLK_USDHC2:
+				freq = imxccm_imx8mq_usdhc(sc, idx);
+				break;
+			case IMX8MQ_CLK_USB_BUS:
+			case IMX8MQ_CLK_USB_CORE_REF:
+			case IMX8MQ_CLK_USB_PHY_REF:
+				freq = imxccm_imx8mq_usb(sc, idx);
+				break;
+			case IMX8MQ_CLK_ECSPI1:
+			case IMX8MQ_CLK_ECSPI2:
+			case IMX8MQ_CLK_ECSPI3:
+				freq = imxccm_imx8mq_ecspi(sc, idx);
+				break;
+			case IMX8MQ_CLK_PWM1:
+			case IMX8MQ_CLK_PWM2:
+			case IMX8MQ_CLK_PWM3:
+			case IMX8MQ_CLK_PWM4:
+				freq = imxccm_imx8mq_pwm(sc, idx);
+				break;
+			default:
+				printf("%s: 0x%08x\n", __func__, idx);
+				return 0;
+			}
+
+			reg = HREAD4(sc, sc->sc_divs[idx].reg);
+			div = reg >> sc->sc_divs[idx].shift;
+			div = div & sc->sc_divs[idx].mask;
+			pre = reg >> sc->sc_predivs[idx].shift;
+			pre = pre & sc->sc_predivs[idx].mask;
+			return ((freq / (pre + 1)) / (div + 1));
+		}
+
 	} else if (sc->sc_gates == imx7d_gates) {
 		switch (idx) {
 		case IMX7D_ENET_AXI_ROOT_SRC:
@@ -1171,7 +1202,7 @@ imxccm_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 
 	if (sc->sc_divs == imx8mq_divs) {
 		switch (idx) {
-		case IMX8MQ_CLK_A53_DIV:
+		case IMX8MQ_CLK_ARM:
 			parent = IMX8MQ_CLK_A53_SRC;
 			return imxccm_set_frequency(cookie, &parent, freq);
 		case IMX8MQ_CLK_A53_SRC:
@@ -1185,21 +1216,20 @@ imxccm_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 			pcells[1] = IMX8MQ_ARM_PLL_OUT;
 			imxccm_set_parent(cookie, &idx, pcells);
 			return ret;
-		case IMX8MQ_CLK_USB_BUS_SRC:
-		case IMX8MQ_CLK_USB_CORE_REF_SRC:
-		case IMX8MQ_CLK_USB_PHY_REF_SRC:
+		case IMX8MQ_CLK_USB_BUS:
+		case IMX8MQ_CLK_USB_CORE_REF:
+		case IMX8MQ_CLK_USB_PHY_REF:
 			if (imxccm_get_frequency(sc, cells) != freq)
 				break;
 			return 0;
-		case IMX8MQ_CLK_USDHC1_DIV:
-			parent = sc->sc_divs[idx].parent;
-			if (imxccm_get_frequency(sc, &parent) != freq)
-				break;
-			imxccm_enable(cookie, &parent, 1);
+		case IMX8MQ_CLK_USDHC1:
+			imxccm_enable(cookie, &idx, 1);
 			reg = HREAD4(sc, sc->sc_divs[idx].reg);
 			reg &= ~(sc->sc_divs[idx].mask << sc->sc_divs[idx].shift);
-			reg |= (0x0 << sc->sc_divs[idx].shift);
 			HWRITE4(sc, sc->sc_divs[idx].reg, reg);
+			reg = HREAD4(sc, sc->sc_predivs[idx].reg);
+			reg &= ~(sc->sc_predivs[idx].mask << sc->sc_predivs[idx].shift);
+			HWRITE4(sc, sc->sc_predivs[idx].reg, reg);
 			return 0;
 		}
 	} else if (sc->sc_divs == imx7d_divs) {
@@ -1258,7 +1288,7 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 				mux |= (0x4 << sc->sc_muxs[idx].shift);
 			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
 			return 0;
-		case IMX8MQ_CLK_USB_BUS_SRC:
+		case IMX8MQ_CLK_USB_BUS:
 			if (pidx != IMX8MQ_SYS2_PLL_500M)
 				break;
 			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
@@ -1266,8 +1296,8 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 			mux |= (0x1 << sc->sc_muxs[idx].shift);
 			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
 			return 0;
-		case IMX8MQ_CLK_USB_CORE_REF_SRC:
-		case IMX8MQ_CLK_USB_PHY_REF_SRC:
+		case IMX8MQ_CLK_USB_CORE_REF:
+		case IMX8MQ_CLK_USB_PHY_REF:
 			if (pidx != IMX8MQ_SYS1_PLL_100M)
 				break;
 			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
@@ -1275,8 +1305,8 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 			mux |= (0x1 << sc->sc_muxs[idx].shift);
 			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
 			return 0;
-		case IMX8MQ_CLK_PCIE1_CTRL_SRC:
-		case IMX8MQ_CLK_PCIE2_CTRL_SRC:
+		case IMX8MQ_CLK_PCIE1_CTRL:
+		case IMX8MQ_CLK_PCIE2_CTRL:
 			if (pidx != IMX8MQ_SYS2_PLL_250M)
 				break;
 			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
@@ -1284,8 +1314,8 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 			mux |= (0x1 << sc->sc_muxs[idx].shift);
 			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
 			return 0;
-		case IMX8MQ_CLK_PCIE1_PHY_SRC:
-		case IMX8MQ_CLK_PCIE2_PHY_SRC:
+		case IMX8MQ_CLK_PCIE1_PHY:
+		case IMX8MQ_CLK_PCIE2_PHY:
 			if (pidx != IMX8MQ_SYS2_PLL_100M)
 				break;
 			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
