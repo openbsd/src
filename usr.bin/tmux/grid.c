@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.91 2019/03/20 19:19:11 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.92 2019/04/01 19:33:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1284,6 +1284,8 @@ grid_reflow(struct grid *gd, u_int sx)
 	if (target->sy < gd->sy)
 		grid_reflow_add(target, gd->sy - target->sy);
 	gd->hsize = target->sy - gd->sy;
+	if (gd->hscrolled > gd->hsize)
+		gd->hscrolled = gd->hsize;
 	free(gd->linedata);
 	gd->linedata = target->linedata;
 	free(target);
