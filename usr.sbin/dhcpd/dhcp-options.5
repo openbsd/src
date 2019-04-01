@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.26 2019/04/01 09:37:57 krw Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.27 2019/04/01 10:25:52 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -71,6 +71,11 @@ The
 data type can be entered either as an explicit IP address
 (e.g., 239.254.197.10) or as a domain name (e.g., haagen.isc.org).
 A domain name must resolve to a single IP address.
+.Pp
+The
+.Ar cidr
+data type specifies a network in CIDR notion.
+e.g. 1.2.3/24.
 .Pp
 The
 .Ar int32
@@ -164,15 +169,19 @@ Some DHCP clients will support it, and others actually require it.
 This option specifies the broadcast address in use on the client's subnet.
 Legal values for broadcast addresses are specified in section 3.2.1.3 of
 RFC 1122.
-.It Ic option classless-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
-This option specifies a list of static routes in CDIR notation, which
-should be sent to the client.
-This option is specified in RFC 3442.
-Note that, since the RFC says that clients supporting this option must ignore the
+.It Ic option classless-static-routes Ar cidr ip-address Oo , Ar cidr ip-address ... Oc ;
+This option specifies a list of destination networks and the
+associated gateways.
+This option is defined in RFC 3442.
+The RFC says that clients supporting this option must ignore the
 .Ic Routers
-option when both are present, the default route
-needs to be included in the list of routes specified here.
-.It Ic option classless-ms-static-routes Ar ip/prefix ip Oo , Ar ip/prefix ip ... Oc ;
+option when both are present.
+Thus default routes, if any,
+must be included in the list.
+The
+.Ar cidr
+of a default route is 0/0.
+.It Ic option classless-ms-static-routes Ar cidr ip-address Oo , Ar cidr ip-address ... Oc ;
 This option does the same as
 .Ic classless-static-routes ,
 but uses option code 249 instead of 121,
@@ -527,6 +536,8 @@ option.
 Note that this option is obsolete and should be replaced by the
 .Ic classless-static-routes
 option.
+.Xr dhclient 8
+ignores this option.
 .It Ic option streettalk-directory-assistance-server Ar ip-address Oo , Ar ip-address ... Oc ;
 The StreetTalk Directory Assistance (STDA) server option specifies a
 list of STDA servers available to the client.
