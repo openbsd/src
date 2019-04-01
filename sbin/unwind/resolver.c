@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.30 2019/03/31 00:57:41 tedu Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.31 2019/04/01 03:31:55 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <tls.h>
 #include <unistd.h>
 
 #include "libunbound/config.h"
@@ -183,11 +184,6 @@ resolver(int debug, int verbose)
 	if ((pw = getpwnam(UNWIND_USER)) == NULL)
 		fatal("getpwnam");
 
-	if (chroot(pw->pw_dir) == -1)
-		fatal("chroot");
-	if (chdir("/") == -1)
-		fatal("chdir(\"/\")");
-
 	uw_process = PROC_RESOLVER;
 	setproctitle("%s", log_procnames[uw_process]);
 	log_procinit(log_procnames[uw_process]);
@@ -197,7 +193,10 @@ resolver(int debug, int verbose)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio inet dns recvfd", NULL) == -1)
+	if (unveil(tls_default_ca_cert_file(), "r") == -1)
+		fatal("unveil");
+
+	if (pledge("stdio inet dns rpath recvfd", NULL) == -1)
 		fatal("pledge");
 
 	ev_base = event_init();
@@ -573,7 +572,7 @@ resolver_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_captiveportal->ev, NULL);
 			break;
 		case IMSG_STARTUP:
-			if (pledge("stdio inet dns", NULL) == -1)
+			if (pledge("stdio inet dns rpath", NULL) == -1)
 				fatal("pledge");
 			break;
 		case IMSG_RECONF_CONF:
@@ -861,6 +860,8 @@ new_static_dot_forwarders(void)
 	static_dot_forwarder = create_resolver(STATIC_DOT_FORWARDER);
 	set_forwarders(static_dot_forwarder,
 	    &resolver_conf->uw_dot_forwarder_list);
+	ub_ctx_set_option(static_dot_forwarder->ctx, "tls-cert-bundle:",
+	    tls_default_ca_cert_file());
 	ub_ctx_set_tls(static_dot_forwarder->ctx, 1);
 
 	check_resolver(static_dot_forwarder);
@@ -995,6 +996,8 @@ check_resolver(struct uw_resolver *res)
 	case STATIC_DOT_FORWARDER:
 		set_forwarders(check_res,
 		    &resolver_conf->uw_dot_forwarder_list);
+		ub_ctx_set_option(check_res->ctx, "tls-cert-bundle:",
+		    tls_default_ca_cert_file());
 		ub_ctx_set_tls(check_res->ctx, 1);
 		break;
 	case RESOLVER_NONE:

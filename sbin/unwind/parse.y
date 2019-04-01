@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2019/03/01 08:02:25 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2019/04/01 03:31:55 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -100,7 +100,7 @@ typedef struct {
 
 %token	STRICT YES NO INCLUDE ERROR
 %token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
-%token	STATUS AUTO
+%token	STATUS AUTO AUTHENTICATION NAME
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -359,6 +359,70 @@ forwarderoptsl		: STRING {
 				    &conf->uw_dot_forwarder_list, uw_forwarder,
 				    entry);
 			}
+			| STRING AUTHENTICATION NAME STRING DOT {
+				int ret;
+				struct sockaddr_storage *ss;
+				if ((ss = host_ip($1)) == NULL) {
+					yyerror("%s is not an ip-address", $1);
+					free($1);
+					YYERROR;
+				}
+				free(ss);
+
+				if ((uw_forwarder = calloc(1,
+				    sizeof(*uw_forwarder))) == NULL)
+					err(1, NULL);
+
+				ret = snprintf(uw_forwarder->name,
+				    sizeof(uw_forwarder->name), "%s#%s", $1,
+				    $4);
+				if (ret == -1 || (size_t)ret >=
+				    sizeof(uw_forwarder->name)) {
+					free(uw_forwarder);
+					yyerror("forwarder %s too long", $1);
+					free($1);
+					YYERROR;
+				}
+
+				SIMPLEQ_INSERT_TAIL(
+				    &conf->uw_dot_forwarder_list, uw_forwarder,
+				    entry);
+			}
+			| STRING PORT NUMBER AUTHENTICATION NAME STRING DOT {
+				int ret;
+				struct sockaddr_storage *ss;
+				if ((ss = host_ip($1)) == NULL) {
+					yyerror("%s is not an ip-address", $1);
+					free($1);
+					YYERROR;
+				}
+				free(ss);
+
+				if ($3 <= 0 || $3 > (int)USHRT_MAX) {
+					yyerror("invalid port: %lld", $3);
+					free($1);
+					YYERROR;
+				}
+
+				if ((uw_forwarder = calloc(1,
+				    sizeof(*uw_forwarder))) == NULL)
+					err(1, NULL);
+
+				ret = snprintf(uw_forwarder->name,
+				    sizeof(uw_forwarder->name), "%s@%d#%s", $1,
+				    (int)$3, $6);
+				if (ret == -1 || (size_t)ret >=
+				    sizeof(uw_forwarder->name)) {
+					free(uw_forwarder);
+					yyerror("forwarder %s too long", $1);
+					free($1);
+					YYERROR;
+				}
+
+				SIMPLEQ_INSERT_TAIL(
+				    &conf->uw_dot_forwarder_list, uw_forwarder,
+				    entry);
+			}
 			;
 %%
 
@@ -395,12 +459,14 @@ lookup(char *s)
 	/* This has to be sorted always. */
 	static const struct keywords keywords[] = {
 		{"DoT",			DOT},
+		{"authentication",	AUTHENTICATION},
 		{"auto",		AUTO},
 		{"captive",		CAPTIVE},
 		{"dot",			DOT},
 		{"expected",		EXPECTED},
 		{"forwarder",		FORWARDER},
 		{"include",		INCLUDE},
+		{"name",		NAME},
 		{"no",			NO},
 		{"port",		PORT},
 		{"portal",		PORTAL},

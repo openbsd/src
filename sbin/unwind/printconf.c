@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.6 2019/02/17 14:49:15 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.7 2019/04/01 03:31:55 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -38,17 +38,28 @@ yesno(int flag)
 void
 print_forwarder(char *name)
 {
-	char	*pos;
+	char	*port_pos, *name_pos;
 
-	pos = strchr(name, '@');
+	port_pos = strchr(name, '@');
+	name_pos = strchr(name, '#');
 
-	if (pos != NULL) {
-		*pos = '\0';
-		printf("%s port %s", name, pos + 1);
-		*pos = '@';
+	if (port_pos != NULL) {
+		*port_pos = '\0';
+		if (name_pos != NULL) {
+			*name_pos = '\0';
+			printf("%s port %s authentication name %s", name,
+			    port_pos + 1, name_pos + 1);
+			*name_pos = '#';
+		} else {
+			printf("%s port %s", name, port_pos + 1);
+		}
+		*port_pos = '@';
+	} else if (name_pos != NULL) {
+		*name_pos = '\0';
+		printf("%s authentication name %s", name, name_pos + 1);
+		*name_pos = '#';
 	} else
 		printf("%s", name);
-
 }
 
 void
