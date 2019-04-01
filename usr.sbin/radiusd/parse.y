@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.11 2019/04/01 09:25:14 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.12 2019/04/01 11:05:41 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -278,17 +278,19 @@ module		: MODULE LOAD STRING STRING {
 			module = find_module($3);
 			if (module == NULL) {
 				yyerror("module `%s' is not found", $3);
+setstrerr:
 				free($3);
 				free($4);
 				free_str_l(&$5);
 				YYERROR;
 			}
+			if ($4[0] == '_') {
+				yyerror("setting `%s' is not allowed", $4);
+				goto setstrerr;
+			}
 			if (radiusd_module_set(module, $4, $5.c, $5.v)) {
 				yyerror("syntax error by module `%s'", $3);
-				free($3);
-				free($4);
-				free_str_l(&$5);
-				YYERROR;
+				goto setstrerr;
 			}
 			free($3);
 			free($4);

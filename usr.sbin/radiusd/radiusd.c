@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.24 2019/04/01 10:34:02 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.25 2019/04/01 11:05:41 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -237,6 +237,8 @@ radiusd_start(struct radiusd *radiusd)
 	signal_add(&radiusd->ev_sigchld, NULL);
 
 	TAILQ_FOREACH(module, &radiusd->module, next) {
+		if (debug > 0)
+			radiusd_module_set(module, "_debug", 0, NULL);
 		radiusd_module_start(module);
 	}
 
@@ -779,18 +781,15 @@ radiusd_access_response_fixup(struct radius_query *q)
 	int		 res_id;
 	size_t		 attrlen;
 	u_char		 req_auth[16], attrbuf[256];
-	const char	*olds, *news;
 	const char	*authen_secret = q->authen->auth->module->secret;
 
-	olds = q->client->secret;
-	news = authen_secret;
-	if (news == NULL)
-		olds = news;
 	radius_get_authenticator(q->req, req_auth);
 
 	if ((authen_secret != NULL &&
 	    strcmp(authen_secret, q->client->secret) != 0) ||
 	    timingsafe_bcmp(q->req_auth, req_auth, 16) != 0) {
+		const char *olds = q->client->secret;
+		const char *news = authen_secret;
 
 		/* RFC 2865 Tunnel-Password */
 		attrlen = sizeof(attrlen);

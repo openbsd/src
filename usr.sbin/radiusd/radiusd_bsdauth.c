@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_bsdauth.c,v 1.11 2019/03/31 07:58:53 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_bsdauth.c,v 1.12 2019/04/01 11:05:41 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -296,7 +296,10 @@ module_bsdauth_config_set(void *ctx, const char *name, int argc,
 		groups[i] = NULL;
 		module->okgroups = groups;
 		module_send_message(module->base, IMSG_OK, NULL);
-	} else
+	} else if (strncmp(name, "_", 1) == 0)
+		/* ignore all internal messages */
+		module_send_message(module->base, IMSG_OK, NULL);
+	else
 		module_send_message(module->base, IMSG_NG,
 		    "Unknown config parameter `%s'", name);
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.15 2019/04/01 10:34:02 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.16 2019/04/01 11:05:41 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -216,7 +216,12 @@ module_radius_config_set(void *ctx, const char *paramname, int paramvalc,
 			    (u_long) sizeof(module->secret) - 1);
 			return;
 		}
-	} else {
+	} else if (strcmp(paramname, "_debug") == 0)
+		log_init(1);
+	else if (strncmp(paramname, "_", 1) == 0)
+		/* ignore all internal messages */
+		module_send_message(module->base, IMSG_OK, NULL);
+	else {
 		module_send_message(module->base, IMSG_NG,
 		    "Unknown config parameter name `%s'", paramname);
 		return;
@@ -236,7 +241,7 @@ module_radius_start(void *ctx)
 
 	if (module->nserver <= 0) {
 		module_send_message(module->base, IMSG_NG,
-			"module `radius' needs one `server' at least");
+			"needs one `server' at least");
 		return;
 	}
 
