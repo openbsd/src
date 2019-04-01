@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.31 2019/04/01 03:31:55 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.32 2019/04/01 09:24:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -820,7 +820,6 @@ new_forwarders(void)
 
 	log_debug("%s: create_resolver", __func__);
 	forwarder = create_resolver(FORWARDER);
-	set_forwarders(forwarder, &dhcp_forwarder_list);
 
 	check_resolver(forwarder);
 }
@@ -839,7 +838,6 @@ new_static_forwarders(void)
 
 	log_debug("%s: create_resolver", __func__);
 	static_forwarder = create_resolver(STATIC_FORWARDER);
-	set_forwarders(static_forwarder, &resolver_conf->uw_forwarder_list);
 
 	check_resolver(static_forwarder);
 }
@@ -858,11 +856,6 @@ new_static_dot_forwarders(void)
 
 	log_debug("%s: create_resolver", __func__);
 	static_dot_forwarder = create_resolver(STATIC_DOT_FORWARDER);
-	set_forwarders(static_dot_forwarder,
-	    &resolver_conf->uw_dot_forwarder_list);
-	ub_ctx_set_option(static_dot_forwarder->ctx, "tls-cert-bundle:",
-	    tls_default_ca_cert_file());
-	ub_ctx_set_tls(static_dot_forwarder->ctx, 1);
 
 	check_resolver(static_dot_forwarder);
 }
@@ -928,6 +921,26 @@ create_resolver(enum uw_resolver_type type)
 
 	evtimer_set(&res->check_ev, resolver_check_timo, res);
 
+	switch(res->type) {
+	case RECURSOR:
+		break;
+	case FORWARDER:
+		set_forwarders(res, &dhcp_forwarder_list);
+		break;
+	case STATIC_FORWARDER:
+		set_forwarders(res, &resolver_conf->uw_forwarder_list);
+		break;
+	case STATIC_DOT_FORWARDER:
+		set_forwarders(res, &resolver_conf->uw_dot_forwarder_list);
+		ub_ctx_set_option(res->ctx, "tls-cert-bundle:",
+		    tls_default_ca_cert_file());
+		ub_ctx_set_tls(res->ctx, 1);
+		break;
+	case RESOLVER_NONE:
+		fatalx("type NONE");
+		break;
+	}
+
 	return (res);
 }
 
@@ -983,27 +996,6 @@ check_resolver(struct uw_resolver *res)
 		fatal("%s", __func__);
 	if ((data = malloc(sizeof(*data))) == NULL)
 		fatal("%s", __func__);
-
-	switch(check_res->type) {
-	case RECURSOR:
-		break;
-	case FORWARDER:
-		set_forwarders(check_res, &dhcp_forwarder_list);
-		break;
-	case STATIC_FORWARDER:
-		set_forwarders(check_res, &resolver_conf->uw_forwarder_list);
-		break;
-	case STATIC_DOT_FORWARDER:
-		set_forwarders(check_res,
-		    &resolver_conf->uw_dot_forwarder_list);
-		ub_ctx_set_option(check_res->ctx, "tls-cert-bundle:",
-		    tls_default_ca_cert_file());
-		ub_ctx_set_tls(check_res->ctx, 1);
-		break;
-	case RESOLVER_NONE:
-		fatalx("type NONE");
-		break;
-	}
 
 	resolver_ref(check_res);
 	resolver_ref(res);
