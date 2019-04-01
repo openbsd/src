@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86emu.c,v 1.10 2018/11/25 19:52:08 jmc Exp $	*/
+/*	$OpenBSD: x86emu.c,v 1.11 2019/04/01 06:03:57 naddy Exp $	*/
 /*	$NetBSD: x86emu.c,v 1.7 2009/02/03 19:26:29 joerg Exp $	*/
 
 /*
@@ -7009,7 +7009,7 @@ rol_byte(struct x86emu *emu, uint8_t d, uint8_t s)
 		CONDITIONAL_SET_FLAG(s == 1 &&
 		    XOR2((res & 0x1) + ((res >> 6) & 0x2)),
 		    F_OF);
-	} if (s != 0) {
+	} else if (s != 0) {
 		/* set the new carry flag, Note that it is the low order bit
 		 * of the result!!!                               */
 		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
@@ -7035,7 +7035,7 @@ rol_word(struct x86emu *emu, uint16_t d, uint8_t s)
 		CONDITIONAL_SET_FLAG(s == 1 &&
 		    XOR2((res & 0x1) + ((res >> 14) & 0x2)),
 		    F_OF);
-	} if (s != 0) {
+	} else if (s != 0) {
 		/* set the new carry flag, Note that it is the low order bit
 		 * of the result!!!                               */
 		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
@@ -7061,7 +7061,7 @@ rol_long(struct x86emu *emu, uint32_t d, uint8_t s)
 		CONDITIONAL_SET_FLAG(s == 1 &&
 		    XOR2((res & 0x1) + ((res >> 30) & 0x2)),
 		    F_OF);
-	} if (s != 0) {
+	} else if (s != 0) {
 		/* set the new carry flag, Note that it is the low order bit
 		 * of the result!!!                               */
 		CONDITIONAL_SET_FLAG(res & 0x1, F_CF);
