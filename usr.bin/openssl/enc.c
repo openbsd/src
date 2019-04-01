@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.19 2019/04/01 16:05:14 jsing Exp $ */
+/* $OpenBSD: enc.c,v 1.20 2019/04/01 16:06:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,6 +88,7 @@ static struct {
 	char *hkey;
 	char *hsalt;
 	char *inf;
+	int iter;
 	char *keyfile;
 	char *keystr;
 	char *md;
@@ -96,10 +97,9 @@ static struct {
 	int olb64;
 	char *outf;
 	char *passarg;
+	int pbkdf2;
 	int printkey;
 	int verbose;
-	int iter;
-	int pbkdf2;
 } enc_config;
 
 static int
