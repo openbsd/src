@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.12 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.13 2019/04/01 08:43:04 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark kettenis <kettenis@openbsd.org>
  *
@@ -95,8 +95,10 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	/* Set up power domain */
+	/* Set up power and clocks */
 	power_domain_enable(sc->sc_node);
+	clock_set_assigned(sc->sc_node);
+	clock_enable_all(sc->sc_node);
 
 	/* 
 	 * Synopsys Designware USB3 controller needs some extra
@@ -381,7 +383,7 @@ exynos5_usbdrd_init(struct xhci_fdt_softc *sc, uint32_t *cells)
 void
 imx8mq_usb_init(struct xhci_fdt_softc *sc, uint32_t *cells)
 {
-	uint32_t phy_reg[4], reg;
+	uint32_t phy_reg[2], reg;
 	int node;
 
 	node = OF_getnodebyphandle(cells[0]);
@@ -391,8 +393,8 @@ imx8mq_usb_init(struct xhci_fdt_softc *sc, uint32_t *cells)
 	    sizeof(phy_reg)) != sizeof(phy_reg))
 		return;
 
-	if (bus_space_map(sc->sc.iot, phy_reg[1],
-	    phy_reg[3], 0, &sc->ph_ioh)) {
+	if (bus_space_map(sc->sc.iot, phy_reg[0],
+	    phy_reg[1], 0, &sc->ph_ioh)) {
 		printf("%s: can't map PHY registers\n",
 		    sc->sc.sc_bus.bdev.dv_xname);
 		return;
