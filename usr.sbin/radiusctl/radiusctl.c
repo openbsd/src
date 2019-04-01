@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusctl.c,v 1.6 2015/12/31 16:22:27 millert Exp $	*/
+/*	$OpenBSD: radiusctl.c,v 1.7 2019/04/01 09:51:56 yasuoka Exp $	*/
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
  *
@@ -252,10 +252,16 @@ radius_dump(FILE *out, RADIUS_PACKET *pkt, bool resp, const char *secret)
 	    "    Code                      = %s(%d)\n",
 	    (int)radius_get_id(pkt), radius_code_str((int)radius_get_code(pkt)),
 	    (int)radius_get_code(pkt));
-	if (resp && secret)
-		fprintf(out, "    Message-Authenticator     = %s\n",
+	if (resp && secret) {
+		fprintf(out, "    Authenticator             = %s\n",
 		    (radius_check_response_authenticator(pkt, secret) == 0)
 		    ? "Verified" : "NG");
+		fprintf(out, "    Message-Authenticator     = %s\n",
+		    (!radius_has_attr(pkt, RADIUS_TYPE_MESSAGE_AUTHENTICATOR))
+		    ? "(Not present)"
+		    : (radius_check_message_authenticator(pkt, secret) == 0)
+		    ? "Verified" : "NG");
+	}
 
 	if (radius_get_string_attr(pkt, RADIUS_TYPE_USER_NAME, buf,
 	    sizeof(buf)) == 0)
