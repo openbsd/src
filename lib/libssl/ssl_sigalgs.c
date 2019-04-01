@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.19 2019/03/25 17:33:26 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.20 2019/04/01 02:09:21 beck Exp $ */
 /*
  * Copyright (c) 2018-2019 Bob Beck <beck@openbsd.org>
  *
@@ -244,11 +244,11 @@ ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
 			return 0;
 	}
 
-	if (pkey->type == EVP_PKEY_EC) {
+	if (pkey->type == EVP_PKEY_EC && check_curve) {
+		/* Curve must match for EC keys. */
 		if (sigalg->curve_nid == 0)
 			return 0;
-		/* Curve must match for EC keys. */
-		if (check_curve && EC_GROUP_get_curve_name(EC_KEY_get0_group
+		if (EC_GROUP_get_curve_name(EC_KEY_get0_group
 		    (EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid) {
 			return 0;
 		}
