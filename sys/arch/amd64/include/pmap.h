@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.74 2019/02/18 08:26:19 yasuoka Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.75 2019/04/01 12:45:49 mlarkin Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ struct pmap {
 
 	u_int64_t pm_cpus;		/* mask of CPUs using pmap */
 	int pm_type;			/* Type of pmap this is (PMAP_TYPE_x) */
+	uint64_t eptp;			/* cached EPTP (used by vmm) */
 };
 
 /*

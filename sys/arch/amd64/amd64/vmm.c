@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.234 2019/04/01 12:02:43 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.235 2019/04/01 12:45:50 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2045,6 +2045,8 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/* xcr0 power on default sets bit 0 (x87 state) */
 	vcpu->vc_gueststate.vg_xcr0 = XCR0_X87 & xsave_mask;
 
+	vcpu->vc_parent->vm_map->pmap->eptp = 0;
+
 exit:
 	return ret;
 }
@@ -2577,6 +2579,8 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 			ret = EINVAL;
 			goto exit;
 		}
+
+		vcpu->vc_parent->vm_map->pmap->eptp = eptp;
 	}
 
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,

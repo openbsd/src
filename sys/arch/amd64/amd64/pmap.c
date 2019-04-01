@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.129 2019/03/25 20:29:25 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.130 2019/04/01 12:45:50 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -116,6 +116,12 @@
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
+
+#include "vmm.h"
+
+#if NVMM > 0
+#include <machine/vmmvar.h>
+#endif /* NVMM > 0 */
 
 #include "acpi.h"
 
@@ -2293,9 +2299,24 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 void pmap_remove_ept(struct pmap *pmap, vaddr_t sgpa, vaddr_t egpa)
 {
 	vaddr_t v;
+#if NVMM > 0
+	struct vmx_invept_descriptor vid;
+#endif /* NVMM > 0 */
 
+	DPRINTF("%s: sgpa=0x%llx egpa=0x%llx\n", __func__, (uint64_t)sgpa,
+	    (uint64_t)egpa);
 	for (v = sgpa; v < egpa + PAGE_SIZE; v += PAGE_SIZE)
 		pmap_do_remove_ept(pmap, v);
+
+#if NVMM > 0
+	if (pmap->eptp != 0) {
+		memset(&vid, 0, sizeof(vid));
+		vid.vid_eptp = pmap->eptp;
+		DPRINTF("%s: flushing EPT TLB for EPTP 0x%llx\n", __func__,
+		    vid.vid_eptp);
+		invept(IA32_VMX_INVEPT_SINGLE_CTX, &vid);
+	}
+#endif /* NVMM > 0 */
 }
 
 void
