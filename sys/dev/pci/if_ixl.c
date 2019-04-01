@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.32 2019/03/29 02:56:46 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.33 2019/04/01 02:58:56 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1397,7 +1397,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rx_ring_ndescs = 1024;
 
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, IXL_PCIREG);
-	if (pci_mapreg_map(pa, IXL_PCIREG, memtype, BUS_SPACE_MAP_PREFETCHABLE,
+	if (pci_mapreg_map(pa, IXL_PCIREG, memtype, 0,
 	    &sc->sc_memt, &sc->sc_memh, NULL, &sc->sc_mems, 0)) {
 		printf(": unable to map registers\n");
 		return;
