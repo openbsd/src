@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.230 2018/08/11 18:37:21 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.231 2019/04/01 00:12:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -648,7 +648,6 @@ edit(struct disklabel *lp, int f)
 	int first, ch, fd, error = 0;
 	struct disklabel label;
 	FILE *fp;
-	u_int64_t total_sectors, starting_sector, ending_sector;
 
 	if ((fd = mkstemp(tmpfil)) == -1 || (fp = fdopen(fd, "w")) == NULL) {
 		warn("%s", tmpfil);
@@ -674,17 +673,10 @@ edit(struct disklabel *lp, int f)
 			warn("%s", tmpfil);
 			break;
 		}
-		/* Get values set by OS and not the label. */
+		/* Start with the kernel's idea of the default label. */
 		if (ioctl(f, DIOCGPDINFO, &label) < 0)
 			err(4, "ioctl DIOCGPDINFO");
-		ending_sector = DL_GETBEND(&label);
-		starting_sector = DL_GETBSTART(&label);
-		total_sectors = DL_GETDSIZE(&label);
 		error = getasciilabel(fp, &label);
-		DL_SETBEND(&label, ending_sector);
-		DL_SETBSTART(&label, starting_sector);
-		DL_SETDSIZE(&label, total_sectors);
-
 		if (error == 0) {
 			if (cmplabel(lp, &label) == 0) {
 				puts("No changes.");
