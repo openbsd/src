@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.82 2018/11/29 14:24:23 tedu Exp $ */
+/* $OpenBSD: tls.c,v 1.83 2019/04/01 15:58:02 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -256,7 +256,9 @@ tls_configure(struct tls *ctx, struct tls_config *config)
 	if (config == NULL)
 		config = tls_config_default;
 
+	pthread_mutex_lock(&config->mutex);
 	config->refcount++;
+	pthread_mutex_unlock(&config->mutex);
 
 	tls_config_free(ctx->config);
 

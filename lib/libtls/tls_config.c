@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.54 2019/03/27 11:12:10 tedu Exp $ */
+/* $OpenBSD: tls_config.c,v 1.55 2019/04/01 15:58:02 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -96,6 +97,7 @@ tls_config_new_internal(void)
 	if ((config->keypair = tls_keypair_new()) == NULL)
 		goto err;
 
+	config->mutex = PTHREAD_MUTEX_INITIALIZER;
 	config->refcount = 1;
 	config->session_fd = -1;
 
@@ -149,11 +151,16 @@ void
 tls_config_free(struct tls_config *config)
 {
 	struct tls_keypair *kp, *nkp;
+	int refcount;
 
 	if (config == NULL)
 		return;
 
-	if (--config->refcount > 0)
+	pthread_mutex_lock(&config->mutex);
+	refcount = --config->refcount;
+	pthread_mutex_unlock(&config->mutex);
+
+	if (refcount > 0)
 		return;
 
 	for (kp = config->keypair; kp != NULL; kp = nkp) {
