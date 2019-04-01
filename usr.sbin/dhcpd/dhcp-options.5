@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.24 2019/04/01 08:37:21 krw Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.25 2019/04/01 08:52:36 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -216,11 +216,17 @@ allow the client to request a lease time for the IP address.
 In a server reply (DHCPOFFER), a DHCP server uses this option to specify the
 lease time it is willing to offer.
 .It Ic option dhcp-max-message-size Ar uint16 ;
-This option specifies the maximum length DHCP message that it is willing
-to accept.
+This option specifies the maximum length
+.Ic option dhcp-message
+that the DHCP client is willing to accept.
 The length is specified as an unsigned 16-bit integer.
 A client may use the maximum DHCP message size option in DHCPDISCOVER or
 DHCPREQUEST messages, but should not use the option in DHCPDECLINE messages.
+.It Ic option dhcp-message Ar string ;
+This option is used to send an error message to a DHCP client in
+the event of a failure.
+The maximum acceptable length of the message can be set with
+.Ic option dhcp-max-message-size .
 .It Ic option dhcp-message-type Ar uint8 ;
 This option is used to convey the type of the DHCP message.
 Values: 1=DHCPDISCOVER, 2=DHCPOFFER, 3=DHCPREQUEST, 4=DHCPDECLINE, 5=DHCPACK,
