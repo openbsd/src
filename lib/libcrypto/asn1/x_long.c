@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.13 2019/03/31 14:41:40 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.14 2019/04/01 15:48:50 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -210,5 +210,8 @@ static int
 long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it, int indent,
     const ASN1_PCTX *pctx)
 {
-	return BIO_printf(out, "%ld\n", *(long *)pval);
+	if (BIO_printf(out, "%ld\n", *(long *)pval) <= 0)
+		return 0;
+
+	return 1;
 }
