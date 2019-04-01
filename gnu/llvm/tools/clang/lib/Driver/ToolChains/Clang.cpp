@@ -4119,6 +4119,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       !Args.hasArg(options::OPT_pg)) {
     CmdArgs.push_back(Args.MakeArgString("-D_RET_PROTECTOR"));
     CmdArgs.push_back(Args.MakeArgString("-ret-protector"));
+    // Consume the stack protector arguments to prevent warning
+    Args.getLastArg(options::OPT_fstack_protector_all,
+        options::OPT_fstack_protector_strong,
+        options::OPT_fstack_protector);
   } else {
     // If we're not using retguard, then do the usual stack protector
     RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext);
