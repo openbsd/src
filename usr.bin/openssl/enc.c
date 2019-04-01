@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.18 2019/02/09 15:49:21 inoguchi Exp $ */
+/* $OpenBSD: enc.c,v 1.19 2019/04/01 16:05:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,7 +180,7 @@ static struct option enc_options[] = {
 		.name = "iter",
 		.argname = "iterations",
 		.desc = "Specify iteration count and force use of PBKDF2",
-		.type = OPTION_VALUE,
+		.type = OPTION_ARG_INT,
 		.opt.value = &enc_config.iter,
 	},
 	{
