@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_machdep.c,v 1.56 2018/10/26 20:28:40 kettenis Exp $ */
+/*	$OpenBSD: armv7_machdep.c,v 1.57 2019/04/01 07:00:51 tedu Exp $ */
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -221,6 +221,9 @@ void (*powerdownfn)(void);
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -268,6 +271,7 @@ haltsys:
 		cngetc();
 	}
 
+doreset:
 	printf("rebooting...\n");
 	delay(500000);
 	if (cpuresetfn)

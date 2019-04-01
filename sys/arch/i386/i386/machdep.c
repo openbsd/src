@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.629 2019/01/19 20:45:06 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.630 2019/04/01 07:00:51 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2682,6 +2682,9 @@ boot(int howto)
 	if ((howto & RB_POWERDOWN) != 0)
 		lid_action = 0;
 
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -2758,6 +2761,7 @@ haltsys:
 		cnpollc(0);
 	}
 
+doreset:
 	printf("rebooting...\n");
 	cpu_reset();
 	for (;;)

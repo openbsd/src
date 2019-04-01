@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.108 2018/12/18 14:24:02 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.109 2019/04/01 07:00:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -764,6 +764,9 @@ int	waittime = -1;
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (curproc)
 		savectx(curproc->p_addr, 0);
 
@@ -803,6 +806,7 @@ haltsys:
 		else
 			printf("System Halt.\n");
 	} else {
+doreset:
 		printf("System restart.\n");
 		(void)disableintr();
 		tlb_set_wired(0);

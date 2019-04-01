@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.159 2019/03/17 05:06:36 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.160 2019/04/01 07:00:52 tedu Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -822,6 +822,9 @@ int	waittime = -1;
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (curproc)
 		savectx(curproc->p_addr, 0);
 
@@ -859,8 +862,10 @@ haltsys:
 			printf("System Power Down.\n");
 		else
 			printf("System Halt.\n");
-	} else
+	} else {
+doreset:
 		printf("System restart.\n");
+	}
 
 	delay(1000000);
 	md_halt(howto);

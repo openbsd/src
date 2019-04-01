@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.254 2018/07/20 01:30:30 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.255 2019/04/01 07:00:51 tedu Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -876,6 +876,9 @@ int waittime = -1;
 __dead void
 boot(int howto)
 {
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	/*
 	 * On older systems without software power control, prevent mi code
 	 * from spinning disks off, in case the operator changes his mind
@@ -936,6 +939,7 @@ haltsys:
 		__asm volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_STOP), "r" (HPPA_LBCAST + iomod_command));
 	} else {
+doreset:
 		printf("rebooting...");
 		DELAY(2000000);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.190 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.191 2019/04/01 07:00:52 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -596,6 +596,9 @@ boot(int howto)
 	int i;
 	static char str[128];
 
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -650,6 +653,7 @@ haltsys:
 		panic("PROM exit failed");
 	}
 
+doreset:
 	printf("rebooting\n\n");
 #if 0
 	if (user_boot_string && *user_boot_string) {

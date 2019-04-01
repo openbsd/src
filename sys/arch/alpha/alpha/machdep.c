@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.186 2018/07/10 04:19:59 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.187 2019/04/01 07:00:51 tedu Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -964,6 +964,9 @@ boot(int howto)
 	int i;
 #endif
 
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -1033,6 +1036,7 @@ haltsys:
 		(*platform.powerdown)();
 		printf("WARNING: powerdown failed!\n");
 	}
+doreset:
 	printf("%s\n\n",
 	    (howto & RB_HALT) != 0 ? "halted." : "rebooting...");
 	prom_halt((howto & RB_HALT) != 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.76 2018/07/16 08:53:44 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.77 2019/04/01 07:00:52 tedu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -648,6 +648,9 @@ boot(int howto)
 {
 	static int syncing;
 
+	if ((howto & RB_RESET) != 0)
+		goto doreset;
+
 	if (cold) {
 		if ((howto & RB_USERREQ) == 0)
 			howto |= RB_HALT;
@@ -687,6 +690,7 @@ haltsys:
 			continue;
 		/* NOTREACHED */
 	}
+doreset:
 	printf("rebooting\n\n");
 
 	{
