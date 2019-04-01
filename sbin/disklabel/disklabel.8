@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.133 2019/03/31 20:12:43 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.134 2019/04/01 00:29:51 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 31 2019 $
+.Dd $Mdocdate: April 1 2019 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -278,9 +278,7 @@ Commands may be aborted by entering
 .Pq Control-D .
 Entering
 .Ql ^D
-at the main
-.Ql >
-prompt will exit the editor.
+at the main prompt will exit the editor.
 .Pp
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
@@ -436,6 +434,11 @@ Toggle
 .Dq expert mode .
 By default, some settings are reserved for experts only
 (such as the block and fragment size on ffs partitions).
+While in expert mode the command line prompt will end
+with
+.Ql #
+instead of
+.Ql > .
 .It Cm x
 Exit the editor without saving any changes to the on-disk label.
 .It Cm z
