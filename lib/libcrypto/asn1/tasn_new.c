@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.17 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.18 2019/04/01 15:48:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -306,10 +306,12 @@ ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	ASN1_STRING *str;
 	int utype;
 
-	if (it && it->funcs) {
+	if (it != NULL && it->funcs != NULL) {
 		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
-		if (pf->prim_new)
-			return pf->prim_new(pval, it);
+
+		if (pf->prim_new == NULL)
+			return 0;
+		return pf->prim_new(pval, it);
 	}
 
 	if (!it || (it->itype == ASN1_ITYPE_MSTRING))
@@ -355,14 +357,17 @@ static void
 asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	int utype;
-	if (it && it->funcs) {
+
+	if (it != NULL && it->funcs != NULL) {
 		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+
 		if (pf->prim_clear)
 			pf->prim_clear(pval, it);
 		else
 			*pval = NULL;
 		return;
 	}
+
 	if (!it || (it->itype == ASN1_ITYPE_MSTRING))
 		utype = V_ASN1_UNDEF;
 	else

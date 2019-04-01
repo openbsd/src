@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.18 2019/03/23 18:48:14 beck Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.19 2019/04/01 15:48:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -500,13 +500,18 @@ asn1_primitive_print(BIO *out, ASN1_VALUE **fld, const ASN1_ITEM *it,
 	ASN1_STRING *str;
 	int ret = 1, needlf = 1;
 	const char *pname;
-	const ASN1_PRIMITIVE_FUNCS *pf;
 
-	pf = it->funcs;
 	if (!asn1_print_fsname(out, indent, fname, sname, pctx))
 		return 0;
-	if (pf && pf->prim_print)
+
+	if (it != NULL && it->funcs != NULL) {
+		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+
+		if (pf->prim_print == NULL)
+			return 0;
+
 		return pf->prim_print(out, fld, it, indent, pctx);
+	}
 
 	str = (ASN1_STRING *)*fld;
 

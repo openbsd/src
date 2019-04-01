@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_fre.c,v 1.16 2018/04/06 12:16:06 bluhm Exp $ */
+/* $OpenBSD: tasn_fre.c,v 1.17 2019/04/01 15:48:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -193,14 +193,14 @@ void
 ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	int utype;
-	if (it) {
-		const ASN1_PRIMITIVE_FUNCS *pf;
-		pf = it->funcs;
-		if (pf && pf->prim_free) {
-			pf->prim_free(pval, it);
-			return;
-		}
+
+	if (it != NULL && it->funcs != NULL) {
+		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+
+		pf->prim_free(pval, it);
+		return;
 	}
+
 	/* Special case: if 'it' is NULL free contents of ASN1_TYPE */
 	if (!it) {
 		ASN1_TYPE *typ = (ASN1_TYPE *)*pval;

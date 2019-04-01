@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.36 2018/09/17 18:18:01 tb Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.37 2019/04/01 15:48:04 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -793,14 +793,17 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 	ASN1_VALUE **opval = NULL;
 	ASN1_STRING *stmp;
 	ASN1_TYPE *typ = NULL;
-	int ret = 0;
-	const ASN1_PRIMITIVE_FUNCS *pf;
 	ASN1_INTEGER **tint;
+	int ret = 0;
 
-	pf = it->funcs;
+	if (it->funcs != NULL) {
+		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
 
-	if (pf && pf->prim_c2i)
+		if (pf->prim_c2i == NULL)
+			return 0;
 		return pf->prim_c2i(pval, cont, len, utype, free_cont, it);
+	}
+
 	/* If ANY type clear type and set pointer to internal value */
 	if (it->utype == V_ASN1_ANY) {
 		if (!*pval) {
