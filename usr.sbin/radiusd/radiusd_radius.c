@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.13 2017/05/30 16:30:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.14 2019/04/01 09:25:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -240,6 +240,12 @@ module_radius_start(void *ctx)
 		return;
 	}
 
+	if (module->secret[0] == '\0') {
+		module_send_message(module->base, IMSG_NG,
+		    "`secret' configuration is required");
+		return;
+	}
+
 	for (i = 0; i < module->nserver; i++) {
 		module->server[i].module = module;
 		if (radius_server_start(&module->server[i]) != 0) {
@@ -251,8 +257,7 @@ module_radius_start(void *ctx)
 	}
 	module_send_message(module->base, IMSG_OK, NULL);
 
-	if (module->secret[0] != '\0')
-		module_notify_secret(module->base, module->secret);
+	module_notify_secret(module->base, module->secret);
 }
 
 static void
@@ -301,8 +306,7 @@ module_radius_access_request(void *ctx, u_int q_id, const u_char *pkt,
 	 * secret.
 	 */
 	attrlen = sizeof(attrbuf);
-	if (module->secret[0] != '\0' &&
-	    radius_get_raw_attr(req->q_pkt, RADIUS_TYPE_USER_PASSWORD,
+	if (radius_get_raw_attr(req->q_pkt, RADIUS_TYPE_USER_PASSWORD,
 		    attrbuf, &attrlen) == 0) {
 		attrbuf[attrlen] = '\0';
 		radius_del_attr_all(req->q_pkt, RADIUS_TYPE_USER_PASSWORD);
@@ -426,27 +430,25 @@ radius_server_on_event(int fd, short evmask, void *ctx)
 	}
 	radius_set_request_packet(radpkt, req->q_pkt);
 
-	if (server->module->secret[0] != '\0') {
-		if (radius_check_response_authenticator(radpkt,
+	if (radius_check_response_authenticator(radpkt,
+	    server->module->secret) != 0) {
+		module_radius_log(server->module, LOG_WARNING,
+		    "server=%s Received radius message(id=%d) has bad "
+		    "authenticator",
+		    addrport_tostring(peer, peer->sa_len, buf,
+		    sizeof(buf)), res_id);
+		goto out;
+	}
+	if (radius_has_attr(radpkt,
+	    RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
+	    radius_check_message_authenticator(radpkt,
 		    server->module->secret) != 0) {
-			module_radius_log(server->module, LOG_WARNING,
-			    "server=%s Received radius message(id=%d) has bad "
-			    "authenticator",
-			    addrport_tostring(peer, peer->sa_len, buf,
-			    sizeof(buf)), res_id);
-			goto out;
-		}
-		if (radius_has_attr(radpkt,
-		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
-		    radius_check_message_authenticator(radpkt,
-			    server->module->secret) != 0) {
-			module_radius_log(server->module, LOG_WARNING,
-			    "server=%s Received radius message(id=%d) has bad "
-			    "message authenticator",
-			    addrport_tostring(peer, peer->sa_len, buf,
-			    sizeof(buf)), res_id);
-			goto out;
-		}
+		module_radius_log(server->module, LOG_WARNING,
+		    "server=%s Received radius message(id=%d) has bad "
+		    "message authenticator",
+		    addrport_tostring(peer, peer->sa_len, buf,
+		    sizeof(buf)), res_id);
+		goto out;
 	}
 
 	module_radius_log(server->module, LOG_INFO,
@@ -605,9 +607,8 @@ module_radius_req_reset_msgauth(struct module_radius_req *req)
 	if (radius_has_attr(req->q_pkt, RADIUS_TYPE_MESSAGE_AUTHENTICATOR))
 		radius_del_attr_all(req->q_pkt,
 		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR);
-	if (req->module->secret[0] != '\0')
-		radius_put_message_authenticator(req->q_pkt,
-		    req->module->secret);
+	radius_put_message_authenticator(req->q_pkt,
+	    req->module->secret);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.10 2019/03/29 07:07:48 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.11 2019/04/01 09:25:14 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -169,6 +169,11 @@ optport		: { $$ = 0; }
 		;
 client		: CLIENT prefix optnl clientopts_b {
 			struct radiusd_client *client0;
+
+			if (client.secret[0] == '\0') {
+				yyerror("secret is required for client");
+				YYERROR;
+			}
 
 			client0 = calloc(1, sizeof(struct radiusd_client));
 			if (client0 == NULL)
