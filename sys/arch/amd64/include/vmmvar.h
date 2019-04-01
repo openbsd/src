@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.61 2019/03/02 08:53:07 ajacoutot Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.62 2019/04/01 08:21:04 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -564,6 +564,7 @@ struct vm_rwregs_params {
  *  speedstep (CPUIDECX_EST)
  *  thermal (CPUIDECX_TM2, CPUID_ACPI, CPUID_TM)
  *  context id (CPUIDECX_CNXTID)
+ *  machine check (CPUID_MCE, CPUID_MCA)
  *  silicon debug (CPUIDECX_SDBG)
  *  xTPR (CPUIDECX_XTPR)
  *  perf/debug (CPUIDECX_PDCM)
@@ -587,7 +588,7 @@ struct vm_rwregs_params {
 #define VMM_CPUIDEDX_MASK ~(CPUID_ACPI | CPUID_TM | \
     CPUID_HTT | CPUID_DS | CPUID_APIC | \
     CPUID_PSN | CPUID_SS | CPUID_PBE | \
-    CPUID_MTRR)
+    CPUID_MTRR | CPUID_MCE | CPUID_MCA)
 
 /*
  * SEFF flags - copy from host minus:
