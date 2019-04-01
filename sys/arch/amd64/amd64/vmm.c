@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.233 2019/03/26 19:32:47 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.234 2019/04/01 12:02:43 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6274,6 +6274,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		break;
 	case 0x80000008:	/* Phys bits info and topology (AMD) */
 		CPUID(0x80000008, *rax, *rbx, *rcx, *rdx);
+		*rbx &= VMM_AMDSPEC_EBX_MASK;
 		/* Reset %rcx (topology) */
 		*rcx = 0;
 		break;
