@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.75 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.76 2019/04/01 03:57:07 naddy Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -963,7 +963,7 @@ play_msf:
 	} else if (s1 > 59 || s2 > 59) {
 		printf("Seconds must be between 0 and 59\n");
 		return (0);
-	} if (f1 > 74 || f2 > 74) {
+	} else if (f1 > 74 || f2 > 74) {
 		printf("Frames number must be between 0 and 74\n");
 		return (0);
 	}
