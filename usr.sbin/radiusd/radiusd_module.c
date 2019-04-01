@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.10 2016/04/05 21:24:02 krw Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.11 2019/04/01 10:34:02 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -67,7 +67,7 @@ struct module_base {
 };
 
 static int	 module_common_radpkt(struct module_base *, uint32_t, u_int,
-		    int, const u_char *, size_t);
+		    const u_char *, size_t);
 static int	 module_recv_imsg(struct module_base *);
 static int	 module_imsg_handler(struct module_base *, struct imsg *);
 #ifdef USE_LIBEVENT
@@ -241,11 +241,11 @@ module_userpass_fail(struct module_base *base, u_int q_id, const char *msg)
 }
 
 int
-module_accsreq_answer(struct module_base *base, u_int q_id, int modified,
-    const u_char *pkt, size_t pktlen)
+module_accsreq_answer(struct module_base *base, u_int q_id, const u_char *pkt,
+    size_t pktlen)
 {
 	return (module_common_radpkt(base, IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER,
-	    q_id, modified, pkt, pktlen));
+	    q_id, pkt, pktlen));
 }
 
 int
@@ -262,7 +262,7 @@ module_accsreq_aborted(struct module_base *base, u_int q_id)
 
 static int
 module_common_radpkt(struct module_base *base, uint32_t imsg_type, u_int q_id,
-    int modified, const u_char *pkt, size_t pktlen)
+    const u_char *pkt, size_t pktlen)
 {
 	int		 ret = 0, off = 0, len, siz;
 	struct iovec	 iov[2];
@@ -270,7 +270,6 @@ module_common_radpkt(struct module_base *base, uint32_t imsg_type, u_int q_id,
 
 	len = pktlen;
 	ans.q_id = q_id;
-	ans.modified = modified;
 	while (off < len) {
 		siz = MAX_IMSGSIZE - sizeof(ans);
 		if (len - off > siz) {

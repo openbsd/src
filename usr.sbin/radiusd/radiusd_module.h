@@ -66,7 +66,7 @@ int			 module_userpass_ok(struct module_base *, u_int,
 int			 module_userpass_fail(struct module_base *, u_int,
 			    const char *);
 int			 module_accsreq_answer(struct module_base *, u_int,
-			    int, const u_char *, size_t);
+			    const u_char *, size_t);
 int			 module_accsreq_aborted(struct module_base *, u_int);
 
 __END_DECLS

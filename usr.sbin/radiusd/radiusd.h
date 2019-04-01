@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.h,v 1.2 2015/07/27 08:58:09 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.h,v 1.3 2019/04/01 10:34:02 yasuoka Exp $	*/
 
 #ifndef	RADIUSD_H
 #define	RADIUSD_H 1
@@ -67,7 +67,6 @@ struct radiusd_module_userpass_arg {
 struct radiusd_module_radpkt_arg {
 	u_int	q_id;
 	bool	final;
-	int	modified;
 	int	datalen;
 };
 
