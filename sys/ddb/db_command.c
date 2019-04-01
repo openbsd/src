@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.85 2019/04/01 07:00:52 tedu Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.86 2019/04/01 09:28:24 tedu Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -105,7 +105,6 @@ void	db_boot_crash_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_boot_dump_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_boot_halt_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_boot_reboot_cmd(db_expr_t, int, db_expr_t, char *);
-void	db_boot_reset_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_boot_poweroff_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_stack_trace_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_dmesg_cmd(db_expr_t, int, db_expr_t, char *);
