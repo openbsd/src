@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.86 2019/04/01 07:00:52 tedu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.87 2019/04/01 07:02:04 tedu Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1050,6 +1050,8 @@ int	waittime = -1;
 __dead void
 boot(int howto)
 {
+	void (*__reset)(void) = (void (*)(void))RESET_EXC_VEC;
+
 	if ((howto & RB_RESET) != 0)
 		goto doreset;
 
@@ -1099,7 +1101,6 @@ haltsys:
 			printf("System Halt.\n");
 	} else {
 doreset:
-		void (*__reset)(void) = (void (*)(void))RESET_EXC_VEC;
 		printf("System restart.\n");
 		if (sys_platform->reset != NULL)
 			(*(sys_platform->reset))();
