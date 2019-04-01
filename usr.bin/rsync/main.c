@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.42 2019/03/31 13:17:44 schwarze Exp $ */
+/*	$Id: main.c,v 1.43 2019/04/01 13:04:51 schwarze Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -505,8 +505,9 @@ main(int argc, char *argv[])
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s"
-	    " [-aDglnoprtv] [-e program] [--del] [--port=portnumber]\n"
-	    "\t[--rsync-path=program] [--version] source ... directory\n",
+	    " [-aDglnoprtv] [-e program] [--del] [--numeric-ids]\n"
+	    "\t[--port=portnumber] [--rsync-path=program] [--version]\n"
+	    "\tsource ... directory\n",
 	    getprogname());
 	exit(1);
 }

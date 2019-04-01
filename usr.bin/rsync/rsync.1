@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.15 2019/03/31 13:17:44 schwarze Exp $
+.\"	$OpenBSD: rsync.1,v 1.16 2019/04/01 13:04:51 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2019 $
+.Dd $Mdocdate: April 1 2019 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -25,7 +25,8 @@
 .Op Fl aDglnoprtv
 .Op Fl e Ar program
 .Op Fl -del
-.Op Fl -port Ns = Ns Ar portnumber
+.Op Fl -numeric-ids
+.Op Fl -port Ns = Ns Ar service
 .Op Fl -rsync-path Ns = Ns Ar program
 .Op Fl -version
 .Ar source ...
@@ -47,13 +48,12 @@ but not both.
 The arguments are as follows:
 .Bl -tag -width Ds
 .It Fl a , -archive
-Archive mode.
 Shorthand for
 .Fl Dgloprt .
 .It Fl D
-Transfer device and special files.
+Also transfer device and special files.
 Shorthand for
-.Fl -devices -specials
+.Fl -devices -specials .
 .It Fl -del , -delete
 Delete files in
 .Ar directory
@@ -63,36 +63,56 @@ directories.
 Only applicable with
 .Fl r .
 .It Fl -devices
-Transfer device files.
+Also transfer device files.
 .It Fl e Ar program , Fl -rsh Ns = Ns Ar program
-Specify alternative program, defaults to
+Specify alternative communication program, defaults to
 .Xr ssh 1 .
 .It Fl g , -group
-Set group identifier to match the source.
-Groups are matched by name: group
+Set the group name to match the source.
+For example, group
 .Qq kristaps
-with id 1000 on a remote server will be properly assigned group
+with ID 1000 on a remote server is matched to group
 .Qq kristaps
-on the local machine with id 2000.
-If the sender's group is unknown on the local machine, it is used
-verbatim.
+on the local machine with ID 2000.
+If
+.Fl -numeric-ids
+is also given or if the remote group name is unknown on the local machine,
+set the numeric group ID to match the source instead.
 .It Fl l , -links
-Transfer symbolic links.
+Also transfer symbolic links.
 The link is transferred as a standalone file: if the destination does
 not exist, it will be broken.
 .It Fl n , -dry-run
-Dry-run mode.
-Does not actually modify the destination.
-.It Fl o , -owner
-Set user identifier to match the source.
-This behaves like
+Do not actually modify the destination.
+Mainly useful in combination with
+.Fl v .
+.It Fl -numeric-ids
+Ignore user and group names, use numeric user and group IDs only.
+Has no effect unless
 .Fl g
-and only works if run as root.
+or
+.Fl o
+is also given.
+.It Fl o , -owner
+Set the user name to match the source, with similar matching logic as for
+.Fl g .
+If
+.Fl -numeric-ids
+is also given or if the remote user name is unknown on the local machine,
+set the numeric user ID to match the source instead.
+Only works if run as root.
 .It Fl p , -perms
 Set destination file or directory permissions to match the source when
 it is updated.
-.It Fl -port Ns = Ns Ar portnumber
-Specify alternative port number.
+.It Fl -port Ns = Ns Ar service
+Specify an alternative TCP port number.
+The
+.Ar service
+can be given as a decimal integer or as a name to be looked up in the
+.Xr services 5
+database.
+The default is
+.Dq rsync .
 .It Fl r , -recursive
 If
 .Ar source
@@ -100,18 +120,19 @@ designates a directory, synchronise the directory and the entire subtree
 connected at that point.
 If
 .Ar source
-ends with a slash, only the subtree is synchronised, not the root
-directory.
+ends with a slash, only the subtree is synchronised, not the
+.Ar source
+directory itself.
 If
 .Ar source
 is a file, this has no effect.
 .It Fl -rsync-path Ns = Ns Ar program
 Run
-.Ar prog
+.Ar program
 on the remote host instead of the default
-.Ar rsync .
+.Pa rsync .
 .It Fl -specials
-Transfer fifo and unix domain socket files.
+Also transfer fifo and unix domain socket files.
 .It Fl t , -times
 Set destination file and directory modification time to match the source
 when it is updated or created.
@@ -128,29 +149,29 @@ A remote
 .Ar source
 or
 .Ar directory
-has syntax
-.Ar host:path
+has the syntax
+.Ar host : Ns Ar path
 for connecting via
 .Xr ssh 1 ,
 or
-.Ar rsync://host/path
+.Cm rsync Ns :// Ns Ar host Ns / Ns Ar path
 or
-.Ar host::path
+.Ar host Ns :: Ns Ar path
 for connecting to a remote daemon.
 Subsequent to the first remote
 .Ar source ,
 the host may be dropped to become just
-.Ar :path
+.Pf : Ar path
 or
-.Ar ::path .
+.Pf :: Ar path .
 .Pp
 For connecting to a remote daemon with
-.Ar rsync://host
+.Cm rsync Ns :// Ns Ar host
 or
-.Ar host::path ,
+.Ar host Ns :: Ns Ar path ,
 the first path component is interpreted as a
 .Qq module :
-.Ar host::module/path .
+.Ar host Ns :: Ns Ar module Ns / Ns Ar path .
 This only applies to the first
 .Ar source
 invocation; subsequent to that, the module should not be specified.
@@ -170,20 +191,13 @@ or symbolic links
 The destination
 .Ar directory
 must be a directory and is created if not found.
-.Pp
-.Nm
-is compatible with the GPL-licensed
-rsync protocol version 27.
-.\" The following requests should be uncommented and used where appropriate.
-.\" .Sh CONTEXT
-.\" For section 9 functions only.
-.\" .Sh RETURN VALUES
-.\" For sections 2, 3, and 9 function return values only.
 .\" .Sh ENVIRONMENT
-.\" For sections 1, 6, 7, and 8 only.
 .\" .Sh FILES
-.\" .Sh EXIT STATUS
-.\" For sections 1, 6, and 8 only.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success, 1 if an error occurs, or 2 if the remote
+protocol version is older than the local protocol version.
 .Sh EXAMPLES
 All examples use
 .Fl t
@@ -232,17 +246,25 @@ on a remote host running
 with the local host running
 .Nm :
 .Pp
-.Dl % rsync --rsync-path rsync -t ../dest/* host:dest
+.Dl % rsync --rsync-path=rsync -t ../dest/* host:dest
 .\" .Sh DIAGNOSTICS
-.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
-.\" .Sh ERRORS
-.\" For sections 2, 3, 4, and 9 errno settings only.
 .Sh SEE ALSO
 .Xr ssh 1 ,
 .Xr rsync 5 ,
 .Xr rsyncd 5
-.\" .Sh STANDARDS
-.\" .Sh HISTORY
-.\" .Sh AUTHORS
+.Sh STANDARDS
+.Nm
+is compatible with rsync protocol version 27
+as supported by the samba.org implementation of rsync.
+.Sh HISTORY
+The
+.Nm
+utility has been available since
+.Ox 6.5 .
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
 .\" .Sh CAVEATS
 .\" .Sh BUGS
