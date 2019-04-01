@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.23 2018/02/28 19:49:33 matthieu Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.24 2019/04/01 08:37:21 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: February 28 2018 $
+.Dd $Mdocdate: April 1 2019 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -225,7 +225,7 @@ DHCPREQUEST messages, but should not use the option in DHCPDECLINE messages.
 This option is used to convey the type of the DHCP message.
 Values: 1=DHCPDISCOVER, 2=DHCPOFFER, 3=DHCPREQUEST, 4=DHCPDECLINE, 5=DHCPACK,
 6=DHCPNAK, 7=DHCPRELEASE, 8=DHCPINFORM.
-.It Ic option dhcp-option-overload Ar uint8 Oo , Ar uint8 ... Oc ;
+.It Ic option dhcp-option-overload Ar uint8 ;
 This option is used to indicate that the DHCP 'sname' or 'file' fields are
 being overloaded by using them to carry DHCP options.
 A DHCP server inserts this option if the returned parameters will exceed
@@ -358,7 +358,7 @@ This option specifies a list of IP addresses indicating Mobile IP
 home agents available to the client.
 Agents should be listed in order of preference, although normally there
 will be only one such agent.
-.It Ic option nds-context Ar string ;
+.It Ic option nds-context Ar data-string ;
 This option specifies the initial NDS context the client should use.
 NDS contexts are 16-bit Unicode strings.
 For transmission in the NDS Context Option, an NDS context is
@@ -377,7 +377,7 @@ This option specifies one or more NDS servers for the client to contact
 for access to the NDS database.
 Servers should be listed in order of preference.
 See RFC 2241 for details.
-.It Ic option nds-tree-name Ar string ;
+.It Ic option nds-tree-name Ar data-string ;
 This option specifies the name of the NDS tree the client will be contacting.
 NDS tree names are 16-bit Unicode strings.
 For transmission in the NDS Tree Name Option, an NDS tree name is
@@ -477,7 +477,7 @@ The
 .Ic pop-server
 option specifies a list of POP3 servers available to the client.
 Servers should be listed in order of preference.
-.It Ic option relay-agent-information Ar string ;
+.It Ic option relay-agent-information Ar data-string ;
 This is a "container" option for specific agent-supplied sub-options.
 See RFC 3046 for details.
 .It Ic option resource-location-servers Ar ip-address Oo , Ar ip-address ... Oc ;
