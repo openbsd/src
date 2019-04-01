@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.535 2019/04/01 06:59:36 tedu Exp $
+#	$OpenBSD: rc,v 1.536 2019/04/01 11:39:46 tedu Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -437,7 +437,7 @@ echo 'starting network'
 
 # Set carp interlock by increasing the demotion counter.
 # Prevents carp from preempting until the system is booted.
-ifconfig -g carp carpdemote 128 >/dev/null 2>&1
+ifconfig -g carp carpdemote 128
 
 sh /etc/netstart
 
@@ -603,7 +603,7 @@ fi
 [[ -f /etc/rc.local ]] && sh /etc/rc.local
 
 # Disable carp interlock.
-ifconfig -g carp -carpdemote 128 >/dev/null 2>&1
+ifconfig -g carp -carpdemote 128
 
 mixerctl_conf
 
