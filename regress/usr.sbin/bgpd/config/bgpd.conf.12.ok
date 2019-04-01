@@ -7,8 +7,9 @@ rde rib Adj-RIB-In no evaluate
 rde rib Adj-RIB-Out no evaluate
 rde rib Loc-RIB rtable 0 fib-update yes
 
-neighbor 127.0.0.4 {
-	remote-as 4
+neighbor 127.0.0.2 {
+	remote-as 2
+	export none
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
@@ -20,9 +21,8 @@ neighbor 127.0.0.3 {
 	enforce local-as yes
 	announce IPv4 unicast
 }
-neighbor 127.0.0.2 {
-	remote-as 2
-	export none
+neighbor 127.0.0.4 {
+	remote-as 4
 	enforce neighbor-as yes
 	enforce local-as yes
 	announce IPv4 unicast
