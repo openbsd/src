@@ -1,4 +1,4 @@
-/*	$OpenBSD: task.h,v 1.13 2018/12/16 03:36:02 dlg Exp $ */
+/*	$OpenBSD: task.h,v 1.14 2019/04/01 03:23:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -35,7 +35,6 @@ struct task {
 TAILQ_HEAD(task_list, task);
 
 #define TASKQ_MPSAFE		(1 << 0)
-#define TASKQ_CANTSLEEP		(1 << 1)
 
 #define TASK_INITIALIZER(_f, _a)  {{ NULL, NULL }, (_f), (_a), 0 }
 

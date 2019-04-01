@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.23 2018/12/16 03:36:02 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.24 2019/04/01 03:23:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -59,9 +59,6 @@ struct taskq taskq_sys_mp = {
 	TAILQ_HEAD_INITIALIZER(taskq_sys_mp.tq_worklist)
 };
 
-typedef int (*sleepfn)(const volatile void *, struct mutex *, int,
-    const char *, int);
-
 struct taskq *const systq = &taskq_sys;
 struct taskq *const systqmp = &taskq_sys_mp;
 
@@ -70,7 +67,7 @@ void	taskq_create_thread(void *);
 void	taskq_barrier_task(void *);
 int	taskq_sleep(const volatile void *, struct mutex *, int,
 	    const char *, int);
-int	taskq_next_work(struct taskq *, struct task *, sleepfn);
+int	taskq_next_work(struct taskq *, struct task *);
 void	taskq_thread(void *);
 
 void
@@ -246,21 +243,7 @@ task_del(struct taskq *tq, struct task *w)
 }
 
 int
-taskq_sleep(const volatile void *ident, struct mutex *mtx, int priority,
-    const char *wmesg, int tmo)
-{
-	u_int *flags = &curproc->p_flag;
-	int rv;
-
-	atomic_clearbits_int(flags, P_CANTSLEEP);
-	rv = msleep(ident, mtx, priority, wmesg, tmo);
-	atomic_setbits_int(flags, P_CANTSLEEP);
-
-	return (tmo);
-}
-
-int
-taskq_next_work(struct taskq *tq, struct task *work, sleepfn tqsleep)
+taskq_next_work(struct taskq *tq, struct task *work)
 {
 	struct task *next;
 
@@ -271,7 +254,7 @@ taskq_next_work(struct taskq *tq, struct task *work, sleepfn tqsleep)
 			return (0);
 		}
 
-		tqsleep(tq, &tq->tq_mtx, PWAIT, "bored", 0);
+		msleep(tq, &tq->tq_mtx, PWAIT, "bored", 0);
 	}
 
 	TAILQ_REMOVE(&tq->tq_worklist, next, t_entry);
@@ -291,7 +274,6 @@ taskq_next_work(struct taskq *tq, struct task *work, sleepfn tqsleep)
 void
 taskq_thread(void *xtq)
 {
-	sleepfn tqsleep = msleep;
 	struct taskq *tq = xtq;
 	struct task work;
 	int last;
@@ -299,12 +281,7 @@ taskq_thread(void *xtq)
 	if (ISSET(tq->tq_flags, TASKQ_MPSAFE))
 		KERNEL_UNLOCK();
 
-	if (ISSET(tq->tq_flags, TASKQ_CANTSLEEP)) {
-		tqsleep = taskq_sleep;
-		atomic_setbits_int(&curproc->p_flag, P_CANTSLEEP);
-	}
-
-	while (taskq_next_work(tq, &work, tqsleep)) {
+	while (taskq_next_work(tq, &work)) {
 		(*work.t_func)(work.t_arg);
 		sched_pause(yield);
 	}
@@ -312,9 +289,6 @@ taskq_thread(void *xtq)
 	mtx_enter(&tq->tq_mtx);
 	last = (--tq->tq_running == 0);
 	mtx_leave(&tq->tq_mtx);
-
-	if (ISSET(tq->tq_flags, TASKQ_CANTSLEEP))
-		atomic_clearbits_int(&curproc->p_flag, P_CANTSLEEP);
 
 	if (ISSET(tq->tq_flags, TASKQ_MPSAFE))
 		KERNEL_LOCK();
