@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.143 2018/02/19 08:59:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.144 2019/04/02 13:07:28 visa Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -713,6 +713,16 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 			free(spp, M_VMSWAP, sizeof(*spp));
 		break;
 	case SWAP_ON:
+		/*
+		 * If the device is a regular file, make sure the filesystem
+		 * can be used for swapping.
+		 */
+		if (vp->v_type == VREG &&
+		    (vp->v_mount->mnt_flag & MNT_SWAPPABLE) == 0) {
+			error = ENOTSUP;
+			break;
+		}
+
 		/*
 		 * check for duplicates.   if none found, then insert a
 		 * dummy entry on the list to prevent someone else from

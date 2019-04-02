@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.143 2018/12/07 16:21:19 mpi Exp $	*/
+/*	$OpenBSD: mount.h,v 1.144 2019/04/02 13:07:28 visa Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -399,6 +399,7 @@ struct mount {
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 #define	MNT_STALLED	0x00100000	/* filesystem stalled */ 
+#define	MNT_SWAPPABLE	0x00200000	/* filesystem can be used for swap */
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
 #define MNT_SOFTDEP     0x04000000      /* soft dependencies being done */
 #define MNT_DOOMED	0x08000000	/* device behind filesystem is gone */

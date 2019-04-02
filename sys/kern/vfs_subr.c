@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.286 2019/02/17 22:17:28 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.287 2019/04/02 13:07:28 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ vfs_mount_alloc(struct vnode *vp, struct vfsconf *vfsp)
 	atomic_inc_int(&vfsp->vfc_refcount);
 	mp->mnt_vfc = vfsp;
 	mp->mnt_op = vfsp->vfc_vfsops;
-	mp->mnt_flag = vfsp->vfc_flags & MNT_VISFLAGMASK;
+	mp->mnt_flag = vfsp->vfc_flags;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
 
 	return (mp);
