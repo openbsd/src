@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.235 2019/04/01 12:45:50 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.236 2019/04/02 05:03:00 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5930,7 +5930,7 @@ svm_handle_msr(struct vcpu *vcpu)
 	uint64_t insn_length, msr;
 	uint64_t *rax, *rcx, *rdx;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
-	int i;
+	int i, ret;
 
 	/* XXX: Validate RDMSR / WRMSR insn_length */
 	insn_length = 2;
@@ -5951,6 +5951,14 @@ svm_handle_msr(struct vcpu *vcpu)
 #endif /* VMM_DEBUG */
 		}
 	} else {
+                switch (*rcx) {
+			case MSR_LS_CFG:
+			DPRINTF("%s: guest read LS_CFG msr, injecting "
+			    "#GP\n", __func__);
+			ret = vmm_inject_gp(vcpu);
+			return (ret);
+                }
+
 		i = rdmsr_safe(*rcx, &msr);
 		if (i == 0) {
 			*rax = msr & 0xFFFFFFFFULL;
