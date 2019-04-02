@@ -1156,6 +1156,7 @@
 ./usr/share/man/man4/acpihve.4
 ./usr/share/man/man4/acpimadt.4
 ./usr/share/man/man4/acpimcfg.4
+./usr/share/man/man4/acpipci.4
 ./usr/share/man/man4/acpiprt.4
 ./usr/share/man/man4/acpipwrres.4
 ./usr/share/man/man4/acpisbs.4
@@ -1638,6 +1639,7 @@
 ./usr/share/man/man4/mue.4
 ./usr/share/man/man4/multicast.4
 ./usr/share/man/man4/mvclock.4
+./usr/share/man/man4/mvgicp.4
 ./usr/share/man/man4/mvgpio.4
 ./usr/share/man/man4/mvicu.4
 ./usr/share/man/man4/mvneta.4
