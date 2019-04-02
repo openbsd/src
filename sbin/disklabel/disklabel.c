@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.232 2019/04/02 00:58:00 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.233 2019/04/02 01:10:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -269,14 +269,9 @@ main(int argc, char *argv[])
 		if (!(t = fopen(argv[1], "r")))
 			err(4, "%s", argv[1]);
 		error = getasciilabel(t, &lab);
-		memset(&lab.d_uid, 0, sizeof(lab.d_uid));
 		if (error == 0) {
+			memset(&lab.d_uid, 0, sizeof(lab.d_uid));
 			error = writelabel(f, &lab);
-			if (error == 0) {
-				if (ioctl(f, DIOCGDINFO, &lab) < 0)
-					err(4, "ioctl DIOCGDINFO");
-				mpsave(&lab);
-			}
 		}
 		fclose(t);
 		break;
