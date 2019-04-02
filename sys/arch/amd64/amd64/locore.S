@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.115 2019/04/01 08:43:29 mortimer Exp $	*/
+/*	$OpenBSD: locore.S,v 1.116 2019/04/02 03:35:08 mortimer Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1127,7 +1127,7 @@ ENTRY(pagezero)
 
 /* int rdmsr_safe(u_int msr, uint64_t *data) */
 ENTRY(rdmsr_safe)
-	RETGUARD_SETUP(rdmsr_safe_return, r10)
+	RETGUARD_SETUP(rdmsr_safe, r10)
 
 	movl	%edi,	%ecx	/* u_int msr */
 	.globl	rdmsr_safe_fault
@@ -1139,12 +1139,12 @@ rdmsr_safe_fault:
 	movq	%rax, (%rsi)	/* *data */
 	xorq	%rax, %rax
 
-	RETGUARD_CHECK(rdmsr_safe_return, r10)
+	RETGUARD_CHECK(rdmsr_safe, r10)
 	ret
 
 NENTRY(rdmsr_resume)
 	movl	$0x1, %eax
-	RETGUARD_CHECK(rdmsr_safe_return, r10)
+	RETGUARD_CHECK(rdmsr_safe, r10)
 	ret
 
 #if NXEN > 0

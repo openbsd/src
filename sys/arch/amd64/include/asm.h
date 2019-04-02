@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.17 2018/07/24 02:42:25 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.18 2019/04/02 03:35:08 mortimer Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -135,6 +135,7 @@
 	cmpq (__retguard_ ## x)(%rip), %reg; \
 	je 66f; \
 	int3; int3; \
+	.zero (0xf - ((. - x) & 0xf)), 0xcc; \
 66:
 # define RETGUARD_PUSH(reg) \
 	pushq %reg
