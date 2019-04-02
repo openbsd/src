@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.89 2019/04/02 10:50:16 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.90 2019/04/02 10:52:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -446,6 +446,10 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 	/* new receive if and move into correct rtable */
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
