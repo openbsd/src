@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.33 2019/04/02 07:45:11 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.34 2019/04/02 07:46:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1300,25 +1300,12 @@ show_status(enum uw_resolver_type type, pid_t pid)
 		    resolvers[STATIC_DOT_FORWARDER] == best, pid);
 		break;
 	case RECURSOR:
-		send_resolver_info(resolvers[RECURSOR], resolvers[RECURSOR] ==
-		    best, pid);
-		send_detailed_resolver_info(resolvers[RECURSOR], pid);
-		break;
 	case FORWARDER:
-		send_resolver_info(resolvers[FORWARDER], resolvers[FORWARDER]
-		    == best, pid);
-		send_detailed_resolver_info(resolvers[FORWARDER], pid);
-		break;
 	case STATIC_FORWARDER:
-		send_resolver_info(resolvers[STATIC_FORWARDER],
-		   resolvers[STATIC_FORWARDER] == best, pid);
-		send_detailed_resolver_info(resolvers[STATIC_FORWARDER], pid);
-		break;
 	case STATIC_DOT_FORWARDER:
-		send_resolver_info(resolvers[STATIC_DOT_FORWARDER],
-		    resolvers[STATIC_DOT_FORWARDER] == best, pid);
-		send_detailed_resolver_info(resolvers[STATIC_DOT_FORWARDER],
+		send_resolver_info(resolvers[type], resolvers[type] == best,
 		    pid);
+		send_detailed_resolver_info(resolvers[type], pid);
 		break;
 	default:
 		fatalx("unknown resolver type %d", type);
