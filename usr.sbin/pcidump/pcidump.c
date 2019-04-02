@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.52 2019/03/12 01:46:21 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.53 2019/04/02 07:01:29 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -54,6 +54,8 @@ void dump_bars(int, int, int, int);
 void dump_caplist(int, int, int, u_int8_t);
 void dump_pci_powerstate(int, int, int, uint8_t);
 void dump_pcie_linkspeed(int, int, int, uint8_t);
+void dump_msi(int, int, int, uint8_t);
+void dump_msix(int, int, int, uint8_t);
 void print_pcie_ls(uint8_t);
 int dump_rom(int, int, int);
 int dump_vga_bios(void);
@@ -398,6 +400,34 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 }
 
 void
+dump_msi(int bus, int dev, int func, u_int8_t ptr)
+{
+	u_int32_t reg;
+
+	if (pci_read(bus, dev, func, ptr, &reg) != 0)
+		return;
+
+	printf("\t\tEnabled: %s\n", reg & PCI_MSI_MC_MSIE ? "yes" : "no");
+}
+
+void
+dump_msix(int bus, int dev, int func, u_int8_t ptr)
+{
+	u_int32_t reg;
+	u_int32_t table;
+
+	if ((pci_read(bus, dev, func, ptr, &reg) != 0) ||
+	    (pci_read(bus, dev, func, ptr + PCI_MSIX_TABLE, &table) != 0))
+		return;
+
+	printf("\t\tEnabled: %s; table size %d (BAR %d:%d)\n",
+	    reg & PCI_MSIX_MC_MSIXE ? "yes" : "no",
+	    PCI_MSIX_MC_TBLSZ(reg) + 1,
+	    (table & PCI_MSIX_TABLE_BIR),
+	    (table & PCI_MSIX_TABLE_OFF));
+}
+
+void
 dump_pcie_enhanced_caplist(int bus, int dev, int func)
 {
 	u_int32_t reg;
@@ -458,6 +488,12 @@ dump_caplist(int bus, int dev, int func, u_int8_t ptr)
 		case PCI_CAP_PCIEXPRESS:
 			dump_pcie_linkspeed(bus, dev, func, ptr);
 			dump_pcie_enhanced_caplist(bus, dev, func);
+			break;
+		case PCI_CAP_MSI:
+			dump_msi(bus, dev,func, ptr);
+			break;
+		case PCI_CAP_MSIX:
+			dump_msix(bus, dev, func, ptr);
 			break;
 		}
 		ptr = PCI_CAPLIST_NEXT(reg);
