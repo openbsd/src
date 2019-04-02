@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.107 2019/03/18 11:58:40 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.108 2019/04/02 09:03:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -976,7 +976,7 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 
 	/* Create a new paste buffer. */
 	log_debug("%s: %.*s", __func__, outlen, out);
-	paste_add(out, outlen);
+	paste_add(NULL, out, outlen);
 
 	return (0);
 }
