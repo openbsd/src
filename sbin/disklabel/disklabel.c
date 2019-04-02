@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.231 2019/04/01 00:12:02 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.232 2019/04/02 00:58:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -91,7 +91,6 @@ int	donothing;
 void	makedisktab(FILE *, struct disklabel *);
 void	makelabel(char *, char *, struct disklabel *);
 int	writelabel(int, struct disklabel *);
-void	l_perror(char *);
 int	edit(struct disklabel *, int);
 int	editit(const char *);
 char	*skip(char *);
@@ -320,47 +319,23 @@ writelabel(int f, struct disklabel *lp)
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
+
 	if (!donothing) {
-		if (ioctl(f, DIOCWDINFO, lp) < 0) {
-			l_perror("ioctl DIOCWDINFO");
+		/* Write new label to disk. */
+		if (ioctl(f, DIOCWDINFO, lp) == -1) {
+			warn("DIOCWDINFO");
 			return (1);
 		}
-	}
 
-	/* Finally, write out any mount point information. */
-	if (!donothing) {
-		/* First refresh our copy of the current label to get UID. */
+		/* Refresh our copy of the on-disk current label to get UID. */
 		if (ioctl(f, DIOCGDINFO, &lab) < 0)
 			err(4, "ioctl DIOCGDINFO");
+
+		/* Finally, write out any mount point information. */
 		mpsave(lp);
 	}
 
 	return (0);
-}
-
-void
-l_perror(char *s)
-{
-
-	switch (errno) {
-	case ESRCH:
-		warnx("%s: No disk label on disk", s);
-		break;
-	case EINVAL:
-		warnx("%s: Label magic number or checksum is wrong!\n"
-		    "(disklabel or kernel is out of date?)", s);
-		break;
-	case EBUSY:
-		warnx("%s: Open partition would move or shrink", s);
-		break;
-	case EXDEV:
-		warnx("%s: Labeled partition or 'a' partition must start "
-		    "at beginning of disk", s);
-		break;
-	default:
-		warn("%s", s);
-		break;
-	}
 }
 
 /*
