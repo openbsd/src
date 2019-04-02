@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.13 2018/07/01 11:37:11 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.14 2019/04/02 07:08:39 stsp Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -237,8 +237,13 @@ sdhc_acpi_do_explore(struct aml_node *node, void *arg)
 	/* Override card detect if we have non-removable devices. */
 	if (aml_evalinteger(sc->sc_acpi, node, "_RMV", 0, NULL, &rmv))
 		rmv = 1;
-	if (rmv == 0 && sc->sc.sc_card_detect == NULL)
-		sc->sc.sc_card_detect = sdhc_acpi_card_detect_nonremovable;
+	if (rmv == 0) {
+		sc->sc.sc_flags |= SDHC_F_NONREMOVABLE;
+		if (sc->sc.sc_card_detect == NULL) {
+			sc->sc.sc_card_detect =
+			    sdhc_acpi_card_detect_nonremovable;
+		}
+	}
 
 	sdhc_acpi_power_on(sc, node);
 

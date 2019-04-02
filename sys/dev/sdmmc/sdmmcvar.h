@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.31 2018/12/29 11:37:30 patrick Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.32 2019/04/02 07:08:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -200,6 +200,7 @@ struct sdmmc_softc {
 #define SMC_CAPS_MMC_DDR52	0x2000  /* eMMC DDR52 timing */
 #define SMC_CAPS_MMC_HS200	0x4000	/* eMMC HS200 timing */
 #define SMC_CAPS_MMC_HS400	0x8000	/* eMMC HS400 timing */
+#define SMC_CAPS_NONREMOVABLE	0x10000	/* non-removable devices */
 
 	int sc_function_count;		/* number of I/O functions (SDIO) */
 	struct sdmmc_function *sc_card;	/* selected card */
