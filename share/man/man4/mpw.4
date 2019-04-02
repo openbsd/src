@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpw.4,v 1.5 2019/03/11 18:55:29 jmc Exp $
+.\"	$OpenBSD: mpw.4,v 1.6 2019/04/02 23:50:14 dlg Exp $
 .\"
 .\" Copyright (C) 2015 Rafael Zalamena <rzalamena@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 11 2019 $
+.Dd $Mdocdate: April 2 2019 $
 .Dt MPW 4
 .Os
 .Sh NAME
@@ -59,6 +59,29 @@ Control Word, and disable the use of a Flow label for Flow-Aware
 Transport of Pseudowires:
 .Bd -literal -offset indent
 # ifconfig mpw5 pwecw -pwefat
+.Ed
+.Pp
+.Nm mpw
+interfaces may be used to build a Virtual Private LAN Service
+(VPLS) with
+.Xr bridge 4 .
+A VPLS is constructed with a full mesh of MPLS pseudowire tunnels
+between all peers, but this introduces loops in the topology.
+To prevent broadcast packets received from the VPLS being forwarded
+it's peers, all the pseudowire interfaces can be configured as a
+set of protected bridge members.
+Different VPLS meshes can be joined together on the same bridge
+using different identifiers for their protected domains.
+.Bd -literal -offset indent
+# ifconfig mpw10 create up
+# ifconfig mpw11 create up
+# ifconfig mpw12 create up
+# ifconfig bridge0 create
+# ifconfig bridge0 add em2
+# ifconfig bridge0 add mpw10 add mpw11 add mpw12
+# ifconfig bridge0 protected mpw10 1
+# ifconfig bridge0 protected mpw11 1
+# ifconfig bridge0 protected mpw12 1
 .Ed
 .Sh SEE ALSO
 .Xr hostname.if 5 ,
