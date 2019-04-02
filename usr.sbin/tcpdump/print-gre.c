@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.22 2019/02/05 10:57:48 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.23 2019/04/02 11:10:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -260,6 +260,7 @@ gre_print_0(const u_char *p, u_int length)
 		ip6_print(p, length);
 		break;
 	case ETHERTYPE_MPLS:
+	case ETHERTYPE_MPLS_MCAST:
 		mpls_print(p, length);
 		break;
 	case ETHERTYPE_TRANSETHER:
