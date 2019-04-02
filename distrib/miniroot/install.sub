@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1112 2019/04/02 01:40:40 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1113 2019/04/02 08:51:49 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2849,6 +2849,7 @@ clean_old() {
 		CVER=$(cd /mnt/usr/lib/clang && ls -r | sed -e 1q)
 		rm -rf -- `ls -d /mnt/usr/lib/clang/* | grep -v "${CVER}$"`
 	fi
+	rm -rf /var/syspatch/*
 }	
 
 do_autoinstall() {
