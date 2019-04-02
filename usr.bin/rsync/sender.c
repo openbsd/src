@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.20 2019/03/23 16:04:28 deraadt Exp $ */
+/*	$Id: sender.c,v 1.21 2019/04/02 11:05:55 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,9 +34,9 @@
  * A request from the receiver to download updated file data.
  */
 struct	send_dl {
-	int32_t		     idx; /* index in our file list */
-	struct blkset	    *blks; /* the sender's block information */
-	TAILQ_ENTRY(send_dl) entries;
+	int32_t			 idx; /* index in our file list */
+	struct blkset		*blks; /* the sender's block information */
+	TAILQ_ENTRY(send_dl)	 entries;
 };
 
 /*

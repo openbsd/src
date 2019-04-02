@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.7 2019/02/18 22:47:34 benno Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.8 2019/04/02 11:05:55 deraadt Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -75,13 +75,13 @@ static int
 mktemp_internalat(int pfd, char *path, int slen, enum tmpmode mode,
 	int flags, const char *link, mode_t dev_type, dev_t dev)
 {
-	char 		*start, *cp, *ep;
-	const char 	 tempchars[] = TEMPCHARS;
-	unsigned int 	 tries;
-	struct stat 	 sb;
+	char		*start, *cp, *ep;
+	const char	 tempchars[] = TEMPCHARS;
+	unsigned int	 tries;
+	struct stat	 sb;
 	struct sockaddr_un sun;
-	size_t 		 len;
-	int 		 fd, saved_errno;
+	size_t		 len;
+	int		 fd, saved_errno;
 
 	len = strlen(path);
 	if (len < MIN_X || slen < 0 || (size_t)slen > len - MIN_X) {
