@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.48 2019/01/20 04:16:59 krw Exp $
+.\"	$OpenBSD: route.4,v 1.49 2019/04/02 14:12:09 kn Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: January 20 2019 $
+.Dd $Mdocdate: April 2 2019 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -154,7 +154,7 @@ to most significant bit within the vector.
 Any messages sent to the kernel are returned, and copies are sent
 to all interested listeners.
 The kernel will provide the process ID
-for the sender, and the sender may use an additional sequence
+of the sender, and the sender may use an additional sequence
 field to distinguish between outstanding messages.
 However, message replies may be lost when kernel buffers are exhausted.
 .Pp
