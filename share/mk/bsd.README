@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.79 2019/03/05 11:35:42 jsg Exp $
+#	$OpenBSD: bsd.README,v 1.80 2019/04/02 11:29:34 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -498,7 +498,7 @@ if it exists, as well as the include file <bsd.man.mk>.
 It has rules for building profiled objects; profiled libraries are
 built by default.
 
-Libraries are ranlib'd when made.
+Static libraries are ranlib'd when made.
 
 In addition, a reduced version of a library, including just specific
 objects that are compiled with additional options to reduce their
