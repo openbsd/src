@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.36 2019/04/02 08:04:13 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.37 2019/04/02 08:28:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -138,7 +138,7 @@ struct imsgev			*iev_frontend;
 struct imsgev			*iev_captiveportal;
 struct imsgev			*iev_main;
 struct uw_forwarder_head	 dhcp_forwarder_list;
-struct uw_resolver		*resolvers[UW_RES_NONE + 1];
+struct uw_resolver		*resolvers[UW_RES_NONE];
 struct timeval			 captive_portal_check_tv =
 				     {PORTAL_CHECK_SEC, 0};
 struct event			 captive_portal_check_ev;
