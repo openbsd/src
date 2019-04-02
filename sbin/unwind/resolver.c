@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.35 2019/04/02 07:47:22 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.36 2019/04/02 08:04:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1111,29 +1111,17 @@ void
 schedule_recheck_all_resolvers(void)
 {
 	struct timeval	 tv;
+	int		 i;
 
 	tv.tv_sec = 0;
 
 	log_debug("%s", __func__);
 
-	if (resolvers[UW_RES_RECURSOR] != NULL) {
+	for (i = 0; i < UW_RES_NONE; i++) {
+		if (resolvers[i] == NULL)
+			continue;
 		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&resolvers[UW_RES_RECURSOR]->check_ev, &tv);
-	}
-
-	if (resolvers[UW_RES_FORWARDER] != NULL) {
-		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&resolvers[UW_RES_FORWARDER]->check_ev, &tv);
-	}
-
-	if (resolvers[UW_RES_DOT] != NULL) {
-		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&resolvers[UW_RES_DOT]->check_ev, &tv);
-	}
-
-	if (resolvers[UW_RES_DHCP] != NULL) {
-		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&resolvers[UW_RES_DHCP]->check_ev, &tv);
+		evtimer_add(&resolvers[i]->check_ev, &tv);
 	}
 }
 
