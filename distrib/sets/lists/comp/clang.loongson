@@ -1478,7 +1478,6 @@
 ./usr/lib/clang/7.0.1/include/tgmath.h
 ./usr/lib/clang/7.0.1/include/unwind.h
 ./usr/lib/clang/7.0.1/include/varargs.h
-./usr/lib/libLLVM.a
 ./usr/lib/libc++.a
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a

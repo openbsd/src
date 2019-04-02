@@ -1557,7 +1557,6 @@
 ./usr/lib/clang/7.0.1/include/xsaveoptintrin.h
 ./usr/lib/clang/7.0.1/include/xsavesintrin.h
 ./usr/lib/clang/7.0.1/include/xtestintrin.h
-./usr/lib/libLLVM.a
 ./usr/lib/libc++.a
 ./usr/lib/libc++_p.a
 ./usr/lib/libc++abi.a
