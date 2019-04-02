@@ -60,6 +60,7 @@
 
 .endif
 
+NOLIBSTATIC=	# do not install static version
 LIB=	LLVM
 
 includes:
