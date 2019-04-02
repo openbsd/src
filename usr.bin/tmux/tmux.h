@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.877 2019/03/25 18:59:55 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.878 2019/04/02 08:45:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2101,8 +2101,8 @@ char	*grid_string_cells(struct grid *, u_int, u_int, u_int,
 void	 grid_duplicate_lines(struct grid *, u_int, struct grid *, u_int,
 	     u_int);
 void	 grid_reflow(struct grid *, u_int);
-u_int	 grid_to_offset(struct grid *, u_int, u_int);
-void	 grid_from_offset(struct grid *, u_int, u_int *, u_int *);
+void	 grid_wrap_position(struct grid *, u_int, u_int, u_int *, u_int *);
+void	 grid_unwrap_position(struct grid *, u_int *, u_int *, u_int, u_int);
 
 /* grid-view.c */
 void	 grid_view_get_cell(struct grid *, u_int, u_int, struct grid_cell *);
