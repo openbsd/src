@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.65 2018/12/06 09:23:15 claudio Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.66 2019/04/02 03:58:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -716,12 +716,13 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 {
 	struct vm_info_result *vir;
 	struct vmop_info_result *vmi;
-	size_t i, j;
-	char *vcpu_state, *tty;
+	size_t i;
+	char *tty;
 	char curmem[FMT_SCALED_STRSIZE];
 	char maxmem[FMT_SCALED_STRSIZE];
 	char user[16], group[16];
 	const char *name;
+	int running;
 
 	printf("%5s %5s %5s %7s %7s %7s %12s %s\n", "ID", "PID", "VCPUS",
 	    "MAXMEM", "CURMEM", "TTY", "OWNER", "NAME");
@@ -729,6 +730,7 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 	for (i = 0; i < ct; i++) {
 		vmi = &list[i];
 		vir = &vmi->vir_info;
+		running = (vir->vir_creator_pid != 0 && vir->vir_id != 0);
 		if (check_info_id(vir->vir_name, vir->vir_id)) {
 			/* get user name */
 			name = user_from_uid(vmi->vir_uid, 1);
@@ -757,7 +759,7 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 			(void)fmt_scaled(vir->vir_memory_size * 1024 * 1024,
 			    maxmem);
 
-			if (vir->vir_creator_pid != 0 && vir->vir_id != 0) {
+			if (running) {
 				if (*vmi->vir_ttyname == '\0')
 					tty = "-";
 				/* get tty - skip /dev/ path */
@@ -781,19 +783,8 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 			}
 		}
 		if (check_info_id(vir->vir_name, vir->vir_id) > 0) {
-			for (j = 0; j < vir->vir_ncpus; j++) {
-				if (vir->vir_vcpu_state[j] ==
-				    VCPU_STATE_STOPPED)
-					vcpu_state = "STOPPED";
-				else if (vir->vir_vcpu_state[j] ==
-				    VCPU_STATE_RUNNING)
-					vcpu_state = "RUNNING";
-				else
-					vcpu_state = "UNKNOWN";
-
-				printf(" VCPU: %2zd STATE: %s\n",
-				    j, vcpu_state);
-			}
+				printf("STATE: %s\n",
+				    running ? "RUNNING" : "STOPPED");
 		}
 	}
 }
