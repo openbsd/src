@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.32 2019/04/01 09:24:15 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.33 2019/04/02 07:45:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -138,8 +138,7 @@ struct imsgev			*iev_frontend;
 struct imsgev			*iev_captiveportal;
 struct imsgev			*iev_main;
 struct uw_forwarder_head	 dhcp_forwarder_list;
-struct uw_resolver		*recursor, *forwarder, *static_forwarder;
-struct uw_resolver		*static_dot_forwarder;
+struct uw_resolver		*resolvers[RESOLVER_NONE + 1];
 struct timeval			 captive_portal_check_tv =
 				     {PORTAL_CHECK_SEC, 0};
 struct event			 captive_portal_check_ev;
@@ -760,7 +759,7 @@ servfail:
 }
 
 void
-parse_dhcp_forwarders(char *resolvers)
+parse_dhcp_forwarders(char *forwarders)
 {
 	struct uw_forwarder_head	 new_forwarder_list;
 	struct uw_forwarder		*uw_forwarder;
@@ -768,8 +767,8 @@ parse_dhcp_forwarders(char *resolvers)
 
 	SIMPLEQ_INIT(&new_forwarder_list);
 
-	if (resolvers != NULL) {
-		while((ns = strsep(&resolvers, ",")) != NULL) {
+	if (forwarders != NULL) {
+		while((ns = strsep(&forwarders, ",")) != NULL) {
 			log_debug("%s: %s", __func__, ns);
 			if ((uw_forwarder = malloc(sizeof(struct
 			    uw_forwarder))) == NULL)
@@ -796,21 +795,21 @@ parse_dhcp_forwarders(char *resolvers)
 void
 new_recursor(void)
 {
-	free_resolver(recursor);
-	recursor = NULL;
+	free_resolver(resolvers[RECURSOR]);
+	resolvers[RECURSOR] = NULL;
 
 	if (TAILQ_EMPTY(&trust_anchors))
 		return;
 
-	recursor = create_resolver(RECURSOR);
-	check_resolver(recursor);
+	resolvers[RECURSOR] = create_resolver(RECURSOR);
+	check_resolver(resolvers[RECURSOR]);
 }
 
 void
 new_forwarders(void)
 {
-	free_resolver(forwarder);
-	forwarder = NULL;
+	free_resolver(resolvers[FORWARDER]);
+	resolvers[FORWARDER] = NULL;
 
 	if (SIMPLEQ_EMPTY(&dhcp_forwarder_list))
 		return;
@@ -819,16 +818,16 @@ new_forwarders(void)
 		return;
 
 	log_debug("%s: create_resolver", __func__);
-	forwarder = create_resolver(FORWARDER);
+	resolvers[FORWARDER] = create_resolver(FORWARDER);
 
-	check_resolver(forwarder);
+	check_resolver(resolvers[FORWARDER]);
 }
 
 void
 new_static_forwarders(void)
 {
-	free_resolver(static_forwarder);
-	static_forwarder = NULL;
+	free_resolver(resolvers[STATIC_FORWARDER]);
+	resolvers[STATIC_FORWARDER] = NULL;
 
 	if (SIMPLEQ_EMPTY(&resolver_conf->uw_forwarder_list))
 		return;
@@ -837,16 +836,16 @@ new_static_forwarders(void)
 		return;
 
 	log_debug("%s: create_resolver", __func__);
-	static_forwarder = create_resolver(STATIC_FORWARDER);
+	resolvers[STATIC_FORWARDER] = create_resolver(STATIC_FORWARDER);
 
-	check_resolver(static_forwarder);
+	check_resolver(resolvers[STATIC_FORWARDER]);
 }
 
 void
 new_static_dot_forwarders(void)
 {
-	free_resolver(static_dot_forwarder);
-	static_dot_forwarder = NULL;
+	free_resolver(resolvers[STATIC_DOT_FORWARDER]);
+	resolvers[STATIC_DOT_FORWARDER] = NULL;
 
 	if (SIMPLEQ_EMPTY(&resolver_conf->uw_dot_forwarder_list))
 		return;
@@ -855,9 +854,9 @@ new_static_dot_forwarders(void)
 		return;
 
 	log_debug("%s: create_resolver", __func__);
-	static_dot_forwarder = create_resolver(STATIC_DOT_FORWARDER);
+	resolvers[STATIC_DOT_FORWARDER] = create_resolver(STATIC_DOT_FORWARDER);
 
-	check_resolver(static_dot_forwarder);
+	check_resolver(resolvers[STATIC_DOT_FORWARDER]);
 }
 
 struct uw_resolver *
@@ -936,8 +935,8 @@ create_resolver(enum uw_resolver_type type)
 		    tls_default_ca_cert_file());
 		ub_ctx_set_tls(res->ctx, 1);
 		break;
-	case RESOLVER_NONE:
-		fatalx("type NONE");
+	default:
+		fatalx("unknown resolver type %d", type);
 		break;
 	}
 
@@ -1117,24 +1116,24 @@ schedule_recheck_all_resolvers(void)
 
 	log_debug("%s", __func__);
 
-	if (recursor != NULL) {
+	if (resolvers[RECURSOR] != NULL) {
 		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&recursor->check_ev, &tv);
+		evtimer_add(&resolvers[RECURSOR]->check_ev, &tv);
 	}
 
-	if (static_forwarder != NULL) {
+	if (resolvers[STATIC_FORWARDER] != NULL) {
 		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&static_forwarder->check_ev, &tv);
+		evtimer_add(&resolvers[STATIC_FORWARDER]->check_ev, &tv);
 	}
 
-	if (static_dot_forwarder != NULL) {
+	if (resolvers[STATIC_DOT_FORWARDER] != NULL) {
 		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&static_dot_forwarder->check_ev, &tv);
+		evtimer_add(&resolvers[STATIC_DOT_FORWARDER]->check_ev, &tv);
 	}
 
-	if (forwarder != NULL) {
+	if (resolvers[FORWARDER] != NULL) {
 		tv.tv_usec = arc4random() % 1000000; /* modulo bias is ok */
-		evtimer_add(&forwarder->check_ev, &tv);
+		evtimer_add(&resolvers[FORWARDER]->check_ev, &tv);
 	}
 }
 
@@ -1214,35 +1213,35 @@ best_resolver(void)
 
 	log_debug("%s: %s: %s, %s: %s, %s: %s, %s: %s, captive_portal: %s",
 	    __func__,
-	    uw_resolver_type_str[RECURSOR],
-	    recursor != NULL ? uw_resolver_state_str[recursor->state] : "NA",
-	    uw_resolver_type_str[FORWARDER],
-	    forwarder != NULL ? uw_resolver_state_str[forwarder->state] : "NA",
+	    uw_resolver_type_str[RECURSOR], resolvers[RECURSOR] != NULL ?
+	    uw_resolver_state_str[resolvers[RECURSOR]->state] : "NA",
+	    uw_resolver_type_str[FORWARDER], resolvers[FORWARDER] != NULL ?
+	    uw_resolver_state_str[resolvers[FORWARDER]->state] : "NA",
 	    uw_resolver_type_str[STATIC_FORWARDER],
-	    static_forwarder != NULL ?
-	    uw_resolver_state_str[static_forwarder->state] : "NA",
+	    resolvers[STATIC_FORWARDER] != NULL ?
+	    uw_resolver_state_str[resolvers[STATIC_FORWARDER]->state] : "NA",
 	    uw_resolver_type_str[STATIC_DOT_FORWARDER],
-	    static_dot_forwarder != NULL ?
-	    uw_resolver_state_str[static_dot_forwarder->state] : "NA",
-	    captive_portal_state_str[captive_portal_state]);
+	    resolvers[STATIC_DOT_FORWARDER] != NULL ?
+	    uw_resolver_state_str[resolvers[STATIC_DOT_FORWARDER]->state] :
+	    "NA", captive_portal_state_str[captive_portal_state]);
 
 	if (captive_portal_state == UNKNOWN || captive_portal_state == BEHIND) {
-		if (forwarder != NULL) {
-			res = forwarder;
+		if (resolvers[FORWARDER] != NULL) {
+			res = resolvers[FORWARDER];
 			goto out;
 		}
 	}
 
-	res = recursor;
+	res = resolvers[RECURSOR];
 
-	if (resolver_cmp(res, static_dot_forwarder) < 0)
-		res = static_dot_forwarder;
+	if (resolver_cmp(res, resolvers[STATIC_DOT_FORWARDER]) < 0)
+		res = resolvers[STATIC_DOT_FORWARDER];
 
-	if (resolver_cmp(res, static_forwarder) < 0)
-		res = static_forwarder;
+	if (resolver_cmp(res, resolvers[STATIC_FORWARDER]) < 0)
+		res = resolvers[STATIC_FORWARDER];
 
-	if (resolver_cmp(res, forwarder) < 0)
-		res = forwarder;
+	if (resolver_cmp(res, resolvers[FORWARDER]) < 0)
+		res = resolvers[FORWARDER];
 
 out:
 	log_debug("%s: %s state: %s", __func__, uw_resolver_type_str[res->type],
@@ -1291,30 +1290,38 @@ show_status(enum uw_resolver_type type, pid_t pid)
 	case RESOLVER_NONE:
 		resolver_imsg_compose_frontend(IMSG_CTL_CAPTIVEPORTAL_INFO,
 		    pid, &captive_portal_state, sizeof(captive_portal_state));
-		send_resolver_info(recursor, recursor == best, pid);
-		send_resolver_info(forwarder, forwarder == best, pid);
-		send_resolver_info(static_forwarder, static_forwarder == best,
-		    pid);
-		send_resolver_info(static_dot_forwarder, static_dot_forwarder
+		send_resolver_info(resolvers[RECURSOR],
+		    resolvers[RECURSOR] == best, pid);
+		send_resolver_info(resolvers[FORWARDER], resolvers[FORWARDER]
 		    == best, pid);
+		send_resolver_info(resolvers[STATIC_FORWARDER],
+		    resolvers[STATIC_FORWARDER] == best, pid);
+		send_resolver_info(resolvers[STATIC_DOT_FORWARDER],
+		    resolvers[STATIC_DOT_FORWARDER] == best, pid);
 		break;
 	case RECURSOR:
-		send_resolver_info(recursor, recursor == best, pid);
-		send_detailed_resolver_info(recursor, pid);
+		send_resolver_info(resolvers[RECURSOR], resolvers[RECURSOR] ==
+		    best, pid);
+		send_detailed_resolver_info(resolvers[RECURSOR], pid);
 		break;
 	case FORWARDER:
-		send_resolver_info(forwarder, forwarder == best, pid);
-		send_detailed_resolver_info(forwarder, pid);
+		send_resolver_info(resolvers[FORWARDER], resolvers[FORWARDER]
+		    == best, pid);
+		send_detailed_resolver_info(resolvers[FORWARDER], pid);
 		break;
 	case STATIC_FORWARDER:
-		send_resolver_info(static_forwarder, static_forwarder == best,
-		    pid);
-		send_detailed_resolver_info(static_forwarder, pid);
+		send_resolver_info(resolvers[STATIC_FORWARDER],
+		   resolvers[STATIC_FORWARDER] == best, pid);
+		send_detailed_resolver_info(resolvers[STATIC_FORWARDER], pid);
 		break;
 	case STATIC_DOT_FORWARDER:
-		send_resolver_info(static_dot_forwarder, static_dot_forwarder
-		    == best, pid);
-		send_detailed_resolver_info(static_dot_forwarder, pid);
+		send_resolver_info(resolvers[STATIC_DOT_FORWARDER],
+		    resolvers[STATIC_DOT_FORWARDER] == best, pid);
+		send_detailed_resolver_info(resolvers[STATIC_DOT_FORWARDER],
+		    pid);
+		break;
+	default:
+		fatalx("unknown resolver type %d", type);
 		break;
 	}
 	resolver_imsg_compose_frontend(IMSG_CTL_END, pid, NULL, 0);
@@ -1381,7 +1388,7 @@ check_captive_portal(int timer_reset)
 		return;
 	}
 
-	if (forwarder == NULL) {
+	if (resolvers[FORWARDER] == NULL) {
 		log_debug("%s no DHCP nameservers known", __func__);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.h,v 1.4 2019/02/17 14:49:15 florian Exp $	*/
+/*	$OpenBSD: resolver.h,v 1.5 2019/04/02 07:45:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -36,7 +36,7 @@ enum uw_resolver_type {
 	FORWARDER,
 	STATIC_FORWARDER,
 	STATIC_DOT_FORWARDER,
-	RESOLVER_NONE = -1
+	RESOLVER_NONE
 };
 
 static const char * const	uw_resolver_type_str[] = {
