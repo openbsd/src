@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.233 2019/04/02 01:10:29 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.234 2019/04/02 01:47:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -229,8 +229,8 @@ main(int argc, char *argv[])
 			errx(1, "autoalloc failed");
 	} else if (argc == 2 || argc == 3) {
 		/* Ensure f is a disk device before pledging. */
-		if (ioctl(f, DIOCGDINFO, &lab) < 0)
-			err(4, "ioctl DIOCGDINFO");
+		if (ioctl(f, DIOCGDINFO, &lab) == -1)
+			err(4, "DIOCGDINFO");
 
 		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
 			err(1, "pledge");
@@ -323,8 +323,8 @@ writelabel(int f, struct disklabel *lp)
 		}
 
 		/* Refresh our copy of the on-disk current label to get UID. */
-		if (ioctl(f, DIOCGDINFO, &lab) < 0)
-			err(4, "ioctl DIOCGDINFO");
+		if (ioctl(f, DIOCGDINFO, &lab) == -1)
+			err(4, "DIOCGDINFO");
 
 		/* Finally, write out any mount point information. */
 		mpsave(lp);
@@ -340,15 +340,15 @@ void
 readlabel(int f)
 {
 
-	if (cflag && ioctl(f, DIOCRLDINFO) < 0)
-		err(4, "ioctl DIOCRLDINFO");
+	if (cflag && ioctl(f, DIOCRLDINFO) == -1)
+		err(4, "DIOCRLDINFO");
 
 	if ((op == RESTORE) || dflag || aflag) {
-		if (ioctl(f, DIOCGPDINFO, &lab) < 0)
-			err(4, "ioctl DIOCGPDINFO");
+		if (ioctl(f, DIOCGPDINFO, &lab) == -1)
+			err(4, "DIOCGPDINFO");
 	} else {
-		if (ioctl(f, DIOCGDINFO, &lab) < 0)
-			err(4, "ioctl DIOCGDINFO");
+		if (ioctl(f, DIOCGDINFO, &lab) == -1)
+			err(4, "DIOCGDINFO");
 	}
 }
 
@@ -644,8 +644,8 @@ edit(struct disklabel *lp, int f)
 			break;
 		}
 		/* Start with the kernel's idea of the default label. */
-		if (ioctl(f, DIOCGPDINFO, &label) < 0)
-			err(4, "ioctl DIOCGPDINFO");
+		if (ioctl(f, DIOCGPDINFO, &label) == -1)
+			err(4, "DIOCGPDINFO");
 		error = getasciilabel(fp, &label);
 		if (error == 0) {
 			if (cmplabel(lp, &label) == 0) {

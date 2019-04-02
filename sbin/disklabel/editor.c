@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.357 2019/03/31 14:06:46 phessler Exp $	*/
+/*	$OpenBSD: editor.c,v 1.358 2019/04/02 01:47:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -275,15 +275,17 @@ editor(int f)
 			break;
 
 		case 'A':
-			if (ioctl(f, DIOCGPDINFO, &newlab) == 0) {
+			if (ioctl(f, DIOCGPDINFO, &newlab) == -1) {
+				warn("DIOCGPDINFO");
+				newlab = lastlabel;
+			} else {
 				int oquiet = quiet, oexpert = expert;
 				aflag = 1;
 				quiet = expert = 0;
 				editor_allocspace(&newlab);
 				quiet = oquiet;
 				expert = oexpert;
-			} else
-				newlab = lastlabel;
+			}
 			break;
 		case 'a':
 			editor_add(&newlab, arg);
@@ -298,14 +300,15 @@ editor(int f)
 			break;
 
 		case 'D':
-			if (ioctl(f, DIOCGPDINFO, &newlab) == 0) {
+			if (ioctl(f, DIOCGPDINFO, &newlab) == -1)
+				warn("DIOCGPDINFO");
+			else {
 				dflag = 1;
-				for (i=0; i<MAXPARTITIONS; i++) {
+				for (i = 0; i < MAXPARTITIONS; i++) {
 					free(mountpoints[i]);
 					mountpoints[i] = NULL;
 				}
-			} else
-				warn("unable to get default partition table");
+			}
 			break;
 
 		case 'd':
@@ -2187,8 +2190,8 @@ get_geometry(int f, struct disklabel **dgpp)
 	/* Get disk geometry */
 	if ((disk_geop = calloc(1, sizeof(struct disklabel))) == NULL)
 		errx(4, "out of memory");
-	if (ioctl(f, DIOCGPDINFO, disk_geop) < 0)
-		err(4, "ioctl DIOCGPDINFO");
+	if (ioctl(f, DIOCGPDINFO, disk_geop) == -1)
+		err(4, "DIOCGPDINFO");
 	*dgpp = disk_geop;
 }
 
