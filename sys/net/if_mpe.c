@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.88 2019/04/02 10:46:02 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.89 2019/04/02 10:50:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -198,6 +198,7 @@ mpe_start(struct ifnet *ifp)
 #endif
 
 		m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+		CLR(m->m_flags, M_BCAST|M_MCAST);
 
 		mpls_output(ifp0, m, &smpls, rt);
 		if_put(ifp0);

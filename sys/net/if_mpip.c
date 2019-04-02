@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.3 2019/04/02 10:46:02 dlg Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.4 2019/04/02 10:50:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -702,6 +702,7 @@ mpip_start(struct ifnet *ifp)
 		*mtod(m, uint32_t *) = shim;
 
 		m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+		CLR(m->m_flags, M_BCAST|M_MCAST);
 
 		mpls_output(ifp0, m, (struct sockaddr *)&smpls, rt);
 	}
