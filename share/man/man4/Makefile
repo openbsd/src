@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.704 2019/03/27 22:11:21 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.705 2019/04/02 03:53:06 kettenis Exp $
 
 MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
-	acpibtn.4 acpicbkbd.4 acpicpu.4 acpidock.4 acpihve.4 \
-	acpiec.4 acpihpet.4 acpimadt.4 acpimcfg.4 acpiprt.4 acpipwrres.4 \
+	acpibtn.4 acpicbkbd.4 acpicpu.4 acpidock.4 acpihve.4 acpiec.4 \
+	acpihpet.4 acpimadt.4 acpimcfg.4 acpipci.4 acpiprt.4 acpipwrres.4 \
 	acpisbs.4 acpisony.4 acpisurface.4 acpithinkpad.4 acpitoshiba.4 \
 	acpitimer.4 acpivideo.4 acpivout.4 acpitz.4 \
 	acx.4 adc.4 addcom.4 adl.4 admcts.4 admlc.4 admtemp.4 \
