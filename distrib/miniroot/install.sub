@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1111 2019/03/02 17:33:18 tb Exp $
+#	$OpenBSD: install.sub,v 1.1112 2019/04/02 01:40:40 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2841,6 +2841,16 @@ __EOT
 	$AI && >/tmp/ai/ai.done
 }
 
+clean_old() {
+	if [[ -f /mnt/usr/bin/gcc ]]; then
+		rm -rf -- `ls -d /mnt/usr/lib/gcc-lib/* | grep -v ${VNAME}$`
+	fi
+	if [[ -f /mnt/usr/bin/clang ]]; then
+		CVER=$(cd /mnt/usr/lib/clang && ls -r | sed -e 1q)
+		rm -rf -- `ls -d /mnt/usr/lib/clang/* | grep -v "${CVER}$"`
+	fi
+}	
+
 do_autoinstall() {
 	rm -f /tmp/ai/ai.done
 
@@ -3177,6 +3187,9 @@ do_upgrade() {
 	# selected.
 	install_sets
 
+	# cleanup old bits
+	clean_old
+	
 	# Perform final steps common to both an install and an upgrade.
 	finish_up
 }
