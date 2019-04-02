@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.29 2019/04/01 14:45:06 jmc Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.30 2019/04/02 03:21:21 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: April 1 2019 $
+.Dd $Mdocdate: April 2 2019 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -292,7 +292,7 @@ The
 option specifies a list of Domain Name System name servers
 available to the client.
 Servers should be listed in order of preference.
-.It Ic option domain-search Ar rfc1035 ;
+.It Ic option domain-search Ar rfc1035 ; | Ar string Oo , Ar string ... Oc ;
 The
 .Ic domain-search
 option specifies a list of the domain names that should be
@@ -312,7 +312,10 @@ Note that
 calls this option
 .Ic option-119
 instead of
-.Ic domain-search .
+.Ic domain-search
+and only supports the
+.Ar rfc1035
+variant.
 .It Ic option extensions-path Ar string ;
 A string to specify a file, retrievable via TFTP, which contains information
 which can be interpreted in the same way as the 64-octet vendor-extension
