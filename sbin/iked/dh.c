@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.21 2017/10/27 14:26:35 patrick Exp $	*/
+/*	$OpenBSD: dh.c,v 1.22 2019/04/02 09:42:55 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -244,9 +244,7 @@ const struct group_id ike_groups[] = {
 	{ GROUP_ECP, 28, 256, NULL, NULL, NID_brainpoolP256r1 },
 	{ GROUP_ECP, 29, 384, NULL, NULL, NID_brainpoolP384r1 },
 	{ GROUP_ECP, 30, 512, NULL, NULL, NID_brainpoolP512r1 },
-
-	/* "Private use" extensions */
-	{ GROUP_CURVE25519, 1034, CURVE25519_SIZE * 8 }
+	{ GROUP_CURVE25519, 31, CURVE25519_SIZE * 8 }
 };
 
 void

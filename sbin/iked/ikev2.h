@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.28 2019/02/27 06:33:57 sthen Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.29 2019/04/02 09:42:55 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -231,16 +231,16 @@ extern struct iked_constmap ikev2_xformauth_map[];
 #define IKEV2_XFORMDH_MODP_4096		16	/* DH Group 16 */
 #define IKEV2_XFORMDH_MODP_6144		17	/* DH Group 17 */
 #define IKEV2_XFORMDH_MODP_8192		18	/* DH Group 18 */
-#define IKEV2_XFORMDH_ECP_256		19	/* DH Group 19 */
-#define IKEV2_XFORMDH_ECP_384		20	/* DH Group 20 */
-#define IKEV2_XFORMDH_ECP_521		21	/* DH Group 21 */
-#define IKEV2_XFORMDH_ECP_192		25	/* DH Group 25 */
-#define IKEV2_XFORMDH_ECP_224		26	/* DH Group 26 */
-#define IKEV2_XFORMDH_BRAINPOOL_P224R1	27	/* DH Group 27 */
-#define IKEV2_XFORMDH_BRAINPOOL_P256R1	28	/* DH Group 28 */
-#define IKEV2_XFORMDH_BRAINPOOL_P384R1	29	/* DH Group 29 */
-#define IKEV2_XFORMDH_BRAINPOOL_P512R1	30	/* DH Group 30 */
-#define IKEV2_XFORMDH_X_CURVE25519	1034	/* draft-ietf-ipsecme-safecurves-00 */
+#define IKEV2_XFORMDH_ECP_256		19	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_384		20	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_521		21	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_192		25	/* RFC5114 */
+#define IKEV2_XFORMDH_ECP_224		26	/* RFC5114 */
+#define IKEV2_XFORMDH_BRAINPOOL_P224R1	27	/* RFC6954 */
+#define IKEV2_XFORMDH_BRAINPOOL_P256R1	28	/* RFC6954 */
+#define IKEV2_XFORMDH_BRAINPOOL_P384R1	29	/* RFC6954 */
+#define IKEV2_XFORMDH_BRAINPOOL_P512R1	30	/* RFC6954 */
+#define IKEV2_XFORMDH_CURVE25519	31	/* RFC8031 */
 
 extern struct iked_constmap ikev2_xformdh_map[];
 

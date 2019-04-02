@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.53 2018/01/31 13:25:55 patrick Exp $
+.\" $OpenBSD: iked.conf.5,v 1.54 2019/04/02 09:42:55 sthen Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2018 $
+.Dd $Mdocdate: April 2 2019 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -883,7 +883,7 @@ The currently supported group types are either
 MODP (exponentiation groups modulo a prime),
 EC2N (elliptic curve groups over GF[2^N]),
 ECP (elliptic curve groups modulo a prime),
-or the non-standard Curve25519.
+or Curve25519.
 Please note that the EC2N groups are considered as insecure and only
 provided for backwards compatibility.
 .Sh EXAMPLES

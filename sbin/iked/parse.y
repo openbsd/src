@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.78 2019/02/13 22:57:07 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.79 2019/04/02 09:42:55 sthen Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -253,7 +253,7 @@ const struct ipsec_xf groupxfs[] = {
 	{ "grp29",		IKEV2_XFORMDH_BRAINPOOL_P384R1 },
 	{ "brainpool512",	IKEV2_XFORMDH_BRAINPOOL_P512R1 },
 	{ "grp30",		IKEV2_XFORMDH_BRAINPOOL_P512R1 },
-	{ "curve25519",		IKEV2_XFORMDH_X_CURVE25519 },
+	{ "curve25519",		IKEV2_XFORMDH_CURVE25519 },
 	{ NULL }
 };
 
