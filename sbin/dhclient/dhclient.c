@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.630 2019/03/22 16:45:48 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.631 2019/04/02 02:59:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1127,17 +1127,20 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		if (options[i].len == 0)
 			continue;
 		name = code_to_name(i);
-		pretty = pretty_print_option(i, &options[i], 0);
+		if (i == DHO_DOMAIN_SEARCH) {
+			/* Replace RFC 1035 data with a string. */
+			pretty = rfc1035_as_string(options[i].data, options[i].len);
+			free(options[i].data);
+			options[i].data = strdup(pretty);
+			if (options[i].data == NULL)
+				fatal("RFC1035 string");
+			options[i].len = strlen(lease->options[i].data) + 1;
+		} else
+			pretty = pretty_print_option(i, &options[i], 0);
 		if (strlen(pretty) == 0)
 			continue;
 		switch (i) {
 		case DHO_DOMAIN_SEARCH:
-			if (strlen(pretty) == 0 || res_hnok_list(pretty) == 0) {
-				log_debug("%s: invalid host name in %s",
-				    log_procname, name);
-				continue;
-			}
-			break;
 		case DHO_DOMAIN_NAME:
 			/*
 			 * Allow deviant but historically blessed
@@ -1865,7 +1868,6 @@ lease_as_proposal(struct client_lease *lease)
 {
 	struct proposal		*proposal;
 	struct option_data	*opt;
-	char			*pretty;
 
 	proposal = calloc(1, sizeof(*proposal));
 	if (proposal == NULL)
@@ -1921,11 +1923,9 @@ lease_as_proposal(struct client_lease *lease)
 
 	if (lease->options[DHO_DOMAIN_SEARCH].len != 0) {
 		opt = &lease->options[DHO_DOMAIN_SEARCH];
-		pretty = pretty_print_domain_search(opt->data, opt->len);
-		if (pretty != NULL && strlen(pretty) > 0 && strlen(pretty) <
-		    sizeof(proposal->rtsearch)) {
-			proposal->rtsearch_len = strlen(pretty);
-			memcpy(proposal->rtsearch, pretty,
+		if (opt->len < sizeof(proposal->rtsearch)) {
+			proposal->rtsearch_len = strlen(opt->data);
+			memcpy(proposal->rtsearch, opt->data,
 			    proposal->rtsearch_len);
 			proposal->addrs |= RTA_SEARCH;
 		} else
@@ -2132,6 +2132,57 @@ res_hnok_list(const char *names)
 	free(dupnames);
 
 	return count > 0 && count < 7 && hn == NULL;
+}
+
+/*
+ * Decode a byte string encoding a list of domain names as specified in RFC 1035
+ * section 4.1.4.
+ *
+ * The result is a string consisting of a blank separated list of domain names.
+ *
+ e.g. 3:65:6e:67:5:61:70:70:6c:65:3:63:6f:6d:0:9:6d:61:72:6b:65:74:69:6e:67:c0:04
+ *
+ *    3 |'e'|'n'|'g'| 5 |'a'|'p'|'p'|'l'|
+ *   'e'| 3 |'c'|'o'|'m'| 0 | 9 |'m'|'a'|
+ *   'r'|'k'|'e'|'t'|'i'|'n'|'g'|xC0|x04|
+ *
+ * will be translated to
+ *
+ * "eng.apple.com. marketing.apple.com."
+ */
+char *
+rfc1035_as_string(unsigned char *src, size_t srclen)
+{
+	static char		 search[DHCP_DOMAIN_SEARCH_LEN];
+	unsigned char		 name[DHCP_DOMAIN_SEARCH_LEN];
+	unsigned char		*endsrc, *cp;
+	int			 len, domains;
+
+	memset(search, 0, sizeof(search));
+
+	/* Compute expanded length. */
+	domains = 0;
+	cp = src;
+	endsrc = src + srclen;
+
+	while (cp < endsrc && domains < DHCP_DOMAIN_SEARCH_CNT) {
+		len = dn_expand(src, endsrc, cp, name, sizeof(name));
+		if (len == -1)
+			goto bad;
+		cp += len;
+		if (domains > 0)
+			strlcat(search, " ", sizeof(search));
+		strlcat(search, name, sizeof(search));
+		if (strlcat(search, ".", sizeof(search)) >= sizeof(search))
+			goto bad;
+		domains++;
+	}
+
+	return search;
+
+bad:
+	memset(search, 0, sizeof(search));
+	return search;
 }
 
 void
