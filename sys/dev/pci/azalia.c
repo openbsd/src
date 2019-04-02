@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.245 2019/03/24 14:37:43 jcs Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.246 2019/04/02 20:24:32 thfr Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -515,6 +515,15 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 		reg = azalia_pci_read(sc->pc, sc->tag, ICH_PCI_MMC);
 		reg &= ~(ICH_PCI_MMC_ME);
 		azalia_pci_write(sc->pc, sc->tag, ICH_PCI_MMC, reg);
+	}
+
+	/* disable MSI for AMD Summit Ridge/Raven Ridge HD Audio */
+	if (PCI_VENDOR(sc->pciid) == PCI_VENDOR_AMD) {
+		switch (PCI_PRODUCT(sc->pciid)) {
+		case PCI_PRODUCT_AMD_AMD64_17_HDA:
+		case PCI_PRODUCT_AMD_RAVENRIDGE_HDA:
+			pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+		}
 	}
 
 	/* interrupt */
