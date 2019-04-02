@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2019/04/01 03:31:55 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2019/04/02 07:47:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -80,6 +80,7 @@ struct sym {
 
 int	 symset(const char *, const char *, int);
 char	*symget(const char *);
+int	 check_pref_uniq(enum uw_resolver_type);
 
 static struct uw_conf		*conf;
 static int			 errors;
@@ -100,7 +101,7 @@ typedef struct {
 
 %token	STRICT YES NO INCLUDE ERROR
 %token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
-%token	STATUS AUTO AUTHENTICATION NAME
+%token	STATUS AUTO AUTHENTICATION NAME PREFERENCE RECURSOR DHCP
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -114,6 +115,7 @@ grammar		: /* empty */
 		| grammar '\n'
 		| grammar conf_main '\n'
 		| grammar varset '\n'
+		| grammar uw_pref '\n'
 		| grammar uw_forwarder '\n'
 		| grammar captive_portal '\n'
 		| grammar error '\n'		{ file->errors++; }
@@ -225,6 +227,59 @@ captive_portal_optsl	: URL STRING {
 			}
 			| AUTO yesno {
 				conf->captive_portal_auto = $2;
+			}
+			;
+
+uw_pref			: PREFERENCE { conf->res_pref_len = 0; } pref_block
+			;
+
+pref_block		: '{' optnl prefopts_l '}'
+			| prefoptsl
+			;
+
+prefopts_l		: prefopts_l prefoptsl optnl
+			| prefoptsl optnl
+			;
+
+prefoptsl		: DOT {
+				if (!check_pref_uniq(UW_RES_DOT))
+					YYERROR;
+				if (conf->res_pref_len >= UW_RES_NONE) {
+					yyerror("preference list too long");
+					YYERROR;
+				}
+				conf->res_pref[conf->res_pref_len++] =
+				    UW_RES_DOT;
+			}
+			| FORWARDER {
+				if (!check_pref_uniq(UW_RES_FORWARDER))
+					YYERROR;
+				if (conf->res_pref_len >= UW_RES_NONE) {
+					yyerror("preference list too long");
+					YYERROR;
+				}
+				conf->res_pref[conf->res_pref_len++] =
+				    UW_RES_FORWARDER;
+			}
+			| RECURSOR {
+				if (!check_pref_uniq(UW_RES_RECURSOR))
+					YYERROR;
+				if (conf->res_pref_len >= UW_RES_NONE) {
+					yyerror("preference list too long");
+					YYERROR;
+				}
+				conf->res_pref[conf->res_pref_len++] =
+				    UW_RES_RECURSOR;
+			}
+			| DHCP {
+				if(!check_pref_uniq(UW_RES_DHCP))
+					YYERROR;
+				if (conf->res_pref_len >= UW_RES_NONE) {
+					yyerror("preference list too long");
+					YYERROR;
+				}
+				conf->res_pref[conf->res_pref_len++] =
+				    UW_RES_DHCP;
 			}
 			;
 
@@ -462,6 +517,7 @@ lookup(char *s)
 		{"authentication",	AUTHENTICATION},
 		{"auto",		AUTO},
 		{"captive",		CAPTIVE},
+		{"dhcp",		DHCP},
 		{"dot",			DOT},
 		{"expected",		EXPECTED},
 		{"forwarder",		FORWARDER},
@@ -470,6 +526,8 @@ lookup(char *s)
 		{"no",			NO},
 		{"port",		PORT},
 		{"portal",		PORTAL},
+		{"preference",		PREFERENCE},
+		{"recursor",		RECURSOR},
 		{"response",		RESPONSE},
 		{"status",		STATUS},
 		{"strict",		STRICT},
@@ -975,4 +1033,19 @@ host_ip(const char *s)
 	}
 
 	return (ss);
+}
+
+int
+check_pref_uniq(enum uw_resolver_type type)
+{
+	int	 i;
+
+	for (i = 0; i < conf->res_pref_len; i++)
+		if (conf->res_pref[i] == type) {
+			yyerror("%s is already in the preference list",
+			    uw_resolver_type_str[type]);
+			return (0);
+		}
+
+	return (1);
 }

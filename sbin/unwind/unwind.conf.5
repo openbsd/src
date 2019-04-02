@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.8 2019/04/01 03:31:56 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.9 2019/04/02 07:47:23 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2019 $
+.Dd $Mdocdate: April 2 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -71,6 +71,27 @@ is specified, use DNS over TLS when sending queries to the server at
 .Ar address .
 .Ar name
 validates the certificate of the DNS over TLS server.
+.It Ic preference Brq Ar type ...
+A list of DNS name server types to specify the preference in which
+name servers are picked.
+Validating name servers are always picked over non-validating name servers.
+DNS name server types are:
+.Bl -tag -width Ds
+.It Ic dhcp
+Name servers learned via dhcp.
+.It Ic DoT
+DNS over TLS name servers configured in
+.Nm
+.It Ic forwarder
+Name servers configured in
+.Nm
+.It Ic recursor
+.Nm unwind
+itself recursively resolves names.
+.El
+.Pp
+The default preference is
+.Ic DoT forwarder recursor dhcp .
 .El
 .Pp
 .Nm unwind

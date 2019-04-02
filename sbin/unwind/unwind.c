@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.22 2019/03/31 03:36:18 yasuoka Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.23 2019/04/02 07:47:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -782,6 +782,9 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 	}
 
 	conf->uw_options = xconf->uw_options;
+	conf->res_pref_len = xconf->res_pref_len;
+	memcpy(&conf->res_pref, &xconf->res_pref,
+	    sizeof(conf->res_pref));
 
 	free(conf->captive_portal_host);
 	conf->captive_portal_host = xconf->captive_portal_host;
@@ -818,11 +821,20 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 struct uw_conf *
 config_new_empty(void)
 {
-	struct uw_conf	*xconf;
+	static enum uw_resolver_type	 default_res_pref[] = {
+	    UW_RES_DOT,
+	    UW_RES_FORWARDER,
+	    UW_RES_RECURSOR,
+	    UW_RES_DHCP};
+	struct uw_conf			*xconf;
 
 	xconf = calloc(1, sizeof(*xconf));
 	if (xconf == NULL)
 		fatal(NULL);
+
+	memcpy(&xconf->res_pref, &default_res_pref,
+	    sizeof(default_res_pref));
+	xconf->res_pref_len = 4;
 
 	SIMPLEQ_INIT(&xconf->uw_forwarder_list);
 	SIMPLEQ_INIT(&xconf->uw_dot_forwarder_list);

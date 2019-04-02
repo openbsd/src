@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.7 2019/04/01 03:31:55 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.8 2019/04/02 07:47:22 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -66,10 +66,19 @@ void
 print_config(struct uw_conf *conf)
 {
 	struct uw_forwarder	*uw_forwarder;
+	int			 i;
 
 #if notyet
 	printf("strict %s\n", yesno(conf->uw_options));
 #endif
+
+	if (conf->res_pref_len > 0) {
+		printf("preference {");
+		for (i = 0; i < conf->res_pref_len; i++) {
+			printf(" %s", uw_resolver_type_str[conf->res_pref[i]]);
+		}
+		printf(" }\n");
+	}
 
 	if (!SIMPLEQ_EMPTY(&conf->uw_forwarder_list) ||
 	    !SIMPLEQ_EMPTY(&conf->uw_dot_forwarder_list)) {

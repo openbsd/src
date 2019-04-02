@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.13 2019/03/30 12:52:03 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.14 2019/04/02 07:47:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -52,6 +52,21 @@ static const char * const log_procnames[] = {
 	"resolver",
 	"frontend",
 	"captive portal",
+};
+
+enum uw_resolver_type {
+	UW_RES_RECURSOR,
+	UW_RES_DHCP,
+	UW_RES_FORWARDER,
+	UW_RES_DOT,
+	UW_RES_NONE
+};
+
+static const char * const	uw_resolver_type_str[] = {
+	"recursor",
+	"dhcp",
+	"forwarder",
+	"DoT"
 };
 
 struct imsgev {
@@ -117,6 +132,8 @@ struct uw_conf {
 	struct uw_forwarder_head	 uw_forwarder_list;
 	struct uw_forwarder_head	 uw_dot_forwarder_list;
 	int				 uw_options;
+	enum uw_resolver_type		 res_pref[UW_RES_NONE];
+	int				 res_pref_len;
 	char				*captive_portal_host;
 	char				*captive_portal_path;
 	char				*captive_portal_expected_response;

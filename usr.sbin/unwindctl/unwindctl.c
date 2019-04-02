@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwindctl.c,v 1.5 2019/02/17 14:49:52 florian Exp $	*/
+/*	$OpenBSD: unwindctl.c,v 1.6 2019/04/02 07:47:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -148,27 +148,27 @@ main(int argc, char *argv[])
 		done = 1;
 		break;
 	case STATUS_RECURSOR:
-		type = RECURSOR;
+		type = UW_RES_RECURSOR;
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
 		    sizeof(type));
 		break;
 	case STATUS_DHCP:
-		type = FORWARDER;
+		type = UW_RES_DHCP;
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
 		    sizeof(type));
 		break;
 	case STATUS_STATIC:
-		type = STATIC_FORWARDER;
+		type = UW_RES_FORWARDER;
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
 		    sizeof(type));
 		break;
 	case STATUS_DOT:
-		type = STATIC_DOT_FORWARDER;
+		type = UW_RES_DOT;
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
 		    sizeof(type));
 		break;
 	case STATUS:
-		type = RESOLVER_NONE;
+		type = UW_RES_NONE;
 		imsg_compose(ibuf, IMSG_CTL_STATUS, 0, 0, -1, &type,
 		    sizeof(type));
 		break;
