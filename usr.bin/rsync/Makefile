@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.8 2019/03/18 04:32:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/04/02 05:32:08 deraadt Exp $
 
 PROG=	openrsync
 SRCS=	blocks.c client.c downloader.c fargs.c flist.c hash.c ids.c \
 	io.c log.c mkpath.c mktemp.c receiver.c sender.c server.c session.c \
-	socket.c symlinks.c uploader.c main.c
+	socket.c symlinks.c uploader.c main.c misc.c
 LDADD+= -lcrypto -lm
 DPADD+= ${LIBCRYPTO} ${LIBM}
 MAN=	openrsync.1

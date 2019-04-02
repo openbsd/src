@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.26 2019/03/31 09:26:05 deraadt Exp $ */
+/*	$Id: extern.h,v 1.27 2019/04/02 05:32:08 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -198,6 +198,16 @@ struct	ident {
 	int32_t	 mapped; /* if receiving, the mapped gid */
 	char	*name; /* resolved name */
 };
+
+typedef struct arglist arglist;
+struct arglist {
+	char	**list;
+	u_int	num;
+	u_int	nalloc;
+};
+void	addargs(arglist *, char *, ...)
+	    __attribute__((format(printf, 2, 3)));
+void	freeargs(arglist *);
 
 struct	download;
 struct	upload;
