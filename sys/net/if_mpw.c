@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.47 2019/03/18 03:20:36 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.48 2019/04/02 10:46:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -563,6 +563,13 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
 		m = n;
 	}
 
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+#if NPF > 0
+        pf_pkt_addr_changed(m);
+#endif
+
 	ml_enqueue(&ml, m);
 	if_input(ifp, &ml);
 	return;
@@ -671,7 +678,7 @@ mpw_start(struct ifnet *ifp)
 		shim->shim_label = htonl(mpls_defttl) & MPLS_TTL_MASK;
 		shim->shim_label |= n->n_rshim.shim_label | bos;
 
-		m0->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+		m0->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 
 		mpls_output(ifp0, m0, (struct sockaddr *)&smpls, rt);
 	}

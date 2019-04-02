@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.2 2019/03/18 03:20:36 dlg Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.3 2019/04/02 10:46:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -537,6 +537,10 @@ mpip_input(struct mpip_softc *sc, struct mbuf *m)
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
 #if NBPFILTER > 0
 	{
 		caddr_t if_bpf = ifp->if_bpf;
@@ -615,7 +619,7 @@ mpip_start(struct ifnet *ifp)
 		return;
 	}
 
-	rt = rtalloc(sstosa(&n->n_nexthop), RT_RESOLVE, 0);
+	rt = rtalloc(sstosa(&n->n_nexthop), RT_RESOLVE, sc->sc_rdomain);
 	if (!rtisvalid(rt)) {
 		IFQ_PURGE(&ifp->if_snd);
 		goto rtfree;
@@ -696,6 +700,8 @@ mpip_start(struct ifnet *ifp)
 		shim |= n->n_rshim.shim_label;
 		shim |= bos;
 		*mtod(m, uint32_t *) = shim;
+
+		m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
 
 		mpls_output(ifp0, m, (struct sockaddr *)&smpls, rt);
 	}

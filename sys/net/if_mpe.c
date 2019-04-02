@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.87 2019/03/18 03:21:20 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.88 2019/04/02 10:46:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -196,6 +196,9 @@ mpe_start(struct ifnet *ifp)
 			m->m_pkthdr.len += sizeof(struct shim_hdr);
 		}
 #endif
+
+		m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+
 		mpls_output(ifp0, m, &smpls, rt);
 		if_put(ifp0);
 		rtfree(rt);
@@ -276,9 +279,6 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	memcpy(mtod(m, struct sockaddr *), rt->rt_gateway, slen);
 	mtod(m, struct sockaddr *)->sa_len = slen; /* to be sure */
 
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	/* XXX assumes MPLS is always in rdomain 0 */
-	m->m_pkthdr.ph_rtableid = 0;
 	m->m_pkthdr.ph_family = dst->sa_family;
 
 	error = if_enqueue(ifp, m);
