@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.9 2019/04/02 07:47:23 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.10 2019/04/02 08:52:26 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -76,15 +76,16 @@ A list of DNS name server types to specify the preference in which
 name servers are picked.
 Validating name servers are always picked over non-validating name servers.
 DNS name server types are:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width "forwarder" -compact
 .It Ic dhcp
-Name servers learned via dhcp.
+Name servers learned via DHCP.
 .It Ic DoT
 DNS over TLS name servers configured in
-.Nm
+.Nm .
 .It Ic forwarder
 Name servers configured in
-.Nm
+.Nm .
 .It Ic recursor
 .Nm unwind
 itself recursively resolves names.
