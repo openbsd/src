@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2019/04/02 07:47:22 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2019/04/03 03:48:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -354,6 +354,7 @@ forwarderoptsl		: STRING {
 				    uw_forwarder, entry);
 			}
 			| STRING DOT {
+				int ret;
 				struct sockaddr_storage *ss;
 				if ((ss = host_ip($1)) == NULL) {
 					yyerror("%s is not an ip-address", $1);
@@ -366,8 +367,9 @@ forwarderoptsl		: STRING {
 				    sizeof(*uw_forwarder))) == NULL)
 					err(1, NULL);
 
-				if(strlcpy(uw_forwarder->name, $1,
-				    sizeof(uw_forwarder->name)) >=
+				ret = snprintf(uw_forwarder->name,
+				    sizeof(uw_forwarder->name), "%s@853", $1);
+				if (ret == -1 || (size_t)ret >=
 				    sizeof(uw_forwarder->name)) {
 					free(uw_forwarder);
 					yyerror("forwarder %s too long", $1);
@@ -429,7 +431,7 @@ forwarderoptsl		: STRING {
 					err(1, NULL);
 
 				ret = snprintf(uw_forwarder->name,
-				    sizeof(uw_forwarder->name), "%s#%s", $1,
+				    sizeof(uw_forwarder->name), "%s@853#%s", $1,
 				    $4);
 				if (ret == -1 || (size_t)ret >=
 				    sizeof(uw_forwarder->name)) {

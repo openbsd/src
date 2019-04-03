@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.12 2019/04/02 19:37:04 jmc Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.13 2019/04/03 03:48:45 florian Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2019 $
+.Dd $Mdocdate: April 3 2019 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -104,10 +104,15 @@ This parameter is required.
 .El
 .It Ic forwarder Brq Ar address Oo Ic port Ar number Oc Oo Oo Ic authentication name Ar name Oc Ic DoT Oc ...
 A list of addresses of DNS name servers to forward queries to.
+.Ic port
+defaults to 53.
 If
 .Ic DoT
 is specified, use DNS over TLS when sending queries to the server at
 .Ar address .
+The default
+.Ic port
+is 853.
 .Ar name
 validates the certificate of the DNS over TLS server.
 .It Ic preference Brq Ar type ...
