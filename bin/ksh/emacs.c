@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.85 2018/06/18 17:03:58 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.86 2019/04/03 14:55:12 jca Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1529,7 +1529,7 @@ x_init_emacs(void)
 	kb_add(x_prev_histword,		CTRL('['), '_', 0);
 	/* how to handle: quote: ^^ */
 	kb_add(x_literal,		CTRL('^'), 0);
-	kb_add(x_draw_line,		CTRL('L'), 0);
+	kb_add(x_clear_screen,		CTRL('L'), 0);
 	kb_add(x_search_char_back,	CTRL('['), CTRL(']'), 0);
 	kb_add(x_search_char_forw,	CTRL(']'), 0);
 	kb_add(x_search_hist,		CTRL('R'), 0);

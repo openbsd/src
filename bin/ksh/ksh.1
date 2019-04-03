@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.202 2018/12/16 13:08:35 schwarze Exp $
+.\"	$OpenBSD: ksh.1,v 1.203 2019/04/03 14:55:12 jca Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: December 16 2018 $
+.Dd $Mdocdate: April 3 2019 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -4694,7 +4694,7 @@ Moves the cursor to the beginning of the edited input line.
 Uppercase the first character in the next
 .Ar n
 words, leaving the cursor past the end of the last word.
-.It clear-screen:
+.It clear-screen: ^L
 Clears the screen if the
 .Ev TERM
 parameter is set and the terminal supports clearing the screen, then
@@ -4891,7 +4891,7 @@ The last
 word of the previous command is inserted at the cursor.
 .It quote: ^^
 The following character is taken literally rather than as an editing command.
-.It redraw: ^L
+.It redraw:
 Reprints the prompt string and the current input line.
 .It Xo search-character-backward:
 .Op Ar n
