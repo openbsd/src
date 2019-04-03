@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.136 2019/04/03 07:38:12 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.137 2019/04/03 07:44:52 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3036,11 +3036,11 @@ uaudio_pdata_copy(struct uaudio_softc *sc)
 
 	getmicrotime(&tv);
 #endif
-	index = s->data_nextxfer + s->ubuf_xfer;
-	if (index >= s->nxfers)
-		index -= s->nxfers;
-	xfer = s->data_xfers + index;
-	while (sc->copy_todo > 0) {
+	while (sc->copy_todo > 0 && s->ubuf_xfer < s->nxfers) {
+		index = s->data_nextxfer + s->ubuf_xfer;
+		if (index >= s->nxfers)
+			index -= s->nxfers;
+		xfer = s->data_xfers + index;
 		avail = s->ring_end - s->ring_pos;
 		count = xfer->size - s->ubuf_pos;
 		if (count > avail)
@@ -3072,12 +3072,6 @@ uaudio_pdata_copy(struct uaudio_softc *sc)
 			}
 #endif
 			s->ubuf_xfer++;
-			if (s->ubuf_xfer == s->nxfers)
-				break;
-			index = s->data_nextxfer + s->ubuf_xfer;
-			if (index >= s->nxfers)
-				index -= s->nxfers;
-			xfer = s->data_xfers + index;
 		}
 	}
 }
