@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.66 2019/03/12 11:16:49 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.67 2019/04/03 06:43:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -102,7 +102,8 @@ start_cfg(void)
 		cmdq_append(c, cfg_item);
 	}
 
-	load_cfg(TMUX_CONF, NULL, NULL, 1);
+	if (cfg_file == NULL)
+		load_cfg(TMUX_CONF, NULL, NULL, 1);
 
 	if (cfg_file == NULL && (home = find_home()) != NULL) {
 		xasprintf(&cfg_file, "%s/.tmux.conf", home);
