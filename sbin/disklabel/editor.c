@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.358 2019/04/02 01:47:49 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.359 2019/04/03 01:10:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -79,6 +79,12 @@ struct space_allocation {
 	int		rate;	/* % of extra space to use */
 	char	       *mp;
 };
+
+/*
+ * NOTE! Changing partition sizes in the space_allocation tables
+ *       requires corresponding updates to the *.ok files in
+ *	 /usr/src/regress/sbin/disklabel.
+ */
 
 /* entries for swap and var are changed by editor_allocspace() */
 struct space_allocation alloc_big[] = {
