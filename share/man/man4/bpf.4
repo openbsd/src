@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.39 2019/03/18 00:05:53 dlg Exp $
+.\"	$OpenBSD: bpf.4,v 1.40 2019/04/03 16:23:20 anton Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: March 18 2019 $
+.Dd $Mdocdate: April 3 2019 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -1021,6 +1021,23 @@ struct bpf_insn insns[] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 .Ed
+.Sh ERRORS
+If the
+.Xr ioctl 2
+call fails,
+.Xr errno 2
+is set to one of the following values:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The timeout used in a
+.Dv BIOCSRTIMEOUT
+request is negative.
+.It Bq Er EOVERFLOW
+The timeout used in a
+.Dv BIOCSRTIMEOUT
+request is too large to be represented by an
+.Vt unsigned long .
+.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr read 2 ,
