@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.137 2019/04/03 07:44:52 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.138 2019/04/03 07:47:20 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3255,6 +3255,7 @@ uaudio_pdata_intr(struct usbd_xfer *usb_xfer, void *arg, usbd_status status)
 	}
 #endif
 	s->ubuf_xfer--;
+	uaudio_pdata_copy(sc);
 }
 
 /*
