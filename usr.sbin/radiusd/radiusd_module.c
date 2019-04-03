@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_module.c,v 1.11 2019/04/01 10:34:02 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_module.c,v 1.12 2019/04/03 11:54:56 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -270,23 +270,23 @@ module_common_radpkt(struct module_base *base, uint32_t imsg_type, u_int q_id,
 
 	len = pktlen;
 	ans.q_id = q_id;
+	ans.pktlen = pktlen;
 	while (off < len) {
 		siz = MAX_IMSGSIZE - sizeof(ans);
-		if (len - off > siz) {
+		if (len - off > siz)
+			ans.final = false;
+		else {
 			ans.final = true;
-			ans.datalen = siz;
-		} else {
-			ans.final = true;
-			ans.datalen = len - off;
+			siz = len - off;
 		}
 		iov[0].iov_base = &ans;
 		iov[0].iov_len = sizeof(ans);
 		iov[1].iov_base = (u_char *)pkt + off;
-		iov[1].iov_len = ans.datalen;
+		iov[1].iov_len = siz;
 		ret = imsg_composev(&base->ibuf, imsg_type, 0, 0, -1, iov, 2);
 		if (ret == -1)
 			break;
-		off += ans.datalen;
+		off += siz;
 	}
 	module_reset_event(base);
 
@@ -426,17 +426,17 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 			break;
 		}
 		accessreq = (struct radiusd_module_radpkt_arg *)imsg->data;
-		if (base->radpktsiz < accessreq->datalen) {
+		if (base->radpktsiz < accessreq->pktlen) {
 			u_char *nradpkt;
 			if ((nradpkt = realloc(base->radpkt,
-			    accessreq->datalen)) == NULL) {
+			    accessreq->pktlen)) == NULL) {
 				syslog(LOG_ERR, "Could not handle received "
 				    "ACCSREQ message: %m");
 				base->radpktoff = 0;
 				goto accsreq_out;
 			}
 			base->radpkt = nradpkt;
-			base->radpktsiz = accessreq->datalen;
+			base->radpktsiz = accessreq->pktlen;
 		}
 		chunklen = datalen - sizeof(struct radiusd_module_radpkt_arg);
 		if (chunklen > base->radpktsiz - base->radpktoff){
@@ -451,7 +451,7 @@ module_imsg_handler(struct module_base *base, struct imsg *imsg)
 		base->radpktoff += chunklen;
 		if (!accessreq->final)
 			goto accsreq_out;
-		if (base->radpktoff != accessreq->datalen) {
+		if (base->radpktoff != accessreq->pktlen) {
 			syslog(LOG_ERR,
 			    "Could not handle received ACCSREQ "
 			    "message: length is mismatch");

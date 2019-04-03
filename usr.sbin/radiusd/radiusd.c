@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.25 2019/04/01 11:05:41 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.26 2019/04/03 11:54:56 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -1288,15 +1288,15 @@ radiusd_module_recv_radpkt(struct radiusd_module *module, struct imsg *imsg,
 
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ans = (struct radiusd_module_radpkt_arg *)imsg->data;
-	if (module->radpktsiz < ans->datalen) {
+	if (module->radpktsiz < ans->pktlen) {
 		u_char *nradpkt;
-		if ((nradpkt = realloc(module->radpkt, ans->datalen)) == NULL) {
+		if ((nradpkt = realloc(module->radpkt, ans->pktlen)) == NULL) {
 			log_warn("Could not handle received %s message from "
 			    "`%s'", type_str, module->name);
 			goto on_fail;
 		}
 		module->radpkt = nradpkt;
-		module->radpktsiz = ans->datalen;
+		module->radpktsiz = ans->pktlen;
 	}
 	chunklen = datalen - sizeof(struct radiusd_module_radpkt_arg);
 	if (chunklen > module->radpktsiz - module->radpktoff) {
@@ -1309,7 +1309,7 @@ radiusd_module_recv_radpkt(struct radiusd_module *module, struct imsg *imsg,
 	module->radpktoff += chunklen;
 	if (!ans->final)
 		return (NULL);	/* again */
-	if (module->radpktoff != module->radpktsiz) {
+	if (module->radpktoff != ans->pktlen) {
 		log_warnx("Could not handle received %s message from `%s': "
 		    "length is mismatch", type_str, module->name);
 		goto on_fail;
@@ -1468,22 +1468,22 @@ radiusd_module_access_request(struct radiusd_module *module,
 	len = radius_get_length(radpkt);
 	memset(&accsreq, 0, sizeof(accsreq));
 	accsreq.q_id = q->id;
+	accsreq.pktlen = len;
 	while (off < len) {
 		siz = MAX_IMSGSIZE - sizeof(accsreq);
-		if (len - off > siz) {
+		if (len - off > siz)
 			accsreq.final = false;
-			accsreq.datalen = siz;
-		} else {
+		else {
 			accsreq.final = true;
-			accsreq.datalen = len - off;
+			siz = len - off;
 		}
 		iov[0].iov_base = &accsreq;
 		iov[0].iov_len = sizeof(accsreq);
 		iov[1].iov_base = (caddr_t)pkt + off;
-		iov[1].iov_len = accsreq.datalen;
+		iov[1].iov_len = siz;
 		imsg_composev(&module->ibuf, IMSG_RADIUSD_MODULE_ACCSREQ, 0, 0,
 		    -1, iov, 2);
-		off += accsreq.datalen;
+		off += siz;
 	}
 	radiusd_module_reset_ev_handler(module);
 	radius_delete_packet(radpkt);
