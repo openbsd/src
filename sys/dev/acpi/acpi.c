@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.362 2019/01/20 00:19:50 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.363 2019/04/04 07:10:05 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -892,8 +892,8 @@ acpi_gpio_parse_events(int crsidx, union acpi_resource *crs, void *arg)
 		node = aml_searchname(devnode,
 		    (char *)&crs->pad[crs->lr_gpio.res_off]);
 		pin = *(uint16_t *)&crs->pad[crs->lr_gpio.pin_off];
-		if (crs->lr_gpio.type == LR_GPIO_INT &&
-		    node && node->gpio && pin < 256) {
+		if (crs->lr_gpio.type == LR_GPIO_INT && pin < 256 &&
+		    node && node->gpio && node->gpio->intr_establish) {
 			struct acpi_gpio *gpio = node->gpio;
 			struct acpi_gpio_event *ev;
 
