@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.14 2019/03/25 17:21:18 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.15 2019/04/04 16:53:57 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -81,10 +81,54 @@ tls13_legacy_connect(SSL *ssl)
 
 	S3I(ssl)->hs.state = SSL_ST_CONNECT;
 
-	if ((ret = tls13_connect(ctx)) == TLS13_IO_SUCCESS)
+	ret = tls13_connect(ctx);
+	if (ret == TLS13_IO_USE_LEGACY)
+		return ssl->method->internal->ssl_connect(ssl);
+	if (ret == TLS13_IO_SUCCESS)
 		S3I(ssl)->hs.state = SSL_ST_OK;
 
 	return tls13_legacy_return_code(ssl, ret);
+}
+
+int
+tls13_use_legacy_client(struct tls13_ctx *ctx)
+{
+	SSL *s = ctx->ssl;
+	CBS cbs;
+
+	s->method = tls_legacy_client_method();
+	s->client_version = s->version = s->method->internal->max_version;
+
+	if (!ssl3_setup_init_buffer(s))
+		goto err;
+	if (!ssl3_setup_buffers(s))
+		goto err;
+	if (!ssl_init_wbio_buffer(s, 0))
+		goto err;
+
+	if (s->bbio != s->wbio)
+		s->wbio = BIO_push(s->bbio, s->wbio);
+
+	if (!tls13_handshake_msg_content(ctx->hs_msg, &cbs))
+		goto err;
+
+	if (!BUF_MEM_grow_clean(s->internal->init_buf, CBS_len(&cbs) + 4))
+		goto err;
+
+	if (!CBS_write_bytes(&cbs, s->internal->init_buf->data + 4,
+	    s->internal->init_buf->length - 4, NULL))
+		goto err;
+
+	S3I(s)->tmp.reuse_message = 1;
+	S3I(s)->tmp.message_type = tls13_handshake_msg_type(ctx->hs_msg);
+	S3I(s)->tmp.message_size = CBS_len(&cbs);
+
+	S3I(s)->hs.state = SSL3_ST_CR_SRVR_HELLO_A;
+
+	return 1;
+
+ err:
+	return 0;
 }
 
 static int
@@ -156,6 +200,35 @@ static const uint8_t tls13_hello_retry_request_hash[] = {
 };
 
 static int
+tls13_server_hello_is_legacy(CBS *cbs)
+{
+	CBS extensions_block, extensions, extension_data;
+	uint16_t selected_version = 0;
+	uint16_t type;
+
+	CBS_dup(cbs, &extensions_block);
+
+	if (!CBS_get_u16_length_prefixed(&extensions_block, &extensions))
+		return 1;
+
+	while (CBS_len(&extensions) > 0) {
+		if (!CBS_get_u16(&extensions, &type))
+			return 1;
+		if (!CBS_get_u16_length_prefixed(&extensions, &extension_data))
+			return 1;
+
+		if (type != TLSEXT_TYPE_supported_versions)
+			continue;
+		if (!CBS_get_u16(&extension_data, &selected_version))
+			return 1;
+		if (CBS_len(&extension_data) != 0)
+			return 1;
+	}
+
+	return (selected_version < TLS1_3_VERSION);
+}
+
+static int
 tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 {
 	CBS server_random, session_id;
@@ -175,6 +248,9 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if (!CBS_get_u8(cbs, &compression_method))
 		goto err;
+
+	if (tls13_server_hello_is_legacy(cbs))
+		return tls13_use_legacy_client(ctx);
 
 	if (!tlsext_client_parse(s, cbs, &alert, SSL_TLSEXT_MSG_SH))
 		goto err;
@@ -259,10 +335,9 @@ tls13_server_hello_recv(struct tls13_ctx *ctx)
 	if (!tls13_server_hello_process(ctx, &cbs))
 		goto err;
 
-	if (ctx->hs->server_version < TLS1_3_VERSION) {
-		/* XXX - switch back to legacy client. */
-		goto err;
-	}
+	/* See if we switched back to the legacy client method. */
+	if (s->method->internal->version < TLS1_3_VERSION)
+		return 1;
 
 	if (ctx->handshake_stage.hs_type & WITH_HRR)
 		return 1;
