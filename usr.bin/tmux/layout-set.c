@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-set.c,v 1.21 2018/10/18 08:38:01 nicm Exp $ */
+/* $OpenBSD: layout-set.c,v 1.22 2019/04/04 10:25:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -450,8 +450,7 @@ layout_set_tiled(struct window *w)
 	/* Free old tree and create a new root. */
 	layout_free(w);
 	lc = w->layout_root = layout_create_cell(NULL);
-	layout_set_size(lc, (width + 1) * columns - 1,
-	    (height + 1) * rows - 1, 0, 0);
+	layout_set_size(lc, w->sx, w->sy, 0, 0);
 	layout_make_node(lc, LAYOUT_TOPBOTTOM);
 
 	/* Create a grid of the cells. */
