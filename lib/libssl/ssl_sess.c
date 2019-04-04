@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.83 2019/04/01 06:43:53 deraadt Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.84 2019/04/04 14:32:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -466,6 +466,7 @@ ssl_get_prev_session(SSL *s, const unsigned char *session_id,
 		break;
 	default:
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
+		fatal = 1;
 		goto err;
 	}
 
