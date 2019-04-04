@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.138 2019/04/03 07:47:20 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.139 2019/04/04 09:23:36 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -4042,39 +4042,16 @@ uaudio_underrun(void *self)
 {
 	struct uaudio_softc *sc = (struct uaudio_softc *)self;
 	struct uaudio_stream *s = &sc->pstream;
-	size_t size;
-	int index;
 
-	/* skip one block in audio fifo */
-	s->ring_pos += s->ring_blksz;
-	if (s->ring_pos >= s->ring_end)
-		s->ring_pos -= s->ring_end - s->ring_start;
-
-	/* get current transfer size */
-	index = s->data_nextxfer + s->ubuf_xfer;
-	if (index >= s->nxfers)
-		index -= s->nxfers;
-	size = s->data_xfers[index].size;
-
-	/* skip one block in usb fifo */
-	s->ubuf_pos += s->ring_blksz;
-	if (s->ubuf_pos >= size) {
-		s->ubuf_pos -= size;
-#ifdef DIAGNOSTIC
-		if (s->ubuf_xfer == s->nxfers) {
-			printf("%s: overflow\n", __func__);
-			return;
-		}
-#endif
-		s->ubuf_xfer++;
-	}
+	sc->copy_todo += s->ring_blksz;
 
 #ifdef UAUDIO_DEBUG
-	if (uaudio_debug >= 2) {
-		printf("%s: ring_pos -> %zd, ubuf_pos -> %u:%u\n", __func__,
-		    s->ring_pos - s->ring_start, s->ubuf_xfer, s->ubuf_pos);
-	}
+	if (uaudio_debug >= 3)
+		printf("%s: copy_todo -> %zd\n", __func__, sc->copy_todo);
 #endif
+
+	/* copy data (actually silence) produced by the audio(4) layer */
+	uaudio_pdata_copy(sc);
 }
 
 int
