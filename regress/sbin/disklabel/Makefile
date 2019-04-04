@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2018/09/27 09:11:09 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2019/04/04 12:03:09 bluhm Exp $
 #
 # Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
 # Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -45,7 +45,7 @@ DISK_SIZES =	  18000 \
 
 DISKLABEL ?=	${.OBJDIR}/disklabel
 
-CLEANFILES +=	*.out *.dl *.fstab diskimage disklabel.c manual.c
+CLEANFILES +=	*.tmp *.out *.dl *.fstab diskimage disklabel.c manual.c
 
 .PATH:		${.CURDIR}/../../../sbin/disklabel
 PROG =		disklabel
@@ -66,24 +66,36 @@ manual.c:
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 
 .for s in ${DISK_SIZES}
+
 REGRESS_TARGETS +=	run-disklabel-$s
-run-disklabel-$s: ${DISKLABEL}
+run-disklabel-$s: $s.out
+	diff -up ${.CURDIR}/$s.ok $s.out
+
+$s.out: ${DISKLABEL}
 	@echo '\n======== $@ ========'
+	rm -f $s.tmp $s.out
 	${SUDO} vnconfig -u vnd0 || true
 	rm -f diskimage
-	echo "===== Start ${s}MB disk =====" >$s.out
+	echo "===== Start ${s}MB disk =====" >$s.tmp
 	dd if=/dev/zero of=diskimage bs=1m count=1 seek=$s status=none
 	${SUDO} vnconfig vnd0 diskimage
-	${SUDO} fdisk -iy vnd0 >>$s.out
-	echo >>$s.out
+	${SUDO} fdisk -iy vnd0 >>$s.tmp
+	echo >>$s.tmp
 	${SUDO} ${DISKLABEL} -A -p g vnd0 >$s.dl
 	${SUDO} ${DISKLABEL} -Aw -f $s.fstab vnd0 >>$s.dl
 	${SUDO} ${DISKLABEL} vnd0 >>$s.dl
-	grep '^  [a-p]: ' $s.dl | egrep -v "unused" | sort >>$s.out
-	echo >>$s.out
-	cat $s.fstab >>$s.out
-	echo "===== End ${s}MB disk =====" >>$s.out
-	diff -up ${.CURDIR}/$s.ok $s.out
+	grep '^  [a-p]: ' $s.dl | egrep -v "unused" | sort >>$s.tmp
+	echo >>$s.tmp
+	cat $s.fstab >>$s.tmp
+	echo "===== End ${s}MB disk =====" >>$s.tmp
+	mv $s.tmp $s.out
+
+$s-update: $s.out
+	cp $s.out ${.CURDIR}/$s.ok
+
+# replace all .ok files with the new generated .out files
+update: $s-update
+
 .endfor
 
 REGRESS_CLEANUP +=	cleanup
