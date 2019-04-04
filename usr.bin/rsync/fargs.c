@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.15 2019/04/02 05:32:08 deraadt Exp $ */
+/*	$Id: fargs.c,v 1.16 2019/04/04 04:19:54 bket Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -106,6 +106,10 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 		addargs(&args, "-v");
 	if (sess->opts->verbose > 0)
 		addargs(&args, "-v");
+	if (sess->opts->one_file_system > 1)
+		addargs(&args, "-x");
+	if (sess->opts->one_file_system > 0)
+		addargs(&args, "-x");
 	if (sess->opts->specials && !sess->opts->devices)
 		addargs(&args, "--specials");
 	if (!sess->opts->specials && sess->opts->devices)

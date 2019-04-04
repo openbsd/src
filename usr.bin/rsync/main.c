@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.43 2019/04/01 13:04:51 schwarze Exp $ */
+/*	$Id: main.c,v 1.44 2019/04/04 04:19:54 bket Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -315,7 +315,7 @@ main(int argc, char *argv[])
 
 	memset(&opts, 0, sizeof(struct opts));
 
-	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvz", lopts, NULL))
+	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, NULL))
 	    != -1) {
 		switch (c) {
 		case 'D':
@@ -358,6 +358,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			opts.verbose++;
+			break;
+		case 'x':
+			opts.one_file_system++;
 			break;
 		case 'z':
 			fprintf(stderr, "%s: -z not supported yet\n", getprogname());
@@ -505,7 +508,7 @@ main(int argc, char *argv[])
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s"
-	    " [-aDglnoprtv] [-e program] [--del] [--numeric-ids]\n"
+	    " [-aDglnoprtvx] [-e program] [--del] [--numeric-ids]\n"
 	    "\t[--port=portnumber] [--rsync-path=program] [--version]\n"
 	    "\tsource ... directory\n",
 	    getprogname());
