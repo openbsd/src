@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipmic.c,v 1.3 2018/05/23 23:08:21 kettenis Exp $	*/
+/*	$OpenBSD: tipmic.c,v 1.4 2019/04/04 06:33:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -272,6 +272,7 @@ struct tipmic_regmap {
 };
 
 struct tipmic_regmap tipmic_thermal_regmap[] = {
+	{ 0x00, TIPMIC_SYSTEMP_HI, TIPMIC_SYSTEMP_LO },
 	{ 0x18, TIPMIC_SYSTEMP_HI, TIPMIC_SYSTEMP_LO }
 };
 
