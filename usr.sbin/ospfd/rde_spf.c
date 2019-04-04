@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.76 2015/11/22 13:09:10 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.77 2019/04/04 19:57:08 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -195,7 +195,7 @@ rt_calc(struct vertex *v, struct area *area, struct ospfd_conf *conf)
 			if (rtr_link->type != LINK_TYPE_STUB_NET)
 				continue;
 
-			addr.s_addr = rtr_link->id;
+			addr.s_addr = rtr_link->id & rtr_link->data;
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 
 			rt_update(addr, mask2prefixlen(rtr_link->data),
