@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.82 2019/04/01 08:46:16 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.83 2019/04/04 04:49:16 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -83,6 +83,7 @@ pciecam*	at fdt?
 pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
+bwfm*		at sdmmc?	# Broadcom FullMAC
 xhci*		at fdt?
 ccp*		at fdt?		# AMD Cryptographic Co-processor
 
