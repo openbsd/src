@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.244 2019/03/25 17:33:26 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.245 2019/04/04 16:44:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1127,7 +1127,6 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_has_ecc_ciphers(SSL *s);
 int ssl_verify_alarm_type(long type);
-void ssl_load_ciphers(void);
 
 int SSL_SESSION_ticket(SSL_SESSION *ss, unsigned char **out, size_t *out_len);
 
