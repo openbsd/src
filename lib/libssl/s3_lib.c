@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.185 2019/03/25 17:21:18 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.186 2019/04/04 15:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1876,6 +1876,47 @@ _SSL_set_tlsext_status_ocsp_resp(SSL *s, unsigned char *resp, int resp_len)
 }
 
 int
+SSL_set0_chain(SSL *ssl, STACK_OF(X509) *chain)
+{
+	return ssl_cert_set0_chain(ssl->cert, chain);
+}
+
+int
+SSL_set1_chain(SSL *ssl, STACK_OF(X509) *chain)
+{
+	return ssl_cert_set1_chain(ssl->cert, chain);
+}
+
+int
+SSL_add0_chain_cert(SSL *ssl, X509 *x509)
+{
+	return ssl_cert_add0_chain_cert(ssl->cert, x509);
+}
+
+int
+SSL_add1_chain_cert(SSL *ssl, X509 *x509)
+{
+	return ssl_cert_add1_chain_cert(ssl->cert, x509);
+}
+
+int
+SSL_get0_chain_certs(const SSL *ssl, STACK_OF(X509) **out_chain)
+{
+	*out_chain = NULL;
+
+	if (ssl->cert->key != NULL)
+		*out_chain = ssl->cert->key->chain;
+
+	return 1;
+}
+
+int
+SSL_clear_chain_certs(SSL *ssl)
+{
+	return ssl_cert_set0_chain(ssl->cert, NULL);
+}
+
+int
 SSL_set1_groups(SSL *s, const int *groups, size_t groups_len)
 {
 	return tls1_set_groups(&s->internal->tlsext_supportedgroups,
@@ -1955,6 +1996,21 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
 		return _SSL_set_tlsext_status_ocsp_resp(s, parg, larg);
+
+	case SSL_CTRL_CHAIN:
+		if (larg == 0)
+			return SSL_set0_chain(s, (STACK_OF(X509) *)parg);
+		else
+			return SSL_set1_chain(s, (STACK_OF(X509) *)parg);
+
+	case SSL_CTRL_CHAIN_CERT:
+		if (larg == 0)
+			return SSL_add0_chain_cert(s, (X509 *)parg);
+		else
+			return SSL_add1_chain_cert(s, (X509 *)parg);
+
+	case SSL_CTRL_GET_CHAIN_CERTS:
+		return SSL_get0_chain_certs(s, (STACK_OF(X509) **)parg);
 
 	case SSL_CTRL_SET_GROUPS:
 		return SSL_set1_groups(s, parg, larg);
@@ -2127,6 +2183,47 @@ _SSL_CTX_set_tlsext_status_arg(SSL_CTX *ctx, void *arg)
 	return 1;
 }
 
+int
+SSL_CTX_set0_chain(SSL_CTX *ctx, STACK_OF(X509) *chain)
+{
+	return ssl_cert_set0_chain(ctx->internal->cert, chain);
+}
+
+int
+SSL_CTX_set1_chain(SSL_CTX *ctx, STACK_OF(X509) *chain)
+{
+	return ssl_cert_set1_chain(ctx->internal->cert, chain);
+}
+
+int
+SSL_CTX_add0_chain_cert(SSL_CTX *ctx, X509 *x509)
+{
+	return ssl_cert_add0_chain_cert(ctx->internal->cert, x509);
+}
+
+int
+SSL_CTX_add1_chain_cert(SSL_CTX *ctx, X509 *x509)
+{
+	return ssl_cert_add1_chain_cert(ctx->internal->cert, x509);
+}
+
+int
+SSL_CTX_get0_chain_certs(const SSL_CTX *ctx, STACK_OF(X509) **out_chain)
+{
+	*out_chain = NULL;
+
+	if (ctx->internal->cert->key != NULL)
+		*out_chain = ctx->internal->cert->key->chain;
+
+	return 1;
+}
+
+int
+SSL_CTX_clear_chain_certs(SSL_CTX *ctx)
+{
+	return ssl_cert_set0_chain(ctx->internal->cert, NULL);
+}
+
 static int
 _SSL_CTX_add_extra_chain_cert(SSL_CTX *ctx, X509 *cert)
 {
@@ -2207,6 +2304,21 @@ ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
 		return _SSL_CTX_set_tlsext_status_arg(ctx, parg);
+
+	case SSL_CTRL_CHAIN:
+		if (larg == 0)
+			return SSL_CTX_set0_chain(ctx, (STACK_OF(X509) *)parg);
+		else
+			return SSL_CTX_set1_chain(ctx, (STACK_OF(X509) *)parg);
+
+	case SSL_CTRL_CHAIN_CERT:
+		if (larg == 0)
+			return SSL_CTX_add0_chain_cert(ctx, (X509 *)parg);
+		else
+			return SSL_CTX_add1_chain_cert(ctx, (X509 *)parg);
+
+	case SSL_CTRL_GET_CHAIN_CERTS:
+		return SSL_CTX_get0_chain_certs(ctx, (STACK_OF(X509) **)parg);
 
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
 		return _SSL_CTX_add_extra_chain_cert(ctx, parg);

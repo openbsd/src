@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.165 2019/03/17 17:28:08 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.166 2019/04/04 15:03:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1118,12 +1118,17 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_CTRL_GET_EXTRA_CHAIN_CERTS		82
 #define SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS	83
 
+#define	SSL_CTRL_CHAIN					88
+#define	SSL_CTRL_CHAIN_CERT				89
+
 #define SSL_CTRL_SET_GROUPS				91
 #define SSL_CTRL_SET_GROUPS_LIST			92
 
 #define SSL_CTRL_SET_ECDH_AUTO			94
 
 #define SSL_CTRL_GET_SERVER_TMP_KEY		109
+
+#define	SSL_CTRL_GET_CHAIN_CERTS			115
 
 #define SSL_CTRL_SET_DH_AUTO			118
 
@@ -1174,6 +1179,20 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_set_ecdh_auto(s, onoff) \
 	SSL_ctrl(s,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
 
+int SSL_CTX_set0_chain(SSL_CTX *ctx, STACK_OF(X509) *chain);
+int SSL_CTX_set1_chain(SSL_CTX *ctx, STACK_OF(X509) *chain);
+int SSL_CTX_add0_chain_cert(SSL_CTX *ctx, X509 *x509);
+int SSL_CTX_add1_chain_cert(SSL_CTX *ctx, X509 *x509);
+int SSL_CTX_get0_chain_certs(const SSL_CTX *ctx, STACK_OF(X509) **out_chain);
+int SSL_CTX_clear_chain_certs(SSL_CTX *ctx);
+
+int SSL_set0_chain(SSL *ssl, STACK_OF(X509) *chain);
+int SSL_set1_chain(SSL *ssl, STACK_OF(X509) *chain);
+int SSL_add0_chain_cert(SSL *ssl, X509 *x509);
+int SSL_add1_chain_cert(SSL *ssl, X509 *x509);
+int SSL_get0_chain_certs(const SSL *ssl, STACK_OF(X509) **out_chain);
+int SSL_clear_chain_certs(SSL *ssl);
+
 int SSL_CTX_set1_groups(SSL_CTX *ctx, const int *groups, size_t groups_len);
 int SSL_CTX_set1_groups_list(SSL_CTX *ctx, const char *groups);
 
@@ -1215,14 +1234,30 @@ int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
  * Also provide those functions as macros for compatibility with
  * existing users.
  */
+#define SSL_CTX_set0_chain		SSL_CTX_set0_chain
+#define SSL_CTX_set1_chain		SSL_CTX_set1_chain
+#define SSL_CTX_add0_chain_cert		SSL_CTX_add0_chain_cert
+#define SSL_CTX_add1_chain_cert		SSL_CTX_add1_chain_cert
+#define SSL_CTX_get0_chain_certs	SSL_CTX_get0_chain_certs
+#define SSL_CTX_clear_chain_certs	SSL_CTX_clear_chain_certs
+
+#define SSL_add0_chain_cert		SSL_add0_chain_cert
+#define SSL_add1_chain_cert		SSL_add1_chain_cert
+#define SSL_set0_chain			SSL_set0_chain
+#define SSL_set1_chain			SSL_set1_chain
+#define SSL_get0_chain_certs		SSL_get0_chain_certs
+#define SSL_clear_chain_certs		SSL_clear_chain_certs
+
 #define SSL_CTX_set1_groups		SSL_CTX_set1_groups
 #define SSL_CTX_set1_groups_list	SSL_CTX_set1_groups_list
 #define SSL_set1_groups			SSL_set1_groups
 #define SSL_set1_groups_list		SSL_set1_groups_list
+
 #define SSL_CTX_get_min_proto_version	SSL_CTX_get_min_proto_version
 #define SSL_CTX_get_max_proto_version	SSL_CTX_get_max_proto_version
 #define SSL_CTX_set_min_proto_version	SSL_CTX_set_min_proto_version
 #define SSL_CTX_set_max_proto_version	SSL_CTX_set_max_proto_version
+
 #define SSL_get_min_proto_version	SSL_get_min_proto_version
 #define SSL_get_max_proto_version	SSL_get_max_proto_version
 #define SSL_set_min_proto_version	SSL_set_min_proto_version
