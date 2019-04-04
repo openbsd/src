@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.6 2018/11/06 01:40:57 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.7 2019/04/04 15:47:15 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -658,7 +658,7 @@ test_ssl_min_max_version(void)
 
 	failed = 0;
 
-	for (i = 0; i < N_SHARED_VERSION_TESTS; i++) {
+	for (i = 0; i < N_MIN_MAX_VERSION_TESTS; i++) {
 		mmvt = &min_max_version_tests[i];
 
 		if ((ssl_ctx = SSL_CTX_new(mmvt->ssl_method())) == NULL) { 
