@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.55 2019/04/01 15:58:02 jsing Exp $ */
+/* $OpenBSD: tls_config.c,v 1.56 2019/04/04 15:09:09 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -94,12 +94,14 @@ tls_config_new_internal(void)
 	if ((config = calloc(1, sizeof(*config))) == NULL)
 		return (NULL);
 
-	if ((config->keypair = tls_keypair_new()) == NULL)
+	if (pthread_mutex_init(&config->mutex, NULL) != 0)
 		goto err;
 
-	config->mutex = PTHREAD_MUTEX_INITIALIZER;
 	config->refcount = 1;
 	config->session_fd = -1;
+
+	if ((config->keypair = tls_keypair_new()) == NULL)
+		goto err;
 
 	/*
 	 * Default configuration.
