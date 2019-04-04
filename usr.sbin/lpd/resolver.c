@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.2 2018/09/05 17:32:56 eric Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.3 2019/04/04 19:25:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Eric Faurot <eric@openbsd.org>
@@ -95,7 +95,7 @@ resolver_getaddrinfo(const char *hostname, const char *servname,
 	m_add_int(p_resolver, hints ? hints->ai_socktype : 0);
 	m_add_int(p_resolver, hints ? hints->ai_protocol : 0);
 	m_add_string(p_resolver, hostname);
-	m_add_string(p_resolver, servname ? servname : "");
+	m_add_string(p_resolver, servname);
 	m_close(p_resolver);
 }
 
@@ -150,8 +150,7 @@ resolver_dispatch_request(struct imsgproc *proc, struct imsg *imsg)
 		m_get_int(proc, &hints.ai_socktype);
 		m_get_int(proc, &hints.ai_protocol);
 		m_get_string(proc, &hostname);
-		if (!m_is_eom(proc))
-			m_get_string(proc, &servname);
+		m_get_string(proc, &servname);
 		m_end(proc);
 
 		s = NULL;
@@ -207,6 +206,8 @@ resolver_dispatch_request(struct imsgproc *proc, struct imsg *imsg)
 		m_create(proc, IMSG_GETNAMEINFO, reqid, 0, -1);
 		m_add_int(proc, EAI_SYSTEM);
 		m_add_int(proc, save_errno);
+		m_add_string(proc, NULL);
+		m_add_string(proc, NULL);
 		m_close(proc);
 		break;
 
@@ -254,7 +255,7 @@ resolver_dispatch_result(struct imsgproc *proc, struct imsg *imsg)
 
 		memmove(ai->ai_addr, &ss, ss.ss_len);
 
-		if (cname[0]) {
+		if (cname) {
 			ai->ai_canonname = strdup(cname);
 			if (ai->ai_canonname == NULL) {
 				log_warn("%s: strdup", __func__);
@@ -281,15 +282,12 @@ resolver_dispatch_result(struct imsgproc *proc, struct imsg *imsg)
 	case IMSG_GETNAMEINFO:
 		m_get_int(proc, &gai_errno);
 		m_get_int(proc, &errno);
-		if (gai_errno == 0) {
-			m_get_string(proc, &host);
-			m_get_string(proc, &serv);
-		}
+		m_get_string(proc, &host);
+		m_get_string(proc, &serv);
 		m_end(proc);
 
 		SPLAY_REMOVE(reqtree, &reqs, req);
-		req->cb_ni(req->arg, gai_errno, gai_errno ? NULL : host,
-		    gai_errno ? NULL : serv);
+		req->cb_ni(req->arg, gai_errno, host, serv);
 		free(req);
 		break;
 	}
@@ -319,8 +317,7 @@ resolver_getaddrinfo_cb(struct asr_result *ar, void *arg)
 		m_add_int(s->proc, ai->ai_socktype);
 		m_add_int(s->proc, ai->ai_protocol);
 		m_add_sockaddr(s->proc, ai->ai_addr);
-		m_add_string(s->proc, ai->ai_canonname ?
-		    ai->ai_canonname : "");
+		m_add_string(s->proc, ai->ai_canonname);
 		m_close(s->proc);
 	}
 
@@ -341,10 +338,8 @@ resolver_getnameinfo_cb(struct asr_result *ar, void *arg)
 	m_create(s->proc, IMSG_GETNAMEINFO, s->reqid, 0, -1);
 	m_add_int(s->proc, ar->ar_gai_errno);
 	m_add_int(s->proc, ar->ar_errno);
-	if (ar->ar_gai_errno == 0) {
-		m_add_string(s->proc, s->host);
-		m_add_string(s->proc, s->serv);
-	}
+	m_add_string(s->proc, ar->ar_gai_errno ? NULL : s->host);
+	m_add_string(s->proc, ar->ar_gai_errno ? NULL : s->serv);
 	m_close(s->proc);
 
 	free(s->host);

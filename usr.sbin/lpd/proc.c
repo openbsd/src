@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.1.1.1 2018/04/27 16:14:37 eric Exp $	*/
+/*	$OpenBSD: proc.c,v 1.2 2019/04/04 19:25:46 eric Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -416,7 +416,12 @@ m_add_time(struct imsgproc *p, time_t v)
 void
 m_add_string(struct imsgproc *p, const char *str)
 {
-	m_add(p, str, strlen(str) + 1);
+	if (str) {
+		m_add(p, "s", 1);
+		m_add(p, str, strlen(str) + 1);
+	}
+	else
+		m_add(p, "\0", 1);
 }
 
 void
@@ -485,11 +490,19 @@ m_get_time(struct imsgproc *p, time_t *dst)
 void
 m_get_string(struct imsgproc *p, const char **dst)
 {
-	char *end;
+	char *end, c;
 
 	if (p->m_in.pos >= p->m_in.end)
 		fatalx("%s: no data left", __func__);
 
+	c = *p->m_in.pos++;
+	if (c == '\0') {
+		*dst = NULL;
+		return;
+	}
+
+	if (p->m_in.pos >= p->m_in.end)
+		fatalx("%s: no data left", __func__);
 	end = memchr(p->m_in.pos, 0, p->m_in.end - p->m_in.pos);
 	if (end == NULL)
 		fatalx("%s: unterminated string", __func__);

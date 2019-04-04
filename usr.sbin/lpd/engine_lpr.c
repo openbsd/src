@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine_lpr.c,v 1.1.1.1 2018/04/27 16:14:35 eric Exp $	*/
+/*	$OpenBSD: engine_lpr.c,v 1.2 2019/04/04 19:25:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -302,7 +302,7 @@ lpr_allowedhost_res(uint32_t connid, const char *hostname, const char *reject)
 {
 	m_create(p_frontend, IMSG_LPR_ALLOWEDHOST, connid, 0, -1);
 	m_add_string(p_frontend, hostname);
-	m_add_string(p_frontend, reject ? reject : "");
+	m_add_string(p_frontend, reject);
 	m_close(p_frontend);
 }
 
@@ -426,8 +426,8 @@ static void
 lpr_displayq_res(uint32_t connid, int fd, const char *host, const char *cmd)
 {
 	m_create(p_frontend, IMSG_LPR_DISPLAYQ, connid, 0, fd);
-	m_add_string(p_frontend, host ? host : "");
-	m_add_string(p_frontend, cmd ? cmd : "");
+	m_add_string(p_frontend, host);
+	m_add_string(p_frontend, cmd);
 	m_close(p_frontend);
 }
 
@@ -479,8 +479,8 @@ static void
 lpr_rmjob_res(uint32_t connid, int fd, const char *host, const char *cmd)
 {
 	m_create(p_frontend, IMSG_LPR_RMJOB, connid, 0, fd);
-	m_add_string(p_frontend, host ? host : "");
-	m_add_string(p_frontend, cmd ? cmd : "");
+	m_add_string(p_frontend, host);
+	m_add_string(p_frontend, cmd);
 	m_close(p_frontend);
 }
 

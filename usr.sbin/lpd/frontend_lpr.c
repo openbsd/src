@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend_lpr.c,v 1.1.1.1 2018/04/27 16:14:35 eric Exp $	*/
+/*	$OpenBSD: frontend_lpr.c,v 1.2 2019/04/04 19:25:45 eric Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -159,7 +159,7 @@ lpr_dispatch_engine(struct imsgproc *proc, struct imsg *imsg)
 		m_get_string(proc, &hostname);
 		m_get_string(proc, &reject);
 		m_end(proc);
-		lpr_on_allowedhost(conn, hostname, reject[0] ? reject : NULL);
+		lpr_on_allowedhost(conn, hostname, reject);
 		break;
 
 	case IMSG_LPR_RECVJOB:
@@ -182,8 +182,7 @@ lpr_dispatch_engine(struct imsgproc *proc, struct imsg *imsg)
 		m_get_string(proc, &hostname);
 		m_get_string(proc, &cmd);
 		m_end(proc);
-		lpr_on_request(conn, imsg->fd, hostname[0] ? hostname : NULL,
-		    cmd[0] ? cmd : NULL);
+		lpr_on_request(conn, imsg->fd, hostname, cmd);
 		break;
 
 	default:
