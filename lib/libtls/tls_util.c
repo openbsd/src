@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.12 2018/02/08 07:55:29 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.13 2019/04/04 15:10:10 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -43,10 +43,11 @@ tls_set_mem(char **dest, size_t *destlen, const void *src, size_t srclen)
 	free(*dest);
 	*dest = NULL;
 	*destlen = 0;
-	if (src != NULL)
+	if (src != NULL) {
 		if ((*dest = memdup(src, srclen)) == NULL)
 			return -1;
-	*destlen = srclen;
+		*destlen = srclen;
+	}
 	return 0;
 }
 
