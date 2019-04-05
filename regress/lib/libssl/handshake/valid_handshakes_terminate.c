@@ -1,4 +1,4 @@
-/*	$OpenBSD: valid_handshakes_terminate.c,v 1.2 2019/01/23 23:29:56 tb Exp $	*/
+/*	$OpenBSD: valid_handshakes_terminate.c,v 1.3 2019/04/05 20:25:42 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -32,6 +32,7 @@ main(int argc, char *argv[])
 
 		if (mt == INVALID)
 			continue;
+
 		terminates = 0;
 
 		for (j = 0; j < TLS13_NUM_MESSAGE_TYPES; j++) {
