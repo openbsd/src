@@ -1925,6 +1925,7 @@
 ./usr/share/man/man3/SMIME_write_PKCS7.3
 ./usr/share/man/man3/SSL_CIPHER_get_name.3
 ./usr/share/man/man3/SSL_COMP_add_compression_method.3
+./usr/share/man/man3/SSL_CTX_add1_chain_cert.3
 ./usr/share/man/man3/SSL_CTX_add_extra_chain_cert.3
 ./usr/share/man/man3/SSL_CTX_add_session.3
 ./usr/share/man/man3/SSL_CTX_ctrl.3
