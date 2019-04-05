@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.67 2018/11/10 05:03:23 dlg Exp $
+.\"	$OpenBSD: traceroute.8,v 1.68 2019/04/05 14:56:48 sthen Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: November 10 2018 $
+.Dd $Mdocdate: April 5 2019 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ The options are as follows:
 .It Fl A
 Look up the AS number for each hop address.
 Uses the DNS service described at
-.Lk http://www.team-cymru.org/Services/ip-to-asn.html .
+.Lk https://www.team-cymru.com/IP-ASN-mapping.html#dns
 .It Fl c
 Do not increment the destination port number in successive UDP packets.
 Rather, all UDP packets will have the same destination port, as set via the
