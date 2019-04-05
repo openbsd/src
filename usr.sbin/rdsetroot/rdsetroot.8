@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdsetroot.8,v 1.1 2019/04/05 21:07:11 deraadt Exp $
+.\"	$OpenBSD: rdsetroot.8,v 1.2 2019/04/05 21:44:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Theo de Raadt
 .\"
@@ -45,9 +45,10 @@ Debug.
 Rather than inserting, extract the
 .Ar disk.fs
 image.
-The disk can be made accessable using
+The disk can be made accessible using
 .Xr vnconfig 8 ,
 filesystems can be manipulated, and finally re-inserted into the RAMDISK kernel.
+.El
 .Sh SEE ALSO
 .Xr config 8 ,
 .Xr disklabel 8 ,
