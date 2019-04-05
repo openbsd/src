@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.34 2019/04/05 05:13:12 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.35 2019/04/05 20:23:38 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -98,6 +98,12 @@ struct tls13_handshake_action state_machine[] = {
 		.send = tls13_server_hello_send,
 		.recv = tls13_server_hello_recv,
 	},
+	[SERVER_HELLO_RETRY] = {
+		.handshake_type = TLS13_MT_SERVER_HELLO,
+		.sender = TLS13_HS_SERVER,
+		.send = tls13_server_hello_retry_send,
+		.recv = tls13_server_hello_retry_recv,
+	},
 	[SERVER_ENCRYPTED_EXTENSIONS] = {
 		.handshake_type = TLS13_MT_ENCRYPTED_EXTENSIONS,
 		.sender = TLS13_HS_SERVER,
@@ -156,6 +162,7 @@ enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
 		CLIENT_HELLO_RETRY,
+		SERVER_HELLO_RETRY,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_CERTIFICATE_REQUEST,
 		SERVER_CERTIFICATE,
@@ -179,6 +186,7 @@ enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
 		CLIENT_HELLO_RETRY,
+		SERVER_HELLO_RETRY,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_CERTIFICATE,
 		SERVER_CERTIFICATE_VERIFY,
@@ -198,6 +206,7 @@ enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
 		CLIENT_HELLO_RETRY,
+		SERVER_HELLO_RETRY,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_FINISHED,
 		CLIENT_FINISHED,
@@ -220,6 +229,7 @@ enum tls13_message_type handshakes[][TLS13_NUM_MESSAGE_TYPES] = {
 		CLIENT_HELLO,
 		SERVER_HELLO,
 		CLIENT_HELLO_RETRY,
+		SERVER_HELLO_RETRY,
 		SERVER_ENCRYPTED_EXTENSIONS,
 		SERVER_CERTIFICATE_REQUEST,
 		SERVER_CERTIFICATE,
@@ -404,6 +414,12 @@ tls13_client_hello_retry_send(struct tls13_ctx *ctx)
 }
 
 int
+tls13_server_hello_retry_recv(struct tls13_ctx *ctx)
+{
+        return 0;
+}
+
+int
 tls13_client_hello_retry_recv(struct tls13_ctx *ctx)
 {
 	return 0;
@@ -469,6 +485,12 @@ tls13_server_hello_send(struct tls13_ctx *ctx)
 {
 	ctx->handshake_stage.hs_type |= NEGOTIATED;
 
+	return 0;
+}
+
+int
+tls13_server_hello_retry_send(struct tls13_ctx *ctx)
+{
 	return 0;
 }
 
