@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.o_init.c,v 1.8 2016/01/09 21:54:11 mestre Exp $	*/
+/*	$OpenBSD: hack.o_init.c,v 1.9 2019/04/05 09:02:27 bentley Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -173,18 +173,29 @@ savenames(int fd)
 {
 	int i;
 	unsigned len;
+	unsigned zero = 0;
 
 	bwrite(fd, bases, sizeof bases);
 	bwrite(fd, objects, sizeof objects);
-	/* as long as we use only one version of Hack/Quest we
-	   need not save oc_name and oc_descr, but we must save
-	   oc_uname for all objects */
 	for(i=0; i < SIZE(objects); i++) {
+		if(objects[i].oc_name) {
+			len = strlen(objects[i].oc_name)+1;
+			bwrite(fd, &len, sizeof len);
+			bwrite(fd, objects[i].oc_name, len);
+		} else
+			bwrite(fd, &zero, sizeof len);
+		if(objects[i].oc_descr) {
+			len = strlen(objects[i].oc_descr)+1;
+			bwrite(fd, &len, sizeof len);
+			bwrite(fd, objects[i].oc_descr, len);
+		} else
+			bwrite(fd, &zero, sizeof len);
 		if(objects[i].oc_uname) {
 			len = strlen(objects[i].oc_uname)+1;
 			bwrite(fd, &len, sizeof len);
 			bwrite(fd, objects[i].oc_uname, len);
-		}
+		} else
+			bwrite(fd, &zero, sizeof len);
 	}
 }
 
@@ -196,10 +207,25 @@ restnames(int fd)
 
 	mread(fd, (char *) bases, sizeof bases);
 	mread(fd, (char *) objects, sizeof objects);
-	for(i=0; i < SIZE(objects); i++) if(objects[i].oc_uname) {
+	for(i=0; i < SIZE(objects); i++) {
 		mread(fd, (char *) &len, sizeof len);
-		objects[i].oc_uname = (char *) alloc(len);
-		mread(fd, objects[i].oc_uname, len);
+		if(len) {
+			objects[i].oc_name = (char *) alloc(len);
+			mread(fd, objects[i].oc_name, len);
+		} else
+			objects[i].oc_name = 0;
+		mread(fd, (char *) &len, sizeof len);
+		if(len) {
+			objects[i].oc_descr = (char *) alloc(len);
+			mread(fd, objects[i].oc_descr, len);
+		} else 
+			objects[i].oc_descr = 0;
+		mread(fd, (char *) &len, sizeof len);
+		if(len) {
+			objects[i].oc_uname = (char *) alloc(len);
+			mread(fd, objects[i].oc_uname, len);
+		} else 
+			objects[i].oc_uname = 0;
 	}
 }
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.308 2019/04/01 07:21:37 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.309 2019/04/05 09:02:27 bentley Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -433,6 +433,8 @@ usr
             ..
             fortune
             ..
+            hack
+            ..
             quiz.db
             ..
         ..
@@ -634,10 +636,6 @@ var
 
     # ./var/games
     games			uname=root gname=games mode=0775
-        hackdir			uname=root gname=games mode=0775
-            save		uname=root gname=games mode=0770
-            ..
-        ..
         save			uname=root gname=games mode=0775
         ..
         phantasia		uname=root gname=games mode=0775

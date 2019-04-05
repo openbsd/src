@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.main.c,v 1.22 2016/01/09 21:54:11 mestre Exp $	*/
+/*	$OpenBSD: hack.main.c,v 1.23 2019/04/05 09:02:27 bentley Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,6 +62,7 @@
  */
 
 #include <sys/stat.h>
+#include <errno.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -538,6 +539,8 @@ chdirx(char *dir, boolean wr)
 	}
 
 	/* warn the player if he cannot write the record file */
+	/* warn the player if he cannot read the permanent lock file */
+	/* warn the player if he cannot create the save directory */
 	/* perhaps we should also test whether . is writable */
 	/* unfortunately the access systemcall is worthless */
 	if(wr) {
@@ -545,11 +548,20 @@ chdirx(char *dir, boolean wr)
 
 	    if(dir == NULL)
 		dir = ".";
-	    if((fd = open(RECORD, O_RDWR)) < 0) {
+	    if((fd = open(RECORD, O_RDWR | O_CREAT, FMASK)) < 0) {
 		printf("Warning: cannot write %s/%s", dir, RECORD);
 		getret();
 	    } else
 		(void) close(fd);
+	    if((fd = open(HLOCK, O_RDONLY | O_CREAT, FMASK)) < 0) {
+		printf("Warning: cannot read %s/%s", dir, HLOCK);
+		getret();
+	    } else
+		(void) close(fd);
+	    if(mkdir("save", 0770) && errno != EEXIST) {
+		printf("Warning: cannot create %s/save", dir);
+		getret();
+	    }
 	}
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.timeout.c,v 1.7 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.timeout.c,v 1.8 2019/04/05 09:02:27 bentley Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -73,7 +73,7 @@ hacktimeout(void)
 	if(Stoned) stoned_dialogue();
 	for(upp = u.uprops; upp < u.uprops+SIZE(u.uprops); upp++)
 	    if((upp->p_flgs & TIMEOUT) && !--upp->p_flgs) {
-		if(upp->p_tofn) (*upp->p_tofn)();
+		if(upp->p_tofn) float_down();
 		else switch(upp - u.uprops){
 		case STONED:
 			killer = "cockatrice";
