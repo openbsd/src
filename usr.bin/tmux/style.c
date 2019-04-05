@@ -1,4 +1,4 @@
-/* $OpenBSD: style.c,v 1.18 2019/03/18 20:53:33 nicm Exp $ */
+/* $OpenBSD: style.c,v 1.19 2019/04/05 20:32:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -172,7 +172,7 @@ style_tostring(struct style *sy)
 {
 	struct grid_cell	*gc = &sy->gc;
 	int			 off = 0;
-	const char		*comma = "", *tmp;
+	const char		*comma = "", *tmp = "";
 	static char		 s[256];
 	char			 b[16];
 
