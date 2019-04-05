@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.23 2019/04/02 11:10:54 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.24 2019/04/05 00:57:59 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -268,6 +268,9 @@ gre_print_0(const u_char *p, u_int length)
 		break;
 	case ERSPAN_II:
 		gre_print_erspan2(p, length);
+		break;
+	case 0x2000:
+		cdp_print(p, length, l, 0);
 		break;
 	default:
 		printf("unknown-proto-%04x", proto);
