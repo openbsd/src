@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.204 2019/01/26 10:59:30 florian Exp $
+#	$OpenBSD: Makefile,v 1.205 2019/04/05 21:07:11 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SUBDIR=	ac accton acme-client acpidump adduser amd apm apmd arp \
 	npppctl npppd nsd ntpd ocspcheck ospfctl ospfd ospf6d ospf6ctl \
 	pcidump pkg_add portmap pppd procmap pstat pwd_mkdb \
 	quot quotaon ractl rad radiusctl radiusd rarpd rbootd \
-	rcctl rdate rebound relayctl relayd repquota ripctl ripd \
+	rcctl rdate rdsetroot rebound relayctl relayd repquota ripctl ripd \
 	rmt route6d rpc.bootparamd rpc.lockd rpc.statd \
 	sa sasyncd sensorsd slaacctl slowcgi smtpd \
 	snmpctl snmpd spamdb switchctl switchd syslogc syslogd sysmerge \
