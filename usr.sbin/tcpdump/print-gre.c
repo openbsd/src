@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.24 2019/04/05 00:57:59 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.25 2019/04/05 00:59:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -146,6 +146,9 @@ gre_print_0(const u_char *p, u_int length)
 	p += sizeof(proto);
 	l -= sizeof(proto);
 	length -= sizeof(proto);
+
+	if (vflag)
+		printf(" %04x", proto);
 
 	if ((flags & GRE_CP) | (flags & GRE_RP)) {
 		if (l < 2)
