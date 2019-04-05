@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.177 2019/03/31 17:55:09 ratchov Exp $	*/
+/*	$OpenBSD: audio.c,v 1.178 2019/04/05 06:14:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1555,15 +1555,17 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		if (sc->ops->copy_output)
 			sc->ops->copy_output(sc->arg, count);
 
+		mtx_enter(&audio_lock);
+		audio_buf_wcommit(&sc->play, count);
+
 		/* start automatically if audio_ioc_start() was never called */
 		if (audio_canstart(sc)) {
+			mtx_leave(&audio_lock);
 			error = audio_start(sc);
 			if (error)
 				return error;
+			mtx_enter(&audio_lock);
 		}
-
-		mtx_enter(&audio_lock);
-		audio_buf_wcommit(&sc->play, count);
 	}
 	mtx_leave(&audio_lock);
 	return 0;
