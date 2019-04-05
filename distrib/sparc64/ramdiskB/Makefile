@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2017/09/19 19:23:57 jasper Exp $
+#	$OpenBSD: Makefile,v 1.31 2019/04/05 21:08:01 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -58,9 +58,9 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYSIZE}
 	rm -f ${REALIMAGE}
 
-${BSD_RD}: ${CBIN} ${IMAGE} bsd elfrdsetroot
+${BSD_RD}: ${CBIN} ${IMAGE} bsd
 	cp bsd ${BSD_RD}
-	${.OBJDIR}/elfrdsetroot ${BSD_RD} < ${IMAGE}
+	rdsetroot ${BSD_RD} ${IMAGE}
 	strip -R .SUNW_ctf ${BSD_RD}
 
 ${IMAGE}: ${CBIN}
@@ -80,11 +80,6 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Oz ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/obj/bsd bsd
 
-elfrdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o elfrdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
-
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND}
@@ -101,7 +96,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c bsd ${BSD_RD} bsd.gz ${FLOPPY} elfrdsetroot
+	    *.o *.lo *.c bsd ${BSD_RD} bsd.gz ${FLOPPY}
 	/bin/rm -rf ${IMAGE}.d
 
 .ifdef RELEASEDIR

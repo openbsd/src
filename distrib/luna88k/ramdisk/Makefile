@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2017/01/27 17:59:09 natano Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/04/05 21:08:00 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,9 +15,9 @@ MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0
 
 all:	${BSD_RD}
 
-${BSD_RD}: ${IMAGE} bsd rdsetroot
+${BSD_RD}: ${IMAGE} bsd
 	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
+	rdsetroot ${BSD_RD} ${IMAGE}
 
 ${IMAGE}: ${CBIN}
 	rm -rf $@.d
@@ -36,11 +36,6 @@ bsd:
 .endif
 	cp -p ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK/obj/bsd bsd
 
-rdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} -o rdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
-
 .ifdef RELEASEDIR
 install:
 	cp ${BSD_RD} ${RELEASEDIR}
@@ -57,8 +52,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c bsd ${BSD_RD} rdsetroot
+	    lib*.a lib*.olist ${CBIN}.map *.o *.lo *.c bsd ${BSD_RD}
 	/bin/rm -rf ${IMAGE}.d
 
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2017/08/13 15:41:30 jasper Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2019/04/05 21:08:00 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -71,10 +71,9 @@ bsd.gz: bsd.rd
 	strip -R .comment -R .SUNW_ctf bsd.strip
 	gzip -c9n bsd.strip > bsd.gz
 
-bsd.rd:	mr.fs bsd rdsetroot
+bsd.rd:	mr.fs bsd
 	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd mr.fs
-
+	rdsetroot bsd.rd mr.fs
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/amd64/compile/${RAMDISK} && \
@@ -93,11 +92,6 @@ mr.fs: instbin
 	vnconfig -v -c ${VND} mr.fs
 	df -i /dev/${VND}a
 	vnconfig -u ${VND}
-
-rdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
 
 .ifdef RELEASEDIR
 install:
@@ -124,8 +118,7 @@ instbin.conf: ${LISTS}
 clean cleandir:
 	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
-	    lib*.a lib*.olist instbin.map \
-	    rdsetroot boot instbin.conf ${FS}
+	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
 	/bin/rm -rf mr.fs.d
 
 .include <bsd.obj.mk>

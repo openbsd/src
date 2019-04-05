@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2017/01/08 14:42:12 natano Exp $
+#	$OpenBSD: Makefile,v 1.21 2019/04/05 21:08:00 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -26,9 +26,9 @@ all ${IMAGE}:
 # mix config is not needed.
 all:	${BSD_RD}
 
-${BSD_RD}: ${IMAGE} bsd rdsetroot
+${BSD_RD}: ${IMAGE} bsd
 	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
+	rdsetroot ${BSD_RD} ${IMAGE}
 
 ${IMAGE}: ${CBIN}
 	rm -rf $@.d
@@ -47,11 +47,6 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/landisk/compile/RAMDISK/obj/bsd bsd
 
-rdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
-
 .ifdef RELEASEDIR
 install:
 	cp ${BSD_RD} ${RELEASEDIR}
@@ -68,8 +63,7 @@ ${CRUNCHCONF}: ${LISTS}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c bsd ${BSD_RD} rdsetroot
+	    lib*.a lib*.olist ${CBIN}.map *.o *.lo *.c bsd ${BSD_RD}
 	rm -f instbin.conf
 	rm -rf cd-dir ${IMAGE}.d
 

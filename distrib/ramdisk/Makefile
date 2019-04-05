@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2017/09/18 20:13:52 jasper Exp $
+#	$OpenBSD: Makefile,v 1.53 2019/04/05 21:08:01 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -21,7 +21,6 @@ REALIMAGE!=	echo /var/tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
-RDSETROOT_EXT_SRC=${.CURDIR}/../common/elf32.c ${.CURDIR}/../common/elf64.c
 CRUNCHGENOPTS?=-E
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../miniroot
@@ -76,17 +75,13 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Oz ${MAKE}'
 	cp -p ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/obj/bsd bsd
 
-bsd.rd:	bsd ${IMAGE} rdsetroot
+bsd.rd:	bsd ${IMAGE}
 	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
+	rdsetroot bsd.rd ${IMAGE}
 	strip -R .SUNW_ctf bsd.rd
 
 bsd.gz:	bsd.rd
 	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
-
-rdsetroot: ${.CURDIR}/../common/elfrdsetroot.c ${RDSETROOT_EXT_SRC}
-	${HOSTCC} ${HOSTCCFLAGS} -o rdsetroot ${RDSETROOT_EXT_SRC} \
-	    ${.CURDIR}/../common/elfrdsetroot.c
 
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
@@ -119,8 +114,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
-	    ${CBIN}.conf *.o *.lo *.c bsd bsd.*
+	    lib*.a lib*.olist ${CBIN}.map ${CBIN}.conf *.o *.lo *.c bsd bsd.*
 
 .endif	# DESTDIR check
 

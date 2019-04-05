@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2017/07/25 13:32:14 robert Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/04/05 21:08:01 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -27,9 +27,9 @@ all ${IMAGE}:
 # mix config is not needed.
 all:	${BSD_RD} ${BSD_BIN}
 
-${BSD_RD}: ${IMAGE} bsd rdsetroot
+${BSD_RD}: ${IMAGE} bsd
 	cp bsd ${BSD_RD}
-	${.OBJDIR}/rdsetroot ${BSD_RD} ${IMAGE}
+	rdsetroot ${BSD_RD} ${IMAGE}
 
 ${BSD_BIN}: ${BSD_RD}
 	objcopy -O binary ${BSD_RD} ${BSD_BIN}
@@ -51,11 +51,6 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Oz ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/socppc/compile/RAMDISK/obj/bsd bsd
 
-rdsetroot:	${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
-
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
@@ -67,8 +62,7 @@ ${CRUNCHCONF}: ${LISTS}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso rdsetroot
+	    lib*.a lib*.olist ${CBIN}.map *.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso
 	rm -rf cd-dir ${IMAGE}.d
 
 .ifdef RELEASEDIR

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.35 2017/09/18 20:13:52 jasper Exp $
+#	$OpenBSD: Makefile.inc,v 1.36 2019/04/05 21:08:00 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -66,9 +66,9 @@ bsd.gz:	bsd.rd
 	strip bsd.strip
 	gzip -c ${GZIPFLAGS} bsd.strip > bsd.gz
 
-bsd.rd: bsd ${IMAGE} rdsetroot
+bsd.rd: bsd ${IMAGE}
 	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd ${IMAGE}
+	rdsetroot bsd.rd ${IMAGE}
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/compile/${RAMDISK} && \
@@ -84,11 +84,6 @@ ${IMAGE}: ${CBIN}
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/${CBIN}
 	makefs ${MAKEFSARGS_RD} $@ $@.d
-
-rdsetroot: ${TOP}/../common/elfrdsetroot.c
-	${HOSTCC} ${HOSTCFLAGS} -o rdsetroot \
-	    ${TOP}/../common/elfrdsetroot.c ${TOP}/../common/elf32.c \
-	    ${TOP}/../common/elf64.c
 
 unconfig:
 	-umount ${MOUNT_POINT}
