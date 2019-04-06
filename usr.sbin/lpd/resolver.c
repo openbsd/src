@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.3 2019/04/04 19:25:46 eric Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.4 2019/04/06 10:35:48 eric Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Eric Faurot <eric@openbsd.org>
@@ -326,7 +326,8 @@ resolver_getaddrinfo_cb(struct asr_result *ar, void *arg)
 	m_add_int(s->proc, ar->ar_errno);
 	m_close(s->proc);
 
-	freeaddrinfo(ar->ar_addrinfo);
+	if (ar->ar_addrinfo)
+		freeaddrinfo(ar->ar_addrinfo);
 	free(s);
 }
 
