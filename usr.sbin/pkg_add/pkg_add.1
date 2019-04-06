@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.156 2018/08/06 18:20:47 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.157 2019/04/06 10:55:01 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: August 6 2018 $
+.Dd $Mdocdate: April 6 2019 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -228,7 +228,7 @@ The operating system version.
 Expands to the string
 .Qq snapshots
 when running a -current or -beta kernel, or if the command line option
-.Fl D Cm snap
+.Fl D Cm snap | Fl D Cm snapshot
 is specified.
 Otherwise, %c expands to %v, which selects a release version.
 .It %m
@@ -343,7 +343,7 @@ Defaults to any key matching
 for packages, and any key matching
 .Sq *fw
 for firmware.
-.It Cm snap
+.It Cm snap | Cm snapshot
 Force
 .Sq %c
 and

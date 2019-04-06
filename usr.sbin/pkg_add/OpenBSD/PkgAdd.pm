@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.108 2018/12/21 14:04:19 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.109 2019/04/06 10:55:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -136,6 +136,9 @@ sub handle_options
 	$state->{pkglist} = $state->opt('l');
 	$state->{update} = $state->opt('u');
 	$state->{fuzzy} = $state->opt('z');
+	if ($state->defines('snapshot')) {
+		$state->{subst}->add('snap', 1);
+	}
 
 	if (@ARGV == 0 && !$state->{update} && !$state->{pkglist}) {
 		$state->usage("Missing pkgname");
