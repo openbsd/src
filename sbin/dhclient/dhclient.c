@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.632 2019/04/03 12:57:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.633 2019/04/06 08:25:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -456,7 +456,9 @@ main(int argc, char *argv[])
 			cmd_opts |= OPT_FOREGROUND;
 			break;
 		case 'i':
-			ignore_list = optarg;
+			ignore_list = strdup(optarg);
+			if (ignore_list == NULL)
+				fatal("ignore_list");
 			break;
 		case 'l':
 			path_lease_db = optarg;
@@ -562,6 +564,7 @@ main(int argc, char *argv[])
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
 	read_conf(ifi->name, ignore_list, &ifi->hw_address);
+	free(ignore_list);
 	if ((cmd_opts & OPT_NOACTION) != 0)
 		return 0;
 
