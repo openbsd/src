@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_prn.c,v 1.19 2019/04/01 15:48:04 jsing Exp $ */
+/* $OpenBSD: tasn_prn.c,v 1.20 2019/04/07 16:35:50 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -512,12 +512,7 @@ asn1_primitive_print(BIO *out, ASN1_VALUE **fld, const ASN1_ITEM *it,
 
 		return pf->prim_print(out, fld, it, indent, pctx);
 	}
-
 	str = (ASN1_STRING *)*fld;
-
-	if (str->length < 0)
-		return 0;
-
 	if (it->itype == ASN1_ITYPE_MSTRING)
 		utype = str->type & ~V_ASN1_NEG;
 	else
@@ -526,6 +521,7 @@ asn1_primitive_print(BIO *out, ASN1_VALUE **fld, const ASN1_ITEM *it,
 		ASN1_TYPE *atype = (ASN1_TYPE *)*fld;
 		utype = atype->type;
 		fld = &atype->value.asn1_value;
+		str = (ASN1_STRING *)*fld;
 		if (pctx->flags & ASN1_PCTX_FLAGS_NO_ANY_TYPE)
 			pname = NULL;
 		else
