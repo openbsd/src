@@ -448,7 +448,7 @@ main(int argc, char *argv[])
 
 	while (argc >= 1) {
 		if (!strcmp(*argv, "-F")) {
-			fprintf(stderr, "not compiled with FIPS support, so exitting without running.\n");
+			fprintf(stderr, "not compiled with FIPS support, so exiting without running.\n");
 			exit(0);
 		} else if (strcmp(*argv, "-server_auth") == 0)
 			server_auth = 1;
