@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.29 2019/03/11 05:05:14 jsg Exp $
+# $OpenBSD: FwUpdate.pm,v 1.30 2019/04/07 12:30:39 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -280,6 +280,11 @@ sub show_info
 	$state->fw_status("Installed", \@installed);
 	$state->fw_status("Installed, extra", \@unneeded);
 	$state->fw_status("Missing", \@needed);
+}
+
+sub silence_children
+{
+	0
 }
 
 sub process_parameters

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.83 2018/07/11 16:53:14 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.84 2019/04/07 12:30:39 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -119,24 +119,25 @@ sub parse_and_run
 	my $state = $self->new_state($cmd);
 	$state->handle_options;
 
-	require POSIX;
-
-
-	my $termios = POSIX::Termios->new;
-	my $lflag;
-
-	if (defined $termios->getattr) {
-		$lflag = $termios->getlflag;
-	}
-
-	if (defined $lflag) {
-		my $NOKERNINFO = 0x02000000; # not defined in POSIX
-		$termios->setlflag($lflag | $NOKERNINFO);
-		$termios->setattr;
-		
-	}
-
 	local $SIG{'INFO'} = sub { $state->status->print($state); };
+
+	my ($lflag, $termios);
+	if ($self->silence_children($state)) {
+		require POSIX;
+
+		$termios = POSIX::Termios->new;
+
+		if (defined $termios->getattr) {
+			$lflag = $termios->getlflag;
+		}
+
+		if (defined $lflag) {
+			my $NOKERNINFO = 0x02000000; # not defined in POSIX
+			$termios->setlflag($lflag | $NOKERNINFO);
+			$termios->setattr;
+			
+		}
+	}
 
 	$self->framework($state);
 
@@ -144,7 +145,13 @@ sub parse_and_run
 		$termios->setlflag($lflag);
 		$termios->setattr;
 	}
+
 	return $state->{bad} != 0;
+}
+
+sub silence_children
+{
+	1
 }
 
 # nothing to do
