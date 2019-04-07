@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.82 2018/12/12 14:11:03 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.83 2019/04/07 10:44:25 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -182,6 +182,11 @@ sub merge
 	# then regen tracker info for $self
 	$tracker->todo($self);
 	return $self;
+}
+
+sub match_locations
+{
+	return [];
 }
 
 OpenBSD::Auto::cache(solver,
