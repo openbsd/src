@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.135 2019/03/31 16:57:38 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.136 2019/04/07 10:52:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -231,6 +231,7 @@ struct peer {
 	u_int8_t		 demoted;
 	u_int8_t		 passive;
 	u_int8_t		 throttled;
+	u_int8_t		 rpending;
 };
 
 extern time_t		 pauseaccept;

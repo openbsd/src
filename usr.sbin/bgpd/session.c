@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.377 2019/03/31 16:57:38 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.378 2019/04/07 10:52:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ void	session_rrefresh(struct peer *, u_int8_t);
 int	session_graceful_restart(struct peer *);
 int	session_graceful_stop(struct peer *);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
-int	session_process_msg(struct peer *);
+void	session_process_msg(struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
 int	parse_open(struct peer *);
 int	parse_update(struct peer *);
@@ -426,7 +426,7 @@ session_main(int debug, int verbose)
 			if (p->wbuf.queued > 0 || p->state == STATE_CONNECT)
 				events |= POLLOUT;
 			/* is there still work to do? */
-			if (p->rbuf && p->rbuf->wpos)
+			if (p->rpending)
 				timeout = 0;
 
 			/* poll events */
@@ -1779,7 +1779,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 	return (0);
 }
 
-int
+void
 session_process_msg(struct peer *p)
 {
 	struct mrt	*mrt;
@@ -1790,19 +1790,20 @@ session_process_msg(struct peer *p)
 
 	rpos = 0;
 	av = p->rbuf->wpos;
+	p->rpending = 0;
 
 	/*
 	 * session might drop to IDLE -> buffers deallocated
 	 * we MUST check rbuf != NULL before use
 	 */
 	for (;;) {
-		if (rpos + MSGSIZE_HEADER > av)
-			break;
 		if (p->rbuf == NULL)
+			return;
+		if (rpos + MSGSIZE_HEADER > av)
 			break;
 		if (parse_header(p, p->rbuf->buf + rpos, &msglen,
 		    &msgtype) == -1)
-			return (0);
+			return;
 		if (rpos + msglen > av)
 			break;
 		p->rbuf->rptr = p->rbuf->buf + rpos;
@@ -1847,11 +1848,11 @@ session_process_msg(struct peer *p)
 			bgp_fsm(p, EVNT_CON_FATAL);
 		}
 		rpos += msglen;
-		if (++processed > MSG_PROCESS_LIMIT)
+		if (++processed > MSG_PROCESS_LIMIT) {
+			p->rpending = 1;
 			break;
+		}
 	}
-	if (p->rbuf == NULL)
-		return (1);
 
 	if (rpos < av) {
 		left = av - rpos;
@@ -1859,8 +1860,6 @@ session_process_msg(struct peer *p)
 		p->rbuf->wpos = left;
 	} else
 		p->rbuf->wpos = 0;
-
-	return (1);
 }
 
 int
