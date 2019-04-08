@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.620 2019/02/28 13:23:32 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.621 2019/04/08 08:22:32 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -996,16 +996,6 @@ extern struct mproc *p_ca;
 extern struct smtpd	*env;
 extern void (*imsg_callback)(struct mproc *, struct imsg *);
 
-struct imsgproc {
-	pid_t			pid;
-	struct event		ev;
-	struct imsgbuf	       *ibuf;
-	char		       *path;
-	char		       *name;
-	void		      (*cb)(struct imsg *, void *);
-	void		       *cb_arg;
-};
-
 /* inter-process structures */
 
 struct bounce_req_msg {
@@ -1311,16 +1301,6 @@ RB_PROTOTYPE(expandtree, expandnode, nodes, expand_cmp);
 
 /* forward.c */
 int forwards_get(int, struct expand *);
-
-
-/* imsgproc.c */
-void imsgproc_init(void);
-struct imsgproc *imsgproc_fork(const char *, const char *,
-    void (*)(struct imsg *, void *), void *);
-void imsgproc_set_read(struct imsgproc *);
-void imsgproc_set_write(struct imsgproc *);
-void imsgproc_set_read_write(struct imsgproc *);
-void imsgproc_reset_callback(struct imsgproc *, void (*)(struct imsg *, void *), void *);
 
 
 /* limit.c */
