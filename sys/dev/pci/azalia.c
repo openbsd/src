@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.246 2019/04/02 20:24:32 thfr Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.247 2019/04/08 10:16:10 stsp Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1406,6 +1406,9 @@ azalia_resume_codec(codec_t *this)
 		    __func__, result));
 	}
 	DELAY(100);
+
+	if (this->qrks & AZ_QRK_WID_DOLBY_ATMOS)
+		azalia_codec_init_dolby_atmos(this);
 
 	FOR_EACH_WIDGET(this, i) {
 		w = &this->w[i];
