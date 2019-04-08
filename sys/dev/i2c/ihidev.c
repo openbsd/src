@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.18 2018/09/20 01:19:56 jsg Exp $ */
+/* $OpenBSD: ihidev.c,v 1.19 2019/04/08 17:50:45 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -585,8 +585,7 @@ ihidev_intr(void *arg)
 {
 	struct ihidev_softc *sc = arg;
 	struct ihidev *scd;
-	u_int psize;
-	int res, i, fast = 0;
+	int psize, res, i, fast = 0;
 	u_char *p;
 	u_int rep = 0;
 
@@ -605,7 +604,7 @@ ihidev_intr(void *arg)
 	 * than or equal to wMaxInputLength
 	 */
 	psize = sc->sc_ibuf[0] | sc->sc_ibuf[1] << 8;
-	if (!psize || psize > sc->sc_isize) {
+	if (psize <= 2 || psize > sc->sc_isize) {
 		if (sc->sc_poll) {
 			/*
 			 * TODO: all fingers are up, should we pass to hid
