@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.1 2019/04/10 10:14:37 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.2 2019/04/10 10:45:50 sthen Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -107,7 +107,7 @@ static const char *sff8024_id_names[] = {
 	[SFF8024_ID_UNKNOWN]	= "Unknown",
 	[SFF8024_ID_GBIC]	= "GBIC",
 	[SFF8024_ID_SFP]	= "SFP",
-	[SFF8024_ID_300PIN_XBI]	= "300 pin XBI",
+	[SFF8024_ID_300PIN_XBI]	= "XBI",
 	[SFF8024_ID_XENPAK]	= "XENPAK",
 	[SFF8024_ID_XFP]	= "XFP",
 	[SFF8024_ID_XFF]	= "XFF",
@@ -118,26 +118,26 @@ static const char *sff8024_id_names[] = {
 	[SFF8024_ID_QSFP]	= "QSFP",
 	[SFF8024_ID_QSFP_PLUS]	= "QSFP+",
 	[SFF8024_ID_CXP]	= "CXP",
-	[SFF8024_ID_HD4X]	= "Shielded Mini Multilane HD 4X",
-	[SFF8024_ID_HD8X]	= "Shielded Mini Multilane HD 8X",
+	[SFF8024_ID_HD4X]	= "HD 4X",
+	[SFF8024_ID_HD8X]	= "HD 8X",
 	[SFF8024_ID_QSFP28]	= "QSFP28",
 	[SFF8024_ID_CXP2]	= "CXP2",
 	[SFF8024_ID_CDFP]	= "CDFP Style 1/2",
-	[SFF8024_ID_HD4X_FAN]	= "Shielded Mini Multilane HD 4X Fanout Cable",
-	[SFF8024_ID_HD8X_FAN]	= "Shielded Mini Multilane HD 8X Fanout Cable",
+	[SFF8024_ID_HD4X_FAN]	= "HD 4X Fanout",
+	[SFF8024_ID_HD8X_FAN]	= "HD 8X Fanout",
 	[SFF8024_ID_CDFP3]	= "CDFP Style 3",
 	[SFF8024_ID_uQSFP]	= "microQSFP",
-	[SFF8024_ID_QSFP_DD]	= "QSFP Double-Density",
+	[SFF8024_ID_QSFP_DD]	= "QSFP-DD",
 };
 
 static const char *sff8024_con_names[] = {
 	[SFF8024_CON_UNKNOWN]	= "Unknown",
 	[SFF8024_CON_SC]	= "SC",
-	[SFF8024_CON_FC_1]	= "Fibre Channel style 1",
-	[SFF8024_CON_FC_2]	= "Fibre Channel style 2",
+	[SFF8024_CON_FC_1]	= "FC Style 1",
+	[SFF8024_CON_FC_2]	= "FC Style 2",
 	[SFF8024_CON_BNC_TNC]	= "BNC/TNC",
-	[SFF8024_CON_FC_COAX]	= "Fibre Channel coax headers",
-	[SFF8024_CON_FJ]	= "Fiber Jack",
+	[SFF8024_CON_FC_COAX]	= "FC coax headers",
+	[SFF8024_CON_FJ]	= "FJ",
 	[SFF8024_CON_LC]	= "LC",
 	[SFF8024_CON_MT_RJ]	= "MT-RJ",
 	[SFF8024_CON_MU]	= "MU",
@@ -170,6 +170,7 @@ static const char *sff8024_con_names[] = {
 #define SFF8472_PRODUCT_END		55
 #define SFF8472_REVISION_START		56
 #define SFF8472_REVISION_END		59
+#define SFF8472_WAVELENGTH		60
 #define SFF8472_SERIAL_START		68
 #define SFF8472_SERIAL_END		83
 #define SFF8472_DATECODE		84
@@ -192,6 +193,15 @@ static const char *sff8024_con_names[] = {
 /*
  * page 0xa2
  */
+#define SFF8472_AW_TEMP			0
+#define SFF8472_AW_VCC			8
+#define SFF8472_AW_TX_BIAS		16
+#define SFF8472_AW_TX_POWER		24
+#define SFF8472_AW_RX_POWER		32
+#define ALRM_HIGH		0
+#define ALRM_LOW		2
+#define WARN_HIGH		4
+#define WARN_LOW		6
 #define SFF8472_DDM_TEMP		96
 #define SFF8472_DDM_VCC			98
 #define SFF8472_DDM_TX_BIAS		100
@@ -200,6 +210,7 @@ static const char *sff8024_con_names[] = {
 #define SFF8472_DDM_LASER		106 /* laser temp/wavelength */
 					    /* optional */
 #define SFF8472_DDM_TEC			108 /* Measured TEC current */
+					    /* optional */
 
 #define SFF_TEMP_FACTOR		256.0
 #define SFF_VCC_FACTOR		10000.0
@@ -284,12 +295,12 @@ if_sff_info(int s, const char *ifname, int dump)
 
 	id = pg0.sff_data[0]; /* SFF8472_ID */
 
-	printf("%s: identifier %s (%02x)\n", ifname, sff_id_name(id), id);
+	printf("%s: %s ", ifname, sff_id_name(id));
 	switch (id) {
 	case SFF8024_ID_SFP:
 		ext_id = pg0.sff_data[SFF8472_EXT_ID];
 		if (ext_id != SFF8472_EXT_ID_2WIRE) {
-			printf("\textended-id: %02xh\n", ext_id);
+			printf("extended-id %02xh\n", ext_id);
 			break;
 		}
 		/* FALLTHROUGH */
@@ -302,8 +313,8 @@ if_sff_info(int s, const char *ifname, int dump)
 }
 
 static void
-if_sff_ascii_print(const struct if_sffpage *sff,
-    size_t start, size_t end)
+if_sff_ascii_print(const struct if_sffpage *sff, const char *name,
+    size_t start, size_t end, const char *trailer)
 {
 	const uint8_t *d = sff->sff_data;
 	int ch;
@@ -314,11 +325,11 @@ if_sff_ascii_print(const struct if_sffpage *sff,
 			break;
 
 		start++;
-		if (start == end) {
-			printf("(unknown)\n");
+		if (start == end)
 			return;
-		}
 	}
+
+	printf("%s", name);
 
 	for (;;) {
 		int ch = d[end];
@@ -333,11 +344,13 @@ if_sff_ascii_print(const struct if_sffpage *sff,
 		vis(dst, d[start], VIS_TAB | VIS_NL, 0);
 		printf("%s", dst);
 	} while (++start <= end);
+
+	printf("%s", trailer);
 }
 
 static void
-if_sff_date_print(const struct if_sffpage *sff,
-    size_t start)
+if_sff_date_print(const struct if_sffpage *sff, const char *name,
+    size_t start, const char *trailer)
 {
 	const uint8_t *d = sff->sff_data + start;
 	size_t i;
@@ -345,13 +358,14 @@ if_sff_date_print(const struct if_sffpage *sff,
 	/* YYMMDD */
 	for (i = 0; i < 6; i++) {
 		if (!isdigit(d[i])) {
-			if_sff_ascii_print(sff, start, start + 5);
+			if_sff_ascii_print(sff, name, start,
+			    start + 5, trailer);
 			return;
 		}
 	}
 
-	printf("20%c%c-%c%c-%c%c\n",
-	    d[0], d[1], d[2], d[3], d[4], d[5]);
+	printf("%s20%c%c-%c%c-%c%c%s", name,
+	    d[0], d[1], d[2], d[3], d[4], d[5], trailer);
 }
 
 static int16_t
@@ -371,32 +385,63 @@ if_sff_uint(const struct if_sffpage *sff, size_t start)
 }
 
 static float
-if_sff_power2dbm(uint16_t power)
+if_sff_power2dbm(const struct if_sffpage *sff, size_t start)
 {
+	const uint8_t *d = sff->sff_data + start;
+
+	int power = d[0] << 8 | d[1];
 	return (10.0 * log10f((float)power / 10000.0));
+}
+
+
+static void
+if_sff_printalarm(const char *unit, int range, float actual,
+    float alrm_high, float alrm_low, float warn_high, float warn_log)
+{
+	printf("%.0f%s", actual, unit);
+	if (range == 1)
+		printf(" (low %.02f%s high %.02f%s)", alrm_low,
+		    unit, alrm_high, unit);
+
+	if(actual > alrm_high || actual < alrm_low)
+		printf(" [ALARM]");
+	else if(actual > warn_high || actual < warn_log)
+		printf(" [WARNING]");
 }
 
 static int
 if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 {
 	struct if_sffpage ddm;
-	uint8_t ddm_types;
+	uint8_t con, ddm_types;
+	uint16_t wavelength;
 
-	if (dump) {
-		uint8_t con = pg0->sff_data[SFF8472_CON];
-		printf("\tconnector: %s (%02x)\n", sff_con_name(con), con);
+	con = pg0->sff_data[SFF8472_CON];
+	printf("%s (", sff_con_name(con));
+
+	if_sff_ascii_print(pg0, "",
+	    SFF8472_VENDOR_START, SFF8472_VENDOR_END, " ");
+	if_sff_ascii_print(pg0, "",
+	    SFF8472_PRODUCT_START, SFF8472_PRODUCT_END, "");
+	if_sff_ascii_print(pg0, " rev ",
+	    SFF8472_REVISION_START, SFF8472_REVISION_END, "");
+
+	wavelength = if_sff_int(pg0, SFF8472_WAVELENGTH);
+	switch (wavelength) {
+	/* Copper Cable */
+	case 0x0100: /* SFF-8431 Appendix E */
+	case 0x0400: /* SFF-8431 limiting */
+	case 0x0c00: /* SFF-8431 limiting and FC-PI-4 limiting */
+		break;
+	default:
+		printf(", %.02u nm", wavelength);
 	}
 
-	printf("\tvendor: ");
-	if_sff_ascii_print(pg0, SFF8472_VENDOR_START, SFF8472_VENDOR_END);
-	printf(", product: ");
-	if_sff_ascii_print(pg0, SFF8472_PRODUCT_START, SFF8472_PRODUCT_END);
-	printf(", rev: ");
-	if_sff_ascii_print(pg0, SFF8472_REVISION_START, SFF8472_REVISION_END);
-	printf("\n\tserial: ");
-	if_sff_ascii_print(pg0, SFF8472_SERIAL_START, SFF8472_SERIAL_END);
-	printf(", date: ");
-	if_sff_date_print(pg0, SFF8472_DATECODE);
+	printf(")\n\t");
+
+	if_sff_ascii_print(pg0, "serial ",
+	    SFF8472_SERIAL_START, SFF8472_SERIAL_END, ", ");
+	if_sff_date_print(pg0, "date ", SFF8472_DATECODE, "\n");
 
 	ddm_types = pg0->sff_data[SFF8472_DDM_TYPE];
 	if (pg0->sff_data[SFF8472_COMPLIANCE] == SFF8472_COMPLIANCE_NONE ||
@@ -415,18 +460,47 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 		    "(WARNING: needs more code)\n");
 	}
 
-	printf("\ttemperature: %.02f C",
-	    if_sff_int(&ddm, SFF8472_DDM_TEMP) / SFF_TEMP_FACTOR);
-	printf(", vcc: %.02f V\n",
-	    if_sff_uint(&ddm, SFF8472_DDM_VCC) / SFF_VCC_FACTOR);
-	printf("\ttx-bias: %.02f mA",
-	    if_sff_uint(&ddm, SFF8472_DDM_TX_BIAS) / SFF_BIAS_FACTOR);
-	printf(", tx-power: %.02f dBm",
-	    if_sff_power2dbm(if_sff_uint(&ddm, SFF8472_DDM_TX_POWER)));
-	printf(", rx-power: %.02f dBm %s\n",
-	    if_sff_power2dbm(if_sff_uint(&ddm, SFF8472_DDM_RX_POWER)),
-	    ISSET(ddm_types, SFF8472_DDM_TYPE_AVG_POWER) ? "avg" : "OMA");
+	printf("\tvoltage ");
+	if_sff_printalarm(" V", 0,
+	    if_sff_uint(&ddm, SFF8472_DDM_VCC) / SFF_VCC_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_VCC + ALRM_HIGH) / SFF_VCC_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_VCC + ALRM_LOW) / SFF_VCC_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_VCC + WARN_HIGH) / SFF_VCC_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_VCC + WARN_LOW) / SFF_VCC_FACTOR);
 
+	printf(", bias current ");
+	if_sff_printalarm(" mA", 0,
+	    if_sff_uint(&ddm, SFF8472_DDM_TX_BIAS) / SFF_BIAS_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_TX_BIAS + ALRM_HIGH) / SFF_BIAS_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_TX_BIAS + ALRM_LOW) / SFF_BIAS_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_TX_BIAS + WARN_HIGH) / SFF_BIAS_FACTOR,
+	    if_sff_uint(&ddm, SFF8472_AW_TX_BIAS + WARN_LOW) / SFF_BIAS_FACTOR);
+
+	printf("\n\ttemp ");
+	if_sff_printalarm(" C", 1,
+	    if_sff_int(&ddm, SFF8472_DDM_TEMP) / SFF_TEMP_FACTOR,
+	    if_sff_int(&ddm, SFF8472_AW_TEMP + ALRM_HIGH) / SFF_TEMP_FACTOR,
+	    if_sff_int(&ddm, SFF8472_AW_TEMP + ALRM_LOW) / SFF_TEMP_FACTOR,
+	    if_sff_int(&ddm, SFF8472_AW_TEMP + WARN_HIGH) / SFF_TEMP_FACTOR,
+	    if_sff_int(&ddm, SFF8472_AW_TEMP + WARN_LOW) / SFF_TEMP_FACTOR);
+
+	printf("\n\ttx ");
+	if_sff_printalarm(" dBm", 1,
+	    if_sff_power2dbm(&ddm, SFF8472_DDM_TX_POWER),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_TX_POWER + ALRM_HIGH),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_TX_POWER + ALRM_LOW),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_TX_POWER + WARN_HIGH),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_TX_POWER + WARN_LOW));
+
+	printf("\n\trx ");
+	if_sff_printalarm(" dBm", 1,
+	    if_sff_power2dbm(&ddm, SFF8472_DDM_RX_POWER),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + ALRM_HIGH),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + ALRM_LOW),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + WARN_HIGH),
+	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + WARN_LOW));
+
+	putchar('\n');
 	return (0);
 }
 
