@@ -1,4 +1,4 @@
-/*	$OpenBSD: irr_parser.c,v 1.14 2015/04/25 21:44:26 phessler Exp $ */
+/*	$OpenBSD: irr_parser.c,v 1.15 2019/04/10 15:23:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2007 Henning Brauer <henning@openbsd.org>
@@ -107,7 +107,7 @@ grow_parsebuf(void)
 	parsebuflen = newlen;
 
 	if (0)
-		fprintf(stderr, "parsebuf now %lu bytes\n", (ulong)parsebuflen);
+		fprintf(stderr, "parsebuf now %zu bytes\n", parsebuflen);
 }
 
 char *
