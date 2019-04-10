@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.4 2019/04/10 16:12:43 deraadt Exp $ */
+/*	$OpenBSD: sff.c,v 1.5 2019/04/10 18:02:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -142,12 +142,12 @@ static const char *sff8024_con_names[] = {
 	[SFF8024_CON_MT_RJ]	= "MT-RJ",
 	[SFF8024_CON_MU]	= "MU",
 	[SFF8024_CON_SG]	= "SG",
-	[SFF8024_CON_O_PIGTAIL]	= "Optical Pigtail",
+	[SFF8024_CON_O_PIGTAIL]	= "AOC",
 	[SFF8024_CON_MPO_1x12]	= "MPO 1x12",
 	[SFF8024_CON_MPO_2x16]	= "MPO 2x16",
 	[SFF8024_CON_HSSDC2]	= "HSSDC II",
 	[SFF8024_CON_Cu_PIGTAIL]
-				= "Copper Pigtail",
+				= "DAC",
 	[SFF8024_CON_RJ45]	= "RJ45",
 	[SFF8024_CON_NO]	= "No separable connector",
 	[SFF8024_CON_MXC_2x16]	= "MXC 2x16",
