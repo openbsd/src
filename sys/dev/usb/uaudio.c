@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.139 2019/04/04 09:23:36 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.140 2019/04/10 15:14:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3225,7 +3225,7 @@ uaudio_pdata_intr(struct usbd_xfer *usb_xfer, void *arg, usbd_status status)
 #endif
 	usbd_get_xfer_status(usb_xfer, NULL, NULL, &size, NULL);
 	if (size != xfer->size) {
-		printf("%s: %u bytes out of %u: incomplete play xfer\n",
+		DPRINTF("%s: %u bytes out of %u: incomplete play xfer\n",
 		    DEVNAME(sc), size, xfer->size);
 	}
 
@@ -3290,7 +3290,7 @@ uaudio_psync_xfer(struct uaudio_softc *sc)
 	    uaudio_psync_intr);
 
 	err = usbd_transfer(xfer->usb_xfer);
-	if (err != USBD_IN_PROGRESS)
+	if (err != 0 && err != USBD_IN_PROGRESS)
 		printf("%s: sync play xfer, err = %d\n", DEVNAME(sc), err);
 
 	if (++s->sync_nextxfer == s->nxfers)
@@ -3544,7 +3544,7 @@ uaudio_rdata_intr(struct usbd_xfer *usb_xfer, void *arg, usbd_status status)
 		    s->data_nextxfer, data_size, xfer->size, s->ring_offs);
 	}
 	if (null_count > 0) {
-		printf("%s: %u null frames out of %u: incomplete record xfer\n",
+		DPRINTF("%s: %u null frames out of %u: incomplete record xfer\n",
 		    DEVNAME(sc), null_count, xfer->nframes);
 	}
 #endif
