@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.34 2019/04/01 03:01:14 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.35 2019/04/10 10:03:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -170,6 +170,8 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_PHY_RESTART_AN	0x0605
 #define IXL_AQ_OP_PHY_LINK_STATUS	0x0607
 #define IXL_AQ_OP_PHY_SET_EVENT_MASK	0x0613
+#define IXL_AQ_OP_PHY_SET_REGISTER	0x0628
+#define IXL_AQ_OP_PHY_GET_REGISTER	0x0629
 #define IXL_AQ_OP_LLDP_GET_MIB		0x0a00
 #define IXL_AQ_OP_LLDP_MIB_CHG_EV	0x0a01
 #define IXL_AQ_OP_LLDP_ADD_TLV		0x0a02
@@ -595,6 +597,18 @@ struct ixl_aq_veb_reply {
 /* GET PHY ABILITIES param[0] */
 #define IXL_AQ_PHY_REPORT_QUAL		(1 << 0)
 #define IXL_AQ_PHY_REPORT_INIT		(1 << 1)
+
+struct ixl_aq_phy_reg_access {
+	uint8_t		phy_iface;
+#define IXL_AQ_PHY_IF_INTERNAL		0
+#define IXL_AQ_PHY_IF_EXTERNAL		1
+#define IXL_AQ_PHY_IF_MODULE		2
+	uint8_t		dev_addr;
+	uint16_t	_reserved1;
+	uint32_t	reg;
+	uint32_t	val;
+	uint32_t	_reserved2;
+} __packed __aligned(16);
 
 /* RESTART_AN param[0] */
 #define IXL_AQ_PHY_RESTART_AN		(1 << 1)
@@ -1124,6 +1138,8 @@ struct ixl_softc {
 
 	struct rwlock		 sc_cfg_lock;
 	unsigned int		 sc_dead;
+
+	struct rwlock		 sc_sff_lock;
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
@@ -1170,6 +1186,12 @@ static void	ixl_link_state_update(void *);
 static void	ixl_arq(void *);
 static void	ixl_hmc_pack(void *, const void *,
 		    const struct ixl_hmc_pack *, unsigned int);
+
+static int	ixl_get_sffpage(struct ixl_softc *, struct if_sffpage *);
+static int	ixl_sff_get_byte(struct ixl_softc *, uint8_t, uint32_t,
+		    uint8_t *);
+static int	ixl_sff_set_byte(struct ixl_softc *, uint8_t, uint32_t,
+		    uint8_t);
 
 static int	ixl_match(struct device *, void *, void *);
 static void	ixl_attach(struct device *, struct device *, void *);
@@ -1346,6 +1368,8 @@ ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 #else
 #define HTOLE16(_x)	(_x)
 #endif
+
+static struct rwlock ixl_sff_lock = RWLOCK_INITIALIZER("ixlsff");
 
 static const struct pci_matchid ixl_devices[] = {
 #ifdef notyet
@@ -1769,6 +1793,15 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = ENETRESET;
 			}
 		}
+		break;
+
+	case SIOCGIFSFFPAGE:
+		error = rw_enter(&ixl_sff_lock, RW_WRITE|RW_INTR);
+		if (error != 0)
+			break;
+
+		error = ixl_get_sffpage(sc, (struct if_sffpage *)data);
+		rw_exit(&ixl_sff_lock);
 		break;
 
 	default:
@@ -3427,6 +3460,114 @@ ixl_get_link_status(struct ixl_softc *sc)
 	}
 
 	sc->sc_ac.ac_if.if_link_state = ixl_set_link_status(sc, &iaq);
+
+	return (0);
+}
+
+static int
+ixl_get_sffpage(struct ixl_softc *sc, struct if_sffpage *sff)
+{
+	uint8_t page;
+	size_t i;
+	int error;
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM) {
+		error = ixl_sff_get_byte(sc, IFSFF_ADDR_EEPROM, 127, &page);
+		if (error != 0)
+			return (error);
+		if (page != sff->sff_page) {
+			error = ixl_sff_set_byte(sc, IFSFF_ADDR_EEPROM, 127,
+			    sff->sff_page);
+			if (error != 0)
+				return (error);
+		}
+	}
+
+	for (i = 0; i < sizeof(sff->sff_data); i++) {
+		error = ixl_sff_get_byte(sc, sff->sff_addr, i,
+		    &sff->sff_data[i]);
+		if (error != 0)
+			return (error);
+	}
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM) {
+		if (page != sff->sff_page) {
+			error = ixl_sff_set_byte(sc, IFSFF_ADDR_EEPROM, 127,
+			    page);
+			if (error != 0)
+				return (error);
+		}
+	}
+
+	return (0);
+}
+
+static int
+ixl_sff_get_byte(struct ixl_softc *sc, uint8_t dev, uint32_t reg, uint8_t *p)
+{
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	struct ixl_aq_phy_reg_access *param;
+
+	memset(&iatq, 0, sizeof(iatq));
+	iaq = &iatq.iatq_desc;
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_GET_REGISTER);
+	param = (struct ixl_aq_phy_reg_access *)iaq->iaq_param;
+	param->phy_iface = IXL_AQ_PHY_IF_MODULE;
+	param->dev_addr = dev;
+	htolem32(&param->reg, reg);
+
+	ixl_atq_exec(sc, &iatq, "ixlsffget");
+
+	switch (iaq->iaq_retval) {
+	case htole16(IXL_AQ_RC_OK):
+		break;
+	case htole16(IXL_AQ_RC_EBUSY):
+		return (EBUSY);
+	case htole16(IXL_AQ_RC_ESRCH):
+		return (ENODEV);
+	case htole16(IXL_AQ_RC_EIO):
+	case htole16(IXL_AQ_RC_EINVAL):
+	default:
+		return (EIO);
+	}
+
+	*p = lemtoh32(&param->val);
+
+	return (0);
+}
+
+
+static int
+ixl_sff_set_byte(struct ixl_softc *sc, uint8_t dev, uint32_t reg, uint8_t v)
+{
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	struct ixl_aq_phy_reg_access *param;
+
+	memset(&iatq, 0, sizeof(iatq));
+	iaq = &iatq.iatq_desc;
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_SET_REGISTER);
+	param = (struct ixl_aq_phy_reg_access *)iaq->iaq_param;
+	param->phy_iface = IXL_AQ_PHY_IF_MODULE;
+	param->dev_addr = dev;
+	htolem32(&param->reg, reg);
+	htolem32(&param->val, v);
+
+	ixl_atq_exec(sc, &iatq, "ixlsffset");
+
+	switch (iaq->iaq_retval) {
+	case htole16(IXL_AQ_RC_OK):
+		break;
+	case htole16(IXL_AQ_RC_EBUSY):
+		return (EBUSY);
+	case htole16(IXL_AQ_RC_ESRCH):
+		return (ENODEV);
+	case htole16(IXL_AQ_RC_EIO):
+	case htole16(IXL_AQ_RC_EINVAL):
+	default:
+		return (EIO);
+	}
 
 	return (0);
 }
