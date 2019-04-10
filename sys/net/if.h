@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.199 2019/01/23 08:23:18 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.200 2019/04/10 09:49:22 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -499,6 +499,20 @@ struct if_afreq {
 struct if_parent {
 	char		ifp_name[IFNAMSIZ];
 	char		ifp_parent[IFNAMSIZ];
+};
+
+/* SIOCGIFSFFPAGE */
+
+#define IFSFF_ADDR_EEPROM	0xa0
+#define IFSFF_ADDR_DDM		0xa2
+
+#define IFSFF_DATA_LEN		256
+
+struct if_sffpage {
+	char		 sff_ifname[IFNAMSIZ];		/* u -> k */
+	uint8_t		 sff_addr;			/* u -> k */
+	uint8_t		 sff_page;			/* u -> k */
+	uint8_t		 sff_data[IFSFF_DATA_LEN];	/* k -> u */
 };
 
 #include <net/if_arp.h>
