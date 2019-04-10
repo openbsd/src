@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.101 2019/03/17 22:05:37 mglocker Exp $ */
+/* $OpenBSD: xhci.c,v 1.102 2019/04/10 08:27:35 ratchov Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -72,6 +72,7 @@ struct xhci_pipe {
 	struct usbd_xfer	*aborted_xfer;
 	int			 halted;
 	size_t			 free_trbs;
+	int			 skip;
 };
 
 int	xhci_reset(struct xhci_softc *);
@@ -697,6 +698,36 @@ xhci_event_dequeue(struct xhci_softc *sc)
 }
 
 void
+xhci_skip_all(struct xhci_pipe *xp)
+{
+	struct usbd_xfer *xfer, *last;
+
+	if (xp->skip) {
+		/*
+		 * Find the last transfer to skip, this is necessary
+		 * as xhci_xfer_done() posts new transfers which we
+		 * don't want to skip
+		 */
+		last = SIMPLEQ_FIRST(&xp->pipe.queue);
+		if (last == NULL)
+			goto done;
+		while ((xfer = SIMPLEQ_NEXT(last, next)) != NULL)
+			last = xfer;
+
+		do {
+			xfer = SIMPLEQ_FIRST(&xp->pipe.queue);
+			if (xfer == NULL)
+				goto done;
+			DPRINTF(("%s: skipping %p\n", __func__, xfer));
+			xfer->status = USBD_NORMAL_COMPLETION;
+			xhci_xfer_done(xfer);
+		} while (xfer != last);
+	done:
+		xp->skip = 0;
+	}
+}
+
+void
 xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
     uint32_t flags)
 {
@@ -726,10 +757,17 @@ xhci_event_xfer(struct xhci_softc *sc, uint64_t paddr, uint32_t status,
 	case XHCI_CODE_RING_UNDERRUN:
 		DPRINTF(("%s: slot %u underrun with %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
+		xhci_skip_all(xp);
 		return;
 	case XHCI_CODE_RING_OVERRUN:
 		DPRINTF(("%s: slot %u overrun with %zu TRB\n", DEVNAME(sc),
 		    slot, xp->ring.ntrb - xp->free_trbs));
+		xhci_skip_all(xp);
+		return;
+	case XHCI_CODE_MISSED_SRV:
+		DPRINTF(("%s: slot %u missed srv with %zu TRB\n", DEVNAME(sc),
+		    slot, xp->ring.ntrb - xp->free_trbs));
+		xp->skip = 1;
 		return;
 	default:
 		break;
@@ -852,6 +890,7 @@ int
 xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
     uint32_t remain, int trb_idx)
 {
+	struct usbd_xfer *skipxfer;
 	struct xhci_xfer *xx = (struct xhci_xfer *)xfer;
 	int trb0_idx, frame_idx = 0;
 
@@ -892,6 +931,18 @@ xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
 
 	if (xx->index != trb_idx)
 		return (1);
+
+	if (xp->skip) {
+		while (1) {
+			skipxfer = SIMPLEQ_FIRST(&xp->pipe.queue);
+			if (skipxfer == xfer || xfer == NULL)
+				break;
+			DPRINTF(("%s: skipping %p\n", __func__, skipxfer));
+			skipxfer->status = USBD_NORMAL_COMPLETION;
+			xhci_xfer_done(skipxfer);
+		}
+		xp->skip = 0;
+	}
 
 	xfer->status = USBD_NORMAL_COMPLETION;
 
