@@ -1,4 +1,4 @@
-/* $OpenBSD: d2i_pr.c,v 1.16 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: d2i_pr.c,v 1.17 2019/04/10 16:23:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,6 +76,7 @@
 EVP_PKEY *
 d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 {
+	const unsigned char *p = *pp;
 	EVP_PKEY *ret;
 
 	if ((a == NULL) || (*a == NULL)) {
@@ -100,6 +101,7 @@ d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 	    !ret->ameth->old_priv_decode(ret, pp, length)) {
 		if (ret->ameth->priv_decode) {
 			PKCS8_PRIV_KEY_INFO *p8 = NULL;
+			*pp = p; /* XXX */
 			p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, pp, length);
 			if (!p8)
 				goto err;
