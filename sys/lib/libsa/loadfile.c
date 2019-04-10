@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.19 2013/10/17 08:45:02 deraadt Exp $ */
+/* $OpenBSD: loadfile.c,v 1.20 2019/04/10 04:17:37 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,8 +90,8 @@
  * Both defined, so elf32_exec() and elf64_exec() need to be separately
  * created (can't do it by including loadfile_elf.c here).
  */
-int elf32_exec(int, Elf32_Ehdr *, u_long *, int);
-int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
+int elf32_exec(int, Elf32_Ehdr *, uint64_t *, int);
+int elf64_exec(int, Elf64_Ehdr *, uint64_t *, int);
 #else
 #include "loadfile_elf.c"
 #endif
@@ -103,7 +103,7 @@ int elf64_exec(int, Elf64_Ehdr *, u_long *, int);
  * Also fills in marks.
  */
 int
-loadfile(const char *fname, u_long *marks, int flags)
+loadfile(const char *fname, uint64_t *marks, int flags)
 {
 	union {
 #if defined(BOOT_ELF32) || (defined(BOOT_ELF) && ELFSIZE == 32)

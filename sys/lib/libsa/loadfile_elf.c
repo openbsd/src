@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.13 2016/09/17 17:39:34 jasper Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.14 2019/04/10 04:17:37 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,10 +65,10 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-int ELFNAME(exec)(int, Elf_Ehdr *, u_long *, int);
+int ELFNAME(exec)(int, Elf_Ehdr *, uint64_t *, int);
 
 int
-ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
+ELFNAME(exec)(int fd, Elf_Ehdr *elf, uint64_t *marks, int flags)
 {
 	Elf_Shdr *shp;
 	Elf_Phdr *phdr;

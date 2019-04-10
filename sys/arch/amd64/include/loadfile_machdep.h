@@ -1,5 +1,5 @@
 /* XXX - DSR */
-/*	$OpenBSD: loadfile_machdep.h,v 1.6 2015/10/05 22:59:39 yasuoka Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.7 2019/04/10 04:17:33 deraadt Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
@@ -59,4 +59,4 @@ extern u_long			efi_loadaddr;
 #define ALLOC(a)		alloc(a)
 #define FREE(a, b)		free(a, b)
 
-void run_loadfile(u_long *, int);
+void run_loadfile(uint64_t *, int);

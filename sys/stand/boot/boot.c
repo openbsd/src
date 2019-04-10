@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.46 2019/04/08 13:55:46 florian Exp $	*/
+/*	$OpenBSD: boot.c,v 1.47 2019/04/10 04:17:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -61,7 +61,7 @@ boot(dev_t bootdev)
 {
 	int fd;
 	int try = 0, st;
-	u_long marks[MARK_MAX];
+	uint64_t marks[MARK_MAX];
 
 	machdep();
 

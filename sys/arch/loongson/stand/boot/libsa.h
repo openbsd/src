@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.5 2011/03/13 00:13:53 deraadt Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.6 2019/04/10 04:17:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -28,7 +28,7 @@
  */
 void	devboot(dev_t, char *);
 void	machdep(void);
-void	run_loadfile(u_long *, int);
+void	run_loadfile(uint64_t *, int);
 
 /*
  * PMON console

@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.5 2015/07/17 20:44:39 miod Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.6 2019/04/10 04:17:37 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,6 +61,6 @@
 #define	COUNT_RANDOM	0x4000
 #define COUNT_ALL	0x7d00
 
-int loadfile(const char *, u_long *, int);
+int loadfile(const char *, uint64_t *, int);
 
 #include <machine/loadfile_machdep.h>

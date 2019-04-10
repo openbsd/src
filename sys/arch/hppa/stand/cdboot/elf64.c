@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64.c,v 1.1 2010/08/16 13:04:52 kettenis Exp $	*/
+/*	$OpenBSD: elf64.c,v 1.2 2019/04/10 04:17:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Mark Kettenis
@@ -30,7 +30,7 @@
 #include <sys/exec_elf.h>
 
 int
-ELFNAME(exec)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
+ELFNAME(exec)(int fd, Elf_Ehdr *elf, uint64_t *marks, int flags)
 {
 	return 1;
 }

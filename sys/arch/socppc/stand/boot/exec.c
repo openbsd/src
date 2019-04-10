@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.3 2009/09/07 21:16:57 dms Exp $	*/
+/*	$OpenBSD: exec.c,v 1.4 2019/04/10 04:17:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -27,7 +27,7 @@
 typedef void (*startfuncp)(int, int, u_int32_t, char *, int) __dead;
 
 void
-run_loadfile(u_long *marks, int howto)
+run_loadfile(uint64_t *marks, int howto)
 {
 	char args[512];			/* Should check size? */
 	u_int32_t entry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.12 2017/06/12 18:26:33 mglocker Exp $	*/
+/*	$OpenBSD: exec.c,v 1.13 2019/04/10 04:17:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -33,7 +33,7 @@
 typedef void (*startfuncp)(void *, void *, void *) __attribute__ ((noreturn));
 
 void
-run_loadfile(u_long *marks, int howto)
+run_loadfile(uint64_t *marks, int howto)
 {
 	Elf_Ehdr *elf = (Elf_Ehdr *)marks[MARK_SYM];
 	Elf_Shdr *shp = (Elf_Shdr *)(marks[MARK_SYM] + elf->e_shoff);

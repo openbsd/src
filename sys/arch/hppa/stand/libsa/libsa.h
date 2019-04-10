@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.14 2011/03/13 00:13:52 deraadt Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.15 2019/04/10 04:17:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -60,7 +60,7 @@ void ite_pollc(dev_t, int);
 void machdep(void);
 void devboot(dev_t, char *);
 void fcacheall(void);
-void run_loadfile(u_long *marks, int howto);
+void run_loadfile(uint64_t *marks, int howto);
 
 int lif_open(char *path, struct open_file *f);
 int lif_close(struct open_file *f);

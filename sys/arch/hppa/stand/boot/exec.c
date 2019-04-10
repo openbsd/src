@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.5 2012/06/26 16:18:43 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.6 2019/04/10 04:17:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -38,15 +38,15 @@ typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
     __attribute__ ((noreturn));
 
 void
-run_loadfile(u_long *marks, int howto)
+run_loadfile(uint64_t *marks, int howto)
 {
 	fcacheall();
 
 	__asm("mtctl %r0, %cr17");
 	__asm("mtctl %r0, %cr17");
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)(marks[MARK_ENTRY]))((int)pdc, howto, bootdev,
-	    marks[MARK_END], BOOTARG_APIVER, BOOTARG_LEN, (caddr_t)BOOTARG_OFF);
+	(*(startfuncp)((u_long)marks[MARK_ENTRY]))((int)pdc, howto, bootdev,
+	    (u_long)marks[MARK_END], BOOTARG_APIVER, BOOTARG_LEN, (caddr_t)BOOTARG_OFF);
 
 	/* not reached */
 }
