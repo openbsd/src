@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.47 2019/04/10 04:17:37 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.48 2019/04/10 19:41:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -76,12 +76,12 @@ boot(dev_t bootdev)
 	cmd.addr = (void *)DEFAULT_KERNEL_ADDRESS;
 	cmd.timeout = boottimeout;
 
-	st = read_conf();
-
 	if (upgrade()) {
 		strlcpy(cmd.image, "/bsd.upgrade", sizeof(cmd.image));
 		printf("upgrade detected: switching to %s\n", cmd.image);
 	}
+
+	st = read_conf();
 
 #ifdef HIBERNATE
 	int bootdev_has_hibernate(void);
