@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.5 2018/11/02 21:32:30 jcs Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.6 2019/04/10 05:17:48 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015-2016 Kevin Lo <kevlo@FreeBSD.org>
  * All rights reserved.
@@ -177,7 +177,7 @@
 #define	URE_EEEP_CR_EEEP_TX	0x0002
 
 /* PLA_WDT6_CTRL */
-#define	URE_WDT6_SET_MODE	0x001
+#define	URE_WDT6_SET_MODE	0x0010
 
 /* PLA_TCR0 */
 #define	URE_TCR0_TX_EMPTY	0x0800
