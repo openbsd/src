@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.2 2019/04/10 10:45:50 sthen Exp $ */
+/*	$OpenBSD: sff.c,v 1.3 2019/04/10 14:15:43 sthen Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -398,7 +398,7 @@ static void
 if_sff_printalarm(const char *unit, int range, float actual,
     float alrm_high, float alrm_low, float warn_high, float warn_log)
 {
-	printf("%.0f%s", actual, unit);
+	printf("%.02f%s", actual, unit);
 	if (range == 1)
 		printf(" (low %.02f%s high %.02f%s)", alrm_low,
 		    unit, alrm_high, unit);
