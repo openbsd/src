@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.397 2019/03/11 11:25:48 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.398 2019/04/10 10:14:37 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -340,6 +340,8 @@ void	umb_setclass(const char *, int);
 void	umb_roaming(const char *, int);
 void	utf16_to_char(uint16_t *, int, char *, size_t);
 int	char_to_utf16(const char *, uint16_t *, size_t);
+void	transceiver(const char *, int);
+void	transceiverdump(const char *, int);
 #else
 void	setignore(const char *, int);
 #endif
@@ -589,6 +591,9 @@ const struct	cmd {
 	{ "datapath",	NEXTARG,	0,		switch_datapathid },
 	{ "portno",	NEXTARG2,	0,		NULL, switch_portno },
 	{ "addlocal",	NEXTARG,	0,		addlocal },
+	{ "transceiver", 0,		0,		transceiver },
+	{ "sff",	0,		0,		transceiver },
+	{ "sffdump",	0,		0,		transceiverdump },
 #else /* SMALL */
 	{ "powersave",	NEXTARG0,	0,		setignore },
 	{ "priority",	NEXTARG,	0,		setignore },
@@ -4033,6 +4038,22 @@ unsetpwe3neighbor(const char *val, int d)
 
 	if (ioctl(s, SIOCDPWE3NEIGHBOR, &req) == -1)
 		warn("-pweneighbor");
+}
+
+int	if_sff_info(int, const char *, int);
+
+void
+transceiver(const char *value, int d)
+{
+	if (if_sff_info(s, name, 0) == -1)
+		err(1, "%s %s", name, __func__);
+}
+
+void
+transceiverdump(const char *value, int d)
+{
+	if (if_sff_info(s, name, 1) == -1)
+		err(1, "%s transceiver", name);
 }
 #endif /* SMALL */
 
