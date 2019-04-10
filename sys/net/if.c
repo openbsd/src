@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.573 2019/03/01 04:47:32 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.574 2019/04/10 09:51:35 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -144,6 +144,8 @@ int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 
 int	ifioctl_get(u_long, caddr_t);
 int	ifconf(caddr_t);
+static int
+	if_sffpage_check(const caddr_t);
 
 int	if_getgroup(caddr_t, struct ifnet *);
 int	if_getgroupmembers(caddr_t);
@@ -2143,6 +2145,19 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		NET_UNLOCK();
 		break;
 
+	case SIOCGIFSFFPAGE:
+		error = suser(p);
+		if (error != 0)
+			break;
+
+		error = if_sffpage_check(data);
+		if (error != 0)
+			break;
+
+		/* don't take NET_LOCK because i2c reads take a long time */
+		error = ((*ifp->if_ioctl)(ifp, cmd, data));
+		break;
+
 	case SIOCSETKALIVE:
 	case SIOCDIFPHYADDR:
 	case SIOCSLIFPHYADDR:
@@ -2302,6 +2317,22 @@ ifioctl_get(u_long cmd, caddr_t data)
 	NET_RUNLOCK();
 
 	return (error);
+}
+
+static int
+if_sffpage_check(const caddr_t data)
+{
+	const struct if_sffpage *sff = (const struct if_sffpage *)data;
+
+	switch (sff->sff_addr) {
+	case IFSFF_ADDR_EEPROM:
+	case IFSFF_ADDR_DDM:
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
 }
 
 /*
