@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2019/04/08 13:56:22 florian Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 2019/04/10 04:19:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,7 +39,7 @@
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 
-const char version[] = "0.7";
+const char version[] = "0.8";
 #if 0	/* network code not compiled in */
 int	debug = 0;
 #endif

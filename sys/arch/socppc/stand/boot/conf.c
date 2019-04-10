@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2019/04/08 13:56:22 florian Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 2019/04/10 04:19:32 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.4 2005/12/11 12:17:06 christos Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #include "libsa.h"
 #include <lib/libsa/ufs.h>
 
-const char version[] = "1.3";
+const char version[] = "1.4";
 int	debug = 0;
 
 /*
