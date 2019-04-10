@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 2019/04/10 04:17:36 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.7 2019/04/10 22:02:03 aoyama Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -209,8 +209,9 @@ bootunix(char *line)
 #endif
 
 		cpu_bootarg1 = BOOT_MAGIC;
-		cpu_bootarg2 = marks[MARK_END];
-		cpu_boot = (void (*)(uint32_t, uint32_t))marks[MARK_ENTRY];
+		cpu_bootarg2 = (uint32_t)marks[MARK_END];
+		cpu_boot = (void (*)(uint32_t, uint32_t))
+		    (uint32_t)marks[MARK_ENTRY];
 		(*cpu_boot)(cpu_bootarg1, cpu_bootarg2);
 	}
 	printf("Booting kernel failed. (%s)\n", strerror(errno));
