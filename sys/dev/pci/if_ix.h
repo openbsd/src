@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.33 2019/02/21 03:16:47 dlg Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.34 2019/04/10 09:55:02 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -251,6 +251,7 @@ struct ix_softc {
 	uint32_t		link_speed;
 	bool			link_up;
 	uint32_t		linkvec;
+	struct rwlock		sfflock;
 
 	/* Mbuf cluster size */
 	uint32_t		rx_mbuf_sz;

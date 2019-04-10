@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.156 2019/03/01 06:15:59 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.157 2019/04/10 09:55:02 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -96,6 +96,7 @@ int	ixgbe_detach(struct device *, int);
 void	ixgbe_start(struct ifqueue *);
 int	ixgbe_ioctl(struct ifnet *, u_long, caddr_t);
 int	ixgbe_rxrinfo(struct ix_softc *, struct if_rxrinfo *);
+int	ixgbe_get_sffpage(struct ix_softc *, struct if_sffpage *);
 void	ixgbe_watchdog(struct ifnet *);
 void	ixgbe_init(void *);
 void	ixgbe_stop(void *);
@@ -224,6 +225,8 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->osdep.os_sc = sc;
 	sc->osdep.os_pa = *pa;
+
+	rw_init(&sc->sfflock, "ixsff");
 
 	/* Set up the timer callout */
 	timeout_set(&sc->timer, ixgbe_local_timer, sc);
@@ -498,6 +501,15 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 		error = ixgbe_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 
+	case SIOCGIFSFFPAGE:
+		error = rw_enter(&sc->sfflock, RW_WRITE|RW_INTR);
+		if (error != 0)
+			break;
+
+		error = ixgbe_get_sffpage(sc, (struct if_sffpage *)data);
+		rw_exit(&sc->sfflock);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->arpcom, command, data);
 	}
@@ -512,6 +524,50 @@ ixgbe_ioctl(struct ifnet * ifp, u_long command, caddr_t data)
 	}
 
 	splx(s);
+	return (error);
+}
+
+int
+ixgbe_get_sffpage(struct ix_softc *sc, struct if_sffpage *sff)
+{
+	struct ixgbe_hw *hw = &sc->hw;
+	uint32_t swfw_mask = hw->phy.phy_semaphore_mask;
+	uint8_t page;
+	size_t i;
+	int error = EIO;
+
+	if (hw->phy.type == ixgbe_phy_fw)
+		return (ENODEV);
+
+	if (hw->mac.ops.acquire_swfw_sync(hw, swfw_mask))
+		return (EBUSY); /* XXX */
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM) {
+		if (hw->phy.ops.read_i2c_byte_unlocked(hw, 127,
+		    IFSFF_ADDR_EEPROM, &page))
+			goto error;
+		if (page != sff->sff_page &&
+		    hw->phy.ops.write_i2c_byte_unlocked(hw, 127,
+		    IFSFF_ADDR_EEPROM, sff->sff_page))
+			goto error;
+	}
+
+	for (i = 0; i < sizeof(sff->sff_data); i++) {
+		if (hw->phy.ops.read_i2c_byte_unlocked(hw, i,
+		    sff->sff_addr, &sff->sff_data[i]))
+			goto error;
+	}
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM) {
+		if (page != sff->sff_page &&
+		    hw->phy.ops.write_i2c_byte_unlocked(hw, 127,
+		    IFSFF_ADDR_EEPROM, page))
+			goto error;
+	}
+
+	error = 0;
+error:
+	hw->mac.ops.release_swfw_sync(hw, swfw_mask);
 	return (error);
 }
 
