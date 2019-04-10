@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.48 2019/02/27 04:31:56 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.49 2019/04/10 15:21:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <endian.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
