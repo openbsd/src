@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.92 2019/02/27 04:34:21 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.93 2019/04/10 15:22:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 
+#include <endian.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
