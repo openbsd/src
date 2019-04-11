@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.5 2019/04/10 18:02:50 deraadt Exp $ */
+/*	$OpenBSD: sff.c,v 1.6 2019/04/11 11:32:24 sthen Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -295,7 +295,7 @@ if_sff_info(int s, const char *ifname, int dump)
 
 	id = pg0.sff_data[0]; /* SFF8472_ID */
 
-	printf("%s: %s ", ifname, sff_id_name(id));
+	printf("\ttransceiver: %s ", sff_id_name(id));
 	switch (id) {
 	case SFF8024_ID_SFP:
 		ext_id = pg0.sff_data[SFF8472_EXT_ID];
@@ -400,7 +400,7 @@ if_sff_printalarm(const char *unit, int range, float actual,
 {
 	printf("%.02f%s", actual, unit);
 	if (range == 1)
-		printf(" (low %.02f%s high %.02f%s)", alrm_low,
+		printf(" (low %.02f%s, high %.02f%s)", alrm_low,
 		    unit, alrm_high, unit);
 
 	if(actual > alrm_high || actual < alrm_low)
@@ -417,14 +417,7 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	uint16_t wavelength;
 
 	con = pg0->sff_data[SFF8472_CON];
-	printf("%s (", sff_con_name(con));
-
-	if_sff_ascii_print(pg0, "",
-	    SFF8472_VENDOR_START, SFF8472_VENDOR_END, " ");
-	if_sff_ascii_print(pg0, "",
-	    SFF8472_PRODUCT_START, SFF8472_PRODUCT_END, "");
-	if_sff_ascii_print(pg0, " rev ",
-	    SFF8472_REVISION_START, SFF8472_REVISION_END, "");
+	printf("%s", sff_con_name(con));
 
 	wavelength = if_sff_int(pg0, SFF8472_WAVELENGTH);
 	switch (wavelength) {
@@ -437,11 +430,17 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 		printf(", %.02u nm", wavelength);
 	}
 
-	printf(")\n\t");
+	printf("\n\tmodel: ");
+	if_sff_ascii_print(pg0, "",
+	    SFF8472_VENDOR_START, SFF8472_VENDOR_END, " ");
+	if_sff_ascii_print(pg0, "",
+	    SFF8472_PRODUCT_START, SFF8472_PRODUCT_END, "");
+	if_sff_ascii_print(pg0, " rev ",
+	    SFF8472_REVISION_START, SFF8472_REVISION_END, "");
 
-	if_sff_ascii_print(pg0, "serial ",
+	if_sff_ascii_print(pg0, "\n\tserial: ",
 	    SFF8472_SERIAL_START, SFF8472_SERIAL_END, ", ");
-	if_sff_date_print(pg0, "date ", SFF8472_DATECODE, "\n");
+	if_sff_date_print(pg0, "date: ", SFF8472_DATECODE, "\n");
 
 	ddm_types = pg0->sff_data[SFF8472_DDM_TYPE];
 	if (pg0->sff_data[SFF8472_COMPLIANCE] == SFF8472_COMPLIANCE_NONE ||
@@ -460,7 +459,7 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 		    "(WARNING: needs more code)\n");
 	}
 
-	printf("\tvoltage ");
+	printf("\tvoltage: ");
 	if_sff_printalarm(" V", 0,
 	    if_sff_uint(&ddm, SFF8472_DDM_VCC) / SFF_VCC_FACTOR,
 	    if_sff_uint(&ddm, SFF8472_AW_VCC + ALRM_HIGH) / SFF_VCC_FACTOR,
@@ -468,7 +467,7 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	    if_sff_uint(&ddm, SFF8472_AW_VCC + WARN_HIGH) / SFF_VCC_FACTOR,
 	    if_sff_uint(&ddm, SFF8472_AW_VCC + WARN_LOW) / SFF_VCC_FACTOR);
 
-	printf(", bias current ");
+	printf(", bias current: ");
 	if_sff_printalarm(" mA", 0,
 	    if_sff_uint(&ddm, SFF8472_DDM_TX_BIAS) / SFF_BIAS_FACTOR,
 	    if_sff_uint(&ddm, SFF8472_AW_TX_BIAS + ALRM_HIGH) / SFF_BIAS_FACTOR,
@@ -476,7 +475,7 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	    if_sff_uint(&ddm, SFF8472_AW_TX_BIAS + WARN_HIGH) / SFF_BIAS_FACTOR,
 	    if_sff_uint(&ddm, SFF8472_AW_TX_BIAS + WARN_LOW) / SFF_BIAS_FACTOR);
 
-	printf("\n\ttemp ");
+	printf("\n\ttemp: ");
 	if_sff_printalarm(" C", 1,
 	    if_sff_int(&ddm, SFF8472_DDM_TEMP) / SFF_TEMP_FACTOR,
 	    if_sff_int(&ddm, SFF8472_AW_TEMP + ALRM_HIGH) / SFF_TEMP_FACTOR,
@@ -484,7 +483,7 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	    if_sff_int(&ddm, SFF8472_AW_TEMP + WARN_HIGH) / SFF_TEMP_FACTOR,
 	    if_sff_int(&ddm, SFF8472_AW_TEMP + WARN_LOW) / SFF_TEMP_FACTOR);
 
-	printf("\n\ttx ");
+	printf("\n\ttx: ");
 	if_sff_printalarm(" dBm", 1,
 	    if_sff_power2dbm(&ddm, SFF8472_DDM_TX_POWER),
 	    if_sff_power2dbm(&ddm, SFF8472_AW_TX_POWER + ALRM_HIGH),
@@ -492,7 +491,7 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	    if_sff_power2dbm(&ddm, SFF8472_AW_TX_POWER + WARN_HIGH),
 	    if_sff_power2dbm(&ddm, SFF8472_AW_TX_POWER + WARN_LOW));
 
-	printf("\n\trx ");
+	printf("\n\trx: ");
 	if_sff_printalarm(" dBm", 1,
 	    if_sff_power2dbm(&ddm, SFF8472_DDM_RX_POWER),
 	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + ALRM_HIGH),

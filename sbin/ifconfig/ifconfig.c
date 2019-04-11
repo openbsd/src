@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.398 2019/04/10 10:14:37 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.399 2019/04/11 11:32:24 sthen Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ int	showcapsflag;
 int	shownet80211chans;
 int	shownet80211nodes;
 int	showclasses;
+int	showtransceiver;
 
 struct	ifencap;
 
@@ -342,6 +343,7 @@ void	utf16_to_char(uint16_t *, int, char *, size_t);
 int	char_to_utf16(const char *, uint16_t *, size_t);
 void	transceiver(const char *, int);
 void	transceiverdump(const char *, int);
+int	if_sff_info(int, const char *, int);
 #else
 void	setignore(const char *, int);
 #endif
@@ -591,8 +593,8 @@ const struct	cmd {
 	{ "datapath",	NEXTARG,	0,		switch_datapathid },
 	{ "portno",	NEXTARG2,	0,		NULL, switch_portno },
 	{ "addlocal",	NEXTARG,	0,		addlocal },
-	{ "transceiver", 0,		0,		transceiver },
-	{ "sff",	0,		0,		transceiver },
+	{ "transceiver", NEXTARG0,	0,		transceiver },
+	{ "sff",	NEXTARG0,	0,		transceiver },
 	{ "sffdump",	0,		0,		transceiverdump },
 #else /* SMALL */
 	{ "powersave",	NEXTARG0,	0,		setignore },
@@ -3371,6 +3373,12 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 			printf("unknown");
 		putchar('\n');
 	}
+
+	if (showtransceiver) {
+		if (if_sff_info(s, name, 0) == -1)
+			if (!aflag && errno != EPERM && errno != ENOTTY)
+				warn("%s transceiver", name);
+	}
 #endif
 	ieee80211_status();
 
@@ -4040,13 +4048,10 @@ unsetpwe3neighbor(const char *val, int d)
 		warn("-pweneighbor");
 }
 
-int	if_sff_info(int, const char *, int);
-
 void
 transceiver(const char *value, int d)
 {
-	if (if_sff_info(s, name, 0) == -1)
-		err(1, "%s %s", name, __func__);
+	showtransceiver = 1;
 }
 
 void
