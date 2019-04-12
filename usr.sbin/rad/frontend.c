@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.27 2019/03/15 16:49:20 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.28 2019/04/12 07:03:11 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -474,7 +474,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatalx("%s: expected to receive imsg "
 				    "routesocket fd but didn't receive any",
 				    __func__);
-			event_set(&ev_route, fd, EV_READ | EV_PERSIST,
+			event_set(&ev_route, routesock, EV_READ | EV_PERSIST,
 			    route_receive, NULL);
 			break;
 		case IMSG_STARTUP:
