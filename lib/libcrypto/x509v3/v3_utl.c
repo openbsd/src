@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.31 2018/05/19 10:50:08 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.32 2019/04/13 18:42:23 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -66,6 +66,7 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
+char *bnstr(const BIGNUM *bn);
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char * const *a, const char * const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
@@ -148,17 +149,43 @@ X509V3_add_value_bool_nf(const char *name, int asn1_bool,
 	return 1;
 }
 
+char *
+bn_to_string(const BIGNUM *bn)
+{
+	const char *sign = "";
+	char *bnstr, *hex;
+	char *ret = NULL;
+
+	/* Only display small numbers in decimal, as conversion is quadratic. */
+	if (BN_num_bits(bn) < 128)
+		return BN_bn2dec(bn);
+
+	if ((hex = bnstr = BN_bn2hex(bn)) == NULL)
+		goto err;
+
+	if (BN_is_negative(bn)) {
+		sign = "-";
+		hex++;
+	}
+
+	if (asprintf(&ret, "%s0x%s", sign, hex) == -1)
+		ret = NULL;
+
+ err:
+	free(bnstr);
+	return ret;
+}
 
 char *
 i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 {
-	BIGNUM *bntmp = NULL;
+	BIGNUM *bntmp;
 	char *strtmp = NULL;
 
-	if (!a)
+	if (a == NULL)
 		return NULL;
-	if (!(bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) ||
-	    !(strtmp = BN_bn2dec(bntmp)))
+	if ((bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) == NULL ||
+	    (strtmp = bn_to_string(bntmp)) == NULL)
 		X509V3error(ERR_R_MALLOC_FAILURE);
 	BN_free(bntmp);
 	return strtmp;
@@ -167,13 +194,13 @@ i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 char *
 i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
 {
-	BIGNUM *bntmp = NULL;
+	BIGNUM *bntmp;
 	char *strtmp = NULL;
 
-	if (!a)
+	if (a == NULL)
 		return NULL;
-	if (!(bntmp = ASN1_INTEGER_to_BN(a, NULL)) ||
-	    !(strtmp = BN_bn2dec(bntmp)))
+	if ((bntmp = ASN1_INTEGER_to_BN(a, NULL)) == NULL ||
+	    (strtmp = bn_to_string(bntmp)) == NULL)
 		X509V3error(ERR_R_MALLOC_FAILURE);
 	BN_free(bntmp);
 	return strtmp;
