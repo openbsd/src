@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.13 2019/04/04 15:10:10 jsing Exp $ */
+/* $OpenBSD: tls_util.c,v 1.14 2019/04/13 18:47:58 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -102,10 +102,14 @@ tls_host_port(const char *hostport, char **host, char **port)
 
 	*p++ = '\0';
 
-	if (asprintf(host, "%s", h) == -1)
+	if (asprintf(host, "%s", h) == -1) {
+		*host = NULL;
 		goto err;
-	if (asprintf(port, "%s", p) == -1)
+	}
+	if (asprintf(port, "%s", p) == -1) {
+		*port = NULL;
 		goto err;
+	}
 
 	rv = 0;
 	goto done;
