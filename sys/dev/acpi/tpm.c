@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.4 2019/04/04 22:20:28 edd Exp $ */
+/* $OpenBSD: tpm.c,v 1.5 2019/04/13 19:19:36 deraadt Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -194,7 +194,6 @@ const char *tpm_hids[] = {
 	"BCM0102",
 	"NSC1200",
 	"ICO0102",
-	"MSFT0101",
 	NULL
 };
 
