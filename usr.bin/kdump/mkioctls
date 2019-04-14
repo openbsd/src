@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.40 2018/08/29 17:47:07 anton Exp $
+#	$OpenBSD: mkioctls,v 1.41 2019/04/14 10:16:00 jsg Exp $
 
 #
 # Copyright (c) 1994
@@ -83,14 +83,12 @@ BEGIN {
 	print "#include <dev/vndioctl.h>"
 	print "#include <scsi/scsi_all.h>"
 	print "#include <dev/vscsivar.h>"
-	print "#include <dev/pci/drm/i915_drm.h>"
+	print "#include <dev/pci/drm/include/uapi/drm/i915_drm.h>"
 	print "#include <dev/pv/pvvar.h>"
 	print "#include <dev/usb/udlio.h>"
 	print "#include <dev/usb/usb.h>"
 	print "#include <sys/ioctl.h>"
 	print "#include \"kdump.h\""
-	print ""
-	print "struct drm_i915_gem_execbuffer {};"
 	print ""
 	print "const char *"
 	print "ioctlname(unsigned long val)"
