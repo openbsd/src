@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.45 2017/11/24 02:36:53 dlg Exp $
+.\"	$OpenBSD: timeout.9,v 1.46 2019/04/14 08:51:31 visa Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 24 2017 $
+.Dd $Mdocdate: April 14 2019 $
 .Dt TIMEOUT_SET 9
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Nm timeout_add_ts ,
 .Nm timeout_add_bt ,
 .Nm timeout_del ,
+.Nm timeout_del_barrier ,
 .Nm timeout_barrier ,
 .Nm timeout_pending ,
 .Nm timeout_initialized ,
@@ -55,6 +56,8 @@
 .Fn timeout_add "struct timeout *to" "int ticks"
 .Ft int
 .Fn timeout_del "struct timeout *to"
+.Ft int
+.Fn timeout_del_barrier "struct timeout *to"
 .Ft void
 .Fn timeout_barrier "struct timeout *to"
 .Ft int
@@ -156,6 +159,11 @@ will cancel the timeout in the argument
 If the timeout has already executed or has never been added
 the call will have no effect.
 .Pp
+.Fn timeout_del_barrier
+is like
+.Fn timeout_del
+but it will wait until any current execution of the timeout has completed.
+.Pp
 .Fn timeout_barrier
 ensures that any current execution of the timeout in the argument
 .Fa to
@@ -232,6 +240,8 @@ interrupt context at or below
 .Dv IPL_CLOCK .
 .Pp
 .Fn timeout_barrier
+and
+.Fn timeout_del_barrier
 can be called from process context.
 .Pp
 When the timeout runs, the
@@ -258,6 +268,8 @@ will return 1 if the timeout
 was added to the timeout schedule or 0 if it was already queued.
 .Pp
 .Fn timeout_del
+and
+.Fn timeout_del_barrier
 will return 1 if the timeout
 .Fa to
 was removed from the pending timeout schedule or 0 if it was not
