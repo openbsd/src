@@ -22,7 +22,8 @@
  * Authors: Christian König <christian.koenig@amd.com>
  */
 
-#include <dev/pci/drm/drmP.h>
+#include <linux/firmware.h>
+#include <drm/drmP.h>
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "rv770d.h"
@@ -115,12 +116,13 @@ int uvd_v2_2_resume(struct radeon_device *rdev)
 	WREG32(UVD_VCPU_CACHE_SIZE0, size);
 
 	addr += size;
-	size = RADEON_UVD_STACK_SIZE >> 3;
+	size = RADEON_UVD_HEAP_SIZE >> 3;
 	WREG32(UVD_VCPU_CACHE_OFFSET1, addr);
 	WREG32(UVD_VCPU_CACHE_SIZE1, size);
 
 	addr += size;
-	size = RADEON_UVD_HEAP_SIZE >> 3;
+	size = (RADEON_UVD_STACK_SIZE +
+	       (RADEON_UVD_SESSION_SIZE * rdev->uvd.max_handles)) >> 3;
 	WREG32(UVD_VCPU_CACHE_OFFSET2, addr);
 	WREG32(UVD_VCPU_CACHE_SIZE2, size);
 

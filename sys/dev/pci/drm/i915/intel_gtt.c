@@ -22,6 +22,13 @@
 
 extern struct cfdriver inteldrm_cd;
 
+#ifdef __amd64__
+#define membar_producer_wc()	__asm __volatile("sfence":::"memory")
+#else
+#define membar_producer_wc()	__asm __volatile(\
+				"lock; addl $0,0(%%esp)":::"memory")
+#endif
+
 /*
  * We're intel IGD, bus 0 function 0 dev 0 should be the GMCH, so it should
  * be Intel
@@ -113,7 +120,7 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct pci_attach_args bpa;
 
-	if (INTEL_INFO(dev_priv->dev)->gen >= 6)
+	if (INTEL_GEN(dev_priv) >= 6)
 		return;
 
 	if (pci_find_device(&bpa, inteldrm_gmch_match) == 0) {
@@ -123,10 +130,10 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 	}
 
 	/* Set up the IFP for chipset flushing */
-	if (IS_I915G(dev) || IS_I915GM(dev) || IS_I945G(dev) ||
-	    IS_I945GM(dev)) {
+	if (IS_I915G(dev_priv) || IS_I915GM(dev_priv) || IS_I945G(dev_priv) ||
+	    IS_I945GM(dev_priv)) {
 		i915_alloc_ifp(dev_priv, &bpa);
-	} else if (INTEL_INFO(dev)->gen >= 4 || IS_G33(dev)) {
+	} else if (INTEL_GEN(dev_priv) >= 4 || IS_G33(dev_priv)) {
 		i965_alloc_ifp(dev_priv, &bpa);
 	} else {
 		int nsegs;
@@ -152,7 +159,7 @@ intel_enable_gtt()
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
 
-	intel_gtt_chipset_setup(dev_priv->dev);
+	intel_gtt_chipset_setup(&dev_priv->drm);
 	return 1;
 }
 
@@ -164,14 +171,13 @@ intel_gmch_probe(struct pci_dev *bridge_dev, struct pci_dev *gpu_pdev,
 }
 
 void
-intel_gtt_get(u64 *gtt_total, size_t *stolen_size,
-    phys_addr_t *mappable_base, u64 *mappable_end)
+intel_gtt_get(u64 *gtt_total,
+    phys_addr_t *mappable_base, resource_size_t *mappable_end)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
-	struct agp_info *ai = &dev_priv->dev->agp->info;
+	struct agp_info *ai = &dev_priv->drm.agp->info;
 	
 	*gtt_total = ai->ai_aperture_size;
-	*stolen_size = 0;
 	*mappable_base = ai->ai_aperture_base;
 	*mappable_end = ai->ai_aperture_size;
 }
@@ -185,20 +191,20 @@ intel_gtt_chipset_flush(void)
 	 * Write to this flush page flushes the chipset write cache.
 	 * The write will return when it is done.
 	 */
-	if (INTEL_INFO(dev_priv->dev)->gen >= 3) {
+	if (INTEL_GEN(dev_priv) >= 3) {
 	    if (dev_priv->ifp.i9xx.bsh != 0)
 		bus_space_write_4(dev_priv->ifp.i9xx.bst,
 		    dev_priv->ifp.i9xx.bsh, 0, 1);
 	} else {
 		int i;
+#define I830_HIC        0x70
+		i915_reg_t hic = _MMIO(I830_HIC);
 
 		wbinvd();
 
-#define I830_HIC        0x70
-
-		I915_WRITE(I830_HIC, (I915_READ(I830_HIC) | (1<<31)));
+		I915_WRITE(hic, (I915_READ(hic) | (1<<31)));
 		for (i = 1000; i; i--) {
-			if (!(I915_READ(I830_HIC) & (1<<31)))
+			if (!(I915_READ(hic) & (1<<31)))
 				break;
 			delay(100);
 		}
@@ -216,7 +222,7 @@ intel_gtt_insert_sg_entries(struct sg_table *pages, unsigned int pg_start,
     unsigned int flags)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
-	struct agp_softc *sc = dev_priv->dev->agp->agpdev;
+	struct agp_softc *sc = dev_priv->drm.agp->agpdev;
 	bus_addr_t addr = sc->sc_apaddr + pg_start * PAGE_SIZE;
 	struct sg_page_iter sg_iter;
 
@@ -225,13 +231,26 @@ intel_gtt_insert_sg_entries(struct sg_table *pages, unsigned int pg_start,
 		    sg_page_iter_dma_address(&sg_iter), flags);
 		addr += PAGE_SIZE;
 	}
+	membar_producer_wc();
+	intel_gtt_chipset_flush();
+}
+
+void
+intel_gtt_insert_page(dma_addr_t addr, unsigned int pg,
+    unsigned int flags)
+{
+	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
+	struct agp_softc *sc = dev_priv->drm.agp->agpdev;
+	bus_addr_t apaddr = sc->sc_apaddr + (pg * PAGE_SIZE);
+	sc->sc_methods->bind_page(sc->sc_chipc, apaddr, addr, flags);
+	intel_gtt_chipset_flush();
 }
 
 void
 intel_gtt_clear_range(unsigned int first_entry, unsigned int num_entries)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
-	struct agp_softc *sc = dev_priv->dev->agp->agpdev;
+	struct agp_softc *sc = dev_priv->drm.agp->agpdev;
 	bus_addr_t addr = sc->sc_apaddr + first_entry * PAGE_SIZE;
 	int i;
 
@@ -239,4 +258,5 @@ intel_gtt_clear_range(unsigned int first_entry, unsigned int num_entries)
 		sc->sc_methods->unbind_page(sc->sc_chipc, addr);
 		addr += PAGE_SIZE;
 	}
+	membar_producer_wc();
 }

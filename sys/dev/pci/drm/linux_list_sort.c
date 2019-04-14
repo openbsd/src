@@ -34,7 +34,7 @@
 
 #include <machine/limits.h>
 
-#include <dev/pci/drm/drm_linux_list.h>
+#include <linux/list.h>
 
 static struct list_head *
 list_sort_merge(struct list_head *, struct list_head *,

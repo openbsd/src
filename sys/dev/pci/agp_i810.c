@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.93 2015/12/19 16:07:20 kettenis Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.94 2019/04/14 10:14:50 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -273,7 +273,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	isc->map = psc->regs;
+	isc->map = psc->vga_regs;
 
 	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33 ||
 	    isc->chiptype == CHIP_PINEVIEW) {

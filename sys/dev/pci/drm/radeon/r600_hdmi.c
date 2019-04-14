@@ -23,9 +23,10 @@
  *
  * Authors: Christian König
  */
-#include <dev/pci/drm/linux_hdmi.h>
-#include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/radeon_drm.h>
+#include <linux/hdmi.h>
+#include <linux/gcd.h>
+#include <drm/drmP.h>
+#include <drm/radeon_drm.h>
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "radeon_audio.h"
@@ -57,7 +58,7 @@ enum r600_hdmi_iec_status_bits {
 
 static struct r600_audio_pin r600_audio_status(struct radeon_device *rdev)
 {
-	struct r600_audio_pin status;
+	struct r600_audio_pin status = {};
 	uint32_t value;
 
 	value = RREG32(R600_AUDIO_RATE_BPS_CHANNEL);
@@ -214,7 +215,7 @@ void r600_hdmi_update_acr(struct drm_encoder *encoder, long offset,
  * build a HDMI Video Info Frame
  */
 void r600_set_avi_packet(struct radeon_device *rdev, u32 offset,
-    unsigned char *buffer, size_t size)
+			 unsigned char *buffer, size_t size)
 {
 	uint8_t *frame = buffer + 3;
 
@@ -311,7 +312,7 @@ void r600_hdmi_audio_workaround(struct drm_encoder *encoder)
 }
 
 void r600_hdmi_audio_set_dto(struct radeon_device *rdev,
-    struct radeon_crtc *crtc, unsigned int clock)
+			     struct radeon_crtc *crtc, unsigned int clock)
 {
 	struct radeon_encoder *radeon_encoder;
 	struct radeon_encoder_atom_dig *dig;

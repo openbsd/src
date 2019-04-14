@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_vma_manager.c,v 1.3 2017/07/01 16:14:10 kettenis Exp $	*/
+/*	$OpenBSD: drm_vma_manager.c,v 1.4 2019/04/14 10:14:51 jsg Exp $	*/
 /*
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * Copyright (c) 2012 David Airlie <airlied@linux.ie>
@@ -23,10 +23,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "drmP.h"
-#include "drm_mm.h"
-#include "drm_vma_manager.h"
-#include "drm_linux_rbtree.h"
+#include <drm/drmP.h>
+#include <drm/drm_mm.h>
+#include <drm/drm_vma_manager.h>
+#include <linux/rbtree.h>
 
 /**
  * DOC: vma offset manager

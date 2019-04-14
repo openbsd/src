@@ -24,7 +24,9 @@
  *     Alex Deucher <alexander.deucher@amd.com>
  */
 
-#include <dev/pci/drm/drm_linux.h>
+#include <linux/bug.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
 
 /*
  * evergreen cards need to use the 3D engine to blit data which requires

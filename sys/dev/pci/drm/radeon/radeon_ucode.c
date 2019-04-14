@@ -21,7 +21,10 @@
  *
  */
 
-#include <dev/pci/drm/drmP.h>
+#include <linux/firmware.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <drm/drmP.h>
 #include "radeon.h"
 #include "radeon_ucode.h"
 

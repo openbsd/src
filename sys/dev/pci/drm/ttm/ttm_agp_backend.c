@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -31,12 +32,16 @@
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
-#include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/ttm/ttm_module.h>
-#include <dev/pci/drm/ttm/ttm_bo_driver.h>
-#include <dev/pci/drm/ttm/ttm_page_alloc.h>
-#ifdef TTM_HAS_AGP
-#include <dev/pci/drm/ttm/ttm_placement.h>
+#include <drm/drmP.h>
+#include <drm/ttm/ttm_module.h>
+#include <drm/ttm/ttm_bo_driver.h>
+#include <drm/ttm/ttm_page_alloc.h>
+#include <drm/ttm/ttm_placement.h>
+#include <linux/agp_backend.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/io.h>
+#include <asm/agp.h>
 
 struct ttm_agp_backend {
 	struct ttm_tt ttm;
@@ -48,6 +53,7 @@ struct ttm_agp_backend {
 static int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 {
 	struct ttm_agp_backend	*agp_be = container_of(ttm, struct ttm_agp_backend, ttm);
+	struct vm_page *dummy_read_page = ttm->bdev->glob->dummy_read_page;
 	struct drm_mm_node *node = bo_mem->mm_node;
 	struct agp_softc *sc = agp_be->agp->agpdev;
 	bus_addr_t addr;
@@ -59,7 +65,7 @@ static int ttm_agp_bind(struct ttm_tt *ttm, struct ttm_mem_reg *bo_mem)
 		struct vm_page *page = ttm->pages[i];
 
 		if (!page)
-			page = ttm->dummy_read_page;
+			page = dummy_read_page;
 
 		sc->sc_methods->bind_page(sc->sc_chipc, addr, VM_PAGE_TO_PHYS(page), 0);
 		addr += PAGE_SIZE;
@@ -108,10 +114,9 @@ static struct ttm_backend_func ttm_agp_func = {
 	.destroy = ttm_agp_destroy,
 };
 
-struct ttm_tt *ttm_agp_tt_create(struct ttm_bo_device *bdev,
+struct ttm_tt *ttm_agp_tt_create(struct ttm_buffer_object *bo,
 				 struct drm_agp_head *agp,
-				 unsigned long size, uint32_t page_flags,
-				 struct vm_page *dummy_read_page)
+				 uint32_t page_flags)
 {
 	struct ttm_agp_backend *agp_be;
 
@@ -123,7 +128,7 @@ struct ttm_tt *ttm_agp_tt_create(struct ttm_bo_device *bdev,
 	agp_be->agp = agp;
 	agp_be->ttm.func = &ttm_agp_func;
 
-	if (ttm_tt_init(&agp_be->ttm, bdev, size, page_flags, dummy_read_page)) {
+	if (ttm_tt_init(&agp_be->ttm, bo, page_flags)) {
 		return NULL;
 	}
 
@@ -131,12 +136,12 @@ struct ttm_tt *ttm_agp_tt_create(struct ttm_bo_device *bdev,
 }
 EXPORT_SYMBOL(ttm_agp_tt_create);
 
-int ttm_agp_tt_populate(struct ttm_tt *ttm)
+int ttm_agp_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
 {
 	if (ttm->state != tt_unpopulated)
 		return 0;
 
-	return ttm_pool_populate(ttm);
+	return ttm_pool_populate(ttm, ctx);
 }
 EXPORT_SYMBOL(ttm_agp_tt_populate);
 
@@ -145,5 +150,3 @@ void ttm_agp_tt_unpopulate(struct ttm_tt *ttm)
 	ttm_pool_unpopulate(ttm);
 }
 EXPORT_SYMBOL(ttm_agp_tt_unpopulate);
-
-#endif

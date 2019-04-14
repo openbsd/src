@@ -24,7 +24,9 @@
  *     Alex Deucher <alexander.deucher@amd.com>
  */
 
-#include <dev/pci/drm/drm_linux.h>
+#include <linux/types.h>
+#include <linux/bug.h>
+#include <linux/kernel.h>
 
 const u32 si_default_state[] =
 {

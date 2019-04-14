@@ -24,9 +24,9 @@
  * Authors: Christian König
  *          Rafał Miłecki
  */
-#include <dev/pci/drm/linux_hdmi.h>
-#include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/radeon_drm.h>
+#include <linux/hdmi.h>
+#include <drm/drmP.h>
+#include <drm/radeon_drm.h>
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "radeon_audio.h"
@@ -206,7 +206,7 @@ void evergreen_hdmi_write_sad_regs(struct drm_encoder *encoder,
  * build a AVI Info Frame
  */
 void evergreen_set_avi_packet(struct radeon_device *rdev, u32 offset,
-    unsigned char *buffer, size_t size)
+			      unsigned char *buffer, size_t size)
 {
 	uint8_t *frame = buffer + 3;
 

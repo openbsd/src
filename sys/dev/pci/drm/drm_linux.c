@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.32 2018/09/11 20:25:58 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.33 2019/04/14 10:14:51 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -16,82 +16,150 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <dev/pci/drm/drmP.h>
+#include <drm/drmP.h>
 #include <dev/pci/ppbreg.h>
 #include <sys/event.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
+#include <linux/dma-buf.h>
+#include <linux/mod_devicetable.h>
+#include <linux/acpi.h>
+#include <linux/pagevec.h>
+
+void
+tasklet_run(void *arg)
+{
+	struct tasklet_struct *ts = arg;
+
+	clear_bit(TASKLET_STATE_SCHED, &ts->state);
+	if (tasklet_trylock(ts)) {
+		if (!atomic_read(&ts->count))
+			ts->func(ts->data);
+		tasklet_unlock(ts);
+	}
+}
 
 struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
-void *sch_ident;
+volatile struct proc *sch_proc;
+volatile void *sch_ident;
 int sch_priority;
 
 void
-flush_barrier(void *arg)
+set_current_state(int state)
 {
-	int *barrier = arg;
+	if (sch_ident != curproc)
+		mtx_enter(&sch_mtx);
+	MUTEX_ASSERT_LOCKED(&sch_mtx);
+	sch_ident = sch_proc = curproc;
+	sch_priority = state;
+}
 
-	*barrier = 1;
-	wakeup(barrier);
+void
+__set_current_state(int state)
+{
+	KASSERT(state == TASK_RUNNING);
+	if (sch_ident == curproc) {
+		MUTEX_ASSERT_LOCKED(&sch_mtx);
+		sch_ident = NULL;
+		mtx_leave(&sch_mtx);
+	}
+}
+
+void
+schedule(void)
+{
+	schedule_timeout(MAX_SCHEDULE_TIMEOUT);
+}
+
+long
+schedule_timeout(long timeout)
+{
+	struct sleep_state sls;
+	long deadline;
+	int wait, spl;
+
+	MUTEX_ASSERT_LOCKED(&sch_mtx);
+	KASSERT(!cold);
+
+	sleep_setup(&sls, sch_ident, sch_priority, "schto");
+	if (timeout != MAX_SCHEDULE_TIMEOUT)
+		sleep_setup_timeout(&sls, timeout);
+	sleep_setup_signal(&sls, sch_priority);
+
+	wait = (sch_proc == curproc && timeout > 0);
+
+	spl = MUTEX_OLDIPL(&sch_mtx);
+	MUTEX_OLDIPL(&sch_mtx) = splsched();
+	mtx_leave(&sch_mtx);
+
+	if (timeout != MAX_SCHEDULE_TIMEOUT)
+		deadline = ticks + timeout;
+	sleep_finish_all(&sls, wait);
+	if (timeout != MAX_SCHEDULE_TIMEOUT)
+		timeout = deadline - ticks;
+
+	mtx_enter(&sch_mtx);
+	MUTEX_OLDIPL(&sch_mtx) = spl;
+	sch_ident = curproc;
+
+	return timeout > 0 ? timeout : 0;
+}
+
+int
+wake_up_process(struct proc *p)
+{
+	int s, r = 0;
+
+	SCHED_LOCK(s);
+	atomic_cas_ptr(&sch_proc, p, NULL);
+	if (p->p_wchan) {
+		if (p->p_stat == SSLEEP) {
+			setrunnable(p);
+			r = 1;
+		} else
+			unsleep(p);
+	}
+	SCHED_UNLOCK(s);
+
+	return r;
 }
 
 void
 flush_workqueue(struct workqueue_struct *wq)
 {
-	struct sleep_state sls;
-	struct task task;
-	int barrier = 0;
-
 	if (cold)
 		return;
 
-	task_set(&task, flush_barrier, &barrier);
-	task_add((struct taskq *)wq, &task);
-	while (!barrier) {
-		sleep_setup(&sls, &barrier, PWAIT, "flwqbar");
-		sleep_finish(&sls, !barrier);
-	}
+	taskq_barrier((struct taskq *)wq);
 }
 
-void
+bool
 flush_work(struct work_struct *work)
 {
-	struct sleep_state sls;
-	struct task task;
-	int barrier = 0;
-
 	if (cold)
-		return;
+		return false;
 
-	task_set(&task, flush_barrier, &barrier);
-	task_add(work->tq, &task);
-	while (!barrier) {
-		sleep_setup(&sls, &barrier, PWAIT, "flwkbar");
-		sleep_finish(&sls, !barrier);
-	}
+	taskq_barrier(work->tq);
+	return false;
 }
 
-void
+bool
 flush_delayed_work(struct delayed_work *dwork)
 {
-	struct sleep_state sls;
-	struct task task;
-	int barrier = 0;
+	bool ret = false;
 
 	if (cold)
-		return;
+		return false;
 
-	while (timeout_pending(&dwork->to))
-		tsleep(&barrier, PWAIT, "fldwto", 1);
-
-	task_set(&task, flush_barrier, &barrier);
-	task_add(dwork->tq ? dwork->tq : systq, &task);
-	while (!barrier) {
-		sleep_setup(&sls, &barrier, PWAIT, "fldwbar");
-		sleep_finish(&sls, !barrier);
+	while (timeout_pending(&dwork->to)) {
+		tsleep(dwork, PWAIT, "fldwto", 1);
+		ret = true;
 	}
+
+	taskq_barrier(dwork->tq ? dwork->tq : (struct taskq *)system_wq);
+	return ret;
 }
 
 struct timespec
@@ -143,6 +211,12 @@ ns_to_timeval(const int64_t nsec)
 	}
 	tv.tv_usec = rem / 1000;
 	return (tv);
+}
+
+int64_t
+timeval_to_ms(const struct timeval *tv)
+{
+	return ((int64_t)tv->tv_sec * 1000) + (tv->tv_usec / 1000);
 }
 
 int64_t
@@ -243,6 +317,19 @@ __free_pages(struct vm_page *page, unsigned int order)
 	for (i = 0; i < (1 << order); i++)
 		TAILQ_INSERT_TAIL(&mlist, &page[i], pageq);
 	uvm_pglistfree(&mlist);
+}
+
+void
+__pagevec_release(struct pagevec *pvec)
+{
+	struct pglist mlist;
+	int i;
+
+	TAILQ_INIT(&mlist);
+	for (i = 0; i < pvec->nr; i++)
+		TAILQ_INSERT_TAIL(&mlist, pvec->pages[i], pageq);
+	uvm_pglistfree(&mlist);
+	pagevec_reinit(pvec);
 }
 
 void *
@@ -452,17 +539,20 @@ idr_replace(struct idr *idr, void *ptr, int id)
 	return old;
 }
 
-void
+void *
 idr_remove(struct idr *idr, int id)
 {
 	struct idr_entry find, *res;
+	void *ptr = NULL;
 
 	find.id = id;
 	res = SPLAY_FIND(idr_tree, &idr->tree, &find);
 	if (res) {
 		SPLAY_REMOVE(idr_tree, &idr->tree, res);
+		ptr = res->ptr;
 		pool_put(&idr_pool, res);
 	}
+	return ptr;
 }
 
 void *
@@ -546,6 +636,11 @@ ida_simple_get(struct ida *ida, unsigned int start, unsigned int end,
 		return -ENOSPC;
 
 	return ida->counter++;
+}
+
+void
+ida_simple_remove(struct ida *ida, int id)
+{
 }
 
 int
@@ -739,8 +834,8 @@ vga_put(struct pci_dev *pdev, int rsrc)
 #include <dev/acpi/acpivar.h>
 
 acpi_status
-acpi_get_table_with_size(const char *sig, int instance,
-    struct acpi_table_header **hdr, acpi_size *size)
+acpi_get_table(const char *sig, int instance,
+    struct acpi_table_header **hdr)
 {
 	struct acpi_softc *sc = acpi_softc;
 	struct acpi_q *entry;
@@ -753,7 +848,6 @@ acpi_get_table_with_size(const char *sig, int instance,
 	SIMPLEQ_FOREACH(entry, &sc->sc_tables, q_next) {
 		if (memcmp(entry->q_table, sig, strlen(sig)) == 0) {
 			*hdr = entry->q_table;
-			*size = (*hdr)->length;
 			return 0;
 		}
 	}
@@ -806,7 +900,7 @@ drm_sysfs_hotplug_event(struct drm_device *dev)
 unsigned int drm_fence_count;
 
 unsigned int
-fence_context_alloc(unsigned int num)
+dma_fence_context_alloc(unsigned int num)
 {
 	return __sync_add_and_fetch(&drm_fence_count, num) - num;
 }
@@ -978,4 +1072,231 @@ void
 get_dma_buf(struct dma_buf *dmabuf)
 {
 	FREF(dmabuf->file);
+}
+
+enum pci_bus_speed
+pcie_get_speed_cap(struct pci_dev *pdev)
+{
+	pci_chipset_tag_t	pc = pdev->pc;
+	pcitag_t		tag = pdev->tag;
+	int			pos ;
+	pcireg_t		xcap, lnkcap = 0, lnkcap2 = 0;
+	pcireg_t		id;
+	enum pci_bus_speed	cap = PCI_SPEED_UNKNOWN;
+	int			bus, device, function;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS,
+	    &pos, NULL)) 
+		return PCI_SPEED_UNKNOWN;
+
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+	/* we've been informed via and serverworks don't make the cut */
+	if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH ||
+	    PCI_VENDOR(id) == PCI_VENDOR_RCC)
+		return PCI_SPEED_UNKNOWN;
+
+	lnkcap = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP);
+	xcap = pci_conf_read(pc, tag, pos + PCI_PCIE_XCAP);
+	if (PCI_PCIE_XCAP_VER(xcap) >= 2)
+		lnkcap2 = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP2);
+
+	lnkcap &= 0x0f;
+	lnkcap2 &= 0xfe;
+
+	if (lnkcap2) { /* PCIE GEN 3.0 */
+		if (lnkcap2 & 0x02)
+			cap = PCIE_SPEED_2_5GT;
+		if (lnkcap2 & 0x04)
+			cap = PCIE_SPEED_5_0GT;
+		if (lnkcap2 & 0x08)
+			cap = PCIE_SPEED_8_0GT;
+		if (lnkcap2 & 0x10)
+			cap = PCIE_SPEED_16_0GT;
+	} else {
+		if (lnkcap & 0x01)
+			cap = PCIE_SPEED_2_5GT;
+		if (lnkcap & 0x02)
+			cap = PCIE_SPEED_5_0GT;
+	}
+
+	DRM_INFO("probing pcie caps for device %d:%d:%d 0x%04x:0x%04x = %x/%x\n",
+	    bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id), lnkcap,
+	    lnkcap2);
+	return cap;
+}
+
+enum pcie_link_width
+pcie_get_width_cap(struct pci_dev *pdev)
+{
+	pci_chipset_tag_t	pc = pdev->pc;
+	pcitag_t		tag = pdev->tag;
+	int			pos ;
+	pcireg_t		lnkcap = 0;
+	pcireg_t		id;
+	int			bus, device, function;
+
+	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS,
+	    &pos, NULL)) 
+		return PCIE_LNK_WIDTH_UNKNOWN;
+
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+	lnkcap = pci_conf_read(pc, tag, pos + PCI_PCIE_LCAP);
+
+	DRM_INFO("probing pcie width for device %d:%d:%d 0x%04x:0x%04x = %x\n",
+	    bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id), lnkcap);
+
+	if (lnkcap)
+		return (lnkcap & 0x3f0) >> 4;
+	return PCIE_LNK_WIDTH_UNKNOWN;
+}
+
+int
+default_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
+    int sync, void *key)
+{
+	wakeup(wqe);
+	if (wqe->proc)
+		wake_up_process(wqe->proc);
+	return 0;
+}
+
+int
+autoremove_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
+    int sync, void *key)
+{
+	default_wake_function(wqe, mode, sync, key);
+	list_del_init(&wqe->entry);
+	return 0;
+}
+
+struct mutex wait_bit_mtx = MUTEX_INITIALIZER(IPL_TTY);
+
+int
+wait_on_bit(unsigned long *word, int bit, unsigned mode)
+{
+	int err;
+
+	if (!test_bit(bit, word))
+		return 0;
+
+	mtx_enter(&wait_bit_mtx);
+	while (test_bit(bit, word)) {
+		err = msleep(word, &wait_bit_mtx, PWAIT | mode, "wtb", 0);
+		if (err) {
+			mtx_leave(&wait_bit_mtx);
+			return 1;
+		}
+	}
+	mtx_leave(&wait_bit_mtx);
+	return 0;
+}
+
+int
+wait_on_bit_timeout(unsigned long *word, int bit, unsigned mode, int timo)
+{
+	int err;
+
+	if (!test_bit(bit, word))
+		return 0;
+
+	mtx_enter(&wait_bit_mtx);
+	while (test_bit(bit, word)) {
+		err = msleep(word, &wait_bit_mtx, PWAIT | mode, "wtb", timo);
+		if (err) {
+			mtx_leave(&wait_bit_mtx);
+			return 1;
+		}
+	}
+	mtx_leave(&wait_bit_mtx);
+	return 0;
+}
+
+void
+wake_up_bit(void *word, int bit)
+{
+	mtx_enter(&wait_bit_mtx);
+	wakeup(word);
+	mtx_leave(&wait_bit_mtx);
+}
+
+struct workqueue_struct *system_wq;
+struct workqueue_struct *system_unbound_wq;
+struct workqueue_struct *system_long_wq;
+struct taskq *taskletq;
+
+void
+drm_linux_init(void)
+{
+	if (system_wq == NULL) {
+		system_wq = (struct workqueue_struct *)
+		    taskq_create("drmwq", 1, IPL_HIGH, 0);
+	}
+	if (system_unbound_wq == NULL) {
+		system_unbound_wq = (struct workqueue_struct *)
+		    taskq_create("drmubwq", 1, IPL_HIGH, 0);
+	}
+	if (system_long_wq == NULL) {
+		system_long_wq = (struct workqueue_struct *)
+		    taskq_create("drmlwq", 1, IPL_HIGH, 0);
+	}
+
+	if (taskletq == NULL)
+		taskletq = taskq_create("drmtskl", 1, IPL_HIGH, 0);
+}
+
+#define PCIE_ECAP_RESIZE_BAR	0x15
+#define RBCAP0			0x04
+#define RBCTRL0			0x08
+#define RBCTRL_BARINDEX_MASK	0x07
+#define RBCTRL_BARSIZE_MASK	0x1f00
+#define RBCTRL_BARSIZE_SHIFT	8
+
+/* size in MB is 1 << nsize */
+int
+pci_resize_resource(struct pci_dev *pdev, int bar, int nsize)
+{
+	pcireg_t	reg;
+	uint32_t	offset, capid;
+
+	KASSERT(bar == 0);
+
+	offset = PCI_PCIE_ECAP;
+
+	/* search PCI Express Extended Capabilities */
+	do {
+		reg = pci_conf_read(pdev->pc, pdev->tag, offset);
+		capid = PCI_PCIE_ECAP_ID(reg);
+		if (capid == PCIE_ECAP_RESIZE_BAR)
+			break;
+		offset = PCI_PCIE_ECAP_NEXT(reg);
+	} while (capid != 0);
+
+	if (capid == 0) {
+		printf("%s: could not find resize bar cap!\n", __func__);
+		return -ENOTSUP;
+	}
+
+	reg = pci_conf_read(pdev->pc, pdev->tag, offset + RBCAP0);
+
+	if ((reg & (1 << (nsize + 4))) == 0) {
+		printf("%s size not supported\n", __func__);
+		return -ENOTSUP;
+	}
+
+	reg = pci_conf_read(pdev->pc, pdev->tag, offset + RBCTRL0);
+	if ((reg & RBCTRL_BARINDEX_MASK) != 0) {
+		printf("%s BAR index not 0\n", __func__);
+		return -EINVAL;
+	}
+
+	reg &= ~RBCTRL_BARSIZE_MASK;
+	reg |= (nsize << RBCTRL_BARSIZE_SHIFT) & RBCTRL_BARSIZE_MASK;
+
+	pci_conf_write(pdev->pc, pdev->tag, offset + RBCTRL0, reg);
+
+	return 0;
 }

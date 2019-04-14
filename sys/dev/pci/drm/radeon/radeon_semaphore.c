@@ -27,7 +27,7 @@
  * Authors:
  *    Christian König <deathsimple@vodafone.de>
  */
-#include <dev/pci/drm/drmP.h>
+#include <drm/drmP.h>
 #include "radeon.h"
 #include "radeon_trace.h"
 
@@ -56,7 +56,7 @@ int radeon_semaphore_create(struct radeon_device *rdev,
 }
 
 bool radeon_semaphore_emit_signal(struct radeon_device *rdev, int ridx,
-			          struct radeon_semaphore *semaphore)
+				  struct radeon_semaphore *semaphore)
 {
 	struct radeon_ring *ring = &rdev->ring[ridx];
 
@@ -73,7 +73,7 @@ bool radeon_semaphore_emit_signal(struct radeon_device *rdev, int ridx,
 }
 
 bool radeon_semaphore_emit_wait(struct radeon_device *rdev, int ridx,
-			        struct radeon_semaphore *semaphore)
+				struct radeon_semaphore *semaphore)
 {
 	struct radeon_ring *ring = &rdev->ring[ridx];
 

@@ -23,10 +23,11 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
+#include <linux/export.h>
 
-#include <dev/pci/drm/drmP.h>
-#include <dev/pci/drm/drm_edid.h>
-#include <dev/pci/drm/radeon_drm.h>
+#include <drm/drmP.h>
+#include <drm/drm_edid.h>
+#include <drm/radeon_drm.h>
 #include "radeon.h"
 #include "atom.h"
 
