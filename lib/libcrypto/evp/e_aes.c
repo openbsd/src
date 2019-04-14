@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.36 2019/04/14 17:26:27 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.37 2019/04/14 17:27:42 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -829,11 +829,10 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		EVP_CIPHER_CTX *out = ptr;
 		EVP_AES_GCM_CTX *gctx_out = out->cipher_data;
 
-		if (gctx->iv == c->iv)
+		if (gctx->iv == c->iv) {
 			gctx_out->iv = out->iv;
-		else {
-			gctx_out->iv = malloc(gctx->ivlen);
-			if (!gctx_out->iv)
+		} else {
+			if ((gctx_out->iv = calloc(1, gctx->ivlen)) == NULL)
 				return 0;
 			memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
 		}
@@ -1381,8 +1380,7 @@ aead_aes_gcm_init(EVP_AEAD_CTX *ctx, const unsigned char *key, size_t key_len,
 		return 0;
 	}
 
-	gcm_ctx = malloc(sizeof(struct aead_aes_gcm_ctx));
-	if (gcm_ctx == NULL)
+	if ((gcm_ctx = calloc(1, sizeof(struct aead_aes_gcm_ctx))) == NULL)
 		return 0;
 
 #ifdef AESNI_CAPABLE
