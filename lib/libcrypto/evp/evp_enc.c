@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.40 2019/03/17 18:07:41 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.41 2019/04/14 16:43:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -674,8 +674,21 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 		memcpy(out->cipher_data, in->cipher_data, in->cipher->ctx_size);
 	}
 
-	if (in->cipher->flags & EVP_CIPH_CUSTOM_COPY)
-		return in->cipher->ctrl((EVP_CIPHER_CTX *)in,
-		    EVP_CTRL_COPY, 0, out);
+	if (in->cipher->flags & EVP_CIPH_CUSTOM_COPY) {
+		if (!in->cipher->ctrl((EVP_CIPHER_CTX *)in, EVP_CTRL_COPY,
+		    0, out)) {
+			/*
+			 * If the custom copy control failed, assume that there
+			 * may still be pointers copied in the cipher_data that
+			 * we do not own. This may result in a leak from a bad
+			 * custom copy control, but that's preferable to a
+			 * double free...
+			 */
+			freezero(out->cipher_data, in->cipher->ctx_size);
+			out->cipher_data = NULL;
+			return 0;
+		}
+	}
+
 	return 1;
 }
