@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.101 2018/08/31 02:32:29 jcs Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.102 2019/04/14 10:23:36 jsg Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -340,7 +340,9 @@ _mkdev(pty, pty*, {-if [ $U -gt 15 ]; then
 	done-})dnl
 __devitem(dc, dc*, {-4 channel serial interface (keyboard{-,-} mouse{-,-}modem{-,-} printer)-})dnl
 __devitem(drm, drm*, {-Direct Rendering Manager-})dnl
-_mcdev({-drm-}, drm*, {-drm-}, {-major_drm_c-}, 600)dnl
+_mkdev(drm, drm*, {-M drm$U c major_drm_c $U 600
+	r=Add($U, 128)
+	M drmR$r c major_drm_c $r 600-})dnl
 __devtitle(prn, Printers)dnl
 __devitem(lpt, lpt*, IEEE 1284 centronics printer)dnl
 _mkdev(lpt, lpt*|lpa*,
