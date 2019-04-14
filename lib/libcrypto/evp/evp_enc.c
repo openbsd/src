@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.42 2019/04/14 16:46:26 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.43 2019/04/14 17:16:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,8 +144,8 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 
 		ctx->cipher = cipher;
 		if (ctx->cipher->ctx_size) {
-			ctx->cipher_data = malloc(ctx->cipher->ctx_size);
-			if (!ctx->cipher_data) {
+			ctx->cipher_data = calloc(1, ctx->cipher->ctx_size);
+			if (ctx->cipher_data == NULL) {
 				EVPerror(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
@@ -667,8 +667,8 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 	memcpy(out, in, sizeof *out);
 
 	if (in->cipher_data && in->cipher->ctx_size) {
-		out->cipher_data = malloc(in->cipher->ctx_size);
-		if (!out->cipher_data) {
+		out->cipher_data = calloc(1, in->cipher->ctx_size);
+		if (out->cipher_data == NULL) {
 			EVPerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
