@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.41 2019/04/14 16:43:49 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.42 2019/04/14 16:46:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -581,6 +581,7 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 		if (c->cipher_data)
 			explicit_bzero(c->cipher_data, c->cipher->ctx_size);
 	}
+	/* XXX - store size of cipher_data so we can always freezero(). */
 	free(c->cipher_data);
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_finish(c->engine);
