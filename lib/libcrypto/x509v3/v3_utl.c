@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.32 2019/04/13 18:42:23 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.33 2019/04/14 07:35:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -66,7 +66,7 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-char *bnstr(const BIGNUM *bn);
+char *bn_to_string(const BIGNUM *bn);
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char * const *a, const char * const *b);
 static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name,
