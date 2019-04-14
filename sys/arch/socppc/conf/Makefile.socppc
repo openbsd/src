@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.socppc,v 1.59 2018/02/09 03:59:15 tb Exp $
+#	$OpenBSD: Makefile.socppc,v 1.60 2019/04/14 14:07:07 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -33,6 +33,9 @@ CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-snprintf \
 		-fno-builtin-log2 -fno-builtin-malloc ${NOPIE_FLAGS}
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
+.endif
+.if ${IDENT:M-DSMALL_KERNEL}
+COPTS?=		-Oz
 .endif
 
 DEBUG?=		-g

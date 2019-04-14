@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2019/04/05 21:08:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2019/04/14 14:07:08 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -48,7 +48,7 @@ ${IMAGE}: ${CBIN}
 
 bsd:
 	cd ${TOP}/../../sys/arch/socppc/compile/RAMDISK && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env COPTS=-Oz ${MAKE}'
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/socppc/compile/RAMDISK/obj/bsd bsd
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}

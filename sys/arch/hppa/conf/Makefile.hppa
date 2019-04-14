@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.105 2018/02/09 03:59:15 tb Exp $
+#	$OpenBSD: Makefile.hppa,v 1.106 2019/04/14 14:07:06 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -31,6 +31,10 @@ CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 CMACHFLAGS+=	-fno-stack-protector
 SORTR=		sort -R
+.if ${IDENT:M-DSMALL_KERNEL}
+SORTR=		cat
+COPTS?=		-Oz
+.endif
 
 DEBUG?=		-g
 COPTS?=		-O2

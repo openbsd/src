@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.99 2019/04/14 10:14:50 jsg Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.100 2019/04/14 14:07:07 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -41,6 +41,7 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
+COPTS?=		-Oz
 .endif
 .if ${COMPILER_VERSION:Mclang}
 CWARNFLAGS+=	-Wno-unused-command-line-argument

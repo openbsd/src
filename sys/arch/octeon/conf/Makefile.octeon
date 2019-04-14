@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.52 2019/01/14 16:27:19 visa Exp $
+#	$OpenBSD: Makefile.octeon,v 1.53 2019/04/14 14:07:07 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -42,6 +42,7 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
+COPTS?=		-Oz
 .endif
 
 DEBUG?=		-g
