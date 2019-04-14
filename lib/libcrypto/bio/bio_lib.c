@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.28 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.29 2019/04/14 17:39:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -250,7 +250,13 @@ BIO_read(BIO *b, void *out, int outl)
 	int i;
 	long (*cb)(BIO *, int, const char *, int, long, long);
 
-	if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL)) {
+	if (b == NULL)
+		return (0);
+
+	if (out == NULL || outl <= 0)
+		return (0);
+
+	if (b->method == NULL || b->method->bread == NULL) {
 		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
@@ -273,6 +279,7 @@ BIO_read(BIO *b, void *out, int outl)
 	if (cb != NULL)
 		i = (int)cb(b, BIO_CB_READ|BIO_CB_RETURN, out, outl,
 		    0L, (long)i);
+
 	return (i);
 }
 
@@ -285,12 +292,15 @@ BIO_write(BIO *b, const void *in, int inl)
 	if (b == NULL)
 		return (0);
 
-	cb = b->callback;
-	if ((b->method == NULL) || (b->method->bwrite == NULL)) {
+	if (in == NULL || inl <= 0)
+		return (0);
+
+	if (b->method == NULL || b->method->bwrite == NULL) {
 		BIOerror(BIO_R_UNSUPPORTED_METHOD);
 		return (-2);
 	}
 
+	cb = b->callback;
 	if ((cb != NULL) &&
 	    ((i = (int)cb(b, BIO_CB_WRITE, in, inl, 0L, 1L)) <= 0))
 		return (i);
