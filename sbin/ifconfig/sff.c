@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.7 2019/04/11 12:32:46 sthen Exp $ */
+/*	$OpenBSD: sff.c,v 1.8 2019/04/15 03:12:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -223,8 +223,27 @@ static const char *sff8024_con_names[] = {
 #define SFF_BIAS_FACTOR		500.0
 #define SFF_POWER_FACTOR	10000.0
 
+/*
+ * XFP stuff is defined by INF-8077.
+ *
+ * The "Serial ID Memory Map" on page 1 contains the interesting strings
+ */
+
+#define INF8077_VENDOR_START		148
+#define INF8077_VENDOR_END		163
+#define INF8077_PRODUCT_START		168
+#define INF8077_PRODUCT_END		183
+#define INF8077_REVISION_START		184
+#define INF8077_REVISION_END		185
+#define INF8077_SERIAL_START		196
+#define INF8077_SERIAL_END		211
+#define INF8077_DATECODE		212
+#define INF8077_LOT_START		218
+#define INF8077_LOT_END			219
+
 static void	hexdump(const void *, size_t);
 static int	if_sff8472(int, const char *, int, const struct if_sffpage *);
+static int	if_inf8077(int, const char *, int, const struct if_sffpage *);
 
 static const char *
 sff_id_name(uint8_t id)
@@ -292,9 +311,14 @@ if_sff_info(int s, const char *ifname, int dump)
 	uint8_t id, ext_id;
 
 	if_sffpage_init(&pg0, ifname, IFSFF_ADDR_EEPROM, 0);
-
-	if (ioctl(s, SIOCGIFSFFPAGE, (caddr_t)&pg0) == -1)
-		return (-1);
+	if (ioctl(s, SIOCGIFSFFPAGE, (caddr_t)&pg0) == -1) {
+		if (errno == ENXIO) {
+			/* try 1 for XFP cos myx which can't switch pages... */
+			if_sffpage_init(&pg0, ifname, IFSFF_ADDR_EEPROM, 1);
+			if (ioctl(s, SIOCGIFSFFPAGE, (caddr_t)&pg0) == -1)
+				return (-1);
+		}
+	}
 
 	if (dump)
 		if_sffpage_dump(ifname, &pg0);
@@ -312,6 +336,16 @@ if_sff_info(int s, const char *ifname, int dump)
 		/* FALLTHROUGH */
 	case SFF8024_ID_GBIC:
 		error = if_sff8472(s, ifname, dump, &pg0);
+		break;
+	case SFF8024_ID_XFP:
+		if (pg0.sff_page != 1) {
+			if_sffpage_init(&pg0, ifname, IFSFF_ADDR_EEPROM, 1);
+			if (ioctl(s, SIOCGIFSFFPAGE, (caddr_t)&pg0) == -1)
+				return (-1);
+			if (dump)
+				if_sffpage_dump(ifname, &pg0);
+		}
+		error = if_inf8077(s, ifname, dump, &pg0);
 		break;
 	}
 
@@ -530,6 +564,31 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + ALRM_LOW),
 	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + WARN_HIGH),
 	    if_sff_power2dbm(&ddm, SFF8472_AW_RX_POWER + WARN_LOW));
+
+	putchar('\n');
+	return (0);
+}
+
+static int
+if_inf8077(int s, const char *ifname, int dump, const struct if_sffpage *pg1)
+{
+	struct if_sffpage ddm;
+	uint8_t con, ddm_types;
+	int i;
+
+	printf("\n\tmodel: ");
+	if_sff_ascii_print(pg1, "",
+	    INF8077_VENDOR_START, INF8077_VENDOR_END, " ");
+	if_sff_ascii_print(pg1, "",
+	    INF8077_PRODUCT_START, INF8077_PRODUCT_END, "");
+	if_sff_ascii_print(pg1, " rev ",
+	    INF8077_REVISION_START, INF8077_REVISION_END, "");
+
+	if_sff_ascii_print(pg1, "\n\tserial: ",
+	    INF8077_SERIAL_START, INF8077_SERIAL_END, " ");
+	if_sff_date_print(pg1, "date: ", INF8077_DATECODE, " ");
+	if_sff_ascii_print(pg1, "lot: ",
+	    INF8077_LOT_START, INF8077_LOT_END, "");
 
 	putchar('\n');
 	return (0);
