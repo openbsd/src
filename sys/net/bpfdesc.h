@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.36 2018/01/24 00:25:17 dlg Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.37 2019/04/15 21:55:08 sashan Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -42,11 +42,16 @@
 
 #ifdef _KERNEL
 
+struct bpf_program_smr {
+	struct bpf_program	bps_bf;
+	struct smr_entry	bps_smr;
+};
+
 /*
  * Descriptor associated with each open bpf file.
  */
 struct bpf_d {
-	SRPL_ENTRY(bpf_d) bd_next;	/* Linked list of descriptors */
+	SMR_SLIST_ENTRY(bpf_d) bd_next;	/* Linked list of descriptors */
 	/*
 	 * Buffer slots: two mbuf clusters buffer the incoming packets.
 	 *   The model has three slots.  Sbuf is always occupied.
@@ -69,8 +74,10 @@ struct bpf_d {
 	struct bpf_if  *bd_bif;		/* interface descriptor */
 	u_long		bd_rtout;	/* Read timeout in 'ticks' */
 	u_long		bd_rdStart;	/* when the read started */
-	struct srp	bd_rfilter;	/* read filter code */
-	struct srp	bd_wfilter;	/* write filter code */
+	struct bpf_program_smr
+		       *bd_rfilter;	/* read filter code */
+	struct bpf_program_smr
+		       *bd_wfilter;	/* write filter code */
 	u_long		bd_rcount;	/* number of packets received */
 	u_long		bd_dcount;	/* number of packets dropped */
 
@@ -92,6 +99,9 @@ struct bpf_d {
 	LIST_ENTRY(bpf_d) bd_list;	/* descriptor list */
 
 	struct task	bd_wake_task;	/* delay csignal() and selwakeup() */
+
+	struct smr_entry
+			bd_smr;
 };
 
 /*
@@ -99,7 +109,7 @@ struct bpf_d {
  */
 struct bpf_if {
 	struct bpf_if *bif_next;	/* list of all interfaces */
-	SRPL_HEAD(, bpf_d) bif_dlist;		/* descriptor list */
+	SMR_SLIST_HEAD(, bpf_d) bif_dlist;		/* descriptor list */
 	struct bpf_if **bif_driverp;	/* pointer into softc */
 	u_int bif_dlt;			/* link layer type */
 	u_int bif_hdrlen;		/* length of header (with padding) */

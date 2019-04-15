@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.172 2019/04/03 16:20:23 anton Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.173 2019/04/15 21:55:08 sashan Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/sysctl.h>
 #include <sys/rwlock.h>
 #include <sys/atomic.h>
-#include <sys/srp.h>
+#include <sys/smr.h>
 #include <sys/specdev.h>
 #include <sys/selinfo.h>
 #include <sys/task.h>
@@ -97,8 +97,8 @@ void	bpf_ifname(struct bpf_if*, struct ifreq *);
 int	_bpf_mtap(caddr_t, const struct mbuf *, u_int,
 	    void (*)(const void *, void *, size_t));
 void	bpf_mcopy(const void *, void *, size_t);
-int	bpf_movein(struct uio *, u_int, struct mbuf **,
-	    struct sockaddr *, struct bpf_insn *);
+int	bpf_movein(struct uio *, struct bpf_d *, struct mbuf **,
+	    struct sockaddr *);
 int	bpf_setif(struct bpf_d *, struct ifreq *);
 int	bpfpoll(dev_t, int, struct proc *);
 int	bpfkqfilter(dev_t, struct knote *);
@@ -123,34 +123,30 @@ void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 void	bpf_detachd(struct bpf_d *);
 void	bpf_resetd(struct bpf_d *);
 
+void	bpf_prog_smr(void *);
+void	bpf_d_smr(void *);
+
 /*
  * Reference count access to descriptor buffers
  */
 void	bpf_get(struct bpf_d *);
 void	bpf_put(struct bpf_d *);
 
-/*
- * garbage collector srps
- */
-
-void bpf_d_ref(void *, void *);
-void bpf_d_unref(void *, void *);
-struct srpl_rc bpf_d_rc = SRPL_RC_INITIALIZER(bpf_d_ref, bpf_d_unref, NULL);
-
-void bpf_insn_dtor(void *, void *);
-struct srp_gc bpf_insn_gc = SRP_GC_INITIALIZER(bpf_insn_dtor, NULL);
 
 struct rwlock bpf_sysctl_lk = RWLOCK_INITIALIZER("bpfsz");
 
 int
-bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
-    struct sockaddr *sockp, struct bpf_insn *filter)
+bpf_movein(struct uio *uio, struct bpf_d *d, struct mbuf **mp,
+    struct sockaddr *sockp)
 {
+	struct bpf_program_smr *bps;
+	struct bpf_insn *fcode = NULL;
 	struct mbuf *m;
 	struct m_tag *mtag;
 	int error;
 	u_int hlen;
 	u_int len;
+	u_int linktype;
 	u_int slen;
 
 	/*
@@ -162,6 +158,7 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 	 * Also, we are careful to leave room at the front of the mbuf
 	 * for the link level header.
 	 */
+	linktype = d->bd_bif->bif_dlt;
 	switch (linktype) {
 
 	case DLT_SLIP:
@@ -223,7 +220,13 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 	if (error)
 		goto bad;
 
-	slen = bpf_filter(filter, mtod(m, u_char *), len, len);
+	smr_read_enter();
+	bps = SMR_PTR_GET(&d->bd_wfilter);
+	if (bps != NULL)
+		fcode = bps->bps_bf.bf_insns;
+	slen = bpf_filter(fcode, mtod(m, u_char *), len, len);
+	smr_read_leave();
+
 	if (slen < len) {
 		error = EPERM;
 		goto bad;
@@ -280,7 +283,7 @@ bpf_attachd(struct bpf_d *d, struct bpf_if *bp)
 	d->bd_bif = bp;
 
 	KERNEL_ASSERT_LOCKED();
-	SRPL_INSERT_HEAD_LOCKED(&bpf_d_rc, &bp->bif_dlist, d, bd_next);
+	SMR_SLIST_INSERT_HEAD_LOCKED(&bp->bif_dlist, d, bd_next);
 
 	*bp->bif_driverp = bp;
 }
@@ -302,9 +305,9 @@ bpf_detachd(struct bpf_d *d)
 
 	/* Remove ``d'' from the interface's descriptor list. */
 	KERNEL_ASSERT_LOCKED();
-	SRPL_REMOVE_LOCKED(&bpf_d_rc, &bp->bif_dlist, d, bpf_d, bd_next);
+	SMR_SLIST_REMOVE_LOCKED(&bp->bif_dlist, d, bpf_d, bd_next);
 
-	if (SRPL_EMPTY_LOCKED(&bp->bif_dlist)) {
+	if (SMR_SLIST_EMPTY_LOCKED(&bp->bif_dlist)) {
 		/*
 		 * Let the driver know that there are no more listeners.
 		 */
@@ -374,6 +377,7 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	bd->bd_sig = SIGIO;
 	mtx_init(&bd->bd_mtx, IPL_NET);
 	task_set(&bd->bd_wake_task, bpf_wakeup_cb, bd);
+	smr_init(&bd->bd_smr);
 
 	if (flag & FNONBLOCK)
 		bd->bd_rtout = -1;
@@ -583,11 +587,8 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	struct bpf_d *d;
 	struct ifnet *ifp;
 	struct mbuf *m;
-	struct bpf_program *bf;
-	struct bpf_insn *fcode = NULL;
 	int error;
 	struct sockaddr_storage dst;
-	u_int dlt;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -608,14 +609,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 		goto out;
 	}
 
-	KERNEL_ASSERT_LOCKED(); /* for accessing bd_wfilter */
-	bf = srp_get_locked(&d->bd_wfilter);
-	if (bf != NULL)
-		fcode = bf->bf_insns;
-
-	dlt = d->bd_bif->bif_dlt;
-
-	error = bpf_movein(uio, dlt, &m, sstosa(&dst), fcode);
+	error = bpf_movein(uio, d, &m, sstosa(&dst));
 	if (error)
 		goto out;
 
@@ -1022,48 +1016,53 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 int
 bpf_setf(struct bpf_d *d, struct bpf_program *fp, int wf)
 {
-	struct bpf_program *bf;
-	struct srp *filter;
+	struct bpf_program_smr *bps, *old_bps;
 	struct bpf_insn *fcode;
 	u_int flen, size;
 
 	KERNEL_ASSERT_LOCKED();
-	filter = wf ? &d->bd_wfilter : &d->bd_rfilter;
 
 	if (fp->bf_insns == 0) {
 		if (fp->bf_len != 0)
 			return (EINVAL);
-		srp_update_locked(&bpf_insn_gc, filter, NULL);
-		mtx_enter(&d->bd_mtx);
-		bpf_resetd(d);
-		mtx_leave(&d->bd_mtx);
-		return (0);
+		bps = NULL;
+	} else {
+		flen = fp->bf_len;
+		if (flen > BPF_MAXINSNS)
+			return (EINVAL);
+
+		fcode = mallocarray(flen, sizeof(*fp->bf_insns), M_DEVBUF,
+		    M_WAITOK | M_CANFAIL);
+		if (fcode == NULL)
+			return (ENOMEM);
+
+		size = flen * sizeof(*fp->bf_insns);
+		if (copyin(fp->bf_insns, fcode, size) != 0 ||
+		    bpf_validate(fcode, (int)flen) == 0) {
+			free(fcode, M_DEVBUF, size);
+			return (EINVAL);
+		}
+
+		bps = malloc(sizeof(*bps), M_DEVBUF, M_WAITOK);
+		smr_init(&bps->bps_smr);
+		bps->bps_bf.bf_len = flen;
+		bps->bps_bf.bf_insns = fcode;
 	}
-	flen = fp->bf_len;
-	if (flen > BPF_MAXINSNS)
-		return (EINVAL);
 
-	fcode = mallocarray(flen, sizeof(*fp->bf_insns), M_DEVBUF,
-	    M_WAITOK | M_CANFAIL);
-	if (fcode == NULL)
-		return (ENOMEM);
-
-	size = flen * sizeof(*fp->bf_insns);
-	if (copyin(fp->bf_insns, fcode, size) != 0 ||
-	    bpf_validate(fcode, (int)flen) == 0) {
-		free(fcode, M_DEVBUF, size);
-		return (EINVAL);
+	if (wf == 0) {
+		old_bps = SMR_PTR_GET_LOCKED(&d->bd_rfilter);
+		SMR_PTR_SET_LOCKED(&d->bd_rfilter, bps);
+	} else {
+		old_bps = SMR_PTR_GET_LOCKED(&d->bd_wfilter);
+		SMR_PTR_SET_LOCKED(&d->bd_wfilter, bps);
 	}
-
-	bf = malloc(sizeof(*bf), M_DEVBUF, M_WAITOK);
-	bf->bf_len = flen;
-	bf->bf_insns = fcode;
-
-	srp_update_locked(&bpf_insn_gc, filter, bf);
 
 	mtx_enter(&d->bd_mtx);
 	bpf_resetd(d);
 	mtx_leave(&d->bd_mtx);
+	if (old_bps != NULL)
+		smr_call(&old_bps->bps_smr, bpf_prog_smr, old_bps);
+
 	return (0);
 }
 
@@ -1265,7 +1264,6 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
     void (*cpfn)(const void *, void *, size_t))
 {
 	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct srp_ref sr;
 	struct bpf_d *d;
 	size_t pktlen, slen;
 	const struct mbuf *m0;
@@ -1286,9 +1284,9 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
 		pktlen += m0->m_len;
 
-	SRPL_FOREACH(d, &sr, &bp->bif_dlist, bd_next) {
-		struct srp_ref bsr;
-		struct bpf_program *bf;
+	smr_read_enter();
+	SMR_SLIST_FOREACH(d, &bp->bif_dlist, bd_next) {
+		struct bpf_program_smr *bps;
 		struct bpf_insn *fcode = NULL;
 
 		atomic_inc_long(&d->bd_rcount);
@@ -1296,11 +1294,10 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 		if (ISSET(d->bd_dirfilt, direction))
 			continue;
 
-		bf = srp_enter(&bsr, &d->bd_rfilter);
-		if (bf != NULL)
-			fcode = bf->bf_insns;
+		bps = SMR_PTR_GET(&d->bd_rfilter);
+		if (bps != NULL)
+			fcode = bps->bps_bf.bf_insns;
 		slen = bpf_mfilter(fcode, m, pktlen);
-		srp_leave(&bsr);
 
 		if (slen == 0)
 			continue;
@@ -1316,7 +1313,7 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 			mtx_leave(&d->bd_mtx);
 		}
 	}
-	SRPL_LEAVE(&sr);
+	smr_read_leave();
 
 	return (drop);
 }
@@ -1582,6 +1579,33 @@ bpf_allocbufs(struct bpf_d *d)
 }
 
 void
+bpf_prog_smr(void *bps_arg)
+{
+	struct bpf_program_smr *bps = bps_arg;
+
+	free(bps->bps_bf.bf_insns, M_DEVBUF,
+	    bps->bps_bf.bf_len * sizeof(struct bpf_insn));
+	free(bps, M_DEVBUF, sizeof(struct bpf_program_smr));
+}
+
+void
+bpf_d_smr(void *smr)
+{
+	struct bpf_d	*bd = smr;
+
+	free(bd->bd_sbuf, M_DEVBUF, 0);
+	free(bd->bd_hbuf, M_DEVBUF, 0);
+	free(bd->bd_fbuf, M_DEVBUF, 0);
+
+	if (bd->bd_rfilter != NULL)
+		bpf_prog_smr(bd->bd_rfilter);
+	if (bd->bd_wfilter != NULL)
+		bpf_prog_smr(bd->bd_wfilter);
+
+	free(bd, M_DEVBUF, sizeof(*bd));
+}
+
+void
 bpf_get(struct bpf_d *bd)
 {
 	atomic_inc_int(&bd->bd_ref);
@@ -1597,14 +1621,7 @@ bpf_put(struct bpf_d *bd)
 	if (atomic_dec_int_nv(&bd->bd_ref) > 0)
 		return;
 
-	free(bd->bd_sbuf, M_DEVBUF, 0);
-	free(bd->bd_hbuf, M_DEVBUF, 0);
-	free(bd->bd_fbuf, M_DEVBUF, 0);
-	KERNEL_ASSERT_LOCKED();
-	srp_update_locked(&bpf_insn_gc, &bd->bd_rfilter, NULL);
-	srp_update_locked(&bpf_insn_gc, &bd->bd_wfilter, NULL);
-
-	free(bd, M_DEVBUF, sizeof(*bd));
+	smr_call(&bd->bd_smr, bpf_d_smr, bd);
 }
 
 void *
@@ -1614,7 +1631,7 @@ bpfsattach(caddr_t *bpfp, const char *name, u_int dlt, u_int hdrlen)
 
 	if ((bp = malloc(sizeof(*bp), M_DEVBUF, M_NOWAIT)) == NULL)
 		panic("bpfattach");
-	SRPL_INIT(&bp->bif_dlist);
+	SMR_SLIST_INIT(&bp->bif_dlist);
 	bp->bif_driverp = (struct bpf_if **)bpfp;
 	bp->bif_name = name;
 	bp->bif_ifp = NULL;
@@ -1677,10 +1694,10 @@ bpfsdetach(void *p)
 		if (cdevsw[maj].d_open == bpfopen)
 			break;
 
-	while ((bd = SRPL_FIRST_LOCKED(&bp->bif_dlist)))
+	while ((bd = SMR_SLIST_FIRST_LOCKED(&bp->bif_dlist)))
 		vdevgone(maj, bd->bd_unit, bd->bd_unit, VCHR);
 
-	free(bp, M_DEVBUF, sizeof *bp);
+	free(bp, M_DEVBUF, sizeof(*bp));
 }
 
 int
@@ -1807,28 +1824,6 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	bpf_attachd(d, bp);
 	bpf_resetd(d);
 	return (0);
-}
-
-void
-bpf_d_ref(void *null, void *d)
-{
-	bpf_get(d);
-}
-
-void
-bpf_d_unref(void *null, void *d)
-{
-	bpf_put(d);
-}
-
-void
-bpf_insn_dtor(void *null, void *f)
-{
-	struct bpf_program *bf = f;
-	struct bpf_insn *insns = bf->bf_insns;
-
-	free(insns, M_DEVBUF, bf->bf_len * sizeof(*insns));
-	free(bf, M_DEVBUF, sizeof(*bf));
 }
 
 u_int32_t	bpf_mbuf_ldw(const void *, u_int32_t, int *);
