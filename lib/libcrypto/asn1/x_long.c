@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.14 2019/04/01 15:48:50 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.15 2019/04/15 17:46:02 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -195,8 +195,8 @@ long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 	}
 	ltmp = (long)utmp;
 	if (neg) {
-		ltmp++;
 		ltmp = -ltmp;
+		ltmp--;
 	}
 	if (ltmp == it->size) {
 		ASN1error(ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
