@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.36 2019/04/10 13:56:09 phessler Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.37 2019/04/15 03:26:55 visa Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2047,8 +2047,7 @@ ixl_down(struct ixl_softc *sc)
 
 		ifq_barrier(ifp->if_ifqs[i]);
 
-		if (!timeout_del(&rxr->rxr_refill))
-			timeout_barrier(&rxr->rxr_refill);
+		timeout_del_barrier(&rxr->rxr_refill);
 	}
 
 	/* XXX wait at least 400 usec for all tx queues in one go */
@@ -2544,8 +2543,7 @@ ixl_rxr_clean(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	bus_dmamap_t map;
 	unsigned int i;
 
-	if (!timeout_del(&rxr->rxr_refill))
-		timeout_barrier(&rxr->rxr_refill);
+	timeout_del_barrier(&rxr->rxr_refill);
 
 	maps = rxr->rxr_maps;
 	for (i = 0; i < sc->sc_rx_ring_ndescs; i++) {

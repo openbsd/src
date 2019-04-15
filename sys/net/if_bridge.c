@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.326 2019/03/31 13:59:38 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.327 2019/04/15 03:26:55 visa Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -692,8 +692,7 @@ bridge_stop(struct bridge_softc *sc)
 
 	CLR(ifp->if_flags, IFF_RUNNING);
 
-	if (!timeout_del(&sc->sc_brtimeout))
-		timeout_barrier(&sc->sc_brtimeout);
+	timeout_del_barrier(&sc->sc_brtimeout);
 
 	bridge_rtflush(sc, IFBF_FLUSHDYN);
 }
