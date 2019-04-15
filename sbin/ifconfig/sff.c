@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.8 2019/04/15 03:12:50 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.9 2019/04/15 03:39:28 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -224,25 +224,33 @@ static const char *sff8024_con_names[] = {
 #define SFF_POWER_FACTOR	10000.0
 
 /*
+ * QSFP is defined by SFF-8436, but the management interface is
+ * updated and maintained by SFF-8636.
+ */
+
+/*
  * XFP stuff is defined by INF-8077.
  *
  * The "Serial ID Memory Map" on page 1 contains the interesting strings
  */
 
-#define INF8077_VENDOR_START		148
-#define INF8077_VENDOR_END		163
-#define INF8077_PRODUCT_START		168
-#define INF8077_PRODUCT_END		183
-#define INF8077_REVISION_START		184
-#define INF8077_REVISION_END		185
-#define INF8077_SERIAL_START		196
-#define INF8077_SERIAL_END		211
-#define INF8077_DATECODE		212
-#define INF8077_LOT_START		218
-#define INF8077_LOT_END			219
+/* SFF-8636 and INF-8077 share a layout for various strings */
+
+#define UPPER_VENDOR_START		148
+#define UPPER_VENDOR_END		163
+#define UPPER_PRODUCT_START		168
+#define UPPER_PRODUCT_END		183
+#define UPPER_REVISION_START		184
+#define UPPER_REVISION_END		185
+#define UPPER_SERIAL_START		196
+#define UPPER_SERIAL_END		211
+#define UPPER_DATECODE			212
+#define UPPER_LOT_START			218
+#define UPPER_LOT_END			219
 
 static void	hexdump(const void *, size_t);
 static int	if_sff8472(int, const char *, int, const struct if_sffpage *);
+static int	if_sff8636(int, const char *, int, const struct if_sffpage *);
 static int	if_inf8077(int, const char *, int, const struct if_sffpage *);
 
 static const char *
@@ -346,6 +354,9 @@ if_sff_info(int s, const char *ifname, int dump)
 				if_sffpage_dump(ifname, &pg0);
 		}
 		error = if_inf8077(s, ifname, dump, &pg0);
+		break;
+	case SFF8024_ID_QSFP_PLUS:
+		error = if_sff8636(s, ifname, dump, &pg0);
 		break;
 	}
 
@@ -569,28 +580,39 @@ if_sff8472(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
 	return (0);
 }
 
+static void
+if_upper_strings(const struct if_sffpage *pg)
+{
+	printf("\n\tmodel: ");
+	if_sff_ascii_print(pg, "",
+	    UPPER_VENDOR_START, UPPER_VENDOR_END, " ");
+	if_sff_ascii_print(pg, "",
+	    UPPER_PRODUCT_START, UPPER_PRODUCT_END, "");
+	if_sff_ascii_print(pg, " rev ",
+	    UPPER_REVISION_START, UPPER_REVISION_END, "");
+
+	if_sff_ascii_print(pg, "\n\tserial: ",
+	    UPPER_SERIAL_START, UPPER_SERIAL_END, " ");
+	if_sff_date_print(pg, "date: ", UPPER_DATECODE, " ");
+	if_sff_ascii_print(pg, "lot: ",
+	    UPPER_LOT_START, UPPER_LOT_END, "");
+
+	putchar('\n');
+}
+
 static int
 if_inf8077(int s, const char *ifname, int dump, const struct if_sffpage *pg1)
 {
-	struct if_sffpage ddm;
-	uint8_t con, ddm_types;
-	int i;
+	if_upper_strings(pg1);
 
-	printf("\n\tmodel: ");
-	if_sff_ascii_print(pg1, "",
-	    INF8077_VENDOR_START, INF8077_VENDOR_END, " ");
-	if_sff_ascii_print(pg1, "",
-	    INF8077_PRODUCT_START, INF8077_PRODUCT_END, "");
-	if_sff_ascii_print(pg1, " rev ",
-	    INF8077_REVISION_START, INF8077_REVISION_END, "");
+	return (0);
+}
 
-	if_sff_ascii_print(pg1, "\n\tserial: ",
-	    INF8077_SERIAL_START, INF8077_SERIAL_END, " ");
-	if_sff_date_print(pg1, "date: ", INF8077_DATECODE, " ");
-	if_sff_ascii_print(pg1, "lot: ",
-	    INF8077_LOT_START, INF8077_LOT_END, "");
+static int
+if_sff8636(int s, const char *ifname, int dump, const struct if_sffpage *pg0)
+{
+	if_upper_strings(pg0);
 
-	putchar('\n');
 	return (0);
 }
 
