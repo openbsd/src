@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.9 2019/04/15 03:39:28 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.10 2019/04/15 03:41:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -355,7 +355,9 @@ if_sff_info(int s, const char *ifname, int dump)
 		}
 		error = if_inf8077(s, ifname, dump, &pg0);
 		break;
+	case SFF8024_ID_QSFP:
 	case SFF8024_ID_QSFP_PLUS:
+	case SFF8024_ID_QSFP28:
 		error = if_sff8636(s, ifname, dump, &pg0);
 		break;
 	}
