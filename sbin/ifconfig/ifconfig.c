@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.399 2019/04/11 11:32:24 sthen Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.400 2019/04/15 12:04:37 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -250,9 +250,6 @@ void	setpwe3fat(const char *, int);
 void	unsetpwe3fat(const char *, int);
 void	setpwe3neighbor(const char *, const char *);
 void	unsetpwe3neighbor(const char *, int);
-void	setvlantag(const char *, int);
-void	setvlandev(const char *, int);
-void	unsetvlandev(const char *, int);
 void	mpls_status(void);
 void	setrdomain(const char *, int);
 void	unsetrdomain(const char *, int);
@@ -424,9 +421,10 @@ const struct	cmd {
 	{ "-vnetid",	0,		0,		delvnetid },
 	{ "parent",	NEXTARG,	0,		setifparent },
 	{ "-parent",	1,		0,		delifparent },
-	{ "vlan",	NEXTARG,	0,		setvlantag },
-	{ "vlandev",	NEXTARG,	0,		setvlandev },
-	{ "-vlandev",	1,		0,		unsetvlandev },
+	{ "vlan",	NEXTARG,	0,		setvnetid },
+	{ "-vlan",	0,		0,		delvnetid },
+	{ "vlandev",	NEXTARG,	0,		setifparent },
+	{ "-vlandev",	1,		0,		delifparent },
 	{ "group",	NEXTARG,	0,		setifgroup },
 	{ "-group",	NEXTARG,	0,		unsetifgroup },
 	{ "autoconf",	1,		0,		setautoconf },
@@ -4273,89 +4271,6 @@ getencap(void)
 #endif
 
 	printf("\n");
-}
-
-static int __tag = 0;
-static int __have_tag = 0;
-
-/* ARGSUSED */
-void
-setvlantag(const char *val, int d)
-{
-	u_int16_t tag;
-	struct vlanreq vreq;
-	const char *errmsg = NULL;
-
-	warnx("The 'vlan' option is deprecated, use 'vnetid'");
-
-	__tag = tag = strtonum(val, EVL_VLID_MIN, EVL_VLID_MAX, &errmsg);
-	if (errmsg)
-		errx(1, "vlan tag %s: %s", val, errmsg);
-	__have_tag = 1;
-
-	bzero((char *)&vreq, sizeof(struct vlanreq));
-	ifr.ifr_data = (caddr_t)&vreq;
-
-	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETVLAN");
-
-	vreq.vlr_tag = tag;
-
-	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETVLAN");
-}
-
-/* ARGSUSED */
-void
-setvlandev(const char *val, int d)
-{
-	struct vlanreq	 vreq;
-	int		 tag;
-	size_t		 skip;
-	const char	*estr;
-
-	warnx("The 'vlandev' option is deprecated, use 'parent'");
-
-	bzero((char *)&vreq, sizeof(struct vlanreq));
-	ifr.ifr_data = (caddr_t)&vreq;
-
-	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETVLAN");
-
-	(void) strlcpy(vreq.vlr_parent, val, sizeof(vreq.vlr_parent));
-
-	if (!__have_tag && vreq.vlr_tag == 0) {
-		skip = strcspn(ifr.ifr_name, "0123456789");
-		tag = strtonum(ifr.ifr_name + skip, 0, 4095, &estr);
-		if (estr != NULL)
-			errx(1, "invalid vlan tag and device specification");
-		vreq.vlr_tag = tag;
-	} else if (__have_tag)
-		vreq.vlr_tag = __tag;
-
-	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETVLAN");
-}
-
-/* ARGSUSED */
-void
-unsetvlandev(const char *val, int d)
-{
-	struct vlanreq vreq;
-
-	warnx("The '-vlandev' option is deprecated, use '-parent'");
-
-	bzero((char *)&vreq, sizeof(struct vlanreq));
-	ifr.ifr_data = (caddr_t)&vreq;
-
-	if (ioctl(s, SIOCGETVLAN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETVLAN");
-
-	bzero((char *)&vreq.vlr_parent, sizeof(vreq.vlr_parent));
-	vreq.vlr_tag = 0;
-
-	if (ioctl(s, SIOCSETVLAN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETVLAN");
 }
 
 void
