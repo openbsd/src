@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.12 2019/04/15 00:51:45 dlg Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.13 2019/04/15 02:59:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -91,7 +91,7 @@ struct myx_cmd {
 	u_int32_t	mc_addr_high;
 	u_int32_t	mc_addr_low;
 	u_int8_t	mc_pad[40];		/* pad up to 64 bytes */
-} __packed;
+} __packed __aligned(4);
 
 struct myx_response {
 	u_int32_t	mr_data;
