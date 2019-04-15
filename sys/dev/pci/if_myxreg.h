@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myxreg.h,v 1.11 2019/04/15 00:37:52 dlg Exp $	*/
+/*	$OpenBSD: if_myxreg.h,v 1.12 2019/04/15 00:51:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -260,7 +260,7 @@ enum {
 	MYXCMD_ERR_BADPORT		= 7,
 	MYXCMD_ERR_RES			= 8,
 	MYXCMD_ERR_MULTICAST		= 9,
-	MYXCMD_ERR_UNALIGNED		= 10
+	MYXCMD_ERR_UNALIGNED		= 10,
 	MYXCMD_ERR_NO_MDIO		= 11,
 	MYXCMD_ERR_I2C_FAILURE		= 12,
 	MYXCMD_ERR_I2C_ABSENT		= 13,
