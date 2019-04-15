@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.103 2017/08/01 01:11:35 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.104 2019/04/15 00:20:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -674,44 +674,6 @@ myx_cmd(struct myx_softc *sc, u_int32_t cmd, struct myx_cmd *mc, u_int32_t *r)
 	struct myx_response	*mr;
 	u_int			 i;
 	u_int32_t		 result, data;
-#ifdef MYX_DEBUG
-	static const char *cmds[MYXCMD_MAX] = {
-		"CMD_NONE",
-		"CMD_RESET",
-		"CMD_GET_VERSION",
-		"CMD_SET_INTRQDMA",
-		"CMD_SET_BIGBUFSZ",
-		"CMD_SET_SMALLBUFSZ",
-		"CMD_GET_TXRINGOFF",
-		"CMD_GET_RXSMALLRINGOFF",
-		"CMD_GET_RXBIGRINGOFF",
-		"CMD_GET_INTRACKOFF",
-		"CMD_GET_INTRDEASSERTOFF",
-		"CMD_GET_TXRINGSZ",
-		"CMD_GET_RXRINGSZ",
-		"CMD_SET_INTRQSZ",
-		"CMD_SET_IFUP",
-		"CMD_SET_IFDOWN",
-		"CMD_SET_MTU",
-		"CMD_GET_INTRCOALDELAYOFF",
-		"CMD_SET_STATSINTVL",
-		"CMD_SET_STATSDMA_OLD",
-		"CMD_SET_PROMISC",
-		"CMD_UNSET_PROMISC",
-		"CMD_SET_LLADDR",
-		"CMD_SET_FC",
-		"CMD_UNSET_FC",
-		"CMD_DMA_TEST",
-		"CMD_SET_ALLMULTI",
-		"CMD_UNSET_ALLMULTI",
-		"CMD_SET_MCASTGROUP",
-		"CMD_UNSET_MCASTGROUP",
-		"CMD_UNSET_MCAST",
-		"CMD_SET_STATSDMA",
-		"CMD_UNALIGNED_DMA_TEST",
-		"CMD_GET_UNALIGNED_STATUS"
-	};
-#endif
 
 	mc->mc_cmd = htobe32(cmd);
 	mc->mc_addr_high = htobe32(MYX_ADDRHIGH(map->dm_segs[0].ds_addr));
@@ -739,9 +701,9 @@ myx_cmd(struct myx_softc *sc, u_int32_t cmd, struct myx_cmd *mc, u_int32_t *r)
 		delay(1000);
 	}
 
-	DPRINTF(MYXDBG_CMD, "%s(%s): %s completed, i %d, "
+	DPRINTF(MYXDBG_CMD, "%s(%s): cmd %u completed, i %d, "
 	    "result 0x%x, data 0x%x (%u)\n", DEVNAME(sc), __func__,
-	    cmds[cmd], i, result, data, data);
+	    cmd, i, result, data, data);
 
 	if (result != 0)
 		return (-1);
