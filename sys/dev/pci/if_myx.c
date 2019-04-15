@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.104 2019/04/15 00:20:29 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.105 2019/04/15 03:06:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -156,6 +157,8 @@ struct myx_softc {
 
 	volatile enum myx_state	 sc_state;
 	volatile u_int8_t	 sc_linkdown;
+
+	struct rwlock		 sc_sff_lock;
 };
 
 #define MYX_RXSMALL_SIZE	MCLBYTES
@@ -200,6 +203,7 @@ int	 myx_rxrinfo(struct myx_softc *, struct if_rxrinfo *);
 void	 myx_up(struct myx_softc *);
 void	 myx_iff(struct myx_softc *);
 void	 myx_down(struct myx_softc *);
+int	 myx_get_sffpage(struct myx_softc *, struct if_sffpage *);
 
 void	 myx_start(struct ifqueue *);
 void	 myx_write_txd_tail(struct myx_softc *, struct myx_slot *, u_int8_t,
@@ -705,12 +709,12 @@ myx_cmd(struct myx_softc *sc, u_int32_t cmd, struct myx_cmd *mc, u_int32_t *r)
 	    "result 0x%x, data 0x%x (%u)\n", DEVNAME(sc), __func__,
 	    cmd, i, result, data, data);
 
-	if (result != 0)
-		return (-1);
+	if (result == MYXCMD_OK) {
+		if (r != NULL)
+			*r = data;
+	}
 
-	if (r != NULL)
-		*r = data;
-	return (0);
+	return (result);
 }
 
 int
@@ -902,6 +906,15 @@ myx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = myx_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
 
+	case SIOCGIFSFFPAGE:
+		error = rw_enter(&sc->sc_sff_lock, RW_WRITE|RW_INTR);
+		if (error != 0)
+			break;
+
+		error = myx_get_sffpage(sc, (struct if_sffpage *)data);
+		rw_exit(&sc->sc_sff_lock);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 	}
@@ -931,6 +944,68 @@ myx_rxrinfo(struct myx_softc *sc, struct if_rxrinfo *ifri)
 	ifr[1].ifr_info = sc->sc_rx_ring[1].mrr_rxr;
 
 	return (if_rxr_info_ioctl(ifri, nitems(ifr), ifr));
+}
+
+static int
+myx_i2c_byte(struct myx_softc *sc, uint8_t off, uint8_t *byte)
+{
+	struct myx_cmd		mc;
+	int			result;
+	uint32_t		r;
+	unsigned int		ms;
+
+	memset(&mc, 0, sizeof(mc));
+	mc.mc_data0 = off;
+	for (ms = 0; ms < 50; ms++) {
+		result = myx_cmd(sc, MYXCMD_I2C_BYTE, &mc, &r);
+		switch (result) {
+		case MYXCMD_OK:
+			*byte = r;
+			return (0);
+		case MYXCMD_ERR_BUSY:
+			break;
+		default:
+			return (EIO);
+		}
+
+		delay(1000);
+	}
+
+	return (EBUSY);
+}
+
+int
+myx_get_sffpage(struct myx_softc *sc, struct if_sffpage *sff)
+{
+	struct myx_cmd		mc;
+	unsigned int		i;
+	int			result;
+
+	memset(&mc, 0, sizeof(mc));
+	mc.mc_data0 = 1; /* get all 256 bytes */
+	mc.mc_data1 = sff->sff_addr << 8;
+	result = myx_cmd(sc, MYXCMD_I2C_READ, &mc, NULL);
+	if (result != 0)
+		return (EIO);
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM) {
+		uint8_t page;
+
+		result = myx_i2c_byte(sc, 127, &page);
+		if (result != 0)
+			return (EIO);
+
+		if (page != sff->sff_page)
+			return (ENXIO);
+	}
+
+	for (i = 0; i < sizeof(sff->sff_data); i++) {
+		result = myx_i2c_byte(sc, i, &sff->sff_data[i]);
+		if (result != 0)
+			return (result);
+	}
+
+	return (0);
 }
 
 void
