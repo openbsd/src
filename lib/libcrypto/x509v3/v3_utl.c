@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.36 2019/04/16 19:34:15 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.37 2019/04/16 19:42:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -79,35 +79,42 @@ static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
 static int ipv6_hex(unsigned char *out, const char *in, int inlen);
 
-/* Add a CONF_VALUE name value pair to stack */
-
+/* Add a CONF_VALUE name-value pair to stack. */
 int
 X509V3_add_value(const char *name, const char *value,
     STACK_OF(CONF_VALUE) **extlist)
 {
 	CONF_VALUE *vtmp = NULL;
-	char *tname = NULL, *tvalue = NULL;
+	STACK_OF(CONF_VALUE) *free_exts = NULL;
 
-	if (name && !(tname = strdup(name)))
+	if ((vtmp = calloc(1, sizeof(CONF_VALUE))) == NULL)
 		goto err;
-	if (value && !(tvalue = strdup(value)))
-		goto err;
-	if (!(vtmp = malloc(sizeof(CONF_VALUE))))
-		goto err;
-	if (!*extlist && !(*extlist = sk_CONF_VALUE_new_null()))
-		goto err;
-	vtmp->section = NULL;
-	vtmp->name = tname;
-	vtmp->value = tvalue;
+	if (name != NULL) {
+		if ((vtmp->name = strdup(name)) == NULL)
+			goto err;
+	}
+	if (value != NULL) {
+		if ((vtmp->value = strdup(value)) == NULL)
+			goto err;
+	}
+
+	if (*extlist == NULL) {
+		if ((free_exts = *extlist = sk_CONF_VALUE_new_null()) == NULL)
+			goto err;
+	}
+
 	if (!sk_CONF_VALUE_push(*extlist, vtmp))
 		goto err;
+
 	return 1;
 
  err:
 	X509V3error(ERR_R_MALLOC_FAILURE);
-	free(vtmp);
-	free(tname);
-	free(tvalue);
+	X509V3_conf_free(vtmp);
+	if (free_exts != NULL) {
+		sk_CONF_VALUE_free(*extlist);
+		*extlist = NULL;
+	}
 	return 0;
 }
 
