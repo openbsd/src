@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.66 2018/04/06 13:59:30 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.67 2019/04/16 18:03:07 patrick Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ struct ppb_softc {
 	pcitag_t sc_tag;		/* ...and tag. */
 	pci_intr_handle_t sc_ih[4];
 	void *sc_intrhand;
+	struct extent *sc_parent_busex;
 	struct extent *sc_busex;
 	struct extent *sc_ioex;
 	struct extent *sc_memex;
@@ -76,6 +77,9 @@ struct ppb_softc {
 	struct task sc_rescan_task;
 	struct task sc_remove_task;
 	struct timeout sc_to;
+
+	u_long sc_busnum;
+	u_long sc_busrange;
 
 	bus_addr_t sc_iobase, sc_iolimit;
 	bus_addr_t sc_membase, sc_memlimit;
@@ -390,6 +394,10 @@ ppbdetach(struct device *self, int flags)
 		free(name, M_DEVBUF, PPB_EXNAMLEN);
 	}
 
+	if (sc->sc_parent_busex)
+		extent_free(sc->sc_parent_busex, sc->sc_busnum,
+		    sc->sc_busrange, EX_NOWAIT);
+
 	return (rv);
 }
 
@@ -529,6 +537,9 @@ ppb_alloc_busrange(struct ppb_softc *sc, struct pci_attach_args *pa,
 		if (extent_alloc(pa->pa_busex, busrange, 1, 0, 0, 
 		    EX_NOWAIT, &busnum))
 			continue;
+		sc->sc_parent_busex = pa->pa_busex;
+		sc->sc_busnum = busnum;
+		sc->sc_busrange = busrange;
 		*busdata |= pa->pa_bus;
 		*busdata |= (busnum << 8);
 		*busdata |= ((busnum + busrange - 1) << 16);
