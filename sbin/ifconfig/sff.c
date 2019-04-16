@@ -1,4 +1,4 @@
-/*	$OpenBSD: sff.c,v 1.10 2019/04/15 03:41:58 dlg Exp $ */
+/*	$OpenBSD: sff.c,v 1.11 2019/04/16 09:32:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -325,7 +325,8 @@ if_sff_info(int s, const char *ifname, int dump)
 			if_sffpage_init(&pg0, ifname, IFSFF_ADDR_EEPROM, 1);
 			if (ioctl(s, SIOCGIFSFFPAGE, (caddr_t)&pg0) == -1)
 				return (-1);
-		}
+		} else
+			return (-1);
 	}
 
 	if (dump)
