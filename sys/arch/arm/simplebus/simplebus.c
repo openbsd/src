@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.14 2019/01/05 03:42:19 jsg Exp $ */
+/* $OpenBSD: simplebus.c,v 1.15 2019/04/16 13:16:06 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -146,6 +146,7 @@ simplebus_attach_node(struct device *self, int node)
 	char			 buf[32];
 	int			 i, len, line;
 	uint32_t		*cell, *reg;
+	struct device		*child;
 
 	if (OF_getproplen(node, "compatible") <= 0)
 		return;
@@ -153,6 +154,14 @@ simplebus_attach_node(struct device *self, int node)
 	if (OF_getprop(node, "status", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "disabled") == 0)
 		return;
+
+	/* Skip if already attached early. */
+	for (i = 0; i < nitems(sc->sc_early_nodes); i++) {
+		if (sc->sc_early_nodes[i] == node)
+			return;
+		if (sc->sc_early_nodes[i] == 0)
+			break;
+	}
 
 	memset(&fa, 0, sizeof(fa));
 	fa.fa_name = "";
@@ -200,8 +209,18 @@ simplebus_attach_node(struct device *self, int node)
 		OF_getpropintarray(node, "interrupts", fa.fa_intr, len);
 	}
 
-	config_found_sm(self, &fa, sc->sc_early ? NULL : simplebus_print,
-	    simplebus_submatch);
+	child = config_found_sm(self, &fa, sc->sc_early ? NULL :
+	    simplebus_print, simplebus_submatch);
+
+	/* Record nodes that we attach early. */
+	if (child && sc->sc_early) {
+		for (i = 0; i < nitems(sc->sc_early_nodes); i++) {
+			if (sc->sc_early_nodes[i] != 0)
+				continue;
+			sc->sc_early_nodes[i] = node;
+			break;
+		}
+	}
 
 	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
 	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
