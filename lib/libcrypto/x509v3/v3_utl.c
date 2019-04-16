@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.35 2019/04/16 19:31:07 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.36 2019/04/16 19:34:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -103,7 +103,7 @@ X509V3_add_value(const char *name, const char *value,
 		goto err;
 	return 1;
 
-err:
+ err:
 	X509V3error(ERR_R_MALLOC_FAILURE);
 	free(vtmp);
 	free(tname);
@@ -291,7 +291,7 @@ X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 		return 1;
 	}
 
-err:
+ err:
 	X509V3error(X509V3_R_INVALID_BOOLEAN_STRING);
 	X509V3_conf_err(value);
 	return 0;
@@ -394,7 +394,7 @@ X509V3_parse_list(const char *line)
 	free(linebuf);
 	return values;
 
-err:
+ err:
 	free(linebuf);
 	sk_CONF_VALUE_pop_free(values, X509V3_conf_free);
 	return NULL;
@@ -502,12 +502,12 @@ string_to_hex(const char *str, long *len)
 
 	return hexbuf;
 
-err:
+ err:
 	free(hexbuf);
 	X509V3error(ERR_R_MALLOC_FAILURE);
 	return NULL;
 
-badhex:
+ badhex:
 	free(hexbuf);
 	X509V3error(X509V3_R_ILLEGAL_HEX_DIGIT);
 	return NULL;
@@ -1159,7 +1159,7 @@ a2i_IPADDRESS_NC(const char *ipasc)
 
 	return ret;
 
-err:
+ err:
 	free(iptmp);
 	if (ret)
 		ASN1_OCTET_STRING_free(ret);
