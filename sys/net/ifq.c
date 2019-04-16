@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.30 2019/03/29 04:21:55 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.31 2019/04/16 04:04:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -70,6 +70,13 @@ struct priq {
 void	ifq_start_task(void *);
 void	ifq_restart_task(void *);
 void	ifq_barrier_task(void *);
+void	ifq_bundle_task(void *);
+
+static inline void
+ifq_run_start(struct ifqueue *ifq)
+{
+	ifq_serialize(ifq, &ifq->ifq_start);
+}
 
 void
 ifq_serialize(struct ifqueue *ifq, struct task *t)
@@ -112,6 +119,16 @@ ifq_is_serialized(struct ifqueue *ifq)
 }
 
 void
+ifq_start(struct ifqueue *ifq)
+{
+	if (ifq_len(ifq) >= min(ifq->ifq_if->if_txmit, ifq->ifq_maxlen)) {
+		task_del(ifq->ifq_softnet, &ifq->ifq_bundle);
+		ifq_run_start(ifq);
+	} else
+		task_add(ifq->ifq_softnet, &ifq->ifq_bundle);
+}
+
+void
 ifq_start_task(void *p)
 {
 	struct ifqueue *ifq = p;
@@ -135,10 +152,20 @@ ifq_restart_task(void *p)
 }
 
 void
+ifq_bundle_task(void *p)
+{
+	struct ifqueue *ifq = p;
+
+	ifq_run_start(ifq);
+}
+
+void
 ifq_barrier(struct ifqueue *ifq)
 {
 	struct cond c = COND_INITIALIZER();
 	struct task t = TASK_INITIALIZER(ifq_barrier_task, &c);
+
+	task_del(ifq->ifq_softnet, &ifq->ifq_bundle);
 
 	if (ifq->ifq_serializer == NULL)
 		return;
@@ -164,6 +191,7 @@ void
 ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 {
 	ifq->ifq_if = ifp;
+	ifq->ifq_softnet = net_tq(ifp->if_index); /* + idx */
 	ifq->ifq_softc = NULL;
 
 	mtx_init(&ifq->ifq_mtx, IPL_NET);
@@ -184,6 +212,7 @@ ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 	mtx_init(&ifq->ifq_task_mtx, IPL_NET);
 	TAILQ_INIT(&ifq->ifq_task_list);
 	ifq->ifq_serializer = NULL;
+	task_set(&ifq->ifq_bundle, ifq_bundle_task, ifq);
 
 	task_set(&ifq->ifq_start, ifq_start_task, ifq);
 	task_set(&ifq->ifq_restart, ifq_restart_task, ifq);
@@ -234,6 +263,10 @@ void
 ifq_destroy(struct ifqueue *ifq)
 {
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+
+	NET_ASSERT_UNLOCKED();
+	if (!task_del(ifq->ifq_softnet, &ifq->ifq_bundle))
+		taskq_barrier(ifq->ifq_softnet);
 
 	/* don't need to lock because this is the last use of the ifq */
 

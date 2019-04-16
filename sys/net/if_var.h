@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.95 2019/03/31 13:58:18 mpi Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.96 2019/04/16 04:04:19 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -176,6 +176,7 @@ struct ifnet {				/* and the entries */
 	struct	ifqueue **if_ifqs;	/* [I] pointer to an array of sndqs */
 	void	(*if_qstart)(struct ifqueue *);
 	unsigned int if_nifqs;		/* [I] number of output queues */
+	unsigned int if_txmit;		/* [c] txmitigation amount */
 
 	struct	ifiqueue if_rcv;	/* rx/input queue */
 	struct	ifiqueue **if_iqs;	/* [I] pointer to the array of iqs */
@@ -302,6 +303,9 @@ do {									\
 #define	IFQ_LEN(ifq)			ifq_len(ifq)
 #define	IFQ_IS_EMPTY(ifq)		ifq_empty(ifq)
 #define	IFQ_SET_MAXLEN(ifq, len)	ifq_set_maxlen(ifq, len)
+
+#define IF_TXMIT_MIN			1
+#define IF_TXMIT_DEFAULT		16
 
 /* default interface priorities */
 #define IF_WIRED_DEFAULT_PRIORITY	0

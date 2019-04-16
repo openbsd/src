@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.575 2019/04/14 06:57:00 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.576 2019/04/16 04:04:19 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -615,6 +615,8 @@ if_attach_common(struct ifnet *ifp)
 	ifp->if_snd.ifq_ifqs[0] = &ifp->if_snd;
 	ifp->if_ifqs = ifp->if_snd.ifq_ifqs;
 	ifp->if_nifqs = 1;
+	if (ifp->if_txmit == 0)
+		ifp->if_txmit = IF_TXMIT_DEFAULT;
 
 	ifiq_init(&ifp->if_rcv, ifp, 0);
 

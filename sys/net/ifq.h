@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.25 2019/03/29 04:21:55 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.26 2019/04/16 04:04:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -25,6 +25,7 @@ struct ifq_ops;
 
 struct ifqueue {
 	struct ifnet		*ifq_if;
+	struct taskq		*ifq_softnet;
 	union {
 		void			*_ifq_softc;
 		/*
@@ -57,6 +58,7 @@ struct ifqueue {
 	struct mutex		 ifq_task_mtx;
 	struct task_list	 ifq_task_list;
 	void			*ifq_serializer;
+	struct task		 ifq_bundle;
 
 	/* work to be serialised */
 	struct task		 ifq_start;
@@ -397,6 +399,7 @@ void		 ifq_attach(struct ifqueue *, const struct ifq_ops *, void *);
 void		 ifq_destroy(struct ifqueue *);
 void		 ifq_add_data(struct ifqueue *, struct if_data *);
 int		 ifq_enqueue(struct ifqueue *, struct mbuf *);
+void		 ifq_start(struct ifqueue *);
 struct mbuf	*ifq_deq_begin(struct ifqueue *);
 void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
 void		 ifq_deq_rollback(struct ifqueue *, struct mbuf *);
@@ -436,12 +439,6 @@ static inline unsigned int
 ifq_is_oactive(struct ifqueue *ifq)
 {
 	return (ifq->ifq_oactive);
-}
-
-static inline void
-ifq_start(struct ifqueue *ifq)
-{
-	ifq_serialize(ifq, &ifq->ifq_start);
 }
 
 static inline void
