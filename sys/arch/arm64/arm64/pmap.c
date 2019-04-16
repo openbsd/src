@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.60 2019/02/10 22:45:58 tedu Exp $ */
+/* $OpenBSD: pmap.c,v 1.61 2019/04/16 14:32:44 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -650,6 +650,8 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pmap_pte_insert(pted);
 
 	ttlb_flush(pm, va & ~PAGE_MASK);
+	if (cache == PMAP_CACHE_CI || cache == PMAP_CACHE_DEV)
+		cpu_idcache_wbinv_range(va & ~PAGE_MASK, PAGE_SIZE);
 }
 
 void
