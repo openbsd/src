@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_utl.c,v 1.34 2019/04/16 19:25:36 tb Exp $ */
+/* $OpenBSD: v3_utl.c,v 1.35 2019/04/16 19:31:07 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -750,7 +750,8 @@ equal_email(const unsigned char *a, size_t a_len, const unsigned char *b,
 	while (pos > 0) {
 		pos--;
 		if (a[pos] == '@' || b[pos] == '@') {
-			if (!equal_nocase(a + pos, a_len - pos, b + pos, a_len - pos, 0))
+			if (!equal_nocase(a + pos, a_len - pos, b + pos,
+			    a_len - pos, 0))
 				return 0;
 			break;
 		}
@@ -1221,7 +1222,7 @@ ipv6_from_asc(unsigned char *v6, const char *in)
 
 	/* Treat the IPv6 representation as a list of values
 	 * separated by ':'. The presence of a '::' will parse
- 	 * as one, two or three zero length elements.
+	 * as one, two or three zero length elements.
 	 */
 	if (!CONF_parse_list(in, ':', 0, ipv6_cb, &v6stat))
 		return 0;
