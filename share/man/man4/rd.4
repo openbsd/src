@@ -1,8 +1,8 @@
-.\"   $OpenBSD: rd.4,v 1.6 2013/10/18 17:42:36 jmc Exp $
+.\"   $OpenBSD: rd.4,v 1.7 2019/04/16 13:58:45 sunil Exp $
 .\"
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: October 18 2013 $
+.Dd $Mdocdate: April 16 2019 $
 .Dt RD 4
 .Os
 .Sh NAME
@@ -16,12 +16,8 @@ The
 driver enables use of system or user memory as a disk.
 Memory for the disk must be allocated and initialized inside the
 kernel image at build-time using the
-.Cm elfrdsetroot
+.Cm rdsetroot
 tool.
-.Pp
-The
-.Cm elfrdsetroot
-tool is available as part of the distribution toolset.
 .Sh FILES
 .Bl -tag -width /dev/rrd??XXX -compact
 .It Pa "/dev/rd??"
@@ -30,4 +26,5 @@ Block mode ramdisk devices.
 Raw mode ramdisk devices.
 .El
 .Sh SEE ALSO
-.Xr elf 5
+.Xr elf 5 ,
+.Xr rdsetroot 8
