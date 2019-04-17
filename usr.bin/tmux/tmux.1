@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.634 2019/04/08 17:55:51 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.635 2019/04/17 14:39:37 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 8 2019 $
+.Dd $Mdocdate: April 17 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1053,6 +1053,14 @@ Switch the current session for client
 .Ar target-client
 to
 .Ar target-session .
+As a special case,
+.Fl t
+may refer to a pane (a target that contains
+.Ql : ,
+.Ql .
+or
+.Ql % )
+in which case the session, window and pane are all changed.
 If
 .Fl l ,
 .Fl n
