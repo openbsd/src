@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.119 2019/03/12 20:02:47 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.120 2019/04/17 14:37:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -368,7 +368,7 @@ server_destroy_session_group(struct session *s)
 	else {
 		TAILQ_FOREACH_SAFE(s, &sg->sessions, gentry, s1) {
 			server_destroy_session(s);
-			session_destroy(s, __func__);
+			session_destroy(s, 1, __func__);
 		}
 	}
 }
@@ -435,7 +435,7 @@ server_check_unattached(void)
 		if (s->attached != 0)
 			continue;
 		if (options_get_number (s->options, "destroy-unattached"))
-			session_destroy(s, __func__);
+			session_destroy(s, 1, __func__);
 	}
 }
 

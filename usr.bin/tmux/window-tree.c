@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.35 2019/03/18 14:10:25 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.36 2019/04/17 14:37:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1006,7 +1006,7 @@ window_tree_kill_each(__unused void* modedata, void* itemdata,
 	case WINDOW_TREE_SESSION:
 		if (s != NULL) {
 			server_destroy_session(s);
-			session_destroy(s, __func__);
+			session_destroy(s, 1, __func__);
 		}
 		break;
 	case WINDOW_TREE_WINDOW:

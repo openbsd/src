@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.61 2019/03/12 11:16:50 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.62 2019/04/17 14:37:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -111,7 +111,7 @@ cmdq_remove(struct cmdq_item *item)
 	if (item->client != NULL)
 		server_client_unref(item->client);
 
-	if (item->type == CMDQ_COMMAND)
+	if (item->cmdlist != NULL)
 		cmd_list_free(item->cmdlist);
 
 	TAILQ_REMOVE(item->queue, item, entry);
