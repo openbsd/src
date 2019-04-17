@@ -1,4 +1,4 @@
-.\" $OpenBSD: myx.4,v 1.5 2013/07/16 16:05:49 schwarze Exp $
+.\" $OpenBSD: myx.4,v 1.6 2019/04/17 02:45:02 dlg Exp $
 .\"
 .\" Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: April 17 2019 $
 .Dt MYX 4
 .Os
 .Sh NAME
@@ -73,3 +73,12 @@ The
 .Nm
 driver was written by
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
+.Sh CAVEATS
+While the firmware supports reading module information for
+.Xr ifconfig 8
+.Cm transceiver
+to use, it does not support writing to the module.
+This prevents configuration of the module, which may prevent
+.Xr ifconfig 8
+from reading the right data from the module where other network
+cards succeed.
