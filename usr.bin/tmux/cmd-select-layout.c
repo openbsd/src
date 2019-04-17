@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.35 2018/07/02 12:39:14 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.36 2019/04/17 14:43:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -135,6 +135,7 @@ cmd_select_layout_exec(struct cmd *self, struct cmdq_item *item)
 
 changed:
 	free(oldlayout);
+	recalculate_sizes();
 	server_redraw_window(w);
 	notify_window("window-layout-changed", w);
 	return (CMD_RETURN_NORMAL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.319 2019/03/14 17:58:52 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.320 2019/04/17 14:43:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -907,9 +907,8 @@ tty_is_visible(struct tty *tty, const struct tty_ctx *ctx, u_int px, u_int py,
 		lines = 0;
 
 	if (xoff + nx <= ctx->ox || xoff >= ctx->ox + ctx->sx ||
-	    yoff + ny <= ctx->oy || yoff >= lines + ctx->oy + ctx->sy) {
+	    yoff + ny <= ctx->oy || yoff >= lines + ctx->oy + ctx->sy)
 		return (0);
-	}
 	return (1);
 }
 

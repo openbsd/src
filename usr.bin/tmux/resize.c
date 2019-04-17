@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.30 2019/03/16 17:14:07 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.31 2019/04/17 14:43:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -51,6 +51,8 @@ resize_window(struct window *w, u_int sx, u_int sy)
 	if (sy < w->layout_root->sy)
 		sy = w->layout_root->sy;
 	window_resize(w, sx, sy);
+	log_debug("%s: @%u resized to %u,%u; layout %u,%u", __func__, w->id,
+	    sx, sy, w->layout_root->sx, w->layout_root->sy);
 
 	/* Restore the window zoom state. */
 	if (zoomed)
