@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.4 2019/04/02 10:50:16 dlg Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.5 2019/04/17 00:45:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -55,6 +55,7 @@ struct mpip_softc {
 	unsigned int		sc_dead;
 	uint32_t		sc_flow; /* xor for mbuf flowid */
 
+	int			sc_txhprio;
 	struct ifaddr		sc_ifa;
 	struct sockaddr_mpls	sc_smpls; /* Local label */
 	unsigned int		sc_rdomain;
@@ -92,6 +93,7 @@ mpip_clone_create(struct if_clone *ifc, int unit)
 	if (sc == NULL)
 		return (ENOMEM);
 
+	sc->sc_txhprio = 0;
 	sc->sc_neighbor = 0;
 	sc->sc_cword = 0; /* default to no control word */
 	sc->sc_fword = 0; /* both sides have to agree on FAT first */
@@ -415,6 +417,22 @@ mpip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_ttl = sc->sc_ttl;
 		break;
 
+	case SIOCSTXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD)
+			;
+		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
+		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
+		break;
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		break;
@@ -611,8 +629,9 @@ mpip_start(struct ifnet *ifp)
 		.smpls_len = sizeof(smpls),
 		.smpls_family = AF_MPLS,
 	};
-	uint32_t bos;
-	uint8_t ttl;
+	int txprio = sc->sc_txhprio;
+	uint32_t exp, bos;
+	uint8_t tos, prio, ttl;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) || n == NULL) {
 		IFQ_PURGE(&ifp->if_snd);
@@ -662,6 +681,40 @@ mpip_start(struct ifnet *ifp)
 		} else
 			ttl = mpls_defttl;
 
+		switch (txprio) {
+		case IF_HDRPRIO_PACKET:
+			prio = m->m_pkthdr.pf.prio;
+			break;
+		case IF_HDRPRIO_PAYLOAD:
+			switch (m->m_pkthdr.ph_family) {
+			case AF_INET: {
+				struct ip *ip;
+				ip = mtod(m, struct ip *);
+				tos = ip->ip_tos;
+				break;
+			}
+#ifdef INET6
+			case AF_INET6: {
+				struct ip6_hdr *ip6;
+				uint32_t flow;
+				ip6 = mtod(m, struct ip6_hdr *);
+				flow = bemtoh32(&ip6->ip6_flow);
+				tos = flow >> 20;
+				break;
+			}
+#endif
+			default:
+				unhandled_af(m->m_pkthdr.ph_family);
+			}
+
+			prio = IFQ_TOS2PRIO(tos);
+			break;
+		default:
+			prio = txprio;
+			break;
+		}
+		exp = htonl(prio << MPLS_EXP_OFFSET);
+
 		if (sc->sc_cword) {
 			m = m_prepend(m, sizeof(shim), M_NOWAIT);
 			if (m == NULL)
@@ -686,7 +739,7 @@ mpip_start(struct ifnet *ifp)
 			shim = htonl(1) & MPLS_TTL_MASK;
 			shim |= htonl(flow << MPLS_LABEL_OFFSET) &
 			    MPLS_LABEL_MASK;
-			shim |= bos;
+			shim |= exp | bos;
 			*mtod(m, uint32_t *) = shim;
 
 			bos = 0;
@@ -698,7 +751,7 @@ mpip_start(struct ifnet *ifp)
 
 		shim = htonl(ttl) & MPLS_TTL_MASK;
 		shim |= n->n_rshim.shim_label;
-		shim |= bos;
+		shim |= exp | bos;
 		*mtod(m, uint32_t *) = shim;
 
 		m->m_pkthdr.ph_rtableid = sc->sc_rdomain;

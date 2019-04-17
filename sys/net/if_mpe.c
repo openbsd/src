@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.90 2019/04/02 10:52:33 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.91 2019/04/17 00:45:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -55,6 +55,7 @@
 
 struct mpe_softc {
 	struct ifnet		sc_if;		/* the interface */
+	int			sc_txhprio;
 	unsigned int		sc_rdomain;
 	struct ifaddr		sc_ifa;
 	struct sockaddr_mpls	sc_smpls;
@@ -121,6 +122,7 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
 
+	sc->sc_txhprio = 0;
 	sc->sc_rdomain = 0;
 	sc->sc_ifa.ifa_ifp = ifp;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
@@ -210,10 +212,13 @@ int
 mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct rtentry *rt)
 {
+	struct mpe_softc *sc;
 	struct rt_mpls	*rtmpls;
 	struct shim_hdr	shim;
 	int		error;
+	int		txprio;
 	uint8_t		ttl = mpls_defttl;
+	uint8_t		tos, prio;
 	size_t		ttloff;
 	socklen_t	slen;
 
@@ -243,15 +248,22 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	error = 0;
 	switch (dst->sa_family) {
-	case AF_INET:
+	case AF_INET: {
+		struct ip *ip = mtod(m, struct ip *);
+		tos = ip->ip_tos;
 		ttloff = offsetof(struct ip, ip_ttl);
 		slen = sizeof(struct sockaddr_in);
 		break;
+	}
 #ifdef INET6
-	case AF_INET6:
+	case AF_INET6: {
+		struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+		uint32_t flow = bemtoh32(&ip6->ip6_flow);
+		tos = flow >> 20;
 		ttloff = offsetof(struct ip6_hdr, ip6_hlim);
 		slen = sizeof(struct sockaddr_in6);
 		break;
+	}
 #endif
 	default:
 		m_freem(m);
@@ -263,7 +275,23 @@ mpe_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		ttl = *(mtod(m, uint8_t *) + ttloff);
 	}
 
-	shim.shim_label = rtmpls->mpls_label | MPLS_BOS_MASK | htonl(ttl);
+	sc = ifp->if_softc;
+	txprio = sc->sc_txhprio;
+
+	switch (txprio) {
+	case IF_HDRPRIO_PACKET:
+		prio = m->m_pkthdr.pf.prio;
+		break;
+	case IF_HDRPRIO_PAYLOAD:
+		prio = IFQ_TOS2PRIO(tos);
+		break;
+	default:
+		prio = txprio;
+		break;
+	}
+
+	shim.shim_label = rtmpls->mpls_label | htonl(prio << MPLS_EXP_OFFSET) |
+	    MPLS_BOS_MASK | htonl(ttl);
 
 	m = m_prepend(m, sizeof(shim), M_NOWAIT);
 	if (m == NULL) {
@@ -387,6 +415,22 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGLIFPHYRTABLE:
 		ifr->ifr_rdomainid = sc->sc_rdomain;
+		break;
+
+	case SIOCSTXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD)
+			;
+		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
+		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
 		break;
 
 	default:
