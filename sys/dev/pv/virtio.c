@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.16 2019/03/24 18:22:36 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.17 2019/04/17 21:43:46 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -364,7 +364,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	}
 	vq->vq_bytesize = allocsize;
 	vq->vq_maxnsegs = maxnsegs;
-	virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 
 	/* free slot management */
 	vq->vq_entries = mallocarray(vq_size, sizeof(struct vq_entry),
@@ -375,6 +374,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	}
 
 	virtio_init_vq(sc, vq, 0);
+	virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 
 #if VIRTIO_DEBUG
 	printf("\nallocated %u byte for virtqueue %d for %s, size %d\n",
@@ -386,7 +386,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	return 0;
 
 err:
-	virtio_setup_queue(sc, vq, 0);
 	if (vq->vq_dmamap)
 		bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	if (vq->vq_vaddr)
