@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.84 2019/03/04 21:32:26 dlg Exp $
+.\"	$OpenBSD: netstat.1,v 1.85 2019/04/17 20:17:00 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,51 +30,49 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: March 4 2019 $
+.Dd $Mdocdate: April 17 2019 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
 .Nm netstat
 .Nd show network status
 .Sh SYNOPSIS
-.Nm netstat
+.Nm
 .Op Fl AaBln
 .Op Fl f Ar address_family
 .Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
-.Nm netstat
-.Bk -words
+.Nm
 .Op Fl bdeFgilmnqrstu
 .Op Fl f Ar address_family
 .Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl T Ar rtable
-.Ek
-.Nm netstat
+.Nm
 .Op Fl bdehn
 .Op Fl c Ar count
 .Op Fl I Ar interface
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl w Ar wait
-.Nm netstat
+.Nm
 .Op Fl v
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Fl P Ar pcbaddr
-.Nm netstat
+.Nm
 .Op Fl s
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Op Fl p Ar protocol
-.Nm netstat
+.Nm
 .Op Fl a
 .Op Fl f Ar address_family
 .Op Fl p Ar protocol
 .Op Fl i | I Ar interface
-.Nm netstat
+.Nm
 .Op Fl W Ar interface
 .Sh DESCRIPTION
 The
