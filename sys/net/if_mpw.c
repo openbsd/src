@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.50 2019/04/17 00:45:03 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.51 2019/04/17 01:57:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -694,7 +694,7 @@ mpw_start(struct ifnet *ifp)
 
 			shim = mtod(m0, struct shim_hdr *);
 			shim->shim_label = htonl(1) & MPLS_TTL_MASK;
-			shim->shim_label = MPLS_LABEL2SHIM(flow) | exp | bos;
+			shim->shim_label |= MPLS_LABEL2SHIM(flow) | exp | bos;
 
 			bos = 0;
 		}
