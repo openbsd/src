@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.88 2018/07/14 13:38:48 benno Exp $
+.\"	$OpenBSD: route.8,v 1.89 2019/04/17 20:34:21 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 14 2018 $
+.Dd $Mdocdate: April 17 2019 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -162,8 +162,10 @@ only changes in that routing table will be displayed.
 .Op Fl label Ar label
 .Op Fl priority Ar priority
 .Xc
-Print out the route table similar to "netstat -r" (see
-.Xr netstat 1 ) .
+Print out the routing table, in a fashion similar to "netstat -r".
+The output is documented in more detail towards the end of the
+.Xr netstat 1
+manual.
 .Pp
 If
 .Fl gateway
