@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.195 2019/04/01 09:48:43 jca Exp $
+#	$OpenBSD: bsd.own.mk,v 1.196 2019/04/17 16:36:23 kettenis Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -137,7 +137,8 @@ STATIC?=	-static ${STATICPIE}
 #SYS_INCLUDE= 	symlinks
 
 # pic relocation flags.
-.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64")
+.if ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sparc64"
 PICFLAG?=-fPIC
 .else
 PICFLAG?=-fpic
