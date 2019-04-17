@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.17 2019/04/17 21:43:46 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.18 2019/04/17 21:44:32 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #endif
 
 void		 virtio_init_vq(struct virtio_softc *,
-				struct virtqueue *, int);
+				struct virtqueue *);
 void		 vq_free_entry(struct virtqueue *, struct vq_entry *);
 struct vq_entry	*vq_alloc_entry(struct virtqueue *);
 
@@ -154,7 +154,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 			panic("%s: virtqueue size changed, vq index %d\n",
 			    sc->sc_dev.dv_xname, vq->vq_index);
 		}
-		virtio_init_vq(sc, vq, 1);
+		virtio_init_vq(sc, vq);
 		virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 	}
 }
@@ -235,7 +235,7 @@ virtio_check_vqs(struct virtio_softc *sc)
  * Initialize vq structure.
  */
 void
-virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int reinit)
+virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq)
 {
 	int i, j;
 	int vq_size = vq->vq_num;
@@ -373,7 +373,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		goto err;
 	}
 
-	virtio_init_vq(sc, vq, 0);
+	virtio_init_vq(sc, vq);
 	virtio_setup_queue(sc, vq, vq->vq_dmamap->dm_segs[0].ds_addr);
 
 #if VIRTIO_DEBUG
