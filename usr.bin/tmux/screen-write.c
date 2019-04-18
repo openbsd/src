@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.150 2019/04/03 06:43:04 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.151 2019/04/18 11:07:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1139,7 +1139,7 @@ screen_write_collect_clear(struct screen_write_ctx *ctx, u_int y, u_int n)
 	u_int					 i;
 	size_t					 size;
 
-	for (i = y ; i < y + n; i++) {
+	for (i = y; i < y + n; i++) {
 		if (TAILQ_EMPTY(&ctx->list[i].items))
 			continue;
 		size = 0;
