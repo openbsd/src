@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsync.2,v 1.14 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: fsync.2,v 1.15 2019/04/18 23:51:13 tedu Exp $
 .\"	$NetBSD: fsync.2,v 1.4 1995/02/27 12:32:38 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: April 18 2019 $
 .Dt FSYNC 2
 .Os
 .Sh NAME
@@ -66,6 +66,16 @@ and
 .Fn fdatasync
 should be used by programs that require a file to be in a known state,
 for example, in building a simple transaction facility.
+.Pp
+If
+.Fn fsync
+or
+.Fn fdatasync
+fail with
+.Er EIO ,
+the state of the on-disk data may have been only partially written.
+To guard against potential inconsistency, future calls will continue failing
+until all references to the file are closed.
 .Sh RETURN VALUES
 .Rv -std fsync fdatasync
 .Sh ERRORS
