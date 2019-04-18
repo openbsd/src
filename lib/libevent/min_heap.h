@@ -1,4 +1,4 @@
-/*	$OpenBSD: min_heap.h,v 1.3 2014/10/29 22:47:29 bluhm Exp $	*/
+/*	$OpenBSD: min_heap.h,v 1.4 2019/04/18 23:44:21 tedu Exp $	*/
 
 /*
  * Copyright (c) 2006 Maxim Yegorushkin <maxim.yegorushkin@gmail.com>
@@ -112,7 +112,7 @@ int min_heap_reserve(min_heap_t* s, unsigned n)
         unsigned a = s->a ? s->a * 2 : 8;
         if(a < n)
             a = n;
-        if(!(p = (struct event**)realloc(s->p, a * sizeof *p)))
+        if(!(p = realloc(s->p, a * sizeof *p)))
             return -1;
         s->p = p;
         s->a = a;
@@ -125,11 +125,13 @@ void min_heap_shift_up_(min_heap_t* s, unsigned hole_index, struct event* e)
     unsigned parent = (hole_index - 1) / 2;
     while(hole_index && min_heap_elem_greater(s->p[parent], e))
     {
-        (s->p[hole_index] = s->p[parent])->min_heap_idx = hole_index;
+        s->p[hole_index] = s->p[parent];
+        s->p[hole_index]->min_heap_idx = hole_index;
         hole_index = parent;
         parent = (hole_index - 1) / 2;
     }
-    (s->p[hole_index] = e)->min_heap_idx = hole_index;
+    e->min_heap_idx = hole_index;
+    s->p[hole_index] = e;
 }
 
 void min_heap_shift_down_(min_heap_t* s, unsigned hole_index, struct event* e)
@@ -137,10 +139,13 @@ void min_heap_shift_down_(min_heap_t* s, unsigned hole_index, struct event* e)
     unsigned min_child = 2 * (hole_index + 1);
     while(min_child <= s->n)
 	{
-        min_child -= min_child == s->n || min_heap_elem_greater(s->p[min_child], s->p[min_child - 1]);
+	if (min_child == s->n ||
+	    min_heap_elem_greater(s->p[min_child], s->p[min_child - 1]))
+        	min_child -= 1;
         if(!(min_heap_elem_greater(e, s->p[min_child])))
             break;
-        (s->p[hole_index] = s->p[min_child])->min_heap_idx = hole_index;
+        s->p[hole_index] = s->p[min_child];
+        s->p[hole_index]->min_heap_idx = hole_index;
         hole_index = min_child;
         min_child = 2 * (hole_index + 1);
 	}
