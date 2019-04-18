@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.274 2019/03/25 18:59:55 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.275 2019/04/18 10:11:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1369,6 +1369,7 @@ focused:
 		if (wp->base.mode & MODE_FOCUSON)
 			bufferevent_write(wp->event, "\033[I", 3);
 		notify_pane("pane-focus-in", wp);
+		session_update_activity(c->session, NULL);
 	}
 	wp->flags |= PANE_FOCUSED;
 }
