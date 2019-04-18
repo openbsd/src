@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.237 2019/04/02 05:06:39 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.238 2019/04/18 18:51:34 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -40,7 +40,7 @@
 
 #include <dev/isa/isareg.h>
 
-/* #define VMM_DEBUG */
+#define VMM_DEBUG
 
 void *l1tf_flush_region;
 
@@ -5951,13 +5951,13 @@ svm_handle_msr(struct vcpu *vcpu)
 #endif /* VMM_DEBUG */
 		}
 	} else {
-                switch (*rcx) {
+		switch (*rcx) {
 			case MSR_LS_CFG:
-			DPRINTF("%s: guest read LS_CFG msr, injecting "
-			    "#GP\n", __func__);
-			ret = vmm_inject_gp(vcpu);
-			return (ret);
-                }
+				DPRINTF("%s: guest read LS_CFG msr, injecting "
+				    "#GP\n", __func__);
+				ret = vmm_inject_gp(vcpu);
+				return (ret);
+		}
 
 		i = rdmsr_safe(*rcx, &msr);
 		if (i == 0) {
@@ -6392,7 +6392,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
 		if (irq != 0xFFFF && vcpu->vc_irqready) {
-			vmcb->v_eventinj = (irq & 0xFF) | (1<<31);
+			vmcb->v_eventinj = (irq & 0xFF) | (1 << 31);
 			irq = 0xFFFF;
 		} 
 
