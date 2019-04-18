@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.66 2019/01/21 10:38:54 djm Exp $
+#	$OpenBSD: Makefile.inc,v 1.67 2019/04/18 07:32:56 dtucker Exp $
 
 .include <bsd.own.mk>
 
@@ -99,7 +99,6 @@ SRCS_PKT+=	umac.c
 SRCS_PKT+=	umac128.c
 
 SRCS_PROT+=	channels.c
-SRCS_PROT+=	crc32.c
 SRCS_PROT+=	monitor_fdpass.c
 SRCS_PROT+=	nchan.c
 SRCS_PROT+=	ttymodes.c
