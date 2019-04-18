@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.80 2019/01/11 01:56:54 kn Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.81 2019/04/18 22:29:41 kn Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -83,6 +83,8 @@ static const char	*istats_text[2][2][2] = {
 	} while (0)
 
 #define CREATE_TABLE do {						\
+		warn_duplicate_tables(table.pfrt_name,			\
+		    table.pfrt_anchor);					\
 		table.pfrt_flags |= PFR_TFLAG_PERSIST;			\
 		if ((!(opts & PF_OPT_NOACTION) ||			\
 		    (opts & PF_OPT_DUMMYACTION)) &&			\
@@ -92,8 +94,6 @@ static const char	*istats_text[2][2][2] = {
 			goto _error;					\
 		}							\
 		if (nadd) {						\
-			warn_duplicate_tables(table.pfrt_name,		\
-			    table.pfrt_anchor);				\
 			xprintf(opts, "%d table created", nadd);	\
 			if (opts & PF_OPT_NOACTION)			\
 				return (0);				\
