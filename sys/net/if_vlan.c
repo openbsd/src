@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.183 2019/02/15 13:00:51 mpi Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.184 2019/04/19 04:36:11 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -174,6 +174,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 
 	refcnt_init(&ifv->ifv_refcnt);
 	ifv->ifv_prio = IF_HDRPRIO_PACKET;
+	ifv->ifv_rxprio = IF_HDRPRIO_OUTER;
 
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED|IFXF_MPSAFE;
@@ -373,11 +374,6 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	/* From now on ether_vtag is fine */
 	tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
-	m->m_pkthdr.pf.prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
-
-	/* IEEE 802.1p has prio 0 and 1 swapped */
-	if (m->m_pkthdr.pf.prio <= 1)
-		m->m_pkthdr.pf.prio = !m->m_pkthdr.pf.prio;
 
 	list = &tagh[TAG_HASH(tag)];
 	SRPL_FOREACH(ifv, &sr, list, ifv_list) {
@@ -406,6 +402,20 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		eh->ether_type = evl->evl_proto;
 		memmove((char *)eh + EVL_ENCAPLEN, eh, sizeof(*eh));
 		m_adj(m, EVL_ENCAPLEN);
+	}
+
+	switch (ifv->ifv_rxprio) {
+	case IF_HDRPRIO_PACKET:
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
+		break;
+	default:
+		m->m_pkthdr.pf.prio = ifv->ifv_rxprio;
+		/* IEEE 802.1p has prio 0 and 1 swapped */
+		if (m->m_pkthdr.pf.prio <= 1)
+			m->m_pkthdr.pf.prio = !m->m_pkthdr.pf.prio;
+		break;
 	}
 
 	ml_enqueue(&ml, m);
@@ -736,6 +746,22 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = ifv->ifv_prio;
+		break;
+
+	case SIOCSRXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_OUTER)
+			;
+		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
+		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
+			error = EINVAL;
+			break;
+		}
+
+		ifv->ifv_rxprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = ifv->ifv_rxprio;
 		break;
 
 	default:
