@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.200 2019/04/10 09:49:22 dlg Exp $	*/
+/*	$OpenBSD: if.h,v 1.201 2019/04/19 04:15:31 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -427,6 +427,7 @@ struct	ifreq {
 #define IF_HDRPRIO_MAX		IFQ_MAXPRIO
 #define IF_HDRPRIO_PACKET	-1	/* use mbuf prio */
 #define IF_HDRPRIO_PAYLOAD	-2	/* copy payload prio */
+#define IF_HDRPRIO_OUTER	-3	/* use outer prio */
 
 #define IF_PWE3_ETHERNET	1	/* ethernet or ethernet tagged */
 #define IF_PWE3_IP		2	/* IP layer 2 */
