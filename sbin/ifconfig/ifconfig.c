@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.400 2019/04/15 12:04:37 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.401 2019/04/19 04:24:25 dlg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -139,6 +139,8 @@ struct ifencap {
 
 #define IFE_TXHPRIO_SET		0x1000
 	int		ife_txhprio;
+#define IFE_RXHPRIO_SET		0x2000
+	int		ife_rxhprio;
 };
 
 struct	ifreq		ifr, ridreq;
@@ -292,6 +294,8 @@ void	delvnetflowid(const char *, int);
 void	getvnetflowid(struct ifencap *);
 void	gettxprio(struct ifencap *);
 void	settxprio(const char *, int);
+void	getrxprio(struct ifencap *);
+void	setrxprio(const char *, int);
 void	settunneldf(const char *, int);
 void	settunnelnodf(const char *, int);
 void	settunnelecn(const char *, int);
@@ -501,6 +505,7 @@ const struct	cmd {
 	{ "vnetflowid",	0,		0,		setvnetflowid },
 	{ "-vnetflowid", 0,		0,		delvnetflowid },
 	{ "txprio",	NEXTARG,	0,		settxprio },
+	{ "rxprio",	NEXTARG,	0,		setrxprio },
 	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
 	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
 	{ "-pppoesvc",	1,		0,		setpppoe_svc },
@@ -4212,6 +4217,46 @@ settxprio(const char *val, int d)
 	if (ioctl(s, SIOCSTXHPRIO, (caddr_t)&ifr) < 0)
 		warn("SIOCSTXHPRIO");
 }
+
+void
+getrxprio(struct ifencap *ife)
+{
+	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name))
+		errx(1, "hdr prio: name is too long");
+
+	if (ioctl(s, SIOCGRXHPRIO, (caddr_t)&ifr) == -1)
+		return;
+
+	ife->ife_flags |= IFE_RXHPRIO_SET;
+	ife->ife_rxhprio = ifr.ifr_hdrprio;
+}
+
+void
+setrxprio(const char *val, int d)
+{
+	const char *errmsg = NULL;
+
+	if (strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name)) >=
+	    sizeof(ifr.ifr_name))
+		errx(1, "rx prio: name is too long");
+
+	if (strcmp(val, "packet") == 0)
+		ifr.ifr_hdrprio = IF_HDRPRIO_PACKET;
+	else if (strcmp(val, "payload") == 0)
+		ifr.ifr_hdrprio = IF_HDRPRIO_PAYLOAD;
+	else if (strcmp(val, "outer") == 0)
+		ifr.ifr_hdrprio = IF_HDRPRIO_OUTER;
+	else {
+		ifr.ifr_hdrprio = strtonum(val,
+		    IF_HDRPRIO_MIN, IF_HDRPRIO_MAX, &errmsg);
+		if (errmsg)
+			errx(1, "rx prio %s: %s", val, errmsg);
+	}
+
+	if (ioctl(s, SIOCSRXHPRIO, (caddr_t)&ifr) < 0)
+		warn("SIOCSRXHPRIO");
+}
 #endif
 
 void
@@ -4224,6 +4269,7 @@ getencap(void)
 	getifparent(&ife);
 #ifndef SMALL
 	gettxprio(&ife);
+	getrxprio(&ife);
 #endif
 
 	if (ife.ife_flags == 0)
@@ -4256,15 +4302,34 @@ getencap(void)
 
 #ifndef SMALL
 	if (ife.ife_flags & IFE_TXHPRIO_SET) {
+		printf(" txprio ");
 		switch (ife.ife_txhprio) {
 		case IF_HDRPRIO_PACKET:
-			printf(" txprio packet");
+			printf("packet");
 			break;
 		case IF_HDRPRIO_PAYLOAD:
-			printf(" txprio payload");
+			printf("payload");
 			break;
 		default:
-			printf(" txprio %d", ife.ife_txhprio);
+			printf("%d", ife.ife_txhprio);
+			break;
+		}
+	}
+
+	if (ife.ife_flags & IFE_RXHPRIO_SET) {
+		printf(" rxprio ");
+		switch (ife.ife_rxhprio) {
+		case IF_HDRPRIO_PACKET:
+			printf("packet");
+			break;
+		case IF_HDRPRIO_PAYLOAD:
+			printf("payload");
+			break;
+		case IF_HDRPRIO_OUTER:
+			printf("outer");
+			break;
+		default:
+			printf("%d", ife.ife_rxhprio);
 			break;
 		}
 	}
