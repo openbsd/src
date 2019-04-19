@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.92 2019/04/19 06:36:54 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.93 2019/04/19 07:39:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -420,14 +420,9 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD)
-			;
-		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
-		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
-			error = EINVAL;
+		error = if_txhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_txhprio = ifr->ifr_hdrprio;
 		break;
@@ -436,15 +431,9 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSRXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_OUTER)
-			;
-		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
-		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
-			error = EINVAL;
+		error = if_rxhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_rxhprio = ifr->ifr_hdrprio;
 		break;

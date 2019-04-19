@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.43 2019/04/19 06:38:32 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.44 2019/04/19 07:39:37 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -289,13 +289,9 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET) /* use mbuf prio */
-			;
-		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
-		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
-			error = EINVAL;
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_txhprio = ifr->ifr_hdrprio;
 		break;
@@ -304,14 +300,9 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
                 break;
 
 	case SIOCSRXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_OUTER ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_PACKET) /* use mbuf prio */
-			;
-		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
-		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
-			error = EINVAL;
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_rxhprio = ifr->ifr_hdrprio;
 		break;

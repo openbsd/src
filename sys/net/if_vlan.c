@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.184 2019/04/19 04:36:11 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.185 2019/04/19 07:39:37 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -734,13 +734,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET)
-			;
-		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
-		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
-			error = EINVAL;
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		ifv->ifv_prio = ifr->ifr_hdrprio;
 		break;
@@ -749,14 +745,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSRXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_OUTER)
-			;
-		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
-		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
-			error = EINVAL;
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		ifv->ifv_rxprio = ifr->ifr_hdrprio;
 		break;

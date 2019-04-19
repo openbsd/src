@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.3 2019/04/19 06:40:00 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.4 2019/04/19 07:39:37 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -482,13 +482,9 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET) /* use mbuf prio */
-			;
-		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
-		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
-			error = EINVAL;
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_txhprio = ifr->ifr_hdrprio;
 		break;
@@ -497,14 +493,9 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSRXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_OUTER ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_PACKET) /* use mbuf prio */
-			;
-		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
-		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
-			error = EINVAL;
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_rxhprio = ifr->ifr_hdrprio;
 		break;

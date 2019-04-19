@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.126 2019/04/19 04:54:53 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.127 2019/04/19 07:39:37 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -555,14 +555,9 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_PACKET)
-			; /* ok, fall through */
-		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
-		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
-			error = EINVAL;
+		error = if_txhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_txhprio = ifr->ifr_hdrprio;
 		break;
@@ -571,15 +566,9 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSRXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
-		    ifr->ifr_hdrprio == IF_HDRPRIO_OUTER)
-			; /* ok, fall through */
-		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
-		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
-			error = EINVAL;
+		error = if_rxhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
 			break;
-		}
 
 		sc->sc_rxhprio = ifr->ifr_hdrprio;
 		break;
