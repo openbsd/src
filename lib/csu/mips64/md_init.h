@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.16 2019/03/23 15:29:55 visa Exp $ */
+/* $OpenBSD: md_init.h,v 1.17 2019/04/19 09:19:22 visa Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -83,6 +83,7 @@
 
 #define MD_SECT_CALL_FUNC(section, func)		\
 	__asm (".section "#section", \"ax\"	\n"	\
+	"	.local	" #func "		\n"	\
 	"	jal	" #func "		\n"	\
 	".previous")
 
@@ -101,6 +102,7 @@
 	"	dsrl	$a1, $sp, 4		\n" /* align stack on a */ \
 	"	dsll	$sp, $a1, 4		\n" /* 16 byte boundary */ \
 	"	move	$a1, $v0		\n" \
+	"	.local	___start		\n" \
 	"	dla	$t9, ___start		\n" \
 	"	jr	$t9			\n" \
 	"	.end	__start			\n" \
@@ -134,6 +136,7 @@
 	"	dsrl	$a1, $sp, 4		\n" /* align stack on a */ \
 	"	dsll	$sp, $a1, 4		\n" /* 16 byte boundary */ \
 	"	move	$a1, $zero		\n" \
+	"	.local	___start		\n" \
 	"	dla	$t9, ___start		\n" \
 	"	jr	$t9			\n" \
 	"	.end	__start			\n" \
