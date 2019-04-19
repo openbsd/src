@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.125 2018/11/29 00:14:29 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.126 2019/04/19 04:54:53 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ struct gif_softc {
 	uint16_t		sc_df;
 	int			sc_ttl;
 	int			sc_txhprio;
+	int			sc_rxhprio;
 	int			sc_ecn;
 };
 
@@ -156,6 +157,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_df = htons(0);
 	sc->sc_ttl = ip_defttl;
 	sc->sc_txhprio = IF_HDRPRIO_PAYLOAD;
+	sc->sc_rxhprio = IF_HDRPRIO_PAYLOAD;
 	sc->sc_ecn = ECN_ALLOWED;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname),
@@ -266,8 +268,8 @@ gif_start(struct ifnet *ifp)
 			if (m == NULL)
 				continue;
 
-			shim = bemtoh32(mtod(m, uint32_t *)) & MPLS_EXP_MASK;
-			tos = (shim >> MPLS_EXP_OFFSET) << 5;
+			shim = *mtod(m, uint32_t *) & MPLS_EXP_MASK;
+			tos = (ntohl(shim) >> MPLS_EXP_OFFSET) << 5;
 
 			ttloff = 3;
 
@@ -568,6 +570,23 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_hdrprio = sc->sc_txhprio;
 		break;
 
+	case SIOCSRXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_OUTER)
+			; /* ok, fall through */
+		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
+		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_rxhprio;
+		break;
+
 	default:
 		error = ENOTTY;
 		break;
@@ -783,6 +802,7 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	struct ifnet *ifp;
 	void (*input)(struct ifnet *, struct mbuf *);
 	uint8_t itos;
+	int rxhprio;
 
 	/* IP-in-IP header is caused by tunnel mode, so skip gif lookup */
 	if (m->m_flags & M_TUNNEL) {
@@ -803,6 +823,7 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	m_adj(m, *offp); /* this is ours now */
 
 	ifp = &sc->sc_if;
+	rxhprio = sc->sc_rxhprio;
 
 	switch (proto) {
 	case IPPROTO_IPV4: {
@@ -848,10 +869,19 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	}
 #endif /* INET6 */
 #ifdef MPLS
-	case IPPROTO_MPLS:
+	case IPPROTO_MPLS: {
+		uint32_t shim;
+		m = *mp = m_pullup(m, sizeof(shim));
+		if (m == NULL)
+			return (IPPROTO_DONE);
+
+		shim = *mtod(m, uint32_t *) & MPLS_EXP_MASK;
+		itos = (ntohl(shim) >> MPLS_EXP_OFFSET) << 5;
+	
 		m->m_pkthdr.ph_family = AF_MPLS;
 		input = mpls_input;
 		break;
+	}
 #endif /* MPLS */
 	default:
 		return (-1);
@@ -860,6 +890,21 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+	switch (rxhprio) {
+	case IF_HDRPRIO_PACKET:
+		/* nop */
+		break;
+	case IF_HDRPRIO_PAYLOAD:
+		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(itos);
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(otos);
+		break;
+	default:
+		m->m_pkthdr.pf.prio = rxhprio;
+		break;
+	}
 
 #if NPF > 0
 	pf_pkt_addr_changed(m);
