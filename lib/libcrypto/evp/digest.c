@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.30 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: digest.c,v 1.31 2019/04/19 17:04:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -186,7 +186,7 @@ EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		ctx->digest = type;
 		if (!(ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) && type->ctx_size) {
 			ctx->update = type->update;
-			ctx->md_data = malloc(type->ctx_size);
+			ctx->md_data = calloc(1, type->ctx_size);
 			if (ctx->md_data == NULL) {
 				EVP_PKEY_CTX_free(ctx->pctx);
 				ctx->pctx = NULL;
@@ -281,11 +281,11 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	memcpy(out, in, sizeof *out);
 
 	if (in->md_data && out->digest->ctx_size) {
-		if (tmp_buf)
+		if (tmp_buf) {
 			out->md_data = tmp_buf;
-		else {
-			out->md_data = malloc(out->digest->ctx_size);
-			if (!out->md_data) {
+		} else {
+			out->md_data = calloc(1, out->digest->ctx_size);
+			if (out->md_data == NULL) {
 				EVPerror(ERR_R_MALLOC_FAILURE);
 				return 0;
 			}
