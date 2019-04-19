@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.146 2019/04/15 03:26:55 visa Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.147 2019/04/19 07:50:09 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -232,9 +232,6 @@ static int
 
 static int	gre_tunnel_ioctl(struct ifnet *, struct gre_tunnel *,
 		    u_long, void *);
-
-static int	gre_l2_txhprio(struct gre_tunnel *, int);
-static int	gre_l3_txhprio(struct gre_tunnel *, int);
 
 static uint8_t	gre_l2_tos(const struct gre_tunnel *, const struct mbuf *);
 static uint8_t	gre_l3_tos(const struct gre_tunnel *,
@@ -2242,41 +2239,6 @@ gre_tunnel_ioctl(struct ifnet *ifp, struct gre_tunnel *tunnel,
 	return (error);
 }
 
-static int
-gre_l2_txhprio(struct gre_tunnel *t, int hdrprio)
-{
-	switch (hdrprio) {
-	case IF_HDRPRIO_PACKET:
-		break;
-	default:
-		if (hdrprio < IF_HDRPRIO_MIN || hdrprio > IF_HDRPRIO_MAX)
-			return (EINVAL);
-		break;
-	}
-
-	t->t_txhprio = hdrprio;
-
-	return (0);
-}
-
-static int
-gre_l3_txhprio(struct gre_tunnel *t, int hdrprio)
-{
-	switch (hdrprio) {
-	case IF_HDRPRIO_PACKET:
-	case IF_HDRPRIO_PAYLOAD:
-		break;
-	default:
-		if (hdrprio < IF_HDRPRIO_MIN || hdrprio > IF_HDRPRIO_MAX)
-			return (EINVAL);
-		break;
-	}
-
-	t->t_txhprio = hdrprio;
-
-	return (0);
-}
-
 static uint8_t
 gre_l2_tos(const struct gre_tunnel *t, const struct mbuf *m)
 {
@@ -2396,7 +2358,11 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		error = gre_l3_txhprio(&sc->sc_tunnel, ifr->ifr_hdrprio);
+		error = if_txhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_txhprio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
@@ -2467,7 +2433,11 @@ mgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		error = gre_l3_txhprio(&sc->sc_tunnel, ifr->ifr_hdrprio);
+		error = if_txhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_txhprio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
@@ -2626,7 +2596,11 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		error = gre_l2_txhprio(&sc->sc_tunnel, ifr->ifr_hdrprio);
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_txhprio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
@@ -2794,7 +2768,11 @@ nvgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		error = gre_l2_txhprio(&sc->sc_tunnel, ifr->ifr_hdrprio);
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_txhprio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
@@ -2976,7 +2954,11 @@ eoip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSTXHPRIO:
-		error = gre_l2_txhprio(&sc->sc_tunnel, ifr->ifr_hdrprio);
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_txhprio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
