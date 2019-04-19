@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.h,v 1.15 2019/03/31 11:33:11 visa Exp $	*/
+/*	$OpenBSD: lockf.h,v 1.16 2019/04/19 09:41:07 visa Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*
@@ -73,6 +73,6 @@ __BEGIN_DECLS
 void	 lf_init(void);
 int	 lf_advlock(struct lockf_state **,
 	    off_t, caddr_t, int, struct flock *, int);
-void	 lf_purgelocks(struct lockf_state *);
+void	 lf_purgelocks(struct lockf_state **);
 __END_DECLS
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.287 2019/04/02 13:07:28 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.288 2019/04/19 09:41:07 visa Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1152,7 +1152,7 @@ vgonel(struct vnode *vp, struct proc *p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
-		lf_purgelocks(vp->v_speclockf);
+		lf_purgelocks(&vp->v_speclockf);
 		free(vp->v_specinfo, M_VNODE, sizeof(struct specinfo));
 		vp->v_specinfo = NULL;
 	}
