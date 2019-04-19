@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.91 2019/04/17 00:45:03 dlg Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.92 2019/04/19 06:36:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -56,6 +56,7 @@
 struct mpe_softc {
 	struct ifnet		sc_if;		/* the interface */
 	int			sc_txhprio;
+	int			sc_rxhprio;
 	unsigned int		sc_rdomain;
 	struct ifaddr		sc_ifa;
 	struct sockaddr_mpls	sc_smpls;
@@ -123,6 +124,7 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 #endif
 
 	sc->sc_txhprio = 0;
+	sc->sc_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_rdomain = 0;
 	sc->sc_ifa.ifa_ifp = ifp;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
@@ -433,6 +435,23 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_hdrprio = sc->sc_txhprio;
 		break;
 
+	case SIOCSRXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_PAYLOAD ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_OUTER)
+			;
+		else if (ifr->ifr_hdrprio > IF_HDRPRIO_MAX ||
+		    ifr->ifr_hdrprio < IF_HDRPRIO_MIN) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_rxhprio;
+		break;
+
 	default:
 		return (ENOTTY);
 	}
@@ -443,12 +462,16 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 void
 mpe_input(struct ifnet *ifp, struct mbuf *m)
 {
+	struct mpe_softc *sc = ifp->if_softc;
 	struct shim_hdr	*shim;
 	struct mbuf 	*n;
-	uint8_t		 ttl;
+	uint8_t		 ttl, tos;
+	uint32_t	 exp;
 	void (*input)(struct ifnet *, struct mbuf *);
+	int rxprio = sc->sc_rxhprio;
 
 	shim = mtod(m, struct shim_hdr *);
+	exp = ntohl(shim->shim_label & MPLS_EXP_MASK) >> MPLS_EXP_OFFSET;
 	if (!MPLS_BOS_ISSET(shim->shim_label))
 		goto drop;
 
@@ -463,7 +486,16 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	switch (*mtod(n, uint8_t *) >> 4) {
-	case 4:
+	case 4: {
+		struct ip *ip;
+		if (m->m_len < sizeof(*ip)) {
+			m = m_pullup(m, sizeof(*ip));
+			if (m == NULL)
+				return;
+		}
+		ip = mtod(m, struct ip *);
+		tos = ip->ip_tos;
+
 		if (mpls_mapttl_ip) {
 			m = mpls_ip_adjttl(m, ttl);
 			if (m == NULL)
@@ -472,8 +504,20 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 		input = ipv4_input;
 		m->m_pkthdr.ph_family = AF_INET;
 		break;
+	}
 #ifdef INET6
-	case 6:
+	case 6: {
+		struct ip6_hdr *ip6;
+		uint32_t flow;
+		if (m->m_len < sizeof(*ip6)) {
+			m = m_pullup(m, sizeof(*ip6));
+			if (m == NULL)
+				return;
+		}
+		ip6 = mtod(m, struct ip6_hdr *);
+		flow = bemtoh32(&ip6->ip6_flow);
+		tos = flow >> 20;
+
 		if (mpls_mapttl_ip6) {
 			m = mpls_ip6_adjttl(m, ttl);
 			if (m == NULL)
@@ -482,9 +526,25 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 		input = ipv6_input;
 		m->m_pkthdr.ph_family = AF_INET6;
 		break;
+	}
 #endif /* INET6 */
 	default:
 		goto drop;
+	}
+
+	switch (rxprio) {
+	case IF_HDRPRIO_PACKET:
+		/* nop */
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = exp;
+		break;
+	case IF_HDRPRIO_PAYLOAD:
+		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(tos);
+		break;
+	default:
+		m->m_pkthdr.pf.prio = rxprio;
+		break;
 	}
 
 	/* new receive if and move into correct rtable */
