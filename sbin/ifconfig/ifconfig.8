@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.333 2019/04/10 13:34:21 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.334 2019/04/19 04:30:57 dlg Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 10 2019 $
+.Dd $Mdocdate: April 19 2019 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1668,6 +1668,7 @@ for a complete list of the available protocols.
 .Nm ifconfig
 .Ar tunnel-interface
 .Op Oo Fl Oc Ns Cm keepalive Ar period count
+.Op Cm rxprio Ar prio
 .Op Oo Fl Oc Ns Cm tunnel Ar src_address dest_address
 .Op Oo Fl Oc Ns Cm tunneldf
 .Op Oo Fl Oc Ns Cm tunneldomain Ar rtable
@@ -1709,6 +1710,16 @@ is 2 since the round-trip time of keepalive packets needs to be accounted for.
 Disable the
 .Xr gre 4
 keepalive mechanism.
+.It Cm rxprio Ar prio
+Configure the source used for the packet priority when decapsulating a packet.
+The value can be a priority number from 0 to 7, or
+.Ar packet
+to use the priority currently set on the packet.
+If supported by the interface, the value may also be set to
+.Ar outer
+to have the priority field copied from the tunnel protocol headers, or
+.Ar payload
+to have the priority field copied from the encapsulated protocol headers.
 .It Cm tunnel Ar src_address dest_address Ns Op : Ns Ar dest_port
 Set the source and destination tunnel addresses on a tunnel interface.
 Packets routed to this interface will be encapsulated in
@@ -1845,6 +1856,7 @@ device will try to establish a data connection with the service provider.
 .Nm ifconfig
 .Ar vlan-interface
 .Op Oo Fl Oc Ns Cm parent Ar parent-interface
+.Op Cm rxprio Ar prio
 .Op Cm txprio Ar prio
 .Op Oo Fl Oc Ns Cm vnetid Ar vlan-tag
 .Ek
@@ -1873,6 +1885,13 @@ it will inherit a copy of the parent interface's Ethernet address.
 .It Cm -parent
 Disassociate from the parent interface.
 This breaks the link between the VLAN interface and its parent.
+.It Cm rxprio Ar prio
+Set the value used for the packet priority field.
+Values may be from 0 to 7,
+.Ar packet
+to maintain the current packet priority, or
+.Ar outer
+to use the priority field in the 802.1Q or 802.1ad headers.
 .It Cm txprio Ar prio
 Set the value used for the priority field in the 802.1Q or 802.1ad
 headers.
