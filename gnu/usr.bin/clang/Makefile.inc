@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.13 2019/03/06 08:13:54 jsg Exp $
+# $OpenBSD: Makefile.inc,v 1.14 2019/04/19 21:09:48 kettenis Exp $
 
 LLVM_SRCS?=	${.CURDIR}/../../../llvm
 
@@ -30,6 +30,11 @@ CXXFLAGS+=	-fno-ret-protector
 .endif
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 CXXFLAGS+=	-mno-retpoline
+.endif
+
+# Compiling with -fno-pie doesn't work on powerpc.
+.if ${MACHINE_ARCH} == "powerpc"
+NOPIE_FLAGS=	-fPIE
 .endif
 
 CPPFLAGS+=	-D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS \
@@ -64,3 +69,7 @@ DPADD+=	${.OBJDIR}/../lib${lib}/lib${lib}.a
 LDADD+=	${.OBJDIR}/../lib${lib}/lib${lib}.a
 .endfor
 LDADD+=-Wl,--end-group
+
+.if ${MACHINE_ARCH} == "powerpc"
+LDFLAGS+=-Wl,-relax
+.endif
