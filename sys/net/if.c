@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.577 2019/04/19 04:22:09 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.578 2019/04/19 07:38:02 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2333,6 +2333,70 @@ if_sffpage_check(const caddr_t data)
 	}
 
 	return (0);
+}
+
+int
+if_txhprio_l2_check(int hdrprio)
+{
+	switch (hdrprio) {
+	case IF_HDRPRIO_PACKET:
+		return (0);
+	default:
+		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
+			return (0);
+		break;
+	}
+
+	return (EINVAL);
+}
+
+int
+if_txhprio_l3_check(int hdrprio)
+{
+	switch (hdrprio) {
+	case IF_HDRPRIO_PACKET:
+	case IF_HDRPRIO_PAYLOAD:
+		return (0);
+	default:
+		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
+			return (0);
+		break;
+	}
+
+	return (EINVAL);
+}
+
+int
+if_rxhprio_l2_check(int hdrprio)
+{
+	switch (hdrprio) {
+	case IF_HDRPRIO_PACKET:
+	case IF_HDRPRIO_OUTER:
+		return (0);
+	default:
+		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
+			return (0);
+		break;
+	}
+
+	return (EINVAL);
+}
+
+int
+if_rxhprio_l3_check(int hdrprio)
+{
+	switch (hdrprio) {
+	case IF_HDRPRIO_PACKET:
+	case IF_HDRPRIO_PAYLOAD:
+	case IF_HDRPRIO_OUTER:
+		return (0);
+	default:
+		if (hdrprio >= IF_HDRPRIO_MIN && hdrprio <= IF_HDRPRIO_MAX)
+			return (0);
+		break;
+	}
+
+	return (EINVAL);
 }
 
 /*

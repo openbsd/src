@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.96 2019/04/16 04:04:19 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.97 2019/04/19 07:38:02 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -386,6 +386,11 @@ int	if_rxr_ioctl(struct if_rxrinfo *, const char *, u_int,
 
 void	if_counters_alloc(struct ifnet *);
 void	if_counters_free(struct ifnet *);
+
+int	if_txhprio_l2_check(int);
+int	if_txhprio_l3_check(int);
+int	if_rxhprio_l2_check(int);
+int	if_rxhprio_l3_check(int);
 
 #endif /* _KERNEL */
 
