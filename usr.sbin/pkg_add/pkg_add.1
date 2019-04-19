@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.157 2019/04/06 10:55:01 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.158 2019/04/19 19:50:53 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: April 6 2019 $
+.Dd $Mdocdate: April 19 2019 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -392,16 +392,12 @@ Installs packages from the raw output of
 as saved in
 .Ar file .
 Generally, use with
-.Li pkg_info -m \*(Gtfile ,
+.Li pkg_info -mz \*(Gtfile ,
 to reproduce an installation from machine to machine.
 With
-.Fl z
-and
 .Fl l
 .Nm
-will try its best to reproduce the installation, even if the
-version numbers don't quite match and even if some packages cannot
-be found.
+will try its best to reproduce the installation.
 .It Fl m
 Causes
 .Nm
