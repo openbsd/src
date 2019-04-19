@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.2 2019/01/16 00:26:45 jsg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.3 2019/04/19 06:40:00 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -99,6 +99,7 @@ struct bpe_softc {
 	struct arpcom		sc_ac;
 	struct ifmedia		sc_media;
 	int			sc_txhprio;
+	int			sc_rxhprio;
 	uint8_t			sc_group[ETHER_ADDR_LEN];
 
 	void *			sc_lh_cookie;
@@ -175,6 +176,7 @@ bpe_clone_create(struct if_clone *ifc, int unit)
 	bpe_set_group(sc, 0);
 
 	sc->sc_txhprio = IF_HDRPRIO_PACKET;
+	sc->sc_txhprio = IF_HDRPRIO_OUTER;
 
 	rw_init(&sc->sc_bridge_lock, "bpebr");
 	RBT_INIT(bpe_map, &sc->sc_bridge_map);
@@ -492,6 +494,22 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		if (ifr->ifr_hdrprio == IF_HDRPRIO_OUTER ||
+		    ifr->ifr_hdrprio == IF_HDRPRIO_PACKET) /* use mbuf prio */
+			;
+		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
+		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
+			error = EINVAL;
+			break;
+		}
+
+		sc->sc_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_rxhprio;
 		break;
 
 	case SIOCGIFMEDIA:
@@ -890,6 +908,7 @@ bpe_input(struct ifnet *ifp0, struct mbuf *m)
 	unsigned int hlen = sizeof(*beh) + sizeof(*itagp) + sizeof(*ceh);
 	struct mbuf *n;
 	int off;
+	int prio;
 
 	if (m->m_len < hlen) {
 		m = m_pullup(m, hlen);
@@ -937,6 +956,19 @@ bpe_input(struct ifnet *ifp0, struct mbuf *m)
 	}
 
 	ifp = &sc->sc_ac.ac_if;
+
+	prio = sc->sc_rxhprio;
+	switch (prio) {
+	case IF_HDRPRIO_PACKET:
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = (itag & PBB_ITAG_PCP_MASK) >>
+		    PBB_ITAG_PCP_SHIFT;
+		break;
+	default:
+		m->m_pkthdr.pf.prio = prio;
+		break;
+	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
