@@ -753,10 +753,12 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
       TS.emitDirectiveOptionPic0();
   }
 
+  MCSection *CS = OutStreamer->getCurrentSectionOnly();
   // Tell the assembler which ABI we are using
   std::string SectionName = std::string(".mdebug.") + getCurrentABIString();
   OutStreamer->SwitchSection(
       OutContext.getELFSection(SectionName, ELF::SHT_PROGBITS, 0));
+  OutStreamer->SwitchSection(CS);
 
   // NaN: At the moment we only support:
   // 1. .nan legacy (default)
