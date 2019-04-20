@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.15 2019/04/15 17:46:02 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.16 2019/04/20 11:13:15 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -142,7 +142,7 @@ long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
 	 * octet is set.
 	 */
 	if (ltmp < 0)
-		utmp = -ltmp - 1;
+		utmp = -(ltmp + 1);
 	else
 		utmp = ltmp;
 	clen = BN_num_bits_word(utmp);
