@@ -1,4 +1,4 @@
-/*	$OpenBSD: acrtc.c,v 1.2 2017/12/17 15:29:29 kettenis Exp $	*/
+/*	$OpenBSD: acrtc.c,v 1.3 2019/04/20 22:40:13 deraadt Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -117,13 +117,13 @@ acrtc_attach(struct device *parent, struct device *self, void *aux)
 	clock_register(&sc->sc_cd);
 }
 
-inline uint16_t
+static inline uint16_t
 acrtc_read_reg(struct acrtc_softc *sc, uint8_t reg)
 {
 	return rsb_read_2(sc->sc_cookie, sc->sc_rta, reg);
 }
 
-inline void
+static inline void
 acrtc_write_reg(struct acrtc_softc *sc, uint8_t reg, uint16_t value)
 {
 	rsb_write_2(sc->sc_cookie, sc->sc_rta, reg, value);
