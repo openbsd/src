@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.52 2017/01/21 11:32:04 guenther Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.53 2019/04/20 11:36:19 bluhm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -855,7 +855,6 @@ rip6_stats(char *name)
 	p(rip6s_fullsock,
 	    "\t%llu message%s dropped due to full socket buffers\n");
 	delivered = rip6stat.rip6s_ipackets -
-		    rip6stat.rip6s_badsum -
 		    rip6stat.rip6s_nosock -
 		    rip6stat.rip6s_nosockmcast -
 		    rip6stat.rip6s_fullsock;
