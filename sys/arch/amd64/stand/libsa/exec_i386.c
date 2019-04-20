@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.27 2019/04/10 04:17:33 deraadt Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.28 2019/04/20 23:00:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -154,7 +154,7 @@ run_loadfile(uint64_t *marks, int howto)
 	 * Move the loaded kernel image to the usual place after calling
 	 * ExitBootServices().
 	 */
-	memcpy((void *)marks[MARK_START] + delta, (void *)marks[MARK_START],
+	memmove((void *)marks[MARK_START] + delta, (void *)marks[MARK_START],
 	    marks[MARK_END] - marks[MARK_START]);
 	for (i = 0; i < MARK_MAX; i++)
 		marks[i] += delta;
