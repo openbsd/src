@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.38 2019/04/20 08:28:59 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.39 2019/04/20 14:13:11 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -875,7 +875,7 @@ lf_print(const char *tag, struct lockf *lock)
 		printf("\n");
 		return;
 	}
-	printf(", %s %p %s, start %llx, end %llx",
+	printf(", %s %p %s, start %lld, end %lld",
 		lock->lf_flags & F_POSIX ? "posix" : "flock",
 		lock->lf_id,
 		lock->lf_type == F_RDLCK ? "shared" :
