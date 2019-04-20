@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2016/07/30 03:25:49 guenther Exp $
+#	$OpenBSD: Makefile,v 1.15 2019/04/20 22:59:03 deraadt Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 S=      ${.CURDIR}/../../../..
@@ -25,7 +25,7 @@ LDFLAGS+=	-T ${.CURDIR}/elf32_powerpc_merge.x -Bstatic
 SRCS+=		getchar.c
 
 .PATH:		${S}/lib/libkern/arch/powerpc ${S}/lib/libkern
-SRCS+=		strlcpy.c memcpy.c strlen.c strrchr.c strlcat.c ashrdi3.c
+SRCS+=		strlcpy.c memcpy.c memmove.c strlen.c strrchr.c strlcat.c ashrdi3.c
 SRCS+=		moddi3.c
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..

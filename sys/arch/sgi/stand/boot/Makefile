@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2016/11/06 16:04:20 tb Exp $
+#	$OpenBSD: Makefile,v 1.19 2019/04/20 22:59:04 deraadt Exp $
 
 NOMAN=		noman
 
@@ -19,7 +19,7 @@ SRCS=		start.S arcbios.c boot.c conf.c diskio.c filesystem.c \
 SRCS+=		loadfile.c
 
 .PATH:		${S}/lib/libkern/arch/mips64 ${S}/lib/libkern
-SRCS+=		memcpy.c strchr.c strcmp.S strlcat.c strlcpy.c strlen.c \
+SRCS+=		memcpy.c memmove.c strchr.c strcmp.S strlcat.c strlcpy.c strlen.c \
 		strncmp.c strrchr.c
 
 CLEANFILES+=	machine mips64

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2017/10/17 19:31:56 naddy Exp $
+#	$OpenBSD: Makefile,v 1.33 2019/04/20 22:59:03 deraadt Exp $
 
 MAN=	pxeboot.8
 
@@ -28,7 +28,7 @@ SRCS+=	boot.c cmd.c vars.c bootarg.c
 
 .PATH:	${S}/lib/libsa
 SRCS+=	alloc.c exit.c getchar.c getfile.c getln.c globals.c putchar.c \
-	strcmp.c strlen.c strncmp.c memcmp.c memcpy.c memset.c printf.c \
+	strcmp.c strlen.c strncmp.c memcmp.c memcpy.c memmove.c memset.c printf.c \
 	snprintf.c strerror.c strncpy.c strtol.c strtoll.c ctime.c strlcpy.c \
 	strlcat.c
 SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \

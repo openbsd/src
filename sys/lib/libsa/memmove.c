@@ -1,5 +1,4 @@
-/*	$OpenBSD: memcpy.c,v 1.6 2019/04/20 22:59:04 deraadt Exp $	*/
-/*	$NetBSD: bcopy.c,v 1.5 1995/04/22 13:46:50 cgd Exp $	*/
+/*	$OpenBSD: memmove.c,v 1.1 2019/04/20 22:59:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -28,23 +27,29 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)bcopy.c	8.1 (Berkeley) 6/11/93
  */
 
 #include <sys/types.h>
-#include "stand.h"
+#include <sys/systm.h>
+
+#undef memmove
 
 /*
  * This is designed to be small, not fast.
  */
 void *
-memcpy(void *s1, const void *s2, size_t n)
+memmove(void *s1, const void *s2, size_t n)
 {
 	const char *f = s2;
 	char *t = s1;
 
-	while (n-- > 0)
-		*t++ = *f++;
+	if (f < t) {
+		f += n;
+		t += n;
+		while (n-- > 0)
+			*--t = *--f;
+	} else
+		while (n-- > 0)
+			*t++ = *f++;
 	return s1;
 }
