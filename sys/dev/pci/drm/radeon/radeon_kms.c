@@ -156,7 +156,7 @@ radeondrm_detach_kms(struct device *self, int flags)
 	radeon_device_fini(rdev);
 
 	if (rdev->ddev != NULL) {
-		config_detach((struct device *)rdev->ddev, flags);
+		config_detach(rdev->ddev->dev, flags);
 		rdev->ddev = NULL;
 	}
 
