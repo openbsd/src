@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.83 2019/01/22 23:23:18 jsg Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.84 2019/04/20 23:10:00 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -49,13 +49,8 @@ typedef __uint64_t	Elf64_Addr;
 typedef __uint64_t	Elf64_Off;
 typedef __int32_t	Elf64_Shalf;
 
-#ifdef __alpha__
-typedef __int64_t	Elf64_Sword;
-typedef __uint64_t	Elf64_Word;
-#else
 typedef __int32_t	Elf64_Sword;
 typedef __uint32_t	Elf64_Word;
-#endif
 
 typedef __int64_t	Elf64_Sxword;
 typedef __uint64_t	Elf64_Xword;
