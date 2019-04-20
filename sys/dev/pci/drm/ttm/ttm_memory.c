@@ -224,14 +224,6 @@ static ssize_t ttm_mem_global_store(struct kobject *kobj,
 }
 #endif
 
-static void ttm_mem_global_kobj_release(struct kobject *kobj)
-{
-	struct ttm_mem_global *glob =
-		container_of(kobj, struct ttm_mem_global, kobj);
-
-	kfree(glob);
-}
-
 #ifdef notyet
 static struct attribute *ttm_mem_global_attrs[] = {
 	&ttm_mem_global_lower_mem_limit,
@@ -245,7 +237,6 @@ static const struct sysfs_ops ttm_mem_global_ops = {
 #endif
 
 static struct kobj_type ttm_mem_glob_kobj_type = {
-	.release = &ttm_mem_global_kobj_release,
 #ifdef __linux__
 	.sysfs_ops = &ttm_mem_global_ops,
 	.default_attrs = ttm_mem_global_attrs,
