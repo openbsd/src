@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockf.h,v 1.16 2019/04/19 09:41:07 visa Exp $	*/
+/*	$OpenBSD: lockf.h,v 1.17 2019/04/20 08:28:59 anton Exp $	*/
 /*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
 
 /*
@@ -35,44 +35,11 @@
  *	@(#)lockf.h	8.1 (Berkeley) 6/11/93
  */
 
-/*
- * The lockf structure is a kernel structure which contains the information
- * associated with a byte range lock.  The lockf structures are linked into
- * the inode structure. Locks are sorted by the starting byte of the lock for
- * efficiency.
- */
-TAILQ_HEAD(locklist, lockf);
-
-struct lockf {
-	short	lf_flags;	 /* Lock semantics: F_POSIX, F_FLOCK, F_WAIT */
-	short	lf_type;	 /* Lock type: F_RDLCK, F_WRLCK */
-	off_t	lf_start;	 /* The byte # of the start of the lock */
-	off_t	lf_end;		 /* The byte # of the end of the lock (-1=EOF)*/
-	caddr_t	lf_id;		 /* The id of the resource holding the lock */
-	struct	lockf_state *lf_state;	/* State associated with the lock */
-	TAILQ_ENTRY(lockf) lf_entry;
-	struct	lockf *lf_blk;	 /* The lock that blocks us */
-	struct	locklist lf_blkhd;	/* The list of blocked locks */
-	TAILQ_ENTRY(lockf) lf_block; /* A request waiting for a lock */
-	uid_t	lf_uid;		/* User ID responsible */
-	pid_t	lf_pid;		/* POSIX - owner pid */
-};
-
-struct lockf_state {
-	TAILQ_HEAD(, lockf)	  ls_locks;	/* list of locks */
-	struct lockf_state	**ls_owner;	/* owner */
-	int		 	  ls_refs;	/* reference counter */
-	int			  ls_pending;	/* pending lock operations */
-};
-
-/* Maximum length of sleep chains to traverse to try and detect deadlock. */
-#define MAXDEPTH 50
-
 #ifdef _KERNEL
-__BEGIN_DECLS
+struct lockf_state;
+
 void	 lf_init(void);
 int	 lf_advlock(struct lockf_state **,
 	    off_t, caddr_t, int, struct flock *, int);
 void	 lf_purgelocks(struct lockf_state **);
-__END_DECLS
 #endif /* _KERNEL */
