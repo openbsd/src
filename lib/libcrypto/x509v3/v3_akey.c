@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.20 2019/04/21 08:07:47 tb Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.21 2019/04/21 16:50:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -91,22 +91,41 @@ static STACK_OF(CONF_VALUE) *
 i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, AUTHORITY_KEYID *akeyid,
     STACK_OF(CONF_VALUE) *extlist)
 {
-	char *tmp;
+	char *tmpstr = NULL;
 
-	if (akeyid->keyid) {
-		tmp = hex_to_string(akeyid->keyid->data, akeyid->keyid->length);
-		X509V3_add_value("keyid", tmp, &extlist);
-		free(tmp);
+	if (akeyid->keyid != NULL) {
+		if ((tmpstr = hex_to_string(akeyid->keyid->data,
+		    akeyid->keyid->length)) == NULL)
+			goto err;
+		if (!X509V3_add_value("keyid", tmpstr, &extlist))
+			goto err;
+		free(tmpstr);
+		tmpstr = NULL;
 	}
-	if (akeyid->issuer)
-		extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer, extlist);
-	if (akeyid->serial) {
-		tmp = hex_to_string(akeyid->serial->data,
-		    akeyid->serial->length);
-		X509V3_add_value("serial", tmp, &extlist);
-		free(tmp);
+
+	if (akeyid->issuer != NULL) {
+		if ((extlist = i2v_GENERAL_NAMES(NULL, akeyid->issuer,
+		    extlist)) == NULL)
+			goto err;
 	}
+
+	if (akeyid->serial != NULL) {
+		if ((tmpstr = hex_to_string(akeyid->serial->data,
+		    akeyid->serial->length)) == NULL)
+			goto err;
+		if (!X509V3_add_value("serial", tmpstr, &extlist))
+			goto err;
+		free(tmpstr);
+		tmpstr = NULL;
+	}
+
 	return extlist;
+
+ err:
+	free(tmpstr);
+	sk_CONF_VALUE_pop_free(extlist, X509V3_conf_free);
+
+	return NULL;
 }
 
 /*
