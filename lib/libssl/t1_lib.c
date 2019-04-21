@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.155 2019/04/21 10:17:25 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.156 2019/04/21 14:38:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -955,10 +955,12 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	/* Move p after IV to start of encrypted ticket, update length */
 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
 	eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
-	sdec = malloc(eticklen);
-	if (sdec == NULL ||
-	    EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
+	if ((sdec = malloc(eticklen)) == NULL) {
 		ret = -1;
+		goto done;
+	}
+	if (EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
+		ret = 2;
 		goto done;
 	}
 	if (EVP_DecryptFinal_ex(&ctx, sdec + slen, &mlen) <= 0) {
@@ -973,7 +975,6 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 		 * For session parse failure, indicate that we need to send a
 		 * new ticket.
 		 */
-		ERR_clear_error();
 		ret = 2;
 		goto done;
 	}
@@ -1001,6 +1002,9 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	free(sdec);
 	HMAC_CTX_cleanup(&hctx);
 	EVP_CIPHER_CTX_cleanup(&ctx);
+
+	if (ret == 2)
+		ERR_clear_error();
 
 	return ret;
 }
