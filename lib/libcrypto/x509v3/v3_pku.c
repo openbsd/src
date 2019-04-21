@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pku.c,v 1.13 2016/12/30 15:54:49 jsing Exp $ */
+/* $OpenBSD: v3_pku.c,v 1.14 2019/04/21 16:38:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,9 +64,7 @@
 
 static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
     PKEY_USAGE_PERIOD *usage, BIO *out, int indent);
-/*
-static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
-*/
+
 const X509V3_EXT_METHOD v3_pkey_usage_period = {
 	.ext_nid = NID_private_key_usage_period,
 	.ext_flags = 0,
@@ -154,13 +152,3 @@ i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage,
 	}
 	return 1;
 }
-
-/*
-static PKEY_USAGE_PERIOD *v2i_PKEY_USAGE_PERIOD(method, ctx, values)
-X509V3_EXT_METHOD *method;
-X509V3_CTX *ctx;
-STACK_OF(CONF_VALUE) *values;
-{
-return NULL;
-}
-*/
