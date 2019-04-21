@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.235 2019/02/06 20:54:28 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.236 2019/04/21 22:43:00 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -131,15 +131,18 @@ struct	roff {
 	char		 escape; /* escape character */
 };
 
+/*
+ * A macro definition, condition, or ignored block.
+ */
 struct	roffnode {
 	enum roff_tok	 tok; /* type of node */
 	struct roffnode	*parent; /* up one in stack */
 	int		 line; /* parse line */
 	int		 col; /* parse col */
 	char		*name; /* node name, e.g. macro name */
-	char		*end; /* end-rules: custom token */
-	int		 endspan; /* end-rules: next-line or infty */
-	int		 rule; /* current evaluation rule */
+	char		*end; /* custom end macro of the block */
+	int		 endspan; /* scope to: 1=eol 2=next line -1=\} */
+	int		 rule; /* content is: 1=evaluated 0=skipped */
 };
 
 #define	ROFF_ARGS	 struct roff *r, /* parse ctx */ \
@@ -179,6 +182,7 @@ static	int		 roff_als(ROFF_ARGS);
 static	int		 roff_block(ROFF_ARGS);
 static	int		 roff_block_text(ROFF_ARGS);
 static	int		 roff_block_sub(ROFF_ARGS);
+static	int		 roff_break(ROFF_ARGS);
 static	int		 roff_cblock(ROFF_ARGS);
 static	int		 roff_cc(ROFF_ARGS);
 static	int		 roff_ccond(struct roff *, int, int);
@@ -398,7 +402,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_unsupp, NULL, NULL, 0 },  /* boxa */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* bp */
 	{ roff_unsupp, NULL, NULL, 0 },  /* BP */
-	{ roff_unsupp, NULL, NULL, 0 },  /* break */
+	{ roff_break, NULL, NULL, 0 },  /* break */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* breakchar */
 	{ roff_line_ignore, NULL, NULL, 0 },  /* brnl */
 	{ roff_noarg, NULL, NULL, 0 },  /* brp */
@@ -683,7 +687,7 @@ roffhash_find(struct ohash *htab, const char *name, size_t sz)
 
 /*
  * Pop the current node off of the stack of roff instructions currently
- * pending.
+ * pending.  Return 1 if it is a loop or 0 otherwise.
  */
 static int
 roffnode_pop(struct roff *r)
@@ -2000,6 +2004,10 @@ roff_cblock(ROFF_ARGS)
 
 }
 
+/*
+ * Pop all nodes ending at the end of the current input line.
+ * Return the number of loops ended.
+ */
 static int
 roffnode_cleanscope(struct roff *r)
 {
@@ -2014,6 +2022,11 @@ roffnode_cleanscope(struct roff *r)
 	return inloop;
 }
 
+/*
+ * Handle the closing \} of a conditional block.
+ * Apart from generating warnings, this only pops nodes.
+ * Return the number of loops ended.
+ */
 static int
 roff_ccond(struct roff *r, int ln, int ppos)
 {
@@ -2233,6 +2246,7 @@ roff_block_text(ROFF_ARGS)
 static int
 roff_cond_sub(ROFF_ARGS)
 {
+	struct roffnode	*bl;
 	char		*ep;
 	int		 endloop, irc, rr;
 	enum roff_tok	 t;
@@ -2280,9 +2294,21 @@ roff_cond_sub(ROFF_ARGS)
 	 */
 
 	t = roff_parse(r, buf->buf, &pos, ln, ppos);
-	irc |= t != TOKEN_NONE && (rr || roffs[t].flags & ROFFMAC_STRUCT) ?
-	    (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs) :
-	    rr ? ROFF_CONT : ROFF_IGN;
+	if (t == ROFF_break) {
+		if (irc & ROFF_LOOPMASK)
+			irc = ROFF_IGN | ROFF_LOOPEXIT;
+		else if (rr) {
+			for (bl = r->last; bl != NULL; bl = bl->parent) {
+				bl->rule = 0;
+				if (bl->tok == ROFF_while)
+					break;
+			}
+		}
+	} else if (t != TOKEN_NONE &&
+	    (rr || roffs[t].flags & ROFFMAC_STRUCT))
+		irc |= (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs);
+	else
+		irc |= rr ? ROFF_CONT : ROFF_IGN;
 	return irc;
 }
 
@@ -3477,6 +3503,17 @@ roff_als(ROFF_ARGS)
 	roff_setstrn(&r->strtab, newn, newsz, value, valsz, 0);
 	roff_setstrn(&r->rentab, newn, newsz, NULL, 0, 0);
 	free(value);
+	return ROFF_IGN;
+}
+
+/*
+ * The .break request only makes sense inside conditionals,
+ * and that case is already handled in roff_cond_sub().
+ */
+static int
+roff_break(ROFF_ARGS)
+{
+	mandoc_msg(MANDOCERR_BLK_NOTOPEN, ln, pos, "break");
 	return ROFF_IGN;
 }
 

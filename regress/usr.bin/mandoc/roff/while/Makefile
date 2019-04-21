@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2018/08/24 22:56:37 schwarze Exp $
+# $OpenBSD: Makefile,v 1.2 2019/04/21 22:43:00 schwarze Exp $
 
-REGRESS_TARGETS	= basic badargs into nesting outof
+REGRESS_TARGETS	= basic badargs break into nesting outof
 LINT_TARGETS	= badargs into nesting outof
 
 # mandoc defects:
