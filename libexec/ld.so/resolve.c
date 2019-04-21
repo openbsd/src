@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.88 2019/04/21 03:41:13 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.89 2019/04/21 04:11:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -361,13 +361,13 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		object->Dyn.info[DT_PREINIT_ARRAY] += obase;
 
 	if (gnu_hash) {
-		Elf32_Word *hashtab = (Elf32_Word *)(gnu_hash + obase);
-		Elf32_Word nbuckets = hashtab[0];
-		Elf32_Word nmaskwords = hashtab[2];
+		Elf_Word *hashtab = (Elf_Word *)(gnu_hash + obase);
+		Elf_Word nbuckets = hashtab[0];
+		Elf_Word nmaskwords = hashtab[2];
 
 		/* validity check */
 		if (nbuckets > 0 && (nmaskwords & (nmaskwords - 1)) == 0) {
-			Elf32_Word symndx = hashtab[1];
+			Elf_Word symndx = hashtab[1];
 			int bloom_size32 = (ELFSIZE / 32) * nmaskwords;
 
 			object->nbuckets = nbuckets;
@@ -385,11 +385,11 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 			 * the entries in the GNU hash chain.
 			 */
 			if (object->Dyn.info[DT_HASH] == 0) {
-				Elf32_Word n;
+				Elf_Word n;
 
 				for (n = 0; n < nbuckets; n++) {
 					Elf_Word bkt = object->buckets_gnu[n];
-					const Elf32_Word *hashval;
+					const Elf_Word *hashval;
 					if (bkt == 0)
 						continue;
 					hashval = &object->chains_gnu[bkt];
@@ -633,8 +633,8 @@ _dl_find_symbol_obj(elf_object_t *obj, struct symlookup *sl)
 		Elf_Addr bloom_word;
 		unsigned int h1;
 		unsigned int h2;
-		Elf32_Word bucket;
-		const Elf32_Word *hashval;
+		Elf_Word bucket;
+		const Elf_Word *hashval;
 
 		/* pick right bitmask word from Bloom filter array */
 		bloom_word = obj->bloom_gnu[(hash / ELFSIZE) &

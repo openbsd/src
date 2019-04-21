@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.89 2019/04/21 03:41:13 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.90 2019/04/21 04:11:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -149,12 +149,12 @@ struct elf_object {
 		} u_elf;
 		struct {
 			/* specific to GNU hash */
-			const Elf32_Word	*buckets;
-			const Elf32_Word	*chains;
+			const Elf_Word		*buckets;
+			const Elf_Word		*chains;
 			const Elf_Addr		*bloom;
-			Elf32_Word		mask_bm;
-			Elf32_Word		shift2;
-			Elf32_Word		symndx;
+			Elf_Word		mask_bm;
+			Elf_Word		shift2;
+			Elf_Word		symndx;
 		} u_gnu;
 	} hash_u;
 #define buckets_elf	hash_u.u_elf.buckets
