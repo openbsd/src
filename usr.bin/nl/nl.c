@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl.c,v 1.6 2015/10/09 01:37:08 deraadt Exp $ */
+/*	$OpenBSD: nl.c,v 1.7 2019/04/21 01:08:46 deraadt Exp $ */
 /*	$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $	*/
 
 /*-
@@ -217,6 +217,9 @@ main(int argc, char *argv[])
 		usage();
 		/* NOTREACHED */
 	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* Generate the delimiter sequence */
 	memcpy(delim, delim1, delim1len);
