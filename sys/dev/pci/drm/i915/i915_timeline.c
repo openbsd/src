@@ -31,7 +31,7 @@ void i915_timeline_init(struct drm_i915_private *i915,
 
 	timeline->fence_context = dma_fence_context_alloc(1);
 
-	mtx_init_flags(&timeline->lock, IPL_NONE, name, MTX_DUPOK);
+	mtx_init_flags(&timeline->lock, IPL_TTY, name, MTX_DUPOK);
 
 	init_request_active(&timeline->last_request, NULL);
 	INIT_LIST_HEAD(&timeline->requests);
