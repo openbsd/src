@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff.c,v 1.236 2019/04/21 22:43:00 schwarze Exp $ */
+/*	$OpenBSD: roff.c,v 1.237 2019/04/21 23:45:50 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -3839,6 +3839,11 @@ roff_userdef(ROFF_ARGS)
 	char		 *arg, *ap, *dst, *src;
 	size_t		  sz;
 
+	/* If the macro is empty, ignore it altogether. */
+
+	if (*r->current_string == '\0')
+		return ROFF_IGN;
+
 	/* Initialize a new macro stack context. */
 
 	if (++r->mstackpos == r->mstacksz) {
@@ -3886,7 +3891,7 @@ roff_userdef(ROFF_ARGS)
 	buf->sz = strlen(buf->buf) + 1;
 	*offs = 0;
 
-	return buf->sz > 1 && buf->buf[buf->sz - 2] == '\n' ?
+	return buf->buf[buf->sz - 2] == '\n' ?
 	    ROFF_REPARSE | ROFF_USERCALL : ROFF_IGN | ROFF_APPEND;
 }
 
