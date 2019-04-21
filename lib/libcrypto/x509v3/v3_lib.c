@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_lib.c,v 1.18 2018/05/19 10:41:53 tb Exp $ */
+/* $OpenBSD: v3_lib.c,v 1.19 2019/04/21 16:29:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -103,11 +103,12 @@ ext_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
 	return ext_cmp(a, b);
 }
 
-static const X509V3_EXT_METHOD * *
-OBJ_bsearch_ext(const X509V3_EXT_METHOD * *key, const X509V3_EXT_METHOD * const *base, int num)
+static const X509V3_EXT_METHOD **
+OBJ_bsearch_ext(const X509V3_EXT_METHOD **key,
+    const X509V3_EXT_METHOD *const *base, int num)
 {
-	return (const X509V3_EXT_METHOD * *)OBJ_bsearch_(key, base, num, sizeof(const X509V3_EXT_METHOD *),
-	    ext_cmp_BSEARCH_CMP_FN);
+	return (const X509V3_EXT_METHOD **)OBJ_bsearch_(key, base, num,
+	    sizeof(const X509V3_EXT_METHOD *), ext_cmp_BSEARCH_CMP_FN);
 }
 
 const X509V3_EXT_METHOD *
