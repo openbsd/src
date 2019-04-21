@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.156 2019/04/21 14:38:32 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.157 2019/04/21 14:41:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -790,7 +790,9 @@ int
 tls1_process_ticket(SSL *s, const unsigned char *session_id, int session_id_len,
     CBS *ext_block, SSL_SESSION **ret)
 {
-	CBS extensions;
+	CBS extensions, ext_data;
+	uint16_t ext_type = 0;
+	int r;
 
 	s->internal->tlsext_ticket_expected = 0;
 	*ret = NULL;
@@ -813,48 +815,50 @@ tls1_process_ticket(SSL *s, const unsigned char *session_id, int session_id_len,
 		return -1;
 
 	while (CBS_len(&extensions) > 0) {
-		uint16_t ext_type;
-		CBS ext_data;
-
 		if (!CBS_get_u16(&extensions, &ext_type) ||
 		    !CBS_get_u16_length_prefixed(&extensions, &ext_data))
 			return -1;
 
-		if (ext_type == TLSEXT_TYPE_session_ticket) {
-			int r;
-			if (CBS_len(&ext_data) == 0) {
-				/* The client will accept a ticket but doesn't
-				 * currently have one. */
-				s->internal->tlsext_ticket_expected = 1;
-				return 1;
-			}
-			if (s->internal->tls_session_secret_cb != NULL) {
-				/* Indicate that the ticket couldn't be
-				 * decrypted rather than generating the session
-				 * from ticket now, trigger abbreviated
-				 * handshake based on external mechanism to
-				 * calculate the master secret later. */
-				return 2;
-			}
-
-			r = tls_decrypt_ticket(s, CBS_data(&ext_data),
-			    CBS_len(&ext_data), session_id, session_id_len, ret);
-
-			switch (r) {
-			case 2: /* ticket couldn't be decrypted */
-				s->internal->tlsext_ticket_expected = 1;
-				return 2;
-			case 3: /* ticket was decrypted */
-				return r;
-			case 4: /* ticket decrypted but need to renew */
-				s->internal->tlsext_ticket_expected = 1;
-				return 3;
-			default: /* fatal error */
-				return -1;
-			}
-		}
+		if (ext_type == TLSEXT_TYPE_session_ticket)
+			break;
 	}
-	return 0;
+
+	if (ext_type != TLSEXT_TYPE_session_ticket)
+		return 0;
+
+	if (CBS_len(&ext_data) == 0) {
+		/*
+		 * The client will accept a ticket but does not currently
+		 * have one.
+		 */
+		s->internal->tlsext_ticket_expected = 1;
+		return 1;
+	}
+
+	if (s->internal->tls_session_secret_cb != NULL) {
+		/*
+		 * Indicate that the ticket could not be decrypted rather than
+		 * generating the session from ticket now, trigger abbreviated
+		 * handshake based on external mechanism to calculate the master
+		 * secret later.
+		 */
+		return 2;
+	}
+
+	r = tls_decrypt_ticket(s, CBS_data(&ext_data), CBS_len(&ext_data),
+	    session_id, session_id_len, ret);
+	switch (r) {
+	case 2: /* ticket couldn't be decrypted */
+		s->internal->tlsext_ticket_expected = 1;
+		return 2;
+	case 3: /* ticket was decrypted */
+		return r;
+	case 4: /* ticket decrypted but need to renew */
+		s->internal->tlsext_ticket_expected = 1;
+		return 3;
+	default: /* fatal error */
+		return -1;
+	}
 }
 
 /* tls_decrypt_ticket attempts to decrypt a session ticket.
