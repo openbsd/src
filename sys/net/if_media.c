@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.30 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.31 2019/04/21 08:28:53 stsp Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -277,7 +277,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		ifm->ifm_cur = match;
 		ifm->ifm_media = newmedia;
 		error = (*ifm->ifm_change)(ifp);
-		if (error) {
+		if (error && error != ENETRESET) {
 			ifm->ifm_cur = oldentry;
 			ifm->ifm_media = oldmedia;
 		}
