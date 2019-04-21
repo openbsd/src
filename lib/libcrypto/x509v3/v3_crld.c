@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_crld.c,v 1.22 2017/05/02 04:11:08 deraadt Exp $ */
+/* $OpenBSD: v3_crld.c,v 1.23 2019/04/21 16:25:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -104,8 +104,8 @@ const X509V3_EXT_METHOD v3_freshest_crl = {
 	.usr_data = NULL,
 };
 
-static
-STACK_OF(GENERAL_NAME) *gnames_from_sectname(X509V3_CTX *ctx, char *sect)
+static STACK_OF(GENERAL_NAME) *
+gnames_from_sectname(X509V3_CTX *ctx, char *sect)
 {
 	STACK_OF(CONF_VALUE) *gnsect;
 	STACK_OF(GENERAL_NAME) *gens;

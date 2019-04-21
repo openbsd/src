@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_cpols.c,v 1.25 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_cpols.c,v 1.26 2019/04/21 16:25:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -398,9 +398,8 @@ NOTICEREF_free(NOTICEREF *a)
 	ASN1_item_free((ASN1_VALUE *)a, &NOTICEREF_it);
 }
 
-static
-STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-    char *value)
+static STACK_OF(POLICYINFO) *
+r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *value)
 {
 	STACK_OF(POLICYINFO) *pols = NULL;
 	char *pstr;

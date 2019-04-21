@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_node.c,v 1.6 2015/07/18 00:01:05 beck Exp $ */
+/* $OpenBSD: pcy_node.c,v 1.7 2019/04/21 16:25:40 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -68,7 +68,8 @@ node_cmp(const X509_POLICY_NODE * const *a, const X509_POLICY_NODE * const *b)
 	return OBJ_cmp((*a)->data->valid_policy, (*b)->data->valid_policy);
 }
 
-STACK_OF(X509_POLICY_NODE) *policy_node_cmp_new(void)
+STACK_OF(X509_POLICY_NODE) *
+policy_node_cmp_new(void)
 {
 	return sk_X509_POLICY_NODE_new(node_cmp);
 }
