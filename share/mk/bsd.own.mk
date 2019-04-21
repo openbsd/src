@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.196 2019/04/17 16:36:23 kettenis Exp $
+#	$OpenBSD: bsd.own.mk,v 1.197 2019/04/21 15:20:24 kettenis Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -15,7 +15,7 @@ SKEY?=		yes
 # Set `YP' to `yes' to build with support for NIS/YP.
 YP?=		yes
 
-CLANG_ARCH=aarch64 amd64 arm i386 mips64 mips64el sparc64
+CLANG_ARCH=aarch64 amd64 arm i386 mips64 mips64el powerpc sparc64
 GCC4_ARCH=alpha hppa mips64 mips64el powerpc sh sparc64
 GCC3_ARCH=m88k
 LLD_ARCH=aarch64 amd64 arm i386
