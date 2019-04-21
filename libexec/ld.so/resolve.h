@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.88 2018/12/05 04:28:32 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.89 2019/04/21 03:41:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -46,6 +46,13 @@ struct load_list {
 	Elf_Addr	moff;
 	long		foff;
 };
+
+/* Alpha uses 8byte entries for DT_HASH */
+#ifdef __alpha__
+typedef uint64_t Elf_Hash_Word;
+#else
+typedef uint32_t Elf_Hash_Word;
+#endif
 
 /*
  *  Structure describing a loaded object.
@@ -137,8 +144,8 @@ struct elf_object {
 	union {
 		struct {
 			/* specific to ELF hash */
-			const Elf_Word	*buckets;
-			const Elf_Word	*chains;
+			const Elf_Hash_Word	*buckets;
+			const Elf_Hash_Word	*chains;
 		} u_elf;
 		struct {
 			/* specific to GNU hash */

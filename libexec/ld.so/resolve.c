@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.87 2018/11/28 03:18:00 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.88 2019/04/21 03:41:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -403,8 +403,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		}
 	}
 	if (object->Dyn.info[DT_HASH] != 0) {
-		Elf_Word *hashtab = (Elf_Word *)(object->Dyn.info[DT_HASH]
-		    + obase);
+		Elf_Hash_Word *hashtab =
+		    (Elf_Hash_Word *)(object->Dyn.info[DT_HASH] + obase);
 
 		object->nchains = hashtab[1];
 		if (object->nbuckets == 0) {
