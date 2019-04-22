@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_bcons.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_bcons.c,v 1.16 2019/04/22 17:21:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -145,9 +145,24 @@ static STACK_OF(CONF_VALUE) *
 i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method, BASIC_CONSTRAINTS *bcons,
     STACK_OF(CONF_VALUE) *extlist)
 {
-	X509V3_add_value_bool("CA", bcons->ca, &extlist);
-	X509V3_add_value_int("pathlen", bcons->pathlen, &extlist);
+	STACK_OF(CONF_VALUE) *free_extlist;
+
+	if (extlist == NULL) {
+		if ((free_extlist = extlist = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
+
+	if (!X509V3_add_value_bool("CA", bcons->ca, &extlist))
+		goto err;
+	if (!X509V3_add_value_int("pathlen", bcons->pathlen, &extlist))
+		goto err;
+
 	return extlist;
+
+ err:
+	sk_CONF_VALUE_pop_free(free_extlist, X509V3_conf_free);
+
+	return NULL;
 }
 
 static BASIC_CONSTRAINTS *
