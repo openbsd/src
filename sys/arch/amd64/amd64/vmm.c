@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.240 2019/04/22 03:54:16 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.241 2019/04/22 20:31:37 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5420,6 +5420,7 @@ int
 vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 {
 	struct vmx_msr_store *msr_store;
+	struct vmx_invvpid_descriptor vid;
 	uint64_t ectls, oldcr0, cr4, mask;
 	int ret;
 
@@ -5465,9 +5466,22 @@ vmx_handle_cr0_write(struct vcpu *vcpu, uint64_t r)
 		return (EINVAL);
 	}
 
-	/* If the guest hasn't enabled paging, nothing more to do. */
-	if (!(r & CR0_PG))
+	/* If the guest hasn't enabled paging ... */
+	if (!(r & CR0_PG)) {
+		if (oldcr0 & CR0_PG) {
+			 /* Paging was disabled (prev. enabled) - Flush TLB */
+			if ((vmm_softc->mode == VMM_MODE_VMX ||
+			    vmm_softc->mode == VMM_MODE_EPT) &&
+			    vcpu->vc_vmx_vpid_enabled) {
+				vid.vid_vpid = vcpu->vc_parent->vm_id;
+				vid.vid_addr = 0;
+				invvpid(IA32_VMX_INVVPID_SINGLE_CTX_GLB, &vid);
+			}
+		}
+
+		/* Nothing more to do in the no-paging case */
 		return (0);
+	}
 
 	/*
 	 * Since the guest has enabled paging, then the IA32_VMX_IA32E_MODE_GUEST
