@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1113 2019/04/02 08:51:49 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1114 2019/04/22 05:36:42 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -331,6 +331,18 @@ get_dkdevs_uninitialized() {
 		_disks=$(rmel "$_d" $_disks)
 	done
 	bsort $_disks
+}
+
+# Return list of valid root disks
+get_dkdevs_root() {
+	local _disks=$(get_dkdevs) _d
+
+	if [[ $MODE == upgrade ]]; then
+		for _d in $_disks; do
+			is_rootdisk "$_d" || _disks=$(rmel "$_d" $_disks)
+		done
+	fi
+	echo -n $_disks
 }
 
 # Return list of all network devices, optionally limited by parameters to
@@ -2241,11 +2253,11 @@ is_rootdisk() {
 
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
-	local _default=$(get_dkdevs) _dkdev
+	local _default=$(get_dkdevs_root) _dkdev
 	local _q="Which disk is the root disk? ('?' for details)"
 
 	while :; do
-		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
+		echo "Available disks are: $(get_dkdevs_root | sed 's/^$/none/')."
 		_ask "$_q" $_default || continue
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
