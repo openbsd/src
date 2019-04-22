@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.239 2019/04/20 23:44:36 kn Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.240 2019/04/22 03:54:16 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -917,8 +917,6 @@ start_vmm_on_cpu(struct cpu_info *ci)
 			}
 
 			/* Enter VMX mode */
-			DPRINTF("%s: Enabling VMX, vmxon region @0x%llx\n",
-			    __func__, (uint64_t)ci->ci_vmxon_region_pa);
 			if (vmxon((uint64_t *)&ci->ci_vmxon_region_pa))
 				return;
 		}
