@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.159 2019/04/22 15:12:20 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.160 2019/04/22 16:03:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -896,10 +896,8 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
 	 * required for a session cookie is never less than this,
 	 * this check isn't too strict.  The exact check comes later.
 	 */
-	if (eticklen < 16 + EVP_MAX_IV_LENGTH) {
-		ret = 2;
-		goto done;
-	}
+	if (eticklen < 16 + EVP_MAX_IV_LENGTH)
+		goto derr;
 
 	/* Initialize session ticket encryption and HMAC contexts */
 	if (tctx->internal->tlsext_ticket_key_cb) {
@@ -908,19 +906,15 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
 		    nctick, nctick + 16, &ctx, &hctx, 0);
 		if (rv < 0)
 			goto err;
-		if (rv == 0) {
-			ret = 2;
-			goto done;
-		}
+		if (rv == 0)
+			goto derr;
 		if (rv == 2)
 			renew_ticket = 1;
 	} else {
 		/* Check key name matches */
 		if (timingsafe_memcmp(etick,
-		    tctx->internal->tlsext_tick_key_name, 16)) {
-			ret = 2;
-			goto done;
-		}
+		    tctx->internal->tlsext_tick_key_name, 16))
+			goto derr;
 		HMAC_Init_ex(&hctx, tctx->internal->tlsext_tick_hmac_key,
 		    16, EVP_sha256(), NULL);
 		EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
@@ -936,10 +930,8 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
 		goto err;
 
 	/* Sanity check ticket length: must exceed keyname + IV + HMAC */
-	if (eticklen <= 16 + EVP_CIPHER_CTX_iv_length(&ctx) + mlen) {
-		ret = 2;
-		goto done;
-	}
+	if (eticklen <= 16 + EVP_CIPHER_CTX_iv_length(&ctx) + mlen)
+		goto derr;
 	eticklen -= mlen;
 
 	/* Check HMAC of encrypted ticket */
@@ -947,38 +939,29 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
 	    HMAC_Final(&hctx, tick_hmac, NULL) <= 0)
 		goto err;
 
-	if (timingsafe_memcmp(tick_hmac, etick + eticklen, mlen)) {
-		ret = 2;
-		goto done;
-	}
+	if (timingsafe_memcmp(tick_hmac, etick + eticklen, mlen))
+		goto derr;
 
 	/* Attempt to decrypt session data */
 	/* Move p after IV to start of encrypted ticket, update length */
 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
 	eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
-	if ((sdec = malloc(eticklen)) == NULL) {
-		ret = -1;
-		goto done;
-	}
-	if (EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0) {
-		ret = 2;
-		goto done;
-	}
-	if (EVP_DecryptFinal_ex(&ctx, sdec + slen, &mlen) <= 0) {
-		ret = 2;
-		goto done;
-	}
+	if ((sdec = malloc(eticklen)) == NULL)
+		goto err;
+	if (EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0)
+		goto derr;
+	if (EVP_DecryptFinal_ex(&ctx, sdec + slen, &mlen) <= 0)
+		goto derr;
+
 	slen += mlen;
 	p = sdec;
 
-	if ((sess = d2i_SSL_SESSION(NULL, &p, slen)) == NULL) {
-		/*
-		 * For session parse failure, indicate that we need to send a
-		 * new ticket.
-		 */
-		ret = 2;
-		goto done;
-	}
+	/*
+	 * For session parse failures, indicate that we need to send a new
+	 * ticket.
+	 */
+	if ((sess = d2i_SSL_SESSION(NULL, &p, slen)) == NULL)
+		goto derr;
 
 	/*
 	 * The session ID, if non-empty, is used by some clients to detect that
@@ -1000,8 +983,13 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
 
 	goto done;
 
+ derr:
+	ret = 2;
+	goto done;
+
  err:
 	ret = -1;
+	goto done;
 
  done:
 	free(sdec);
