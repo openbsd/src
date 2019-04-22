@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.158 2019/04/22 14:49:42 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.159 2019/04/22 15:12:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,9 +122,8 @@
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 
-static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
-    const unsigned char *sess_id, int sesslen,
-    SSL_SESSION **psess);
+static int tls_decrypt_ticket(SSL *s, CBS *session_id,
+    const unsigned char *tick, int ticklen, SSL_SESSION **psess);
 
 SSL3_ENC_METHOD TLSv1_enc_data = {
 	.enc = tls1_enc,
@@ -759,8 +758,7 @@ ssl_check_serverhello_tlsext(SSL *s)
  * ClientHello, and other operations depend on the result, we need to handle
  * any TLS session ticket extension at the same time.
  *
- *   session_id: points at the session ID in the ClientHello.
- *   session_id_len: the length of the session ID.
+ *   session_id: a CBS containing the session ID.
  *   ext_block: a CBS for the ClientHello extensions block.
  *   ret: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
@@ -787,8 +785,7 @@ ssl_check_serverhello_tlsext(SSL *s)
  *   Otherwise, s->internal->tlsext_ticket_expected is set to 0.
  */
 int
-tls1_process_ticket(SSL *s, const unsigned char *session_id, int session_id_len,
-    CBS *ext_block, SSL_SESSION **ret)
+tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
 {
 	CBS extensions, ext_data;
 	uint16_t ext_type = 0;
@@ -845,8 +842,8 @@ tls1_process_ticket(SSL *s, const unsigned char *session_id, int session_id_len,
 		return 2;
 	}
 
-	r = tls_decrypt_ticket(s, CBS_data(&ext_data), CBS_len(&ext_data),
-	    session_id, session_id_len, ret);
+	r = tls_decrypt_ticket(s, session_id, CBS_data(&ext_data),
+	    CBS_len(&ext_data), ret);
 	switch (r) {
 	case 2: /* ticket couldn't be decrypted */
 		s->internal->tlsext_ticket_expected = 1;
@@ -863,10 +860,9 @@ tls1_process_ticket(SSL *s, const unsigned char *session_id, int session_id_len,
 
 /* tls_decrypt_ticket attempts to decrypt a session ticket.
  *
+ *   session_id: a CBS containing the session ID.
  *   etick: points to the body of the session ticket extension.
  *   eticklen: the length of the session tickets extenion.
- *   sess_id: points at the session ID.
- *   sesslen: the length of the session ID.
  *   psess: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  *
@@ -877,10 +873,11 @@ tls1_process_ticket(SSL *s, const unsigned char *session_id, int session_id_len,
  *    4: same as 3, but the ticket needs to be renewed.
  */
 static int
-tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
-    const unsigned char *sess_id, int sesslen, SSL_SESSION **psess)
+tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
+    int eticklen, SSL_SESSION **psess)
 {
-	SSL_SESSION *sess;
+	SSL_SESSION *sess = NULL;
+	size_t session_id_len = 0;
 	unsigned char *sdec = NULL;
 	const unsigned char *p;
 	int slen, mlen, renew_ticket = 0;
@@ -988,10 +985,14 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	 * the ticket has been accepted. So we copy it to the session structure.
 	 * If it is empty set length to zero as required by standard.
 	 */
-	if (sesslen)
-		memcpy(sess->session_id, sess_id, sesslen);
-	sess->session_id_length = sesslen;
+	if (!CBS_write_bytes(session_id, sess->session_id,
+	    sizeof(sess->session_id), &session_id_len))
+		goto err;
+	sess->session_id_length = (unsigned int)session_id_len;
+
 	*psess = sess;
+	sess = NULL;
+
 	if (renew_ticket)
 		ret = 4;
 	else
@@ -1006,6 +1007,7 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	free(sdec);
 	HMAC_CTX_cleanup(&hctx);
 	EVP_CIPHER_CTX_cleanup(&ctx);
+	SSL_SESSION_free(sess);
 
 	if (ret == 2)
 		ERR_clear_error();

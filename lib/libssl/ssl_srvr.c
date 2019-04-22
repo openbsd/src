@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.67 2019/04/22 14:49:42 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.68 2019/04/22 15:12:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -913,8 +913,7 @@ ssl3_get_client_hello(SSL *s)
 
 		CBS_dup(&cbs, &ext_block);
 
-		i = ssl_get_prev_session(s, CBS_data(&session_id),
-		    CBS_len(&session_id), &ext_block);
+		i = ssl_get_prev_session(s, &session_id, &ext_block);
 		if (i == 1) { /* previous session */
 			s->internal->hit = 1;
 		} else if (i == -1)
