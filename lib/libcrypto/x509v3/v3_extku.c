@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_extku.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_extku.c,v 1.16 2019/04/22 17:26:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -149,19 +149,34 @@ EXTENDED_KEY_USAGE_free(EXTENDED_KEY_USAGE *a)
 
 static STACK_OF(CONF_VALUE) *
 i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method, void *a,
-    STACK_OF(CONF_VALUE) *ext_list)
+    STACK_OF(CONF_VALUE) *extlist)
 {
-	EXTENDED_KEY_USAGE *eku = a;
-	int i;
 	ASN1_OBJECT *obj;
+	EXTENDED_KEY_USAGE *eku = a;
+	STACK_OF(CONF_VALUE) *free_extlist = NULL;
 	char obj_tmp[80];
+	int i;
+
+	if (extlist == NULL) {
+		if ((free_extlist = extlist = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
 
 	for (i = 0; i < sk_ASN1_OBJECT_num(eku); i++) {
-		obj = sk_ASN1_OBJECT_value(eku, i);
-		i2t_ASN1_OBJECT(obj_tmp, 80, obj);
-		X509V3_add_value(NULL, obj_tmp, &ext_list);
+		if ((obj = sk_ASN1_OBJECT_value(eku, i)) == NULL)
+			goto err;
+		if (!i2t_ASN1_OBJECT(obj_tmp, sizeof obj_tmp, obj))
+			goto err;
+		if (!X509V3_add_value(NULL, obj_tmp, &extlist))
+			goto err;
 	}
-	return ext_list;
+
+	return extlist;
+
+ err:
+	sk_CONF_VALUE_pop_free(free_extlist, X509V3_conf_free);
+
+	return NULL;
 }
 
 static void *
