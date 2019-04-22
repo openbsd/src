@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.147 2019/04/19 07:50:09 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.148 2019/04/22 00:38:05 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -193,6 +193,7 @@ struct gre_tunnel {
 #define t_dst6	t_dst.in6
 	int			t_ttl;
 	int			t_txhprio;
+	int			t_rxhprio;
 	int			t_ecn;
 	uint16_t		t_df;
 	sa_family_t		t_af;
@@ -293,16 +294,16 @@ static int	gre_input_key(struct mbuf **, int *, int, int, uint8_t,
 
 static struct mbuf *
 		gre_ipv4_patch(const struct gre_tunnel *, struct mbuf *,
-		    uint8_t);
+		    uint8_t *, uint8_t);
 #ifdef INET6
 static struct mbuf *
 		gre_ipv6_patch(const struct gre_tunnel *, struct mbuf *,
-		    uint8_t);
+		    uint8_t *, uint8_t);
 #endif
 #ifdef MPLS
 static struct mbuf *
 		gre_mpls_patch(const struct gre_tunnel *, struct mbuf *,
-		    uint8_t);
+		    uint8_t *, uint8_t);
 #endif
 static void	gre_keepalive_send(void *);
 static void	gre_keepalive_recv(struct ifnet *ifp, struct mbuf *);
@@ -385,7 +386,8 @@ static void	egre_media_status(struct ifnet *, struct ifmediareq *);
 static int	egre_up(struct egre_softc *);
 static int	egre_down(struct egre_softc *);
 
-static int	egre_input(const struct gre_tunnel *, struct mbuf *, int);
+static int	egre_input(const struct gre_tunnel *, struct mbuf *, int,
+		    uint8_t);
 struct if_clone egre_cloner =
     IF_CLONE_INITIALIZER("egre", egre_clone_create, egre_clone_destroy);
  
@@ -471,7 +473,8 @@ static int	nvgre_set_parent(struct nvgre_softc *, const char *);
 static void	nvgre_link_change(void *);
 static void	nvgre_detach(void *);
 
-static int	nvgre_input(const struct gre_tunnel *, struct mbuf *, int);
+static int	nvgre_input(const struct gre_tunnel *, struct mbuf *, int,
+		    uint8_t);
 static void	nvgre_send(void *);
 
 static int	nvgre_rtfind(struct nvgre_softc *, struct ifbaconf *);
@@ -537,7 +540,7 @@ static struct mbuf *
 
 static struct mbuf *
 		eoip_input(struct gre_tunnel *, struct mbuf *,
-		    const struct gre_header *, int);
+		    const struct gre_header *, uint8_t, int);
 struct if_clone eoip_cloner =
     IF_CLONE_INITIALIZER("eoip", eoip_clone_create, eoip_clone_destroy);
  
@@ -597,6 +600,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_tunnel.t_ttl = ip_defttl;
 	sc->sc_tunnel.t_txhprio = IF_HDRPRIO_PAYLOAD;
+	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
 	sc->sc_tunnel.t_ecn = ECN_ALLOWED;
 
@@ -664,6 +668,7 @@ mgre_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_tunnel.t_ttl = ip_defttl;
 	sc->sc_tunnel.t_txhprio = IF_HDRPRIO_PAYLOAD;
+	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
 	sc->sc_tunnel.t_ecn = ECN_ALLOWED;
 
@@ -717,6 +722,7 @@ egre_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_tunnel.t_ttl = ip_defttl;
 	sc->sc_tunnel.t_txhprio = 0;
+	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
 
 	ifmedia_init(&sc->sc_media, 0, egre_media_change, egre_media_status);
@@ -778,6 +784,7 @@ nvgre_clone_create(struct if_clone *ifc, int unit)
 	tunnel = &sc->sc_tunnel;
 	tunnel->t_ttl = IP_DEFAULT_MULTICAST_TTL;
 	tunnel->t_txhprio = 0;
+	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	tunnel->t_df = htons(IP_DF);
 	tunnel->t_key_mask = GRE_KEY_ENTROPY;
 	tunnel->t_key = htonl((NVGRE_VSID_RES_MAX + 1) <<
@@ -845,6 +852,7 @@ eoip_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_tunnel.t_ttl = ip_defttl;
 	sc->sc_tunnel.t_txhprio = 0;
+	sc->sc_tunnel.t_rxhprio = IF_HDRPRIO_PACKET;
 	sc->sc_tunnel.t_df = htons(0);
 
 	sc->sc_ka_timeo = 10;
@@ -963,7 +971,7 @@ mgre_find(const struct gre_tunnel *key)
 
 static struct mbuf *
 gre_input_1(struct gre_tunnel *key, struct mbuf *m,
-    const struct gre_header *gh, int iphlen)
+    const struct gre_header *gh, uint8_t otos, int iphlen)
 {
 	switch (gh->gre_proto) {
 	case htons(ETHERTYPE_PPP):
@@ -979,7 +987,7 @@ gre_input_1(struct gre_tunnel *key, struct mbuf *m,
 #endif
 		break;
 	case htons(GRE_EOIP):
-		return (eoip_input(key, m, gh, iphlen));
+		return (eoip_input(key, m, gh, otos, iphlen));
 		break;
 	}
 
@@ -991,17 +999,18 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
     struct gre_tunnel *key)
 {
 	struct mbuf *m = *mp;
-	int iphlen = *offp, hlen;
+	int iphlen = *offp, hlen, rxprio;
 	struct ifnet *ifp;
 	const struct gre_tunnel *tunnel;
 	caddr_t buf;
 	struct gre_header *gh;
 	struct gre_h_key *gkh;
 	void (*input)(struct ifnet *, struct mbuf *);
-	struct mbuf *(*patch)(const struct gre_tunnel *,
-	    struct mbuf *, uint8_t);
+	struct mbuf *(*patch)(const struct gre_tunnel *, struct mbuf *,
+	    uint8_t *, uint8_t);
 	int bpf_af = AF_UNSPEC; /* bpf */
 	int mcast = 0;
+	uint8_t itos;
 
 	if (!gre_allow)
 		goto decline;
@@ -1025,7 +1034,7 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		break;
 
 	case htons(GRE_VERS_1):
-		m = gre_input_1(key, m, gh, iphlen);
+		m = gre_input_1(key, m, gh, otos, iphlen);
 		if (m == NULL)
 			return (IPPROTO_DONE);
 		/* FALLTHROUGH */
@@ -1056,8 +1065,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		key->t_key_mask = GRE_KEY_NONE;
 
 	if (gh->gre_proto == htons(ETHERTYPE_TRANSETHER)) {
-		if (egre_input(key, m, hlen) == -1 &&
-		    nvgre_input(key, m, hlen) == -1)
+		if (egre_input(key, m, hlen, otos) == -1 &&
+		    nvgre_input(key, m, hlen, otos) == -1)
 			goto decline;
 
 		return (IPPROTO_DONE);
@@ -1149,13 +1158,29 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 
 	tunnel = ifp->if_softc; /* gre and mgre tunnel info is at the front */
 
-	m = (*patch)(tunnel, m, otos);
+	m = (*patch)(tunnel, m, &itos, otos);
 	if (m == NULL)
 		return (IPPROTO_DONE); 
 
 	if (tunnel->t_key_mask == GRE_KEY_ENTROPY) {
 		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
 		    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+	}
+
+	rxprio = tunnel->t_rxhprio;
+	switch (rxprio) {
+	case IF_HDRPRIO_PACKET:
+		/* nop */
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(otos);
+		break;
+	case IF_HDRPRIO_PAYLOAD:
+		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(itos);
+		break;
+	default:
+		m->m_pkthdr.pf.prio = rxprio;
+		break;
 	}
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
@@ -1183,7 +1208,8 @@ decline:
 }
 
 static struct mbuf *
-gre_ipv4_patch(const struct gre_tunnel *tunnel, struct mbuf *m, uint8_t otos)
+gre_ipv4_patch(const struct gre_tunnel *tunnel, struct mbuf *m,
+    uint8_t *itosp, uint8_t otos)
 {
 	struct ip *ip;
 	uint8_t itos;
@@ -1202,12 +1228,15 @@ gre_ipv4_patch(const struct gre_tunnel *tunnel, struct mbuf *m, uint8_t otos)
 	if (itos != ip->ip_tos)
 		ip_tos_patch(ip, itos);
 
+	*itosp = itos;
+
 	return (m);
 }
 
 #ifdef INET6
 static struct mbuf *
-gre_ipv6_patch(const struct gre_tunnel *tunnel, struct mbuf *m, uint8_t otos)
+gre_ipv6_patch(const struct gre_tunnel *tunnel, struct mbuf *m,
+    uint8_t *itosp, uint8_t otos)
 {
 	struct ip6_hdr *ip6;
 	uint32_t flow;
@@ -1230,27 +1259,55 @@ gre_ipv6_patch(const struct gre_tunnel *tunnel, struct mbuf *m, uint8_t otos)
 	SET(flow, itos << 20);
 	htobem32(&ip6->ip6_flow, flow);
 
+	*itosp = itos;
+
 	return (m);
 }
 #endif
 
 #ifdef MPLS
 static struct mbuf *
-gre_mpls_patch(const struct gre_tunnel *tunnel, struct mbuf *m, uint8_t otos)
+gre_mpls_patch(const struct gre_tunnel *tunnel, struct mbuf *m,
+    uint8_t *itosp, uint8_t otos)
 {
-	uint8_t itos = 0;
+	uint8_t itos;
+	uint32_t shim;
+
+	m = m_pullup(m, sizeof(shim));
+	if (m == NULL)
+		return (NULL);
+
+	shim = *mtod(m, uint32_t *);
+	itos = (ntohl(shim & MPLS_EXP_MASK) >> MPLS_EXP_OFFSET) << 5;
 
 	if (ip_ecn_egress(tunnel->t_ecn, &otos, &itos) == 0) {
 		m_freem(m);
 		return (NULL);
 	}
 
+	*itosp = itos;
+
 	return (m);
 }
 #endif
 
+#define gre_l2_prio(_t, _m, _otos) do {					\
+	int rxprio = (_t)->t_rxhprio;					\
+	switch (rxprio) {						\
+	case IF_HDRPRIO_PACKET:						\
+		/* nop */						\
+		break;							\
+	case IF_HDRPRIO_OUTER:						\
+		(_m)->m_pkthdr.pf.prio = IFQ_TOS2PRIO((_otos));		\
+		break;							\
+	default:							\
+		(_m)->m_pkthdr.pf.prio = rxprio;			\
+		break;							\
+	}								\
+} while (0)
+
 static int
-egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
+egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen, uint8_t otos)
 {
 	struct egre_softc *sc;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -1275,6 +1332,8 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 #if NPF > 0
 	pf_pkt_addr_changed(m);
 #endif
+
+	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
 	ml_enqueue(&ml, m);
 	if_input(&sc->sc_ac.ac_if, &ml);
@@ -1496,7 +1555,8 @@ nvgre_ucast_find(const struct gre_tunnel *key)
 }
 
 static int
-nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
+nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
+    uint8_t otos)
 {
 	struct nvgre_softc *sc;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -1518,6 +1578,8 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen)
 
 	m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
 	    (bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY);
+
+	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 
@@ -2368,6 +2430,17 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
 		break;
 
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_tunnel.t_rxhprio;
+		break;
+
 	default:
 		error = gre_tunnel_ioctl(ifp, &sc->sc_tunnel, cmd, data);
 		break;
@@ -2441,6 +2514,17 @@ mgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l3_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_tunnel.t_rxhprio;
 		break;
 
 	case SIOCSVNETID:
@@ -2604,6 +2688,17 @@ egre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_tunnel.t_rxhprio;
 		break;
 
 	case SIOCSVNETID:
@@ -2776,6 +2871,17 @@ nvgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_tunnel.t_rxhprio;
 		break;
 
 	case SIOCBRDGSCACHE:
@@ -2962,6 +3068,17 @@ eoip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGTXHPRIO:
 		ifr->ifr_hdrprio = sc->sc_tunnel.t_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_tunnel.t_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_tunnel.t_rxhprio;
 		break;
 
 	case SIOCADDMULTI:
@@ -4069,7 +4186,7 @@ eoip_keepalive_recv(struct eoip_softc *sc)
 
 static struct mbuf *
 eoip_input(struct gre_tunnel *key, struct mbuf *m,
-    const struct gre_header *gh, int iphlen)
+    const struct gre_header *gh, uint8_t otos, int iphlen)
 {
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct eoip_softc *sc;
@@ -4114,6 +4231,8 @@ eoip_input(struct gre_tunnel *key, struct mbuf *m,
 		goto drop;
 	if (m->m_pkthdr.len != len)
 		m_adj(m, len - m->m_pkthdr.len);
+
+	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 
