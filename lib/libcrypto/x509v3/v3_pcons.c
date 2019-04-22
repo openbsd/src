@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pcons.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: v3_pcons.c,v 1.12 2019/04/22 17:29:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -133,12 +133,26 @@ i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
     STACK_OF(CONF_VALUE) *extlist)
 {
 	POLICY_CONSTRAINTS *pcons = a;
+	STACK_OF(CONF_VALUE) *free_extlist = NULL;
 
-	X509V3_add_value_int("Require Explicit Policy",
-	    pcons->requireExplicitPolicy, &extlist);
-	X509V3_add_value_int("Inhibit Policy Mapping",
-	    pcons->inhibitPolicyMapping, &extlist);
+	if (extlist == NULL) {
+		if ((free_extlist = extlist = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
+
+	if (!X509V3_add_value_int("Require Explicit Policy",
+	    pcons->requireExplicitPolicy, &extlist))
+		goto err;
+	if (!X509V3_add_value_int("Inhibit Policy Mapping",
+	    pcons->inhibitPolicyMapping, &extlist))
+		goto err;
+
 	return extlist;
+
+ err:
+	sk_CONF_VALUE_pop_free(free_extlist, X509V3_conf_free);
+
+	return NULL;
 }
 
 static void *
