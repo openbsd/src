@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.28 2019/03/31 02:37:05 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.29 2019/04/22 18:52:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -710,8 +710,8 @@ cpu_opp_mountroot(struct device *self)
 		}
 
 		/* Disable if regulator isn't implemented. */
-		error = ENODEV;
-		if (curr_microvolt != 0)
+		error = ci->ci_cpu_supply ? ENODEV : 0;
+		if (ci->ci_cpu_supply && curr_microvolt != 0)
 			error = regulator_set_voltage(ci->ci_cpu_supply,
 			    curr_microvolt);
 		if (error) {
@@ -776,8 +776,8 @@ cpu_opp_dotask(void *arg)
 
 		if (error == 0 && opp_hz < curr_hz)
 			error = clock_set_frequency(ci->ci_node, NULL, opp_hz);
-		if (error == 0 && opp_microvolt != 0 &&
-		    opp_microvolt != curr_microvolt) {
+		if (error == 0 && ci->ci_cpu_supply &&
+		    opp_microvolt != 0 && opp_microvolt != curr_microvolt) {
 			error = regulator_set_voltage(ci->ci_cpu_supply,
 			    opp_microvolt);
 		}
