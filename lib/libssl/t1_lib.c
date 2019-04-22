@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.157 2019/04/21 14:41:30 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.158 2019/04/22 14:49:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -925,7 +925,7 @@ tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 			goto done;
 		}
 		HMAC_Init_ex(&hctx, tctx->internal->tlsext_tick_hmac_key,
-		    16, tlsext_tick_md(), NULL);
+		    16, EVP_sha256(), NULL);
 		EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
 		    tctx->internal->tlsext_tick_aes_key, etick + 16);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.66 2019/03/25 17:21:18 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.67 2019/04/22 14:49:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2553,7 +2553,7 @@ ssl3_send_newsession_ticket(SSL *s)
 			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
 			    tctx->internal->tlsext_tick_aes_key, iv);
 			HMAC_Init_ex(&hctx, tctx->internal->tlsext_tick_hmac_key,
-			    16, tlsext_tick_md(), NULL);
+			    16, EVP_sha256(), NULL);
 			memcpy(key_name, tctx->internal->tlsext_tick_key_name, 16);
 		}
 
