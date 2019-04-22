@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_fdt.c,v 1.2 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: pluart_fdt.c,v 1.3 2019/04/22 10:18:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -27,6 +27,7 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 
 int	pluart_fdt_match(struct device *, void *, void *);
 void	pluart_fdt_attach(struct device *, struct device *, void *);
@@ -75,6 +76,8 @@ pluart_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
 	    0, &sc->sc_ioh))
 		panic("pluartattach: bus_space_map failed!");
+
+	pinctrl_byname(faa->fa_node, "default");
 
 	pluart_attach_common(sc, stdout_node == faa->fa_node);
 }
