@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.185 2019/04/19 07:39:37 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.186 2019/04/22 03:29:40 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -348,7 +348,6 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	SRPL_HEAD(, ifvlan)		*tagh, *list;
 	struct srp_ref			 sr;
 	u_int				 tag;
-	struct mbuf_list		 ml = MBUF_LIST_INITIALIZER();
 	u_int16_t			 etype;
 
 	eh = mtod(m, struct ether_header *);
@@ -418,8 +417,7 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		break;
 	}
 
-	ml_enqueue(&ml, m);
-	if_input(&ifv->ifv_if, &ml);
+	if_vinput(&ifv->ifv_if, m);
 	SRPL_LEAVE(&sr);
 	return (1);
 
