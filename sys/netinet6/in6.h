@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.103 2018/09/11 21:04:03 bluhm Exp $	*/
+/*	$OpenBSD: in6.h,v 1.104 2019/04/22 22:47:49 bluhm Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -413,7 +413,7 @@ struct cmsghdr;
 
 void	ipv6_input(struct ifnet *, struct mbuf *);
 
-int	in6_cksum(struct mbuf *, u_int8_t, u_int32_t, u_int32_t);
+int	in6_cksum(struct mbuf *, uint8_t, uint32_t, uint32_t);
 void	in6_proto_cksum_out(struct mbuf *, struct ifnet *);
 int	in6_localaddr(struct in6_addr *);
 int	in6_addrscope(struct in6_addr *);
