@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_info.c,v 1.26 2018/05/19 10:37:02 tb Exp $ */
+/* $OpenBSD: v3_info.c,v 1.27 2019/04/22 17:18:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -207,33 +207,41 @@ i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD *method,
     AUTHORITY_INFO_ACCESS *ainfo, STACK_OF(CONF_VALUE) *ret)
 {
 	ACCESS_DESCRIPTION *desc;
-	int i, nlen;
-	char objtmp[80], *ntmp;
 	CONF_VALUE *vtmp;
+	STACK_OF(CONF_VALUE) *free_ret = NULL;
+	char objtmp[80], *ntmp;
+	int i;
+
+	if (ret == NULL) {
+		if ((free_ret = ret = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
 
 	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(ainfo); i++) {
-		desc = sk_ACCESS_DESCRIPTION_value(ainfo, i);
-		ret = i2v_GENERAL_NAME(method, desc->location, ret);
-		if (!ret)
-			break;
-		vtmp = sk_CONF_VALUE_value(ret, i);
-		i2t_ASN1_OBJECT(objtmp, sizeof objtmp, desc->method);
-		nlen = strlen(objtmp) + strlen(vtmp->name) + 5;
-		ntmp = malloc(nlen);
-		if (!ntmp) {
+		if ((desc = sk_ACCESS_DESCRIPTION_value(ainfo, i)) == NULL)
+			goto err;
+		if ((ret = i2v_GENERAL_NAME(method, desc->location,
+		    ret)) == NULL)
+			goto err;
+		if ((vtmp = sk_CONF_VALUE_value(ret, i)) == NULL)
+			goto err;
+		if (!i2t_ASN1_OBJECT(objtmp, sizeof objtmp, desc->method))
+			goto err;
+		if (asprintf(&ntmp, "%s - %s", objtmp, vtmp->name) == -1) {
+			ntmp = NULL;
 			X509V3error(ERR_R_MALLOC_FAILURE);
-			return NULL;
+			goto err;
 		}
-		strlcpy(ntmp, objtmp, nlen);
-		strlcat(ntmp, " - ", nlen);
-		strlcat(ntmp, vtmp->name, nlen);
 		free(vtmp->name);
 		vtmp->name = ntmp;
-
 	}
-	if (!ret)
-		return sk_CONF_VALUE_new_null();
+
 	return ret;
+
+ err:
+	sk_CONF_VALUE_pop_free(free_ret, X509V3_conf_free);
+
+	return NULL;
 }
 
 static AUTHORITY_INFO_ACCESS *
