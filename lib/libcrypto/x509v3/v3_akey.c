@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_akey.c,v 1.21 2019/04/21 16:50:34 tb Exp $ */
+/* $OpenBSD: v3_akey.c,v 1.22 2019/04/22 17:10:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -91,7 +91,13 @@ static STACK_OF(CONF_VALUE) *
 i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, AUTHORITY_KEYID *akeyid,
     STACK_OF(CONF_VALUE) *extlist)
 {
+	STACK_OF(CONF_VALUE) *free_extlist = NULL;
 	char *tmpstr = NULL;
+
+	if (extlist == NULL) {
+		if ((free_extlist = extlist = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
 
 	if (akeyid->keyid != NULL) {
 		if ((tmpstr = hex_to_string(akeyid->keyid->data,
@@ -119,11 +125,14 @@ i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method, AUTHORITY_KEYID *akeyid,
 		tmpstr = NULL;
 	}
 
+	if (sk_CONF_VALUE_num(extlist) <= 0)
+		goto err;
+
 	return extlist;
 
  err:
 	free(tmpstr);
-	sk_CONF_VALUE_pop_free(extlist, X509V3_conf_free);
+	sk_CONF_VALUE_pop_free(free_extlist, X509V3_conf_free);
 
 	return NULL;
 }

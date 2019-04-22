@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_alt.c,v 1.29 2019/04/21 16:50:34 tb Exp $ */
+/* $OpenBSD: v3_alt.c,v 1.30 2019/04/22 17:10:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -127,11 +127,12 @@ STACK_OF(CONF_VALUE) *
 i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, GENERAL_NAMES *gens,
     STACK_OF(CONF_VALUE) *ret)
 {
+	STACK_OF(CONF_VALUE) *free_ret = NULL;
 	GENERAL_NAME *gen;
 	int i;
 
 	if (ret == NULL) {
-		if ((ret = sk_CONF_VALUE_new_null()) == NULL)
+		if ((free_ret = ret = sk_CONF_VALUE_new_null()) == NULL)
 			return NULL;
 	}
 
@@ -145,7 +146,7 @@ i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method, GENERAL_NAMES *gens,
 	return ret;
 
  err:
-	sk_CONF_VALUE_pop_free(ret, X509V3_conf_free);
+	sk_CONF_VALUE_pop_free(free_ret, X509V3_conf_free);
 
 	return NULL;
 }
@@ -154,9 +155,15 @@ STACK_OF(CONF_VALUE) *
 i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen,
     STACK_OF(CONF_VALUE) *ret)
 {
+	STACK_OF(CONF_VALUE) *free_ret = NULL;
 	unsigned char *p;
 	char oline[256], htmp[5];
 	int i;
+
+	if (ret == NULL) {
+		if ((free_ret = ret = sk_CONF_VALUE_new_null()) == NULL)
+			return NULL;
+	}
 
 	switch (gen->type) {
 	case GEN_OTHERNAME:
@@ -231,7 +238,7 @@ i2v_GENERAL_NAME(X509V3_EXT_METHOD *method, GENERAL_NAME *gen,
 	return ret;
 
  err:
-	sk_CONF_VALUE_pop_free(ret, X509V3_conf_free);
+	sk_CONF_VALUE_pop_free(free_ret, X509V3_conf_free);
 
 	return NULL;
 }
