@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_tables.c,v 1.4 2019/04/23 03:14:44 guenther Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.5 2019/04/23 03:28:53 guenther Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -43,12 +43,13 @@
 #include <unistd.h>
 
 void
-usage(void)
+usage(int status)
 {
 	printf("\
 Usage: dump_tables [-1234dlmpr]\n\
  -1234\tShow the specified levels in the page tables.\n\
  -d\tHide the entries in the direct-map.\n\
+ -h\tShow this usage message.\n\
  -l\tShow the leaf entries, whether 4kB, 2MB, or 1GB.\n\
  -m\tShow the Meltdown U-K page tables instead.\n\
  -p\tHide the entries through the recursive PTE mapping.\n\
@@ -56,8 +57,16 @@ Usage: dump_tables [-1234dlmpr]\n\
 \treproducibility.\n\
  -u\tShow the page tables for PID 1 instead of those for kernel threads.\n\
 \n\
-If none of the options -1234l are used, then all levels will be shown.\n");
-	exit(1);
+Dump the page tables, including intermediate levels, showing for\n\
+each valid entry the virtual-address (VA) it applies to, the level\n\
+of page table, the index of the entry within its page, the physical\n\
+address (PA) it points to, the size of leaf page it points to, the\n\
+attributes on the entry, the effective attributes for those affected\n\
+by higher levels of page table, and the L4 slot type for those which\n\
+have a particular name.\n\n\
+If none of the options -1234l are used, then all levels will be shown.\n\
+");
+	exit(status);
 }
 
 
@@ -203,13 +212,16 @@ main(int argc, char **argv)
 	u_long i;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "1234dlmpru")) != -1) {
+	while ((ch = getopt(argc, argv, "1234dhlmpru")) != -1) {
 		switch (ch) {
 		case '1': case '2': case '3': case '4':
 			show[ch - '0'] = 1;
 			break;
 		case 'd':
 			hide_direct = 1;
+			break;
+		case 'h':
+			usage(0);
 			break;
 		case 'l':
 			show_leaves = 1;
@@ -227,13 +239,13 @@ main(int argc, char **argv)
 			user_proc = 1;
 			break;
 		default:
-			usage();
+			usage(1);
 		}
 	}
 	argc -= optind;
 	argv += optind;
 	if (argc != 0)
-		usage();
+		usage(1);
 
 	if (!show[1] && !show[2] && !show[3] && !show[4] && !show_leaves)
 		show[1] = show[2] = show[3] = show[4] = 1;
@@ -279,7 +291,7 @@ main(int argc, char **argv)
 		check_mbz(cr3, mbz_normal[5]);
 	}
 	printf("\
-VA               lvl  idx    PA                 entry-attr eff  L4-slot\
+VA               lvl  idx    PA              sz entry-attr eff  L4-slot\
 \n");
 	for (i = 0; i < PAGE_SIZE / sizeof(pd_entry_t); i++) {
 		const char *name = NULL;
