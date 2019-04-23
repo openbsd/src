@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.33 2019/04/14 10:14:51 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.34 2019/04/23 11:38:55 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -19,7 +19,6 @@
 #include <drm/drmP.h>
 #include <dev/pci/ppbreg.h>
 #include <sys/event.h>
-#include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>

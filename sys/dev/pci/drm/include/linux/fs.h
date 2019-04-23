@@ -5,6 +5,7 @@
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
+#include <sys/file.h>
 #include <linux/capability.h>
 #include <linux/linkage.h>
 #include <linux/uuid.h>
