@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.149 2019/04/23 10:53:45 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.150 2019/04/23 11:48:55 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -608,6 +608,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	timeout_set_proc(&sc->sc_ka_hold, gre_keepalive_hold, sc);
 	sc->sc_ka_state = GRE_KA_NONE;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
@@ -672,6 +673,7 @@ mgre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_tunnel.t_df = htons(0);
 	sc->sc_tunnel.t_ecn = ECN_ALLOWED;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
@@ -1195,8 +1197,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 	pf_pkt_addr_changed(m);
 #endif
 
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
+	counters_pkt(ifp->if_counters,
+	    ifc_ipackets, ifc_ibytes, m->m_pkthdr.len);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
