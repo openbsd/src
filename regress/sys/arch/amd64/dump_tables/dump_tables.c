@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_tables.c,v 1.1 2019/04/23 02:32:17 guenther Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.2 2019/04/23 02:59:58 guenther Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,7 +20,8 @@
  * Requires "kern.allowkmem=1" sysctl
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
@@ -53,6 +54,7 @@ Usage: dump_tables [-1234dlmpr]\n\
  -p\tHide the entries through the recursive PTE mapping.\n\
  -r\tSuppress the 'U'sed and 'M'odified attributes to increase.\n\
 \treproducibility.\n\
+ -u\tShow the page tables for PID 1 instead of those for kernel threads.\n\
 \n\
 If none of the options -1234l are used, then all levels will be shown.\n");
 	exit(1);
@@ -62,6 +64,7 @@ If none of the options -1234l are used, then all levels will be shown.\n");
 kvm_t *k;
 pd_entry_t *pt[5];
 int meltdown, hide_direct, hide_pte, reproducible, show[5], show_leaves;
+int user_proc;
 
 struct nlist proc0[] = { { "_proc0paddr" }, { NULL } };
 
@@ -74,7 +77,7 @@ struct nlist proc0[] = { { "_proc0paddr" }, { NULL } };
 #define KGETPT_PA(addr, level)						\
 	KGETPT_VA(PMAP_DIRECT_MAP(addr), level)
 #define KGETPT_VA(addr, level)						\
-	KGETRET(addr, pt[level], 4096, ptname[level])
+	KGETRET(addr, pt[level], PAGE_SIZE, ptname[level])
 
 const int shift[] = {
     [3] = L3_SHIFT,
@@ -182,7 +185,7 @@ pent(int level, int idx, vaddr_t va, pd_entry_t e, pd_entry_t inherited,
 		return;
 	level--;
 	KGETPT_PA(pa, level);
-	for (u_long i = 0; i < 4096 / 8; i++) {
+	for (u_long i = 0; i < PAGE_SIZE / 8; i++) {
 		pent(level, i, (i << shift[level]) + va,
 		    pt[level][i], inherited, NULL);
 	}
@@ -192,13 +195,13 @@ pent(int level, int idx, vaddr_t va, pd_entry_t e, pd_entry_t inherited,
 int
 main(int argc, char **argv)
 {
-	u_long proc0paddr;
-	struct pcb proc0pcb;
+	u_long paddr;
+	struct pcb pcb;
 	pd_entry_t cr3;
 	u_long i;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "1234dlmpr")) != -1) {
+	while ((ch = getopt(argc, argv, "1234dlmpru")) != -1) {
 		switch (ch) {
 		case '1': case '2': case '3': case '4':
 			show[ch - '0'] = 1;
@@ -218,6 +221,9 @@ main(int argc, char **argv)
 		case 'r':
 			reproducible = 1;
 			break;
+		case 'u':
+			user_proc = 1;
+			break;
 		default:
 			usage();
 		}
@@ -230,25 +236,33 @@ main(int argc, char **argv)
 	if (!show[1] && !show[2] && !show[3] && !show[4] && !show_leaves)
 		show[1] = show[2] = show[3] = show[4] = 1;
 
-	if ((pt[4] = malloc(4096)) == NULL ||
-	    (pt[3] = malloc(4096)) == NULL ||
-	    (pt[2] = malloc(4096)) == NULL ||
-	    (pt[1] = malloc(4096)) == NULL)
+	if ((pt[4] = malloc(PAGE_SIZE)) == NULL ||
+	    (pt[3] = malloc(PAGE_SIZE)) == NULL ||
+	    (pt[2] = malloc(PAGE_SIZE)) == NULL ||
+	    (pt[1] = malloc(PAGE_SIZE)) == NULL)
 		err(1, "malloc");
 
 	k = kvm_open(NULL, NULL, NULL, O_RDONLY, "foo");
 	if (k == NULL)
 		return 1;
 
-	if (kvm_nlist(k, proc0) != 0)
-		err(1, "nlist");
-	KGET(proc0[0].n_value, proc0paddr);
-	KGET(proc0paddr, proc0pcb);
+	if (user_proc) {
+		int cnt;
+		struct kinfo_proc *kp = kvm_getprocs(k, KERN_PROC_PID, 1,
+			sizeof *kp, &cnt);
+		paddr = kp->p_addr;
+	} else {
+		if (kvm_nlist(k, proc0) != 0)
+			err(1, "nlist");
+		KGET(proc0[0].n_value, paddr);
+	}
 
-	cr3 = proc0pcb.pcb_cr3 & ~0xfff;	/* mask off PCID */
+	KGET(paddr, pcb);
+
+	cr3 = pcb.pcb_cr3 & ~0xfff;		/* mask off PCID */
 	if (meltdown) {
 		struct pmap pmap;
-		KGET((u_long)proc0pcb.pcb_pmap, pmap);
+		KGET((u_long)pcb.pcb_pmap, pmap);
 		if (cr3 != pmap.pm_pdirpa)
 			errx(1, "cr3 != pm_pdir: %016llx != %016lx",
 			    cr3, pmap.pm_pdirpa);
@@ -262,7 +276,7 @@ main(int argc, char **argv)
 		printf("PML4 @ %016llx\n", cr3);
 		check_mbz(cr3, mbz_normal[5]);
 	}
-	for (i = 0; i < 4096 / 8; i++) {
+	for (i = 0; i < PAGE_SIZE / sizeof(pd_entry_t); i++) {
 		const char *name = NULL;
 		if (i >= L4_SLOT_DIRECT &&
 		    i < L4_SLOT_DIRECT + NUM_L4_SLOT_DIRECT) {
