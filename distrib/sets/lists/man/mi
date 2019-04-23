@@ -1244,6 +1244,7 @@
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
+./usr/share/man/man4/arm64/openprom.4
 ./usr/share/man/man4/armv7/agtimer.4
 ./usr/share/man/man4/armv7/amdisplay.4
 ./usr/share/man/man4/armv7/ampintc.4
