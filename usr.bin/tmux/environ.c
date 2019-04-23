@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.21 2019/03/18 11:58:40 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.22 2019/04/23 20:36:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -177,20 +177,20 @@ environ_update(struct options *oo, struct environ *src, struct environ *dst)
 	struct environ_entry		*envent;
 	struct options_entry		*o;
 	struct options_array_item	*a;
-	const char			*value;
+	union options_value		*ov;
 
 	o = options_get(oo, "update-environment");
 	if (o == NULL)
 		return;
 	a = options_array_first(o);
 	while (a != NULL) {
-		value = options_array_item_value(a);
-		if (value == NULL) {
+		ov = options_array_item_value(a);
+		if (ov == NULL) {
 			a = options_array_next(a);
 			continue;
 		}
-		if ((envent = environ_find(src, value)) == NULL)
-			environ_clear(dst, value);
+		if ((envent = environ_find(src, ov->string)) == NULL)
+			environ_clear(dst, ov->string);
 		else
 			environ_set(dst, envent->name, "%s", envent->value);
 		a = options_array_next(a);

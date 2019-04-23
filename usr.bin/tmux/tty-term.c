@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.61 2019/03/18 11:58:40 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.62 2019/04/23 20:36:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -417,6 +417,7 @@ tty_term_find(char *name, int fd, char **cause)
 	struct tty_code				*code;
 	struct options_entry			*o;
 	struct options_array_item		*a;
+	union options_value			*ov;
 	u_int					 i;
 	int		 			 n, error;
 	const char				*s, *acs;
@@ -494,9 +495,9 @@ tty_term_find(char *name, int fd, char **cause)
 	o = options_get_only(global_options, "terminal-overrides");
 	a = options_array_first(o);
 	while (a != NULL) {
-		s = options_array_item_value(a);
-		if (s != NULL)
-			tty_term_override(term, s);
+		ov = options_array_item_value(a);
+		if (ov != NULL)
+			tty_term_override(term, ov->string);
 		a = options_array_next(a);
 	}
 
