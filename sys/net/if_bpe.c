@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.4 2019/04/19 07:39:37 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.5 2019/04/23 10:53:45 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -194,6 +194,7 @@ bpe_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ether_fakeaddr(ifp);
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -891,7 +892,6 @@ bpe_input_map(struct bpe_softc *sc, const uint8_t *ba, const uint8_t *ca)
 void
 bpe_input(struct ifnet *ifp0, struct mbuf *m)
 {
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct bpe_softc *sc;
 	struct ifnet *ifp;
 	struct ether_header *beh, *ceh;
@@ -969,8 +969,7 @@ bpe_input(struct ifnet *ifp0, struct mbuf *m)
 	pf_pkt_addr_changed(m);
 #endif
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	if_vinput(ifp, m);
 	return;
 
 drop:

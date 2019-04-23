@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.70 2018/12/03 17:25:22 claudio Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.71 2019/04/23 10:53:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -159,6 +159,7 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -634,7 +635,6 @@ int
 vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
     struct sockaddr *srcsa, struct sockaddr *dstsa)
 {
-	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct vxlan_softc	*sc = NULL, *sc_cand = NULL;
 	struct vxlan_header	 v;
 	int			 vni;
@@ -743,8 +743,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 		m = n;
 	}
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	if_vinput(ifp, m);
 
 	/* success */
 	return (1);

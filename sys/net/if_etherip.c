@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.44 2019/04/19 07:39:37 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.45 2019/04/23 10:53:45 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -159,6 +159,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -592,7 +593,6 @@ int
 etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
     int hlen)
 {
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct etherip_softc *sc;
 	struct ifnet *ifp;
 	struct etherip_header *eip;
@@ -657,8 +657,7 @@ etherip_input(struct etherip_tunnel *key, struct mbuf *m, uint8_t tos,
 	pf_pkt_addr_changed(m);
 #endif
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	if_vinput(ifp, m);
 	return IPPROTO_DONE;
 
 drop:

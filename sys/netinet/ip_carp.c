@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.336 2018/12/17 09:17:30 claudio Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.337 2019/04/23 10:53:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -829,6 +829,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = carp_start;
 	ifp->if_xflags = IFXF_CLONED;
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	ifp->if_type = IFT_CARP;
@@ -1381,7 +1382,6 @@ int
 carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 {
 	struct ether_header *eh;
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct srpl *cif;
 	struct carp_softc *sc;
 	struct srp_ref sr;
@@ -1444,18 +1444,14 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 			if (m0 == NULL)
 				continue;
 
-			ml_init(&ml);
-			ml_enqueue(&ml, m0);
-
-			if_input(&sc->sc_if, &ml);
+			if_vinput(&sc->sc_if, m0);
 		}
 		SRPL_LEAVE(&sr);
 
 		return (0);
 	}
 
-	ml_enqueue(&ml, m);
-	if_input(&sc->sc_if, &ml);
+	if_vinput(&sc->sc_if, m);
 out:
 	SRPL_LEAVE(&sr);
 

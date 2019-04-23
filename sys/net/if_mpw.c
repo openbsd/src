@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.53 2019/04/19 07:39:37 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.54 2019/04/23 10:53:45 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -116,6 +116,7 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_dead = 0;
 
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
@@ -506,7 +507,6 @@ mpw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 static void
 mpw_input(struct mpw_softc *sc, struct mbuf *m)
 {
-	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct ifnet *ifp = &sc->sc_if;
 	struct shim_hdr *shim;
 	struct mbuf *n;
@@ -612,8 +612,7 @@ mpw_input(struct mpw_softc *sc, struct mbuf *m)
         pf_pkt_addr_changed(m);
 #endif
 
-	ml_enqueue(&ml, m);
-	if_input(ifp, &ml);
+	if_vinput(ifp, m);
 	return;
 drop:
 	m_freem(m);
