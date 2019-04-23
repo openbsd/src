@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.104 2019/04/23 06:08:57 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.105 2019/04/23 06:15:14 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -909,7 +909,8 @@ orig_rtr_lsa(struct area *area)
 					rtr_link.id = nbr->addr.s_addr;
 					rtr_link.data = 0xffffffff;
 				} else {
-					rtr_link.id = iface->addr.s_addr;
+					rtr_link.id = iface->addr.s_addr &
+					              iface->mask.s_addr;
 					rtr_link.data = iface->mask.s_addr;
 				}
 				rtr_link.type = LINK_TYPE_STUB_NET;
