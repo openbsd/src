@@ -1,4 +1,4 @@
-/* $OpenBSD: layout.c,v 1.42 2019/04/17 14:44:33 nicm Exp $ */
+/* $OpenBSD: layout.c,v 1.43 2019/04/23 09:15:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -414,9 +414,9 @@ layout_destroy_cell(struct window *w, struct layout_cell *lc,
 		lcother = TAILQ_NEXT(lc, entry);
 	else
 		lcother = TAILQ_PREV(lc, layout_cells, entry);
-	if (lcparent->type == LAYOUT_LEFTRIGHT)
+	if (lcother != NULL && lcparent->type == LAYOUT_LEFTRIGHT)
 		layout_resize_adjust(w, lcother, lcparent->type, lc->sx + 1);
-	else
+	else if (lcother != NULL)
 		layout_resize_adjust(w, lcother, lcparent->type, lc->sy + 1);
 
 	/* Remove this from the parent's list. */
