@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_tables.c,v 1.2 2019/04/23 02:59:58 guenther Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.3 2019/04/23 03:06:07 guenther Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -273,9 +273,12 @@ main(int argc, char **argv)
 		KGETPT_VA(cr3, 4);
 	} else {
 		KGETPT_PA(cr3, 4);
-		printf("PML4 @ %016llx\n", cr3);
+		/*printf("PML4 @ %016llx\n", cr3);*/
 		check_mbz(cr3, mbz_normal[5]);
 	}
+	printf("\
+VA               lvl  idx    PA                 attr       cumulative L4-slot\
+\n");
 	for (i = 0; i < PAGE_SIZE / sizeof(pd_entry_t); i++) {
 		const char *name = NULL;
 		if (i >= L4_SLOT_DIRECT &&
