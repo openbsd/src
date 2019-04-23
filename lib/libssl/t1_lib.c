@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.160 2019/04/22 16:03:54 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.161 2019/04/23 17:02:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,8 +122,8 @@
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 
-static int tls_decrypt_ticket(SSL *s, CBS *session_id,
-    const unsigned char *tick, int ticklen, SSL_SESSION **psess);
+static int tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket,
+    SSL_SESSION **psess);
 
 SSL3_ENC_METHOD TLSv1_enc_data = {
 	.enc = tls1_enc,
@@ -842,8 +842,7 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
 		return 2;
 	}
 
-	r = tls_decrypt_ticket(s, session_id, CBS_data(&ext_data),
-	    CBS_len(&ext_data), ret);
+	r = tls_decrypt_ticket(s, session_id, &ext_data, ret);
 	switch (r) {
 	case 2: /* ticket couldn't be decrypted */
 		s->internal->tlsext_ticket_expected = 1;
@@ -861,8 +860,7 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
 /* tls_decrypt_ticket attempts to decrypt a session ticket.
  *
  *   session_id: a CBS containing the session ID.
- *   etick: points to the body of the session ticket extension.
- *   eticklen: the length of the session tickets extenion.
+ *   ticket: a CBS containing the body of the session ticket extension.
  *   psess: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  *
@@ -873,15 +871,15 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
  *    4: same as 3, but the ticket needs to be renewed.
  */
 static int
-tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
-    int eticklen, SSL_SESSION **psess)
+tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 {
+	CBS ticket_name, ticket_iv, ticket_encdata, ticket_hmac;
 	SSL_SESSION *sess = NULL;
 	size_t session_id_len = 0;
 	unsigned char *sdec = NULL;
 	const unsigned char *p;
 	int slen, mlen, renew_ticket = 0;
-	unsigned char tick_hmac[EVP_MAX_MD_SIZE];
+	unsigned char hmac[EVP_MAX_MD_SIZE];
 	HMAC_CTX hctx;
 	EVP_CIPHER_CTX ctx;
 	SSL_CTX *tctx = s->initial_ctx;
@@ -890,65 +888,95 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, const unsigned char *etick,
 	HMAC_CTX_init(&hctx);
 	EVP_CIPHER_CTX_init(&ctx);
 
-	/*
-	 * The API guarantees EVP_MAX_IV_LENGTH bytes of space for
-	 * the iv to tlsext_ticket_key_cb().  Since the total space
-	 * required for a session cookie is never less than this,
-	 * this check isn't too strict.  The exact check comes later.
-	 */
-	if (eticklen < 16 + EVP_MAX_IV_LENGTH)
+	*psess = NULL;
+
+	if (!CBS_get_bytes(ticket, &ticket_name, 16))
 		goto derr;
 
-	/* Initialize session ticket encryption and HMAC contexts */
-	if (tctx->internal->tlsext_ticket_key_cb) {
-		unsigned char *nctick = (unsigned char *)etick;
-		int rv = tctx->internal->tlsext_ticket_key_cb(s,
-		    nctick, nctick + 16, &ctx, &hctx, 0);
-		if (rv < 0)
+	/*
+	 * Initialize session ticket encryption and HMAC contexts.
+	 */
+	if (tctx->internal->tlsext_ticket_key_cb != NULL) {
+		int rv;
+
+		/*
+		 * The API guarantees EVP_MAX_IV_LENGTH bytes of space for
+		 * the iv to tlsext_ticket_key_cb().  Since the total space
+		 * required for a session cookie is never less than this,
+		 * this check isn't too strict.  The exact check comes later.
+		 */
+		if (CBS_len(ticket) < EVP_MAX_IV_LENGTH)
+			goto derr;
+
+		if ((rv = tctx->internal->tlsext_ticket_key_cb(s,
+		    (unsigned char *)CBS_data(&ticket_name),
+		    (unsigned char *)CBS_data(ticket), &ctx, &hctx, 0)) < 0)
 			goto err;
 		if (rv == 0)
 			goto derr;
 		if (rv == 2)
 			renew_ticket = 1;
+
+		/*
+		 * Now that the cipher context is initialised, we can extract
+		 * the IV since its length is known.
+		 */
+		if (!CBS_get_bytes(ticket, &ticket_iv,
+		    EVP_CIPHER_CTX_iv_length(&ctx)))
+			goto derr;
 	} else {
-		/* Check key name matches */
-		if (timingsafe_memcmp(etick,
-		    tctx->internal->tlsext_tick_key_name, 16))
+		/* Check that the key name matches. */
+		if (!CBS_mem_equal(&ticket_name,
+		    tctx->internal->tlsext_tick_key_name,
+		    sizeof(tctx->internal->tlsext_tick_key_name)))
 			goto derr;
 		HMAC_Init_ex(&hctx, tctx->internal->tlsext_tick_hmac_key,
-		    16, EVP_sha256(), NULL);
+		    sizeof(tctx->internal->tlsext_tick_hmac_key), EVP_sha256(),
+		    NULL);
+		if (!CBS_get_bytes(ticket, &ticket_iv,
+		    EVP_CIPHER_iv_length(EVP_aes_128_cbc())))
+			goto derr;
 		EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-		    tctx->internal->tlsext_tick_aes_key, etick + 16);
+		    tctx->internal->tlsext_tick_aes_key, CBS_data(&ticket_iv));
 	}
 
 	/*
-	 * Attempt to process session ticket, first conduct sanity and
-	 * integrity checks on ticket.
+	 * Attempt to process session ticket.
 	 */
-	mlen = HMAC_size(&hctx);
-	if (mlen < 0)
+
+	if ((mlen = HMAC_size(&hctx)) < 0)
 		goto err;
 
-	/* Sanity check ticket length: must exceed keyname + IV + HMAC */
-	if (eticklen <= 16 + EVP_CIPHER_CTX_iv_length(&ctx) + mlen)
+	if (mlen > CBS_len(ticket))
 		goto derr;
-	eticklen -= mlen;
-
-	/* Check HMAC of encrypted ticket */
-	if (HMAC_Update(&hctx, etick, eticklen) <= 0 ||
-	    HMAC_Final(&hctx, tick_hmac, NULL) <= 0)
+	if (!CBS_get_bytes(ticket, &ticket_encdata, CBS_len(ticket) - mlen))
+		goto derr;
+	if (!CBS_get_bytes(ticket, &ticket_hmac, mlen))
+		goto derr;
+	if (CBS_len(ticket) != 0)
 		goto err;
 
-	if (timingsafe_memcmp(tick_hmac, etick + eticklen, mlen))
+	/* Check HMAC of encrypted ticket. */
+	if (HMAC_Update(&hctx, CBS_data(&ticket_name),
+	    CBS_len(&ticket_name)) <= 0)
+		goto err;
+	if (HMAC_Update(&hctx, CBS_data(&ticket_iv),
+	    CBS_len(&ticket_iv)) <= 0)
+		goto err;
+	if (HMAC_Update(&hctx, CBS_data(&ticket_encdata),
+	    CBS_len(&ticket_encdata)) <= 0)
+		goto err;
+	if (HMAC_Final(&hctx, hmac, &mlen) <= 0)
+		goto err;
+
+	if (!CBS_mem_equal(&ticket_hmac, hmac, mlen))
 		goto derr;
 
-	/* Attempt to decrypt session data */
-	/* Move p after IV to start of encrypted ticket, update length */
-	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
-	eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
-	if ((sdec = malloc(eticklen)) == NULL)
+	/* Attempt to decrypt session data. */
+	if ((sdec = malloc(CBS_len(&ticket_encdata))) == NULL)
 		goto err;
-	if (EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen) <= 0)
+	if (EVP_DecryptUpdate(&ctx, sdec, &slen, CBS_data(&ticket_encdata),
+	    CBS_len(&ticket_encdata)) <= 0)
 		goto derr;
 	if (EVP_DecryptFinal_ex(&ctx, sdec + slen, &mlen) <= 0)
 		goto derr;
