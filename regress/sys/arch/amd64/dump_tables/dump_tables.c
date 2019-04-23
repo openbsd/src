@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_tables.c,v 1.5 2019/04/23 03:28:53 guenther Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.6 2019/04/23 04:46:03 guenther Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -62,8 +62,8 @@ each valid entry the virtual-address (VA) it applies to, the level\n\
 of page table, the index of the entry within its page, the physical\n\
 address (PA) it points to, the size of leaf page it points to, the\n\
 attributes on the entry, the effective attributes for those affected\n\
-by higher levels of page table, and the L4 slot type for those which\n\
-have a particular name.\n\n\
+by higher levels of page table, and the slot type for those which have\n\
+a particular name.\n\n\
 If none of the options -1234l are used, then all levels will be shown.\n\
 ");
 	exit(status);
@@ -127,6 +127,20 @@ check_mbz(pd_entry_t e, pd_entry_t mbz)
 		errx(1, "non-zero mbz: %016llx in %016llx", e & mbz, e);
 }
 
+enum l4_type { T_NORMAL = 0, T_DIRECT, T_PTE, T_KERNBASE, };
+
+static inline enum l4_type
+l4type(int i)
+{
+	if (i >= L4_SLOT_DIRECT && i < L4_SLOT_DIRECT + NUM_L4_SLOT_DIRECT)
+		return T_DIRECT;
+	if (i == L4_SLOT_PTE)
+		return T_PTE;
+	if (i == L4_SLOT_KERNBASE)
+		return T_KERNBASE;
+	return T_NORMAL;
+}
+
 void
 pflags(pd_entry_t e, pd_entry_t inherited)
 {
@@ -156,7 +170,7 @@ const char * const prefix[] = {
 
 void
 pent(int level, int idx, vaddr_t va, pd_entry_t e, pd_entry_t inherited,
-    const char *name)
+    enum l4_type l4_type)
 {
 	if ((e & PG_V) == 0)
 		return;
@@ -186,10 +200,12 @@ pent(int level, int idx, vaddr_t va, pd_entry_t e, pd_entry_t inherited,
 
 		printf("%016llx %c ", pa, type);
 		pflags(e, inherited);
-		if (name != NULL)
-			printf(" %s\n", name);
-		else
-			putchar('\n');
+		switch (l4_type) {
+		case T_NORMAL:		putchar('\n'); break;
+		case T_DIRECT:		puts(" direct"); break;
+		case T_PTE:		puts(" pte"); break;
+		case T_KERNBASE:	puts(" kernbase"); break;
+		}
 	}
 
 	if (type != ' ')
@@ -197,8 +213,8 @@ pent(int level, int idx, vaddr_t va, pd_entry_t e, pd_entry_t inherited,
 	level--;
 	KGETPT_PA(pa, level);
 	for (u_long i = 0; i < PAGE_SIZE / 8; i++) {
-		pent(level, i, (i << shift[level]) + va,
-		    pt[level][i], inherited, NULL);
+		pent(level, i, (i << shift[level]) + va, pt[level][i],
+		    inherited, l4_type == T_PTE ? l4type(i) : T_NORMAL);
 	}
 }
 
@@ -294,22 +310,14 @@ main(int argc, char **argv)
 VA               lvl  idx    PA              sz entry-attr eff  L4-slot\
 \n");
 	for (i = 0; i < PAGE_SIZE / sizeof(pd_entry_t); i++) {
-		const char *name = NULL;
-		if (i >= L4_SLOT_DIRECT &&
-		    i < L4_SLOT_DIRECT + NUM_L4_SLOT_DIRECT) {
-			if (hide_direct)
-				continue;
-			name = "direct";
-		} else if (i == L4_SLOT_PTE) {
-			if (hide_pte)
-				continue;
-			name = "pte";
-		} else if (i == L4_SLOT_KERNBASE)
-			name = "kernbase";
+		enum l4_type l4_type = l4type(i);
+		if ((l4_type == T_DIRECT && hide_direct) ||
+		    (l4_type == T_PTE && hide_pte))
+			continue;
 		u_long va = i << L4_SHIFT;
 		if (i > 255)
 			va |= VA_SIGN_MASK;
-		pent(4, i, va, pt[4][i], ~0UL, name);
+		pent(4, i, va, pt[4][i], ~0UL, l4_type);
 	}
 	return 0;
 }
