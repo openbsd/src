@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.130 2019/04/01 12:45:50 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.131 2019/04/23 06:51:04 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2279,12 +2279,13 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	/*
 	 * Look up the corresponding U+K entry.  If we're installing the
-	 * same PA into the U-K map then set the PG_G bit on both
+	 * same PA into the U-K map then set the PG_G bit on both and copy
+	 * the cache-control bits from the U+K entry to the U-K entry.
 	 */
 	level = pmap_find_pte_direct(pmap, va, &ptes, &offs);
 	if (__predict_true(level == 0 && pmap_valid_entry(ptes[offs]))) {
 		if (((pd[l1idx] ^ ptes[offs]) & PG_FRAME) == 0) {
-			pd[l1idx] |= PG_G;
+			pd[l1idx] |= PG_G | (ptes[offs] & (PG_N | PG_WT));
 			ptes[offs] |= PG_G;
 		} else {
 			DPRINTF("%s: special diffing mapping at %llx\n",
