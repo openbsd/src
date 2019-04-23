@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.49 2018/07/02 12:46:20 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.50 2019/04/23 18:34:06 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -193,3 +193,7 @@ file	dev/acpi/acpisurface.c		acpisurface
 # IPMI
 attach	ipmi at acpi with ipmi_acpi
 file	dev/acpi/ipmi_acpi.c		ipmi_acpi
+
+# AMD Cryptographic Co-processor
+attach	ccp at acpi with ccp_acpi
+file	dev/acpi/ccp_acpi.c		ccp_acpi

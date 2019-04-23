@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.83 2019/04/04 04:49:16 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.84 2019/04/23 18:34:06 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -56,6 +56,7 @@ acpimcfg*	at acpi?
 acpipci*	at acpi?
 pci*		at acpipci?
 ahci*		at acpi?
+ccp*		at acpi?		# AMD Cryptographic Co-processor
 com*		at acpi?
 pluart*		at acpi?
 xhci*		at acpi?
