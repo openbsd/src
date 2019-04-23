@@ -5232,7 +5232,6 @@ fail:
 	return ERR_PTR(ret);
 }
 
-#ifdef __linux__
 static bool discard_backing_storage(struct drm_i915_gem_object *obj)
 {
 	/* If we are the last user of the backing storage (be it shmemfs
@@ -5256,7 +5255,6 @@ static bool discard_backing_storage(struct drm_i915_gem_object *obj)
 	 */
 	return atomic_long_read(&obj->base.filp->f_count) == 1;
 }
-#endif
 
 static void __i915_gem_free_objects(struct drm_i915_private *i915,
 				    struct llist_node *freed)
@@ -5402,10 +5400,8 @@ void i915_gem_free_object(struct drm_gem_object *gem_obj)
 	if (obj->mm.quirked)
 		__i915_gem_object_unpin_pages(obj);
 
-#ifdef notyet
 	if (discard_backing_storage(obj))
 		obj->mm.madv = I915_MADV_DONTNEED;
-#endif
 
 	/*
 	 * Before we free the object, make sure any pure RCU-only
