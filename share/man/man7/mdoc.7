@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.164 2019/02/07 06:49:47 jmc Exp $
+.\"	$OpenBSD: mdoc.7,v 1.165 2019/04/23 18:45:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2019 $
+.Dd $Mdocdate: April 23 2019 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -596,6 +596,13 @@ block.
 Book or journal page number of an
 .Ic \&Rs
 block.
+Conventionally, the argument starts with
+.Ql p.\&
+for a single page or
+.Ql pp.\&
+for a range of pages, for example:
+.Pp
+.Dl .%P pp. 42\e(en47
 .It Ic \&%Q Ar name
 Institutional author (school, government, etc.) of an
 .Ic \&Rs
@@ -2982,7 +2989,7 @@ exclamation mark
 Note that even a period preceded by a backslash
 .Pq Sq \e.\&
 gets this special handling; use
-.Sq \e&.
+.Sq \e&.\&
 to prevent that.
 .Pp
 Many in-line macros interrupt their scope when they encounter
