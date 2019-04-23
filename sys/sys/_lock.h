@@ -1,4 +1,4 @@
-/*	$OpenBSD: _lock.h,v 1.3 2018/12/03 01:51:17 jsg Exp $	*/
+/*	$OpenBSD: _lock.h,v 1.4 2019/04/23 13:35:12 visa Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -66,15 +66,5 @@ struct lock_object {
 struct lock_type {
 	const char		*lt_name;
 };
-
-#ifdef WITNESS
-#define	LOCK_FL_VARS	, const char *file, int line
-#define	LOCK_FL_ARGS	, file, line
-#define	LOCK_FILE_LINE	, __FILE__, __LINE__
-#else
-#define	LOCK_FL_VARS
-#define	LOCK_FL_ARGS
-#define	LOCK_FILE_LINE
-#endif
 
 #endif /* !_SYS__LOCK_H_ */

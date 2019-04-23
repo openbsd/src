@@ -1,4 +1,4 @@
-/*	$OpenBSD: witness.h,v 1.4 2019/01/29 14:07:15 visa Exp $	*/
+/*	$OpenBSD: witness.h,v 1.5 2019/04/23 13:35:12 visa Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -72,16 +72,13 @@
 void	witness_initialize(void);
 void	witness_init(struct lock_object *, const struct lock_type *);
 int	witness_defineorder(struct lock_object *, struct lock_object *);
-void	witness_checkorder(struct lock_object *, int, const char *, int,
-	    struct lock_object *);
-void	witness_lock(struct lock_object *, int, const char *, int);
-void	witness_upgrade(struct lock_object *, int, const char *, int);
-void	witness_downgrade(struct lock_object *, int, const char *, int);
-void	witness_unlock(struct lock_object *, int, const char *, int);
-void	witness_save(struct lock_object *, const char **, int *);
-void	witness_restore(struct lock_object *, const char *, int);
+void	witness_checkorder(struct lock_object *, int, struct lock_object *);
+void	witness_lock(struct lock_object *, int);
+void	witness_upgrade(struct lock_object *, int);
+void	witness_downgrade(struct lock_object *, int);
+void	witness_unlock(struct lock_object *, int);
 int	witness_warn(int, struct lock_object *, const char *, ...);
-void	witness_assert(const struct lock_object *, int, const char *, int);
+void	witness_assert(const struct lock_object *, int);
 void	witness_display_spinlock(struct lock_object *, struct proc *,
 	    int (*)(const char *, ...));
 int	witness_line(struct lock_object *);
@@ -105,24 +102,24 @@ int	witness_sysctl_watch(void *, size_t *, void *, size_t);
 #define	WITNESS_INIT(lock, type)					\
 	witness_init((lock), (type))
 
-#define	WITNESS_CHECKORDER(lock, flags, file, line, interlock)		\
-	witness_checkorder((lock), (flags), (file), (line), (interlock))
+#define	WITNESS_CHECKORDER(lock, flags, interlock)			\
+	witness_checkorder((lock), (flags), (interlock))
 
 #define	WITNESS_DEFINEORDER(lock1, lock2)				\
 	witness_defineorder((struct lock_object *)(lock1),		\
 	    (struct lock_object *)(lock2))
 
-#define	WITNESS_LOCK(lock, flags, file, line)				\
-	witness_lock((lock), (flags), (file), (line))
+#define	WITNESS_LOCK(lock, flags)					\
+	witness_lock((lock), (flags))
 
-#define	WITNESS_UPGRADE(lock, flags, file, line)			\
-	witness_upgrade((lock), (flags), (file), (line))
+#define	WITNESS_UPGRADE(lock, flags)					\
+	witness_upgrade((lock), (flags))
 
-#define	WITNESS_DOWNGRADE(lock, flags, file, line)			\
-	witness_downgrade((lock), (flags), (file), (line))
+#define	WITNESS_DOWNGRADE(lock, flags)					\
+	witness_downgrade((lock), (flags))
 
-#define	WITNESS_UNLOCK(lock, flags, file, line)				\
-	witness_unlock((lock), (flags), (file), (line))
+#define	WITNESS_UNLOCK(lock, flags)					\
+	witness_unlock((lock), (flags))
 
 #define	WITNESS_CHECK(flags, lock, fmt, ...)				\
 	witness_warn((flags), (lock), (fmt), ## __VA_ARGS__)
@@ -130,27 +127,11 @@ int	witness_sysctl_watch(void *, size_t *, void *, size_t);
 #define	WITNESS_WARN(flags, lock, fmt, ...)				\
 	witness_warn((flags), (lock), (fmt), ## __VA_ARGS__)
 
-#define	WITNESS_SAVE_DECL(n)						\
-	const char * __CONCAT(n, __wf);					\
-	int __CONCAT(n, __wl)
-
-#define	WITNESS_SAVE(lock, n) 						\
-	witness_save((lock), &__CONCAT(n, __wf), &__CONCAT(n, __wl))
-
-#define	WITNESS_RESTORE(lock, n) 					\
-	witness_restore((lock), __CONCAT(n, __wf), __CONCAT(n, __wl))
-
 #define	WITNESS_NORELEASE(lock)						\
 	witness_norelease(&(lock)->lock_object)
 
 #define	WITNESS_RELEASEOK(lock)						\
 	witness_releaseok(&(lock)->lock_object)
-
-#define	WITNESS_FILE(lock) 						\
-	witness_file(lock)
-
-#define	WITNESS_LINE(lock) 						\
-	witness_line(lock)
 
 #define	WITNESS_THREAD_EXIT(p)						\
 	witness_thread_exit((p))
@@ -159,21 +140,16 @@ int	witness_sysctl_watch(void *, size_t *, void *, size_t);
 #define	WITNESS_INITIALIZE()					(void)0
 #define	WITNESS_INIT(lock, type)				(void)0
 #define	WITNESS_DEFINEORDER(lock1, lock2)	0
-#define	WITNESS_CHECKORDER(lock, flags, file, line, interlock)	(void)0
-#define	WITNESS_LOCK(lock, flags, file, line)			(void)0
-#define	WITNESS_UPGRADE(lock, flags, file, line)		(void)0
-#define	WITNESS_DOWNGRADE(lock, flags, file, line)		(void)0
-#define	WITNESS_UNLOCK(lock, flags, file, line)			(void)0
+#define	WITNESS_CHECKORDER(lock, flagsi, interlock)		(void)0
+#define	WITNESS_LOCK(lock, flags)				(void)0
+#define	WITNESS_UPGRADE(lock, flags)				(void)0
+#define	WITNESS_DOWNGRADE(lock, flags)				(void)0
+#define	WITNESS_UNLOCK(lock, flags)				(void)0
 #define	WITNESS_CHECK(flags, lock, fmt, ...)	0
 #define	WITNESS_WARN(flags, lock, fmt, ...)			(void)0
-#define	WITNESS_SAVE_DECL(n)					(void)0
-#define	WITNESS_SAVE(lock, n)					(void)0
-#define	WITNESS_RESTORE(lock, n)				(void)0
 #define	WITNESS_NORELEASE(lock)					(void)0
 #define	WITNESS_RELEASEOK(lock)					(void)0
 #define	WITNESS_THREAD_EXIT(p)					(void)0
-#define	WITNESS_FILE(lock) ("?")
-#define	WITNESS_LINE(lock) (0)
 #endif	/* WITNESS */
 
 #endif	/* _KERNEL */

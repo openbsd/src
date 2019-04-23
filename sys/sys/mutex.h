@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.h,v 1.17 2019/03/23 05:30:16 visa Exp $	*/
+/*	$OpenBSD: mutex.h,v 1.18 2019/04/23 13:35:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -121,23 +121,16 @@ void __mtx_init(struct mutex *, int);
 void _mtx_init(struct mutex *, int);
 #endif
 
-void	__mtx_enter(struct mutex *);
-int	__mtx_enter_try(struct mutex *);
-void	__mtx_leave(struct mutex *);
+void	mtx_enter(struct mutex *);
+int	mtx_enter_try(struct mutex *);
+void	mtx_leave(struct mutex *);
 
 #define mtx_init(m, ipl)	mtx_init_flags(m, ipl, NULL, 0)
-#define mtx_enter(m)		_mtx_enter(m LOCK_FILE_LINE)
-#define mtx_enter_try(m)	_mtx_enter_try(m LOCK_FILE_LINE)
-#define mtx_leave(m)		_mtx_leave(m LOCK_FILE_LINE)
 
 #ifdef WITNESS
 
 void	_mtx_init_flags(struct mutex *, int, const char *, int,
 	    const struct lock_type *);
-
-void	_mtx_enter(struct mutex *, const char *, int);
-int	_mtx_enter_try(struct mutex *, const char *, int);
-void	_mtx_leave(struct mutex *, const char *, int);
 
 #define mtx_init_flags(m, ipl, name, flags) do {			\
 	static const struct lock_type __lock_type = { .lt_name = #m };	\
@@ -152,9 +145,6 @@ void	_mtx_leave(struct mutex *, const char *, int);
 } while (0)
 
 #define _mtx_init_flags(m,i,n,f,t)	_mtx_init(m,i)
-#define _mtx_enter(m)			__mtx_enter(m)
-#define _mtx_enter_try(m)		__mtx_enter_try(m)
-#define _mtx_leave(m)			__mtx_leave(m)
 
 #endif /* WITNESS */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: completion.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: completion.h,v 1.2 2019/04/23 13:35:12 visa Exp $	*/
 /*
  * Copyright (c) 2015, 2018 Mark Kettenis
  *
@@ -36,97 +36,88 @@ init_completion(struct completion *x)
 }
 
 static inline u_long
-_wait_for_completion_timeout(struct completion *x, u_long timo LOCK_FL_VARS)
+wait_for_completion_timeout(struct completion *x, u_long timo)
 {
 	int ret;
 
 	KASSERT(!cold);
 
-	_mtx_enter(&x->wait.lock LOCK_FL_ARGS);
+	mtx_enter(&x->wait.lock);
 	while (x->done == 0) {
 		ret = msleep(x, &x->wait.lock, 0, "wfct", timo);
 		if (ret) {
-			_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+			mtx_leave(&x->wait.lock);
 			return (ret == EWOULDBLOCK) ? 0 : -ret;
 		}
 	}
 	x->done--;
-	_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+	mtx_leave(&x->wait.lock);
 
 	return 1;
 }
-#define wait_for_completion_timeout(x, timo)	\
-	_wait_for_completion_timeout(x, timo LOCK_FILE_LINE)
 
 static inline u_long
-_wait_for_completion_interruptible(struct completion *x LOCK_FL_VARS)
+wait_for_completion_interruptible(struct completion *x)
 {
 	int ret;
 
 	KASSERT(!cold);
 
-	_mtx_enter(&x->wait.lock LOCK_FL_ARGS);
+	mtx_enter(&x->wait.lock);
 	while (x->done == 0) {
 		ret = msleep(x, &x->wait.lock, PCATCH, "wfci", 0);
 		if (ret) {
-			_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+			mtx_leave(&x->wait.lock);
 			return (ret == EWOULDBLOCK) ? 0 : -ret;
 		}
 	}
 	x->done--;
-	_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+	mtx_leave(&x->wait.lock);
 
 	return 0;
 }
-#define wait_for_completion_interruptible(x)	\
-	_wait_for_completion_interruptible(x LOCK_FILE_LINE)
 
 static inline u_long
-_wait_for_completion_interruptible_timeout(struct completion *x, u_long timo
-    LOCK_FL_VARS)
+wait_for_completion_interruptible_timeout(struct completion *x, u_long timo)
 {
 	int ret;
 
 	KASSERT(!cold);
 
-	_mtx_enter(&x->wait.lock LOCK_FL_ARGS);
+	mtx_enter(&x->wait.lock);
 	while (x->done == 0) {
 		ret = msleep(x, &x->wait.lock, PCATCH, "wfcit", timo);
 		if (ret) {
-			_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+			mtx_leave(&x->wait.lock);
 			return (ret == EWOULDBLOCK) ? 0 : -ret;
 		}
 	}
 	x->done--;
-	_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+	mtx_leave(&x->wait.lock);
 
 	return 1;
 }
-#define wait_for_completion_interruptible_timeout(x, timo)	\
-	_wait_for_completion_interruptible_timeout(x, timo LOCK_FILE_LINE)
 
 static inline void
-_complete_all(struct completion *x LOCK_FL_VARS)
+complete_all(struct completion *x)
 {
-	_mtx_enter(&x->wait.lock LOCK_FL_ARGS);
+	mtx_enter(&x->wait.lock);
 	x->done = UINT_MAX;
-	_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+	mtx_leave(&x->wait.lock);
 	wakeup(x);
 }
-#define complete_all(x)	_complete_all(x LOCK_FILE_LINE)
 
 static inline bool
-_try_wait_for_completion(struct completion *x LOCK_FL_VARS)
+try_wait_for_completion(struct completion *x)
 {
-	_mtx_enter(&x->wait.lock LOCK_FL_ARGS);
+	mtx_enter(&x->wait.lock);
 	if (x->done == 0) {
-		_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+		mtx_leave(&x->wait.lock);
 		return false;
 	}
 	x->done--;
-	_mtx_leave(&x->wait.lock LOCK_FL_ARGS);
+	mtx_leave(&x->wait.lock);
 	return true;
 }
-#define try_wait_for_completion(x)	_try_wait_for_completion(x LOCK_FILE_LINE)
 
 #endif

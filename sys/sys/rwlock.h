@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.24 2018/06/08 15:38:15 guenther Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.25 2019/04/23 13:35:12 visa Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -147,15 +147,10 @@ void	_rw_init_flags(struct rwlock *, const char *, int,
 #define rw_init(rwl, name)	_rw_init_flags(rwl, name, 0, NULL)
 #endif /* WITNESS */
 
-void	_rw_enter_read(struct rwlock * LOCK_FL_VARS);
-void	_rw_enter_write(struct rwlock * LOCK_FL_VARS);
-void	_rw_exit_read(struct rwlock * LOCK_FL_VARS);
-void	_rw_exit_write(struct rwlock * LOCK_FL_VARS);
-
-#define rw_enter_read(rwl)	_rw_enter_read(rwl LOCK_FILE_LINE)
-#define rw_enter_write(rwl)	_rw_enter_write(rwl LOCK_FILE_LINE)
-#define rw_exit_read(rwl)	_rw_exit_read(rwl LOCK_FILE_LINE)
-#define rw_exit_write(rwl)	_rw_exit_write(rwl LOCK_FILE_LINE)
+void	rw_enter_read(struct rwlock *);
+void	rw_enter_write(struct rwlock *);
+void	rw_exit_read(struct rwlock *);
+void	rw_exit_write(struct rwlock *);
 
 #ifdef DIAGNOSTIC
 void	rw_assert_wrlock(struct rwlock *);
@@ -169,17 +164,14 @@ void	rw_assert_unlocked(struct rwlock *);
 #define rw_assert_unlocked(rwl)	((void)0)
 #endif
 
-int	_rw_enter(struct rwlock *, int LOCK_FL_VARS);
-void	_rw_exit(struct rwlock * LOCK_FL_VARS);
+int	rw_enter(struct rwlock *, int);
+void	rw_exit(struct rwlock *);
 int	rw_status(struct rwlock *);
-
-#define rw_enter(rwl, flags)	_rw_enter(rwl, flags LOCK_FILE_LINE)
-#define rw_exit(rwl)		_rw_exit(rwl LOCK_FILE_LINE)
 
 void	_rrw_init_flags(struct rrwlock *, char *, int,
 	    const struct lock_type *);
-int	_rrw_enter(struct rrwlock *, int LOCK_FL_VARS);
-void	_rrw_exit(struct rrwlock * LOCK_FL_VARS);
+int	rrw_enter(struct rrwlock *, int);
+void	rrw_exit(struct rrwlock *);
 int	rrw_status(struct rrwlock *);
 
 #ifdef WITNESS
@@ -193,9 +185,6 @@ int	rrw_status(struct rrwlock *);
 				_rrw_init_flags(rrwl, name, 0, NULL)
 #define rrw_init(rrwl, name)	_rrw_init_flags(rrwl, name, 0, NULL)
 #endif /* WITNESS */
-
-#define rrw_enter(rrwl, flags)	_rrw_enter(rrwl, flags LOCK_FILE_LINE)
-#define rrw_exit(rrwl)		_rrw_exit(rrwl LOCK_FILE_LINE)
 
 #endif /* _KERNEL */
 

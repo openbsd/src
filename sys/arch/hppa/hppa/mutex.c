@@ -1,4 +1,4 @@
-/*	$OpenBSD: mutex.c,v 1.16 2017/04/20 13:57:29 visa Exp $	*/
+/*	$OpenBSD: mutex.c,v 1.17 2019/04/23 13:35:12 visa Exp $	*/
 
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
@@ -34,8 +34,6 @@
 
 #include <ddb/db_output.h>
 
-int __mtx_enter_try(struct mutex *);
-
 #ifdef MULTIPROCESSOR
 /* Note: lock must be 16-byte aligned. */
 #define __mtx_lock(mtx) ((int *)(((vaddr_t)mtx->mtx_lock + 0xf) & ~0xf))
@@ -57,14 +55,14 @@ __mtx_init(struct mutex *mtx, int wantipl)
 
 #ifdef MULTIPROCESSOR
 void
-__mtx_enter(struct mutex *mtx)
+mtx_enter(struct mutex *mtx)
 {
-	while (__mtx_enter_try(mtx) == 0)
+	while (mtx_enter_try(mtx) == 0)
 		;
 }
 
 int
-__mtx_enter_try(struct mutex *mtx)
+mtx_enter_try(struct mutex *mtx)
 {
 	struct cpu_info *ci = curcpu();
 	volatile int *lock = __mtx_lock(mtx);
@@ -104,7 +102,7 @@ __mtx_enter_try(struct mutex *mtx)
 }
 #else
 void
-__mtx_enter(struct mutex *mtx)
+mtx_enter(struct mutex *mtx)
 {
 	struct cpu_info *ci = curcpu();
 
@@ -124,15 +122,15 @@ __mtx_enter(struct mutex *mtx)
 }
 
 int
-__mtx_enter_try(struct mutex *mtx)
+mtx_enter_try(struct mutex *mtx)
 {
-	__mtx_enter(mtx);
+	mtx_enter(mtx);
 	return (1);
 }
 #endif
 
 void
-__mtx_leave(struct mutex *mtx)
+mtx_leave(struct mutex *mtx)
 {
 #ifdef MULTIPROCESSOR
 	volatile int *lock = __mtx_lock(mtx);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.2 2019/04/23 13:35:12 visa Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -193,22 +193,21 @@ do {						\
 })
 
 static inline void
-_wake_up(wait_queue_head_t *wqh LOCK_FL_VARS)
+wake_up(wait_queue_head_t *wqh)
 {
 	wait_queue_entry_t *wqe;
 	wait_queue_entry_t *tmp;
-	_mtx_enter(&wqh->lock LOCK_FL_ARGS);
+	mtx_enter(&wqh->lock);
 	
 	list_for_each_entry_safe(wqe, tmp, &wqh->head, entry) {
 		if (wqe->func != NULL)
 			wqe->func(wqe, 0, wqe->flags, NULL);
 	}
 	wakeup(wqh);
-	_mtx_leave(&wqh->lock LOCK_FL_ARGS);
+	mtx_leave(&wqh->lock);
 }
 
-#define wake_up(wq)			_wake_up(wq LOCK_FILE_LINE)
-#define wake_up_all(wq)			_wake_up(wq LOCK_FILE_LINE)
+#define wake_up_all(wq)			wake_up(wq)
 
 static inline void
 wake_up_all_locked(wait_queue_head_t *wqh)
@@ -223,7 +222,7 @@ wake_up_all_locked(wait_queue_head_t *wqh)
 	wakeup(wqh);
 }
 
-#define wake_up_interruptible(wq)	_wake_up(wq LOCK_FILE_LINE)
+#define wake_up_interruptible(wq)	wake_up(wq)
 #define waitqueue_active(wq)		((wq)->count > 0)
 
 #define	DEFINE_WAIT(name)				\

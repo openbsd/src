@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.54 2019/04/14 08:51:31 visa Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.55 2019/04/23 13:35:12 visa Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -156,21 +156,20 @@ struct lock_type timeout_spinlock_type = {
 static void
 timeout_sync_order(int needsproc)
 {
-	WITNESS_CHECKORDER(TIMEOUT_LOCK_OBJ(needsproc),
-	    LOP_NEWORDER, __FILE__, __LINE__, NULL);
+	WITNESS_CHECKORDER(TIMEOUT_LOCK_OBJ(needsproc), LOP_NEWORDER, NULL);
 }
 
 static void
 timeout_sync_enter(int needsproc)
 {
 	timeout_sync_order(needsproc);
-	WITNESS_LOCK(TIMEOUT_LOCK_OBJ(needsproc), 0, __FILE__, __LINE__);
+	WITNESS_LOCK(TIMEOUT_LOCK_OBJ(needsproc), 0);
 }
 
 static void
 timeout_sync_leave(int needsproc)
 {
-	WITNESS_UNLOCK(TIMEOUT_LOCK_OBJ(needsproc), 0, __FILE__, __LINE__);
+	WITNESS_UNLOCK(TIMEOUT_LOCK_OBJ(needsproc), 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.140 2018/05/31 02:16:22 guenther Exp $	*/
+/*	$OpenBSD: systm.h,v 1.141 2019/04/23 13:35:12 visa Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -379,12 +379,12 @@ void	user_config(void);
 
 #if defined(MULTIPROCESSOR)
 void	_kernel_lock_init(void);
-void	_kernel_lock(const char *, int);
+void	_kernel_lock(void);
 void	_kernel_unlock(void);
 int	_kernel_lock_held(void);
 
 #define	KERNEL_LOCK_INIT()		_kernel_lock_init()
-#define	KERNEL_LOCK()			_kernel_lock(__FILE__, __LINE__)
+#define	KERNEL_LOCK()			_kernel_lock()
 #define	KERNEL_UNLOCK()			_kernel_unlock()
 #define	KERNEL_ASSERT_LOCKED()		KASSERT(_kernel_lock_held())
 #define	KERNEL_ASSERT_UNLOCKED()	KASSERT(!_kernel_lock_held())
