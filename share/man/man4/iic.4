@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.96 2019/04/09 14:09:13 sthen Exp $
+.\"	$OpenBSD: iic.4,v 1.97 2019/04/23 14:02:40 visa Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2019 $
+.Dd $Mdocdate: April 23 2019 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Cd "iic* at gdiumiic?              # loongson"
 .Cd "iic* at tsciic?                # alpha"
 .Cd "iic* at dwiic?                 # amd64"
+.Cd "iic* at octiic?                # octeon"
 .Sh DESCRIPTION
 .Tn I2C
 is a two-wire bus developed by Philips used for connecting
@@ -96,6 +97,8 @@ Intel ICH SMBus controller
 Apple Kauai I2C controller
 .It Xr nviic 4
 NVIDIA nForce2/3/4 SMBus controller
+.It Xr octiic 4
+OCTEON two-wire serial interface
 .It Xr pcfiic 4
 Phillips PCF8584 I2C controller
 .It Xr piic 4
