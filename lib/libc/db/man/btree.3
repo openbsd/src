@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btree.3,v 1.23 2015/09/10 10:20:55 jmc Exp $
+.\"	$OpenBSD: btree.3,v 1.24 2019/04/23 18:13:11 schwarze Exp $
 .\"	$NetBSD: btree.3,v 1.6 1996/05/03 21:26:48 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)btree.3	8.4 (Berkeley) 8/18/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: April 23 2019 $
 .Dt BTREE 3
 .Os
 .Sh NAME
@@ -74,9 +74,7 @@ typedef struct {
 The elements of this structure are as follows:
 .Bl -tag -width "XXXXXX"
 .It Fa flags
-The flag value is specified by
-.Tn OR Ns 'ing
-any of the following values:
+The flag value is specified by OR'ing any of the following values:
 .Bl -tag -width XXXXX
 .It Dv R_DUP
 Permit duplicate keys in the tree, i.e., permit insertion if the key to be
@@ -222,7 +220,7 @@ for any of the errors specified for the library routine
 .%A Douglas Comer
 .%J ACM Comput. Surv. 11
 .%D June 1979
-.%P pp 121-138
+.%P pp. 121\(en138
 .Re
 .Rs
 .%T "Prefix B-trees"
@@ -231,13 +229,13 @@ for any of the errors specified for the library routine
 .%J ACM Transactions on Database Systems
 .%V Vol. 2 , 1
 .%D March 1977
-.%P pp 11-26
+.%P pp. 11\(en26
 .Re
 .Rs
 .%B "The Art of Computer Programming Vol. 3: Sorting and Searching"
 .%A D. E. Knuth
 .%D 1968
-.%P pp 471-480
+.%P pp. 471\(en480
 .Re
 .Sh BUGS
 Only big and little endian byte order is supported.
