@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.105 2019/04/23 06:15:14 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.106 2019/04/23 06:18:02 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -900,7 +900,7 @@ orig_rtr_lsa(struct area *area)
 				if (ibuf_add(buf, &rtr_link, sizeof(rtr_link)))
 					fatalx("orig_rtr_lsa: ibuf_add failed");
 			}
-			if ((iface->flags & IFF_UP) && 
+			if ((iface->flags & IFF_UP) &&
 			    LINK_STATE_IS_UP(iface->linkstate)) {
 				log_debug("orig_rtr_lsa: stub net, "
 				    "interface %s", iface->name);
