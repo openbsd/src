@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump_tables.c,v 1.3 2019/04/23 03:06:07 guenther Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.4 2019/04/23 03:14:44 guenther Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -119,12 +119,13 @@ check_mbz(pd_entry_t e, pd_entry_t mbz)
 }
 
 void
-pflags(pd_entry_t e, const char *pad)
+pflags(pd_entry_t e, pd_entry_t inherited)
 {
 	if (reproducible)
 		e &= ~(PG_M|PG_U);
-	printf("[%c%c%c%c""%c%c%c%c]%s",
-	    e & PG_NX ? 'x' : '-',
+	inherited &= e;
+	printf("[%c%c%c%c""%c%c%c%c][%c%c%c]",
+	    e & PG_NX ? 'X' : '-',	/* reversed */
 	    e & PG_G  ? 'G' : '-',
 	    e & PG_M  ? 'M' : '-',
 	    e & PG_U  ? 'U' : '-',
@@ -132,7 +133,9 @@ pflags(pd_entry_t e, const char *pad)
 	    e & PG_WT ? 'w' : '-',
 	    e & PG_u  ? 'u' : '-',
 	    e & PG_RW ? 'W' : '-',
-	    pad);
+	    inherited & PG_NX ? 'X' : '-',	/* reversed */
+	    inherited & PG_u  ? 'u' : '-',
+	    inherited & PG_RW ? 'W' : '-');
 }
 
 const char * const prefix[] = {
@@ -173,8 +176,7 @@ pent(int level, int idx, vaddr_t va, pd_entry_t e, pd_entry_t inherited,
 		printf("%016lx %s% 4d -> ", va, prefix[level], idx);
 
 		printf("%016llx %c ", pa, type);
-		pflags(e, " ");
-		pflags(e & (inherited | ~(PG_NX|PG_u|PG_RW)), "");
+		pflags(e, inherited);
 		if (name != NULL)
 			printf(" %s\n", name);
 		else
@@ -277,7 +279,7 @@ main(int argc, char **argv)
 		check_mbz(cr3, mbz_normal[5]);
 	}
 	printf("\
-VA               lvl  idx    PA                 attr       cumulative L4-slot\
+VA               lvl  idx    PA                 entry-attr eff  L4-slot\
 \n");
 	for (i = 0; i < PAGE_SIZE / sizeof(pd_entry_t); i++) {
 		const char *name = NULL;
