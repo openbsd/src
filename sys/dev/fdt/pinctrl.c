@@ -1,6 +1,6 @@
-/*	$OpenBSD: pinctrl.c,v 1.2 2018/08/27 10:03:35 jsg Exp $	*/
+/*	$OpenBSD: pinctrl.c,v 1.3 2019/04/23 18:32:26 kettenis Exp $	*/
 /*
- * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2018, 2019 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,8 @@ pinctrl_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "pinctrl-single");
+	return (OF_is_compatible(faa->fa_node, "pinctrl-single") ||
+	    OF_is_compatible(faa->fa_node, "pinconf-single"));
 }
 
 void
@@ -89,10 +90,6 @@ pinctrl_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_func_mask = OF_getpropint(faa->fa_node,
 	    "pinctrl-single,function-mask", 0);
-	if (sc->sc_func_mask == 0) {
-		printf(": bogus function mask\n");
-		return;
-	}
 
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
@@ -104,6 +101,34 @@ pinctrl_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_register(faa->fa_node, pinctrl_pinctrl, sc);
 
 	printf("\n");
+}
+
+uint32_t
+pinctrl_set2(int node, char *setting, uint32_t val)
+{
+	uint32_t values[2];
+
+	if (OF_getpropintarray(node, setting, values, sizeof(values)) !=
+	    sizeof(values))
+		return val;
+
+	val &= ~values[1];
+	val |= (values[0] & values[1]);
+	return val;
+}
+
+uint32_t
+pinctrl_set4(int node, char *setting, uint32_t val)
+{
+	uint32_t values[4];
+
+	if (OF_getpropintarray(node, setting, values, sizeof(values)) !=
+	    sizeof(values))
+		return val;
+
+	val &= ~values[3];
+	val |= (values[0] & values[3]);
+	return val;
 }
 
 int
@@ -125,27 +150,26 @@ pinctrl_pinctrl(uint32_t phandle, void *cookie)
 	OF_getpropintarray(node, "pinctrl-single,pins", pins, len);
 
 	for (i = 0; i < len / sizeof(uint32_t); i += 2) {
-		if (sc->sc_reg_width == 16) {
-			uint16_t reg = pins[i];
-			uint16_t func = pins[i + 1];
-			uint16_t val;
-
+		uint32_t reg = pins[i];
+		uint32_t func = pins[i + 1];
+		uint32_t val = 0;
+		
+		if (sc->sc_reg_width == 16)
 			val = HREAD2(sc, reg);
-			val &= ~sc->sc_func_mask;
-			val |= (func & sc->sc_func_mask);
-			HWRITE2(sc, reg, val);
-			break;
-		} else if (sc->sc_reg_width == 32) {
-			uint32_t reg = pins[i];
-			uint32_t func = pins[i + 1];
-			uint32_t val;
-
+		else if (sc->sc_reg_width == 32)
 			val = HREAD4(sc, reg);
-			val &= ~sc->sc_func_mask;
-			val |= (func & sc->sc_func_mask);
+
+		val &= ~sc->sc_func_mask;
+		val |= (func & sc->sc_func_mask);
+
+		val = pinctrl_set2(node, "pinctrl-single,drive-strength", val);
+		val = pinctrl_set4(node, "pinctrl-single,bias-pulldown", val);
+		val = pinctrl_set4(node, "pinctrl-single,bias-pullup", val);
+
+		if (sc->sc_reg_width == 16)
+			HWRITE2(sc, reg, val);
+		else if (sc->sc_reg_width == 32)
 			HWRITE4(sc, reg, val);
-			break;
-		}
 	}
 
 	free(pins, M_TEMP, len);
