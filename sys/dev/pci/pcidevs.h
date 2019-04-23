@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1882 2019/04/10 13:54:06 phessler Exp 
+ *	OpenBSD: pcidevs,v 1.1883 2019/04/23 03:24:22 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1092,6 +1092,7 @@
 #define	PCI_PRODUCT_ATI_KAVERI_20	0x131b		/* Kaveri Radeon R4 */
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
+#define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
@@ -1443,8 +1444,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_X700SE_R410	0x5e4c		/* FireGL X700 SE */
 #define	PCI_PRODUCT_ATI_RADEON_X700_PCIE	0x5e4d		/* Radeon X700 PCIE */
 #define	PCI_PRODUCT_ATI_RADEON_X700SE_PCIE	0x5e4f		/* Radeon X700 SE PCIE */
-#define	PCI_PRODUCT_ATI_RADEON_X700_PCIE_S	0x5e6d		/* Radeon X700 PCIE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X700_SE	0x5e4f		/* Radeon X700 SE */
+#define	PCI_PRODUCT_ATI_RADEON_X700_PCIE_S	0x5e6d		/* Radeon X700 PCIE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_X700_SE_S	0x5e6f		/* Radeon X700 SE Sec */
 #define	PCI_PRODUCT_ATI_RADEON_HD8670A	0x6600		/* Radeon HD 8670A */
 #define	PCI_PRODUCT_ATI_RADEON_HD8730M	0x6601		/* Radeon HD 8730M */
@@ -1480,6 +1481,13 @@
 #define	PCI_PRODUCT_ATI_HAINAN_2	0x6665		/* Hainan */
 #define	PCI_PRODUCT_ATI_HAINAN_3	0x6667		/* Hainan */
 #define	PCI_PRODUCT_ATI_RADEON_HD8500M_2	0x666f		/* Radeon HD 8500M */
+#define	PCI_PRODUCT_ATI_VEGA20_1	0x66a0		/* Vega 20 */
+#define	PCI_PRODUCT_ATI_VEGA20_2	0x66a1		/* Vega 20 */
+#define	PCI_PRODUCT_ATI_VEGA20_3	0x66a2		/* Vega 20 */
+#define	PCI_PRODUCT_ATI_VEGA20_4	0x66a3		/* Vega 20 */
+#define	PCI_PRODUCT_ATI_VEGA20_5	0x66a4		/* Vega 20 */
+#define	PCI_PRODUCT_ATI_VEGA20_6	0x66a7		/* Vega 20 */
+#define	PCI_PRODUCT_ATI_VEGA20_7	0x66af		/* Vega 20 */
 #define	PCI_PRODUCT_ATI_CAYMAN_1	0x6700		/* Cayman */
 #define	PCI_PRODUCT_ATI_CAYMAN_2	0x6701		/* Cayman */
 #define	PCI_PRODUCT_ATI_CAYMAN_3	0x6702		/* Cayman */
@@ -1566,7 +1574,27 @@
 #define	PCI_PRODUCT_ATI_HAWAII_10	0x67b9		/* Hawaii */
 #define	PCI_PRODUCT_ATI_HAWAII_11	0x67ba		/* Hawaii */
 #define	PCI_PRODUCT_ATI_HAWAII_12	0x67be		/* Hawaii */
-#define	PCI_PRODUCT_ATI_RADEON_PROWX4130	0x67e8		/* Radeon Pro WX 4130/4150 */
+#define	PCI_PRODUCT_ATI_POLARIS10_1	0x67c0		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_2	0x67c1		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_3	0x67c2		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_4	0x67c4		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_5	0x67c7		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_6	0x67c8		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_7	0x67c9		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_8	0x67ca		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_9	0x67cc		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_10	0x67cf		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_11	0x67d0		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS10_12	0x67df		/* Polaris 10 */
+#define	PCI_PRODUCT_ATI_POLARIS11_1	0x67e0		/* Polaris 11 */
+#define	PCI_PRODUCT_ATI_POLARIS11_2	0x67e1		/* Polaris 11 */
+#define	PCI_PRODUCT_ATI_POLARIS11_3	0x67e3		/* Polaris 11 */
+#define	PCI_PRODUCT_ATI_POLARIS11_4	0x67e7		/* Polaris 11 */
+#define	PCI_PRODUCT_ATI_POLARIS11_5	0x67e8		/* Radeon Pro WX 4130/4150 */
+#define	PCI_PRODUCT_ATI_POLARIS11_6	0x67e9		/* Polaris 11 */
+#define	PCI_PRODUCT_ATI_POLARIS11_7	0x67eb		/* Polaris 11 */
+#define	PCI_PRODUCT_ATI_POLARIS11_8	0x67ef		/* Polaris 11 */
+#define	PCI_PRODUCT_ATI_POLARIS11_9	0x67ff		/* Polaris 11 */
 #define	PCI_PRODUCT_ATI_RADEON_HD7970M	0x6800		/* Radeon HD 7970M */
 #define	PCI_PRODUCT_ATI_RADEON_HD8970M	0x6801		/* Radeon HD 8970M */
 #define	PCI_PRODUCT_ATI_PITCAIRN_1	0x6802		/* Pitcairn */
@@ -1619,8 +1647,14 @@
 #define	PCI_PRODUCT_ATI_VEGA10_5	0x6864		/* Vega 10 */
 #define	PCI_PRODUCT_ATI_VEGA10_6	0x6867		/* Vega 10 */
 #define	PCI_PRODUCT_ATI_VEGA10_7	0x6868		/* Vega 10 */
-#define	PCI_PRODUCT_ATI_VEGA10_8	0x687f		/* Radeon Rx Vega */
-#define	PCI_PRODUCT_ATI_VEGA10_9	0x686c		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_8	0x6869		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_9	0x686a		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_10	0x686b		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_11	0x686c		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_12	0x686d		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_13	0x686e		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_14	0x686f		/* Vega 10 */
+#define	PCI_PRODUCT_ATI_VEGA10_15	0x687f		/* Radeon Rx Vega */
 #define	PCI_PRODUCT_ATI_CYPRESS	0x6880		/* Cypress */
 #define	PCI_PRODUCT_ATI_FIREPRO_V8800	0x6888		/* FirePro V8800 */
 #define	PCI_PRODUCT_ATI_FIREPRO_V7800	0x6889		/* FirePro V7800 */
@@ -1664,6 +1698,37 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD5450	0x68f9		/* Radeon HD 5450 */
 #define	PCI_PRODUCT_ATI_RADEON_HD7350	0x68fa		/* Radeon HD 7350 */
 #define	PCI_PRODUCT_ATI_CEDAR_LE	0x68fe		/* Cedar LE */
+#define	PCI_PRODUCT_ATI_TOPAZ_1	0x6900		/* Topaz */
+#define	PCI_PRODUCT_ATI_TOPAZ_2	0x6901		/* Topaz */
+#define	PCI_PRODUCT_ATI_TOPAZ_3	0x6902		/* Topaz */
+#define	PCI_PRODUCT_ATI_TOPAZ_4	0x6903		/* Topaz */
+#define	PCI_PRODUCT_ATI_TOPAZ_5	0x6907		/* Topaz */
+#define	PCI_PRODUCT_ATI_TONGA_1	0x6920		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_2	0x6921		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_3	0x6928		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_4	0x6929		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_5	0x692b		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_6	0x692f		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_7	0x6930		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_8	0x6938		/* Tonga */
+#define	PCI_PRODUCT_ATI_TONGA_9	0x6939		/* Tonga */
+#define	PCI_PRODUCT_ATI_VEGAM_1	0x694c		/* Vega M */
+#define	PCI_PRODUCT_ATI_VEGAM_2	0x694e		/* Vega M */
+#define	PCI_PRODUCT_ATI_VEGAM_3	0x694f		/* Vega M */
+#define	PCI_PRODUCT_ATI_POLARIS12_1	0x6980		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_POLARIS12_2	0x6981		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_POLARIS12_3	0x6985		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_POLARIS12_4	0x6986		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_POLARIS12_5	0x6987		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_POLARIS12_6	0x6995		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_POLARIS12_7	0x6997		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_POLARIS12_8	0x699f		/* Polaris 12 */
+#define	PCI_PRODUCT_ATI_VEGA12_1	0x69a0		/* Vega 12 */
+#define	PCI_PRODUCT_ATI_VEGA12_2	0x69a1		/* Vega 12 */
+#define	PCI_PRODUCT_ATI_VEGA12_3	0x69a2		/* Vega 12 */
+#define	PCI_PRODUCT_ATI_VEGA12_4	0x69a3		/* Vega 12 */
+#define	PCI_PRODUCT_ATI_VEGA12_5	0x69af		/* Vega 12 */
+#define	PCI_PRODUCT_ATI_POLARIS10_13	0x6fdf		/* Polaris 10 */
 #define	PCI_PRODUCT_ATI_RS100_PCI	0x700f		/* RS100 PCI */
 #define	PCI_PRODUCT_ATI_RS200_PCI	0x7010		/* RS200 PCI */
 #define	PCI_PRODUCT_ATI_RADEON_X1800A	0x7100		/* Radeon X1800 */
@@ -1770,6 +1835,8 @@
 #define	PCI_PRODUCT_ATI_RV560_4	0x7297		/* RV560 */
 #define	PCI_PRODUCT_ATI_RADEON_X1950_PRO_S	0x72a0		/* Radeon X1950 Pro Sec */
 #define	PCI_PRODUCT_ATI_RADEON_RX1650_XT_2	0x72b1		/* Radeon RX1650 XT Sec */
+#define	PCI_PRODUCT_ATI_FIJI_1	0x7300		/* Fiji */
+#define	PCI_PRODUCT_ATI_FIJI_2	0x730f		/* Fiji */
 #define	PCI_PRODUCT_ATI_RADEON_9000IGP	0x7834		/* Radeon 9000/9100 IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS350IGP	0x7835		/* Radeon RS350IGP */
 #define	PCI_PRODUCT_ATI_RS690_HB	0x7910		/* RS690 Host */
@@ -1985,6 +2052,7 @@
 #define	PCI_PRODUCT_ATI_CARRIZO_3	0x9875		/* Carrizo */
 #define	PCI_PRODUCT_ATI_CARRIZO_4	0x9876		/* Carrizo */
 #define	PCI_PRODUCT_ATI_CARRIZO_5	0x9877		/* Carrizo */
+#define	PCI_PRODUCT_ATI_STONEY	0x98e4		/* Stoney Ridge */
 #define	PCI_PRODUCT_ATI_ARUBA_1	0x9900		/* Aruba */
 #define	PCI_PRODUCT_ATI_RADEON_HD7660D	0x9901		/* Radeon HD 7660D */
 #define	PCI_PRODUCT_ATI_RADEON_HD7640G_1	0x9903		/* Radeon HD 7640G */

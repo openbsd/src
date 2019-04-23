@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1882 2019/04/10 13:54:06 phessler Exp 
+ *	OpenBSD: pcidevs,v 1.1883 2019/04/23 03:24:22 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2600,6 +2600,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Kaveri Radeon R6",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PICASSO,
+	    "Picasso",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAVEN_VEGA,
 	    "Radeon Vega",
 	},
@@ -4004,12 +4008,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon X700 SE PCIE",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_PCIE_S,
-	    "Radeon X700 PCIE Sec",
-	},
-	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_SE,
 	    "Radeon X700 SE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_PCIE_S,
+	    "Radeon X700 PCIE Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_SE_S,
@@ -4150,6 +4154,34 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD8500M_2,
 	    "Radeon HD 8500M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA20_1,
+	    "Vega 20",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA20_2,
+	    "Vega 20",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA20_3,
+	    "Vega 20",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA20_4,
+	    "Vega 20",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA20_5,
+	    "Vega 20",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA20_6,
+	    "Vega 20",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA20_7,
+	    "Vega 20",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CAYMAN_1,
@@ -4496,8 +4528,88 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Hawaii",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_PROWX4130,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_1,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_2,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_3,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_4,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_5,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_6,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_7,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_8,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_9,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_10,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_11,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_12,
+	    "Polaris 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_1,
+	    "Polaris 11",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_2,
+	    "Polaris 11",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_3,
+	    "Polaris 11",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_4,
+	    "Polaris 11",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_5,
 	    "Radeon Pro WX 4130/4150",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_6,
+	    "Polaris 11",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_7,
+	    "Polaris 11",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_8,
+	    "Polaris 11",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS11_9,
+	    "Polaris 11",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD7970M,
@@ -4709,11 +4821,35 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_8,
-	    "Radeon Rx Vega",
+	    "Vega 10",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_9,
 	    "Vega 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_10,
+	    "Vega 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_11,
+	    "Vega 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_12,
+	    "Vega 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_13,
+	    "Vega 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_14,
+	    "Vega 10",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA10_15,
+	    "Radeon Rx Vega",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CYPRESS,
@@ -4886,6 +5022,130 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CEDAR_LE,
 	    "Cedar LE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TOPAZ_1,
+	    "Topaz",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TOPAZ_2,
+	    "Topaz",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TOPAZ_3,
+	    "Topaz",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TOPAZ_4,
+	    "Topaz",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TOPAZ_5,
+	    "Topaz",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_1,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_2,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_3,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_4,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_5,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_6,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_7,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_8,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_TONGA_9,
+	    "Tonga",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGAM_1,
+	    "Vega M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGAM_2,
+	    "Vega M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGAM_3,
+	    "Vega M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_1,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_2,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_3,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_4,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_5,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_6,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_7,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS12_8,
+	    "Polaris 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA12_1,
+	    "Vega 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA12_2,
+	    "Vega 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA12_3,
+	    "Vega 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA12_4,
+	    "Vega 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VEGA12_5,
+	    "Vega 12",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_POLARIS10_13,
+	    "Polaris 10",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS100_PCI,
@@ -5310,6 +5570,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RX1650_XT_2,
 	    "Radeon RX1650 XT Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIJI_1,
+	    "Fiji",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_FIJI_2,
+	    "Fiji",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9000IGP,
@@ -6170,6 +6438,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_CARRIZO_5,
 	    "Carrizo",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_STONEY,
+	    "Stoney Ridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ARUBA_1,
