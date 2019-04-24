@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.131 2019/04/23 06:51:04 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.132 2019/04/24 04:12:36 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -800,7 +800,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, IPL_NONE, PR_WAITOK,
 	    "pdppl", NULL);
 
-	kpm->pm_pdir_intel = 0;
+	kpm->pm_pdir_intel = NULL;
 	kpm->pm_pdirpa_intel = 0;
 
 	/*
@@ -870,7 +870,7 @@ pmap_randomize_level(pd_entry_t *pde, int level)
 	if (level == 0)
 		return;
 
-	if (level < 3 && (*pde & PG_PS))
+	if (level < PTP_LEVELS - 1 && (*pde & PG_PS))
 		return;
 
 	new_pd_va = km_alloc(PAGE_SIZE, &kv_page, &kp_zero, &kd_nowait);
@@ -888,7 +888,7 @@ pmap_randomize_level(pd_entry_t *pde, int level)
 	memset((void *)old_pd_va, 0, PAGE_SIZE);
 
 	pg = PHYS_TO_VM_PAGE(old_pd_pa);
-	if (pg) {
+	if (pg != NULL) {
 		pg->wire_count--;
 		pmap_kernel()->pm_stats.resident_count--;
 		if (pg->wire_count <= 1)
@@ -1036,17 +1036,15 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	unsigned long index;
 	int level;
 	vaddr_t invaladdr;
-	pd_entry_t opde, *mdpml4es;
 
 	level = 1;
 	do {
 		pmap_freepage(pmap, ptp, level, pagelist);
 		index = pl_i(va, level + 1);
-		opde = pmap_pte_set(&normal_pdes[level - 1][index], 0);
-		if (level == 3 && pmap->pm_pdir_intel) {
+		pmap_pte_set(&normal_pdes[level - 1][index], 0);
+		if (level == PTP_LEVELS - 1 && pmap->pm_pdir_intel != NULL) {
 			/* Zap special meltdown PML4e */
-			mdpml4es = pmap->pm_pdir_intel;
-			opde = pmap_pte_set(&mdpml4es[index], 0);
+			pmap_pte_set(&pmap->pm_pdir_intel[index], 0);
 			DPRINTF("%s: cleared meltdown PML4e @ index %lu "
 			    "(va range start 0x%llx)\n", __func__, index,
 			    (uint64_t)(index << L4_SHIFT));
@@ -1121,7 +1119,8 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 		 * usermode addresses, just copy the PML4e to the U-K page
 		 * table.
 		 */
-		if (pmap->pm_pdir_intel && i == 4 && va < VM_MAXUSER_ADDRESS) {
+		if (pmap->pm_pdir_intel != NULL && i == PTP_LEVELS &&
+		    va < VM_MAXUSER_ADDRESS) {
 			pva_intel = pmap->pm_pdir_intel;
 			pva_intel[index] = pva[index];
 			DPRINTF("%s: copying usermode PML4e (content=0x%llx) "
@@ -1268,7 +1267,7 @@ pmap_create(void)
 			panic("%s: unknown PA mapping for meltdown PML4",
 			    __func__);
 	} else {
-		pmap->pm_pdir_intel = 0;
+		pmap->pm_pdir_intel = NULL;
 		pmap->pm_pdirpa_intel = 0;
 	}
 
@@ -1328,10 +1327,9 @@ pmap_destroy(struct pmap *pmap)
 		}
 	}
 
-	/* XXX: need to flush it out of other processor's space? */
 	pool_put(&pmap_pdp_pool, pmap->pm_pdir);
 
-	if (pmap->pm_pdir_intel) {
+	if (pmap->pm_pdir_intel != NULL) {
 		pmap->pm_stats.resident_count--;
 		pool_put(&pmap_pdp_pool, pmap->pm_pdir_intel);
 	}
@@ -1549,7 +1547,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
 
-		if (ptp)
+		if (ptp != NULL)
 			ptp->wire_count--;		/* dropping a PTE */
 
 		pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
@@ -1577,7 +1575,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		/* sync R/M bits */
 		pmap_sync_flags_pte(pg, opte);
 		pve = pmap_remove_pv(pg, pmap, startva);
-		if (pve) {
+		if (pve != NULL) {
 			pve->pv_next = *free_pvs;
 			*free_pvs = pve;
 		}
@@ -1616,7 +1614,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		pmap->pm_stats.wired_count--;
 	pmap->pm_stats.resident_count--;
 
-	if (ptp)
+	if (ptp != NULL)
 		ptp->wire_count--;		/* dropping a PTE */
 
 	pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
@@ -1642,7 +1640,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	/* sync R/M bits */
 	pmap_sync_flags_pte(pg, opte);
 	pve = pmap_remove_pv(pg, pmap, va);
-	if (pve) {
+	if (pve != NULL) {
 		pve->pv_next = *free_pvs;
 		*free_pvs = pve;
 	}
@@ -1864,7 +1862,7 @@ pmap_page_remove(struct vm_page *pg)
 		mtx_leave(&pg->mdpage.pv_mtx);
 
 #ifdef DIAGNOSTIC
-		if (pve->pv_ptp && pmap_pdes_valid(pve->pv_va, &pde) &&
+		if (pve->pv_ptp != NULL && pmap_pdes_valid(pve->pv_va, &pde) &&
 		   (pde & PG_FRAME) != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
 			printf("%s: pg=%p: va=%lx, pv_ptp=%p\n", __func__,
 			       pg, pve->pv_va, pve->pv_ptp);
@@ -1889,7 +1887,7 @@ pmap_page_remove(struct vm_page *pg)
 		pmap_sync_flags_pte(pg, opte);
 
 		/* update the PTP reference count.  free if last reference. */
-		if (pve->pv_ptp) {
+		if (pve->pv_ptp != NULL) {
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
 				pmap_free_ptp(pve->pv_pmap, pve->pv_ptp,
@@ -2179,7 +2177,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		panic("%s: invalid special mapping va 0x%lx requested",
 		    __func__, va);
 
-	if (!pmap->pm_pdir_intel)
+	if (pmap->pm_pdir_intel == NULL)
 		pmap->pm_pdir_intel = pool_get(&pmap_pdp_pool,
 		    PR_WAITOK | PR_ZERO);
 
@@ -2195,7 +2193,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	/* Start at PML4 / top level */
 	pd = pmap->pm_pdir_intel;
 
-	if (!pd)
+	if (pd == NULL)
 		panic("%s: PML4 not initialized for pmap @ %p", __func__,
 		    pmap);
 
@@ -2219,7 +2217,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
-	if (!pd)
+	if (pd == NULL)
 		panic("%s: can't locate PDPT @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
@@ -2243,7 +2241,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
-	if (!pd)
+	if (pd == NULL)
 		panic("%s: can't locate PD page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
@@ -2267,7 +2265,7 @@ pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	}
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
-	if (!pd)
+	if (pd == NULL)
 		panic("%s: can't locate PT page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
@@ -2337,7 +2335,7 @@ pmap_do_remove_ept(struct pmap *pmap, paddr_t gpa)
 	/* Start at PML4 / top level */
 	pd4 = (pd_entry_t *)pmap->pm_pdir;
 
-	if (!pd4)
+	if (pd4 == NULL)
 		return;
 
 	/* npa3 = physaddr of PDPT */
@@ -2418,7 +2416,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 	/* Start at PML4 / top level */
 	pd = (pd_entry_t *)pmap->pm_pdir;
 
-	if (!pd)
+	if (pd == NULL)
 		return ENOMEM;
 
 	/* npa = physaddr of PDPT */
@@ -2458,7 +2456,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 	}
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
-	if (!pd)
+	if (pd == NULL)
 		panic("%s: can't locate PDPT @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
@@ -2499,7 +2497,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 	}
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
-	if (!pd)
+	if (pd == NULL)
 		panic("%s: can't locate PD page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
@@ -2536,7 +2534,7 @@ pmap_enter_ept(struct pmap *pmap, paddr_t gpa, paddr_t hpa, vm_prot_t prot)
 	}
 
 	pd = (pd_entry_t *)PMAP_DIRECT_MAP(npa);
-	if (!pd)
+	if (pd == NULL)
 		panic("%s: can't locate PT page @ pa=0x%llx", __func__,
 		    (uint64_t)npa);
 
@@ -2704,7 +2702,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			wireddelta = 1;
 		else
 			wireddelta = 0;
-		if (ptp)
+		if (ptp != NULL)
 			ptpdelta = 1;
 		else
 			ptpdelta = 0;
@@ -2732,7 +2730,7 @@ enter_now:
 
 	pmap->pm_stats.resident_count += resdelta;
 	pmap->pm_stats.wired_count += wireddelta;
-	if (ptp)
+	if (ptp != NULL)
 		ptp->wire_count += ptpdelta;
 
 	KASSERT(pg == PHYS_TO_VM_PAGE(pa));
@@ -2780,9 +2778,9 @@ enter_now:
 	error = 0;
 
 out:
-	if (pve)
+	if (pve != NULL)
 		pool_put(&pmap_pv_pool, pve);
-	if (opve)
+	if (opve != NULL)
 		pool_put(&pmap_pv_pool, opve);
 
 	return error;
@@ -3014,9 +3012,9 @@ pmap_convert(struct pmap *pmap, int mode)
 		memset(pte, 0, PAGE_SIZE);
 
 		/* Give back the meltdown pdir */
-		if (pmap->pm_pdir_intel) {
+		if (pmap->pm_pdir_intel != NULL) {
 			pool_put(&pmap_pdp_pool, pmap->pm_pdir_intel);
-			pmap->pm_pdir_intel = 0;
+			pmap->pm_pdir_intel = NULL;
 		}
 	}
 
