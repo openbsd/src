@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxtreg.h,v 1.2 2019/03/15 05:42:38 kevlo Exp $	*/
+/*	$OpenBSD: if_bnxtreg.h,v 1.3 2019/04/24 10:09:49 jmatthew Exp $	*/
 /*-
  *   BSD LICENSE
  *
@@ -10738,6 +10738,68 @@ struct hwrm_port_phy_qcaps_output {
 	 */
 	#define HWRM_PORT_PHY_QCAPS_OUTPUT_VALID_MASK		UINT32_C(0xff000000)
 	#define HWRM_PORT_PHY_QCAPS_OUTPUT_VALID_SFT		24
+} __attribute__((packed));
+
+/* hwrm_port_phy_i2c_read (40 bytes) */
+struct hwrm_port_phy_i2c_read_input {
+	/*
+	 * This value indicates what type of request this is. The format for the
+	 * rest of the command is determined by this field.
+	 */
+	uint16_t req_type;
+	/*
+	 * This value indicates the what completion ring the request will be
+	 * optionally completed on. If the value is -1, then no CR completion
+	 * will be generated. Any other value must be a valid CR ring_id value
+	 * for this function.
+	 */
+	uint16_t cmpl_ring;
+	/* This value indicates the command sequence number. */
+	uint16_t seq_id;
+	/*
+	 * Target ID of this command. 0x0 - 0xFFF8 - Used for function ids
+	 * 0xFFF8 - 0xFFFE - Reserved for internal processors 0xFFFF - HWRM
+	 */
+	uint16_t target_id;
+	/*
+	 * This is the host address where the response will be written when the
+	 * request is complete. This area must be 16B aligned and must be
+	 * cleared to zero before the request is made.
+	 */
+	uint64_t resp_addr;
+	uint32_t flags;
+	uint32_t enables;
+#define HWRM_PORT_PHY_I2C_READ_REQ_ENABLES_PAGE_OFFSET     0x1UL
+
+	uint16_t port_id;
+	uint8_t i2c_slave_addr;
+	uint8_t unused_0;
+	uint16_t page_number;
+	uint16_t page_offset;
+	uint8_t data_length;
+	uint8_t unused_1[7];
+} __attribute__((packed));
+
+/* hwrm_port_phy_i2c_read_output (80 bytes)*/
+struct hwrm_port_phy_i2c_read_output {
+	/*
+	 * Pass/Fail or error type Note: receiver to verify the in parameters,
+	 * and fail the call with an error when appropriate
+	 */
+	uint16_t error_code;
+	/* This field returns the type of original request. */
+	uint16_t req_type;
+	/* This field provides original sequence number of the command. */
+	uint16_t seq_id;
+	/*
+	 * This field is the length of the response in bytes. The last byte of
+	 * the response is a valid flag that will read as '1' when the command
+	 * has been completely written to memory.
+	 */
+	uint16_t resp_len;
+	uint32_t data[16];
+	uint8_t unused_0[7];
+	uint8_t valid;
 } __attribute__((packed));
 
 /* hwrm_port_led_cfg */
@@ -29478,6 +29540,8 @@ struct cmd_nums {
 	#define HWRM_PORT_PHY_QCFG				(UINT32_C(0x27))
 	#define HWRM_PORT_MAC_QCFG				(UINT32_C(0x28))
 	#define HWRM_PORT_PHY_QCAPS				(UINT32_C(0x2a))
+	#define HWRM_PORT_PHY_I2C_WRITE				(UINT32_C(0x2b))
+	#define HWRM_PORT_PHY_I2C_READ				(UINT32_C(0x2c))
 	#define HWRM_PORT_LED_CFG				(UINT32_C(0x2d))
 	#define HWRM_PORT_LED_QCFG				(UINT32_C(0x2e))
 	#define HWRM_PORT_LED_QCAPS				(UINT32_C(0x2f))
@@ -29532,6 +29596,8 @@ struct cmd_nums {
 	#define HWRM_FW_QSTATUS				(UINT32_C(0xc1))
 	#define HWRM_FW_SET_TIME				(UINT32_C(0xc8))
 	#define HWRM_FW_GET_TIME				(UINT32_C(0xc9))
+	#define HWRM_FW_SET_STRUCTURED_DATA			(UINT32_C(0xca))
+	#define HWRM_FW_GET_STRUCTURED_DATA			(UINT32_C(0xcb))
 	#define HWRM_EXEC_FWD_RESP				(UINT32_C(0xd0))
 	#define HWRM_REJECT_FWD_RESP				(UINT32_C(0xd1))
 	#define HWRM_FWD_RESP					(UINT32_C(0xd2))
