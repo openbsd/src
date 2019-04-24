@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.321 2019/04/24 20:29:24 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.322 2019/04/24 20:32:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2361,7 +2361,7 @@ tty_check_bg(struct tty *tty, struct window_pane *wp, struct grid_cell *gc)
 			if (gc->bg & 8) {
 				gc->bg &= 7;
 				if (colours >= 16)
-					gc->fg += 90;
+					gc->bg += 90;
 			}
 		}
 		return;
