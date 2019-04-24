@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1884 2019/04/23 19:19:33 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1885 2019/04/24 03:44:50 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8094,6 +8094,7 @@
 #define	PCI_PRODUCT_VMWARE_NET_3	0x07b0		/* VMXNET3 */
 #define	PCI_PRODUCT_VMWARE_PVSCSI	0x07c0		/* PVSCSI */
 #define	PCI_PRODUCT_VMWARE_AHCI	0x07e0		/* AHCI */
+#define	PCI_PRODUCT_VMWARE_NVME	0x07f0		/* NVMe */
 #define	PCI_PRODUCT_VMWARE_VMI	0x0801		/* VMI */
 #define	PCI_PRODUCT_VMWARE_HDA	0x1977		/* HD Audio */
 
