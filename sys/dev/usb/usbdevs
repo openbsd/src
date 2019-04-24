@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.697 2019/03/27 22:04:20 kettenis Exp $
+$OpenBSD: usbdevs,v 1.698 2019/04/24 20:28:31 remi Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3943,6 +3943,7 @@ product SILABS DEKTEK_DTAPLUS	0x83d8	DekTec DTA Plus VHF/UHF Booster
 product SILABS KYOCERA_GPS	0x8411	Kyocera GPS
 product SILABS IRZ_SG10		0x8418	IRZ SG-10 GSM/GPRS Modem
 product SILABS BEI_VCP		0x846e	BEI USB Sensor (VCP)
+product SILABS JUNIPER_BX_CONS	0x8470	Juniper BX Console
 product SILABS BALLUFF_RFID	0x8477	Balluff RFID reader
 product SILABS AC_SERV_IBUS	0x85ea	AC-Services IBUS
 product SILABS AC_SERV_CIS	0x85eb	AC-Services CIS-IBUS
