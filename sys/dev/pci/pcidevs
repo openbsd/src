@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1884 2019/04/23 19:19:33 deraadt Exp $
+$OpenBSD: pcidevs,v 1.1885 2019/04/24 03:44:50 dlg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -8089,6 +8089,7 @@ product VMWARE PCIE		0x07a0	PCIE
 product VMWARE NET_3		0x07b0	VMXNET3
 product VMWARE PVSCSI		0x07c0	PVSCSI
 product VMWARE AHCI		0x07e0	AHCI
+product VMWARE NVME		0x07f0	NVMe
 product VMWARE VMI		0x0801	VMI
 product VMWARE HDA		0x1977	HD Audio
 
