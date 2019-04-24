@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1114 2019/04/22 05:36:42 florian Exp $
+#	$OpenBSD: install.sub,v 1.1115 2019/04/24 15:59:22 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3190,6 +3190,8 @@ do_upgrade() {
 	umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
 	mount_fs
 
+	rm -f /mnt/bsd.upgrade
+
 	# Feed the random pool some entropy before we read from it.
 	feed_random
 
@@ -3207,6 +3209,24 @@ do_upgrade() {
 	finish_up
 }
 
+check_unattendedupgrade() {
+	local _d=$(get_dkdevs_root) _rc=1
+
+	_d=${_d%% *}
+	(
+		if [[ -n $_d ]]; then
+			make_dev $_d
+			if mount -t ffs -r /dev/${_d}a /mnt; then
+				ls /mnt/bsd.upgrade 
+				_rc=$?
+				umount -f /mnt
+			fi
+			rm -f /dev/{r,}$_d?
+		fi
+		return $_rc
+	) > /dev/null 2>&1
+}
+
 # ------------------------------------------------------------------------------
 # Initial actions common to both installs and upgrades.
 #
@@ -3216,14 +3236,16 @@ do_upgrade() {
 
 # Parse parameters.
 AI=false
+UU=false
 MODE=
 PROGNAME=${0##*/}
 AI_RESPFILE=
-while getopts "af:m:" opt; do
+while getopts "af:m:x" opt; do
 	case $opt in
 	a)	AI=true;;
 	f)	AI_RESPFILE=$OPTARG;;
 	m)	MODE=$OPTARG;;
+	x)	UU=true;;
 	*)	usage;;
 	esac
 done
@@ -3356,6 +3378,16 @@ pressing RETURN.  You can exit this program at any time by pressing
 Control-C, but this can leave your system in an inconsistent state.
 
 __EOT
+elif $UU; then
+	MODE=upgrade
+	check_unattendedupgrade || exit 1
+	cat <<__EOT > /auto_upgrade.conf
+Location of sets = disk
+Pathname to the sets = /home/upgrade/
+Set name(s) = done
+__EOT
+	get_responsefile
+	do_autoinstall
 elif [[ -z $AI_RESPFILE ]]; then
 	get_responsefile ||
 		err_exit "No response file found; non-interactive mode aborted."

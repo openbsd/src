@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.42 2017/10/13 18:06:28 rpe Exp $
+#	$OpenBSD: dot.profile,v 1.43 2019/04/24 15:59:22 florian Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -68,6 +68,9 @@ __EOT
 
 	# Create working directories with proper permissions in /tmp.
 	mkdir -m u=rwx,go=rx -p /tmp/{ai,i}
+
+	# try unattended install
+	/autoinstall -x
 
 	# Set timer to automatically start unattended installation or upgrade
 	# if netbooted or if a response file is found in / after a timeout,
