@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.320 2019/04/17 14:43:49 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.321 2019/04/24 20:29:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2388,8 +2388,7 @@ tty_colours_fg(struct tty *tty, const struct grid_cell *gc)
 
 	/* Is this an aixterm bright colour? */
 	if (gc->fg >= 90 && gc->fg <= 97) {
-		xsnprintf(s, sizeof s, "\033[%dm", gc->fg);
-		tty_puts(tty, s);
+		tty_putcode1(tty, TTYC_SETAF, gc->fg - 90 + 8);
 		goto save_fg;
 	}
 
@@ -2417,8 +2416,7 @@ tty_colours_bg(struct tty *tty, const struct grid_cell *gc)
 
 	/* Is this an aixterm bright colour? */
 	if (gc->bg >= 90 && gc->bg <= 97) {
-		xsnprintf(s, sizeof s, "\033[%dm", gc->bg + 10);
-		tty_puts(tty, s);
+		tty_putcode1(tty, TTYC_SETAB, gc->bg - 90 + 8);
 		goto save_bg;
 	}
 
