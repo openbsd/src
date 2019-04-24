@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.174 2018/09/09 21:06:51 bluhm Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.175 2019/04/24 19:13:49 mestre Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -221,6 +221,11 @@ main(int argc, char *argv[])
 
 	if (ps->ps_noaction == 0)
 		log_info("startup");
+
+	if (unveil("/", "r") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	event_init();
 
