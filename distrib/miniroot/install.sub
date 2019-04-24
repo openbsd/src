@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1115 2019/04/24 15:59:22 florian Exp $
+#	$OpenBSD: install.sub,v 1.1116 2019/04/24 18:11:00 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2871,7 +2871,8 @@ do_autoinstall() {
 	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
 		sed "s/^.*$(echo '\r')//;w/tmp/ai/ai.log"
 
-	[[ -f /tmp/ai/ai.done ]] || err_exit "failed; check /tmp/ai/ai.log"
+	$UU || [[ -f /tmp/ai/ai.done ]] || 
+		err_exit "failed; check /tmp/ai/ai.log"
 
 	# Email autoinstall protocol to root on next boot.
 	prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
@@ -3381,6 +3382,10 @@ __EOT
 elif $UU; then
 	MODE=upgrade
 	check_unattendedupgrade || exit 1
+
+	# trigger watchdog
+	(sleep 1800 && reboot) &
+
 	cat <<__EOT > /auto_upgrade.conf
 Location of sets = disk
 Pathname to the sets = /home/upgrade/
