@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openprom.4,v 1.1 2019/04/23 16:34:27 denis Exp $
+.\"	$OpenBSD: openprom.4,v 1.2 2019/04/24 13:10:24 visa Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"     from: @(#)openprom.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 23 2019 $
+.Dd $Mdocdate: April 24 2019 $
 .Dt OPENPROM 4 octeon
 .Os
 .Sh NAME
@@ -140,11 +140,8 @@ Memory could not be allocated.
 .Xr ioctl 2 ,
 .Xr eeprom 8
 .Sh HISTORY
-An
-Octeon
-.Nm openprom
-manual page first appeared in
-.Ox 6.6 .
+The OCTEON OPENPROM interface first appeared in
+.Ox 6.0 .
 .Sh BUGS
 Due to limitations within the OPENPROM itself,
 these functions run at elevated priority
