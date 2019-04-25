@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.143 2019/04/23 20:36:55 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.144 2019/04/25 19:36:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -335,10 +335,6 @@ cmd_try_alias(int *argc, char ***argv)
 	a = options_array_first(o);
 	while (a != NULL) {
 		ov = options_array_item_value(a);
-		if (ov == NULL) {
-			a = options_array_next(a);
-			continue;
-		}
 		cp = strchr(ov->string, '=');
 		if (cp != NULL &&
 		    (size_t)(cp - ov->string) == wanted &&

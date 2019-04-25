@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.62 2019/04/23 20:36:55 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.63 2019/04/25 19:36:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -496,8 +496,7 @@ tty_term_find(char *name, int fd, char **cause)
 	a = options_array_first(o);
 	while (a != NULL) {
 		ov = options_array_item_value(a);
-		if (ov != NULL)
-			tty_term_override(term, ov->string);
+		tty_term_override(term, ov->string);
 		a = options_array_next(a);
 	}
 
