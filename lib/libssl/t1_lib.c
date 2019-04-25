@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.163 2019/04/25 04:54:35 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.164 2019/04/25 04:57:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -875,8 +875,9 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 {
 	CBS ticket_name, ticket_iv, ticket_encdata, ticket_hmac;
 	SSL_SESSION *sess = NULL;
-	size_t session_id_len;
 	unsigned char *sdec = NULL;
+	size_t sdec_len = 0;
+	size_t session_id_len;
 	const unsigned char *p;
 	unsigned char hmac[EVP_MAX_MD_SIZE];
 	HMAC_CTX *hctx = NULL;
@@ -978,7 +979,8 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 		goto derr;
 
 	/* Attempt to decrypt session data. */
-	if ((sdec = malloc(CBS_len(&ticket_encdata))) == NULL)
+	sdec_len = CBS_len(&ticket_encdata);
+	if ((sdec = calloc(1, sdec_len)) == NULL)
 		goto err;
 	if (EVP_DecryptUpdate(cctx, sdec, &slen, CBS_data(&ticket_encdata),
 	    CBS_len(&ticket_encdata)) <= 0)
@@ -1025,7 +1027,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 	goto done;
 
  done:
-	free(sdec);
+	freezero(sdec, sdec_len);
 	EVP_CIPHER_CTX_free(cctx);
 	HMAC_CTX_free(hctx);
 	SSL_SESSION_free(sess);
