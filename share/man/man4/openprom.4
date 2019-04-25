@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openprom.4,v 1.3 2019/04/24 15:58:57 denis Exp $
+.\"	$OpenBSD: openprom.4,v 1.1 2019/04/25 16:47:56 denis Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,8 +32,8 @@
 .\"
 .\"     from: @(#)openprom.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: April 24 2019 $
-.Dt OPENPROM 4 arm64
+.Dd $Mdocdate: April 25 2019 $
+.Dt OPENPROM 4
 .Os
 .Sh NAME
 .Nm openprom
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 The file
 .Pa /dev/openprom
-is an interface to the ARM OPENPROM.
+is an interface to the OPENPROM.
 This interface is highly stylized,
 ioctls are used for all operations.
 These ioctls refer to
@@ -104,6 +104,10 @@ If no such property is associated with that node,
 the value length is set to -1.
 If the named property exists but has no value,
 the value length is set to 0.
+.It Dv OPIOCSET
+Writes the given value under the given name.
+The OPENPROM may refuse this operation,
+in this case
 .Dv EINVAL
 is returned.
 .It Dv OPIOCNEXTPROP
@@ -135,12 +139,25 @@ The given name or value field
 exceeds the maximum allowed length (8191 bytes).
 .It Bq Er ENOMEM
 Memory could not be allocated.
+.It Bq Er ENOTTY
+The ioctl is not supported on this architecture.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr eeprom 8
 .Sh HISTORY
-The ARM OPENPROM interface first appeared in
+The
+.Nm
+interface first appeared in
+.Ox 3.0
+for sparc64.
+It has been available on macppc since
+.Ox 4.3 ,
+on octeon since
+.Ox 6.0 ,
+on armv7 since
+.Ox 6.0 ,
+and on arm64 since
 .Ox 6.1 .
 .Sh BUGS
 Due to limitations within the OPENPROM itself,
