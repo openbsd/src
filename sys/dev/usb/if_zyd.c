@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.119 2018/11/27 14:53:56 mpi Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.120 2019/04/25 01:52:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -646,9 +646,9 @@ zyd_media_change(struct ifnet *ifp)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		zyd_init(ifp);
+		error = zyd_init(ifp);
 
-	return 0;
+	return error;
 }
 
 /*

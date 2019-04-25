@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.145 2019/01/13 14:27:15 mpi Exp $	*/
+/*	$OpenBSD: if_ral.c,v 1.146 2019/04/25 01:52:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006
@@ -497,9 +497,9 @@ ural_media_change(struct ifnet *ifp)
 		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
-		ural_init(ifp);
+		error = ural_init(ifp);
 
-	return 0;
+	return error;
 }
 
 /*

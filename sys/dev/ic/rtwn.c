@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.45 2019/03/11 06:19:33 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.46 2019/04/25 01:52:13 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -745,9 +745,9 @@ rtwn_media_change(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
 		rtwn_stop(ifp);
-		rtwn_init(ifp);
+		error = rtwn_init(ifp);
 	}
-	return (0);
+	return (error);
 }
 
 /*

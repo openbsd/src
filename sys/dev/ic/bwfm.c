@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.59 2019/04/01 15:19:56 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.60 2019/04/25 01:52:13 kevlo Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -757,7 +757,7 @@ bwfm_media_change(struct ifnet *ifp)
 		bwfm_stop(ifp);
 		bwfm_init(ifp);
 	}
-	return 0;
+	return error;
 }
 
 /* Chip initialization (SDIO, PCIe) */

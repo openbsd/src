@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.125 2018/01/30 20:56:38 zhuk Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.126 2019/04/25 01:52:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1693,10 +1693,10 @@ run_media_change(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
 		run_stop(ifp, 0);
-		run_init(ifp);
+		error = run_init(ifp);
 	}
 
-	return 0;
+	return error;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.43 2018/04/26 12:50:07 pirofti Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.44 2019/04/25 01:52:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -749,9 +749,9 @@ rsu_media_change(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
 		rsu_stop(ifp);
-		rsu_init(ifp);
+		error = rsu_init(ifp);
 	}
-	return (0);
+	return (error);
 }
 
 void

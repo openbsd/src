@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.82 2018/08/25 17:07:20 mestre Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.83 2019/04/25 01:52:14 kevlo Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1242,7 +1242,7 @@ upgt_media_change(struct ifnet *ifp)
 		upgt_init(ifp);
 	}
 
-	return (0);
+	return (error);
 }
 
 void
