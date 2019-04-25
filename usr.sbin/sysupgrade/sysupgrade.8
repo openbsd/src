@@ -1,0 +1,73 @@
+.\"	$OpenBSD: sysupgrade.8,v 1.1 2019/04/25 20:22:52 florian Exp $
+.\"
+.\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: April 25 2019 $
+.Dt sysupgrade 8
+.Os
+.Sh NAME
+.Nm sysupgrade
+.Nd upgrade system to the next release or a new snapshot
+.Sh SYNOPSIS
+.Nm
+.Op Fl c
+.Op Ar installurl
+.Sh DESCRIPTION
+.Nm
+is a utility to upgrade
+.Ox
+to the next release or a new snapshot.
+.Pp
+.Nm
+downloads the necessary files to
+.Pa /home/_sysupgrade ,
+verifies them with
+.Xr signify 1 ,
+and copies bsd.rd to
+.Pa /bsd.upgrade .
+.Pp
+.Nm
+then reboots the system and the bootloader will automatically choose
+.Pa /bsd.upgrade ,
+triggering a one-shot upgrade using the files in
+.Pa /home/_sysupgrade .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+upgrade to a snapshot.
+The default is to find out if the system is running a release or a snapshot.
+In case of release
+.Nm
+downloads the next release.
+.El
+.Sh FILES
+.Bl -tag -width "/home/_sysupgrade" -compact
+.It Pa /etc/installurl
+.Ox
+mirror top-level URL for fetching an upgrade.
+.It Pa /home/_sysupgrade
+Directory the upgrade is downloaded to.
+.It Pa /bsd.upgrade
+The ramdisk kernel to trigger an unattended upgrade.
+.El
+.Sh SEE ALSO
+.Xr signify 1 ,
+.Xr installurl 5 ,
+.Xr release 8
+.Sh HISTORY
+.Nm
+first appeared in
+.Ox 6.6 .
