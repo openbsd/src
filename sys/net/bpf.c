@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.173 2019/04/15 21:55:08 sashan Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.174 2019/04/25 18:24:39 anton Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -486,7 +486,8 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 			/* User requested non-blocking I/O */
 			error = EWOULDBLOCK;
 		} else {
-			if ((d->bd_rdStart + d->bd_rtout) < ticks) {
+			if (d->bd_rdStart <= ULONG_MAX - d->bd_rtout &&
+			    d->bd_rdStart + d->bd_rtout < ticks) {
 				error = msleep(d, &d->bd_mtx, PRINET|PCATCH,
 				    "bpf", d->bd_rtout);
 			} else
@@ -863,12 +864,12 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				error = EINVAL;
 				break;
 			}
-			if (tv->tv_sec > ULONG_MAX / hz) {
+			if (tv->tv_sec > INT_MAX / hz) {
 				error = EOVERFLOW;
 				break;
 			}
 			rtout = tv->tv_sec * hz;
-			if (tv->tv_usec / tick > ULONG_MAX - rtout) {
+			if (tv->tv_usec / tick > INT_MAX - rtout) {
 				error = EOVERFLOW;
 				break;
 			}
@@ -1537,7 +1538,8 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 		do_wakeup = 1;
 	}
 
-	if (d->bd_rdStart && (d->bd_rtout + d->bd_rdStart < ticks)) {
+	if (d->bd_rdStart && d->bd_rdStart <= ULONG_MAX - d->bd_rtout &&
+	    d->bd_rdStart + d->bd_rtout < ticks) {
 		/*
 		 * we could be selecting on the bpf, and we
 		 * may have timeouts set.  We got here by getting
