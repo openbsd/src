@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.1 2019/04/25 20:22:52 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.2 2019/04/25 22:12:11 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -112,8 +112,9 @@ SIGNIFY_KEY=/etc/signify/openbsd-$(sed -n \
 
 unpriv signify -qV -p "${SIGNIFY_KEY}" -x SHA256.sig -e -m /dev/null
 
-SETS=$(sed -e 's/^SHA256 (\(.*\)) .*/\1/' \
-    -e "/^INSTALL.${ARCH}\$/p;/^bsd/p;/$version\.tgz\$/p;d" SHA256.sig)
+# INSTALL.*, bsd*, *.tgz
+SETS=$(sed -n -e 's/^SHA256 (\(.*\)) .*/\1/' \
+    -e "/^INSTALL\./p;/^bsd/p;/\.tgz\$/p" SHA256.sig)
 
 OLD_FILES=$(ls)
 OLD_FILES=$(rmel SHA256.sig $OLD_FILES)
