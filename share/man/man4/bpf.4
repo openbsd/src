@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.40 2019/04/03 16:23:20 anton Exp $
+.\"	$OpenBSD: bpf.4,v 1.41 2019/04/25 18:26:16 anton Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: April 3 2019 $
+.Dd $Mdocdate: April 25 2019 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -1036,7 +1036,7 @@ request is negative.
 The timeout used in a
 .Dv BIOCSRTIMEOUT
 request is too large to be represented by an
-.Vt unsigned long .
+.Vt int .
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
