@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.378 2019/04/07 10:52:30 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.379 2019/04/25 12:12:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2212,7 +2212,7 @@ parse_notification(struct peer *peer)
 	u_int8_t	 subcode;
 	u_int8_t	 capa_code;
 	u_int8_t	 capa_len;
-	u_int8_t	 shutcomm_len;
+	size_t		 shutcomm_len;
 	u_int8_t	 i;
 
 	/* just log */
@@ -2310,16 +2310,15 @@ parse_notification(struct peer *peer)
 	if (errcode == ERR_CEASE &&
 	    (subcode == ERR_CEASE_ADMIN_DOWN ||
 	     subcode == ERR_CEASE_ADMIN_RESET)) {
-		if (datalen >= sizeof(shutcomm_len)) {
-			memcpy(&shutcomm_len, p, sizeof(shutcomm_len));
-			p += sizeof(shutcomm_len);
-			datalen -= sizeof(shutcomm_len);
+		if (datalen > 1) {
+			shutcomm_len = *p++;
+			datalen--;
 			if(datalen < shutcomm_len) {
 			    log_peer_warnx(&peer->conf,
 				"received truncated shutdown reason");
 			    return (0);
 			}
-			if (shutcomm_len > (SHUT_COMM_LEN-1)) {
+			if (shutcomm_len > SHUT_COMM_LEN - 1) {
 			    log_peer_warnx(&peer->conf,
 				"received overly long shutdown reason");
 			    return (0);
@@ -3181,19 +3180,21 @@ void
 session_stop(struct peer *peer, u_int8_t subcode)
 {
 	char data[SHUT_COMM_LEN];
-	uint8_t datalen;
-	uint8_t shutcomm_len;
+	size_t datalen;
+	size_t shutcomm_len;
 	char *communication;
 
 	datalen = 0;
-
 	communication = peer->conf.shutcomm;
 
 	if ((subcode == ERR_CEASE_ADMIN_DOWN ||
 	    subcode == ERR_CEASE_ADMIN_RESET)
 	    && communication && *communication) {
 		shutcomm_len = strlen(communication);
-		if(shutcomm_len < SHUT_COMM_LEN) {
+		if (shutcomm_len > SHUT_COMM_LEN - 1) {
+		    log_peer_warnx(&peer->conf,
+			"trying to send overly long shutdown reason");
+		} else {
 			data[0] = shutcomm_len;
 			datalen = shutcomm_len + sizeof(data[0]);
 			memcpy(data + 1, communication, shutcomm_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.378 2019/03/31 16:57:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.379 2019/04/25 12:12:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,7 +38,7 @@
 #define	CONFFILE			"/etc/bgpd.conf"
 #define	BGPD_USER			"_bgpd"
 #define	PEER_DESCR_LEN			32
-#define	SHUT_COMM_LEN			129
+#define	SHUT_COMM_LEN			256	/* includes NUL terminator */
 #define	PFTABLE_LEN			32
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
