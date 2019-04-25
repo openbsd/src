@@ -4122,7 +4122,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Consume the stack protector arguments to prevent warning
     Args.getLastArg(options::OPT_fstack_protector_all,
         options::OPT_fstack_protector_strong,
-        options::OPT_fstack_protector);
+        options::OPT_fstack_protector,
+        options::OPT__param); // ssp-buffer-size
   } else {
     // If we're not using retguard, then do the usual stack protector
     RenderSSPOptions(getToolChain(), Args, CmdArgs, KernelOrKext);
