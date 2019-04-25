@@ -1244,7 +1244,7 @@
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
-./usr/share/man/man4/arm64/openprom.4
+./usr/share/man/man4/openprom.4
 ./usr/share/man/man4/armv7/agtimer.4
 ./usr/share/man/man4/armv7/amdisplay.4
 ./usr/share/man/man4/armv7/ampintc.4
@@ -1600,7 +1600,6 @@
 ./usr/share/man/man4/macppc/mpcpcibr.4
 ./usr/share/man/man4/macppc/onyx.4
 ./usr/share/man/man4/macppc/openpic.4
-./usr/share/man/man4/macppc/openprom.4
 ./usr/share/man/man4/macppc/pgs.4
 ./usr/share/man/man4/macppc/piic.4
 ./usr/share/man/man4/macppc/smu.4
@@ -1679,7 +1678,6 @@
 ./usr/share/man/man4/octeon/octsctl.4
 ./usr/share/man/man4/octeon/octuctl.4
 ./usr/share/man/man4/octeon/octxctl.4
-./usr/share/man/man4/octeon/openprom.4
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4
@@ -1862,7 +1860,6 @@
 ./usr/share/man/man4/sparc64/magma.4
 ./usr/share/man/man4/sparc64/mem.4
 ./usr/share/man/man4/sparc64/mgx.4
-./usr/share/man/man4/sparc64/openprom.4
 ./usr/share/man/man4/sparc64/pcons.4
 ./usr/share/man/man4/sparc64/pmc.4
 ./usr/share/man/man4/sparc64/power.4
