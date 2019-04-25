@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1116 2019/04/24 18:11:00 florian Exp $
+#	$OpenBSD: install.sub,v 1.1117 2019/04/25 17:18:52 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3388,7 +3388,7 @@ elif $UU; then
 
 	cat <<__EOT > /auto_upgrade.conf
 Location of sets = disk
-Pathname to the sets = /home/upgrade/
+Pathname to the sets = /home/_sysupgrade/
 Set name(s) = done
 __EOT
 	get_responsefile
