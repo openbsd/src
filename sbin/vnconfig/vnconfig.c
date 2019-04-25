@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.1 2019/04/25 16:50:36 deraadt Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.2 2019/04/25 18:05:03 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -318,7 +318,7 @@ config(char **argv, int action, struct disklabel *dp, char *key, size_t keylen)
 		if (rv)
 			warn("VNDIOCCLR");
 		else if (verbose)
-			printf("%s: cleared\n", dev);
+			fprintf(stderr, "%s: cleared\n", dev);
 	}
 	/*
 	 * Configure the device
@@ -328,7 +328,8 @@ config(char **argv, int action, struct disklabel *dp, char *key, size_t keylen)
 		if (rv)
 			warn("VNDIOCSET");
 		else if (verbose)
-			printf("%s: %llu bytes on %s\n", dev, vndio.vnd_size,
+			fprintf(stderr,
+			    "%s: %llu bytes on %s\n", dev, vndio.vnd_size,
 			    file);
 	}
 
