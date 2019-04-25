@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.234 2019/02/27 04:34:21 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.235 2019/04/25 12:14:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -2353,7 +2353,8 @@ static void
 show_mrt_notification(u_char *p, u_int16_t len)
 {
 	u_int16_t i;
-	u_int8_t errcode, subcode, shutcomm_len;
+	u_int8_t errcode, subcode;
+	size_t shutcomm_len;
 	char shutcomm[SHUT_COMM_LEN];
 
 	memcpy(&errcode, p, sizeof(errcode));
@@ -2369,15 +2370,14 @@ show_mrt_notification(u_char *p, u_int16_t len)
 
 	if (errcode == ERR_CEASE && (subcode == ERR_CEASE_ADMIN_DOWN ||
 	    subcode == ERR_CEASE_ADMIN_RESET)) {
-		if (len >= sizeof(shutcomm_len)) {
-			memcpy(&shutcomm_len, p, sizeof(shutcomm_len));
-			p += sizeof(shutcomm_len);
-			len -= sizeof(shutcomm_len);
+		if (len > 1) {
+			shutcomm_len = *p++;
+			len--;
 			if(len < shutcomm_len) {
 				printf("truncated shutdown reason");
 				return;
 			}
-			if (shutcomm_len > (SHUT_COMM_LEN-1)) {
+			if (shutcomm_len > SHUT_COMM_LEN - 1) {
 				printf("overly long shutdown reason");
 				return;
 			}
