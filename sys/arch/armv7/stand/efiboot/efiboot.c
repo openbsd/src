@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.23 2018/08/25 00:12:14 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.24 2019/04/25 20:19:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -606,6 +606,14 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 	dp = &devsw[dev];
 	f->f_dev = dp;
+
+	if (strcmp("tftp", dp->dv_name) != 0) {
+		/*
+		 * Clear bootmac, to signal that we loaded this file from a
+		 * non-network device.
+		 */
+		bootmac = NULL;
+	}
 
 	return (*dp->dv_open)(f, unit, part);
 }

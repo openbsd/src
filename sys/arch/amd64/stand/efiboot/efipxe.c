@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.3 2018/01/30 20:19:06 naddy Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.4 2019/04/25 20:19:30 naddy Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -126,6 +126,9 @@ tftp_open(char *path, struct open_file *f)
 	EFI_PHYSICAL_ADDRESS addr;
 	EFI_STATUS status;
 	UINT64 size;
+
+	if (strcmp("TFTP", f->f_dev->dv_name) != 0)
+		return ENXIO;
 
 	if (PXE == NULL)
 		return ENXIO;

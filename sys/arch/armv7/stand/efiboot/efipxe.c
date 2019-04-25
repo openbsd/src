@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.1 2018/03/31 18:19:12 patrick Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.2 2019/04/25 20:19:30 naddy Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -157,6 +157,9 @@ mtftp_open(char *path, struct open_file *f)
 	EFI_STATUS status;
 	UINT64 size;
 
+	if (strcmp("tftp", f->f_dev->dv_name) != 0)
+		return ENXIO;
+
 	if (PXE == NULL)
 		return ENXIO;
 
@@ -295,6 +298,9 @@ mtftp_readdir(struct open_file *f, char *name)
 int
 efitftp_open(char *path, struct open_file *f)
 {
+	if (strcmp("tftp", f->f_dev->dv_name) != 0)
+		return ENXIO;
+
 	if (NET == NULL || PXE == NULL)
 		return ENXIO;
 
