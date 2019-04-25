@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.161 2019/04/23 17:02:45 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.162 2019/04/25 04:48:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -878,15 +878,15 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 	size_t session_id_len = 0;
 	unsigned char *sdec = NULL;
 	const unsigned char *p;
-	int slen, mlen, renew_ticket = 0;
+	int slen, hlen, renew_ticket = 0;
 	unsigned char hmac[EVP_MAX_MD_SIZE];
 	HMAC_CTX hctx;
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX cctx;
 	SSL_CTX *tctx = s->initial_ctx;
 	int ret = -1;
 
 	HMAC_CTX_init(&hctx);
-	EVP_CIPHER_CTX_init(&ctx);
+	EVP_CIPHER_CTX_init(&cctx);
 
 	*psess = NULL;
 
@@ -910,7 +910,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 
 		if ((rv = tctx->internal->tlsext_ticket_key_cb(s,
 		    (unsigned char *)CBS_data(&ticket_name),
-		    (unsigned char *)CBS_data(ticket), &ctx, &hctx, 0)) < 0)
+		    (unsigned char *)CBS_data(ticket), &cctx, &hctx, 0)) < 0)
 			goto err;
 		if (rv == 0)
 			goto derr;
@@ -922,7 +922,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 		 * the IV since its length is known.
 		 */
 		if (!CBS_get_bytes(ticket, &ticket_iv,
-		    EVP_CIPHER_CTX_iv_length(&ctx)))
+		    EVP_CIPHER_CTX_iv_length(&cctx)))
 			goto derr;
 	} else {
 		/* Check that the key name matches. */
@@ -936,7 +936,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 		if (!CBS_get_bytes(ticket, &ticket_iv,
 		    EVP_CIPHER_iv_length(EVP_aes_128_cbc())))
 			goto derr;
-		EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+		EVP_DecryptInit_ex(&cctx, EVP_aes_128_cbc(), NULL,
 		    tctx->internal->tlsext_tick_aes_key, CBS_data(&ticket_iv));
 	}
 
@@ -944,14 +944,14 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 	 * Attempt to process session ticket.
 	 */
 
-	if ((mlen = HMAC_size(&hctx)) < 0)
+	if ((hlen = HMAC_size(&hctx)) < 0)
 		goto err;
 
-	if (mlen > CBS_len(ticket))
+	if (hlen > CBS_len(ticket))
 		goto derr;
-	if (!CBS_get_bytes(ticket, &ticket_encdata, CBS_len(ticket) - mlen))
+	if (!CBS_get_bytes(ticket, &ticket_encdata, CBS_len(ticket) - hlen))
 		goto derr;
-	if (!CBS_get_bytes(ticket, &ticket_hmac, mlen))
+	if (!CBS_get_bytes(ticket, &ticket_hmac, hlen))
 		goto derr;
 	if (CBS_len(ticket) != 0)
 		goto err;
@@ -966,28 +966,28 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 	if (HMAC_Update(&hctx, CBS_data(&ticket_encdata),
 	    CBS_len(&ticket_encdata)) <= 0)
 		goto err;
-	if (HMAC_Final(&hctx, hmac, &mlen) <= 0)
+	if (HMAC_Final(&hctx, hmac, &hlen) <= 0)
 		goto err;
 
-	if (!CBS_mem_equal(&ticket_hmac, hmac, mlen))
+	if (!CBS_mem_equal(&ticket_hmac, hmac, hlen))
 		goto derr;
 
 	/* Attempt to decrypt session data. */
 	if ((sdec = malloc(CBS_len(&ticket_encdata))) == NULL)
 		goto err;
-	if (EVP_DecryptUpdate(&ctx, sdec, &slen, CBS_data(&ticket_encdata),
+	if (EVP_DecryptUpdate(&cctx, sdec, &slen, CBS_data(&ticket_encdata),
 	    CBS_len(&ticket_encdata)) <= 0)
 		goto derr;
-	if (EVP_DecryptFinal_ex(&ctx, sdec + slen, &mlen) <= 0)
+	if (EVP_DecryptFinal_ex(&cctx, sdec + slen, &hlen) <= 0)
 		goto derr;
 
-	slen += mlen;
-	p = sdec;
+	slen += hlen;
 
 	/*
 	 * For session parse failures, indicate that we need to send a new
 	 * ticket.
 	 */
+	p = sdec;
 	if ((sess = d2i_SSL_SESSION(NULL, &p, slen)) == NULL)
 		goto derr;
 
@@ -1022,7 +1022,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
  done:
 	free(sdec);
 	HMAC_CTX_cleanup(&hctx);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_cleanup(&cctx);
 	SSL_SESSION_free(sess);
 
 	if (ret == 2)
