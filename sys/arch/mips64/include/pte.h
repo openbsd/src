@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.21 2016/10/09 03:29:53 visa Exp $	*/
+/*	$OpenBSD: pte.h,v 1.22 2019/04/26 16:27:36 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,9 @@
 /*
  * R4000 and R8000 hardware page table entries
  */
+
+#ifndef	_MIPS64_PTE_H_
+#define	_MIPS64_PTE_H_
 
 #ifndef _LOCORE
 
@@ -190,3 +193,5 @@ typedef u_int32_t pt_entry_t;
 #define	TLB_PAGE_MASK	PG_SIZE_16K
 #endif
 #endif	/* !R8000 */
+
+#endif	/* !_MIPS64_PTE_H_ */
