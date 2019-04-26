@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.4 2019/04/26 14:57:35 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.5 2019/04/26 17:28:10 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -33,7 +33,7 @@ ug_err()
 
 usage()
 {
-	ug_err "usage: ${0##*/} [-c] [install URL]"
+	ug_err "usage: ${0##*/} [-c] [installurl]"
 }
 
 unpriv()
@@ -124,22 +124,22 @@ esac
 
 [[ -f ${SIGNIFY_KEY} ]] || ug_err "cannot find ${SIGNIFY_KEY}"
 
-unpriv signify -qV -p "${SIGNIFY_KEY}" -x SHA256.sig -e -m /dev/null
+unpriv -f SHA256 signify -Veq -p "${SIGNIFY_KEY}" -x SHA256.sig -m SHA256
 
 # INSTALL.*, bsd*, *.tgz
 SETS=$(sed -n -e 's/^SHA256 (\(.*\)) .*/\1/' \
-    -e "/^INSTALL\./p;/^bsd/p;/\.tgz\$/p" SHA256.sig)
+    -e '/^INSTALL\./p;/^bsd/p;/\.tgz$/p' SHA256)
 
 OLD_FILES=$(ls)
+OLD_FILES=$(rmel SHA256 $OLD_FILES)
 OLD_FILES=$(rmel SHA256.sig $OLD_FILES)
 DL=$SETS
 
 for f in $SETS; do
-	signify -C -p "${SIGNIFY_KEY}" -x SHA256.sig $f \
-	    >/dev/null 2>&1 && {
+	if cksum -C SHA256 $f >/dev/null 2>&1; then
 		DL=$(rmel $f ${DL})
 		OLD_FILES=$(rmel $f ${OLD_FILES})
-	}
+	fi
 done
 
 [[ -n ${OLD_FILES} ]] && rm ${OLD_FILES}
@@ -147,6 +147,7 @@ for f in ${DL}; do
 	unpriv -f $f ftp -Vmo ${f} ${URL}${f}
 done
 
+# re-check signature after downloads
 unpriv signify -C -p "${SIGNIFY_KEY}" -x SHA256.sig ${SETS}
 
 cp bsd.rd /nbsd.upgrade
