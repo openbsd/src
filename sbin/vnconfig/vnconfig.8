@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.2 2019/04/25 17:46:56 jmc Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.3 2019/04/26 17:55:28 espie Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,7 +49,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2019 $
+.Dd $Mdocdate: April 26 2019 $
 .Dt VNCONFIG 8
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@
 .Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm vnconfig
-.Op Fl kluv
+.Op Fl Akluv
 .Op Fl K Ar rounds
 .Op Fl S Ar saltfile
 .Op Fl t Ar disktype
@@ -75,6 +75,12 @@ allowing the latter to be accessed as though it were a disk.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Automatically allocate an unused device
+so that
+.Ar vnd_dev
+is not needed,
+and prints its name on standard output.
 .It Fl K Ar rounds
 Associate an encryption key with the device.
 All data will be encrypted using the Blowfish cipher before it is
