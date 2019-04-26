@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.226 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.227 2019/04/26 10:24:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -344,6 +344,8 @@ window_destroy(struct window *w)
 		layout_free_cell(w->saved_layout_root);
 	free(w->old_layout);
 
+	window_destroy_panes(w);
+
 	if (event_initialized(&w->name_event))
 		evtimer_del(&w->name_event);
 
@@ -353,8 +355,6 @@ window_destroy(struct window *w)
 		event_del(&w->offset_timer);
 
 	options_free(w->options);
-
-	window_destroy_panes(w);
 
 	free(w->name);
 	free(w);
