@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.5 2019/04/26 17:28:10 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.6 2019/04/26 21:52:39 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -78,7 +78,7 @@ shift $(( OPTIND -1 ))
 
 case $# in
 0)	MIRROR=$(sed 's/#.*//;/^$/d' /etc/installurl) 2>/dev/null ||
-		installurl=https://cdn.openbsd.org/pub/OpenBSD
+		MIRROR=https://cdn.openbsd.org/pub/OpenBSD
 	;;
 1)	MIRROR=$1
 	;;
