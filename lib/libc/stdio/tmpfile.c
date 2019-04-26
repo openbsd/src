@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfile.c,v 1.11 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: tmpfile.c,v 1.12 2019/04/26 06:33:29 martijn Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +31,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
@@ -47,24 +45,14 @@ tmpfile(void)
 	sigset_t set, oset;
 	FILE *fp;
 	int fd, sverrno;
-#define	TRAILER	"tmp.XXXXXXXXXX"
-	char buf[sizeof(_PATH_TMP) + sizeof(TRAILER)];
-
-	(void)memcpy(buf, _PATH_TMP, sizeof(_PATH_TMP) - 1);
-	(void)memcpy(buf + sizeof(_PATH_TMP) - 1, TRAILER, sizeof(TRAILER));
+	char buf[] = _PATH_TMP "tmp.XXXXXXXXXX";
 
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 
 	fd = mkstemp(buf);
-	if (fd != -1) {
-		mode_t u;
-
+	if (fd != -1)
 		(void)unlink(buf);
-		u = umask(0);
-		(void)umask(u);
-		(void)fchmod(fd, 0666 & ~u);
-	}
 
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 
