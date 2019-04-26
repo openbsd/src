@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpathtest.c,v 1.2 2019/04/26 06:44:14 beck Exp $ */
+/*	$OpenBSD: realpathtest.c,v 1.3 2019/04/26 06:47:43 beck Exp $ */
 
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -103,9 +103,9 @@ main(int argc, char *argv[])
 	RP_SHOULD_SUCCEED("/bin", NULL, NULL);
 	RP_SHOULD_SUCCEED("/bin/herp", NULL, NULL);
 	RP_SHOULD_SUCCEED("////usr/bin", NULL, NULL);
-	RP_SHOULD_SUCCEED("////usr/bin/../../herp", r2, r3);
+	RP_SHOULD_SUCCEED("//.//usr/bin/.././../herp", r2, r3);
 	RP_SHOULD_SUCCEED("/usr/include/machine/setjmp.h", r2, r3);
-	RP_SHOULD_FAIL("////usr/bin/../../herp/derp", r2, r3);
+	RP_SHOULD_FAIL("//.//usr/bin/.././../herp/derp", r2, r3);
 	RP_SHOULD_FAIL("/../.../usr/bin", r2, r3);
 	RP_SHOULD_FAIL("/bsd/herp", r2, r3);
 
