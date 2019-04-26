@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.3 2019/04/26 06:13:48 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.4 2019/04/26 14:57:35 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -87,9 +87,8 @@ esac
 
 if [[ ${#_KERNV[*]} == 2 ]]; then
 	CURRENT=true
-else
-	NEXT_VERSION=$(echo ${_KERNV[0]} + 0.1 | bc -l)
 fi
+NEXT_VERSION=$(echo ${_KERNV[0]} + 0.1 | bc)
 
 if $CURRENT; then
 	URL=${MIRROR}/snapshots/${ARCH}/
@@ -113,9 +112,15 @@ cd ${SETSDIR}
 
 unpriv -f SHA256.sig ftp -Vmo SHA256.sig ${URL}SHA256.sig
 
-# XXX run this unpriv?
-SIGNIFY_KEY=/etc/signify/openbsd-$(sed -n \
-	's/^SHA256 (base\([0-9]\{2,3\}\)\.tgz) .*/\1/p' SHA256.sig)-base.pub
+_KEY=openbsd-${_KERNV[0]%.*}${_KERNV[0]#*.}-base.pub
+_NEXTKEY=openbsd-${NEXT_VERSION%.*}${NEXT_VERSION#*.}-base.pub
+
+read _LINE <SHA256.sig
+case ${_LINE} in
+*\ ${_KEY})	SIGNIFY_KEY=/etc/signify/${_KEY} ;;
+*\ ${_NEXTKEY})	SIGNIFY_KEY=/etc/signify/${_NEXTKEY} ;;
+*)		ug_err "invalid signing key" ;;
+esac
 
 [[ -f ${SIGNIFY_KEY} ]] || ug_err "cannot find ${SIGNIFY_KEY}"
 
