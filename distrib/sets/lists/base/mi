@@ -2610,6 +2610,7 @@
 ./usr/sbin/syslogd
 ./usr/sbin/sysmerge
 ./usr/sbin/syspatch
+./usr/sbin/sysupgrade
 ./usr/sbin/tcpdrop
 ./usr/sbin/tcpdump
 ./usr/sbin/tftp-proxy

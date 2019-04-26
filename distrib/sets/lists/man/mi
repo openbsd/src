@@ -1244,7 +1244,6 @@
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
-./usr/share/man/man4/openprom.4
 ./usr/share/man/man4/armv7/agtimer.4
 ./usr/share/man/man4/armv7/amdisplay.4
 ./usr/share/man/man4/armv7/ampintc.4
@@ -1681,6 +1680,7 @@
 ./usr/share/man/man4/ohci.4
 ./usr/share/man/man4/onewire.4
 ./usr/share/man/man4/oosiop.4
+./usr/share/man/man4/openprom.4
 ./usr/share/man/man4/options.4
 ./usr/share/man/man4/osiop.4
 ./usr/share/man/man4/otus.4
@@ -2532,6 +2532,7 @@
 ./usr/share/man/man8/syslogd.8
 ./usr/share/man/man8/sysmerge.8
 ./usr/share/man/man8/syspatch.8
+./usr/share/man/man8/sysupgrade.8
 ./usr/share/man/man8/talkd.8
 ./usr/share/man/man8/tcpdrop.8
 ./usr/share/man/man8/tcpdump.8
@@ -2555,6 +2556,7 @@
 ./usr/share/man/man8/vmctl.8
 ./usr/share/man/man8/vmd.8
 ./usr/share/man/man8/vmstat.8
+./usr/share/man/man8/vnconfig.8
 ./usr/share/man/man8/watchdogd.8
 ./usr/share/man/man8/wsconscfg.8
 ./usr/share/man/man8/wsconsctl.8
