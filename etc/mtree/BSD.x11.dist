@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.52 2019/03/19 21:40:16 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.53 2019/04/26 09:53:00 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -339,8 +339,6 @@
                     fontconfig
                         fontconfig-devel
                         ..
-                    ..
-                    libFS
                     ..
                     libICE
                     ..
