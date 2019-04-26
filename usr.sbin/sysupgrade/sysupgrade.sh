@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.2 2019/04/25 22:12:11 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.3 2019/04/26 06:13:48 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -97,9 +97,18 @@ else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
 fi
 
-# XXX be more paranoid who owns this directory
+if [[ -e ${SETSDIR} ]]; then
+	eval $(stat -s ${SETSDIR})
+	[[ $st_uid -eq 0 ]] ||
+		 ug_err "${SETSDIR} needs to be owned by root:wheel"
+	[[ $st_gid -eq 0 ]] ||
+		 ug_err "${SETSDIR} needs to be owned by root:wheel"
+	[[ $st_mode -eq 040755 ]] || 
+		ug_err "${SETSDIR} is not a directory with permissions 0755"
+else
+	mkdir -p ${SETSDIR}
+fi
 
-mkdir -p ${SETSDIR}
 cd ${SETSDIR}
 
 unpriv -f SHA256.sig ftp -Vmo SHA256.sig ${URL}SHA256.sig
