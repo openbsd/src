@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.62 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.63 2019/04/26 11:38:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -96,6 +96,60 @@ cmdq_insert_after(struct cmdq_item *after, struct cmdq_item *item)
 
 		item = next;
 	} while (item != NULL);
+}
+
+
+/* Insert a hook. */
+void
+cmdq_insert_hook(struct session *s, struct cmdq_item *item,
+    struct cmd_find_state *fs, const char *fmt, ...)
+{
+	struct options			*oo;
+	va_list				 ap;
+	char				*name;
+	struct cmdq_item		*new_item;
+	struct options_entry		*o;
+	struct options_array_item	*a;
+	struct cmd_list			*cmdlist;
+
+	if (item->flags & CMDQ_NOHOOKS)
+		return;
+	if (s == NULL)
+		oo = global_s_options;
+	else
+		oo = s->options;
+
+	va_start(ap, fmt);
+	xvasprintf(&name, fmt, ap);
+	va_end(ap);
+
+	o = options_get(oo, name);
+	if (o == NULL) {
+		free(name);
+		return;
+	}
+	log_debug("running hook %s (parent %p)", name, item);
+
+	a = options_array_first(o);
+	while (a != NULL) {
+		cmdlist = options_array_item_value(a)->cmdlist;
+		if (cmdlist == NULL) {
+			a = options_array_next(a);
+			continue;
+		}
+
+		new_item = cmdq_get_command(cmdlist, fs, NULL, CMDQ_NOHOOKS);
+		cmdq_format(new_item, "hook", "%s", name);
+		if (item != NULL) {
+			cmdq_insert_after(item, new_item);
+			item = new_item;
+		} else
+			cmdq_append(NULL, new_item);
+
+		a = options_array_next(a);
+	}
+
+	free(name);
 }
 
 /* Remove an item. */
@@ -245,7 +299,7 @@ cmdq_fire_command(struct cmdq_item *item)
 			fsp = &fs;
 		else
 			goto out;
-		hooks_insert(fsp->s->hooks, item, fsp, "after-%s", entry->name);
+		cmdq_insert_hook(fsp->s, item, fsp, "after-%s", entry->name);
 	}
 
 out:

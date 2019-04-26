@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.195 2019/04/25 19:36:59 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.196 2019/04/26 11:38:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1323,7 +1323,7 @@ status_prompt_complete_list(u_int *size, const char *s)
 		while (a != NULL) {
 			value = options_array_item_value(a)->string;
 			if ((cp = strchr(value, '=')) == NULL)
-			    goto next;
+				goto next;
 			valuelen = cp - value;
 			if (slen > valuelen || strncmp(value, s, slen) != 0)
 				goto next;

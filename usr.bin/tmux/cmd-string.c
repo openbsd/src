@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-string.c,v 1.30 2018/08/19 19:03:46 nicm Exp $ */
+/* $OpenBSD: cmd-string.c,v 1.31 2019/04/26 11:38:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -174,7 +174,10 @@ cmd_string_parse(const char *s, const char *file, u_int line, char **cause)
 	int		  argc;
 	char		**argv;
 
-	*cause = NULL;
+	if (cause != NULL)
+		*cause = NULL;
+	log_debug ("%s: %s", __func__, s);
+
 	if (cmd_string_split(s, &argc, &argv) != 0) {
 		xasprintf(cause, "invalid or unknown command: %s", s);
 		return (NULL);

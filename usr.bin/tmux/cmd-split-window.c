@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-split-window.c,v 1.92 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-split-window.c,v 1.93 2019/04/26 11:38:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -144,7 +144,7 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	cmd_find_from_winlink_pane(&fs, wl, new_wp, 0);
-	hooks_insert(s->hooks, item, &fs, "after-split-window");
+	cmdq_insert_hook(s, item, &fs, "after-split-window");
 
 	return (CMD_RETURN_NORMAL);
 }

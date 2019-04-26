@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.48 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.49 2019/04/26 11:38:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -196,7 +196,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	window_redraw_active_switch(w, wp);
 	if (window_set_active_pane(w, wp, 1)) {
 		cmd_find_from_winlink_pane(current, wl, wp, 0);
-		hooks_insert(s->hooks, item, current, "after-select-pane");
+		cmdq_insert_hook(s, item, current, "after-select-pane");
 		cmd_select_pane_redraw(w);
 	}
 
