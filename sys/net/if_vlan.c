@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.193 2019/04/27 05:28:00 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.194 2019/04/27 05:30:13 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -88,7 +88,6 @@ struct vlan_softc {
 	unsigned int		 sc_ifidx0;	/* parent interface */
 	int			 sc_rxprio;
 	int			 sc_prio;
-	u_int16_t		 sc_proto; /* encapsulation ethertype */
 	u_int16_t		 sc_tag;
 	u_int16_t		 sc_type; /* non-standard ethertype or 0x8100 */
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)
