@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.43 2019/04/24 15:59:22 florian Exp $
+#	$OpenBSD: dot.profile,v 1.44 2019/04/27 22:08:58 kn Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -86,7 +86,7 @@ __EOT
 
 		# Set trap handlers to remove timer if the shell is interrupted,
 		# killed or about to exit.
-		trap 'kill $timeout_pid 2>/dev/null' EXIT
+		trap 'kill $timer_pid 2>/dev/null' EXIT
 		trap 'exit 1' INT
 		trap 'timeout=true' TERM
 
