@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.191 2019/04/27 05:11:50 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.192 2019/04/27 05:14:33 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -84,14 +84,13 @@ struct vlan_mc_entry {
 
 struct vlan_softc {
 	struct arpcom		 ifv_ac;
+#define	ifv_if			 ifv_ac.ac_if
 	unsigned int		 ifv_ifidx0;	/* parent interface */
 	int			 ifv_rxprio;
-	struct ifv_linkmib {
-		int		 ifvm_prio;
-		u_int16_t	 ifvm_proto; /* encapsulation ethertype */
-		u_int16_t	 ifvm_tag;
-		u_int16_t	 ifvm_type; /* non-standard ethertype or 0x8100 */
-	}			 ifv_mib;
+	int			 ifv_prio;
+	u_int16_t		 ifv_proto; /* encapsulation ethertype */
+	u_int16_t		 ifv_tag;
+	u_int16_t		 ifv_type; /* non-standard ethertype or 0x8100 */
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)
 				 vlan_mc_listhead;
 	SRPL_ENTRY(vlan_softc)	 ifv_list;
@@ -102,10 +101,6 @@ struct vlan_softc {
 	struct ifih		*ifv_ifih;
 };
 
-#define	ifv_if		ifv_ac.ac_if
-#define	ifv_tag		ifv_mib.ifvm_tag
-#define	ifv_prio	ifv_mib.ifvm_prio
-#define	ifv_type	ifv_mib.ifvm_type
 #define	IFVF_PROMISC	0x01	/* the parent should be made promisc */
 #define	IFVF_LLADDR	0x02	/* don't inherit the parents mac */
 

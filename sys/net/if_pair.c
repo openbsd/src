@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.11 2018/01/09 15:24:24 bluhm Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.12 2019/04/27 05:14:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -167,29 +167,25 @@ pairstart(struct ifnet *ifp)
 	struct mbuf		*m;
 
 	pairedifp = if_get(sc->sc_pairedif);
+	if (pairedifp == NULL) {
+		ifq_purge(&ifp->if_snd);
+		return;
+	}
 
-	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
-
+	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
 
-		if (pairedifp != NULL) {
-			if (m->m_flags & M_PKTHDR)
-				m_resethdr(m);
-			ml_enqueue(&ml, m);
-		} else
-			m_freem(m);
+		if (m->m_flags & M_PKTHDR)
+			m_resethdr(m);
+
+		ml_enqueue(&ml, m);
 	}
 
-	if (pairedifp != NULL) {
-		if_input(pairedifp, &ml);
-		if_put(pairedifp);
-	}
+	if_input(pairedifp, &ml);
+	if_put(pairedifp);
 }
 
 int
