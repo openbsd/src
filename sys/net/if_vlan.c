@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.186 2019/04/22 03:29:40 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.187 2019/04/27 04:46:03 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -57,6 +57,7 @@
 #include <sys/systm.h>
 #include <sys/rwlock.h>
 #include <sys/percpu.h>
+#include <sys/refcnt.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -71,6 +72,41 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+
+struct vlan_mc_entry {
+	LIST_ENTRY(vlan_mc_entry)	mc_entries;
+	union {
+		struct ether_multi	*mcu_enm;
+	} mc_u;
+#define mc_enm	mc_u.mcu_enm
+	struct sockaddr_storage		mc_addr;
+};
+
+struct	ifvlan {
+	struct	arpcom ifv_ac;	/* make this an interface */
+	unsigned int ifv_ifidx0;	/* parent interface of this vlan */
+	int ifv_rxprio;
+	struct	ifv_linkmib {
+		int ifvm_prio; /* prio to apply on packet leaving if */
+		u_int16_t ifvm_proto; /* encapsulation ethertype */
+		u_int16_t ifvm_tag; /* tag to apply on packets leaving if */
+		u_int16_t ifvm_type; /* non-standard ethertype or 0x8100 */
+	}	ifv_mib;
+	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
+	SRPL_ENTRY(ifvlan) ifv_list;
+	int ifv_flags;
+	struct refcnt ifv_refcnt;
+	void *lh_cookie;
+	void *dh_cookie;
+	struct ifih *ifv_ifih;
+};
+
+#define	ifv_if		ifv_ac.ac_if
+#define	ifv_tag		ifv_mib.ifvm_tag
+#define	ifv_prio	ifv_mib.ifvm_prio
+#define	ifv_type	ifv_mib.ifvm_type
+#define	IFVF_PROMISC	0x01	/* the parent should be made promisc */
+#define	IFVF_LLADDR	0x02	/* don't inherit the parents mac */
 
 #define TAG_HASH_BITS		5
 #define TAG_HASH_SIZE		(1 << TAG_HASH_BITS)
