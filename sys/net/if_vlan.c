@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.195 2019/04/27 05:31:42 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.196 2019/04/27 05:37:24 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -88,8 +88,9 @@ struct vlan_softc {
 	unsigned int		 sc_ifidx0;	/* parent interface */
 	int			 sc_txprio;
 	int			 sc_rxprio;
-	u_int16_t		 sc_tag;
-	u_int16_t		 sc_type; /* non-standard ethertype or 0x8100 */
+	uint16_t		 sc_proto; /* encapsulation ethertype */
+	uint16_t		 sc_tag;
+	uint16_t		 sc_type; /* non-standard ethertype or 0x8100 */
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)
 				 sc_mc_listhead;
 	SRPL_ENTRY(vlan_softc)	 sc_list;
@@ -125,7 +126,7 @@ int	vlan_down(struct vlan_softc *);
 
 void	vlan_ifdetach(void *);
 void	vlan_link_hook(void *);
-void	vlan_link_state(struct vlan_softc *, u_char, u_int64_t);
+void	vlan_link_state(struct vlan_softc *, u_char, uint64_t);
 
 int	vlan_set_vnetid(struct vlan_softc *, uint16_t);
 int	vlan_set_parent(struct vlan_softc *, const char *);
@@ -159,7 +160,7 @@ struct srpl_rc vlan_tagh_rc = SRPL_RC_INITIALIZER(vlan_ref, vlan_unref, NULL);
 void
 vlanattach(int count)
 {
-	u_int i;
+	unsigned int i;
 
 	/* Normal VLAN */
 	vlan_tagh = mallocarray(TAG_HASH_SIZE, sizeof(*vlan_tagh),
@@ -378,8 +379,8 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	struct ether_header *eh;
 	SRPL_HEAD(, vlan_softc) *tagh, *list;
 	struct srp_ref sr;
-	u_int tag;
-	u_int16_t etype;
+	uint16_t tag;
+	uint16_t etype;
 
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
@@ -491,7 +492,7 @@ vlan_up(struct vlan_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
 	int error = 0;
-	u_int hardmtu;
+	unsigned int hardmtu;
 
 	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
 
@@ -1059,7 +1060,7 @@ vlan_multi_add(struct vlan_softc *sc, struct ifreq *ifr)
 {
 	struct ifnet *ifp0;
 	struct vlan_mc_entry *mc;
-	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	uint8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
 	error = ether_addmulti(ifr, &sc->sc_ac);
@@ -1110,7 +1111,7 @@ vlan_multi_del(struct vlan_softc *sc, struct ifreq *ifr)
 	struct ifnet *ifp0;
 	struct ether_multi *enm;
 	struct vlan_mc_entry *mc;
-	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	uint8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
 	/*
