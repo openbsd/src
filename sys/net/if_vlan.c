@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.187 2019/04/27 04:46:03 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.188 2019/04/27 04:53:01 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -82,7 +82,7 @@ struct vlan_mc_entry {
 	struct sockaddr_storage		mc_addr;
 };
 
-struct	ifvlan {
+struct vlan_softc {
 	struct	arpcom ifv_ac;	/* make this an interface */
 	unsigned int ifv_ifidx0;	/* parent interface of this vlan */
 	int ifv_rxprio;
@@ -93,7 +93,7 @@ struct	ifvlan {
 		u_int16_t ifvm_type; /* non-standard ethertype or 0x8100 */
 	}	ifv_mib;
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
-	SRPL_ENTRY(ifvlan) ifv_list;
+	SRPL_ENTRY(vlan_softc) ifv_list;
 	int ifv_flags;
 	struct refcnt ifv_refcnt;
 	void *lh_cookie;
@@ -112,7 +112,7 @@ struct	ifvlan {
 #define TAG_HASH_SIZE		(1 << TAG_HASH_BITS)
 #define TAG_HASH_MASK		(TAG_HASH_SIZE - 1)
 #define TAG_HASH(tag)		(tag & TAG_HASH_MASK)
-SRPL_HEAD(, ifvlan) *vlan_tagh, *svlan_tagh;
+SRPL_HEAD(, vlan_softc) *vlan_tagh, *svlan_tagh;
 struct rwlock vlan_tagh_lk = RWLOCK_INITIALIZER("vlantag");
 
 void	vlanattach(int count);
@@ -124,29 +124,29 @@ int	vlan_enqueue(struct ifnet *, struct mbuf *);
 void	vlan_start(struct ifqueue *ifq);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
 
-int	vlan_up(struct ifvlan *);
-int	vlan_parent_up(struct ifvlan *, struct ifnet *);
-int	vlan_down(struct ifvlan *);
+int	vlan_up(struct vlan_softc *);
+int	vlan_parent_up(struct vlan_softc *, struct ifnet *);
+int	vlan_down(struct vlan_softc *);
 
 void	vlan_ifdetach(void *);
 void	vlan_link_hook(void *);
-void	vlan_link_state(struct ifvlan *, u_char, u_int64_t);
+void	vlan_link_state(struct vlan_softc *, u_char, u_int64_t);
 
-int	vlan_set_vnetid(struct ifvlan *, uint16_t);
-int	vlan_set_parent(struct ifvlan *, const char *);
-int	vlan_del_parent(struct ifvlan *);
+int	vlan_set_vnetid(struct vlan_softc *, uint16_t);
+int	vlan_set_parent(struct vlan_softc *, const char *);
+int	vlan_del_parent(struct vlan_softc *);
 int	vlan_inuse(uint16_t, unsigned int, uint16_t);
 int	vlan_inuse_locked(uint16_t, unsigned int, uint16_t);
 
-int	vlan_multi_add(struct ifvlan *, struct ifreq *);
-int	vlan_multi_del(struct ifvlan *, struct ifreq *);
-void	vlan_multi_apply(struct ifvlan *, struct ifnet *, u_long);
-void	vlan_multi_free(struct ifvlan *);
+int	vlan_multi_add(struct vlan_softc *, struct ifreq *);
+int	vlan_multi_del(struct vlan_softc *, struct ifreq *);
+void	vlan_multi_apply(struct vlan_softc *, struct ifnet *, u_long);
+void	vlan_multi_free(struct vlan_softc *);
 
-int	vlan_media_get(struct ifvlan *, struct ifreq *);
+int	vlan_media_get(struct vlan_softc *, struct ifreq *);
 
-int	vlan_iff(struct ifvlan *);
-int	vlan_setlladdr(struct ifvlan *, struct ifreq *);
+int	vlan_iff(struct vlan_softc *);
+int	vlan_setlladdr(struct vlan_softc *, struct ifreq *);
 
 int	vlan_set_compat(struct ifnet *, struct ifreq *);
 int	vlan_get_compat(struct ifnet *, struct ifreq *);
@@ -190,7 +190,7 @@ vlanattach(int count)
 int
 vlan_clone_create(struct if_clone *ifc, int unit)
 {
-	struct ifvlan	*ifv;
+	struct vlan_softc	*ifv;
 	struct ifnet	*ifp;
 
 	ifv = malloc(sizeof(*ifv), M_DEVBUF, M_WAITOK|M_ZERO);
@@ -231,7 +231,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 void
 vlan_ref(void *null, void *v)
 {
-	struct ifvlan *ifv = v;
+	struct vlan_softc *ifv = v;
 
 	refcnt_take(&ifv->ifv_refcnt);
 }
@@ -239,7 +239,7 @@ vlan_ref(void *null, void *v)
 void
 vlan_unref(void *null, void *v)
 {
-	struct ifvlan *ifv = v;
+	struct vlan_softc *ifv = v;
 
 	refcnt_rele_wake(&ifv->ifv_refcnt);
 }
@@ -247,7 +247,7 @@ vlan_unref(void *null, void *v)
 int
 vlan_clone_destroy(struct ifnet *ifp)
 {
-	struct ifvlan	*ifv = ifp->if_softc;
+	struct vlan_softc	*ifv = ifp->if_softc;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		vlan_down(ifv);
@@ -262,7 +262,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 }
 
 void
-vlan_transmit(struct ifvlan *ifv, struct ifnet *ifp0, struct mbuf *m)
+vlan_transmit(struct vlan_softc *ifv, struct ifnet *ifp0, struct mbuf *m)
 {
 	struct ifnet *ifp = &ifv->ifv_if;
 	int txprio = ifv->ifv_prio;
@@ -306,7 +306,7 @@ int
 vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifnet *ifp0;
-	struct ifvlan *ifv;
+	struct vlan_softc *ifv;
 	int error = 0;
 
 	if (!ifq_is_priq(&ifp->if_snd))
@@ -333,7 +333,7 @@ void
 vlan_start(struct ifqueue *ifq)
 {
 	struct ifnet	*ifp = ifq->ifq_if;
-	struct ifvlan   *ifv = ifp->if_softc;
+	struct vlan_softc   *ifv = ifp->if_softc;
 	struct ifnet	*ifp0;
 	struct mbuf	*m;
 
@@ -378,10 +378,10 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 int
 vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 {
-	struct ifvlan			*ifv;
+	struct vlan_softc			*ifv;
 	struct ether_vlan_header	*evl;
 	struct ether_header		*eh;
-	SRPL_HEAD(, ifvlan)		*tagh, *list;
+	SRPL_HEAD(, vlan_softc)		*tagh, *list;
 	struct srp_ref			 sr;
 	u_int				 tag;
 	u_int16_t			 etype;
@@ -464,7 +464,7 @@ drop:
 }
 
 int
-vlan_parent_up(struct ifvlan *ifv, struct ifnet *ifp0)
+vlan_parent_up(struct vlan_softc *ifv, struct ifnet *ifp0)
 {
 	int error;
 
@@ -490,9 +490,9 @@ vlan_parent_up(struct ifvlan *ifv, struct ifnet *ifp0)
 }
 
 int
-vlan_up(struct ifvlan *ifv)
+vlan_up(struct vlan_softc *ifv)
 {
-	SRPL_HEAD(, ifvlan) *tagh, *list;
+	SRPL_HEAD(, vlan_softc) *tagh, *list;
 	struct ifnet *ifp = &ifv->ifv_if;
 	struct ifnet *ifp0;
 	int error = 0;
@@ -572,7 +572,7 @@ vlan_up(struct ifvlan *ifv)
 
 remove:
 	rw_enter(&vlan_tagh_lk, RW_WRITE);
-	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, ifvlan, ifv_list);
+	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, vlan_softc, ifv_list);
 leave:
 	rw_exit(&vlan_tagh_lk);
 scrub:
@@ -586,9 +586,9 @@ put:
 }
 
 int
-vlan_down(struct ifvlan *ifv)
+vlan_down(struct vlan_softc *ifv)
 {
-	SRPL_HEAD(, ifvlan) *tagh, *list;
+	SRPL_HEAD(, vlan_softc) *tagh, *list;
 	struct ifnet *ifp = &ifv->ifv_if;
 	struct ifnet *ifp0;
 
@@ -614,7 +614,7 @@ vlan_down(struct ifvlan *ifv)
 	if_put(ifp0);
 
 	rw_enter_write(&vlan_tagh_lk);
-	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, ifvlan, ifv_list);
+	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, vlan_softc, ifv_list);
 	rw_exit_write(&vlan_tagh_lk);
 
 	ifp->if_capabilities = 0;
@@ -627,7 +627,7 @@ vlan_down(struct ifvlan *ifv)
 void
 vlan_ifdetach(void *v)
 {
-	struct ifvlan *ifv = v;
+	struct vlan_softc *ifv = v;
 	struct ifnet *ifp = &ifv->ifv_if;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
@@ -641,7 +641,7 @@ vlan_ifdetach(void *v)
 void
 vlan_link_hook(void *v)
 {
-	struct ifvlan *ifv = v;
+	struct vlan_softc *ifv = v;
 	struct ifnet *ifp0;
 
 	u_char link = LINK_STATE_DOWN;
@@ -658,7 +658,7 @@ vlan_link_hook(void *v)
 }
 
 void
-vlan_link_state(struct ifvlan *ifv, u_char link, uint64_t baud)
+vlan_link_state(struct vlan_softc *ifv, u_char link, uint64_t baud)
 {
 	if (ifv->ifv_if.if_link_state == link)
 		return;
@@ -672,7 +672,7 @@ vlan_link_state(struct ifvlan *ifv, u_char link, uint64_t baud)
 int
 vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct ifvlan *ifv = ifp->if_softc;
+	struct vlan_softc *ifv = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_parent *parent = (struct if_parent *)data;
 	struct ifnet *ifp0;
@@ -803,7 +803,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 int
-vlan_iff(struct ifvlan *ifv)
+vlan_iff(struct vlan_softc *ifv)
 {
 	struct ifnet *ifp0;
 	int promisc = 0;
@@ -832,7 +832,7 @@ vlan_iff(struct ifvlan *ifv)
 }
 
 int
-vlan_setlladdr(struct ifvlan *ifv, struct ifreq *ifr)
+vlan_setlladdr(struct vlan_softc *ifv, struct ifreq *ifr)
 {
 	struct ifnet *ifp = &ifv->ifv_if;
 	struct ifnet *ifp0;
@@ -867,10 +867,10 @@ vlan_setlladdr(struct ifvlan *ifv, struct ifreq *ifr)
 }
 
 int
-vlan_set_vnetid(struct ifvlan *ifv, uint16_t tag)
+vlan_set_vnetid(struct vlan_softc *ifv, uint16_t tag)
 {
 	struct ifnet *ifp = &ifv->ifv_if;
-	SRPL_HEAD(, ifvlan) *tagh, *list;
+	SRPL_HEAD(, vlan_softc) *tagh, *list;
 	u_char link = ifp->if_link_state;
 	uint64_t baud = ifp->if_baudrate;
 	int error;
@@ -890,7 +890,8 @@ vlan_set_vnetid(struct ifvlan *ifv, uint16_t tag)
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
 		list = &tagh[TAG_HASH(ifv->ifv_tag)];
-		SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, ifvlan, ifv_list);
+		SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, vlan_softc,
+		    ifv_list);
 
 		ifv->ifv_tag = tag;
 
@@ -909,7 +910,7 @@ unlock:
 }
 
 int
-vlan_set_parent(struct ifvlan *ifv, const char *parent)
+vlan_set_parent(struct vlan_softc *ifv, const char *parent)
 {
 	struct ifnet *ifp = &ifv->ifv_if;
 	struct ifnet *ifp0;
@@ -943,7 +944,7 @@ vlan_set_parent(struct ifvlan *ifv, const char *parent)
 }
 
 int
-vlan_del_parent(struct ifvlan *ifv)
+vlan_del_parent(struct vlan_softc *ifv)
 {
 	struct ifnet *ifp = &ifv->ifv_if;
 
@@ -1002,7 +1003,7 @@ vlan_set_compat(struct ifnet *ifp, struct ifreq *ifr)
 int
 vlan_get_compat(struct ifnet *ifp, struct ifreq *ifr)
 {
-	struct ifvlan *ifv = ifp->if_softc;
+	struct vlan_softc *ifv = ifp->if_softc;
 	struct vlanreq vlr;
 	struct ifnet *p;
 
@@ -1042,8 +1043,8 @@ vlan_inuse(uint16_t type, unsigned int ifidx, uint16_t tag)
 int
 vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 {
-	SRPL_HEAD(, ifvlan) *tagh, *list;
-	struct ifvlan *ifv;
+	SRPL_HEAD(, vlan_softc) *tagh, *list;
+	struct vlan_softc *ifv;
 
 	tagh = type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 	list = &tagh[TAG_HASH(tag)];
@@ -1059,7 +1060,7 @@ vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 }
 
 int
-vlan_multi_add(struct ifvlan *ifv, struct ifreq *ifr)
+vlan_multi_add(struct vlan_softc *ifv, struct ifreq *ifr)
 {
 	struct ifnet		*ifp0;
 	struct vlan_mc_entry	*mc;
@@ -1109,7 +1110,7 @@ vlan_multi_add(struct ifvlan *ifv, struct ifreq *ifr)
 }
 
 int
-vlan_multi_del(struct ifvlan *ifv, struct ifreq *ifr)
+vlan_multi_del(struct vlan_softc *ifv, struct ifreq *ifr)
 {
 	struct ifnet		*ifp0;
 	struct ether_multi	*enm;
@@ -1162,7 +1163,7 @@ forget:
 }
 
 int
-vlan_media_get(struct ifvlan *ifv, struct ifreq *ifr)
+vlan_media_get(struct vlan_softc *ifv, struct ifreq *ifr)
 {
 	struct ifnet		*ifp0;
 	int			 error;
@@ -1176,7 +1177,7 @@ vlan_media_get(struct ifvlan *ifv, struct ifreq *ifr)
 }
 
 void
-vlan_multi_apply(struct ifvlan *ifv, struct ifnet *ifp0, u_long cmd)
+vlan_multi_apply(struct vlan_softc *ifv, struct ifnet *ifp0, u_long cmd)
 {
 	struct vlan_mc_entry	*mc;
 	union {
@@ -1197,7 +1198,7 @@ vlan_multi_apply(struct ifvlan *ifv, struct ifnet *ifp0, u_long cmd)
 }
 
 void
-vlan_multi_free(struct ifvlan *ifv)
+vlan_multi_free(struct vlan_softc *ifv)
 {
 	struct vlan_mc_entry	*mc;
 
