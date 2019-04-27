@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.31 2018/11/27 12:09:38 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.32 2019/04/27 14:58:14 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1240,8 +1240,9 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 		}
 
 		/* sign extend if MSB is set */
-		if (val >> ((i - 1) * 8) & 0x80)
-			val |= ULLONG_MAX << (i * 8);
+		if (len < (ssize_t)sizeof(long long) &&
+		    (val >> ((len - 1) * 8) & 0x80))
+			val |= ULLONG_MAX << (len * 8);
 		elm->be_numeric = val;
 		break;
 	case BER_TYPE_BITSTRING:
