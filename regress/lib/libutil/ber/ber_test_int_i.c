@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test_int_i.c,v 1.3 2019/04/27 04:28:57 rob Exp $
+/* $OpenBSD: ber_test_int_i.c,v 1.4 2019/04/27 14:29:28 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -34,13 +34,9 @@ struct test_vector {
 	unsigned char	 input[1024];
 };
 
-/*
- * ber_scanf_int failes on the negative boundary at 2^31.
- * There may be a problem with the MSB processing in ber_read_element().
- */
 struct test_vector test_vectors[] = {
 	{
-		SUCCEED,	/* failing */
+		SUCCEED,
 		"integer (-9223372036854775808)",
 		10,
 		-9223372036854775808,
@@ -50,7 +46,7 @@ struct test_vector test_vectors[] = {
 		},
 	},
 	{
-		SUCCEED,	/* failing */
+		SUCCEED,
 		"integer (-9223372036854775807)",
 		10,
 		-9223372036854775807,
@@ -60,7 +56,7 @@ struct test_vector test_vectors[] = {
 		},
 	},
 	{
-		SUCCEED,	/* failing */
+		SUCCEED,
 		"integer (-9223372036854775806)",
 		10,
 		-9223372036854775806,
@@ -70,7 +66,7 @@ struct test_vector test_vectors[] = {
 		},
 	},
 	{
-		SUCCEED,	/* failing */
+		SUCCEED,
 		"integer (-2147483650)",
 		10,
 		-2147483650,
@@ -80,7 +76,7 @@ struct test_vector test_vectors[] = {
 		},
 	},
 	{
-		SUCCEED,	/* failing */
+		SUCCEED,
 		"integer (-2147483649)",
 		10,
 		-2147483649,
@@ -244,6 +240,24 @@ struct test_vector test_vectors[] = {
 	},
 	{
 		SUCCEED,
+		"integer (32767)",
+		4,
+		32767,
+		{
+			0x02, 0x02, 0x7f, 0xff
+		},
+	},
+	{
+		SUCCEED,
+		"integer (32768)",
+		5,
+		32768,
+		{
+			0x02, 0x03, 0x00, 0x80, 0x00
+		},
+	},
+	{
+		SUCCEED,
 		"integer (65535)",
 		5,
 		65535,
@@ -398,7 +412,7 @@ test(int i)
 		if (val != test_vectors[i].value) {
 			printf("(ber_get_integer) got %lld, expected %lld\n",
 			    val, test_vectors[i].value);
-//			return 1;
+			return 1;
 		}
 		if (ber_scanf_elements(elm, "i", &val) == -1) {
 			printf("(ber_scanf_elements) failed (int)"
@@ -408,11 +422,11 @@ test(int i)
 		if (val != test_vectors[i].value) {
 			printf("got %lld, expected %lld\n", val,
 			    test_vectors[i].value);
-//			return 1;
+			return 1;
 		}
 		break;
 	default:
-		printf("failed with unknown encoding (%ud)\n",
+		printf("failed with unexpected encoding (%ud)\n",
 		    elm->be_encoding);
 		return 1;
 	}
@@ -433,13 +447,11 @@ test(int i)
 
 	if (memcmp(ber.br_wbuf, test_vectors[i].input,
 	    test_vectors[i].length) != 0) {
-printf("*** %s\n", test_vectors[i].title);
 		printf("failed byte stream compare\n");
 		printf("Got:\n");
 		hexdump(ber.br_wbuf, len);
 		printf("Expected:\n");
 		hexdump(test_vectors[i].input, test_vectors[i].length);
-printf("***\n");
 		return 1;
 	}
 	ber_free(&ber);
