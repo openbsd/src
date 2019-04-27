@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.197 2019/04/27 05:55:27 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.198 2019/04/27 05:58:17 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -381,6 +381,7 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	struct srp_ref sr;
 	uint16_t tag;
 	uint16_t etype;
+	int rxprio;
 
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
@@ -431,17 +432,18 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		m_adj(m, EVL_ENCAPLEN);
 	}
 
-	switch (sc->sc_rxprio) {
+	rxprio = sc->sc_rxprio;
+	switch (rxprio) {
 	case IF_HDRPRIO_PACKET:
 		break;
 	case IF_HDRPRIO_OUTER:
 		m->m_pkthdr.pf.prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
-		break;
-	default:
-		m->m_pkthdr.pf.prio = sc->sc_rxprio;
 		/* IEEE 802.1p has prio 0 and 1 swapped */
 		if (m->m_pkthdr.pf.prio <= 1)
 			m->m_pkthdr.pf.prio = !m->m_pkthdr.pf.prio;
+		break;
+	default:
+		m->m_pkthdr.pf.prio = rxprio;
 		break;
 	}
 
