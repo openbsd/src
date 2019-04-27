@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.189 2019/04/27 04:56:41 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.190 2019/04/27 05:08:30 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -190,13 +190,13 @@ vlanattach(int count)
 int
 vlan_clone_create(struct if_clone *ifc, int unit)
 {
-	struct vlan_softc *ifv;
+	struct vlan_softc *sc;
 	struct ifnet *ifp;
 
-	ifv = malloc(sizeof(*ifv), M_DEVBUF, M_WAITOK|M_ZERO);
-	LIST_INIT(&ifv->vlan_mc_listhead);
-	ifp = &ifv->ifv_if;
-	ifp->if_softc = ifv;
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	LIST_INIT(&sc->vlan_mc_listhead);
+	ifp = &sc->ifv_if;
+	ifp->if_softc = sc;
 	snprintf(ifp->if_xname, sizeof ifp->if_xname, "%s%d", ifc->ifc_name,
 	    unit);
 	/* NB: flags are not set here */
@@ -204,13 +204,13 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 
 	/* Special handling for the IEEE 802.1ad QinQ variant */
 	if (strcmp("svlan", ifc->ifc_name) == 0)
-		ifv->ifv_type = ETHERTYPE_QINQ;
+		sc->ifv_type = ETHERTYPE_QINQ;
 	else
-		ifv->ifv_type = ETHERTYPE_VLAN;
+		sc->ifv_type = ETHERTYPE_VLAN;
 
-	refcnt_init(&ifv->ifv_refcnt);
-	ifv->ifv_prio = IF_HDRPRIO_PACKET;
-	ifv->ifv_rxprio = IF_HDRPRIO_OUTER;
+	refcnt_init(&sc->ifv_refcnt);
+	sc->ifv_prio = IF_HDRPRIO_PACKET;
+	sc->ifv_rxprio = IF_HDRPRIO_OUTER;
 
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED|IFXF_MPSAFE;
@@ -231,41 +231,41 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 void
 vlan_ref(void *null, void *v)
 {
-	struct vlan_softc *ifv = v;
+	struct vlan_softc *sc = v;
 
-	refcnt_take(&ifv->ifv_refcnt);
+	refcnt_take(&sc->ifv_refcnt);
 }
 
 void
 vlan_unref(void *null, void *v)
 {
-	struct vlan_softc *ifv = v;
+	struct vlan_softc *sc = v;
 
-	refcnt_rele_wake(&ifv->ifv_refcnt);
+	refcnt_rele_wake(&sc->ifv_refcnt);
 }
 
 int
 vlan_clone_destroy(struct ifnet *ifp)
 {
-	struct vlan_softc *ifv = ifp->if_softc;
+	struct vlan_softc *sc = ifp->if_softc;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
-		vlan_down(ifv);
+		vlan_down(sc);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	refcnt_finalize(&ifv->ifv_refcnt, "vlanrefs");
-	vlan_multi_free(ifv);
-	free(ifv, M_DEVBUF, sizeof(*ifv));
+	refcnt_finalize(&sc->ifv_refcnt, "vlanrefs");
+	vlan_multi_free(sc);
+	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
 }
 
 void
-vlan_transmit(struct vlan_softc *ifv, struct ifnet *ifp0, struct mbuf *m)
+vlan_transmit(struct vlan_softc *sc, struct ifnet *ifp0, struct mbuf *m)
 {
-	struct ifnet *ifp = &ifv->ifv_if;
-	int txprio = ifv->ifv_prio;
+	struct ifnet *ifp = &sc->ifv_if;
+	int txprio = sc->ifv_prio;
 	uint8_t prio;
 
 #if NBPFILTER > 0
@@ -285,12 +285,12 @@ vlan_transmit(struct vlan_softc *ifv, struct ifnet *ifp0, struct mbuf *m)
 	 * itself, create an encapsulation header.
 	 */
 	if ((ifp0->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
-	    (ifv->ifv_type == ETHERTYPE_VLAN)) {
-		m->m_pkthdr.ether_vtag = ifv->ifv_tag +
+	    (sc->ifv_type == ETHERTYPE_VLAN)) {
+		m->m_pkthdr.ether_vtag = sc->ifv_tag +
 		    (prio << EVL_PRIO_BITS);
 		m->m_flags |= M_VLANTAG;
 	} else {
-		m = vlan_inject(m, ifv->ifv_type, ifv->ifv_tag |
+		m = vlan_inject(m, sc->ifv_type, sc->ifv_tag |
 		    (prio << EVL_PRIO_BITS));
 		if (m == NULL) {
 			counters_inc(ifp->if_counters, ifc_oerrors);
@@ -306,14 +306,14 @@ int
 vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ifnet *ifp0;
-	struct vlan_softc *ifv;
+	struct vlan_softc *sc;
 	int error = 0;
 
 	if (!ifq_is_priq(&ifp->if_snd))
 		return (if_enqueue_ifq(ifp, m));
 
-	ifv = ifp->if_softc;
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	sc = ifp->if_softc;
+	ifp0 = if_get(sc->ifv_ifidx0);
 
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		m_freem(m);
@@ -321,7 +321,7 @@ vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		counters_pkt(ifp->if_counters,
 		    ifc_opackets, ifc_obytes, m->m_pkthdr.len);
-		vlan_transmit(ifv, ifp0, m);
+		vlan_transmit(sc, ifp0, m);
 	}
 
 	if_put(ifp0);
@@ -333,18 +333,18 @@ void
 vlan_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
-	struct vlan_softc *ifv = ifp->if_softc;
+	struct vlan_softc *sc = ifp->if_softc;
 	struct ifnet *ifp0;
 	struct mbuf *m;
 
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	ifp0 = if_get(sc->ifv_ifidx0);
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
 		ifq_purge(ifq);
 		goto leave;
 	}
 
 	while ((m = ifq_dequeue(ifq)) != NULL)
-		vlan_transmit(ifv, ifp0, m);
+		vlan_transmit(sc, ifp0, m);
 
 leave:
 	if_put(ifp0);
@@ -378,7 +378,7 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 int
 vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 {
-	struct vlan_softc *ifv;
+	struct vlan_softc *sc;
 	struct ether_vlan_header *evl;
 	struct ether_header *eh;
 	SRPL_HEAD(, vlan_softc) *tagh, *list;
@@ -411,18 +411,18 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
 
 	list = &tagh[TAG_HASH(tag)];
-	SRPL_FOREACH(ifv, &sr, list, ifv_list) {
-		if (ifp0->if_index == ifv->ifv_ifidx0 && tag == ifv->ifv_tag &&
-		    etype == ifv->ifv_type)
+	SRPL_FOREACH(sc, &sr, list, ifv_list) {
+		if (ifp0->if_index == sc->ifv_ifidx0 && tag == sc->ifv_tag &&
+		    etype == sc->ifv_type)
 			break;
 	}
 
-	if (ifv == NULL) {
+	if (sc == NULL) {
 		ifp0->if_noproto++;
 		goto drop;
 	}
 
-	if ((ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
+	if ((sc->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	    (IFF_UP|IFF_RUNNING))
 		goto drop;
 
@@ -439,21 +439,21 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		m_adj(m, EVL_ENCAPLEN);
 	}
 
-	switch (ifv->ifv_rxprio) {
+	switch (sc->ifv_rxprio) {
 	case IF_HDRPRIO_PACKET:
 		break;
 	case IF_HDRPRIO_OUTER:
 		m->m_pkthdr.pf.prio = EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
 		break;
 	default:
-		m->m_pkthdr.pf.prio = ifv->ifv_rxprio;
+		m->m_pkthdr.pf.prio = sc->ifv_rxprio;
 		/* IEEE 802.1p has prio 0 and 1 swapped */
 		if (m->m_pkthdr.pf.prio <= 1)
 			m->m_pkthdr.pf.prio = !m->m_pkthdr.pf.prio;
 		break;
 	}
 
-	if_vinput(&ifv->ifv_if, m);
+	if_vinput(&sc->ifv_if, m);
 	SRPL_LEAVE(&sr);
 	return (1);
 
@@ -464,25 +464,25 @@ drop:
 }
 
 int
-vlan_parent_up(struct vlan_softc *ifv, struct ifnet *ifp0)
+vlan_parent_up(struct vlan_softc *sc, struct ifnet *ifp0)
 {
 	int error;
 
-	if (ISSET(ifv->ifv_flags, IFVF_PROMISC)) {
+	if (ISSET(sc->ifv_flags, IFVF_PROMISC)) {
 		error = ifpromisc(ifp0, 1);
 		if (error != 0)
 			return (error);
 	}
 
 	/* Register callback for physical link state changes */
-	ifv->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
-	    vlan_link_hook, ifv);
+	sc->lh_cookie = hook_establish(ifp0->if_linkstatehooks, 1,
+	    vlan_link_hook, sc);
 
 	/* Register callback if parent wants to unregister */
-	ifv->dh_cookie = hook_establish(ifp0->if_detachhooks, 0,
-	    vlan_ifdetach, ifv);
+	sc->dh_cookie = hook_establish(ifp0->if_detachhooks, 0,
+	    vlan_ifdetach, sc);
 
-	vlan_multi_apply(ifv, ifp0, SIOCADDMULTI);
+	vlan_multi_apply(sc, ifp0, SIOCADDMULTI);
 
 	if_ih_insert(ifp0, vlan_input, NULL);
 
@@ -490,20 +490,20 @@ vlan_parent_up(struct vlan_softc *ifv, struct ifnet *ifp0)
 }
 
 int
-vlan_up(struct vlan_softc *ifv)
+vlan_up(struct vlan_softc *sc)
 {
 	SRPL_HEAD(, vlan_softc) *tagh, *list;
-	struct ifnet *ifp = &ifv->ifv_if;
+	struct ifnet *ifp = &sc->ifv_if;
 	struct ifnet *ifp0;
 	int error = 0;
 	u_int hardmtu;
 
 	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
 
-	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
-	list = &tagh[TAG_HASH(ifv->ifv_tag)];
+	tagh = sc->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
+	list = &tagh[TAG_HASH(sc->ifv_tag)];
 
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	ifp0 = if_get(sc->ifv_ifidx0);
 	if (ifp0 == NULL)
 		return (ENXIO);
 
@@ -522,7 +522,7 @@ vlan_up(struct vlan_softc *ifv)
 		goto put;
 	}
 
-	/* parent is fine, let's prepare the ifv to handle packets */
+	/* parent is fine, let's prepare the sc to handle packets */
 	ifp->if_hardmtu = hardmtu;
 	SET(ifp->if_flags, ifp0->if_flags & IFF_SIMPLEX);
 
@@ -531,7 +531,7 @@ vlan_up(struct vlan_softc *ifv)
 	 * csum can be freely defined, we could actually do csum offload
 	 * for VLAN and QINQ packets.
 	 */
-	if (ifv->ifv_type != ETHERTYPE_VLAN) {
+	if (sc->ifv_type != ETHERTYPE_VLAN) {
 		/*
 		 * Hardware offload only works with the default VLAN
 		 * ethernet type (0x8100).
@@ -545,26 +545,26 @@ vlan_up(struct vlan_softc *ifv)
 		ifp->if_capabilities = ifp0->if_capabilities & IFCAP_CSUM_MASK;
 	}
 
-	/* commit the ifv */
+	/* commit the sc */
 	error = rw_enter(&vlan_tagh_lk, RW_WRITE | RW_INTR);
 	if (error != 0)
 		goto scrub;
 
-	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifidx0, ifv->ifv_tag);
+	error = vlan_inuse_locked(sc->ifv_type, sc->ifv_ifidx0, sc->ifv_tag);
 	if (error != 0)
 		goto leave;
 
-	SRPL_INSERT_HEAD_LOCKED(&vlan_tagh_rc, list, ifv, ifv_list);
+	SRPL_INSERT_HEAD_LOCKED(&vlan_tagh_rc, list, sc, ifv_list);
 	rw_exit(&vlan_tagh_lk);
 
 	/* configure the parent to handle packets for this vlan */
-	error = vlan_parent_up(ifv, ifp0);
+	error = vlan_parent_up(sc, ifp0);
 	if (error != 0)
 		goto remove;
 
 	/* we're running now */
 	SET(ifp->if_flags, IFF_RUNNING);
-	vlan_link_state(ifv, ifp0->if_link_state, ifp0->if_baudrate);
+	vlan_link_state(sc, ifp0->if_link_state, ifp0->if_baudrate);
 
 	if_put(ifp0);
 
@@ -572,7 +572,7 @@ vlan_up(struct vlan_softc *ifv)
 
 remove:
 	rw_enter(&vlan_tagh_lk, RW_WRITE);
-	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, vlan_softc, ifv_list);
+	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, sc, vlan_softc, ifv_list);
 leave:
 	rw_exit(&vlan_tagh_lk);
 scrub:
@@ -586,35 +586,35 @@ put:
 }
 
 int
-vlan_down(struct vlan_softc *ifv)
+vlan_down(struct vlan_softc *sc)
 {
 	SRPL_HEAD(, vlan_softc) *tagh, *list;
-	struct ifnet *ifp = &ifv->ifv_if;
+	struct ifnet *ifp = &sc->ifv_if;
 	struct ifnet *ifp0;
 
-	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
-	list = &tagh[TAG_HASH(ifv->ifv_tag)];
+	tagh = sc->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
+	list = &tagh[TAG_HASH(sc->ifv_tag)];
 
 	KASSERT(ISSET(ifp->if_flags, IFF_RUNNING));
 
-	vlan_link_state(ifv, LINK_STATE_DOWN, 0);
+	vlan_link_state(sc, LINK_STATE_DOWN, 0);
 	CLR(ifp->if_flags, IFF_RUNNING);
 
 	ifq_barrier(&ifp->if_snd);
 
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	ifp0 = if_get(sc->ifv_ifidx0);
 	if (ifp0 != NULL) {
 		if_ih_remove(ifp0, vlan_input, NULL);
-		if (ISSET(ifv->ifv_flags, IFVF_PROMISC))
+		if (ISSET(sc->ifv_flags, IFVF_PROMISC))
 			ifpromisc(ifp0, 0);
-		vlan_multi_apply(ifv, ifp0, SIOCDELMULTI);
-		hook_disestablish(ifp0->if_detachhooks, ifv->dh_cookie);
-		hook_disestablish(ifp0->if_linkstatehooks, ifv->lh_cookie);
+		vlan_multi_apply(sc, ifp0, SIOCDELMULTI);
+		hook_disestablish(ifp0->if_detachhooks, sc->dh_cookie);
+		hook_disestablish(ifp0->if_linkstatehooks, sc->lh_cookie);
 	}
 	if_put(ifp0);
 
 	rw_enter_write(&vlan_tagh_lk);
-	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, vlan_softc, ifv_list);
+	SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, sc, vlan_softc, ifv_list);
 	rw_exit_write(&vlan_tagh_lk);
 
 	ifp->if_capabilities = 0;
@@ -627,52 +627,52 @@ vlan_down(struct vlan_softc *ifv)
 void
 vlan_ifdetach(void *v)
 {
-	struct vlan_softc *ifv = v;
-	struct ifnet *ifp = &ifv->ifv_if;
+	struct vlan_softc *sc = v;
+	struct ifnet *ifp = &sc->ifv_if;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-		vlan_down(ifv);
+		vlan_down(sc);
 		CLR(ifp->if_flags, IFF_UP);
 	}
 
-	ifv->ifv_ifidx0 = 0;
+	sc->ifv_ifidx0 = 0;
 }
 
 void
 vlan_link_hook(void *v)
 {
-	struct vlan_softc *ifv = v;
+	struct vlan_softc *sc = v;
 	struct ifnet *ifp0;
 
 	u_char link = LINK_STATE_DOWN;
 	uint64_t baud = 0;
 
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	ifp0 = if_get(sc->ifv_ifidx0);
 	if (ifp0 != NULL) {
 		link = ifp0->if_link_state;
 		baud = ifp0->if_baudrate;
 	}
 	if_put(ifp0);
 
-	vlan_link_state(ifv, link, baud);
+	vlan_link_state(sc, link, baud);
 }
 
 void
-vlan_link_state(struct vlan_softc *ifv, u_char link, uint64_t baud)
+vlan_link_state(struct vlan_softc *sc, u_char link, uint64_t baud)
 {
-	if (ifv->ifv_if.if_link_state == link)
+	if (sc->ifv_if.if_link_state == link)
 		return;
 
-	ifv->ifv_if.if_link_state = link;
-	ifv->ifv_if.if_baudrate = baud;
+	sc->ifv_if.if_link_state = link;
+	sc->ifv_if.if_baudrate = baud;
 
-	if_link_state_change(&ifv->ifv_if);
+	if_link_state_change(&sc->ifv_if);
 }
 
 int
 vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct vlan_softc *ifv = ifp->if_softc;
+	struct vlan_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct if_parent *parent = (struct if_parent *)data;
 	struct ifnet *ifp0;
@@ -687,12 +687,12 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if (ISSET(ifp->if_flags, IFF_UP)) {
 			if (!ISSET(ifp->if_flags, IFF_RUNNING))
-				error = vlan_up(ifv);
+				error = vlan_up(sc);
 			else
 				error = ENETRESET;
 		} else {
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
-				error = vlan_down(ifv);
+				error = vlan_down(sc);
 		}
 		break;
 
@@ -704,29 +704,29 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		tag = ifr->ifr_vnetid;
-		if (tag == ifv->ifv_tag)
+		if (tag == sc->ifv_tag)
 			break;
 
-		error = vlan_set_vnetid(ifv, tag);
+		error = vlan_set_vnetid(sc, tag);
 		break;
 
 	case SIOCGVNETID:
-		if (ifv->ifv_tag == EVL_VLID_NULL)
+		if (sc->ifv_tag == EVL_VLID_NULL)
 			error = EADDRNOTAVAIL;
 		else
-			ifr->ifr_vnetid = (int64_t)ifv->ifv_tag;
+			ifr->ifr_vnetid = (int64_t)sc->ifv_tag;
 		break;
 
 	case SIOCDVNETID:
-		error = vlan_set_vnetid(ifv, 0);
+		error = vlan_set_vnetid(sc, 0);
 		break;
 
 	case SIOCSIFPARENT:
-		error = vlan_set_parent(ifv, parent->ifp_parent);
+		error = vlan_set_parent(sc, parent->ifp_parent);
 		break;
 
 	case SIOCGIFPARENT:
-		ifp0 = if_get(ifv->ifv_ifidx0);
+		ifp0 = if_get(sc->ifv_ifidx0);
 		if (ifp0 == NULL)
 			error = EADDRNOTAVAIL;
 		else {
@@ -737,19 +737,19 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCDIFPARENT:
-		error = vlan_del_parent(ifv);
+		error = vlan_del_parent(sc);
 		break;
 
 	case SIOCADDMULTI:
-		error = vlan_multi_add(ifv, ifr);
+		error = vlan_multi_add(sc, ifr);
 		break;
 
 	case SIOCDELMULTI:
-		error = vlan_multi_del(ifv, ifr);
+		error = vlan_multi_del(sc, ifr);
 		break;
 
 	case SIOCGIFMEDIA:
-		error = vlan_media_get(ifv, ifr);
+		error = vlan_media_get(sc, ifr);
 		break;
 
 	case SIOCSIFMEDIA:
@@ -757,7 +757,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFLLADDR:
-		error = vlan_setlladdr(ifv, ifr);
+		error = vlan_setlladdr(sc, ifr);
 		break;
 
 	case SIOCSETVLAN:
@@ -772,10 +772,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error != 0)
 			break;
 
-		ifv->ifv_prio = ifr->ifr_hdrprio;
+		sc->ifv_prio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGTXHPRIO:
-		ifr->ifr_hdrprio = ifv->ifv_prio;
+		ifr->ifr_hdrprio = sc->ifv_prio;
 		break;
 
 	case SIOCSRXHPRIO:
@@ -783,19 +783,19 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error != 0)
 			break;
 
-		ifv->ifv_rxprio = ifr->ifr_hdrprio;
+		sc->ifv_rxprio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGRXHPRIO:
-		ifr->ifr_hdrprio = ifv->ifv_rxprio;
+		ifr->ifr_hdrprio = sc->ifv_rxprio;
 		break;
 
 	default:
-		error = ether_ioctl(ifp, &ifv->ifv_ac, cmd, data);
+		error = ether_ioctl(ifp, &sc->ifv_ac, cmd, data);
 		break;
 	}
 
 	if (error == ENETRESET) {
-		vlan_iff(ifv);
+		vlan_iff(sc);
 		error = 0;
 	}
 
@@ -803,38 +803,38 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 int
-vlan_iff(struct vlan_softc *ifv)
+vlan_iff(struct vlan_softc *sc)
 {
 	struct ifnet *ifp0;
 	int promisc = 0;
 	int error = 0;
 
-	if (ISSET(ifv->ifv_if.if_flags, IFF_PROMISC) ||
-	    ISSET(ifv->ifv_flags, IFVF_LLADDR))
+	if (ISSET(sc->ifv_if.if_flags, IFF_PROMISC) ||
+	    ISSET(sc->ifv_flags, IFVF_LLADDR))
 		promisc = IFVF_PROMISC;
 
-	if (ISSET(ifv->ifv_flags, IFVF_PROMISC) == promisc)
+	if (ISSET(sc->ifv_flags, IFVF_PROMISC) == promisc)
 		return (0);
 
-	if (ISSET(ifv->ifv_if.if_flags, IFF_RUNNING)) {
-		ifp0 = if_get(ifv->ifv_ifidx0);
+	if (ISSET(sc->ifv_if.if_flags, IFF_RUNNING)) {
+		ifp0 = if_get(sc->ifv_ifidx0);
 		if (ifp0 != NULL)
 			error = ifpromisc(ifp0, promisc);
 		if_put(ifp0);
 	}
 
 	if (error == 0) {
-		CLR(ifv->ifv_flags, IFVF_PROMISC);
-		SET(ifv->ifv_flags, promisc);
+		CLR(sc->ifv_flags, IFVF_PROMISC);
+		SET(sc->ifv_flags, promisc);
 	}
 
 	return (error);
 }
 
 int
-vlan_setlladdr(struct vlan_softc *ifv, struct ifreq *ifr)
+vlan_setlladdr(struct vlan_softc *sc, struct ifreq *ifr)
 {
-	struct ifnet *ifp = &ifv->ifv_if;
+	struct ifnet *ifp = &sc->ifv_if;
 	struct ifnet *ifp0;
 	uint8_t lladdr[ETHER_ADDR_LEN];
 	int flag;
@@ -843,7 +843,7 @@ vlan_setlladdr(struct vlan_softc *ifv, struct ifreq *ifr)
 
 	/* setting the mac addr to 00:00:00:00:00:00 means reset lladdr */
 	if (memcmp(lladdr, etheranyaddr, sizeof(lladdr)) == 0) {
-		ifp0 = if_get(ifv->ifv_ifidx0);
+		ifp0 = if_get(sc->ifv_ifidx0);
 		if (ifp0 != NULL)
 			memcpy(lladdr, LLADDR(ifp0->if_sadl), sizeof(lladdr));
 		if_put(ifp0);
@@ -853,66 +853,66 @@ vlan_setlladdr(struct vlan_softc *ifv, struct ifreq *ifr)
 		flag = IFVF_LLADDR;
 
 	if (memcmp(lladdr, LLADDR(ifp->if_sadl), sizeof(lladdr)) == 0 &&
-	    ISSET(ifv->ifv_flags, IFVF_LLADDR) == flag) {
+	    ISSET(sc->ifv_flags, IFVF_LLADDR) == flag) {
 		/* nop */
 		return (0);
 	}
 
 	/* commit */
 	if_setlladdr(ifp, lladdr);
-	CLR(ifv->ifv_flags, IFVF_LLADDR);
-	SET(ifv->ifv_flags, flag);
+	CLR(sc->ifv_flags, IFVF_LLADDR);
+	SET(sc->ifv_flags, flag);
 
 	return (ENETRESET);
 }
 
 int
-vlan_set_vnetid(struct vlan_softc *ifv, uint16_t tag)
+vlan_set_vnetid(struct vlan_softc *sc, uint16_t tag)
 {
-	struct ifnet *ifp = &ifv->ifv_if;
+	struct ifnet *ifp = &sc->ifv_if;
 	SRPL_HEAD(, vlan_softc) *tagh, *list;
 	u_char link = ifp->if_link_state;
 	uint64_t baud = ifp->if_baudrate;
 	int error;
 
-	tagh = ifv->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
+	tagh = sc->ifv_type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING) && LINK_STATE_IS_UP(link))
-		vlan_link_state(ifv, LINK_STATE_DOWN, 0);
+		vlan_link_state(sc, LINK_STATE_DOWN, 0);
 
 	error = rw_enter(&vlan_tagh_lk, RW_WRITE);
 	if (error != 0)
 		return (error);
 
-	error = vlan_inuse_locked(ifv->ifv_type, ifv->ifv_ifidx0, tag);
+	error = vlan_inuse_locked(sc->ifv_type, sc->ifv_ifidx0, tag);
 	if (error != 0)
 		goto unlock;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-		list = &tagh[TAG_HASH(ifv->ifv_tag)];
-		SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, ifv, vlan_softc,
+		list = &tagh[TAG_HASH(sc->ifv_tag)];
+		SRPL_REMOVE_LOCKED(&vlan_tagh_rc, list, sc, vlan_softc,
 		    ifv_list);
 
-		ifv->ifv_tag = tag;
+		sc->ifv_tag = tag;
 
-		list = &tagh[TAG_HASH(ifv->ifv_tag)];
-		SRPL_INSERT_HEAD_LOCKED(&vlan_tagh_rc, list, ifv, ifv_list);
+		list = &tagh[TAG_HASH(sc->ifv_tag)];
+		SRPL_INSERT_HEAD_LOCKED(&vlan_tagh_rc, list, sc, ifv_list);
 	} else
-		ifv->ifv_tag = tag;
+		sc->ifv_tag = tag;
 
 unlock:
 	rw_exit(&vlan_tagh_lk);
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING) && LINK_STATE_IS_UP(link))
-		vlan_link_state(ifv, link, baud);
+		vlan_link_state(sc, link, baud);
 
 	return (error);
 }
 
 int
-vlan_set_parent(struct vlan_softc *ifv, const char *parent)
+vlan_set_parent(struct vlan_softc *sc, const char *parent)
 {
-	struct ifnet *ifp = &ifv->ifv_if;
+	struct ifnet *ifp = &sc->ifv_if;
 	struct ifnet *ifp0;
 	int error = 0;
 
@@ -923,7 +923,7 @@ vlan_set_parent(struct vlan_softc *ifv, const char *parent)
 	if (ifp0->if_type != IFT_ETHER)
 		return (EPROTONOSUPPORT);
 
-	if (ifv->ifv_ifidx0 == ifp0->if_index) {
+	if (sc->ifv_ifidx0 == ifp0->if_index) {
 		/* nop */
 		return (0);
 	}
@@ -931,29 +931,29 @@ vlan_set_parent(struct vlan_softc *ifv, const char *parent)
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		return (EBUSY);
 
-	error = vlan_inuse(ifv->ifv_type, ifp0->if_index, ifv->ifv_tag);
+	error = vlan_inuse(sc->ifv_type, ifp0->if_index, sc->ifv_tag);
 	if (error != 0)
 		return (error);
 
 	/* commit */
-	ifv->ifv_ifidx0 = ifp0->if_index;
-	if (!ISSET(ifv->ifv_flags, IFVF_LLADDR))
+	sc->ifv_ifidx0 = ifp0->if_index;
+	if (!ISSET(sc->ifv_flags, IFVF_LLADDR))
 		if_setlladdr(ifp, LLADDR(ifp0->if_sadl));
 
 	return (0);
 }
 
 int
-vlan_del_parent(struct vlan_softc *ifv)
+vlan_del_parent(struct vlan_softc *sc)
 {
-	struct ifnet *ifp = &ifv->ifv_if;
+	struct ifnet *ifp = &sc->ifv_if;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		return (EBUSY);
 
 	/* commit */
-	ifv->ifv_ifidx0 = 0;
-	if (!ISSET(ifv->ifv_flags, IFVF_LLADDR))
+	sc->ifv_ifidx0 = 0;
+	if (!ISSET(sc->ifv_flags, IFVF_LLADDR))
 		if_setlladdr(ifp, etheranyaddr);
 
 	return (0);
@@ -1003,17 +1003,17 @@ vlan_set_compat(struct ifnet *ifp, struct ifreq *ifr)
 int
 vlan_get_compat(struct ifnet *ifp, struct ifreq *ifr)
 {
-	struct vlan_softc *ifv = ifp->if_softc;
+	struct vlan_softc *sc = ifp->if_softc;
 	struct vlanreq vlr;
 	struct ifnet *p;
 
 	memset(&vlr, 0, sizeof(vlr));
-	p = if_get(ifv->ifv_ifidx0);
+	p = if_get(sc->ifv_ifidx0);
 	if (p != NULL)
 		memcpy(vlr.vlr_parent, p->if_xname, sizeof(vlr.vlr_parent));
 	if_put(p);
 
-	vlr.vlr_tag = ifv->ifv_tag;
+	vlr.vlr_tag = sc->ifv_tag;
 
 	return (copyout(&vlr, ifr->ifr_data, sizeof(vlr)));
 }
@@ -1044,15 +1044,15 @@ int
 vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 {
 	SRPL_HEAD(, vlan_softc) *tagh, *list;
-	struct vlan_softc *ifv;
+	struct vlan_softc *sc;
 
 	tagh = type == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
 	list = &tagh[TAG_HASH(tag)];
 
-	SRPL_FOREACH_LOCKED(ifv, list, ifv_list) {
-		if (ifv->ifv_tag == tag &&
-		    ifv->ifv_type == type && /* wat */
-		    ifv->ifv_ifidx0 == ifidx)
+	SRPL_FOREACH_LOCKED(sc, list, ifv_list) {
+		if (sc->ifv_tag == tag &&
+		    sc->ifv_type == type && /* wat */
+		    sc->ifv_ifidx0 == ifidx)
 			return (EADDRINUSE);
 	}
 
@@ -1060,14 +1060,14 @@ vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 }
 
 int
-vlan_multi_add(struct vlan_softc *ifv, struct ifreq *ifr)
+vlan_multi_add(struct vlan_softc *sc, struct ifreq *ifr)
 {
 	struct ifnet *ifp0;
 	struct vlan_mc_entry *mc;
 	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
-	error = ether_addmulti(ifr, &ifv->ifv_ac);
+	error = ether_addmulti(ifr, &sc->ifv_ac);
 	if (error != ENETRESET)
 		return (error);
 
@@ -1086,11 +1086,11 @@ vlan_multi_add(struct vlan_softc *ifv, struct ifreq *ifr)
 	 * statement shouldn't fail.
 	 */
 	(void)ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ac, mc->mc_enm);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, &sc->ifv_ac, mc->mc_enm);
 	memcpy(&mc->mc_addr, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
-	LIST_INSERT_HEAD(&ifv->vlan_mc_listhead, mc, mc_entries);
+	LIST_INSERT_HEAD(&sc->vlan_mc_listhead, mc, mc_entries);
 
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	ifp0 = if_get(sc->ifv_ifidx0);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCADDMULTI, (caddr_t)ifr);
 	if_put(ifp0);
@@ -1104,13 +1104,13 @@ vlan_multi_add(struct vlan_softc *ifv, struct ifreq *ifr)
 	LIST_REMOVE(mc, mc_entries);
 	free(mc, M_DEVBUF, sizeof(*mc));
  alloc_failed:
-	(void)ether_delmulti(ifr, &ifv->ifv_ac);
+	(void)ether_delmulti(ifr, &sc->ifv_ac);
 
 	return (error);
 }
 
 int
-vlan_multi_del(struct vlan_softc *ifv, struct ifreq *ifr)
+vlan_multi_del(struct vlan_softc *sc, struct ifreq *ifr)
 {
 	struct ifnet *ifp0;
 	struct ether_multi *enm;
@@ -1124,11 +1124,11 @@ vlan_multi_del(struct vlan_softc *ifv, struct ifreq *ifr)
 	 */
 	if ((error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi)) != 0)
 		return (error);
-	ETHER_LOOKUP_MULTI(addrlo, addrhi, &ifv->ifv_ac, enm);
+	ETHER_LOOKUP_MULTI(addrlo, addrhi, &sc->ifv_ac, enm);
 	if (enm == NULL)
 		return (EINVAL);
 
-	LIST_FOREACH(mc, &ifv->vlan_mc_listhead, mc_entries) {
+	LIST_FOREACH(mc, &sc->vlan_mc_listhead, mc_entries) {
 		if (mc->mc_enm == enm)
 			break;
 	}
@@ -1137,20 +1137,20 @@ vlan_multi_del(struct vlan_softc *ifv, struct ifreq *ifr)
 	if (mc == NULL)
 		return (EINVAL);
 
-	error = ether_delmulti(ifr, &ifv->ifv_ac);
+	error = ether_delmulti(ifr, &sc->ifv_ac);
 	if (error != ENETRESET)
 		return (error);
 
-	if (!ISSET(ifv->ifv_if.if_flags, IFF_RUNNING))
+	if (!ISSET(sc->ifv_if.if_flags, IFF_RUNNING))
 		goto forget;
 
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	ifp0 = if_get(sc->ifv_ifidx0);
 	error = (ifp0 == NULL) ? 0 :
 	    (*ifp0->if_ioctl)(ifp0, SIOCDELMULTI, (caddr_t)ifr);
 	if_put(ifp0);
 
 	if (error != 0) {
-		(void)ether_addmulti(ifr, &ifv->ifv_ac);
+		(void)ether_addmulti(ifr, &sc->ifv_ac);
 		return (error);
 	}
 
@@ -1163,12 +1163,12 @@ forget:
 }
 
 int
-vlan_media_get(struct vlan_softc *ifv, struct ifreq *ifr)
+vlan_media_get(struct vlan_softc *sc, struct ifreq *ifr)
 {
 	struct ifnet *ifp0;
 	int error;
 
-	ifp0 = if_get(ifv->ifv_ifidx0);
+	ifp0 = if_get(sc->ifv_ifidx0);
 	error = (ifp0 == NULL) ? ENOTTY :
 	    (*ifp0->if_ioctl)(ifp0, SIOCGIFMEDIA, (caddr_t)ifr);
 	if_put(ifp0);
@@ -1177,7 +1177,7 @@ vlan_media_get(struct vlan_softc *ifv, struct ifreq *ifr)
 }
 
 void
-vlan_multi_apply(struct vlan_softc *ifv, struct ifnet *ifp0, u_long cmd)
+vlan_multi_apply(struct vlan_softc *sc, struct ifnet *ifp0, u_long cmd)
 {
 	struct vlan_mc_entry *mc;
 	union {
@@ -1190,7 +1190,7 @@ vlan_multi_apply(struct vlan_softc *ifv, struct ifnet *ifp0, u_long cmd)
 	struct ifreq *ifr = &ifreq.ifreq;
 
 	memcpy(ifr->ifr_name, ifp0->if_xname, IFNAMSIZ);
-	LIST_FOREACH(mc, &ifv->vlan_mc_listhead, mc_entries) {
+	LIST_FOREACH(mc, &sc->vlan_mc_listhead, mc_entries) {
 		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
 
 		(void)(*ifp0->if_ioctl)(ifp0, cmd, (caddr_t)ifr);
@@ -1198,11 +1198,11 @@ vlan_multi_apply(struct vlan_softc *ifv, struct ifnet *ifp0, u_long cmd)
 }
 
 void
-vlan_multi_free(struct vlan_softc *ifv)
+vlan_multi_free(struct vlan_softc *sc)
 {
 	struct vlan_mc_entry *mc;
 
-	while ((mc = LIST_FIRST(&ifv->vlan_mc_listhead)) != NULL) {
+	while ((mc = LIST_FIRST(&sc->vlan_mc_listhead)) != NULL) {
 		LIST_REMOVE(mc, mc_entries);
 		free(mc, M_DEVBUF, sizeof(*mc));
 	}
