@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.188 2019/04/27 04:53:01 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.189 2019/04/27 04:56:41 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -190,8 +190,8 @@ vlanattach(int count)
 int
 vlan_clone_create(struct if_clone *ifc, int unit)
 {
-	struct vlan_softc	*ifv;
-	struct ifnet	*ifp;
+	struct vlan_softc *ifv;
+	struct ifnet *ifp;
 
 	ifv = malloc(sizeof(*ifv), M_DEVBUF, M_WAITOK|M_ZERO);
 	LIST_INIT(&ifv->vlan_mc_listhead);
@@ -247,7 +247,7 @@ vlan_unref(void *null, void *v)
 int
 vlan_clone_destroy(struct ifnet *ifp)
 {
-	struct vlan_softc	*ifv = ifp->if_softc;
+	struct vlan_softc *ifv = ifp->if_softc;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		vlan_down(ifv);
@@ -332,10 +332,10 @@ vlan_enqueue(struct ifnet *ifp, struct mbuf *m)
 void
 vlan_start(struct ifqueue *ifq)
 {
-	struct ifnet	*ifp = ifq->ifq_if;
-	struct vlan_softc   *ifv = ifp->if_softc;
-	struct ifnet	*ifp0;
-	struct mbuf	*m;
+	struct ifnet *ifp = ifq->ifq_if;
+	struct vlan_softc *ifv = ifp->if_softc;
+	struct ifnet *ifp0;
+	struct mbuf *m;
 
 	ifp0 = if_get(ifv->ifv_ifidx0);
 	if (ifp0 == NULL || !ISSET(ifp0->if_flags, IFF_RUNNING)) {
@@ -378,13 +378,13 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 int
 vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 {
-	struct vlan_softc			*ifv;
-	struct ether_vlan_header	*evl;
-	struct ether_header		*eh;
-	SRPL_HEAD(, vlan_softc)		*tagh, *list;
-	struct srp_ref			 sr;
-	u_int				 tag;
-	u_int16_t			 etype;
+	struct vlan_softc *ifv;
+	struct ether_vlan_header *evl;
+	struct ether_header *eh;
+	SRPL_HEAD(, vlan_softc) *tagh, *list;
+	struct srp_ref sr;
+	u_int tag;
+	u_int16_t etype;
 
 	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
@@ -1062,10 +1062,10 @@ vlan_inuse_locked(uint16_t type, unsigned int ifidx, uint16_t tag)
 int
 vlan_multi_add(struct vlan_softc *ifv, struct ifreq *ifr)
 {
-	struct ifnet		*ifp0;
-	struct vlan_mc_entry	*mc;
-	u_int8_t		 addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
-	int			 error;
+	struct ifnet *ifp0;
+	struct vlan_mc_entry *mc;
+	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	int error;
 
 	error = ether_addmulti(ifr, &ifv->ifv_ac);
 	if (error != ENETRESET)
@@ -1112,11 +1112,11 @@ vlan_multi_add(struct vlan_softc *ifv, struct ifreq *ifr)
 int
 vlan_multi_del(struct vlan_softc *ifv, struct ifreq *ifr)
 {
-	struct ifnet		*ifp0;
-	struct ether_multi	*enm;
-	struct vlan_mc_entry	*mc;
-	u_int8_t		 addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
-	int			 error;
+	struct ifnet *ifp0;
+	struct ether_multi *enm;
+	struct vlan_mc_entry *mc;
+	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	int error;
 
 	/*
 	 * Find a key to lookup vlan_mc_entry.  We have to do this
@@ -1165,8 +1165,8 @@ forget:
 int
 vlan_media_get(struct vlan_softc *ifv, struct ifreq *ifr)
 {
-	struct ifnet		*ifp0;
-	int			 error;
+	struct ifnet *ifp0;
+	int error;
 
 	ifp0 = if_get(ifv->ifv_ifidx0);
 	error = (ifp0 == NULL) ? ENOTTY :
@@ -1179,7 +1179,7 @@ vlan_media_get(struct vlan_softc *ifv, struct ifreq *ifr)
 void
 vlan_multi_apply(struct vlan_softc *ifv, struct ifnet *ifp0, u_long cmd)
 {
-	struct vlan_mc_entry	*mc;
+	struct vlan_mc_entry *mc;
 	union {
 		struct ifreq ifreq;
 		struct {
@@ -1187,7 +1187,7 @@ vlan_multi_apply(struct vlan_softc *ifv, struct ifnet *ifp0, u_long cmd)
 			struct sockaddr_storage	ifr_ss;
 		} ifreq_storage;
 	} ifreq;
-	struct ifreq	*ifr = &ifreq.ifreq;
+	struct ifreq *ifr = &ifreq.ifreq;
 
 	memcpy(ifr->ifr_name, ifp0->if_xname, IFNAMSIZ);
 	LIST_FOREACH(mc, &ifv->vlan_mc_listhead, mc_entries) {
@@ -1200,7 +1200,7 @@ vlan_multi_apply(struct vlan_softc *ifv, struct ifnet *ifp0, u_long cmd)
 void
 vlan_multi_free(struct vlan_softc *ifv)
 {
-	struct vlan_mc_entry	*mc;
+	struct vlan_mc_entry *mc;
 
 	while ((mc = LIST_FIRST(&ifv->vlan_mc_listhead)) != NULL) {
 		LIST_REMOVE(mc, mc_entries);
