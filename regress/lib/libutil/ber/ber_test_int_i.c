@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test_int_i.c,v 1.4 2019/04/27 14:29:28 rob Exp $
+/* $OpenBSD: ber_test_int_i.c,v 1.5 2019/04/27 23:43:51 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -29,27 +29,24 @@
 struct test_vector {
 	int		 fail;		/* 1 means test is expected to fail */
 	char		 title[128];
-	size_t		 length;
+	size_t		 input_length;
 	long long	 value;
 	unsigned char	 input[1024];
+	size_t		 expect_length;
+	unsigned char	 expect[1024];
 };
 
 struct test_vector test_vectors[] = {
 	{
 		SUCCEED,
-		"integer (-9223372036854775808)",
-		10,
-		-9223372036854775808,
-		{
-			0x02, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00
-		},
-	},
-	{
-		SUCCEED,
 		"integer (-9223372036854775807)",
 		10,
 		-9223372036854775807,
+		{
+			0x02, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x01
+		},
+		10,
 		{
 			0x02, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x01
@@ -64,25 +61,63 @@ struct test_vector test_vectors[] = {
 			0x02, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x02
 		},
+		10,
+		{
+			0x02, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
+			0x00, 0x02
+		},
 	},
 	{
-		SUCCEED,
-		"integer (-2147483650)",
+		FAIL,
+		"integer (-2147483650) (expected failure)",
 		10,
 		-2147483650,
 		{
 			0x02, 0x08, 0xff, 0xff, 0xff, 0xff, 0x7f, 0xff,
 			0xff, 0xfe
 		},
+		7,
+		{
+			0x02, 0x05, 0xff, 0x7f, 0xff, 0xff, 0xfe
+		},
+	},
+	{
+		SUCCEED,
+		"integer (-2147483650)",
+		7,
+		-2147483650,
+		{
+			0x02, 0x05, 0xff, 0x7f, 0xff, 0xff, 0xfe
+		},
+		7,
+		{
+			0x02, 0x05, 0xff, 0x7f, 0xff, 0xff, 0xfe
+		},
 	},
 	{
 		SUCCEED,
 		"integer (-2147483649)",
-		10,
+		7,
 		-2147483649,
 		{
-			0x02, 0x08, 0xff, 0xff, 0xff, 0xff, 0x7f, 0xff,
-			0xff, 0xff
+			0x02, 0x05, 0xff, 0x7f, 0xff, 0xff, 0xff
+		},
+		7,
+		{
+			0x02, 0x05, 0xff, 0x7f, 0xff, 0xff, 0xff
+		},
+	},
+	{
+		FAIL,
+		"integer (-2147483648) (expected failure)",
+		8,
+		-2147483648,
+		{
+			0x02, 0x06, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00
+		},
+		6,
+		{
+			0x02, 0x04, 0x80, 0x00, 0x00, 0x00
 		},
 	},
 	{
@@ -90,6 +125,10 @@ struct test_vector test_vectors[] = {
 		"integer (-2147483648)",
 		6,
 		-2147483648,
+		{
+			0x02, 0x04, 0x80, 0x00, 0x00, 0x00
+		},
+		6,
 		{
 			0x02, 0x04, 0x80, 0x00, 0x00, 0x00
 		},
@@ -102,12 +141,20 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x04, 0xc0, 0x00, 0x00, 0x00
 		},
+		6,
+		{
+			0x02, 0x04, 0xc0, 0x00, 0x00, 0x00
+		},
 	},
 	{
 		SUCCEED,
 		"integer (-536870912)",
 		6,
 		-536870912,
+		{
+			0x02, 0x04, 0xe0, 0x00, 0x00, 0x00
+		},
+		6,
 		{
 			0x02, 0x04, 0xe0, 0x00, 0x00, 0x00
 		},
@@ -120,12 +167,20 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x04, 0xf0, 0x00, 0x00, 0x00
 		},
+		6,
+		{
+			0x02, 0x04, 0xf0, 0x00, 0x00, 0x00
+		},
 	},
 	{
 		SUCCEED,
 		"integer (-1342177728)",
 		6,
 		-1342177728,
+		{
+			0x02, 0x04, 0xaf, 0xff, 0xfe, 0x40
+		},
+		6,
 		{
 			0x02, 0x04, 0xaf, 0xff, 0xfe, 0x40
 		},
@@ -138,12 +193,20 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x04, 0xfb, 0xff, 0xff, 0xff
 		},
+		6,
+		{
+			0x02, 0x04, 0xfb, 0xff, 0xff, 0xff
+		},
 	},
 	{
 		SUCCEED,
 		"integer (-67108864)",
 		6,
 		-67108864,
+		{
+			0x02, 0x04, 0xfc, 0x00, 0x00, 0x00
+		},
+		6,
 		{
 			0x02, 0x04, 0xfc, 0x00, 0x00, 0x00
 		},
@@ -156,32 +219,48 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x04, 0xfc, 0x00, 0x00, 0x01
 		},
+		6,
+		{
+			0x02, 0x04, 0xfc, 0x00, 0x00, 0x01
+		},
 	},
 	{
 		SUCCEED,
 		"integer (-3554432)",
-		6,
+		5,
 		-3554432,
 		{
-			0x02, 0x04, 0xff, 0xc9, 0xc3, 0x80
+			0x02, 0x03, 0xc9, 0xc3, 0x80
+		},
+		5,
+		{
+			0x02, 0x03, 0xc9, 0xc3, 0x80
 		},
 	},
 	{
 		SUCCEED,
 		"integer (-65535)",
-		6,
+		5,
 		-65535,
 		{
-			0x02, 0x04, 0xff, 0xff, 0x00, 0x01,
+			0x02, 0x03, 0xff, 0x00, 0x01,
+		},
+		5,
+		{
+			0x02, 0x03, 0xff, 0x00, 0x01,
 		},
 	},
 	{
 		SUCCEED,
 		"integer (-32769)",
-		6,
+		5,
 		-32769,
 		{
-			0x02, 0x04, 0xff, 0xff, 0x7f, 0xff
+			0x02, 0x03, 0xff, 0x7f, 0xff
+		},
+		5,
+		{
+			0x02, 0x03, 0xff, 0x7f, 0xff
 		},
 	},
 	{
@@ -192,23 +271,35 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x02, 0x80, 0x00
 		},
+		4,
+		{
+			0x02, 0x02, 0x80, 0x00
+		},
 	},
 	{
 		SUCCEED,
 		"integer (-128)",
-		4,
+		3,
 		-128,
 		{
-			0x02, 0x02, 0xff, 0x80
+			0x02, 0x01, 0x80
+		},
+		3,
+		{
+			0x02, 0x01, 0x80
 		},
 	},
 	{
 		SUCCEED,
 		"integer (-1)",
-		4,
+		3,
 		-1,
 		{
-			0x02, 0x02, 0xff, 0xff
+			0x02, 0x01, 0xff
+		},
+		3,
+		{
+			0x02, 0x01, 0xff
 		},
 	},
 	{
@@ -216,6 +307,10 @@ struct test_vector test_vectors[] = {
 		"integer (0)",
 		3,
 		0,
+		{
+			0x02, 0x01, 0x00
+		},
+		3,
 		{
 			0x02, 0x01, 0x00
 		},
@@ -228,12 +323,20 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x01, 0x7f
 		},
+		3,
+		{
+			0x02, 0x01, 0x7f
+		},
 	},
 	{
 		SUCCEED,
 		"integer (128)",
 		4,
 		128,
+		{
+			0x02, 0x02, 0x00, 0x80
+		},
+		4,
 		{
 			0x02, 0x02, 0x00, 0x80
 		},
@@ -246,12 +349,20 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x02, 0x7f, 0xff
 		},
+		4,
+		{
+			0x02, 0x02, 0x7f, 0xff
+		},
 	},
 	{
 		SUCCEED,
 		"integer (32768)",
 		5,
 		32768,
+		{
+			0x02, 0x03, 0x00, 0x80, 0x00
+		},
+		5,
 		{
 			0x02, 0x03, 0x00, 0x80, 0x00
 		},
@@ -264,14 +375,22 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x03, 0x00, 0xff, 0xff
 		},
+		5,
+		{
+			0x02, 0x03, 0x00, 0xff, 0xff
+		},
 	},
 	{
 		SUCCEED,
 		"integer (65536)",
-		6,
+		5,
 		65536,
 		{
-			0x02, 0x04, 0x00, 0x01, 0x00, 0x00
+			0x02, 0x03, 0x01, 0x00, 0x00
+		},
+		5,
+		{
+			0x02, 0x03, 0x01, 0x00, 0x00
 		},
 	},
 	{
@@ -282,55 +401,74 @@ struct test_vector test_vectors[] = {
 		{
 			0x02, 0x04, 0x7f, 0xff, 0xff, 0xff
 		},
+		6,
+		{
+			0x02, 0x04, 0x7f, 0xff, 0xff, 0xff
+		},
 	},
 	{
 		SUCCEED,
 		"integer (2147483648)",
-		10,
+		7,
 		2147483648,
 		{
-			0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00,
-			0x00, 0x00
+			0x02, 0x05, 0x00, 0x80, 0x00, 0x00, 0x00
+		},
+		7,
+		{
+			0x02, 0x05, 0x00, 0x80, 0x00, 0x00, 0x00
 		},
 	},
 	{
 		SUCCEED,
 		"integer (2147483649)",
-		10,
+		7,
 		2147483649,
 		{
-			0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00,
-			0x00, 0x01
+			0x02, 0x05, 0x00, 0x80, 0x00, 0x00, 0x01
+		},
+		7,
+		{
+			0x02, 0x05, 0x00, 0x80, 0x00, 0x00, 0x01
 		},
 	},
 	{
 		SUCCEED,
 		"integer (4294967295)",
-		10,
+		7,
 		4294967295,
 		{
-			0x02, 0x08, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
-			0xff, 0xff
+			0x02, 0x05, 0x00, 0xff, 0xff, 0xff, 0xff
+		},
+		7,
+		{
+			0x02, 0x05, 0x00, 0xff, 0xff, 0xff, 0xff
 		},
 	},
 	{
 		SUCCEED,
 		"integer (4294967296)",
-		10,
+		7,
 		4294967296,
 		{
-			0x02, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
-			0x00, 0x00
+			0x02, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00
+		},
+		7,
+		{
+			0x02, 0x05, 0x01, 0x00, 0x00, 0x00, 0x00
 		},
 	},
 	{
 		SUCCEED,
 		"integer (4294967297)",
-		10,
+		7,
 		4294967297,
 		{
-			0x02, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
-			0x00, 0x01
+			0x02, 0x05, 0x01, 0x00, 0x00, 0x00, 0x01
+		},
+		7,
+		{
+			0x02, 0x05, 0x01, 0x00, 0x00, 0x00, 0x01
 		},
 	},
 	{
@@ -342,12 +480,22 @@ struct test_vector test_vectors[] = {
 			0x02, 0x08, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xfe
 		},
+		10,
+		{
+			0x02, 0x08, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0xff, 0xfe
+		},
 	},
 	{
 		SUCCEED,
 		"integer (9223372036854775807)",
 		10,
 		9223372036854775807,
+		{
+			0x02, 0x08, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0xff, 0xff
+		},
+		10,
 		{
 			0x02, 0x08, 0x7f, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff
@@ -368,7 +516,7 @@ hexdump(const unsigned char *buf, size_t len)
 }
 
 static int
-test(int i)
+test_read_elements(int i)
 {
 	int			 pos, b;
 	char			*string;
@@ -382,24 +530,23 @@ test(int i)
 	struct ber_octetstring	 ostring;
 
 	bzero(&ber, sizeof(ber));
-	ber_set_readbuf(&ber, test_vectors[i].input, test_vectors[i].length);
+	ber_set_readbuf(&ber, test_vectors[i].input,
+	    test_vectors[i].input_length);
 
 	elm = ber_read_elements(&ber, elm);
-	if (elm == NULL && test_vectors[i].fail &&
-	    (errno == EINVAL || errno == ERANGE || errno == ECANCELED))
-		return 0;
-	else if (elm != NULL && test_vectors[i].fail) {
-		printf("expected failure of ber_read_elements did not occur\n");
+	if (elm != NULL && test_vectors[i].fail == FAIL) {
+		printf("unexpectedly passed ber_read_elements\n");
 		return 1;
-	} else if (elm == NULL) {
+	} else if (elm == NULL && test_vectors[i].fail != FAIL) {
 		printf("unexpectedly failed ber_read_elements\n");
 		return 1;
-	}
+	} else if (elm == NULL && test_vectors[i].fail == FAIL)
+		return 0;
 
 	pos = ber_getpos(elm);
 	if (pos != 2) {
 		printf("unexpected element position within "
-		    "byte stream\n");
+		    "byte stream (%d)\n", pos);
 		return 1;
 	}
 
@@ -432,26 +579,112 @@ test(int i)
 	}
 
 	len = ber_calc_len(elm);
-	if (len != test_vectors[i].length) {
+	if (len != test_vectors[i].expect_length) {
 		printf("failed to calculate length\n");
+		printf("was %zd want %zu\n", len,
+		    test_vectors[i].expect_length);
 		return 1;
 	}
 
 	ber.br_wbuf = NULL;
 	len = ber_write_elements(&ber, elm);
-	if (len != test_vectors[i].length) {
+	if (len != test_vectors[i].expect_length) {
 		printf("failed length check (was %zd want "
-		    "%zd)\n", len, test_vectors[i].length);
+		    "%zd)\n", len, test_vectors[i].expect_length);
 		return 1;
 	}
 
-	if (memcmp(ber.br_wbuf, test_vectors[i].input,
-	    test_vectors[i].length) != 0) {
+	if (memcmp(ber.br_wbuf, test_vectors[i].expect,
+	    test_vectors[i].expect_length) != 0) {
 		printf("failed byte stream compare\n");
 		printf("Got:\n");
 		hexdump(ber.br_wbuf, len);
 		printf("Expected:\n");
-		hexdump(test_vectors[i].input, test_vectors[i].length);
+		hexdump(test_vectors[i].expect, test_vectors[i].expect_length);
+		return 1;
+	}
+	ber_free(&ber);
+
+	ber_free_elements(elm);
+
+	return 0;
+}
+
+static int
+test_printf_elements(int i)
+{
+	int			 pos, b;
+	char			*string;
+	void			*p = NULL;
+	ssize_t			 len = 0;
+	struct ber_element	*elm = NULL, *ptr = NULL;
+	struct ber		 ber;
+	long long		 val;
+	void			*bstring = NULL;
+	struct ber_oid		 oid;
+	struct ber_octetstring	 ostring;
+
+	bzero(&ber, sizeof(ber));
+	ber_set_readbuf(&ber, test_vectors[i].input,
+	    test_vectors[i].input_length);
+
+	elm = ber_printf_elements(elm, "i", test_vectors[i].value);
+	if (elm == NULL) {
+		printf("unexpectedly failed ber_printf_elements\n");
+		return 1;
+	}
+
+	switch (elm->be_encoding) {
+	case BER_TYPE_INTEGER:
+		if (ber_get_integer(elm, &val) == -1) {
+			printf("failed (int) encoding check\n");
+			return 1;
+		}
+		if (val != test_vectors[i].value) {
+			printf("(ber_get_integer) got %lld, expected %lld\n",
+			    val, test_vectors[i].value);
+			return 1;
+		}
+		if (ber_scanf_elements(elm, "i", &val) == -1) {
+			printf("(ber_scanf_elements) failed (int)"
+			    " ber_scanf_elements (i)\n");
+			return 1;
+		}
+		if (val != test_vectors[i].value) {
+			printf("got %lld, expected %lld\n", val,
+			    test_vectors[i].value);
+			return 1;
+		}
+		break;
+	default:
+		printf("failed with unexpected encoding (%ud)\n",
+		    elm->be_encoding);
+		return 1;
+	}
+
+	len = ber_calc_len(elm);
+	if (len != test_vectors[i].expect_length) {
+		printf("failed to calculate length\n");
+		printf("was %zd want %zu\n", len,
+		    test_vectors[i].expect_length);
+		return 1;
+	}
+
+	ber.br_wbuf = NULL;
+	len = ber_write_elements(&ber, elm);
+	if (len != test_vectors[i].expect_length) {
+		printf("failed length check (was %zd want "
+		    "%zd)\n", len, test_vectors[i].expect_length);
+		return 1;
+	}
+
+	if (memcmp(ber.br_wbuf, test_vectors[i].expect,
+	    test_vectors[i].expect_length) != 0) {
+		printf("failed byte stream compare\n");
+		printf("Got:\n");
+		hexdump(ber.br_wbuf, len);
+		printf("Expected:\n");
+		hexdump(test_vectors[i].expect, test_vectors[i].expect_length);
 		return 1;
 	}
 	ber_free(&ber);
@@ -472,8 +705,24 @@ main(void)
 	/*
 	 * drive test vectors for ber byte stream input validation, etc.
 	 */
+	printf("= = = = = test_read_elements\n");
 	for (i = 0; i < sizeof(test_vectors) / sizeof(test_vectors[0]); i++) {
-		if (test(i) != 0) {
+		if (test_read_elements(i) != 0) {
+			printf("FAILED: %s\n", test_vectors[i].title);
+			ret = 1;
+		} else
+			printf("SUCCESS: %s\n", test_vectors[i].title);
+	}
+
+	printf("= = = = = test_printf_elements\n");
+	for (i = 0; i < sizeof(test_vectors) / sizeof(test_vectors[0]); i++) {
+		/*
+		 * skip test cases known to fail under ber_read_elements as
+		 * they are not applicable to ber_printf_elements
+		 */
+		if (test_vectors[i].fail)
+			continue;
+		if (test_printf_elements(i) != 0) {
 			printf("FAILED: %s\n", test_vectors[i].title);
 			ret = 1;
 		} else
