@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.194 2019/04/27 05:30:13 dlg Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.195 2019/04/27 05:31:42 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -86,8 +86,8 @@ struct vlan_softc {
 	struct arpcom		 sc_ac;
 #define	sc_if			 sc_ac.ac_if
 	unsigned int		 sc_ifidx0;	/* parent interface */
+	int			 sc_txprio;
 	int			 sc_rxprio;
-	int			 sc_prio;
 	u_int16_t		 sc_tag;
 	u_int16_t		 sc_type; /* non-standard ethertype or 0x8100 */
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry)
@@ -204,7 +204,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 		sc->sc_type = ETHERTYPE_VLAN;
 
 	refcnt_init(&sc->sc_refcnt);
-	sc->sc_prio = IF_HDRPRIO_PACKET;
+	sc->sc_txprio = IF_HDRPRIO_PACKET;
 	sc->sc_rxprio = IF_HDRPRIO_OUTER;
 
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
@@ -260,7 +260,7 @@ void
 vlan_transmit(struct vlan_softc *sc, struct ifnet *ifp0, struct mbuf *m)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	int txprio = sc->sc_prio;
+	int txprio = sc->sc_txprio;
 	uint8_t prio;
 
 #if NBPFILTER > 0
@@ -767,10 +767,10 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error != 0)
 			break;
 
-		sc->sc_prio = ifr->ifr_hdrprio;
+		sc->sc_txprio = ifr->ifr_hdrprio;
 		break;
 	case SIOCGTXHPRIO:
-		ifr->ifr_hdrprio = sc->sc_prio;
+		ifr->ifr_hdrprio = sc->sc_txprio;
 		break;
 
 	case SIOCSRXHPRIO:
