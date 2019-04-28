@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.3 2019/04/28 14:46:00 deraadt Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.4 2019/04/28 16:28:00 jmc Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -363,6 +363,6 @@ usage(void)
 	fprintf(stderr,
 	    "       vnconfig -l [vnd_dev]\n");
 	fprintf(stderr,
-	    "       vnconfig -u -[v] vnd_dev\n");
+	    "       vnconfig -u [-v] vnd_dev\n");
 	exit(1);
 }
