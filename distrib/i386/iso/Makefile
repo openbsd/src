@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2019/04/28 16:47:30 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2019/04/28 17:35:45 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -94,6 +94,7 @@ bsd.gz: bsd.rd
 	gzip -c9n bsd.strip > bsd.gz
 
 bsd.rd: ${BSDRD}
+	cp ${BSDRD} bsd.rd
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
