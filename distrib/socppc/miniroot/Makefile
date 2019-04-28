@@ -1,6 +1,5 @@
 
 REV=	${OSrev}
-BSD_RD=		bsd.rd
 
 IMAGE=	miniroot${REV}.fs
 

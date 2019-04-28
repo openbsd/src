@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.5 2019/04/05 21:08:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2019/04/28 15:15:39 deraadt Exp $
 
 REV=	${OSrev}
 
 TOP=		${.CURDIR}/..
 
-BSD_RD=		bsd.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=	${CBIN}.conf
@@ -28,7 +27,7 @@ all ${IMAGE}:
 .else
 
 ALLBSD=		bsd
-ALLBSDRD=	${BSD_RD}
+ALLBSDRD=	bsd.rd
 all:	${ALLBSDRD}
 
 bsd:
@@ -36,9 +35,9 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 	cp -p ${TOP}/../../sys/arch/arm64/compile/RAMDISK/obj/bsd bsd
 
-${BSD_RD}: ${IMAGE} bsd
-	cp bsd ${BSD_RD}
-	rdsetroot ${BSD_RD} ${IMAGE}
+bsd.rd: ${IMAGE} bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd ${IMAGE}
 
 ${IMAGE}: ${CBIN}
 	rm -rf $@.d

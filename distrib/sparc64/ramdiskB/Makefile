@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.33 2019/04/28 14:48:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.34 2019/04/28 15:15:40 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-BSD_RD=		bsd.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
 LISTS=		${.CURDIR}/list
@@ -28,7 +27,7 @@ all ${IMAGE}:
 .else
 
 # mix config is not needed.
-all:	${FLOPPY} ${BSD_RD}
+all:	${FLOPPY} bsd.rd
 
 bsd.gz:	bsd.rd
 	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
@@ -49,10 +48,10 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-${BSD_RD}: ${CBIN} ${IMAGE} bsd
-	cp bsd ${BSD_RD}
-	rdsetroot ${BSD_RD} ${IMAGE}
-	strip -R .SUNW_ctf ${BSD_RD}
+bsd.rd: ${CBIN} ${IMAGE} bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd ${IMAGE}
+	strip -R .SUNW_ctf bsd.rd
 
 ${IMAGE}: ${CBIN}
 	rm -rf $@.d
@@ -87,7 +86,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
 	    lib*.a lib*.olist ${CBIN}.map \
-	    *.o *.lo *.c bsd ${BSD_RD} bsd.gz ${FLOPPY}
+	    *.o *.lo *.c bsd bsd.rd bsd.gz ${FLOPPY}
 	/bin/rm -rf ${IMAGE}.d
 
 .ifdef RELEASEDIR

@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.19 2019/04/14 14:07:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/04/28 15:15:40 deraadt Exp $
 
 REV=	${OSrev}
 
 TOP=		${.CURDIR}/..
 
-BSD_RD=		bsd.rd
 BSD_BIN=	bsd.bin
 IMAGE=		mr.fs
 CBIN?=		instbin
@@ -25,14 +24,14 @@ all ${IMAGE}:
 .else
 
 # mix config is not needed.
-all:	${BSD_RD} ${BSD_BIN}
+all:	bsd.rd ${BSD_BIN}
 
-${BSD_RD}: ${IMAGE} bsd
-	cp bsd ${BSD_RD}
-	rdsetroot ${BSD_RD} ${IMAGE}
+bsd.rd: ${IMAGE} bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd ${IMAGE}
 
-${BSD_BIN}: ${BSD_RD}
-	objcopy -O binary ${BSD_RD} ${BSD_BIN}
+${BSD_BIN}: bsd.rd
+	objcopy -O binary bsd.rd ${BSD_BIN}
 
 ${IMAGE}: ${CBIN}
 	rm -rf $@.d
@@ -62,12 +61,12 @@ ${CRUNCHCONF}: ${LISTS}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map *.o *.lo *.c bsd ${BSD_RD} cd${REV}.iso
+	    lib*.a lib*.olist ${CBIN}.map *.o *.lo *.c bsd bsd.rd cd${REV}.iso
 	rm -rf cd-dir ${IMAGE}.d
 
 .ifdef RELEASEDIR
 install:
-	cp ${BSD_RD} ${BSD_BIN} ${RELEASEDIR}
+	cp bsd.rd ${BSD_BIN} ${RELEASEDIR}
 .endif
 
 .include <bsd.obj.mk>

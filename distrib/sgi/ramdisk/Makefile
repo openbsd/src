@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.24 2019/04/05 21:08:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2019/04/28 15:15:39 deraadt Exp $
 
 REV=		${OSrev}
 
 TOP=		${.CURDIR}/..
 
-BSD_RD=		bsd.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=	${CBIN}.conf
@@ -28,7 +27,7 @@ ALLBSD=
 ALLBSDRD=
 .for IP in ${ALLIP}
 ALLBSD+=	bsd.IP${IP}
-ALLBSDRD+=	${BSD_RD}.IP${IP}
+ALLBSDRD+=	bsd.rd.IP${IP}
 all:	${ALLBSDRD}
 .endfor
 
@@ -40,9 +39,9 @@ bsd.IP${IP}:
 .endif
 	cp -p ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP}/obj/bsd bsd.IP${IP}
 
-${BSD_RD}.IP${IP}: ${IMAGE} bsd.IP${IP}
-	cp bsd.IP${IP} ${BSD_RD}.IP${IP}
-	rdsetroot ${BSD_RD}.IP${IP} ${IMAGE}
+bsd.rd.IP${IP}: ${IMAGE} bsd.IP${IP}
+	cp bsd.IP${IP} bsd.rd.IP${IP}
+	rdsetroot bsd.rd.IP${IP} ${IMAGE}
 .endfor
 
 ${IMAGE}: ${CBIN}
