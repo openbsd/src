@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.2 2019/04/25 18:05:03 deraadt Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.3 2019/04/28 14:46:00 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -59,10 +59,10 @@ e */
 #define VND_GETINFO	3
 
 int verbose = 0;
-int opt_A;
 
 __dead void	 usage(void);
-int		 config(char **, int, struct disklabel *, char *, size_t);
+int		 config(char *, char *, struct disklabel *, char *, size_t);
+int		 unconfig(char *);
 int		 getinfo(const char *, int *availp);
 char		*get_pkcs_key(char *, char *);
 
@@ -71,19 +71,17 @@ main(int argc, char **argv)
 {
 	int	 ch, rv, action, opt_k = 0, opt_K = 0, opt_l = 0, opt_u = 0;
 	char	*key = NULL, *rounds = NULL, *saltopt = NULL;
+	char	*file, *vnd;
 	size_t	 keylen = 0;
 	extern char *__progname;
 	struct disklabel *dp = NULL;
 
 	action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "AckK:lo:S:t:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "ckK:lo:S:t:uv")) != -1) {
 		switch (ch) {
 		case 'c':
-			/* backwards compat */
-			break;
-		case 'A':
-			opt_A = 1;
+			/* backwards compat: delete in 2020 */
 			break;
 		case 'k':
 			opt_k = 1;
@@ -129,9 +127,13 @@ main(int argc, char **argv)
 		errx(1, "-S only makes sense when used with -K");
 
 	if (action == VND_CONFIG) {
-		if (opt_A == 0 && argc != 2)
-			usage();
-		if (opt_A == 1 && argc != 1)
+		if (argc == 1) {
+			file = argv[0];
+			vnd = NULL;
+		} else if (argc == 2) {
+			vnd = argv[0];
+			file = argv[1];
+		} else
 			usage();
 
 		if (opt_k || opt_K)
@@ -146,9 +148,9 @@ main(int argc, char **argv)
 			key = get_pkcs_key(rounds, saltopt);
 			keylen = BLF_MAXUTILIZED;
 		}
-		rv = config(argv, action, dp, key, keylen);
+		rv = config(file, vnd, dp, key, keylen);
 	} else if (action == VND_UNCONFIG && argc == 1)
-		rv = config(argv, action, NULL, NULL, 0);
+		rv = unconfig(argv[0]);
 	else if (action == VND_GETINFO)
 		rv = getinfo(argc ? argv[0] : NULL, NULL);
 	else
@@ -280,22 +282,18 @@ end:
 }
 
 int
-config(char **argv, int action, struct disklabel *dp, char *key, size_t keylen)
+config(char *file, char *dev, struct disklabel *dp, char *key, size_t keylen)
 {
 	struct vnd_ioctl vndio;
-	char *rdev, *dev, *file;
+	char *rdev;
 	int fd, rv = -1;
 	int unit;
 
-	if (opt_A) {
+	if (dev == NULL) {
 		if (getinfo(NULL, &unit) == -1)
 			err(1, "no devices available");
 		printf("vnd%d\n", unit);
 		asprintf(&dev, "vnd%d", unit);
-		file = argv[0];
-	} else {
-		dev = argv[0];
-		file = argv[1];
 	}
 
 	if ((fd = opendev(dev, O_RDONLY, OPENDEV_PART, &rdev)) < 0) {
@@ -303,6 +301,7 @@ config(char **argv, int action, struct disklabel *dp, char *key, size_t keylen)
 		goto out;
 	}
 
+	memset(&vndio, 0, sizeof vndio);
 	vndio.vnd_file = file;
 	vndio.vnd_secsize = (dp && dp->d_secsize) ? dp->d_secsize : DEV_BSIZE;
 	vndio.vnd_nsectors = (dp && dp->d_nsectors) ? dp->d_nsectors : 100;
@@ -311,27 +310,14 @@ config(char **argv, int action, struct disklabel *dp, char *key, size_t keylen)
 	vndio.vnd_keylen = keylen;
 
 	/*
-	 * Clear (un-configure) the device
-	 */
-	if (action == VND_UNCONFIG) {
-		rv = ioctl(fd, VNDIOCCLR, &vndio);
-		if (rv)
-			warn("VNDIOCCLR");
-		else if (verbose)
-			fprintf(stderr, "%s: cleared\n", dev);
-	}
-	/*
 	 * Configure the device
 	 */
-	if (action == VND_CONFIG) {
-		rv = ioctl(fd, VNDIOCSET, &vndio);
-		if (rv)
-			warn("VNDIOCSET");
-		else if (verbose)
-			fprintf(stderr,
-			    "%s: %llu bytes on %s\n", dev, vndio.vnd_size,
-			    file);
-	}
+	rv = ioctl(fd, VNDIOCSET, &vndio);
+	if (rv)
+		warn("VNDIOCSET");
+	else if (verbose)
+		fprintf(stderr, "%s: %llu bytes on %s\n", dev, vndio.vnd_size,
+		    file);
 
 	close(fd);
 	fflush(stdout);
@@ -341,11 +327,42 @@ config(char **argv, int action, struct disklabel *dp, char *key, size_t keylen)
 	return (rv < 0);
 }
 
+int
+unconfig(char *vnd)
+{
+	struct vnd_ioctl vndio;
+	int fd, rv = -1, unit;
+	char *rdev;
+
+	if ((fd = opendev(vnd, O_RDONLY, OPENDEV_PART, &rdev)) < 0)
+		err(4, "%s", rdev);
+
+	memset(&vndio, 0, sizeof vndio);
+	vndio.vnd_file = vnd;
+
+	/*
+	 * Clear (un-configure) the device
+	 */
+	rv = ioctl(fd, VNDIOCCLR, &vndio);
+	if (rv)
+		warn("VNDIOCCLR");
+	else if (verbose)
+		fprintf(stderr, "%s: cleared\n", vnd);
+
+	close(fd);
+	fflush(stdout);
+	return (rv < 0);
+}
+
 __dead void
 usage(void)
 {
-	(void)fprintf(stderr,
-	    "usage: vnconfig [-Ackluv] [-K rounds] [-S saltfile] "
-	    "[-t disktype] vnd_dev image\n");
+	fprintf(stderr,
+	    "usage: vnconfig [-kv] [-K rounds] [-S saltfile] "
+	    "[-t disktype] [vnd_dev] image\n");
+	fprintf(stderr,
+	    "       vnconfig -l [vnd_dev]\n");
+	fprintf(stderr,
+	    "       vnconfig -u -[v] vnd_dev\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.4 2019/04/27 21:26:02 jmc Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.5 2019/04/28 14:46:00 deraadt Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,7 +49,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2019 $
+.Dd $Mdocdate: April 28 2019 $
 .Dt VNCONFIG 8
 .Os
 .Sh NAME
@@ -57,12 +57,19 @@
 .Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm vnconfig
-.Op Fl Akluv
+.Op Fl kv
 .Op Fl K Ar rounds
 .Op Fl S Ar saltfile
 .Op Fl t Ar disktype
-.Ar vnd_dev
+.Op Ar vnd_dev
 .Ar image
+.Nm vnconfig
+.Fl l
+.Op Ar vnd_dev
+.Nm vnconfig
+.Fl u
+.Op Fl v
+.Ar vnd_dev
 .Sh DESCRIPTION
 The
 .Nm vnconfig
@@ -72,15 +79,14 @@ It will associate (or disassociate) the special file
 with the regular file
 .Ar image ,
 allowing the latter to be accessed as though it were a disk.
+If
+.Ar vnd_dev
+is not specified, an unused one will be allocated and the name printed
+to
+.Va stdout .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl A
-Automatically allocate an unused device
-so that
-.Ar vnd_dev
-is not needed,
-and print its name on standard output.
 .It Fl K Ar rounds
 Associate an encryption key with the device.
 All data will be encrypted using the Blowfish cipher before it is
