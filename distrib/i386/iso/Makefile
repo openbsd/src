@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2019/04/28 14:48:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.17 2019/04/28 15:32:03 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -90,7 +90,7 @@ clean cleandir:
 	rm -rf cd-dir
 
 bsd.gz: bsd.rd
-	cp ${BSDRD} bsd.strip
+	cp bsd.rd bsd.strip
 	strip bsd.strip
 	strip -R .comment -R .SUNW_ctf bsd.strip
 	gzip -c9n bsd.strip > bsd.gz

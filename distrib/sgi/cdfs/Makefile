@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.17 2019/04/28 14:48:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/04/28 15:32:03 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-BSDRD=	bsd.rd
 CDROM=	cd${REV}.iso
 FFS=	ffs.img
 # must match the size of `minicdroot' in disktab
@@ -29,7 +28,7 @@ ${CDROM}:
 	mount /dev/`cat vnd`a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSrev}/sgi
 .for IP in ${ALLIP}
-	gzip -9f < ${.OBJDIR}/../ramdisk/${BSDRD}.IP${IP} > \
+	gzip -9f < ${.OBJDIR}/../ramdisk/bsd.rd.IP${IP} > \
 	    ${.OBJDIR}/cd-dir/bsd.IP${IP}
 	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/bsd.rd.IP${IP}
 	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.IP${IP}

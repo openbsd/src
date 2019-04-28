@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2019/04/28 15:21:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2019/04/28 15:32:03 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -25,9 +25,7 @@ all ${IMAGE}:
 	@false
 .else
 
-ALLBSD=		bsd
-ALLBSDRD=	bsd.rd
-all:	${ALLBSDRD}
+all:	bsd.rd
 
 bsd:
 	cd ${TOP}/../../sys/arch/arm64/compile/RAMDISK && \
@@ -64,14 +62,14 @@ ${CRUNCHCONF}: ${LISTS}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map *.o *.lo *.c ${ALLBSD} ${ALLBSDRD}
+	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd.rd
 	rm -f instbin.conf
 	rm -rf cd-dir ${IMAGE}.d
 
 .ifdef RELEASEDIR
 install:
-	cp ${ALLBSDRD} ${RELEASEDIR}
-	cd ${RELEASEDIR} && chmod a+r ${ALLBSDRD}
+	cp bsd.rd ${RELEASEDIR}
+	cd ${RELEASEDIR} && chmod a+r bsd.rd
 .endif	# RELEASEDIR
 
 .include <bsd.obj.mk>
