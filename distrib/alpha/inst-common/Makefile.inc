@@ -1,31 +1,30 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.16 2017/09/18 20:09:34 jasper Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2019/04/28 15:21:49 deraadt Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
 
-CBIN?=		instbin
 UTILS=		${TOP}/../miniroot
 
 LISTS?=		${.CURDIR}/../common/list
-CRUNCHCONF?=	${CBIN}.conf
+CRUNCHCONF?=	instbin.conf
 MTREE=		${UTILS}/mtree.conf
 STRIPOPTS?=	-R .eh_frame -R .SUNW_ctf -R .shstrtab
 
 ${CRUNCHCONF}: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+instbin.mk instbin.cache instbin.c: ${CRUNCHCONF}
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	strip ${STRIPOPTS} ${CBIN}
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+	strip ${STRIPOPTS} instbin
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
+	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
 	    *.o *.lo *.c \
-	    lib*.a lib*.olist ${CBIN}.map ${CLEANFILES}
+	    lib*.a lib*.olist instbin.map ${CLEANFILES}
 	/bin/rm -rf ${IMAGE}.d
 
 .include <bsd.obj.mk>

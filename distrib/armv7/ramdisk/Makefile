@@ -1,12 +1,11 @@
-#	$OpenBSD: Makefile,v 1.20 2019/04/28 15:15:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.21 2019/04/28 15:21:49 deraadt Exp $
 
 REV=	${OSrev}
 
 TOP=		${.CURDIR}/..
 
 IMAGE=		mr.fs
-CBIN?=		instbin
-CRUNCHCONF?=	${CBIN}.conf
+CRUNCHCONF?=	instbin.conf
 CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
 LISTS=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
@@ -43,7 +42,7 @@ bsd.rd: ${IMAGE} bsd
 	cp bsd bsd.rd
 	rdsetroot bsd.rd ${IMAGE}
 
-${IMAGE}: ${CBIN}
+${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 .for DIR in ${DIRS}
@@ -53,23 +52,23 @@ ${IMAGE}: ${CBIN}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/${CBIN}
+	rm $@.d/instbin
 	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 .endif
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+instbin.mk instbin.cache instbin.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 ${CRUNCHCONF}: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map *.o *.lo *.c ${ALLBSD} ${ALLBSDRD}
+	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map *.o *.lo *.c ${ALLBSD} ${ALLBSDRD}
 	rm -f instbin.conf
 	rm -rf cd-dir ${IMAGE}.d
 

@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.47 2019/04/28 14:48:10 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.48 2019/04/28 15:21:49 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
-CBIN?=		instbin
-CRUNCHCONF?=	${CBIN}.conf
+CRUNCHCONF?=	instbin.conf
 LISTS?=		${.CURDIR}/../common/list
 UTILS?=		${.CURDIR}/../../miniroot
 
@@ -65,14 +64,14 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
 	cp -p ${.CURDIR}/../../../sys/arch/i386/compile/${RAMDISK}/obj/bsd bsd
 
-${IMAGE}: ${CBIN}
+${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/${CBIN}
+	rm $@.d/instbin
 	makefs ${MAKEFSARGS_RD} $@ $@.d
 	vnconfig -v mr.fs > vnd
 	df -i /dev/`cat vnd`a
@@ -90,21 +89,21 @@ install:
 .endif
 .endif	# RELEASEDIR
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+instbin.mk instbin.cache instbin.c: ${CRUNCHCONF}
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
-	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
+	-c instbin.c -e instbin -m instbin.mk ${CRUNCHCONF}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	strip -R .comment -R .SUNW_ctf ${CBIN}
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+	strip -R .comment -R .SUNW_ctf instbin
 
 ${CRUNCHCONF}: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CRUNCHCONF}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > ${CRUNCHCONF}
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
+	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
-	    lib*.a lib*.olist ${CBIN}.map boot ${CRUNCHCONF} ${FS}
+	    lib*.a lib*.olist instbin.map boot ${CRUNCHCONF} ${FS}
 	/bin/rm -rf ${IMAGE}.d
 
 .include <bsd.obj.mk>

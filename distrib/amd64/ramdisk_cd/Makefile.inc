@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 2019/04/28 14:48:10 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 2019/04/28 15:21:49 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -104,7 +104,7 @@ instbin: instbin.mk instbin.cache instbin.c
 	strip -R .comment -R .SUNW_ctf instbin
 
 instbin.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=instbin ${LISTS} > instbin.conf
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
 clean cleandir:
 	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \

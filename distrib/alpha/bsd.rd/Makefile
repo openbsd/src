@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2019/04/28 14:48:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.34 2019/04/28 15:21:49 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -32,14 +32,14 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
 	cp -p ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISKBIG/obj/bsd bsd
 
-${IMAGE}: ${CBIN}
+${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/${CBIN}
+	rm $@.d/instbin
 	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 .ifdef RELEASEDIR

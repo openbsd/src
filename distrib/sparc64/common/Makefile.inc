@@ -1,11 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.19 2019/04/28 14:48:11 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 2019/04/28 15:21:50 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
-CBIN?=		instbin
-CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}.conf
+CRUNCHCONF?=    ${.CURDIR}/../common/instbin.conf
 LISTS?=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
 
@@ -43,9 +42,9 @@ NBLKS?=          3510
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -i 4096
 
-${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
+${IMAGE}: instbin rd_setup do_files rd_teardown
 
-rd_setup: ${CBIN}
+rd_setup: instbin
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
 	vnconfig -v ${IMAGE} > vnd
 	disklabel -w `cat vnd` ${DISKTYPE}
@@ -72,23 +71,23 @@ install:
 	cp ${FS} ${RELEASEDIR}
 .endif
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+instbin.mk instbin.cache instbin.c: ${CRUNCHCONF}
 	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib \
-	-c ${CBIN}.c -e ${CBIN} -m ${CBIN}.mk ${CRUNCHCONF}
+	-c instbin.c -e instbin -m instbin.mk ${CRUNCHCONF}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
-	rm ${MOUNT_POINT}/${CBIN}
+	rm ${MOUNT_POINT}/instbin
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}*.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
+	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin*.cache \
+	    lib*.a lib*.olist instbin.map \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs
 
 .include <bsd.subdir.mk>

@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.55 2019/04/28 14:48:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.56 2019/04/28 15:21:50 deraadt Exp $
 
 REV=		${OSrev}
 
-CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 
 .include <bsd.own.mk>
@@ -76,7 +75,7 @@ bsd.rd:	bsd ${IMAGE}
 bsd.gz:	bsd.rd
 	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
 
-${IMAGE}: ${CBIN}
+${IMAGE}: instbin
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig -v ${IMAGE} > vnd
 	disklabel -w $(cat vnd) ${DISKTYPE}
@@ -86,26 +85,26 @@ ${IMAGE}: ${CBIN}
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
-	rm ${MOUNT_POINT}/${CBIN}
+	rm ${MOUNT_POINT}/instbin
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 
-${CBIN}.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen ${CRUNCHGENOPTS} -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib \
-	    ${CBIN}.conf
+	    instbin.conf
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map ${CBIN}.conf *.o *.lo *.c bsd bsd.*
+	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map instbin.conf *.o *.lo *.c bsd bsd.*
 
 .endif	# DESTDIR check
 

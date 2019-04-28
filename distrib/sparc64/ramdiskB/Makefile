@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.34 2019/04/28 15:15:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.35 2019/04/28 15:21:50 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
-CBIN?=		instbin
 LISTS=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
 
@@ -48,19 +47,19 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-bsd.rd: ${CBIN} ${IMAGE} bsd
+bsd.rd: instbin ${IMAGE} bsd
 	cp bsd bsd.rd
 	rdsetroot bsd.rd ${IMAGE}
 	strip -R .SUNW_ctf bsd.rd
 
-${IMAGE}: ${CBIN}
+${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
-	rm $@.d/${CBIN}
+	rm $@.d/instbin
 	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 .endif
@@ -74,18 +73,18 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
-${CBIN}.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
+instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	    lib*.a lib*.olist ${CBIN}.map \
+	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz ${FLOPPY}
 	/bin/rm -rf ${IMAGE}.d
 
