@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.883 2019/04/26 11:38:51 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.884 2019/04/28 20:05:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,6 +37,7 @@
 extern char   **environ;
 
 struct args;
+struct args_value;
 struct client;
 struct cmd_find_state;
 struct cmdq_item;
@@ -1578,6 +1579,7 @@ struct spawn_context {
 	const char		 *name;
 	char			**argv;
 	int			  argc;
+	struct environ           *environ;
 
 	int			  idx;
 	const char		 *cwd;
@@ -1871,6 +1873,8 @@ void		 args_free(struct args *);
 char		*args_print(struct args *);
 int		 args_has(struct args *, u_char);
 const char	*args_get(struct args *, u_char);
+const char	*args_first_value(struct args *, u_char, struct args_value **);
+const char	*args_next_value(struct args_value **);
 long long	 args_strtonum(struct args *, u_char, long long, long long,
 		     char **);
 

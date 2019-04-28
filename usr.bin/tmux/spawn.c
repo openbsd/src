@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.1 2019/04/17 14:37:48 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.2 2019/04/28 20:05:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -293,6 +293,8 @@ spawn_pane(struct spawn_context *sc, char **cause)
 
 	/* Create an environment for this pane. */
 	child = environ_for_session(s, 0);
+	if (sc->environ != NULL)
+		environ_copy(sc->environ, child);
 	environ_set(child, "TMUX_PANE", "%%%u", new_wp->id);
 
 	/*
