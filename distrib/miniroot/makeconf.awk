@@ -1,4 +1,4 @@
-#	$OpenBSD: makeconf.awk,v 1.26 2019/04/28 15:21:50 deraadt Exp $
+#	$OpenBSD: makeconf.awk,v 1.27 2019/04/28 16:14:48 deraadt Exp $
 
 #
 # generate crunchgen(1) configuration file from `list' spec.
@@ -19,7 +19,7 @@ $1 == "SRCDIRS" {
 	print;
 }
 
-($1 == "LINK" || $1 == "SYMLINK") && index($2,instbin) {
+($1 == "LINK" || $1 == "SYMLINK") && $2 == "instbin" {
 	# find basenames for inclusion in crunchgen's `prog' and `ln' directives
 	n = split($3, x, "/");
 	p = x[n];
