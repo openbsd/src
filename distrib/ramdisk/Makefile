@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2019/04/28 15:21:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.57 2019/04/28 15:23:50 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -14,7 +14,6 @@ MOUNT_POINT?=	/mnt
 DISKTYPE=	rdroot
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
-NEWFS_WILL_FAIL?=false
 CRUNCHGENOPTS?=-E
 UTILS?=		${.CURDIR}/../miniroot
 
@@ -79,7 +78,7 @@ ${IMAGE}: instbin
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig -v ${IMAGE} > vnd
 	disklabel -w $(cat vnd) ${DISKTYPE}
-	newfs ${NEWFSOPTS_RD} /dev/r$(cat vnd)a || ${NEWFS_WILL_FAIL}
+	newfs ${NEWFSOPTS_RD} /dev/r$(cat vnd)a
 	mount /dev/$(cat vnd)a ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
