@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.19 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: a_enum.c,v 1.20 2019/04/28 05:05:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/asn1.h>
@@ -107,7 +108,7 @@ long
 ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
 {
 	int neg = 0, i;
-	long r = 0;
+	unsigned long r = 0;
 
 	if (a == NULL)
 		return (0L);
@@ -128,9 +129,13 @@ ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
 		r <<= 8;
 		r |= (unsigned char)a->data[i];
 	}
+
+	if (r > LONG_MAX)
+		return -1;
+
 	if (neg)
-		r = -r;
-	return (r);
+		return -(long)r;
+	return (long)r;
 }
 
 ASN1_ENUMERATED *
