@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.71 2019/04/23 10:53:45 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.72 2019/04/28 22:15:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -711,7 +711,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 
 #if NBRIDGE > 0
 	/* Store the tunnel src/dst IP and vni for the bridge or switch */
-	if ((ifp->if_bridgeport != NULL || ifp->if_switchport != NULL) &&
+	if ((ifp->if_bridgeidx != 0 || ifp->if_switchport != NULL) &&
 	    srcsa->sa_family != AF_UNSPEC &&
 	    ((brtag = bridge_tunneltag(m)) != NULL)) {
 		memcpy(&brtag->brtag_peer.sa, srcsa, srcsa->sa_len);

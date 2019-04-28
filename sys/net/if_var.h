@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.98 2019/04/22 03:26:16 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.99 2019/04/28 22:15:57 mpi Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -131,8 +131,8 @@ struct ifnet {				/* and the entries */
 	void	(*if_rtrequest)(struct ifnet *, int, struct rtentry *);
 	char	if_xname[IFNAMSIZ];	/* [I] external name (name + unit) */
 	int	if_pcount;		/* [k] # of promiscuous listeners */
+	unsigned int if_bridgeidx;	/* [k] used by bridge ports */
 	caddr_t	if_bpf;			/* packet filter structure */
-	caddr_t if_bridgeport;		/* used by bridge ports */
 	caddr_t if_switchport;		/* used by switch ports */
 	caddr_t if_mcast;		/* used by multicast code */
 	caddr_t if_mcast6;		/* used by IPv6 multicast code */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.63 2019/03/08 17:48:35 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.64 2019/04/28 22:15:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -424,10 +424,6 @@ struct bridge_iflist {
 };
 #define bif_state			bif_stp->bp_state
 
-#define SAME_BRIDGE(_bp1, _bp2)						\
-	(_bp1 && _bp2 && ((struct bridge_iflist *)_bp1)->bridge_sc ==	\
-	    ((struct bridge_iflist *)_bp2)->bridge_sc)
-
 /*
  * XXX ip_ipsp.h's sockaddr_union should be converted to sockaddr *
  * passing with correct sa_len, then a good approach for cleaning this
@@ -453,7 +449,7 @@ struct bridge_tunneltag {
  */
 struct bridge_rtnode {
 	LIST_ENTRY(bridge_rtnode)	brt_next;	/* next in list */
-	struct ifnet			*brt_if;	/* destination ifs */
+	unsigned int			brt_ifidx;	/* destination ifs */
 	u_int8_t			brt_flags;	/* address flags */
 	u_int8_t			brt_age;	/* age counter */
 	struct ether_addr		brt_addr;	/* dst addr */
@@ -470,6 +466,7 @@ struct bridge_rtnode {
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
  *	m	per-softc mutex
+ *	k	kernel lock
  */
 /*
  * Software state for each bridge
@@ -482,8 +479,8 @@ struct bridge_softc {
 	uint64_t			sc_hashkey[2];	/* [I] siphash key */
 	struct timeout			sc_brtimeout;	/* timeout state */
 	struct bstp_state		*sc_stp;	/* stp state */
-	SLIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
-	SLIST_HEAD(, bridge_iflist)	sc_spanlist;	/* span ports */
+	SLIST_HEAD(, bridge_iflist)	sc_iflist;	/* [k] interface list */
+	SLIST_HEAD(, bridge_iflist)	sc_spanlist;	/* [k] span ports */
 	struct mutex			sc_mtx;		/* mutex */
 	LIST_HEAD(, bridge_rtnode)	sc_rts[BRIDGE_RTABLE_SIZE];	/* [m] hash table */
 };
@@ -491,8 +488,7 @@ struct bridge_softc {
 extern const u_int8_t bstp_etheraddr[];
 struct llc;
 
-int	bridge_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-    struct rtentry *);
+int	bridge_enqueue(struct ifnet *, struct mbuf *);
 void	bridge_update(struct ifnet *, struct ether_addr *, int);
 void	bridge_rtdelete(struct bridge_softc *, struct ifnet *, int);
 void	bridge_rtagenode(struct ifnet *, int);
@@ -517,8 +513,8 @@ void	bstp_ifsflags(struct bstp_port *, u_int);
 
 int	bridgectl_ioctl(struct ifnet *, u_long, caddr_t);
 int	bridge_rtupdate(struct bridge_softc *,
-    struct ether_addr *, struct ifnet *ifp, int, u_int8_t, struct mbuf *);
-struct ifnet *bridge_rtlookup(struct bridge_softc *,
+    struct ether_addr *, struct ifnet *, int, u_int8_t, struct mbuf *);
+unsigned int bridge_rtlookup(struct ifnet *,
     struct ether_addr *, struct mbuf *);
 void	bridge_rtflush(struct bridge_softc *, int);
 void	bridge_rtage(void *);
@@ -529,6 +525,7 @@ void	bridge_flushrule(struct bridge_iflist *);
 
 void	bridge_fragment(struct ifnet *, struct ifnet *, struct ether_header *,
     struct mbuf *);
+struct bridge_iflist *bridge_getbif(struct ifnet *);
 
 #endif /* _KERNEL */
 #endif /* _NET_IF_BRIDGE_H_ */

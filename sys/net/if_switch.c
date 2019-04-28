@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.25 2018/12/28 14:32:47 bluhm Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.26 2019/04/28 22:15:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -492,7 +492,7 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 	if ((ifs = ifunit(req->ifbr_ifsname)) == NULL)
 		return (ENOENT);
 
-	if (ifs->if_bridgeport != NULL)
+	if (ifs->if_bridgeidx != 0)
 		return (EBUSY);
 
 	if (ifs->if_switchport != NULL) {

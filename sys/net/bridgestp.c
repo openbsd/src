@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.68 2019/03/31 13:56:25 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.69 2019/04/28 22:15:57 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1616,7 +1616,7 @@ bstp_ifstate(void *arg)
 		return;
 
 	s = splnet();
-	if ((bif = (struct bridge_iflist *)ifp->if_bridgeport) == NULL)
+	if ((bif = bridge_getbif(ifp)) == NULL)
 		goto done;
 	if ((bif->bif_flags & IFBIF_STP) == 0)
 		goto done;
@@ -2092,8 +2092,7 @@ bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			err = ENOENT;
 			break;
 		}
-		bif = (struct bridge_iflist *)ifs->if_bridgeport;
-		if (bif == NULL || bif->bridge_sc != sc) {
+		if (ifs->if_bridgeidx != ifp->if_index) {
 			err = ESRCH;
 			break;
 		}

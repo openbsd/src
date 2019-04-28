@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.242 2019/04/23 11:01:54 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.243 2019/04/28 22:15:58 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2708,7 +2708,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv6) ||
 		    ip6->ip6_nxt != IPPROTO_TCP ||
-		    ifp->if_bridgeport != NULL) {
+		    ifp->if_bridgeidx != 0) {
 			tcpstat_inc(tcps_outswcsum);
 			in6_delayed_cksum(m, IPPROTO_TCP);
 			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
@@ -2716,7 +2716,7 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
 		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv6) ||
 		    ip6->ip6_nxt != IPPROTO_UDP ||
-		    ifp->if_bridgeport != NULL) {
+		    ifp->if_bridgeidx != 0) {
 			udpstat_inc(udps_outswcsum);
 			in6_delayed_cksum(m, IPPROTO_UDP);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
