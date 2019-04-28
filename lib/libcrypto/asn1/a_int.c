@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.33 2019/03/26 09:15:07 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.34 2019/04/28 05:03:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -418,7 +418,7 @@ long
 ASN1_INTEGER_get(const ASN1_INTEGER *a)
 {
 	int neg = 0, i;
-	long r = 0;
+	unsigned long r = 0;
 
 	if (a == NULL)
 		return (0L);
@@ -442,9 +442,13 @@ ASN1_INTEGER_get(const ASN1_INTEGER *a)
 		r <<= 8;
 		r |= (unsigned char)a->data[i];
 	}
+
+	if (r > LONG_MAX)
+		return -1;
+
 	if (neg)
-		r = -r;
-	return (r);
+		return -(long)r;
+	return (long)r;
 }
 
 ASN1_INTEGER *
