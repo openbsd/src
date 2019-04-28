@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.69 2016/09/17 15:03:39 florian Exp $
+#	$OpenBSD: list,v 1.70 2019/04/28 22:49:11 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -65,8 +65,8 @@ COPY	${CURDIR}/../miniroot/protocols		etc/protocols
 COPY	${CURDIR}/../miniroot/services		etc/services
 
 # and the installation scripts
-SCRIPT	${CURDIR}/dot.profile			.profile
-SCRIPT	${CURDIR}/install.sub			install.sub
+SCRIPT	${CURDIR}/../miniroot/dot.profile	.profile
+SCRIPT	${CURDIR}/../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install.sub
 SYMLINK	install.sub				autoinstall
 SYMLINK	install.sub				install
