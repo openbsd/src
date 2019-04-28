@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2019/03/17 16:32:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2019/04/28 14:48:11 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -49,31 +49,32 @@ ${CDROM}:
 
 	# Create the 512 byte sector volume header
 
-	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
+	vnconfig -v ${CDROM} > vnd
 
-	/usr/mdec/sgivol -qi -h `expr ${SGIVOLSZ} \* 4` vnd0
+	/usr/mdec/sgivol -qi -h `expr ${SGIVOLSZ} \* 4` `cat vnd`
 	uudecode -o ${.OBJDIR}/xfs512.bin.gz \
 	    ${.CURDIR}/../cdfs/xfs512.bin.gz.uue
 	gzip -d ${.OBJDIR}/xfs512.bin.gz
 	cat ${DESTDIR}/usr/mdec/boot64 >> ${.OBJDIR}/xfs512.bin
 	dd if=${.OBJDIR}/xfs512.bin of=${.OBJDIR}/xfs obs=16m conv=osync
-	/usr/mdec/sgivol -qw xfsboot ${.OBJDIR}/xfs vnd0
-	/usr/mdec/sgivol -qw bootecof ${DESTDIR}/usr/mdec/bootecoff vnd0
-	/usr/mdec/sgivol -ql bootecof sash vnd0
-	/usr/mdec/sgivol -qw boot32 ${DESTDIR}/usr/mdec/boot32 vnd0
-	/usr/mdec/sgivol -ql boot32 sashARCS vnd0
-	/usr/mdec/sgivol -qw boot64 ${DESTDIR}/usr/mdec/boot64 vnd0
-	/usr/mdec/sgivol -ql boot64 sash64 vnd0
+	/usr/mdec/sgivol -qw xfsboot ${.OBJDIR}/xfs `cat vnd`
+	/usr/mdec/sgivol -qw bootecof ${DESTDIR}/usr/mdec/bootecoff `cat vnd`
+	/usr/mdec/sgivol -ql bootecof sash `cat vnd`
+	/usr/mdec/sgivol -qw boot32 ${DESTDIR}/usr/mdec/boot32 `cat vnd`
+	/usr/mdec/sgivol -ql boot32 sashARCS `cat vnd`
+	/usr/mdec/sgivol -qw boot64 ${DESTDIR}/usr/mdec/boot64 `cat vnd`
+	/usr/mdec/sgivol -ql boot64 sash64 `cat vnd`
 
-	vnconfig -u vnd0
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 	# Create the 2048 byte sector media with the FFS partition
 
-	vnconfig -v -c -t cdroot vnd0 ${.OBJDIR}/${CDROM}
+	vnconfig -v -t cdroot ${CDROM} > vnd
 
-	disklabel -w vnd0 cdroot "OpenBSD/sgi     "
-	newfs /dev/rvnd0a
-	mount /dev/vnd0a ${.OBJDIR}/cd-dir
+	disklabel -w `cat vnd` cdroot "OpenBSD/sgi     "
+	newfs /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	cp ${DESTDIR}/usr/mdec/bootecoff ${.OBJDIR}/cd-dir/bootecoff
@@ -102,18 +103,18 @@ ${CDROM}:
 	umount ${.OBJDIR}/cd-dir
 
 	# Summary
-	disklabel vnd0
-	/usr/mdec/sgivol vnd0
+	disklabel `cat vnd`
+	/usr/mdec/sgivol `cat vnd`
 
-	vnconfig -u vnd0
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 install:
 	cp ${CDROM} ${RELDIR}/
 
 unconfig:
-	-umount /mnt
-	-umount ${.OBJDIR}/cd-dir
-	-vnconfig -u vnd0
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 clean cleandir:
 	/bin/rm -f ${CDROM} xfs512.bin xfs

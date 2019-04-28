@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2019/04/14 14:07:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 2019/04/28 14:48:08 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -7,8 +7,6 @@ IMAGE=		ramdisk${REV}.fs
 
 STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
 GZIPFLAGS?=	-9fn
-
-RAMDISK=	RAMDISKBIG
 
 .include "${TOP}/inst-common/Makefile.inc"
 
@@ -30,9 +28,9 @@ bsd.rd_unz: bsd ${IMAGE}
 	strip -R .SUNW_ctf -R .shstrtab bsd.rd_unz
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/alpha/compile/${RAMDISK} && \
+	cd ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISKBIG && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/alpha/compile/${RAMDISK}/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISKBIG/obj/bsd bsd
 
 ${IMAGE}: ${CBIN}
 	rm -rf $@.d

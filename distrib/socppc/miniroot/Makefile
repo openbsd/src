@@ -6,20 +6,10 @@ IMAGE=	miniroot${REV}.fs
 
 MOUNT_POINT=	/mnt
 
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_IDEV=	/dev/${VND}i
-VND_IRDEV=	/dev/r${VND}i
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
-
 DISKTYPE=       miniroot
 NBLKS=		8064
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -i 4096
-
 
 .ifndef DESTDIR
 all ${IMAGE}:
@@ -33,28 +23,27 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	dd if=${DESTDIR}/usr/mdec/boot.elf of=${VND_IRDEV} conv=osync
+	dd if=${DESTDIR}/usr/mdec/boot.elf of=/dev/r`cat vnd`i conv=osync
 	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c -t ${DISKTYPE} ${VND} ${IMAGE}
-	fdisk -i -y ${VND}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	fsck ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	vnconfig -v -t ${DISKTYPE} ${IMAGE} > vnd
+	fdisk -i -y `cat vnd`
+	disklabel -w `cat vnd` ${DISKTYPE}
+	newfs ${NEWFSARGS} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .PRECIOUS:	${IMAGE}
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2014/09/21 13:44:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2019/04/28 14:48:09 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -7,6 +7,7 @@ TOP=	${.CURDIR}/..
 CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
+MOUNT_POINT=	/mnt
 
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/game${OSrev}.tgz ${RELDIR}/man${OSrev}.tgz \
@@ -41,14 +42,15 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
-	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
-	mount -t cd9660 /dev/vnd0a /mnt
+	vnconfig -v ${CDROM} > vnd
+	mount -t cd9660 /dev/`cat vnd`a ${MOUNT_POINT}
 	/usr/mdec/installboot -v \
 	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
 	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
-	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rvnd0c
-	umount /mnt
-	vnconfig -u vnd0
+	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx `cat vnd`
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 install:
 	cp ${CDROM} ${RELDIR}/
@@ -58,8 +60,8 @@ clean cleandir:
 	rm -rf cd-dir log
 
 unconfig:
-	-umount /mnt
-	-vnconfig -u vnd0
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

@@ -6,12 +6,6 @@ IMAGE=	miniroot${REV}.fs
 
 MOUNT_POINT=	/mnt
 
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
-
 DISKTYPE=       miniroot2.5M
 #NBLKS=		8192
 NBLKS=		5120
@@ -31,29 +25,29 @@ ${IMAGE}: rd_setup do_files rd_teardown
 .endif
 
 do_files:
-	installboot -vr ${MOUNT_POINT} ${VND} \
+	installboot -vr ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/boot
 	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c -t ${DISKTYPE} ${VND} ${IMAGE}
-	fdisk -i -y ${VND}
-	fdisk -u -y -f ${DESTDIR}/usr/mdec/mbr ${VND}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	vnconfig -v -t ${DISKTYPE} ${IMAGE} > vnd
+	fdisk -i -y `cat vnd`
+	fdisk -u -y -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
+	disklabel -w `cat vnd` ${DISKTYPE}
+	newfs ${NEWFSARGS} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .PRECIOUS:	${IMAGE}
 

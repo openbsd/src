@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2019/04/05 21:08:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.37 2019/04/28 14:48:10 deraadt Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -12,7 +12,7 @@ SRCDIR=		${.CURDIR}/../../..
 
 IMAGE?=		ramdisk${REV}.fs
 CRUNCHGENOPTS?=-E
-KERNEL?=	RAMDISK
+RAMDISK?=	RAMDISK
 UTILS?=		${.CURDIR}/../../miniroot
 
 LISTS=		${ARCHDIR}/list ${.CURDIR}/list.local
@@ -48,9 +48,9 @@ ${CDROM}: bsd ${CDBOOT}
 	dd if=/dev/zero bs=64k count=1 >> ${.OBJDIR}/${CDROM}
 
 obsd:
-	cd ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL} && \
+	cd ${SRCDIR}/sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${SRCDIR}/sys/arch/${MACHINE}/compile/${KERNEL}/obj/bsd obsd
+	cp -p ${SRCDIR}/sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd obsd
 
 bsd.rd:	obsd ${IMAGE}
 	cp obsd bsd.rd
@@ -69,9 +69,10 @@ ${IMAGE}: ${CBIN}
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/${CBIN}
 	makefs ${MAKEFSARGS_RD} $@ $@.d
-	vnconfig -v -c vnd0 $@
-	df -i /dev/vnd0a
-	vnconfig -u vnd0
+	vnconfig -v ${IMAGE} > vnd
+	df -i /dev/`cat vnd`a
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf

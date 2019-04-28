@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.54 2019/04/14 14:07:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.55 2019/04/28 14:48:10 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -12,17 +12,11 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 .endif
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
 DISKTYPE=	rdroot
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
 CRUNCHGENOPTS?=-E
-KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../miniroot
 
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list.local
@@ -55,25 +49,24 @@ all:	bsd.rd
 .endif
 
 ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
-	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${FLOPPYTYPE}
-	newfs ${NEWFSOPTS_FD} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	dd if=/dev/zero of=${FLOPPY} count=${FLOPPYSIZE}
+	vnconfig -v ${FLOPPY} > vnd
+	disklabel -w $(cat vnd) ${FLOPPYTYPE}
+	newfs ${NEWFSOPTS_FD} /dev/r$(cat vnd)a
+	mount /dev/$(cat vnd)a ${MOUNT_POINT}
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	${INSTALLBOOT} -v -r ${MOUNT_POINT} ${VND} ${BOOTXX} ${BOOT}
+	${INSTALLBOOT} -v -r ${MOUNT_POINT} $(cat vnd) ${BOOTXX} ${BOOT}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYSIZE}
-	rm -f ${REALIMAGE}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 bsd:
-	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL} && \
+	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
-	cp -p ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${KERNEL}/obj/bsd bsd
+	cp -p ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 bsd.rd:	bsd ${IMAGE}
 	cp bsd bsd.rd
@@ -84,11 +77,11 @@ bsd.gz:	bsd.rd
 	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
 
 ${IMAGE}: ${CBIN}
-	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSOPTS_RD} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
+	vnconfig -v ${IMAGE} > vnd
+	disklabel -w $(cat vnd) ${DISKTYPE}
+	newfs ${NEWFSOPTS_RD} /dev/r$(cat vnd)a || ${NEWFS_WILL_FAIL}
+	mount /dev/$(cat vnd)a ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
@@ -98,9 +91,7 @@ ${IMAGE}: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV}
-	cp ${REALIMAGE} ${IMAGE}
-	rm ${REALIMAGE}
+	vnconfig -u `cat vnd`
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -129,8 +120,7 @@ beforeinstall:
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${REALIMAGE}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

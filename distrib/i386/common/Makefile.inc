@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.46 2019/04/14 14:07:07 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.47 2019/04/28 14:48:10 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -14,12 +14,6 @@ MTREE=		${UTILS}/mtree.conf
 
 XNAME?=		floppy
 FS?=		${XNAME}${REV}.fs
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 BOOT?=		${DESTDIR}/usr/mdec/boot
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy3
@@ -27,31 +21,30 @@ FLOPPYTYPE?=	floppy3
 all:	${FS}
 
 ${FS}:	bsd.gz
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FLOPPYSIZE}
-	vnconfig -v -c ${VND} ${REALIMAGE}
+	dd if=/dev/zero of=${FS} bs=512 count=${FLOPPYSIZE}
+	vnconfig -v ${FS} > vnd
 .ifdef LBA
-	fdisk -yi -l ${FLOPPYSIZE} -f ${DESTDIR}/usr/mdec/mbr ${VND}
+	fdisk -yi -l ${FLOPPYSIZE} -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
 .endif
-	disklabel -w ${VND} ${FLOPPYTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	disklabel -w `cat vnd` ${FLOPPYTYPE}
+	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp ${BOOT} ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
 	strip -R .comment -R .SUNW_ctf ${.OBJDIR}/boot
-	installboot -v -r ${MOUNT_POINT} ${VND_CRDEV} \
+	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	cp ${REALIMAGE} ${FS}
-	rm ${REALIMAGE}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 
 DISKTYPE?=	rdroot
@@ -81,9 +74,10 @@ ${IMAGE}: ${CBIN}
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/${CBIN}
 	makefs ${MAKEFSARGS_RD} $@ $@.d
-	vnconfig -v -c ${VND} mr.fs
-	df -i /dev/${VND}a
-	vnconfig -u ${VND}
+	vnconfig -v mr.fs > vnd
+	df -i /dev/`cat vnd`a
+	vnconfig -u `cat vnd`
+	-rm -f vnd
 
 .ifdef RELEASEDIR
 install:

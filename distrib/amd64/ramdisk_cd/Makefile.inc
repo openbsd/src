@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2019/04/14 14:07:07 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2019/04/28 14:48:10 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -10,14 +10,6 @@ MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
 FS?=		miniroot${REV}.fs
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-VND_IDEV=	/dev/${VND}i
-VND_IRDEV=	/dev/r${VND}i
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 BOOT?=		${DESTDIR}/usr/mdec/boot
 EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
 FLOPPYSIZE?=	2880
@@ -26,41 +18,39 @@ FLOPPYTYPE?=	floppy3
 all:	${FS}
 
 ${FS}:	bsd.gz
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${FLOPPYSIZE}
-	vnconfig -v -c ${VND} ${REALIMAGE}
+	dd if=/dev/zero of=${FS} bs=512 count=${FLOPPYSIZE}
+	vnconfig -v ${FS} > vnd
 .ifdef LBA
-	fdisk -yi -l ${FLOPPYSIZE} -b 960 -f ${DESTDIR}/usr/mdec/mbr ${VND}
+	fdisk -yi -l ${FLOPPYSIZE} -b 960 -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
 .endif
 .ifdef TEMPLATE
-	disklabel -wAT ${TEMPLATE} ${VND}
-	newfs -t msdos ${VND_IRDEV}
-	mount ${VND_IDEV} ${MOUNT_POINT}
+	disklabel -wAT ${TEMPLATE} `cat vnd`
+	newfs -t msdos /dev/r`cat vnd`i
+	mount /dev/`cat vnd`i ${MOUNT_POINT}
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp ${EFIBOOT} ${MOUNT_POINT}/efi/boot
 	umount ${MOUNT_POINT}
 .else
-	disklabel -w ${VND} ${FLOPPYTYPE}
+	disklabel -w `cat vnd` ${FLOPPYTYPE}
 .endif
-	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp ${BOOT} ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
 	strip -R .comment -R .SUNW_ctf ${.OBJDIR}/boot
-	installboot -v -r ${MOUNT_POINT} ${VND_CRDEV} \
+	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	cp ${REALIMAGE} ${FS}
-	rm ${REALIMAGE}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 DISKTYPE?=	rdroot
 MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
@@ -89,9 +79,10 @@ mr.fs: instbin
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
 	makefs ${MAKEFSARGS_RD} $@ $@.d
-	vnconfig -v -c ${VND} mr.fs
-	df -i /dev/${VND}a
-	vnconfig -u ${VND}
+	vnconfig -v mr.fs > vnd
+	df -i /dev/`cat vnd`a
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 .ifdef RELEASEDIR
 install:

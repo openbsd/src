@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.8 2011/04/18 16:52:09 thib Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/04/28 14:48:09 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 CDROM=		cd${OSrev}.iso
+MOUNT_POINT=	/mnt
 
 all: ${CDROM}
 
@@ -27,14 +28,15 @@ ${CDROM}:
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/${MACHINE}   ${OSREV} boot-only CD" \
 	    ${.OBJDIR}/cd-dir 2>&1) | tee log
-	vnconfig -v -c vnd0 ${.OBJDIR}/${CDROM}
-	mount -t cd9660 /dev/vnd0a /mnt
+	vnconfig -v ${CDROM} > vnd
+	mount -t cd9660 /dev/`cat vnd`a ${MOUNT_POINT}
 	/usr/mdec/installboot -v \
 	    -s `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f1` \
 	    -e `cat log | grep -v 'Name' | egrep "/cd-dir/${OSREV}/${MACHINE}/boot$$" | cut -d' ' -f2` \
-	    /mnt/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx /dev/rvnd0c
-	umount /mnt
-	vnconfig -u vnd0
+	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/boot /usr/mdec/bootxx `cat vnd`
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 .ifdef RELEASEDIR
 install:
@@ -46,8 +48,8 @@ clean cleandir:
 	rm -rf cd-dir log
 
 unconfig:
-	-umount /mnt
-	-vnconfig -u vnd0
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

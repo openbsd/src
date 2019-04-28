@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2019/04/05 21:08:01 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2019/04/28 14:48:11 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -14,12 +14,6 @@ MTREE=		${UTILS}/mtree.conf
 
 XNAME?=		floppy
 FS?=		${XNAME}${REV}.fs
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 LISTFLOPPY?=	${.CURDIR}/../common/list_floppy
 FLOPPYSIZE?=	144
 FLOPPYSECS?=	18
@@ -28,22 +22,21 @@ FLOPPYTYPE?=	floppy3
 all:	${FS}
 
 ${FS}:	bsd.rd
-	dd if=/dev/zero of=${REALIMAGE} bs=10k count=${FLOPPYSIZE}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${FLOPPYTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	dd if=/dev/zero of=${FS} bs=10k count=${FLOPPYSIZE}
+	vnconfig -v ${FS} > vnd
+	disklabel -w `cat vnd` ${FLOPPYTYPE}
+	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTFLOPPY}
-	installboot -v ${VND}
+	installboot -v `cat vnd`
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	cp ${REALIMAGE} ${FS}
-	rm ${REALIMAGE}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 DISKTYPE?=       rdroot
 NBLKS?=          3510
@@ -53,24 +46,20 @@ NEWFSARGS= -m 0 -o space -i 4096
 ${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
 rd_setup: ${CBIN}
-	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV}
-	fsck ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
+	vnconfig -v ${IMAGE} > vnd
+	disklabel -w `cat vnd` ${DISKTYPE}
+	newfs ${NEWFSARGS} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	cp ${REALIMAGE} ${IMAGE}
-	rm ${REALIMAGE}
+	-vnconfig -u `cat vnd`
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .PRECIOUS:	${IMAGE}
 

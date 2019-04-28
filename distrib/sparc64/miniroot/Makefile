@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.8 2015/03/12 21:41:56 naddy Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/04/28 14:48:11 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-TARGET=miniroot${REV}.fs
+TARGET=		miniroot${REV}.fs
+MOUNT_POINT=	/mnt
 
 .ifndef DESTDIR
 all ${TARGET}:
@@ -17,30 +18,31 @@ all: ${TARGET}
 ${TARGET}: vn_up install_files installboot showit vn_down
 
 vn_up: blank_filesystem
-	vnconfig vnd0 ${TARGET}
-	disklabel -w vnd0 fakeramdisk
-	newfs -m 0 /dev/rvnd0a
-	mount /dev/vnd0a /mnt
+	vnconfig -v ${TARGET} > vnd
+	disklabel -w `cat vnd` fakeramdisk
+	newfs -m 0 /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 
 showit:
-	df -ki /mnt
+	df -ki ${MOUNT_POINT}
 
 vn_down:
-	-umount /mnt
-	-vnconfig -u vnd0
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 install_files: bsd.rd ofwboot
 
 bsd.rd:
 	install -c -m 555 -o root -g wheel \
-	    ${.OBJDIR}/../bsd.rd/bsd.rd /mnt/bsd
+	    ${.OBJDIR}/../bsd.rd/bsd.rd ${MOUNT_POINT}/bsd
 
 ofwboot:
 	install -c -m 555 -o root -g wheel \
-	    ${DESTDIR}/usr/mdec/ofwbootfd /mnt/ofwboot
+	    ${DESTDIR}/usr/mdec/ofwbootfd ${MOUNT_POINT}/ofwboot
 
 installboot:
-	installboot -v vnd0
+	installboot -v `cat vnd`
 
 blank_filesystem:
 	dd if=/dev/zero of=${TARGET} bs=512 count=5760
@@ -48,8 +50,8 @@ blank_filesystem:
 .endif
 
 unconfig:
-	-umount -f /mnt
-	-vnconfig -u /dev/vnd0a
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .ifdef RELEASEDIR
 install:

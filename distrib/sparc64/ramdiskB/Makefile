@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2019/04/14 14:07:08 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 2019/04/28 14:48:11 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -16,15 +16,7 @@ FLOPPY=		floppyB${REV}.fs
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy
 
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-
 GZIPFLAGS?=	-9nv
-
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
-KERNEL?=	RAMDISKU5
 
 DISKTYPE=	rdroot
 MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=8192
@@ -42,21 +34,20 @@ bsd.gz:	bsd.rd
 	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
 
 ${FLOPPY}:	bsd.gz ${BOOT} /usr/
-	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${FLOPPYTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	dd if=/dev/zero of=${FLOPPY} count=${FLOPPYSIZE}
+	vnconfig -v ${FLOPPY} > vnd
+	disklabel -w `cat vnd` ${FLOPPYTYPE}
+	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp ${DESTDIR}/usr/mdec/ofwbootfd ${MOUNT_POINT}/ofwboot
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	installboot -v ${VND} /usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
+	installboot -v `cat vnd` /usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYSIZE}
-	rm -f ${REALIMAGE}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd
 	cp bsd ${BSD_RD}
@@ -76,13 +67,13 @@ ${IMAGE}: ${CBIN}
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/sparc64/compile/${KERNEL} && \
+	cd ${TOP}/../../sys/arch/sparc64/compile/RAMDISKU5 && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
-	cp -p ${TOP}/../../sys/arch/sparc64/compile/${KERNEL}/obj/bsd bsd
+	cp -p ${TOP}/../../sys/arch/sparc64/compile/RAMDISKU5/obj/bsd bsd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf

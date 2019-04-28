@@ -1,63 +1,66 @@
-#	$OpenBSD: Makefile,v 1.3 2015/09/19 10:44:43 miod Exp $
+#	$OpenBSD: Makefile,v 1.4 2019/04/28 14:48:09 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-TARGET=miniroot${REV}.fs
+FS=		miniroot${REV}.fs
+MOUNT_POINT=	/mnt
 
 .ifndef DESTDIR
-all ${TARGET}:
+all ${FS}:
 	@echo setenv DESTDIR before making a ramdisk!
 	@false
 .else
 
-all: ${TARGET}
+all: ${FS}
 
-${TARGET}: vn_up install_files installboot showit vn_down
+${FS}: vn_up install_files installboot showit vn_down
 
 vn_up: blank_filesystem
-	vnconfig vnd0 ${TARGET}
-	disklabel -w vnd0 fakeramdisk
-	newfs -m 0 /dev/rvnd0a
-	mount /dev/vnd0a /mnt
+	vnconfig -v ${FS} > vnd
+	disklabel -w `cat vnd` fakeramdisk
+	newfs -m 0 /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 
 showit:
-	df -ki /mnt
+	df -ki ${MOUNT_POINT}
 
 vn_down:
-	-umount /mnt
-	-vnconfig -u vnd0
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 install_files: bsd.rd boot
 
 bsd.rd:
 	install -c -m 555 -o root -g wheel \
-	    ${.OBJDIR}/../bsd.rd/bsd.rd /mnt/bsd
+	    ${.OBJDIR}/../bsd.rd/bsd.rd ${MOUNT_POINT}/bsd
 
 boot:
 	install -c -m 555 -o root -g wheel \
-	    ${DESTDIR}/usr/mdec/boot /mnt/boot
+	    ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 
 installboot:
-	/usr/mdec/installboot -v /mnt/boot ${DESTDRIR}/usr/mdec/bootxx /dev/rvnd0c
+	/usr/mdec/installboot -v ${MOUNT_POINT}/boot \
+	    ${DESTDRIR}/usr/mdec/bootxx `cat vnd`
 
 blank_filesystem:
-	dd if=/dev/zero of=${TARGET} bs=512 count=5760
+	dd if=/dev/zero of=${FS} bs=512 count=5760
 
 .endif
 
 unconfig:
-	-umount -f /mnt
-	-vnconfig -u /dev/vnd0a
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .ifdef RELEASEDIR
 install:
-	cp ${TARGET} ${RELEASEDIR}
+	cp ${FS} ${RELEASEDIR}
 .endif
 
 clean:
-	rm -f ${TARGET}
+	rm -f ${FS}
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

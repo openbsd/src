@@ -6,14 +6,6 @@ IMAGE=	miniroot${REV}.fs
 
 MOUNT_POINT=	/mnt
 
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_IDEV=	/dev/${VND}i
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-VND_RIDEV=	/dev/r${VND}i
-PID!=		echo $$$$
-
 DISKTYPE=       miniroot
 NBLKS=		24576
 NEWFSARGS= -t msdos
@@ -35,22 +27,21 @@ do_files:
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
-	vnconfig -v -c -t ${DISKTYPE} ${VND} ${IMAGE}
-	echo 'u\ne 0\nC\nn\n64\n22528\nf 0\nw\nq\n' | fdisk -e ${VND}
-	echo 'w\ny\nq\n' | disklabel -E ${VND} > /dev/null
-	newfs ${NEWFSARGS} ${VND_RIDEV}
-	fsck ${VND_RIDEV}
-	mount ${VND_IDEV} ${MOUNT_POINT}
+	vnconfig -v -t ${DISKTYPE} ${IMAGE} > vnd
+	echo 'u\ne 0\nC\nn\n64\n22528\nf 0\nw\nq\n' | fdisk -e `cat vnd`
+	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
+	newfs ${NEWFSARGS} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .PRECIOUS:	${IMAGE}
 

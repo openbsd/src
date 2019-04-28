@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2019/04/05 21:08:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.36 2019/04/28 14:48:10 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -62,9 +62,10 @@ ${IMAGE}: ${CBIN}
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/${CBIN}
 	makefs ${MAKEFSARGS_RD} $@ $@.d
-	vnconfig -v -c vnd0 mr.fs
-	df -i /dev/vnd0a
-	vnconfig -u vnd0
+	vnconfig -v mr.fs > vnd
+	df -i /dev/`cat vnd`a
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 .endif
 

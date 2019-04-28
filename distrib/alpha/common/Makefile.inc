@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.37 2019/04/14 14:07:07 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.38 2019/04/28 14:48:09 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,13 +6,6 @@ TOP=		${.CURDIR}/..
 IMAGE=		ramdisk${REV}.fs
 
 MOUNT_POINT=	/mnt
-
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CRDEV=	/dev/r${VND}c
-PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
 
 STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
 GZIPFLAGS?=	-9fn
@@ -39,27 +32,20 @@ NEWFSARGS_FD=	-i 524288 -c ${FLOPPYBLKS}
 CLEANFILES+=	bsd bsd.rd bsd.gz ${FLOPPY}
 
 ${FLOPPY}:	bsd.gz
-	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYBLKS}
-	vnconfig -v -c ${VND} ${REALIMAGE}
-	disklabel -w ${VND} ${FLOPPYTYPE}
-	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
+	dd if=/dev/zero of=${FLOPPY} count=${FLOPPYBLKS}
+	vnconfig -v ${FLOPPY} > vnd
+	disklabel -w `cat vnd` ${FLOPPYTYPE}
+	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	dd if=${DESTDIR}/${BOOT} of=${MOUNT_POINT}/boot bs=512
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
-	${INSTALLBOOT} ${MOUNT_POINT}/boot ${BOOTXX} ${VND_CRDEV}
+	${INSTALLBOOT} ${MOUNT_POINT}/boot ${BOOTXX} `cat vnd`
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
-	@cmp ${DESTDIR}/${BOOT} ${MOUNT_POINT}/boot || echo "Warning! /boot corrupted!!!"
-	@cmp bsd.gz ${MOUNT_POINT}/bsd || echo "Warning! /bsd corrupted!!!"
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-	if test `env BLOCKSIZE=512 du -s ${REALIMAGE} | cut -f1` -eq ${FLOPPYBLKS}; then \
-	    mv ${REALIMAGE} ${FLOPPY} ; \
-	else \
-	    dd if=${REALIMAGE} of=${FLOPPY} count=${FLOPPYBLKS} ; \
-	    rm -f ${REALIMAGE} ; \
-	fi
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 bsd.gz:	bsd.rd
 	objcopy -Sg -R .comment -R .SUNW_ctf -R .shstrtab -R .shstrtab bsd.rd bsd.strip
@@ -86,8 +72,8 @@ ${IMAGE}: ${CBIN}
 	makefs ${MAKEFSARGS_RD} $@ $@.d
 
 unconfig:
-	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND}
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .ifdef RELEASEDIR
 beforeinstall:
