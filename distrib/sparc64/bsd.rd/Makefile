@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2019/04/28 15:21:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.40 2019/04/28 16:26:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,7 +8,6 @@ LISTS?=		${.CURDIR}/list
 UTILS?=		${TOP}/../miniroot
 
 STRIPOPTS?=	-R .SUNW_ctf
-GZIPFLAGS?=	-9fn
 MTREE=		${UTILS}/mtree.conf
 
 all: bsd.rd
@@ -19,7 +18,7 @@ MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 bsd.rd:	bsd.rd_unz
 	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
 	strip ${STRIPOPTS} bsd.strip
-	gzip -c ${GZIPFLAGS} bsd.strip > bsd.rd
+	gzip -c -9nv bsd.strip > bsd.rd
 
 bsd.rd_unz: bsd ${IMAGE}
 	cp bsd bsd.rd_unz

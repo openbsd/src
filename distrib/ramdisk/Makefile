@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 2019/04/28 15:23:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.58 2019/04/28 16:26:07 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -72,7 +72,7 @@ bsd.rd:	bsd ${IMAGE}
 	strip -R .SUNW_ctf bsd.rd
 
 bsd.gz:	bsd.rd
-	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
+	gzip -9nv < bsd.rd > bsd.gz
 
 ${IMAGE}: instbin
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}

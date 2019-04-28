@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2019/04/28 15:21:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.39 2019/04/28 16:26:07 deraadt Exp $
 
 ARCHDIR=	${.CURDIR}/..
 SRCDIR=		${.CURDIR}/../../..
@@ -24,7 +24,6 @@ BOOT?=		${DESTDIR}/usr/mdec/boot
 CDBOOT?=	${DESTDIR}/usr/mdec/cdboot
 
 STRIPOPTS?=	-R .SUNW_ctf
-GZIPFLAGS?=	-9n
 
 DISKTYPE=	rdroot
 MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
@@ -57,7 +56,7 @@ bsd.rd:	obsd ${IMAGE}
 	strip ${STRIPOPTS} bsd.rd
 
 bsd:	bsd.rd
-	(cat bsd.rd ; dd if=/dev/zero count=1) | gzip ${GZIPFLAGS} > bsd
+	(cat bsd.rd ; dd if=/dev/zero count=1) | gzip -9nv > bsd
 
 ${IMAGE}: instbin
 	rm -rf $@.d

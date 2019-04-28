@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2019/04/28 15:21:50 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.42 2019/04/28 16:26:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -14,8 +14,6 @@ FLOPPY=		floppy${REV}.fs
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy
 
-GZIPFLAGS?=	-9nv
-
 DISKTYPE=	rdroot
 MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
 
@@ -29,7 +27,7 @@ all ${IMAGE}:
 all:	${FLOPPY} bsd.rd
 
 bsd.gz:	bsd.rd
-	gzip ${GZIPFLAGS} < bsd.rd > bsd.gz
+	gzip -9nv < bsd.rd > bsd.gz
 
 ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	dd if=/dev/zero of=${FLOPPY} count=${FLOPPYSIZE}

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.39 2019/04/28 15:21:49 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.40 2019/04/28 16:26:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,7 +8,6 @@ IMAGE=		ramdisk${REV}.fs
 MOUNT_POINT=	/mnt
 
 STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
-GZIPFLAGS?=	-9fn
 INSTALLBOOT?=	/usr/mdec/installboot -v
 
 XNAME?=		floppy
@@ -50,7 +49,7 @@ ${FLOPPY}:	bsd.gz
 bsd.gz:	bsd.rd
 	objcopy -Sg -R .comment -R .SUNW_ctf -R .shstrtab -R .shstrtab bsd.rd bsd.strip
 	strip bsd.strip
-	gzip -c ${GZIPFLAGS} bsd.strip > bsd.gz
+	gzip -c -9nv bsd.strip > bsd.gz
 
 bsd.rd: bsd ${IMAGE}
 	cp bsd bsd.rd
