@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.73 2019/03/04 21:32:26 dlg Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.74 2019/04/28 17:59:51 mpi Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ char	*routename4(in_addr_t);
 char	*netname(struct sockaddr *, struct sockaddr *);
 char	*netname4(in_addr_t, in_addr_t);
 char	*mpls_op(u_int32_t);
-void	routepr(u_long, u_long, u_long, u_long, u_int);
+void	routepr(u_long, u_long, u_long, u_int);
 
 void	nsprotopr(u_long, char *);
 
