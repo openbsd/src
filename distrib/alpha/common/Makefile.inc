@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.40 2019/04/28 16:26:07 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.41 2019/04/28 16:47:29 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -39,9 +39,7 @@ ${FLOPPY}:	bsd.gz
 	dd if=${DESTDIR}/${BOOT} of=${MOUNT_POINT}/boot bs=512
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	${INSTALLBOOT} ${MOUNT_POINT}/boot ${BOOTXX} `cat vnd`
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2019/04/28 16:26:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.37 2019/04/28 16:47:31 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -38,9 +38,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	cp ${DESTDIR}/usr/mdec/ofwbootfd ${MOUNT_POINT}/ofwboot
 	cp bsd.gz ${MOUNT_POINT}/bsd
 	installboot -v `cat vnd` /usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd

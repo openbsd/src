@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2019/04/28 15:21:49 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2019/04/28 16:47:30 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -41,9 +41,7 @@ ${FS}:	bsd.gz
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd

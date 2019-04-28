@@ -31,7 +31,7 @@ rd_setup:
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
 
 rd_teardown:
-	@df -i ${MOUNT_POINT}
+	df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd

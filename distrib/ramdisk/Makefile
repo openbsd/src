@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.58 2019/04/28 16:26:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.59 2019/04/28 16:47:30 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -54,9 +54,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	mount /dev/$(cat vnd)a ${MOUNT_POINT}
 	cp bsd.gz ${MOUNT_POINT}/bsd
 	${INSTALLBOOT} -v -r ${MOUNT_POINT} $(cat vnd) ${BOOTXX} ${BOOT}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
@@ -85,9 +83,7 @@ ${IMAGE}: instbin
 	    ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/instbin
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 

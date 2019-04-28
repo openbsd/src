@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2019/04/28 15:32:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2019/04/28 16:47:31 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -38,7 +38,7 @@ ${CDROM}:
 	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
 	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/cd-dir/boot64
 	umount ${.OBJDIR}/cd-dir
-	@df /dev/`cat vnd`a
+	df -i /dev/`cat vnd`a
 	vnconfig -u `cat vnd`
 	rm -f vnd
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=1m count=`expr ${CDFSMB} + 1 + ${SGIVOLSZ} / 2048`

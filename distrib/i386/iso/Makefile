@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2019/04/28 15:32:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/04/28 16:47:30 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -51,9 +51,7 @@ ${FS}: ${BASE} ${XBASE} bsd.gz
 	    ${MOUNT_POINT}/${OSREV}/${MACHINE}/SHA256
 	# XXX no SHA256.sig
 
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd

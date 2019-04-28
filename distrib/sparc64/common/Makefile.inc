@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.20 2019/04/28 15:21:50 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.21 2019/04/28 16:47:31 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,9 +30,7 @@ ${FS}:	bsd.rd
 	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTFLOPPY}
 	installboot -v `cat vnd`
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
+	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
@@ -52,7 +50,7 @@ rd_setup: instbin
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 
 rd_teardown:
-	@df -i ${MOUNT_POINT}
+	df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	-vnconfig -u `cat vnd`
 
