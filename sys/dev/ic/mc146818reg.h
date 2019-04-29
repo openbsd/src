@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc146818reg.h,v 1.7 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: mc146818reg.h,v 1.8 2019/04/29 15:46:11 cheloha Exp $	*/
 /*	$NetBSD: mc146818reg.h,v 1.1 1995/05/04 19:31:18 cgd Exp $	*/
 
 /*
@@ -166,11 +166,13 @@ typedef u_int mc_todregs[MC_NTODREGS];
 									\
 		/* update in progress; spin loop */			\
 		while (mc146818_read(sc, MC_REGA) & MC_REGA_UIP)	\
-			;						\
+			continue;					\
 									\
-		/* read all of the tod/alarm regs */			\
-		for (i = 0; i < MC_NTODREGS; i++)			\
-			(*regs)[i] = mc146818_read(sc, i);		\
+		do {							\
+			/* read all of the tod/alarm regs */		\
+			for (i = 0; i < MC_NTODREGS; i++)		\
+				(*regs)[i] = mc146818_read(sc, i);	\
+		} while ((*regs)[MC_SEC] != mc146818_read(sc, MC_SEC));	\
 	} while (0);
 
 /*
