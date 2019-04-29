@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.56 2018/11/13 07:29:07 mestre Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.57 2019/04/29 16:04:05 rob Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -857,7 +857,7 @@ snmpe_encode(struct snmp_message *msg)
 		}
 	}
 
-	if (!ber_printf_elements(epdu, "tiii{e}.", BER_CLASS_CONTEXT,
+	if (!ber_printf_elements(epdu, "tiii{e}", BER_CLASS_CONTEXT,
 	    msg->sm_context, msg->sm_request,
 	    msg->sm_error, msg->sm_errorindex,
 	    msg->sm_varbindresp)) {
