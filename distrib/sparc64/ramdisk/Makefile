@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2019/04/28 16:47:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.44 2019/04/29 01:48:41 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ UTILS?=		${.CURDIR}/../../miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
-FLOPPY=		floppy${REV}.fs
+FLOPPY=		floppy${OSrev}.fs
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy
 
@@ -52,7 +52,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

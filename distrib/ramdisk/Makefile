@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2019/04/28 16:47:30 deraadt Exp $
-
-REV=		${OSrev}
+#	$OpenBSD: Makefile,v 1.60 2019/04/29 01:48:40 deraadt Exp $
 
 ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 
@@ -12,7 +10,7 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 
 MOUNT_POINT?=	/mnt
 DISKTYPE=	rdroot
-IMAGE?=		ramdisk${REV}.fs
+IMAGE?=		ramdisk${OSrev}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 CRUNCHGENOPTS?=-E
 UTILS?=		${.CURDIR}/../miniroot
@@ -20,7 +18,7 @@ UTILS?=		${.CURDIR}/../miniroot
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list.local
 MTREE=		${UTILS}/mtree.conf
 
-FLOPPY?=	floppy${REV}.fs
+FLOPPY?=	floppy${OSrev}.fs
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy
 INSTALLBOOT?=	installboot
@@ -79,7 +77,7 @@ ${IMAGE}: instbin
 	newfs ${NEWFSOPTS_RD} /dev/r$(cat vnd)a
 	mount /dev/$(cat vnd)a ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	OSrev=${OSrev} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/instbin

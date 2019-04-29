@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.17 2019/04/28 14:48:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/04/29 01:48:41 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-CDROM=		install${REV}.iso
+CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
 
@@ -44,10 +44,10 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -V "OpenBSD/${MACHINE} ${OSREV} Install CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
 	vnconfig -v ${.OBJDIR}/${CDROM} > vnd
-	disklabel -w `cat vnd` fakecdrom "OpenBSD${REV}${MACHINE}"
+	disklabel -w `cat vnd` fakecdrom "OpenBSD${OSrev}${MACHINE}"
 	vnconfig -u `cat vnd`
 	rm -f vnd
-	mksuncd f ${.OBJDIR}/${CDROM} ${.OBJDIR}/../miniroot/miniroot${REV}.fs
+	mksuncd f ${.OBJDIR}/${CDROM} ${.OBJDIR}/../miniroot/miniroot${OSrev}.fs
 
 install:
 	cp ${CDROM} ${RELDIR}/

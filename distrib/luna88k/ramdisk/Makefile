@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2019/04/28 15:21:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2019/04/29 01:48:40 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,7 +21,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

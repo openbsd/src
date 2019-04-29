@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.21 2019/04/28 16:47:31 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.22 2019/04/29 01:48:41 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -12,7 +12,7 @@ MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
 XNAME?=		floppy
-FS?=		${XNAME}${REV}.fs
+FS?=		${XNAME}${OSrev}.fs
 LISTFLOPPY?=	${.CURDIR}/../common/list_floppy
 FLOPPYSIZE?=	144
 FLOPPYSECS?=	18
@@ -79,7 +79,7 @@ instbin: instbin.mk instbin.cache instbin.c
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    REV=${REV} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
+	    OSrev=${OSrev} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/instbin
 

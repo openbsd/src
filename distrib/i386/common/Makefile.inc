@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.49 2019/04/28 16:47:30 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.50 2019/04/29 01:48:40 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -12,7 +12,7 @@ MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
 XNAME?=		floppy
-FS?=		${XNAME}${REV}.fs
+FS?=		${XNAME}${OSrev}.fs
 BOOT?=		${DESTDIR}/usr/mdec/boot
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy3
@@ -66,7 +66,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

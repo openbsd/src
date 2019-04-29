@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.17 2019/04/28 14:48:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/04/29 01:48:41 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-CDROM=	cd${REV}.iso
+CDROM=	cd${OSrev}.iso
 
 all: ${CDROM}
 
@@ -29,10 +29,10 @@ ${CDROM}:
 	    -V "OpenBSD/sparc64 ${OSREV} boot-only CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
 	vnconfig -v ${CDROM} > vnd
-	disklabel -w `cat vnd` fakecdrom "OpenBSD${REV}sparc64"
+	disklabel -w `cat vnd` fakecdrom "OpenBSD${OSrev}sparc64"
 	vnconfig -u `cat vnd`
 	rm -f vnd
-	mksuncd f ${CDROM} ${.OBJDIR}/../miniroot/miniroot${REV}.fs
+	mksuncd f ${CDROM} ${.OBJDIR}/../miniroot/miniroot${OSrev}.fs
 
 .ifdef RELEASEDIR
 install:

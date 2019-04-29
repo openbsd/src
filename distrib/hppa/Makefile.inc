@@ -1,3 +1,2 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2003/01/30 21:05:00 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2019/04/29 01:48:39 deraadt Exp $
 
-REV=${OSrev}

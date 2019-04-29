@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2019/04/28 16:47:30 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2019/04/29 01:48:39 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -9,7 +9,7 @@ UTILS?=		${.CURDIR}/../../miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
-FS?=		miniroot${REV}.fs
+FS?=		miniroot${OSrev}.fs
 BOOT?=		${DESTDIR}/usr/mdec/boot
 EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
 FLOPPYSIZE?=	2880

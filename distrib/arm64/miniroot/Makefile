@@ -1,7 +1,5 @@
 
-REV=	${OSrev}
-
-IMAGE=	miniroot${REV}.fs
+IMAGE=	miniroot${OSrev}.fs
 
 MOUNT_POINT=	/mnt
 

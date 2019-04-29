@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2019/04/28 15:32:03 deraadt Exp $
-
-REV=	${OSrev}
+#	$OpenBSD: Makefile,v 1.9 2019/04/29 01:48:39 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -43,7 +41,7 @@ ${IMAGE}: instbin
 	mkdir -p $@.d/usr/mdec/${DIR}
 .endfor
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.41 2019/04/28 16:47:29 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.42 2019/04/29 01:48:39 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk${REV}.fs
+IMAGE=		ramdisk${OSrev}.fs
 
 MOUNT_POINT=	/mnt
 
@@ -11,7 +11,7 @@ STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
 INSTALLBOOT?=	/usr/mdec/installboot -v
 
 XNAME?=		floppy
-FLOPPY?=	${XNAME}${REV}.fs
+FLOPPY?=	${XNAME}${OSrev}.fs
 FLOPPYBLKS?=	2880
 FLOPPYTYPE?=	floppy
 BOOT?=		/usr/mdec/boot
@@ -62,7 +62,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

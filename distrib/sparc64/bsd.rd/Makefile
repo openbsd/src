@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.40 2019/04/28 16:26:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.41 2019/04/29 01:48:41 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk${REV}.fs
+IMAGE=		ramdisk${OSrev}.fs
 LISTS?=		${.CURDIR}/list
 UTILS?=		${TOP}/../miniroot
 
@@ -33,7 +33,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

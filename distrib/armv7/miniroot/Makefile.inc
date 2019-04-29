@@ -1,7 +1,5 @@
 
-REV=	${OSrev}
-
-IMAGE=	miniroot-${BOARD}-${REV}.fs
+IMAGE=	miniroot-${BOARD}-${OSrev}.fs
 MKUBOOT?=	mkuboot
 
 MOUNT_POINT=	/mnt

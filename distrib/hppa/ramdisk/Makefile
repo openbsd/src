@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2019/04/28 16:26:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.40 2019/04/29 01:48:40 deraadt Exp $
 
 ARCHDIR=	${.CURDIR}/..
 SRCDIR=		${.CURDIR}/../../..
@@ -9,7 +9,7 @@ SRCDIR=		${.CURDIR}/../../..
 .include "${ARCHDIR}/Makefile.inc"
 .endif
 
-IMAGE?=		ramdisk${REV}.fs
+IMAGE?=		ramdisk${OSrev}.fs
 CRUNCHGENOPTS?=-E
 RAMDISK?=	RAMDISK
 UTILS?=		${.CURDIR}/../../miniroot
@@ -17,8 +17,8 @@ UTILS?=		${.CURDIR}/../../miniroot
 LISTS=		${ARCHDIR}/list ${.CURDIR}/list.local
 MTREE=		${UTILS}/mtree.conf
 
-LIF?=		lif${REV}.fs
-CDROM?=		cd${REV}.iso
+LIF?=		lif${OSrev}.fs
+CDROM?=		cd${OSrev}.iso
 MKBOOT?=	/usr/mdec/mkboot
 BOOT?=		${DESTDIR}/usr/mdec/boot
 CDBOOT?=	${DESTDIR}/usr/mdec/cdboot
@@ -62,7 +62,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} ARCHDIR=${ARCHDIR} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} ARCHDIR=${ARCHDIR} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

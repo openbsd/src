@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.19 2019/04/28 16:47:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/04/29 01:48:41 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-CDROM=	cd${REV}.iso
+CDROM=	cd${OSrev}.iso
 FFS=	ffs.img
 # must match the size of `minicdroot' in disktab
 CDFSMB=	15

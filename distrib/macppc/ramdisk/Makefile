@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2019/04/28 15:21:49 deraadt Exp $
-
-REV=	${OSrev}
+#	$OpenBSD: Makefile,v 1.39 2019/04/29 01:48:40 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -55,7 +53,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} REV=${REV} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
@@ -83,12 +81,12 @@ ${CRUNCHCONF}: ${LISTS}
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd cd${REV}.iso
+	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd cd${OSrev}.iso
 	rm -rf cd-dir ${IMAGE}.d
 
 .ifdef RELEASEDIR
 install:
-	cp bsd.rd cd${REV}.iso ${RELEASEDIR}
+	cp bsd.rd cd${OSrev}.iso ${RELEASEDIR}
 .endif
 
 .include <bsd.obj.mk>

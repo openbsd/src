@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.26 2019/04/28 17:35:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2019/04/29 01:48:39 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
-CDROM=		install${REV}.iso
+CDROM=		install${OSrev}.iso
 
-FS=		install${REV}.fs
+FS=		install${OSrev}.fs
 FSSIZE=		921536
 FSTYPE=		install360
 
