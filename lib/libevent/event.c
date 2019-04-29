@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.38 2015/01/06 23:11:23 bluhm Exp $	*/
+/*	$OpenBSD: event.c,v 1.39 2019/04/29 17:11:51 tobias Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -163,7 +163,8 @@ event_base_new(void)
 void
 event_base_free(struct event_base *base)
 {
-	int i, n_deleted=0;
+	int i;
+	size_t n_deleted=0;
 	struct event *ev;
 
 	if (base == NULL && current_base)
@@ -199,7 +200,7 @@ event_base_free(struct event_base *base)
 	}
 
 	if (n_deleted)
-		event_debug(("%s: %d events were still set in base",
+		event_debug(("%s: %zu events were still set in base",
 			__func__, n_deleted));
 
 	if (base->evsel->dealloc != NULL)
@@ -846,7 +847,7 @@ static void
 timeout_correct(struct event_base *base, struct timeval *tv)
 {
 	struct event **pev;
-	unsigned int size;
+	size_t size;
 	struct timeval off;
 
 	if (use_monotonic)

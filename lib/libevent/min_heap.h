@@ -1,4 +1,4 @@
-/*	$OpenBSD: min_heap.h,v 1.5 2019/04/20 23:22:28 tedu Exp $	*/
+/*	$OpenBSD: min_heap.h,v 1.6 2019/04/29 17:11:52 tobias Exp $	*/
 
 /*
  * Copyright (c) 2006 Maxim Yegorushkin <maxim.yegorushkin@gmail.com>
@@ -33,7 +33,7 @@
 
 typedef struct min_heap {
 	struct event **p;
-	unsigned n, a;
+	size_t n, a;
 } min_heap_t;
 
 static inline void min_heap_ctor(min_heap_t * s);
@@ -41,14 +41,14 @@ static inline void min_heap_dtor(min_heap_t * s);
 static inline void min_heap_elem_init(struct event * e);
 static inline int min_heap_elem_greater(struct event * a, struct event * b);
 static inline int min_heap_empty(min_heap_t * s);
-static inline unsigned min_heap_size(min_heap_t * s);
+static inline size_t min_heap_size(min_heap_t * s);
 static inline struct event *min_heap_top(min_heap_t * s);
-static inline int min_heap_reserve(min_heap_t * s, unsigned n);
+static inline int min_heap_reserve(min_heap_t * s, size_t n);
 static inline int min_heap_push(min_heap_t * s, struct event * e);
 static inline struct event *min_heap_pop(min_heap_t * s);
 static inline int min_heap_erase(min_heap_t * s, struct event * e);
-static inline void min_heap_shift_up_(min_heap_t * s, unsigned hole_index, struct event * e);
-static inline void min_heap_shift_down_(min_heap_t * s, unsigned hole_index, struct event * e);
+static inline void min_heap_shift_up_(min_heap_t * s, size_t hole_index, struct event * e);
+static inline void min_heap_shift_down_(min_heap_t * s, size_t hole_index, struct event * e);
 
 int 
 min_heap_elem_greater(struct event * a, struct event * b)
@@ -70,14 +70,14 @@ void min_heap_dtor(min_heap_t * s) {
 void 
 min_heap_elem_init(struct event * e)
 {
-	e->min_heap_idx = -1;
+	e->min_heap_idx = SIZE_MAX;
 }
 int 
 min_heap_empty(min_heap_t * s)
 {
-	return 0u == s->n;
+	return 0 == s->n;
 }
-unsigned 
+size_t 
 min_heap_size(min_heap_t * s)
 {
 	return s->n;
@@ -102,8 +102,8 @@ min_heap_pop(min_heap_t * s)
 {
 	if (s->n) {
 		struct event *e = *s->p;
-		min_heap_shift_down_(s, 0u, s->p[--s->n]);
-		e->min_heap_idx = -1;
+		min_heap_shift_down_(s, 0, s->p[--s->n]);
+		e->min_heap_idx = SIZE_MAX;
 		return e;
 	}
 	return 0;
@@ -112,9 +112,9 @@ min_heap_pop(min_heap_t * s)
 int 
 min_heap_erase(min_heap_t * s, struct event * e)
 {
-	if (((unsigned int)-1) != e->min_heap_idx) {
+	if (e->min_heap_idx != SIZE_MAX) {
 		struct event *last = s->p[--s->n];
-		unsigned parent = (e->min_heap_idx - 1) / 2;
+		size_t parent = (e->min_heap_idx - 1) / 2;
 		/*
 		 * we replace e with the last element in the heap.  We might
 		 * need to shift it upward if it is less than its parent, or
@@ -126,21 +126,21 @@ min_heap_erase(min_heap_t * s, struct event * e)
 			min_heap_shift_up_(s, e->min_heap_idx, last);
 		else
 			min_heap_shift_down_(s, e->min_heap_idx, last);
-		e->min_heap_idx = -1;
+		e->min_heap_idx = SIZE_MAX;
 		return 0;
 	}
 	return -1;
 }
 
 int 
-min_heap_reserve(min_heap_t * s, unsigned n)
+min_heap_reserve(min_heap_t * s, size_t n)
 {
 	if (s->a < n) {
 		struct event **p;
-		unsigned a = s->a ? s->a * 2 : 8;
+		size_t a = s->a ? s->a * 2 : 8;
 		if (a < n)
 			a = n;
-		if (!(p = realloc(s->p, a * sizeof *p)))
+		if (!(p = recallocarray(s->p, s->a, a, sizeof *p)))
 			return -1;
 		s->p = p;
 		s->a = a;
@@ -149,9 +149,9 @@ min_heap_reserve(min_heap_t * s, unsigned n)
 }
 
 void 
-min_heap_shift_up_(min_heap_t * s, unsigned hole_index, struct event * e)
+min_heap_shift_up_(min_heap_t * s, size_t hole_index, struct event * e)
 {
-	unsigned parent = (hole_index - 1) / 2;
+	size_t parent = (hole_index - 1) / 2;
 	while (hole_index && min_heap_elem_greater(s->p[parent], e)) {
 		s->p[hole_index] = s->p[parent];
 		s->p[hole_index]->min_heap_idx = hole_index;
@@ -163,9 +163,9 @@ min_heap_shift_up_(min_heap_t * s, unsigned hole_index, struct event * e)
 }
 
 void 
-min_heap_shift_down_(min_heap_t * s, unsigned hole_index, struct event * e)
+min_heap_shift_down_(min_heap_t * s, size_t hole_index, struct event * e)
 {
-	unsigned min_child = 2 * (hole_index + 1);
+	size_t min_child = 2 * (hole_index + 1);
 	while (min_child <= s->n) {
 		if (min_child == s->n ||
 		    min_heap_elem_greater(s->p[min_child], s->p[min_child - 1]))
