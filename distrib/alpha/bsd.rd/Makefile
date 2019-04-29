@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.36 2019/04/29 01:48:39 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.37 2019/04/29 15:56:23 deraadt Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk${OSrev}.fs
 
 STRIPOPTS?=	-R .SUNW_ctf -R .shstrtab
 
-.include "${TOP}/inst-common/Makefile.inc"
+UTILS=		${.CURDIR}/../../miniroot
+LISTS?=		${.CURDIR}/../common/list
+MTREE=		${UTILS}/mtree.conf
+STRIPOPTS?=	-R .eh_frame -R .SUNW_ctf -R .shstrtab
 
 LISTS+=		${.CURDIR}/list.local
 
@@ -35,11 +35,30 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
 	makefs ${MAKEFSARGS_RD} $@ $@.d
+
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
+
+instbin.mk instbin.cache instbin.c: instbin.conf
+	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib instbin.conf
+
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+	strip ${STRIPOPTS} instbin
+
+clean cleandir:
+	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
+	    *.o *.lo *.c \
+	    lib*.a lib*.olist instbin.map ${CLEANFILES}
+	/bin/rm -rf ${IMAGE}.d
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
 
 .ifdef RELEASEDIR
 beforeinstall:

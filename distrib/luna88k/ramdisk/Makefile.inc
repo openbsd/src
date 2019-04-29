@@ -1,14 +1,10 @@
-#
-#	$OpenBSD: Makefile.inc,v 1.9 2019/04/29 01:48:40 deraadt Exp $
-#
-
-# TOP is assumed to be defined by Makefile including this one.
+#	$OpenBSD: Makefile.inc,v 1.10 2019/04/29 15:56:26 deraadt Exp $
 
 LISTS=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
 
-COMMONDIR=	${TOP}/ramdisk
-MOUNT_POINT?=	${TOP}/${BASE}/fs
+COMMONDIR=	${.CURDIR}/../ramdisk
+MOUNT_POINT?=	${.CURDIR}/../${BASE}/fs
 
 CRUNCHCONF?=	${COMMONDIR}/instbin.conf
 MTREE=		${UTILS}/mtree.conf
@@ -27,7 +23,7 @@ instbin: instbin.mk instbin.cache instbin.c
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    OSrev=${OSrev} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/instbin

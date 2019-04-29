@@ -1,8 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.50 2019/04/29 01:48:40 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.51 2019/04/29 15:56:25 deraadt Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
 CRUNCHCONF?=	instbin.conf
 LISTS?=		${.CURDIR}/../common/list
@@ -66,7 +63,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

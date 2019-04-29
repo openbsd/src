@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2019/04/29 01:48:41 deraadt Exp $
-
-TOP=		${.CURDIR}/..
+#	$OpenBSD: Makefile,v 1.23 2019/04/29 15:56:26 deraadt Exp $
 
 BSD_BIN=	bsd.bin
 IMAGE=		mr.fs
@@ -34,7 +32,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
@@ -43,9 +41,9 @@ ${IMAGE}: instbin
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/socppc/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/socppc/compile/RAMDISK && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
-	cp -p ${TOP}/../../sys/arch/socppc/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/socppc/compile/RAMDISK/obj/bsd bsd
 
 instbin.mk instbin.cache instbin.c: ${CRUNCHCONF}
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}

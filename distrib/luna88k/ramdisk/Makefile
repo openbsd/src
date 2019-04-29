@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.23 2019/04/29 01:48:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2019/04/29 15:56:26 deraadt Exp $
 
-TOP=		${.CURDIR}/..
+LDSTATIC=-static
+# Hack needed to find kernel images...
+BSDSRCDIR?=/usr/src
+SRCSYSDIR?=${BSDSRCDIR}/sys
 
-.include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
 LISTS=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
@@ -21,7 +23,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

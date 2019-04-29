@@ -1,8 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.22 2019/04/29 01:48:41 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.23 2019/04/29 15:56:26 deraadt Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
 CRUNCHCONF?=    ${.CURDIR}/../common/instbin.conf
 LISTS?=		${.CURDIR}/list
@@ -26,7 +23,7 @@ ${FS}:	bsd.rd
 	disklabel -w `cat vnd` ${FLOPPYTYPE}
 	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
 	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTFLOPPY}
 	installboot -v `cat vnd`
@@ -78,9 +75,9 @@ instbin: instbin.mk instbin.cache instbin.c
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    OSrev=${OSrev} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
-	    RELEASEDIR=${RELEASEDIR} sh ${UTILS}/runlist.sh ${LISTS}
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm ${MOUNT_POINT}/instbin
 
 clean cleandir:

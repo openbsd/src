@@ -1,8 +1,5 @@
-#	$OpenBSD: Makefile,v 1.44 2019/04/29 01:48:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.45 2019/04/29 15:56:26 deraadt Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
 LISTS=		${.CURDIR}/list
 UTILS?=		${.CURDIR}/../../miniroot
@@ -52,7 +49,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
@@ -61,9 +58,9 @@ ${IMAGE}: instbin
 .endif
 
 bsd:
-	cd ${TOP}/../../sys/arch/sparc64/compile/RAMDISKU1 && \
+	cd ${.CURDIR}/../../../sys/arch/sparc64/compile/RAMDISKU1 && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && env ${MAKE}'
-	cp -p ${TOP}/../../sys/arch/sparc64/compile/RAMDISKU1/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/sparc64/compile/RAMDISKU1/obj/bsd bsd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

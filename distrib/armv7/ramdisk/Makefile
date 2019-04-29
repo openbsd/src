@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2019/04/29 01:48:39 deraadt Exp $
-
-TOP=		${.CURDIR}/..
+#	$OpenBSD: Makefile,v 1.23 2019/04/29 15:56:25 deraadt Exp $
 
 IMAGE=		mr.fs
 CRUNCHCONF?=	instbin.conf
@@ -32,9 +30,9 @@ ALLBSDRD=	bsd.rd
 all:	${ALLBSDRD}
 
 bsd:
-	cd ${TOP}/../../sys/arch/armv7/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/armv7/compile/RAMDISK && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${TOP}/../../sys/arch/armv7/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/armv7/compile/RAMDISK/obj/bsd bsd
 
 bsd.rd: ${IMAGE} bsd
 	cp bsd bsd.rd
@@ -47,7 +45,7 @@ ${IMAGE}: instbin
 	mkdir -p $@.d/usr/mdec/${DIR}
 .endfor
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin

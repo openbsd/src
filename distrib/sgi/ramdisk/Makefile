@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2019/04/29 01:48:41 deraadt Exp $
-
-TOP=		${.CURDIR}/..
+#	$OpenBSD: Makefile,v 1.28 2019/04/29 15:56:26 deraadt Exp $
 
 IMAGE=		mr.fs
 CRUNCHCONF?=	instbin.conf
@@ -31,10 +29,10 @@ all:	${ALLBSDRD}
 .for IP in ${ALLIP}
 bsd.IP${IP}:
 .ifndef NOBUILD
-	cd ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP} && \
+	cd ${.CURDIR}/../../../sys/arch/sgi/compile/RAMDISK-IP${IP} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 .endif
-	cp -p ${.TOP}/../../sys/arch/sgi/compile/RAMDISK-IP${IP}/obj/bsd bsd.IP${IP}
+	cp -p ${.CURDIR}/../../../sys/arch/sgi/compile/RAMDISK-IP${IP}/obj/bsd bsd.IP${IP}
 
 bsd.rd.IP${IP}: ${IMAGE} bsd.IP${IP}
 	cp bsd.IP${IP} bsd.rd.IP${IP}
@@ -45,7 +43,7 @@ ${IMAGE}: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
