@@ -1,4 +1,4 @@
-/*	$OpenBSD: trunklacp.c,v 1.30 2018/08/12 23:50:31 ccardenas Exp $ */
+/*	$OpenBSD: trunklacp.c,v 1.31 2019/04/29 03:54:52 dlg Exp $ */
 /*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $ */
 /*	$FreeBSD:ieee8023ad_lacp.c,v 1.15 2008/03/16 19:25:30 thompsa Exp $ */
 
@@ -52,11 +52,6 @@
 
 #include <net/if_trunk.h>
 #include <net/trunklacp.h>
-
-#include "bpfilter.h"
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 
 const u_int8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
@@ -219,11 +214,6 @@ lacp_input(struct trunk_port *tp, struct mbuf *m)
 	eh = mtod(m, struct ether_header *);
 
 	if (ntohs(eh->ether_type) == ETHERTYPE_SLOW) {
-#if NBPFILTER > 0
-		if (tp->tp_if->if_bpf)
-			bpf_mtap_ether(tp->tp_if->if_bpf, m, BPF_DIRECTION_IN);
-#endif
-
 		if (m->m_pkthdr.len < (sizeof(*eh) + sizeof(subtype)))
 			return (-1);
 
