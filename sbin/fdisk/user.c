@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.51 2018/04/26 15:55:14 guenther Exp $	*/
+/*	$OpenBSD: user.c,v 1.52 2019/04/29 18:54:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -31,6 +31,7 @@
 #include "cmd.h"
 #include "user.h"
 #include "gpt.h"
+#include "disk.h"
 
 /* Our command table */
 struct cmd cmd_table[] = {
@@ -87,7 +88,7 @@ USER_edit(off_t offset, off_t reloff)
 	/* Edit cycle */
 again:
 	do {
-		printf("fdisk:%c%d> ", (modified)?'*':' ', editlevel);
+		printf("%s%s: %d> ", disk.name, modified ? "*" : "", editlevel);
 		fflush(stdout);
 		ask_cmd(&cmd, &args);
 

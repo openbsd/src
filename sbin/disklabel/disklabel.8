@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.134 2019/04/01 00:29:51 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.135 2019/04/29 18:54:12 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: April 1 2019 $
+.Dd $Mdocdate: April 29 2019 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -245,6 +245,22 @@ used to rewrite the disk label.
 The built-in label editor
 .Pq fourth form
 provides a simple interactive label editor.
+The editor prompt contains information about the state of the edit
+process.
+.Pp
+.Dl Ar disk Ns *>
+.Pp
+Where
+.Ar disk
+is the name of the disk being edited,
+.Sq *
+means that the in-memory copy of the partition table has been modified but
+not yet written to disk and the
+.Sq >
+is replaced by
+.Sq #
+when the editor is in expert mode.
+.Pp
 Some commands or prompts take an optional unit.
 Available units are
 .Sq b

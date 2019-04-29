@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.359 2019/04/03 01:10:30 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.360 2019/04/29 18:54:12 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -253,7 +253,9 @@ editor(int f)
 
 	puts("Label editor (enter '?' for help at any prompt)");
 	for (;;) {
-		fprintf(stdout, "%s%s", dkname, (expert == 0) ? "> " : "# ");
+		fprintf(stdout, "%s%s%c ", dkname,
+		    (memcmp(&lab, &newlab, sizeof(newlab)) == 0) ? "" : "*",
+		    (expert == 0) ? '>' : '#');
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			putchar('\n');
 			buf[0] = 'q';
