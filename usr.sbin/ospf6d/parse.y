@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.42 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.43 2019/04/29 05:14:38 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -1151,18 +1151,41 @@ conf_get_area(struct in_addr id)
 int
 conf_check_rdomain(u_int rdomain)
 {
-	struct area	*a;
-	struct iface	*i;
-	int		 errs = 0;
+	struct area		*a;
+	struct iface		*i, *idep;
+	struct redistribute	*r;
+	int			 errs = 0;
+
+	SIMPLEQ_FOREACH(r, &conf->redist_list, entry)
+		if (r->dependon[0] != '\0') {
+			idep = if_findname(r->dependon);
+			if (idep->rdomain != rdomain) {
+				logit(LOG_CRIT,
+				    "depend on %s: interface not in rdomain %u",
+				    idep->name, rdomain);
+				errs++;
+			}
+		}
 
 	LIST_FOREACH(a, &conf->area_list, entry)
-		LIST_FOREACH(i, &a->iface_list, entry)
+		LIST_FOREACH(i, &a->iface_list, entry) {
 			if (i->rdomain != rdomain) {
 				logit(LOG_CRIT,
 				    "interface %s not in rdomain %u",
 				    i->name, rdomain);
 				errs++;
 			}
+			if (i->dependon[0] != '\0') {
+				idep = if_findname(i->dependon);
+				if (idep->rdomain != rdomain) {
+					logit(LOG_CRIT,
+					    "depend on %s: interface not in "
+					    "rdomain %u",
+					    idep->name, rdomain);
+					errs++;
+				}
+			}
+		}
 
 	return (errs);
 }

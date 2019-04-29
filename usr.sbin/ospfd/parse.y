@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.95 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.96 2019/04/29 05:14:38 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -1371,18 +1371,45 @@ conf_get_if(struct kif *kif, struct kif_addr *ka)
 int
 conf_check_rdomain(unsigned int rdomain)
 {
-	struct area	*a;
-	struct iface	*i;
-	int		 errs = 0;
+	struct area		*a;
+	struct iface		*i;
+	struct in_addr		 addr;
+	struct kif		*kif;
+	struct redistribute	*r;
+	int			 errs = 0;
+
+	SIMPLEQ_FOREACH(r, &conf->redist_list, entry)
+		if (r->dependon[0] != '\0') {
+			bzero(&addr, sizeof(addr));
+			kif = kif_findname(r->dependon, addr, NULL);
+			if (kif->rdomain != rdomain) {
+				logit(LOG_CRIT,
+				    "depend on %s: interface not in rdomain %u",
+				    kif->ifname, rdomain);
+				errs++;
+			}
+		}
 
 	LIST_FOREACH(a, &conf->area_list, entry)
-		LIST_FOREACH(i, &a->iface_list, entry)
+		LIST_FOREACH(i, &a->iface_list, entry) {
 			if (i->rdomain != rdomain) {
 				logit(LOG_CRIT,
 				    "interface %s not in rdomain %u",
 				    i->name, rdomain);
 				errs++;
 			}
+			if (i->dependon[0] != '\0') {
+				bzero(&addr, sizeof(addr));
+				kif = kif_findname(i->dependon, addr, NULL);
+				if (kif->rdomain != rdomain) {
+					logit(LOG_CRIT,
+					    "depend on %s: interface not in "
+					    "rdomain %u",
+					    kif->ifname, rdomain);
+					errs++;
+				}
+			}
+		}
 
 	return (errs);
 }
