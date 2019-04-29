@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.209 2019/02/27 04:10:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.210 2019/04/29 09:00:16 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4703,7 +4703,7 @@ iwn_limit_dwell(struct iwn_softc *sc, uint16_t dwell_time)
 		return (MIN(IWN_PASSIVE_DWELL_BASE, ((bintval * 85) / 100)));
 
 	/* No association context? Default */
-	return (IWN_PASSIVE_DWELL_BASE);
+	return dwell_time;
 }
 
 uint16_t
