@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2019/04/29 01:48:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.61 2019/04/29 17:55:54 naddy Exp $
 
 ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 
@@ -47,11 +47,11 @@ all:	bsd.rd
 ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	dd if=/dev/zero of=${FLOPPY} count=${FLOPPYSIZE}
 	vnconfig -v ${FLOPPY} > vnd
-	disklabel -w $(cat vnd) ${FLOPPYTYPE}
-	newfs ${NEWFSOPTS_FD} /dev/r$(cat vnd)a
-	mount /dev/$(cat vnd)a ${MOUNT_POINT}
+	disklabel -w `cat vnd` ${FLOPPYTYPE}
+	newfs ${NEWFSOPTS_FD} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	${INSTALLBOOT} -v -r ${MOUNT_POINT} $(cat vnd) ${BOOTXX} ${BOOT}
+	${INSTALLBOOT} -v -r ${MOUNT_POINT} `cat vnd` ${BOOTXX} ${BOOT}
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
@@ -73,9 +73,9 @@ bsd.gz:	bsd.rd
 ${IMAGE}: instbin
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig -v ${IMAGE} > vnd
-	disklabel -w $(cat vnd) ${DISKTYPE}
-	newfs ${NEWFSOPTS_RD} /dev/r$(cat vnd)a
-	mount /dev/$(cat vnd)a ${MOUNT_POINT}
+	disklabel -w `cat vnd` ${DISKTYPE}
+	newfs ${NEWFSOPTS_RD} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	OSrev=${OSrev} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    ARCHDIR=${ARCHDIR} TARGDIR=${MOUNT_POINT} UTILS=${UTILS} \
