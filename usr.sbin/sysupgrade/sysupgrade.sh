@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.7 2019/04/28 07:21:28 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.8 2019/04/29 22:27:39 ian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -152,7 +152,7 @@ echo Verifying sets.
 unpriv signify -qC -p "${SIGNIFY_KEY}" -x SHA256.sig ${SETS}
 
 cp bsd.rd /nbsd.upgrade
-ln /nbsd.upgrade /bsd.upgrade
+ln -f /nbsd.upgrade /bsd.upgrade
 rm /nbsd.upgrade
 
 echo Upgrading.
