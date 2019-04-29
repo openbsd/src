@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.138 2019/04/23 10:53:45 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.139 2019/04/29 04:26:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -158,7 +158,6 @@ trunk_clone_create(struct if_clone *ifc, int unit)
 	int i, error = 0;
 
 	tr = malloc(sizeof(*tr), M_DEVBUF, M_WAITOK|M_ZERO);
-	tr->tr_unit = unit;
 	tr->tr_proto = TRUNK_PROTO_NONE;
 	for (i = 0; trunk_protos[i].ti_proto != TRUNK_PROTO_NONE; i++) {
 		if (trunk_protos[i].ti_proto == TRUNK_PROTO_DEFAULT) {

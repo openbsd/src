@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.26 2018/08/12 23:50:31 ccardenas Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.27 2019/04/29 04:26:47 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -208,7 +208,6 @@ struct trunk_ifreq {
 
 struct trunk_softc {
 	struct arpcom			tr_ac;		/* virtual interface */
-	int				tr_unit;	/* trunk unit */
 	enum trunk_proto		tr_proto;	/* trunk protocol */
 	u_int				tr_count;	/* number of ports */
 	struct trunk_port		*tr_primary;	/* primary port */
