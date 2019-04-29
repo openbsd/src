@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1117 2019/04/25 17:18:52 florian Exp $
+#	$OpenBSD: install.sub,v 1.1118 2019/04/29 23:50:34 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -903,14 +903,11 @@ __EOT
 }
 
 # Obtain and output the inet information related to interface $1.
-# Outputs one of:
-# DOWN
-# UP
-# UP\n<addr> <netmask> <rest of inet line>[\n<more inet lines>]
+# Outputs:
+# <flags>\n<addr> <netmask> <rest of inet line>[\n<more inet lines>]
 v4_info() {
 	ifconfig $1 inet | sed -n '
-		1s/.*<UP,.*/UP/p
-		1s/.*<.*/DOWN/p
+		1s/.*flags=.*<\(.*\)>.*/\1/p
 		/inet/s/netmask //
 		/.inet /s///p'
 }
@@ -1069,14 +1066,10 @@ v4_config() {
 }
 
 # Obtain and output the inet6 information related to interface $1.
-# Outputs one of:
-# DOWN
-# UP
-# UP\n<addr> <prefixlen> <rest of inet6 line>[\n<more inet6 lines>]
+# <flags>\n<addr> <prefixlen> <rest of inet6 line>[\n<more inet6 lines>]
 v6_info() {
 	ifconfig $1 inet6 | sed -n '
-		1s/.*<UP,.*/UP/p
-		1s/.*<.*/DOWN/p
+		1s/.*flags=.*<\(.*\)>.*/\1/p
 		/scopeid/d
 		/inet6/s/prefixlen //
 		/.inet6 /s///p'
@@ -3275,7 +3268,7 @@ umount -af >/dev/null 2>&1
 # Make sure only successful dhcp requests retain their state.
 for _if in $(get_ifs dhcp); do
 	set -- $(v4_info $_if)
-	[[ $1 == UP && -n $2 ]] && continue
+	[[ $1 == @(UP,*) && -n $2 ]] && continue
 	ifconfig $_if delete down -group dhcp 2>/dev/null
 done
 
