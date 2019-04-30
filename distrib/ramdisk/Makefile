@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 2019/04/30 17:46:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.63 2019/04/30 21:14:59 deraadt Exp $
 
 ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 
@@ -96,7 +96,7 @@ instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
 clean cleandir:
-	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
+	rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
 	    lib*.a lib*.olist instbin.map instbin.conf *.o *.lo *.c bsd bsd.*
 
 .endif	# DESTDIR check

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2019/04/30 17:46:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2019/04/30 21:14:59 deraadt Exp $
 
 FS=		floppy${OSrev}.fs
 FSSIZE=		2880
@@ -80,9 +80,9 @@ install:
 .endif	# RELEASEDIR
 
 clean cleandir:
-	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
+	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
-	/bin/rm -rf mr.fs.d
+	rm -rf mr.fs.d
 
 .include <bsd.obj.mk>

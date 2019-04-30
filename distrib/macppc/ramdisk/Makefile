@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2019/04/30 17:46:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.42 2019/04/30 21:14:59 deraadt Exp $
 
 CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
@@ -72,7 +72,7 @@ install:
 .endif
 
 clean cleandir:
-	/bin/rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
 	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd cd${OSrev}.iso
 	rm -rf cd-dir mr.fs.d
 

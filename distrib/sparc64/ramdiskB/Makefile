@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2019/04/30 17:46:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.41 2019/04/30 21:15:00 deraadt Exp $
 
 FS=		floppyB${OSrev}.fs
 FSDISKTYPE=	floppy
@@ -75,9 +75,9 @@ install:
 .endif
 
 clean cleandir:
-	/bin/rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
 	    lib*.a lib*.olist instbin.map \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz ${FS}
-	/bin/rm -rf mr.fs.d
+	rm -rf mr.fs.d
 
 .include <bsd.obj.mk>

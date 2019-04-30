@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2019/04/30 17:46:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.30 2019/04/30 21:14:59 deraadt Exp $
 
 MTREE=		${UTILS}/mtree.conf
 
@@ -53,8 +53,8 @@ install:
 
 
 clean cleandir:
-	/bin/rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
 	    lib*.a lib*.olist instbin.map ${ALLBSD} ${ALLBSDRD} *.o *.lo *.c
-	/bin/rm -rf mr.fs.d
+	rm -rf mr.fs.d
 
 .include <bsd.obj.mk>

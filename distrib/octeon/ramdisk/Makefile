@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2019/04/30 17:46:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2019/04/30 21:14:59 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		24576
@@ -61,7 +61,7 @@ instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
 clean cleandir:
-	/bin/rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
 	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd
 	rm -rf cd-dir mr.fs.d
 
