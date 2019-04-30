@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.5 2019/04/28 14:46:00 deraadt Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.6 2019/04/30 18:05:11 espie Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -49,7 +49,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2019 $
+.Dd $Mdocdate: April 30 2019 $
 .Dt VNCONFIG 8
 .Os
 .Sh NAME
@@ -57,9 +57,11 @@
 .Nd configure vnode disks
 .Sh SYNOPSIS
 .Nm vnconfig
-.Op Fl kv
-.Op Fl K Ar rounds
+.Op Fl v
+.Oo
+.Fl k | K Ar rounds
 .Op Fl S Ar saltfile
+.Oc
 .Op Fl t Ar disktype
 .Op Ar vnd_dev
 .Ar image
@@ -104,6 +106,7 @@ is a number between 1000 and
 DO NOT LOSE THE SALT FILE.
 .It Fl k
 Associate an encryption key with the device.
+The user is asked for the encryption key.
 All data will be encrypted using the Blowfish cipher before it is
 written to the disk.
 .It Fl l
