@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.13 2019/04/30 17:46:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/04/30 20:38:30 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		9600
 FSDISKTYPE=	mini34
+CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
@@ -11,7 +12,7 @@ UTILS=		${.CURDIR}/../../miniroot
 
 EFIBOOT=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
 
-all:	${FS}
+all:	${FS} ${CDROM}
 
 ${FS}:	bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
@@ -35,6 +36,22 @@ ${FS}:	bsd.gz
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
+
+${CDROM}: bsd.rd
+	rm -rf ${.OBJDIR}/cd-dir
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/amd64
+	mkdir -p ${.OBJDIR}/cd-dir/etc
+	echo "set image /${OSREV}/amd64/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
+	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/amd64
+	cp ${DESTDIR}/usr/mdec/cdbr ${.OBJDIR}/cd-dir/${OSREV}/amd64
+	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/amd64/cdboot
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
+	    -A "OpenBSD ${OSREV} amd64 bootonly CD" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
+	    -p "Theo de Raadt <deraadt@openbsd.org>" \
+	    -V "OpenBSD/amd64   ${OSREV} boot-only CD" \
+	    -b ${OSREV}/amd64/cdbr -c ${OSREV}/amd64/boot.catalog \
+	    ${.OBJDIR}/cd-dir
 
 MRDISKTYPE=	rdrootb
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
@@ -64,6 +81,9 @@ mr.fs: instbin
 	rm $@.d/instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
+
 instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
 	    -c instbin.c -e instbin -m instbin.mk instbin.conf
@@ -71,9 +91,6 @@ instbin.mk instbin.cache instbin.c: instbin.conf
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 	strip -R .comment -R .SUNW_ctf instbin
-
-instbin.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -83,13 +100,15 @@ unconfig:
 install:
 	cp bsd.rd ${RELEASEDIR}/bsd.rd
 	chmod a+r ${RELEASEDIR}/bsd.rd
-	cp ${FS} ${RELEASEDIR}/${FS}
-.endif	# RELEASEDIR
+	cp ${FS} ${CDROM} ${RELEASEDIR}
+.endif
 
 clean cleandir:
 	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
-	/bin/rm -rf mr.fs.d
+	rm -rf mr.fs.d
+	rm -f ${CDROM}
+	rm -rf cd-dir
 
 .include <bsd.obj.mk>
