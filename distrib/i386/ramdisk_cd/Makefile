@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2019/04/30 23:37:32 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		7936
@@ -103,7 +103,7 @@ install:
 .endif
 
 clean cleandir:
-	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
+	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
 	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
 	rm -rf mr.fs.d

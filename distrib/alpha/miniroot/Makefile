@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2019/04/30 23:37:31 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		5760
@@ -87,9 +87,6 @@ mr.fs: instbin
 	rm $@.d/instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
-instbin.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
-
 instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
 	    -c instbin.c -e instbin -m instbin.mk instbin.conf
@@ -97,6 +94,9 @@ instbin.mk instbin.cache instbin.c: instbin.conf
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 	strip ${STRIPOPTS} instbin
+
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

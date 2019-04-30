@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2019/04/30 21:14:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2019/04/30 23:37:31 deraadt Exp $
 
 FS=		install${OSrev}.fs
 FSSIZE=		921536
@@ -24,7 +24,7 @@ MSDOSSIZE=	960
 TOTALSIZE!=	expr ${FSSIZE} + ${MSDOSSIZE}
 TEMPLATE=	${.CURDIR}/template
 
-all: ${CDROM} ${FS}
+all: ${FS} ${CDROM}
 
 ${FS}: ${BASE} ${XBASE} bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${TOTALSIZE}

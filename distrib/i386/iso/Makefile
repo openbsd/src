@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2019/04/30 23:37:32 deraadt Exp $
 
 FS=		install${OSrev}.fs
 FSSIZE=		921600
@@ -18,7 +18,7 @@ BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
-all: ${CDROM} ${FS}
+all: ${FS} ${CDROM}
 
 ${FS}: ${BASE} ${XBASE} bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}

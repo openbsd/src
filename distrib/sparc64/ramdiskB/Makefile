@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.43 2019/04/30 23:37:32 deraadt Exp $
 
 FS=		floppyB${OSrev}.fs
 FSDISKTYPE=	floppy
@@ -53,15 +53,15 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 	cp -p ${.CURDIR}/../../../sys/arch/sparc64/compile/RAMDISKU5/obj/bsd bsd
 
-instbin.conf: ${LISTS}
-	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
-
 instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
 	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

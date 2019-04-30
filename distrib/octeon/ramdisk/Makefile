@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/04/30 23:37:32 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		24576
@@ -33,6 +33,11 @@ bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
 	rdsetroot bsd.rd mr.fs
 
+bsd:
+	cd ${.CURDIR}/../../../sys/arch/octeon/compile/RAMDISK && \
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/octeon/compile/RAMDISK/obj/bsd bsd
+
 mr.fs: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
@@ -42,11 +47,6 @@ mr.fs: instbin
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
-
-bsd:
-	cd ${.CURDIR}/../../../sys/arch/octeon/compile/RAMDISK && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/octeon/compile/RAMDISK/obj/bsd bsd
 
 instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -M -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
@@ -58,11 +58,6 @@ instbin: instbin.mk instbin.cache instbin.c
 instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
-clean cleandir:
-	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd
-	rm -rf cd-dir mr.fs.d
-
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
@@ -73,5 +68,10 @@ install:
 	chmod a+r ${RELEASEDIR}/bsd.rd
 	cp ${FS} ${RELEASEDIR}
 .endif
+
+clean cleandir:
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd
+	rm -rf cd-dir mr.fs.d
 
 .include <bsd.obj.mk>
