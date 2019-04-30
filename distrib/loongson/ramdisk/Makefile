@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2019/04/30 17:46:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2019/04/30 18:06:44 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		18432
@@ -10,7 +10,7 @@ MTREE=		${UTILS}/mtree.conf
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
 
-MRMRDISKTYPE=	rdroot
+MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 all:	${FS} ${CDROM}
