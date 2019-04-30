@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.89 2019/04/17 20:34:21 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.90 2019/04/30 16:34:19 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: April 17 2019 $
+.Dd $Mdocdate: April 30 2019 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -178,8 +178,15 @@ is specified, only routes with the specified label are shown.
 .Pp
 If
 .Fl priority
-is specified, only routes with the specified (numeric) priority are shown.
-Some well-known priorities can be given by name.
+is specified, only routes with the specified priority are shown.
+It may be specified by number or one of
+.Cm local ,
+.Cm connected ,
+.Cm static ,
+.Cm ospf ,
+.Cm rip ,
+or
+.Cm bgp .
 If the priority is negative, then routes that do not match the numeric
 priority are shown.
 .El
