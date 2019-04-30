@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.76 2019/04/30 20:29:46 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.77 2019/04/30 20:38:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -143,6 +143,7 @@ void dynex_sc51_init(struct envy_softc *);
 
 void julia_init(struct envy_softc *);
 void julia_codec_write(struct envy_softc *, int, int, int);
+void julia_set_rate(struct envy_softc *, int);
 
 void unkenvy_init(struct envy_softc *);
 void unkenvy_codec_write(struct envy_softc *, int, int, int);
@@ -161,6 +162,7 @@ int ak4358_dac_ndev(struct envy_softc *);
 void ak4358_dac_devinfo(struct envy_softc *, struct mixer_devinfo *, int);
 void ak4358_dac_get(struct envy_softc *, struct mixer_ctrl *, int);
 int ak4358_dac_set(struct envy_softc *, struct mixer_ctrl *, int);
+void ak4358_set_rate(struct envy_softc *, int);
 
 int ak5365_adc_ndev(struct envy_softc *);
 void ak5365_adc_devinfo(struct envy_softc *, struct mixer_devinfo *, int);
@@ -310,7 +312,7 @@ struct envy_card envy_cards[] = {
 		2, &unkenvy_codec, 2, &ak4358_dac, 1,
 		julia_init,
 		julia_codec_write,
-		NULL,
+		julia_set_rate,
 		julia_eeprom
 	}, {
 		PCI_ID_CODE(0x1412, 0x3632),
@@ -663,6 +665,12 @@ dynex_sc51_init(struct envy_softc *sc)
  * ESI Julia specific code
  */
 
+#define JULIA_AK5385_CKS0	(1 << 8)
+#define JULIA_AK5385_DFS1	(1 << 9)
+#define JULIA_AK5385_DFS0	(1 << 10)
+#define JULIA_AK5385_CKS1	(1 << 14)
+#define JULIA_AK5385_MASK	0x4700
+
 void
 julia_init(struct envy_softc *sc)
 {
@@ -681,6 +689,22 @@ julia_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 {
 #define JULIA_AK4358_ADDR	0x11
 	envy_i2c_write(sc, JULIA_AK4358_ADDR, addr, data);
+}
+
+void
+julia_set_rate(struct envy_softc *sc, int rate)
+{
+	int reg;
+
+	/* set AK5385 clock params */
+	reg = envy_gpio_getstate(sc) & ~(JULIA_AK5385_MASK);
+	if (rate > 96000)
+		reg |= JULIA_AK5385_CKS0 | JULIA_AK5385_DFS1;
+	else if (rate > 48000)
+		reg |= JULIA_AK5385_DFS0;
+	envy_gpio_setstate(sc, reg);
+
+	ak4358_set_rate(sc, rate);
 }
 
 /*
@@ -747,6 +771,26 @@ ak4358_dac_set(struct envy_softc *sc, struct mixer_ctrl *ctl, int idx)
 	val = ctl->un.value.level[0] / 2;
 	envy_codec_write(sc, 0, AK4358_ATT(idx), val | AK4358_ATT_EN);
 	return 0;
+}
+
+void
+ak4358_set_rate(struct envy_softc *sc, int rate)
+{
+	int reg;
+
+	reg = AK4358_SPEED_DEFAULT & ~(AK4358_SPEED_DFS0 | AK4358_SPEED_DFS1);
+	if (rate > 96000)
+		reg |= AK4358_SPEED_DFS1;
+	else if (rate > 48000)
+		reg |= AK4358_SPEED_DFS0;
+
+	/* put in reset state */
+	reg &= ~AK4358_SPEED_RSTN;
+	envy_codec_write(sc, 0, AK4358_SPEED, reg);
+
+	/* back in normal state */
+	reg |= AK4358_SPEED_RSTN;
+	envy_codec_write(sc, 0, AK4358_SPEED, reg);
 }
 
 /*

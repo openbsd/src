@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.18 2019/04/30 20:17:12 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.19 2019/04/30 20:38:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -220,6 +220,15 @@
  */
 #define AK4358_ATT(chan)	((chan) <= 5 ? 0x4 + (chan) : 0xb - 6 + (chan))
 #define   AK4358_ATT_EN		0x80
+#define AK4358_SPEED		2
+#define   AK4358_SPEED_RSTN	0x01	/* 0 = reset, 1 = normal op */
+#define   AK4358_SPEED_PW1	0x02	/* power-down dac1 */
+#define   AK4358_SPEED_PW2	0x04	/* power-down dac2 */
+#define   AK4358_SPEED_PW3	0x08	/* power-down dac3 */
+#define   AK4358_SPEED_DFS0	0x10	/* rate multiplier (1x, 2x, 4x) */
+#define   AK4358_SPEED_DFS1	0x20
+#define   AK4358_SPEED_PW4	0x40	/* power-down dac4 */
+#define   AK4358_SPEED_DEFAULT	0x4f	/* default register value */
 
 /*
  * AK5365 control registers
