@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.12 2019/02/20 07:36:37 patrick Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.13 2019/04/30 19:53:27 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -133,8 +133,8 @@ regulator_set(uint32_t phandle, int enable)
 	if (node == 0)
 		return ENODEV;
 
-	/* Don't mess around with regulators that are always on. */
-	if (OF_getproplen(node, "regulator-always-on") == 0)
+	/* Never turn off regulators that should always be on. */
+	if (OF_getproplen(node, "regulator-always-on") == 0 && !enable)
 		return 0;
 
 	LIST_FOREACH(rd, &regulator_devices, rd_list) {
