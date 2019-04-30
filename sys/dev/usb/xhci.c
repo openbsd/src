@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.102 2019/04/10 08:27:35 ratchov Exp $ */
+/* $OpenBSD: xhci.c,v 1.103 2019/04/30 20:09:12 ratchov Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -3048,7 +3048,7 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 		 */
 		trb = xhci_xfer_get_trb(sc, xfer, &toggle, (ntrb == 1));
 
-		DPRINTF(("%s:%d: ring %p trb0_idx %lu ntrb %d paddr %llx "
+		DPRINTFN(4, ("%s:%d: ring %p trb0_idx %lu ntrb %d paddr %llx "
 		    "len %u\n", __func__, __LINE__,
 		    &xp->ring.trbs[0], (trb - &xp->ring.trbs[0]), ntrb, paddr,
 		    len));
@@ -3091,7 +3091,7 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 			if (usbd_xfer_isread(xfer))
 				flags |= XHCI_TRB_ISP;
 			flags |= (j == 1) ? XHCI_TRB_IOC : XHCI_TRB_CHAIN;
-			DPRINTF(("%s:%d: ring %p trb0_idx %lu ntrb %d "
+			DPRINTFN(3, ("%s:%d: ring %p trb0_idx %lu ntrb %d "
 			    "paddr %llx len %u\n", __func__, __LINE__,
 			    &xp->ring.trbs[0], (trb - &xp->ring.trbs[0]), ntrb,
 			    paddr, len));
