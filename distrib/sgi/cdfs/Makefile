@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2019/04/29 15:56:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.22 2019/04/30 17:46:05 deraadt Exp $
 
 CDROM=	cd${OSrev}.iso
 FFS=	ffs.img
@@ -15,7 +15,7 @@ ALLIP=		22 26 27 28 30 32
 SGIVOLSZ=	33500
 
 ${CDROM}:
-	-rm -rf ${.OBJDIR}/cd-dir
+	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 	dd if=/dev/zero of=${FFS} bs=1m count=${CDFSMB}
 	vnconfig -v ${FFS} > vnd
@@ -55,18 +55,17 @@ ${CDROM}:
 	rm -f vnd
 	dd if=${FFS} of=${CDROM} bs=512 seek=${SGIVOLSZ}
 
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+
 .ifdef RELEASEDIR
 install:
 	cp ${CDROM} ${RELEASEDIR}
 .endif
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 clean cleandir:
 	/bin/rm -f ${CDROM} ${FFS} xfs512.bin xfs
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

@@ -1,51 +1,44 @@
-#	$OpenBSD: Makefile,v 1.39 2019/04/29 15:56:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.40 2019/04/30 17:46:06 deraadt Exp $
 
-IMAGE=		mr.fs
-LISTS=		${.CURDIR}/list
-UTILS?=		${.CURDIR}/../../miniroot
-
+FS=		floppyB${OSrev}.fs
+FSDISKTYPE=	floppy
+FSSIZE=		2880
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
-FLOPPY=		floppyB${OSrev}.fs
-FLOPPYSIZE?=	2880
-FLOPPYTYPE?=	floppy
+LISTS=		${.CURDIR}/list
+UTILS=		${.CURDIR}/../../miniroot
 
-DISKTYPE=	rdroot
-MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=8192
+MRDISKTYPE=	rdroot
+MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=8192
 
-.ifndef DESTDIR
-all ${IMAGE}:
-	@echo setenv DESTDIR before making a ramdisk!
-	@false
-.else
+all:	${FS}
 
-# mix config is not needed.
-all:	${FLOPPY} bsd.rd
-
-bsd.gz:	bsd.rd
-	gzip -9nv < bsd.rd > bsd.gz
-
-${FLOPPY}:	bsd.gz ${BOOT} /usr/
-	dd if=/dev/zero of=${FLOPPY} count=${FLOPPYSIZE}
-	vnconfig -v ${FLOPPY} > vnd
-	disklabel -w `cat vnd` ${FLOPPYTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FLOPPYSIZE} /dev/r`cat vnd`a
+${FS}:	bsd.gz
+	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
+	vnconfig -v ${FS} > vnd
+	disklabel -w `cat vnd` ${FSDISKTYPE}
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	cp ${DESTDIR}/usr/mdec/ofwbootfd ${MOUNT_POINT}/ofwboot
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	installboot -v `cat vnd` /usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
+	install -c -m 555 -o root -g wheel \
+	    ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/ofwboot
+	installboot -v -r ${MOUNT_POINT} `cat vnd` \
+	    /usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-bsd.rd: instbin ${IMAGE} bsd
+bsd.gz:	bsd.rd
+	gzip -c -9nv < bsd.rd > bsd.gz
+
+bsd.rd: bsd mr.fs
 	cp bsd bsd.rd
-	rdsetroot bsd.rd ${IMAGE}
+	rdsetroot bsd.rd mr.fs
 	strip -R .SUNW_ctf bsd.rd
 
-${IMAGE}: instbin
+mr.fs: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
@@ -53,38 +46,38 @@ ${IMAGE}: instbin
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
-	makefs ${MAKEFSARGS_RD} $@ $@.d
-
-.endif
+	makefs ${MRMAKEFSARGS} $@ $@.d
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/sparc64/compile/RAMDISKU5 && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 	cp -p ${.CURDIR}/../../../sys/arch/sparc64/compile/RAMDISKU5/obj/bsd bsd
-
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
 
 instbin.mk instbin.cache instbin.c: instbin.conf
-	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
+	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
-clean cleandir:
-	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz ${FLOPPY}
-	/bin/rm -rf ${IMAGE}.d
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .ifdef RELEASEDIR
 install:
-	cp ${FLOPPY} ${BSD.RD} ${RELEASEDIR}
+	cp bsd.rd ${RELEASEDIR}/bsd.rd
+	chmod a+r ${RELEASEDIR}/bsd.rd
+	cp ${FS} ${RELEASEDIR}
 .endif
 
+clean cleandir:
+	/bin/rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz ${FS}
+	/bin/rm -rf mr.fs.d
+
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

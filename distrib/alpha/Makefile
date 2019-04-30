@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.13 2017/09/17 16:31:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/04/30 17:46:00 deraadt Exp $
 
-SUBDIR= bsd.rd miniroot cdfs
+SUBDIR= miniroot
 
 .if	make(obj) || make(cleandir) || make(clean)
 SUBDIR+= iso
@@ -8,10 +8,5 @@ SUBDIR+= iso
 
 unconfig:
 	cd miniroot; ${MAKE} unconfig
-	cd floppy; ${MAKE} unconfig
-	cd floppyB; ${MAKE} unconfig
-	cd floppyC; ${MAKE} unconfig
-	cd cdfs; ${MAKE} unconfig
-	cd iso; ${MAKE} unconfig
 
 .include <bsd.subdir.mk>

@@ -1,45 +1,32 @@
-#	$OpenBSD: Makefile,v 1.28 2019/04/29 15:56:26 deraadt Exp $
-
-IMAGE=		mr.fs
-CRUNCHCONF?=	instbin.conf
-CRUNCHCONFS?=	${.CURDIR}/../common/crunch.conf
-LISTS=		${.CURDIR}/list
-UTILS?=		${.CURDIR}/../../miniroot
+#	$OpenBSD: Makefile,v 1.29 2019/04/30 17:46:05 deraadt Exp $
 
 MTREE=		${UTILS}/mtree.conf
 
-DISKTYPE=	rdroot
-MAKEFSARGS_RD=	-o disklabel=${DISKTYPE},minfree=0,density=4096
+LISTS=		${.CURDIR}/list
+UTILS=		${.CURDIR}/../../miniroot
 
-.ifndef DESTDIR
-all ${IMAGE}:
-	@echo setenv DESTDIR before makeing a ramdisk!
-	@false
-.else
+MRDISKTYPE=	rdroot
+MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 ALLIP=		22 26 27 28 30 32
-ALLBSD=
 ALLBSDRD=
 .for IP in ${ALLIP}
-ALLBSD+=	bsd.IP${IP}
 ALLBSDRD+=	bsd.rd.IP${IP}
 all:	${ALLBSDRD}
 .endfor
 
 .for IP in ${ALLIP}
+bsd.rd.IP${IP}: mr.fs bsd.IP${IP}
+	cp bsd.IP${IP} bsd.rd.IP${IP}
+	rdsetroot bsd.rd.IP${IP} mr.fs
+
 bsd.IP${IP}:
-.ifndef NOBUILD
 	cd ${.CURDIR}/../../../sys/arch/sgi/compile/RAMDISK-IP${IP} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-.endif
 	cp -p ${.CURDIR}/../../../sys/arch/sgi/compile/RAMDISK-IP${IP}/obj/bsd bsd.IP${IP}
-
-bsd.rd.IP${IP}: ${IMAGE} bsd.IP${IP}
-	cp bsd.IP${IP} bsd.rd.IP${IP}
-	rdsetroot bsd.rd.IP${IP} ${IMAGE}
 .endfor
 
-${IMAGE}: instbin
+mr.fs: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
@@ -47,28 +34,27 @@ ${IMAGE}: instbin
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
-	makefs ${MAKEFSARGS_RD} $@ $@.d
+	makefs ${MRMAKEFSARGS} $@ $@.d
 
-.endif
-
-instbin.mk instbin.cache instbin.c: ${CRUNCHCONF}
-	crunchgen -M -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+instbin.mk instbin.cache instbin.c: instbin.conf
+	crunchgen -M -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
+	    -c instbin.c -e instbin -m instbin.mk instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
 
-${CRUNCHCONF}: ${LISTS}
+instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
-
-clean cleandir:
-	/bin/rm -f *.core ${IMAGE} instbin instbin.mk instbin.cache \
-	    lib*.a lib*.olist instbin.map ${ALLBSD} ${ALLBSDRD} *.o *.lo *.c
-	/bin/rm -rf ${IMAGE}.d
 
 .ifdef RELEASEDIR
 install:
 	cp ${ALLBSDRD} ${RELEASEDIR}
 .endif
 
+
+clean cleandir:
+	/bin/rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map ${ALLBSD} ${ALLBSDRD} *.o *.lo *.c
+	/bin/rm -rf mr.fs.d
+
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

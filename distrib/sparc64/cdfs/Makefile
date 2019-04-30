@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.19 2019/04/29 15:56:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/04/30 17:46:05 deraadt Exp $
 
 CDROM=	cd${OSrev}.iso
 
 all: ${CDROM}
 
 ${CDROM}:
-	-rm -rf ${.OBJDIR}/cd-dir
-	-mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/sparc64
-	-cp ${.OBJDIR}/../bsd.rd/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/sparc64
+	rm -rf ${.OBJDIR}/cd-dir
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/sparc64
+	cp ${.OBJDIR}/../miniroot/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/sparc64
 	ln ${.OBJDIR}/cd-dir/${OSREV}/sparc64/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/sparc64/bsd
-	-cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/${OSREV}/sparc64
+	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/${OSREV}/sparc64
 
 	echo 'm 1	sun4' > ${.OBJDIR}/cd-dir/.slicemapfile
 	echo 'm 2	sun4c' >> ${.OBJDIR}/cd-dir/.slicemapfile
@@ -30,6 +30,10 @@ ${CDROM}:
 	rm -f vnd
 	mksuncd f ${CDROM} ${.OBJDIR}/../miniroot/miniroot${OSrev}.fs
 
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+
 .ifdef RELEASEDIR
 install:
 	cp ${CDROM} ${RELEASEDIR}
@@ -39,4 +43,3 @@ clean cleandir:
 	/bin/rm -rf ${CDROM} ${.OBJDIR}/cd-dir
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.17 2019/04/29 15:56:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/04/30 17:46:03 deraadt Exp $
 
 CDROM=		install${OSrev}.iso
+MOUNT_POINT=	/mnt
+
 RELXDIR?=	/home/relx-${MACHINE}
 RELDIR?=	/home/rel-${MACHINE}
-MOUNT_POINT=	/mnt
 
 BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 		${RELDIR}/game${OSrev}.tgz ${RELDIR}/man${OSrev}.tgz \
@@ -15,7 +16,7 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 all: ${CDROM}
 
 ${CDROM}: ${BASE} ${XBASE}
-	-rm -rf ${.OBJDIR}/cd-dir
+	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -48,6 +49,10 @@ ${CDROM}: ${BASE} ${XBASE}
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+
 install:
 	cp ${CDROM} ${RELDIR}/
 
@@ -55,9 +60,4 @@ clean cleandir:
 	/bin/rm -f ${CDROM}
 	rm -rf cd-dir log
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
-
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

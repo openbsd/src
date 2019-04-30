@@ -88,5 +88,3 @@ install:
 .endif
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.include <bsd.own.mk>

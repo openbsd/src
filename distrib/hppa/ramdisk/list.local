@@ -1,4 +1,4 @@
-#	$OpenBSD: list.local,v 1.6 2017/11/19 12:11:53 job Exp $
+#	$OpenBSD: list.local,v 1.7 2019/04/30 17:46:03 deraadt Exp $
 
 # hppa extra's
 LINK	instbin					sbin/disklabel
@@ -19,5 +19,5 @@ SYMLINK	/tmp/i/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp700-wy,hp70092		usr/share/misc/termcap
 
 # and the installation tools (no upgrade from to 3.3)
-SCRIPT	${ARCHDIR}/install.md			install.md
+SCRIPT	${CURDIR}/../install.md			install.md
 TZ

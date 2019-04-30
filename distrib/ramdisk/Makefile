@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 2019/04/29 17:55:54 naddy Exp $
+#	$OpenBSD: Makefile,v 1.62 2019/04/30 17:46:05 deraadt Exp $
 
 ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 
@@ -13,7 +13,7 @@ DISKTYPE=	rdroot
 IMAGE?=		ramdisk${OSrev}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 CRUNCHGENOPTS?=-E
-UTILS?=		${.CURDIR}/../miniroot
+UTILS=		${.CURDIR}/../miniroot
 
 LISTS=		${.CURDIR}/list ${ARCHDIR}/list.local
 MTREE=		${UTILS}/mtree.conf
@@ -59,7 +59,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 
 bsd:
 	cd ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && ${MAKE}'
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 	cp -p ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 bsd.rd:	bsd ${IMAGE}
@@ -115,4 +115,3 @@ unconfig:
 	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

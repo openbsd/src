@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2019/04/29 15:56:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/04/30 17:46:05 deraadt Exp $
 
 CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
@@ -14,8 +14,8 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 all: ${CDROM}
 
 ${CDROM}: ${BASE} ${XBASE}
-	-rm -rf ${.OBJDIR}/cd-dir
-	-mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	rm -rf ${.OBJDIR}/cd-dir/
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -45,6 +45,10 @@ ${CDROM}: ${BASE} ${XBASE}
 	rm -f vnd
 	mksuncd f ${.OBJDIR}/${CDROM} ${.OBJDIR}/../miniroot/miniroot${OSrev}.fs
 
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+
 install:
 	cp ${CDROM} ${RELDIR}/
 
@@ -52,4 +56,3 @@ clean cleandir:
 	/bin/rm -rf ${CDROM} ${.OBJDIR}/cd-dir
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

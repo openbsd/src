@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.11 2019/04/29 15:56:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2019/04/30 17:46:03 deraadt Exp $
 
 CDROM=	cd${OSrev}.iso
 
 all: ${CDROM}
 
 ${CDROM}:
-	-rm -rf ${.OBJDIR}/cd-dir
+	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/amd64
 	mkdir -p ${.OBJDIR}/cd-dir/etc
 	echo "set image /${OSREV}/amd64/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
@@ -30,4 +30,3 @@ clean cleandir:
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

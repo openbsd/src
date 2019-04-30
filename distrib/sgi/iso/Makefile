@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2019/04/29 15:56:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.34 2019/04/30 17:46:05 deraadt Exp $
 
 CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
@@ -38,7 +38,7 @@ CDROMSZ=489	# nt     (size of the iso image in megabytes)
 # filling the 2048 byte sector filesystem.
 
 ${CDROM}:
-	-rm -rf ${.OBJDIR}/cd-dir
+	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
 
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=2048b count=${CDROMSZ}
@@ -105,16 +105,15 @@ ${CDROM}:
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-install:
-	cp ${CDROM} ${RELDIR}/
-
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+
+install:
+	cp ${CDROM} ${RELDIR}/
 
 clean cleandir:
 	/bin/rm -f ${CDROM} xfs512.bin xfs
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

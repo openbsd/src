@@ -1,11 +1,9 @@
-#	$OpenBSD: Makefile,v 1.21 2019/04/29 15:56:25 deraadt Exp $
-
-CDROM=		install${OSrev}.iso
+#	$OpenBSD: Makefile,v 1.22 2019/04/30 17:46:03 deraadt Exp $
 
 FS=		install${OSrev}.fs
 FSSIZE=		921600
-FSTYPE=		install360
-
+FSDISKTYPE=	install360
+CDROM=		install${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
@@ -20,18 +18,16 @@ BASE=		${RELDIR}/base${OSrev}.tgz ${RELDIR}/comp${OSrev}.tgz \
 XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 		${RELXDIR}/xshare${OSrev}.tgz ${RELXDIR}/xserv${OSrev}.tgz
 
-BOOT?=		${DESTDIR}/usr/mdec/boot
-
 all: ${CDROM} ${FS}
 
 ${FS}: ${BASE} ${XBASE} bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	fdisk -yi -l ${FSSIZE} -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
-	disklabel -w `cat vnd` ${FSTYPE}
+	disklabel -w `cat vnd` ${FSDISKTYPE}
 	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}/boot
+	cp ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 	strip -R .comment -R .SUNW_ctf ${MOUNT_POINT}/boot
 	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
@@ -53,7 +49,7 @@ ${FS}: ${BASE} ${XBASE} bsd.gz
 	rm -f vnd
 
 ${CDROM}: ${BASE} ${XBASE}
-	-rm -rf ${.OBJDIR}/cd-dir
+	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkdir -p ${.OBJDIR}/cd-dir/etc
 	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
@@ -76,13 +72,6 @@ ${CDROM}: ${BASE} ${XBASE}
 	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
 	    ${.OBJDIR}/cd-dir
 
-install:
-	cp ${CDROM} ${FS} ${RELDIR}/
-
-clean cleandir:
-	/bin/rm -f ${CDROM} ${FS}
-	rm -rf cd-dir
-
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
@@ -92,5 +81,15 @@ bsd.gz: bsd.rd
 bsd.rd: ${BSDRD}
 	cp ${BSDRD} bsd.rd
 
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+
+install:
+	cp ${CDROM} ${FS} ${RELDIR}/
+
+clean cleandir:
+	/bin/rm -f ${CDROM} ${FS}
+	rm -rf cd-dir
+
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>

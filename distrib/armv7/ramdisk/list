@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.39 2019/04/29 01:48:39 deraadt Exp $
+#	$OpenBSD: list,v 1.40 2019/04/30 17:46:03 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -120,6 +120,7 @@ SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
 
 # u-boot and dtbs
+MKDIR						usr/mdec/am335x
 COPY	/usr/local/share/u-boot/am335x_evm/MLO	usr/mdec/am335x/MLO
 COPY	/usr/local/share/u-boot/am335x_evm/u-boot.img	usr/mdec/am335x/u-boot.img
 COPY	/usr/local/share/dtb/arm/am335x-bone.dtb	usr/mdec/am335x/am335x-bone.dtb
@@ -133,9 +134,11 @@ COPY	/usr/local/share/dtb/arm/am335x-evm.dtb		usr/mdec/am335x/am335x-evm.dtb
 COPY	/usr/local/share/dtb/arm/am335x-evmsk.dtb	usr/mdec/am335x/am335x-evmsk.dtb
 COPY	/usr/local/share/dtb/arm/am335x-icev2.dtb	usr/mdec/am335x/am335x-icev2.dtb
 
+MKDIR							usr/mdec/cubie
 COPY	/usr/local/share/u-boot/Cubieboard2/u-boot-sunxi-with-spl.bin	usr/mdec/cubie/u-boot-sunxi-with-spl.bin
 COPY	/usr/local/share/dtb/arm/sun7i-a20-cubieboard2.dtb	usr/mdec/cubie/sun7i-a20-cubieboard2.dtb
 
+MKDIR							usr/mdec/panda
 COPY	/usr/local/share/u-boot/omap4_panda/MLO		usr/mdec/panda/MLO
 COPY	/usr/local/share/u-boot/omap4_panda/u-boot.img	usr/mdec/panda/u-boot.img
 COPY	/usr/local/share/dtb/arm/omap4-duovero-parlor.dtb	usr/mdec/panda/omap4-duovero-parlor.dtb
@@ -144,6 +147,7 @@ COPY	/usr/local/share/dtb/arm/omap4-panda-es.dtb	usr/mdec/panda/omap4-panda-es.d
 COPY	/usr/local/share/dtb/arm/omap4-panda.dtb	usr/mdec/panda/omap4-panda.dtb
 COPY	/usr/local/share/dtb/arm/omap4-sdp.dtb		usr/mdec/panda/omap4-sdp.dtb
 
+MKDIR							usr/mdec/cubox
 COPY	/usr/local/share/u-boot/mx6cuboxi/SPL		usr/mdec/cubox/SPL
 COPY	/usr/local/share/u-boot/mx6cuboxi/u-boot.img	usr/mdec/cubox/u-boot.img
 COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i.dtb	usr/mdec/cubox/imx6dl-cubox-i.dtb
@@ -165,12 +169,14 @@ COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2.dtb	usr/mdec/cubox/imx6q-hummi
 COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-emmc-som-v15.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-som-v15.dtb
 
+MKDIR							usr/mdec/nitrogen
 COPY	/usr/local/share/dtb/arm/imx6dl-nitrogen6x.dtb	usr/mdec/nitrogen/imx6dl-nitrogen6x.dtb
 COPY	/usr/local/share/dtb/arm/imx6dl-sabrelite.dtb	usr/mdec/nitrogen/imx6dl-sabrelite.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-nitrogen6_max.dtb	usr/mdec/nitrogen/imx6q-nitrogen6_max.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-nitrogen6x.dtb	usr/mdec/nitrogen/imx6q-nitrogen6x.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-sabrelite.dtb	usr/mdec/nitrogen/imx6q-sabrelite.dtb
 
+MKDIR							usr/mdec/wandboard
 COPY	/usr/local/share/u-boot/wandboard/SPL		usr/mdec/wandboard/SPL
 COPY	/usr/local/share/u-boot/wandboard/u-boot.img	usr/mdec/wandboard/u-boot.img
 COPY	/usr/local/share/dtb/arm/imx6dl-wandboard.dtb	usr/mdec/wandboard/imx6dl-wandboard.dtb
