@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.84 2019/04/23 18:34:06 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.85 2019/04/30 20:04:31 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -145,6 +145,7 @@ mvpinctrl*	at fdt? early 1
 mvgpio*		at fdt?
 mvrng*		at fdt?
 mvrtc*		at fdt?
+mvuart*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
