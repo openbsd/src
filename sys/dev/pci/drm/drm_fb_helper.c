@@ -575,6 +575,9 @@ static bool drm_fb_helper_is_bound(struct drm_fb_helper *fb_helper)
 #ifdef notyet
 	if (READ_ONCE(dev->master))
 		return false;
+#else
+	if (!SPLAY_EMPTY(&dev->files))
+		return false;
 #endif
 
 	drm_for_each_crtc(crtc, dev) {
