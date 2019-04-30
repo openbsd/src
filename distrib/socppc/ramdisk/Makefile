@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2019/04/30 23:25:19 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		8064
@@ -15,7 +15,7 @@ UTILS=		${.CURDIR}/../../miniroot
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
-all:	${FS} bsd.bin
+all: ${FS} bsd.bin
 
 ${FS}: mr.fs
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
@@ -72,8 +72,8 @@ unconfig:
 install:
 	cp bsd.rd ${RELEASEDIR}/bsd.rd
 	chmod a+r ${RELEASEDIR}/bsd.rd
-	cp bsd.bin ${RELEASEDIR}
 	cp ${FS} ${RELEASEDIR}
+	cp bsd.bin ${RELEASEDIR}
 .endif
 
 clean cleandir:

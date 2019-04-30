@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2019/04/30 23:25:19 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		43008
@@ -35,7 +35,7 @@ PIFILES=\
 	bcm2710-rpi-3-b-plus.dtb \
 	bcm2710-rpi-cm3.dtb
 
-all:	${FS}
+all: ${FS}
 
 ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
@@ -64,8 +64,6 @@ ${FS}: bsd.rd
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
-
-all:	bsd.rd
 
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
@@ -108,7 +106,7 @@ install:
 	cp bsd.rd ${RELEASEDIR}/bsd.rd
 	chmod a+r ${RELEASEDIR}/bsd.rd
 	cp ${FS} ${RELEASEDIR}
-.endif	# RELEASEDIR
+.endif
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin.cache \

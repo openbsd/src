@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.42 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.43 2019/04/30 23:25:19 deraadt Exp $
 
-CDROM=		cd${OSrev}.iso
 LIF=		lif${OSrev}.fs
+CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
 
 LISTS=		${.CURDIR}/../list ${.CURDIR}/list.local
@@ -10,9 +10,9 @@ UTILS=		${.CURDIR}/../../miniroot
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
-all:	${LIF} ${CDROM}
+all: ${LIF} ${CDROM}
 
-${LIF}:	bsd.lif
+${LIF}: bsd.lif
 	/usr/mdec/mkboot -v ${DESTDIR}/usr/mdec/boot bsd.lif ${LIF}
 
 ${CDROM}: bsd.rd
@@ -65,7 +65,8 @@ instbin.conf: ${LISTS}
 install:
 	cp bsd.rd ${RELEASEDIR}/bsd.rd
 	chmod a+r ${RELEASEDIR}/bsd.rd
-	cp ${LIF} ${CDROM} ${RELEASEDIR}
+	cp ${LIF} ${RELEASEDIR}
+	cp ${CDROM} ${RELEASEDIR}
 .endif
 
 clean cleandir:

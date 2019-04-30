@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2019/04/30 21:15:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.42 2019/04/30 23:25:19 deraadt Exp $
 
 FS=		floppyB${OSrev}.fs
 FSDISKTYPE=	floppy
@@ -12,9 +12,9 @@ UTILS=		${.CURDIR}/../../miniroot
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=8192
 
-all:	${FS}
+all: ${FS}
 
-${FS}:	bsd.gz
+${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
@@ -30,7 +30,7 @@ ${FS}:	bsd.gz
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-bsd.gz:	bsd.rd
+bsd.gz: bsd.rd
 	gzip -c -9nv < bsd.rd > bsd.gz
 
 bsd.rd: bsd mr.fs

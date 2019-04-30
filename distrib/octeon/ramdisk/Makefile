@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2019/04/30 23:25:19 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		24576
@@ -14,7 +14,7 @@ NEWFSARGS= -t msdos
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
-all:	${FS}
+all: ${FS}
 
 ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
@@ -28,8 +28,6 @@ ${FS}: bsd.rd
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
-
-all:	bsd.rd
 
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd

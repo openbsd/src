@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2019/04/30 21:14:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2019/04/30 23:25:19 deraadt Exp $
 
 FS=		floppy${OSrev}.fs
 FSSIZE=		2880
@@ -11,9 +11,9 @@ UTILS=		${.CURDIR}/../../miniroot
 
 EFIBOOT=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
 
-all:	${FS}
+all: ${FS}
 
-${FS}:	bsd.gz
+${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
@@ -75,8 +75,8 @@ unconfig:
 
 .ifdef RELEASEDIR
 install:
-	cp ${FS} ${RELEASEDIR}/${FS}
-.endif	# RELEASEDIR
+	cp ${FS} ${RELEASEDIR}
+.endif
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \

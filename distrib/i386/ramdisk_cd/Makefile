@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2019/04/30 21:11:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.10 2019/04/30 23:25:19 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		7936
@@ -13,9 +13,9 @@ UTILS=		${.CURDIR}/../../miniroot
 RAMDISK=RAMDISK_CD
 LBA=1
 
-all:	${FS} ${CDROM}
+all: ${FS} ${CDROM}
 
-${FS}:	bsd.gz
+${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 .ifdef LBA
@@ -98,8 +98,9 @@ unconfig:
 install:
 	cp bsd.rd ${RELEASEDIR}/bsd.rd
 	chmod a+r ${RELEASEDIR}/bsd.rd
-	cp ${FS} ${CDROM} ${RELEASEDIR}
-.endif	# RELEASEDIR
+	cp ${FS} ${RELEASEDIR}
+	cp ${CDROM} ${RELEASEDIR}
+.endif
 
 clean cleandir:
 	/bin/rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
