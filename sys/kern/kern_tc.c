@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.43 2019/03/25 23:32:00 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.44 2019/04/30 15:51:53 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -400,6 +400,7 @@ tc_setclock(const struct timespec *ts)
 	struct bintime bt, bt2;
 	struct timespec earlier;
 	static int first = 1;
+	int rewind = 0;
 #ifndef SMALL_KERNEL
 	long long adj_ticks;
 #endif
@@ -425,19 +426,21 @@ tc_setclock(const struct timespec *ts)
 	 */
 	if (bt.sec < timehands->th_offset.sec ||
 	    (bt.sec == timehands->th_offset.sec &&
-	    bt.frac < timehands->th_offset.frac)) {
-		mtx_leave(&windup_mtx);
+	    bt.frac < timehands->th_offset.frac))
+		rewind = 1;
+
+	bt2 = timehands->th_offset;
+
+	/* XXX fiddle all the little crinkly bits around the fiords... */
+	tc_windup(NULL, rewind ? NULL : &bt, NULL);
+	mtx_leave(&windup_mtx);
+
+	if (rewind) {
 		bintime2timespec(&bt, &earlier);
 		printf("%s: cannot rewind uptime to %lld.%09ld\n",
 		    __func__, (long long)earlier.tv_sec, earlier.tv_nsec);
 		return;
 	}
-
-	bt2 = timehands->th_offset;
-
-	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup(NULL, &bt, NULL);
-	mtx_leave(&windup_mtx);
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
