@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.50 2019/04/29 01:48:39 deraadt Exp $
+#	$OpenBSD: list,v 1.1 2019/04/30 18:40:43 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -69,8 +69,22 @@ SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SCRIPT	${CURDIR}/../common/install.md		install.md
+SCRIPT	${CURDIR}/install.md			install.md
 SPECIAL	chmod 755 install.sub
 SYMLINK	install.sub				autoinstall
 SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
+LINK	instbin					sbin/growfs
+LINK	instbin					sbin/mount_cd9660
+LINK	instbin					sbin/dhclient
+LINK	instbin					bin/mt bin/eject
+LINK	instbin					sbin/bioctl
+LINK	instbin					sbin/slaacd
+
+# firmware we might need
+#COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
+#COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
+COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue
+COPY	${DESTDIR}/etc/firmware/3c990		etc/firmware/3c990
+
+TZ

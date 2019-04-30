@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.45 2017/11/02 14:04:24 mpi Exp $
+#       $OpenBSD: install.md,v 1.1 2019/04/30 18:40:43 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.

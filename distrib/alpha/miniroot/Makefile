@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2019/04/30 17:46:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/04/30 18:40:43 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		5760
@@ -7,7 +7,7 @@ CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 
-LISTS=		${.CURDIR}/../common/list ${.CURDIR}/list.local
+LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
 
 STRIPOPTS=	-R .eh_frame -R .SUNW_ctf -R .shstrtab
