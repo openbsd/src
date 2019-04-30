@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.2 2018/07/24 21:52:38 kettenis Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.3 2019/04/30 20:00:25 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,8 +28,19 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+#define HREAD4(sc, reg)							\
+	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+#define HWRITE4(sc, reg, val)						\
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define HSET4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
+#define HCLR4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
+
 struct mvclock_softc {
 	struct device		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
 
 	struct clock_device	sc_cd;
 };
@@ -49,13 +60,25 @@ uint32_t ap806_get_frequency(void *, uint32_t *);
 uint32_t cp110_get_frequency(void *, uint32_t *);
 void	cp110_enable(void *, uint32_t *, int);
 
+void	 a3700_periph_nb_enable(void *, uint32_t *, int);
+uint32_t a3700_periph_nb_get_frequency(void *, uint32_t *);
+void	 a3700_periph_sb_enable(void *, uint32_t *, int);
+uint32_t a3700_periph_sb_get_frequency(void *, uint32_t *);
+uint32_t a3700_tbg_get_frequency(void *, uint32_t *);
+uint32_t a3700_xtal_get_frequency(void *, uint32_t *);
+
 int
 mvclock_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
+	int node = faa->fa_node;
 
-	return (OF_is_compatible(faa->fa_node, "marvell,ap806-clock") ||
-	    OF_is_compatible(faa->fa_node, "marvell,cp110-clock"));
+	return (OF_is_compatible(node, "marvell,ap806-clock") ||
+	    OF_is_compatible(node, "marvell,cp110-clock") ||
+	    OF_is_compatible(node, "marvell,armada-3700-periph-clock-nb") ||
+	    OF_is_compatible(node, "marvell,armada-3700-periph-clock-sb") ||
+	    OF_is_compatible(node, "marvell,armada-3700-tbg-clock") ||
+	    OF_is_compatible(node, "marvell,armada-3700-xtal-clock"));
 }
 
 void
@@ -63,16 +86,36 @@ mvclock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mvclock_softc *sc = (struct mvclock_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	int node = faa->fa_node;
+
+	if (faa->fa_nreg > 0) {
+		sc->sc_iot = faa->fa_iot;
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+		    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+			printf(": can't map registers\n");
+			return;
+		}
+	}
 
 	printf("\n");
 
-	sc->sc_cd.cd_node = faa->fa_node;
+	sc->sc_cd.cd_node = node;
 	sc->sc_cd.cd_cookie = sc;
-	if (OF_is_compatible(faa->fa_node, "marvell,ap806-clock")) {
+	if (OF_is_compatible(node, "marvell,ap806-clock")) {
 		sc->sc_cd.cd_get_frequency = ap806_get_frequency;
-	} else {
+	} else if (OF_is_compatible(node, "marvell,cp110-clock")) {
 		sc->sc_cd.cd_get_frequency = cp110_get_frequency;
 		sc->sc_cd.cd_enable = cp110_enable;
+	} else if (OF_is_compatible(node, "marvell,armada-3700-periph-clock-nb")) {
+		sc->sc_cd.cd_enable = a3700_periph_nb_enable;
+		sc->sc_cd.cd_get_frequency = a3700_periph_nb_get_frequency;
+	} else if (OF_is_compatible(node, "marvell,armada-3700-periph-clock-sb")) {
+		sc->sc_cd.cd_enable = a3700_periph_sb_enable;
+		sc->sc_cd.cd_get_frequency = a3700_periph_sb_get_frequency;
+	} else if (OF_is_compatible(node, "marvell,armada-3700-tbg-clock")) {
+		sc->sc_cd.cd_get_frequency = a3700_tbg_get_frequency;
+	} else if (OF_is_compatible(node, "marvell,armada-3700-xtal-clock")) {
+		sc->sc_cd.cd_get_frequency = a3700_xtal_get_frequency;
 	}
 	clock_register(&sc->sc_cd);
 }
@@ -199,4 +242,226 @@ cp110_enable(void *cookie, uint32_t *cells, int on)
 	}
 
 	printf("%s: 0x%08x 0x%08x\n", __func__, mod, idx);
+}
+
+/* Armada 3700 Periph block */
+
+#define PERIPH_NB_MMC			0x0
+#define PERIPH_SB_GBE1_CORE		0x7
+#define PERIPH_SB_GBE0_CORE		0x8
+#define PERIPH_SB_USB32_USB2_SYS	0xb
+#define PERIPH_SB_USB32_SS_SYS		0xc
+
+#define PERIPH_TBG_SEL			0x0
+#define  PERIPH_TBG_SEL_MASK			0x3
+#define PERIPH_DIV_SEL0			0x4
+#define PERIPH_DIV_SEL1			0x8
+#define PERIPH_DIV_SEL2			0xc
+#define  PERIPH_DIV_SEL_MASK			0x7
+#define PERIPH_CLK_SEL			0x10
+#define PERIPH_CLK_DIS			0x14
+
+void	 a3700_periph_enable(struct mvclock_softc *, uint32_t, int);
+uint32_t a3700_periph_tbg_get_frequency(struct mvclock_softc *, uint32_t);
+uint32_t a3700_periph_get_double_div(struct mvclock_softc *, uint32_t,
+	   uint32_t, uint32_t);
+
+void
+a3700_periph_nb_enable(void *cookie, uint32_t *cells, int on)
+{
+	struct mvclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case PERIPH_NB_MMC:
+		return a3700_periph_enable(sc, 2, on);
+	default:
+		break;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+}
+
+uint32_t
+a3700_periph_nb_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct mvclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t freq;
+
+	switch (idx) {
+	case PERIPH_NB_MMC:
+		freq = a3700_periph_tbg_get_frequency(sc, 0);
+		freq /= a3700_periph_get_double_div(sc,
+		    PERIPH_DIV_SEL2, 16, 13);
+		return freq;
+	default:
+		break;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+void
+a3700_periph_sb_enable(void *cookie, uint32_t *cells, int on)
+{
+	struct mvclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case PERIPH_SB_GBE1_CORE:
+		return a3700_periph_enable(sc, 4, on);
+	case PERIPH_SB_GBE0_CORE:
+		return a3700_periph_enable(sc, 5, on);
+	case PERIPH_SB_USB32_USB2_SYS:
+		return a3700_periph_enable(sc, 16, on);
+	case PERIPH_SB_USB32_SS_SYS:
+		return a3700_periph_enable(sc, 17, on);
+	default:
+		break;
+	}
+
+	printf("%s: 0x%08x\n", __func__, idx);
+}
+
+uint32_t
+a3700_periph_sb_get_frequency(void *cookie, uint32_t *cells)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+void
+a3700_periph_enable(struct mvclock_softc *sc, uint32_t idx, int on)
+{
+	uint32_t reg;
+
+	reg = HREAD4(sc, PERIPH_CLK_DIS);
+	reg &= ~(1 << idx);
+	if (!on)
+		reg |= (1 << idx);
+	HWRITE4(sc, PERIPH_CLK_DIS, reg);
+}
+
+uint32_t
+a3700_periph_tbg_get_frequency(struct mvclock_softc *sc, uint32_t idx)
+{
+	uint32_t reg;
+
+	reg = HREAD4(sc, PERIPH_TBG_SEL);
+	reg >>= idx;
+	reg &= PERIPH_TBG_SEL_MASK;
+
+	return clock_get_frequency_idx(sc->sc_cd.cd_node, reg);
+}
+
+uint32_t
+a3700_periph_get_double_div(struct mvclock_softc *sc, uint32_t off,
+    uint32_t idx0, uint32_t idx1)
+{
+	uint32_t reg = HREAD4(sc, off);
+	return ((reg >> idx0) & PERIPH_DIV_SEL_MASK) *
+	    ((reg >> idx1) & PERIPH_DIV_SEL_MASK);
+}
+
+/* Armada 3700 TBG block */
+
+#define TBG_A_P				0
+#define TBG_B_P				1
+#define TBG_A_S				2
+#define TBG_B_S				3
+
+#define TBG_CTRL0			0x4
+#define  TBG_A_FBDIV_SHIFT			2
+#define  TBG_B_FBDIV_SHIFT			18
+#define TBG_CTRL1			0x8
+#define  TBG_A_VCODIV_SE_SHIFT			0
+#define  TBG_B_VCODIV_SE_SHIFT			16
+#define TBG_CTRL7			0x20
+#define  TBG_A_REFDIV_SHIFT			0
+#define  TBG_B_REFDIV_SHIFT			16
+#define TBG_CTRL8			0x30
+#define  TBG_A_VCODIV_DIFF_SHIFT		1
+#define  TBG_B_VCODIV_DIFF_SHIFT		17
+#define TBG_DIV_MASK			0x1ff
+
+uint32_t
+a3700_tbg_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct mvclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint64_t mult, div, freq;
+	uint32_t reg, vcodiv;
+
+	switch (idx) {
+	case TBG_A_P:
+		vcodiv = HREAD4(sc, TBG_CTRL8);
+		vcodiv >>= TBG_A_VCODIV_DIFF_SHIFT;
+		vcodiv &= TBG_DIV_MASK;
+		break;
+	case TBG_B_P:
+		vcodiv = HREAD4(sc, TBG_CTRL8);
+		vcodiv >>= TBG_B_VCODIV_DIFF_SHIFT;
+		vcodiv &= TBG_DIV_MASK;
+		break;
+	case TBG_A_S:
+		vcodiv = HREAD4(sc, TBG_CTRL1);
+		vcodiv >>= TBG_A_VCODIV_SE_SHIFT;
+		vcodiv &= TBG_DIV_MASK;
+		break;
+	case TBG_B_S:
+		vcodiv = HREAD4(sc, TBG_CTRL1);
+		vcodiv >>= TBG_B_VCODIV_SE_SHIFT;
+		vcodiv &= TBG_DIV_MASK;
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		return 0;
+	}
+
+	reg = HREAD4(sc, TBG_CTRL0);
+	if (idx == TBG_A_P || idx == TBG_A_S)
+		reg >>= TBG_A_FBDIV_SHIFT;
+	else
+		reg >>= TBG_B_FBDIV_SHIFT;
+	reg &= TBG_DIV_MASK;
+	mult = reg << 2;
+
+	reg = HREAD4(sc, TBG_CTRL7);
+	if (idx == TBG_A_P || idx == TBG_A_S)
+		reg >>= TBG_A_REFDIV_SHIFT;
+	else
+		reg >>= TBG_B_REFDIV_SHIFT;
+	reg &= TBG_DIV_MASK;
+	div = reg;
+
+	if (div == 0)
+		div = 1;
+	div *= 1 << vcodiv;
+
+	freq = clock_get_frequency(sc->sc_cd.cd_node, NULL);
+	return (freq * mult) / div;
+}
+
+/* Armada 3700 XTAL block */
+
+#define XTAL			0xc
+#define  XTAL_MODE			(1 << 31)
+
+uint32_t
+a3700_xtal_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct mvclock_softc *sc = cookie;
+	struct regmap *rm;
+
+	rm = regmap_bynode(OF_parent(sc->sc_cd.cd_node));
+	KASSERT(rm != NULL);
+
+	if (regmap_read_4(rm, XTAL) & XTAL_MODE)
+		return 40000000;
+	else
+		return 25000000;
 }
