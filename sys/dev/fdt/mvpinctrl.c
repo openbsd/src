@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.5 2019/04/13 18:12:01 kettenis Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.6 2019/04/30 20:06:32 patrick Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -26,14 +26,24 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
+
+/* Armada 3700 Registers */
+#define GPIO_DIRECTION		0x00
+#define GPIO_INPUT		0x10
+#define GPIO_OUTPUT		0x18
 
 #define HREAD4(sc, reg)							\
 	(regmap_read_4((sc)->sc_rm, (reg)))
 #define HWRITE4(sc, reg, val)						\
 	regmap_write_4((sc)->sc_rm, (reg), (val))
+#define HSET4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
+#define HCLR4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 struct mvpinctrl_pin {
 	char *pin;
@@ -49,11 +59,16 @@ struct mvpinctrl_softc {
 	struct regmap		*sc_rm;
 	struct mvpinctrl_pin	*sc_pins;
 	int			 sc_npins;
+	struct gpio_controller	 sc_gc;
 };
 
 int	mvpinctrl_match(struct device *, void *, void *);
 void	mvpinctrl_attach(struct device *, struct device *, void *);
 int	mvpinctrl_pinctrl(uint32_t, void *);
+
+void	mvpinctrl_config_pin(void *, uint32_t *, int);
+int	mvpinctrl_get_pin(void *, uint32_t *);
+void	mvpinctrl_set_pin(void *, uint32_t *, int);
 
 struct cfattach mvpinctrl_ca = {
 	sizeof (struct mvpinctrl_softc), mvpinctrl_match, mvpinctrl_attach
@@ -118,8 +133,11 @@ mvpinctrl_match(struct device *parent, void *match, void *aux)
 
 	for (i = 0; i < nitems(mvpinctrl_pins); i++) {
 		if (OF_is_compatible(faa->fa_node, mvpinctrl_pins[i].compat))
-			return 1;
+			return 10;
 	}
+
+	if (OF_is_compatible(faa->fa_node, "marvell,armada3710-sb-pinctrl"))
+		return 10;
 
 	return 0;
 }
@@ -129,7 +147,7 @@ mvpinctrl_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mvpinctrl_softc *sc = (struct mvpinctrl_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int i;
+	int i, node;
 
 	if (faa->fa_nreg > 0) {
 		sc->sc_iot = faa->fa_iot;
@@ -153,6 +171,21 @@ mvpinctrl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	if (OF_is_compatible(faa->fa_node, "marvell,armada3710-sb-pinctrl")) {
+		for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+			if (OF_getproplen(node, "gpio-controller") == 0)
+				break;
+		}
+		KASSERT(node != 0);
+		sc->sc_gc.gc_node = node;
+		sc->sc_gc.gc_cookie = sc;
+		sc->sc_gc.gc_config_pin = mvpinctrl_config_pin;
+		sc->sc_gc.gc_get_pin = mvpinctrl_get_pin;
+		sc->sc_gc.gc_set_pin = mvpinctrl_set_pin;
+		gpio_controller_register(&sc->sc_gc);
+		return;
+	}
 
 	for (i = 0; i < nitems(mvpinctrl_pins); i++) {
 		if (OF_is_compatible(faa->fa_node, mvpinctrl_pins[i].compat)) {
@@ -219,4 +252,57 @@ mvpinctrl_pinctrl(uint32_t phandle, void *cookie)
 	free(func, M_TEMP, flen);
 	free(pins, M_TEMP, plen);
 	return 0;
+}
+
+void
+mvpinctrl_config_pin(void *cookie, uint32_t *cells, int config)
+{
+	struct mvpinctrl_softc *sc = cookie;
+	uint32_t pin = cells[0];
+
+	if (pin > 32)
+		return;
+
+	if (config & GPIO_CONFIG_OUTPUT)
+		HSET4(sc, GPIO_DIRECTION, (1 << pin));
+	else
+		HCLR4(sc, GPIO_DIRECTION, (1 << pin));
+}
+
+int
+mvpinctrl_get_pin(void *cookie, uint32_t *cells)
+{
+	struct mvpinctrl_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t reg;
+	int val;
+
+	if (pin > 32)
+		return 0;
+
+	reg = HREAD4(sc, GPIO_INPUT);
+	reg &= (1 << pin);
+	val = (reg >> pin) & 1;
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	return val;
+}
+
+void
+mvpinctrl_set_pin(void *cookie, uint32_t *cells, int val)
+{
+	struct mvpinctrl_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+
+	if (pin > 32)
+		return;
+
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	if (val)
+		HSET4(sc, GPIO_OUTPUT, (1 << pin));
+	else
+		HCLR4(sc, GPIO_OUTPUT, (1 << pin));
 }
