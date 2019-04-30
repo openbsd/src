@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.224 2019/03/04 18:14:27 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.225 2019/04/30 18:48:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -383,6 +383,7 @@ main(int argc, char *argv[])
 				res[sz].file = mandoc_strdup(argv[c]);
 				res[sz].names = NULL;
 				res[sz].output = NULL;
+				res[sz].bits = 0;
 				res[sz].ipath = SIZE_MAX;
 				res[sz].sec = 10;
 				res[sz].form = FORM_SRC;
@@ -731,6 +732,7 @@ found:
 	page->file = file;
 	page->names = NULL;
 	page->output = NULL;
+	page->bits = NAME_FILE & NAME_MASK;
 	page->ipath = ipath;
 	page->sec = (*sec >= '1' && *sec <= '9') ? *sec - '1' + 1 : 10;
 	page->form = form;
