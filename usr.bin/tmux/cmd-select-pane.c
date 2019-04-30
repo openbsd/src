@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.49 2019/04/26 11:38:51 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.50 2019/04/30 06:21:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -66,7 +66,7 @@ cmd_select_pane_redraw(struct window *w)
 	 */
 
 	TAILQ_FOREACH(c, &clients, entry) {
-		if (c->session == NULL)
+		if (c->session == NULL || (c->flags & CLIENT_CONTROL))
 			continue;
 		if (c->session->curw->window == w && tty_window_bigger(&c->tty))
 			server_redraw_client(c);
