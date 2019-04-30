@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.75 2019/04/30 20:21:36 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.76 2019/04/30 20:29:46 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -265,14 +265,12 @@ struct envy_card envy_cards[] = {
 		8, &ak4524_adc, 8, &ak4524_dac, 1,
 		delta_init,
 		delta_codec_write,
-		NULL
 	}, {
 		PCI_ID_CODE(0x1412, 0xd632),
 		"M-Audio Delta 66",
 		4, &ak4524_adc, 4, &ak4524_dac, 0,
 		delta_init,
 		delta_codec_write,
-		NULL
 	}, {
 #define ENVY_SUBID_DELTA44	(PCI_ID_CODE(0x1412, 0xd633))
 		PCI_ID_CODE(0x1412, 0xd633),
@@ -280,28 +278,24 @@ struct envy_card envy_cards[] = {
 		4, &ak4524_adc, 4, &ak4524_dac, 0,
 		delta_init,
 		delta_codec_write,
-		NULL
 	}, {
 		PCI_ID_CODE(0x1412, 0xd63b),
 		"M-Audio Delta 1010LT",
 		8, &ak4524_adc, 8, &ak4524_dac, 1,
 		delta_init,
 		delta_codec_write,
-		NULL
 	}, {
 		PCI_ID_CODE(0x1412, 0xd634),
 		"M-Audio Audiophile 2496",
 		2, &ak4524_adc, 2, &ak4524_dac, 1,
 		delta_init,
 		delta_codec_write,
-		NULL
 	}, {
 		PCI_ID_CODE(0x153b, 0x1130),
 		"Terratec EWX 24/96",
 		2, &ak4524_adc, 2, &ak4524_dac, 1,
 		delta_init,
 		ewx_codec_write,
-		NULL
 	}, {
 		0,
 		"unknown 1712-based card",
@@ -316,6 +310,7 @@ struct envy_card envy_cards[] = {
 		2, &unkenvy_codec, 2, &ak4358_dac, 1,
 		julia_init,
 		julia_codec_write,
+		NULL,
 		julia_eeprom
 	}, {
 		PCI_ID_CODE(0x1412, 0x3632),
@@ -1874,6 +1869,9 @@ envy_set_params(void *self, int setmode, int usemode,
 			reg &= ~ENVY_MT_FMT_128X;
 		envy_mt_write_1(sc, ENVY_MT_FMT, reg);
 	}
+
+	if (sc->card->set_rate)
+		sc->card->set_rate(sc, rate);
 
 	reg = envy_mt_read_1(sc, ENVY_MT_RATE);
 	reg &= ~ENVY_MT_RATEMASK;
