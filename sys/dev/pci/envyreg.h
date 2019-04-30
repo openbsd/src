@@ -1,4 +1,4 @@
-/*	$OpenBSD: envyreg.h,v 1.17 2011/04/27 07:01:33 ratchov Exp $	*/
+/*	$OpenBSD: envyreg.h,v 1.18 2019/04/30 20:17:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -114,6 +114,8 @@
 #define   ENVY_MT_INTR_RMASK	0x80	/* !HT only */
 #define ENVY_MT_RATE		1
 #define   ENVY_MT_RATEMASK	0x0f
+#define ENVY_MT_FMT		2
+#define   ENVY_MT_FMT_128X	0x08	/* HT only */
 #define ENVY_MT_IMASK		3	/* HT only */
 #define   ENVY_MT_IMASK_PDMA0	0x1
 #define   ENVY_MT_IMASK_RDMA0	0x2

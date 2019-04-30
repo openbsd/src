@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.73 2018/09/03 05:37:32 miko Exp $	*/
+/*	$OpenBSD: envy.c,v 1.74 2019/04/30 20:17:12 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -226,7 +226,9 @@ struct {
 } envy_rates[] = {
 	{ 8000, 0x6}, { 9600, 0x3}, {11025, 0xa}, {12000, 2}, {16000, 5},
 	{22050, 0x9}, {24000, 0x1}, {32000, 0x4}, {44100, 8}, {48000, 0},
-	{64000, 0xf}, {88200, 0xb}, {96000, 0x7}, {-1, -1}
+	{64000, 0xf}, {88200, 0xb}, {96000, 0x7},
+	{176400, 0xc}, {192000, 0xe},
+	{-1, -1}
 };
 
 /*
@@ -1849,7 +1851,13 @@ envy_set_params(void *self, int setmode, int usemode,
 		DPRINTF("%s: play/rec rates mismatch\n", DEVNAME(sc));
 		r->sample_rate = p->sample_rate;
 	}
+
 	rate = (setmode & AUMODE_PLAY) ? p->sample_rate : r->sample_rate;
+
+	/* only HT model supports rates above 96kHz */
+	if (!sc->isht && rate > 96000)
+		rate = 96000;	
+
 	for (i = 0; envy_rates[i].rate < rate; i++) {
 		if (envy_rates[i].rate == -1) {
 			i--;
@@ -1857,10 +1865,21 @@ envy_set_params(void *self, int setmode, int usemode,
 			break;
 		}
 	}
+
+	if (sc->isht) {
+		reg = envy_mt_read_1(sc, ENVY_MT_FMT);
+		if (rate > 96000)
+			reg |= ENVY_MT_FMT_128X;
+		else
+			reg &= ~ENVY_MT_FMT_128X;
+		envy_mt_write_1(sc, ENVY_MT_FMT, reg);
+	}
+
 	reg = envy_mt_read_1(sc, ENVY_MT_RATE);
 	reg &= ~ENVY_MT_RATEMASK;
 	reg |= envy_rates[i].reg;
 	envy_mt_write_1(sc, ENVY_MT_RATE, reg);
+
 	if (setmode & AUMODE_PLAY) {
 		p->sample_rate = envy_rates[i].rate;
 		p->encoding = AUDIO_ENCODING_SLINEAR_LE;
