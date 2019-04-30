@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.6 2018/08/06 10:52:30 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.7 2019/04/30 20:26:02 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -340,7 +340,8 @@ mvneta_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "marvell,armada-370-neta");
+	return OF_is_compatible(faa->fa_node, "marvell,armada-370-neta") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada-3700-neta");
 }
 
 void
