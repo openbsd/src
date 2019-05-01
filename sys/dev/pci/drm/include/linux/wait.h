@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.2 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: wait.h,v 1.3 2019/05/01 07:22:24 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -127,7 +127,7 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 			mtx_leave(&sch_mtx);				\
 			break;						\
 		}							\
-		if (timo && (ret <= 0 || __error == EWOULDBLOCK)) { 	\
+		if ((timo) > 0 && (ret <= 0 || __error == EWOULDBLOCK)) { \
 			mtx_leave(&sch_mtx);				\
 			ret = ((condition)) ? 1 : 0;			\
 			break;						\
