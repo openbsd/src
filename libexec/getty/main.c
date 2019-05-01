@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.51 2018/11/17 01:40:51 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.52 2019/05/01 14:13:12 florian Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -170,6 +170,8 @@ main(int argc, char *argv[])
 
 	ioctl(0, FIOASYNC, &off);	/* turn off async mode */
 
+	tname = "default";
+
 	if (unveil(_PATH_GETTYTAB, "r") == -1) {
 		syslog(LOG_ERR, "%s: %m", tname);
 		exit(1);
@@ -185,7 +187,6 @@ main(int argc, char *argv[])
 
 	gettable("default", defent);
 	gendefaults();
-	tname = "default";
 	if (argc > 1)
 		tname = argv[1];
 	gettable(tname, tabent);
