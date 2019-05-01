@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.29 2019/05/01 22:55:06 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		5120
@@ -27,7 +27,7 @@ ${FS}: bsd.rd
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	installboot -vr ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/boot
-	gzip -c < ${.OBJDIR}/../ramdisk/bsd.rd > ${MOUNT_POINT}/bsd.rd
+	gzip -c < ${.OBJDIR}/bsd.rd > ${MOUNT_POINT}/bsd.rd
 	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
