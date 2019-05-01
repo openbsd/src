@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2019/04/30 21:14:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/05/01 20:53:34 deraadt Exp $
 
 CDROM=		install${OSrev}.iso
 MOUNT_POINT=	/mnt
@@ -33,7 +33,7 @@ ${CDROM}: ${BASE} ${XBASE}
 	cp -p ${RELDIR}/boot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/bootxx ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	(mkhybrid -a -R -v -v -T -L -d -D -N -o ${.OBJDIR}/${CDROM} \
+	(mkhybrid -a -R -T -L -d -D -N -o ${.OBJDIR}/${CDROM} -v -v -v \
 	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
