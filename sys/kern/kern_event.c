@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.101 2018/11/27 15:52:50 cheloha Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.102 2019/05/01 06:22:39 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1073,6 +1073,7 @@ knote_enqueue(struct knote *kn)
 	int s = splhigh();
 
 	KASSERT((kn->kn_status & KN_QUEUED) == 0);
+	KERNEL_ASSERT_LOCKED();
 
 	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status |= KN_QUEUED;
@@ -1088,6 +1089,7 @@ knote_dequeue(struct knote *kn)
 	int s = splhigh();
 
 	KASSERT(kn->kn_status & KN_QUEUED);
+	KERNEL_ASSERT_LOCKED();
 
 	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 	kn->kn_status &= ~KN_QUEUED;
