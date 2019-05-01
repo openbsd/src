@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.140 2019/04/10 15:14:49 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.141 2019/05/01 14:51:40 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -4089,17 +4089,25 @@ uaudio_get_port(void *arg, struct mixer_ctrl *ctl)
 	struct uaudio_mixent *m;
 	unsigned char req_buf[4];
 	struct uaudio_blob p;
-	int i, nch, val;
+	int i, nch, val, req_num;
 
 	if (!uaudio_mixer_byindex(sc, ctl->dev, &u, &m))
 		return ENOENT;
+
+	switch (sc->version) {
+	case UAUDIO_V1:
+		req_num = UAUDIO_V1_REQ_GET_CUR;
+		break;
+	case UAUDIO_V2:
+		req_num = UAUDIO_V2_REQ_CUR;
+	}
 
 	switch (m->type) {
 	case UAUDIO_MIX_SW:
 		p.rptr = p.wptr = req_buf;
 		if (!uaudio_req(sc,
 			UT_READ_CLASS_INTERFACE,
-			UAUDIO_V1_REQ_GET_CUR,
+			req_num,
 			m->req_sel,
 			m->chan < 0 ? 0 : m->chan,
 			sc->ctl_ifnum,
@@ -4119,7 +4127,7 @@ uaudio_get_port(void *arg, struct mixer_ctrl *ctl)
 			p.rptr = p.wptr = req_buf;
 			if (!uaudio_req(sc,
 				UT_READ_CLASS_INTERFACE,
-				UAUDIO_V1_REQ_GET_CUR,
+				req_num,
 				m->req_sel,
 				m->chan < 0 ? 0 : i + 1,
 				sc->ctl_ifnum,
