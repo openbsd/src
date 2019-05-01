@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.228 2019/02/19 22:42:41 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.229 2019/05/01 06:26:42 dlg Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -888,6 +888,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	struct process *pr = p->p_p;
 	struct proc *q;
 	int wakeparent = 0;
+
+	KERNEL_ASSERT_LOCKED();
 
 #ifdef DIAGNOSTIC
 	if ((u_int)signum >= NSIG || signum == 0)
