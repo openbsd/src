@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2019/04/30 23:37:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2019/05/01 20:53:55 deraadt Exp $
 
 FS=		install${OSrev}.fs
 FSSIZE=		921600
@@ -64,7 +64,7 @@ ${CDROM}: ${BASE} ${XBASE}
 	cp -p ${RELDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	cp -p ${RELDIR}/cdboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/cdboot
 
-	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2019/04/30 23:37:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2019/05/01 20:53:55 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		7936
@@ -43,7 +43,7 @@ ${CDROM}: bsd.rd
 	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/i386
 	cp ${DESTDIR}/usr/mdec/cdbr ${.OBJDIR}/cd-dir/${OSREV}/i386
 	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/i386/cdboot
-	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} i386 bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \

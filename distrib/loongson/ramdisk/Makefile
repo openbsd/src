@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.22 2019/05/01 20:53:55 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		18432
@@ -34,7 +34,7 @@ ${CDROM}: bsd.rd
 	mkdir -p ${.OBJDIR}/cd-dir/etc
 	echo "set image /${OSREV}/loongson/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
 	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/loongson
-	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} loongson bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \

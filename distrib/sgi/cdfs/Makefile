@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.23 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2019/05/01 20:53:55 deraadt Exp $
 
-CDROM=	cd${OSrev}.iso
-FFS=	ffs.img
+FS=		miniroot${OSrev}.fs
+CDROM=		cd${OSrev}.iso
 # must match the size of `minicdroot' in disktab
 CDFSMB=	15
+
 all: ${CDROM}
 
 ALLIP=		22 26 27 28 30 32
@@ -17,8 +18,8 @@ SGIVOLSZ=	33500
 ${CDROM}:
 	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/
-	dd if=/dev/zero of=${FFS} bs=1m count=${CDFSMB}
-	vnconfig -v ${FFS} > vnd
+	dd if=/dev/zero of=${FS} bs=1m count=${CDFSMB}
+	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` minicdroot "OpenBSD/sgi     "
 	newfs /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${.OBJDIR}/cd-dir

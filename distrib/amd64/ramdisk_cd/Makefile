@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2019/04/30 23:37:31 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/05/01 20:53:55 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		9600
@@ -45,7 +45,7 @@ ${CDROM}: bsd.rd
 	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/amd64
 	cp ${DESTDIR}/usr/mdec/cdbr ${.OBJDIR}/cd-dir/${OSREV}/amd64
 	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/amd64/cdboot
-	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} -v -v \
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
 	    -A "OpenBSD ${OSREV} amd64 bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
