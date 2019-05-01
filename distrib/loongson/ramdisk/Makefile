@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2019/05/01 20:53:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2019/05/01 22:55:58 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		18432
@@ -22,7 +22,7 @@ ${FS}: bsd.rd
 	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
 	newfs_ext2fs /dev/r`cat vnd`i
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
-	cp ${.OBJDIR}/../ramdisk/bsd.rd ${MOUNT_POINT}/bsd.rd
+	cp ${.OBJDIR}/bsd.rd ${MOUNT_POINT}/bsd.rd
 	df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
