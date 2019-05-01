@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.40 2019/05/01 19:12:47 jca Exp $	*/
+/*	$OpenBSD: event.c,v 1.41 2019/05/01 19:14:25 jca Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -77,23 +77,20 @@ static void	event_process_active(struct event_base *);
 static int	timeout_next(struct event_base *, struct timeval **);
 static void	timeout_process(struct event_base *);
 
-static int
+static void
 gettime(struct event_base *base, struct timeval *tp)
 {
 	struct timespec	ts;
 
 	if (base->tv_cache.tv_sec) {
 		*tp = base->tv_cache;
-		return (0);
+		return;
 	}
 
 	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1)
 		event_err(1, "%s: clock_gettime", __func__);
 
-	tp->tv_sec = ts.tv_sec;
-	tp->tv_usec = ts.tv_nsec / 1000;
-
-	return (0);
+	TIMESPEC_TO_TIMEVAL(tp, &ts);
 }
 
 struct event_base *
@@ -803,8 +800,7 @@ timeout_next(struct event_base *base, struct timeval **tv_p)
 		return (0);
 	}
 
-	if (gettime(base, &now) == -1)
-		return (-1);
+	gettime(base, &now);
 
 	if (timercmp(&ev->ev_timeout, &now, <=)) {
 		timerclear(tv);
