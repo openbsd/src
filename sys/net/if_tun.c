@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.184 2019/02/03 23:04:49 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.185 2019/05/01 06:11:46 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -583,6 +583,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 void
 tun_wakeup(struct tun_softc *tp)
 {
+	KERNEL_LOCK();
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
 		wakeup((caddr_t)tp);
@@ -591,6 +592,7 @@ tun_wakeup(struct tun_softc *tp)
 		csignal(tp->tun_pgid, SIGIO,
 		    tp->tun_siguid, tp->tun_sigeuid);
 	selwakeup(&tp->tun_rsel);
+	KERNEL_UNLOCK();
 }
 
 /*
