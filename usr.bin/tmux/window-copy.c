@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.218 2019/04/29 06:55:21 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.219 2019/05/01 06:07:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1003,7 +1003,7 @@ window_copy_cmd_previous_matching_bracket(struct window_copy_cmd_state *cs)
 	struct screen			*s = data->backing;
 	char				 open[] = "{[(", close[] = "}])";
 	char				 tried, found, start, *cp;
-	u_int				 px, py, xx, yy, n;
+	u_int				 px, py, xx, n;
 	struct grid_cell		 gc;
 	int				 failed;
 
@@ -1012,7 +1012,6 @@ window_copy_cmd_previous_matching_bracket(struct window_copy_cmd_state *cs)
 		px = data->cx;
 		py = screen_hsize(s) + data->cy - data->oy;
 		xx = window_copy_find_length(wme, py);
-		yy = screen_hsize(s) + screen_size_y(s) - 1;
 		if (xx == 0)
 			break;
 
