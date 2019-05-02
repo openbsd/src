@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstream.c,v 1.7 2017/03/17 14:53:08 deraadt Exp $	*/
+/*	$OpenBSD: open_memstream.c,v 1.8 2019/05/02 08:30:10 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -76,7 +76,7 @@ static fpos_t
 memstream_seek(void *v, fpos_t off, int whence)
 {
 	struct state	*st = v;
-	ssize_t		 base = 0;
+	size_t		 base = 0;
 
 	switch (whence) {
 	case SEEK_SET:
@@ -89,7 +89,7 @@ memstream_seek(void *v, fpos_t off, int whence)
 		break;
 	}
 
-	if (off > SIZE_MAX - base || off < -base) {
+	if ((off > 0 && off > SIZE_MAX - base) || (off < 0 && base < -off)) {
 		errno = EOVERFLOW;
 		return (-1);
 	}
