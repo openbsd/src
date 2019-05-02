@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.92 2018/12/10 13:35:54 landry Exp $	*/
+/*	$OpenBSD: mib.c,v 1.93 2019/05/02 14:04:10 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -614,6 +614,8 @@ mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 
 	sop = &so[0];
 	switch (idx) {
+	case 0:
+		return (-1);
 	case 1:
 		descr = "Physical memory";
 		units = uvm.pagesize;
