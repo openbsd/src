@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstreamtest.c,v 1.4 2014/07/20 01:58:37 guenther Exp $ */
+/*	$OpenBSD: open_memstreamtest.c,v 1.5 2019/05/02 08:38:41 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -164,13 +164,18 @@ main(void)
 		failures++;
 	}
 
+	if (fseek(fp, -1, SEEK_END) != 0) {
+		warnx("failed to fseek. (24)");
+		failures++;
+	}
+
 	if (fclose(fp) == EOF) {
-		warnx("fclose failed. (24)");
+		warnx("fclose failed. (25)");
 		failures++;
 	}
 
 	if (size != 12) {
-		warnx("failed, size %zu should be %u.  (25)",
+		warnx("failed, size %zu should be %u.  (26)",
 		    size, 12);
 		failures++;
 	}
