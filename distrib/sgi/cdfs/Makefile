@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2019/05/01 20:53:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2019/05/02 01:18:40 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 CDROM=		cd${OSrev}.iso
@@ -54,7 +54,7 @@ ${CDROM}:
 	/usr/mdec/sgivol -l boot64 sash64 `cat vnd`
 	vnconfig -u `cat vnd`
 	rm -f vnd
-	dd if=${FFS} of=${CDROM} bs=512 seek=${SGIVOLSZ}
+	dd if=${FS} of=${CDROM} bs=512 seek=${SGIVOLSZ}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
@@ -66,7 +66,7 @@ install:
 .endif
 
 clean cleandir:
-	rm -f ${CDROM} ${FFS} xfs512.bin xfs
+	rm -f ${CDROM} ${FS} xfs512.bin xfs
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
