@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1885 2019/04/24 03:44:50 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1886 2019/05/02 09:49:36 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1510,6 +1510,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_3,
 	    "AMD64 17h/1xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV5C,
+	    "Cryptographic Co-processor v5c",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_1,

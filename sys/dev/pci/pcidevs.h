@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1885 2019/04/24 03:44:50 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.1886 2019/05/02 09:49:36 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -795,6 +795,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_1	0x15d3		/* AMD64 17h/1xh PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_2	0x15db		/* AMD64 17h/1xh PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_3	0x15dc		/* AMD64 17h/1xh PCIE */
+#define	PCI_PRODUCT_AMD_CCPV5C	0x15df		/* Cryptographic Co-processor v5c */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_1	0x15e0		/* AMD64 17h/1xh xHCI */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_2	0x15e1		/* AMD64 17h/1xh xHCI */
 #define	PCI_PRODUCT_AMD_RAVENRIDGE_HDA	0x15e3		/* Raven Ridge HD Audio */
