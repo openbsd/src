@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1118 2019/04/29 23:50:34 krw Exp $
+#	$OpenBSD: install.sub,v 1.1119 2019/05/02 06:19:33 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2774,6 +2774,11 @@ finish_up() {
 	# Write kernel.SHA256 matching the just installed kernel and fix path to
 	# ensure it references the kernel as /bsd.
 	sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
+
+	# Keep SHA256.sig from installed sets for sysupgrade(8).
+	if [[ -f /tmp/SHA256.sig ]]; then
+		cp /tmp/SHA256.sig /mnt/var/db/installed.SHA256.sig
+	fi
 
 	if [[ -f $_kernel_dir.tgz ]]; then
 		echo -n "Relinking to create unique kernel..."
