@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.82 2019/01/21 01:40:35 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.83 2019/05/02 07:00:46 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -375,7 +375,7 @@
 #define ARCH_CAPABILITIES_SKIP_L1DFL_VMENTRY	(1 << 3)
 #define ARCH_CAPABILITIES_SSB_NO	(1 << 4)	/* Spec St Byp safe */
 #define MSR_FLUSH_CMD		0x10b
-#define FLUSH_CMD_L1D_FLUSH	(1ULL << 0)
+#define FLUSH_CMD_L1D_FLUSH	0x1	/* (1ULL << 0) */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define	MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define	MSR_BBL_CR_CTL		0x119	/* PII+ only */
