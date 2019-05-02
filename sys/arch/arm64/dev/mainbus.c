@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.11 2019/01/23 09:57:36 phessler Exp $ */
+/* $OpenBSD: mainbus.c,v 1.12 2019/05/02 21:12:45 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -51,6 +51,7 @@ struct mainbus_softc {
 	int			*sc_ranges;
 	int			 sc_rangeslen;
 	int			 sc_early;
+	int			 sc_early_nodes[64];
 };
 
 struct cfattach mainbus_ca = {
@@ -148,6 +149,31 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	mainbus_attach_cpus(self, mainbus_match_secondary);
 }
 
+int
+mainbus_print(void *aux, const char *pnp)
+{
+	struct fdt_attach_args *fa = aux;
+	char name[32];
+
+	if (!pnp)
+		return (QUIET);
+
+	if (OF_getprop(fa->fa_node, "name", name, sizeof(name)) > 0) {
+		name[sizeof(name) - 1] = 0;
+		if (strcmp(name, "aliases") == 0 ||
+		    strcmp(name, "chosen") == 0 ||
+		    strcmp(name, "cpus") == 0 ||
+		    strcmp(name, "memory") == 0)
+			return (QUIET);
+		printf("\"%s\"", name);
+	} else
+		printf("node %u", fa->fa_node);
+
+	printf(" at %s", pnp);
+
+	return (UNCONF);
+}
+
 /*
  * Look for a driver that wants to be attached to this node.
  */
@@ -158,6 +184,16 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 	struct fdt_attach_args	 fa;
 	int			 i, len, line;
 	uint32_t		*cell, *reg;
+	struct device		*child;
+	cfprint_t		 print = NULL;
+
+	/* Skip if already attached early. */
+	for (i = 0; i < nitems(sc->sc_early_nodes); i++) {
+		if (sc->sc_early_nodes[i] == node)
+			return;
+		if (sc->sc_early_nodes[i] == 0)
+			break;
+	}
 
 	memset(&fa, 0, sizeof(fa));
 	fa.fa_name = "";
@@ -212,9 +248,22 @@ mainbus_attach_node(struct device *self, int node, cfmatch_t submatch)
 		fa.fa_dmat->_flags |= BUS_DMA_COHERENT;
 	}
 
+	if (submatch == NULL && sc->sc_early == 0)
+		print = mainbus_print;
 	if (submatch == NULL)
 		submatch = mainbus_match_status;
-	config_found_sm(self, &fa, NULL, submatch);
+
+	child = config_found_sm(self, &fa, print, submatch);
+
+	/* Record nodes that we attach early. */
+	if (child && sc->sc_early) {
+		for (i = 0; i < nitems(sc->sc_early_nodes); i++) {
+			if (sc->sc_early_nodes[i] != 0)
+				continue;
+			sc->sc_early_nodes[i] = node;
+			break;
+		}
+	}
 
 	free(fa.fa_reg, M_DEVBUF, fa.fa_nreg * sizeof(struct fdt_reg));
 	free(fa.fa_intr, M_DEVBUF, fa.fa_nintr * sizeof(uint32_t));
@@ -237,6 +286,7 @@ mainbus_match_status(struct device *parent, void *match, void *aux)
 
 	if (cf->cf_loc[0] == sc->sc_early)
 		return (*cf->cf_attach->ca_match)(parent, match, aux);
+
 	return 0;
 }
 
@@ -321,7 +371,6 @@ mainbus_attach_apm(struct device *self)
 	fa.fa_name = "apm";
 
 	config_found(self, &fa, NULL);
-
 }
 
 void
