@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.21 2018/02/07 03:28:05 florian Exp $	*/
+/*	$OpenBSD: logger.c,v 1.22 2019/05/02 22:32:34 kn Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -197,7 +197,7 @@ logger_open(struct server *srv, struct server_config *srv_conf, void *arg)
 {
 	struct log_file	*log, *logfile = NULL, *errfile = NULL;
 
-	if (srv_conf->flags & SRVFLAG_SYSLOG)
+	if (srv_conf->flags & (SRVFLAG_SYSLOG | SRVFLAG_NO_LOG))
 		return (0);
 
 	/* disassociate */
