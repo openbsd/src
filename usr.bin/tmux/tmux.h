@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.885 2019/05/03 14:51:31 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.886 2019/05/03 15:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1291,7 +1291,7 @@ struct cmdq_shared {
 /* Command queue item. */
 typedef enum cmd_retval (*cmdq_cb) (struct cmdq_item *, void *);
 struct cmdq_item {
-	const char		*name;
+	char			*name;
 	struct cmdq_list	*queue;
 	struct cmdq_item	*next;
 
