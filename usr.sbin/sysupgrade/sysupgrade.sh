@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.10 2019/05/03 14:44:19 ian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.11 2019/05/03 14:48:13 ian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -66,7 +66,7 @@ CURRENT=false
 FORCE=false
 REBOOT=true
 
-while getopts cf arg; do
+while getopts cfn arg; do
 	case ${arg} in
 	c)	CURRENT=true;;
 	f)	FORCE=true;;
