@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.110 2019/02/19 11:37:26 pirofti Exp $	*/
+/*	$OpenBSD: parse.y,v 1.111 2019/05/03 17:16:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -140,7 +140,7 @@ typedef struct {
 %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
 %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
-%token	CA CLIENT CRL OPTIONAL PARAM
+%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
@@ -1024,6 +1024,11 @@ logstyle	: COMMON		{
 			srv_conf->flags |= SRVFLAG_LOG;
 			srv_conf->logformat = LOG_FORMAT_CONNECTION;
 		}
+		| FORWARDED		{
+			srv_conf->flags &= ~SRVFLAG_NO_LOG;
+			srv_conf->flags |= SRVFLAG_LOG;
+			srv_conf->logformat = LOG_FORMAT_FORWARDED;
+		}
 		;
 
 filter		: block RETURN NUMBER optstring	{
@@ -1295,6 +1300,7 @@ lookup(char *s)
 		{ "ecdhe",		ECDHE },
 		{ "error",		ERR },
 		{ "fastcgi",		FCGI },
+		{ "forwarded",		FORWARDED },
 		{ "hsts",		HSTS },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },

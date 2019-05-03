@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.105 2019/04/16 20:52:47 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.106 2019/05/03 17:16:27 tb Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 16 2019 $
+.Dd $Mdocdate: May 3 2019 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -453,7 +453,8 @@ The
 .Ar style
 can be
 .Cm common ,
-.Cm combined
+.Cm combined ,
+.Cm forwarded
 or
 .Cm connection .
 The styles
@@ -462,6 +463,14 @@ and
 .Cm combined
 write a log entry after each request similar to the standard Apache
 and nginx access log formats.
+The style
+.Cm forwarded
+extends the style
+.Cm combined
+by appending two fields containing the values of the headers
+.Ar X-Forwarded-For
+and
+.Ar X-Forwarded-Port .
 The style
 .Cm connection
 writes a summarized log entry after each connection,

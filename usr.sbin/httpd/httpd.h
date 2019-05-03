@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.143 2019/02/19 11:37:26 pirofti Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.144 2019/05/03 17:16:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -437,7 +437,8 @@ SPLAY_HEAD(client_tree, client);
 enum log_format {
 	LOG_FORMAT_COMMON,
 	LOG_FORMAT_COMBINED,
-	LOG_FORMAT_CONNECTION
+	LOG_FORMAT_CONNECTION,
+	LOG_FORMAT_FORWARDED
 };
 
 struct log_file {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.129 2019/02/10 13:41:27 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.130 2019/05/03 17:16:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -1632,7 +1632,7 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 	static char		 tstamp[64];
 	static char		 ip[INET6_ADDRSTRLEN];
 	time_t			 t;
-	struct kv		 key, *agent, *referrer;
+	struct kv		 key, *agent, *referrer, *xff, *xfp;
 	struct tm		*tm;
 	struct server_config	*srv_conf;
 	struct http_descriptor	*desc;
@@ -1642,6 +1642,8 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 	char			*version = NULL;
 	char			*referrer_v = NULL;
 	char			*agent_v = NULL;
+	char			*xff_v = NULL;
+	char			*xfp_v = NULL;
 
 	if ((srv_conf = clt->clt_srv_conf) == NULL)
 		return (-1);
@@ -1698,6 +1700,7 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 		break;
 
 	case LOG_FORMAT_COMBINED:
+	case LOG_FORMAT_FORWARDED:
 		key.kv_key = "Referer"; /* sic */
 		if ((referrer = kv_find(&desc->http_headers, &key)) != NULL &&
 		    referrer->kv_value == NULL)
@@ -1734,9 +1737,9 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 		    (referrer_v = url_encode(referrer->kv_value)) == NULL)
 			goto done;
 
-		ret = evbuffer_add_printf(clt->clt_log,
+		if ((ret = evbuffer_add_printf(clt->clt_log,
 		    "%s %s - %s [%s] \"%s %s%s%s%s%s\""
-		    " %03d %zu \"%s\" \"%s\"\n",
+		    " %03d %zu \"%s\" \"%s\"",
 		    srv_conf->name, ip, user == NULL ? "-" :
 		    user, tstamp,
 		    server_httpmethod_byid(desc->http_method),
@@ -1747,7 +1750,38 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 		    desc->http_version == NULL ? "" : version,
 		    code, len,
 		    referrer == NULL ? "" : referrer_v,
-		    agent == NULL ? "" : agent_v);
+		    agent == NULL ? "" : agent_v)) == -1)
+			break;
+
+		if (srv_conf->logformat == LOG_FORMAT_COMBINED)
+			goto finish;
+
+		xff = xfp = NULL;
+
+		key.kv_key = "X-Forwarded-For";
+		if ((xff = kv_find(&desc->http_headers, &key)) != NULL
+		    && xff->kv_value == NULL)
+			xff = NULL;
+
+		if (xff &&
+		    stravis(&xff_v, xff->kv_value, HTTPD_LOGVIS) == -1)
+			goto finish;
+
+		key.kv_key = "X-Forwarded-Port";
+		if ((xfp = kv_find(&desc->http_headers, &key)) != NULL
+		   && xfp->kv_value == NULL)
+			xfp = NULL;
+
+		if (xfp &&
+		    stravis(&xfp_v, xfp->kv_value, HTTPD_LOGVIS) == -1)
+			goto finish;
+
+		if ((ret = evbuffer_add_printf(clt->clt_log, " %s %s",
+		    xff == NULL ? "-" : xff_v,
+		    xfp == NULL ? "-" : xfp_v)) == -1)
+			break;
+finish:
+		ret = evbuffer_add_printf(clt->clt_log, "\n");
 
 		break;
 
@@ -1769,6 +1803,8 @@ done:
 	free(version);
 	free(referrer_v);
 	free(agent_v);
+	free(xff_v);
+	free(xfp_v);
 
 	return (ret);
 }
