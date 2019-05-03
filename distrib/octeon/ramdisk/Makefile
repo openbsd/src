@@ -1,15 +1,14 @@
-#	$OpenBSD: Makefile,v 1.15 2019/05/01 14:03:25 visa Exp $
+#	$OpenBSD: Makefile,v 1.16 2019/05/03 20:03:59 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		24576
 FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
-
-NEWFSARGS= -t msdos
 
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
@@ -21,7 +20,7 @@ ${FS}: bsd.rd
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
 	echo 'u\ne 0\nC\nn\n64\n22528\nf 0\nw\nq\n' | fdisk -e `cat vnd`
 	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
-	newfs ${NEWFSARGS} /dev/r`cat vnd`i
+	newfs -t msdos /dev/r`cat vnd`i
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
 	cp bsd.rd ${MOUNT_POINT}/bsd.rd
 	df -i ${MOUNT_POINT}
@@ -34,9 +33,9 @@ bsd.rd: mr.fs bsd
 	rdsetroot bsd.rd mr.fs
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/octeon/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/octeon/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d

@@ -1,13 +1,11 @@
-#	$OpenBSD: Makefile,v 1.26 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2019/05/03 20:03:59 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		8064
 FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
-
-# minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -i 4096
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -17,20 +15,35 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 all: ${FS} bsd.bin
 
-${FS}: mr.fs
+${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
 	fdisk -i -y `cat vnd`
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs ${NEWFSARGS} /dev/r`cat vnd`a
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	dd if=${DESTDIR}/usr/mdec/boot.elf of=/dev/r`cat vnd`i conv=osync
-	gzip -c < bsd.rd > ${MOUNT_POINT}/bsd.rd
-	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
+	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
+	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
+
+bsd.bin: bsd.rd
+	objcopy -O binary bsd.rd bsd.bin
+
+bsd.gz: bsd.rd
+	gzip -9cn bsd.rd > bsd.gz
+
+bsd.rd: mr.fs bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd mr.fs
+
+bsd:
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d
@@ -41,18 +54,6 @@ mr.fs: instbin
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
-
-bsd.bin: bsd.rd
-	objcopy -O binary bsd.rd bsd.bin
-
-bsd.rd: mr.fs bsd
-	cp bsd bsd.rd
-	rdsetroot bsd.rd mr.fs
-
-bsd:
-	cd ${.CURDIR}/../../../sys/arch/socppc/compile/RAMDISK && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/socppc/compile/RAMDISK/obj/bsd bsd
 
 instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \

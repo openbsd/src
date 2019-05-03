@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2019/05/01 20:53:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2019/05/03 20:03:58 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		7936
@@ -6,11 +6,11 @@ FSDISKTYPE=	mini34
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK_CD
 
 LISTS=		${.CURDIR}/../common/list ${.CURDIR}/list.local
 UTILS=		${.CURDIR}/../../miniroot
 
-RAMDISK=RAMDISK_CD
 LBA=1
 
 all: ${FS} ${CDROM}
@@ -29,7 +29,7 @@ ${FS}: bsd.gz
 	strip -R .comment -R .SUNW_ctf ${.OBJDIR}/boot
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
-	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
+	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
@@ -58,16 +58,16 @@ bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
 	strip -R .comment -R .SUNW_ctf bsd.strip
-	gzip -c9n bsd.strip > bsd.gz
+	gzip -9cn bsd.strip > bsd.gz
 
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
 	rdsetroot bsd.rd mr.fs
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/i386/compile/${RAMDISK} && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/i386/compile/${RAMDISK}/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d

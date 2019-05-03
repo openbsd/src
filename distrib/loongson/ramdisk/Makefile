@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2019/05/01 22:55:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.24 2019/05/03 20:03:58 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		18432
@@ -6,6 +6,7 @@ FSDISKTYPE=	miniroot
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -22,7 +23,8 @@ ${FS}: bsd.rd
 	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
 	newfs_ext2fs /dev/r`cat vnd`i
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
-	cp ${.OBJDIR}/bsd.rd ${MOUNT_POINT}/bsd.rd
+	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
+	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
 	df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
@@ -45,6 +47,11 @@ bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
 	rdsetroot bsd.rd mr.fs
 
+bsd:
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
+
 mr.fs: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
@@ -54,11 +61,6 @@ mr.fs: instbin
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
-
-bsd:
-	cd ${.CURDIR}/../../../sys/arch/loongson/compile/RAMDISK && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/loongson/compile/RAMDISK/obj/bsd bsd
 
 instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -E -M -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \

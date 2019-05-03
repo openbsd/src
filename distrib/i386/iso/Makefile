@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2019/05/01 20:53:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.26 2019/05/03 20:03:58 deraadt Exp $
 
 FS=		install${OSrev}.fs
 FSSIZE=		921600
@@ -29,9 +29,10 @@ ${FS}: ${BASE} ${XBASE} bsd.gz
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 	strip -R .comment -R .SUNW_ctf ${MOUNT_POINT}/boot
-	dd if=bsd.gz of=${MOUNT_POINT}/bsd bs=512
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${MOUNT_POINT}/boot
+	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
+	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
 	mkdir -p ${MOUNT_POINT}/${OSREV}/${MACHINE}
 	mkdir -p ${MOUNT_POINT}/etc
 	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${MOUNT_POINT}/etc/boot.conf
@@ -76,7 +77,7 @@ bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
 	strip bsd.strip
 	strip -R .comment -R .SUNW_ctf bsd.strip
-	gzip -c9n bsd.strip > bsd.gz
+	gzip -9cn bsd.strip > bsd.gz
 
 bsd.rd: ${BSDRD}
 	cp ${BSDRD} bsd.rd

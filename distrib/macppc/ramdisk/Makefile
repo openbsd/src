@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.45 2019/05/02 02:59:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.46 2019/05/03 20:03:58 deraadt Exp $
 
 CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -16,8 +17,7 @@ ${CDROM}: bsd.gz
 	# we skip doing so.
 	# ln ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
 	# ln ${.OBJDIR}/cd-dir/bsd.rd ${.OBJDIR}/cd-dir/bsd
-	cp ${DESTDIR}/usr/mdec/tbxidata/bsd.tbxi \
-	    ${.OBJDIR}/cd-dir/${OSREV}/macppc
+	cp ${DESTDIR}/usr/mdec/bsd.tbxi ${.OBJDIR}/cd-dir/${OSREV}/macppc
 	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/
 	mkhybrid -r -part -hfs \
 	    -hfs-bless ${.OBJDIR}/cd-dir/${OSREV}/macppc \
@@ -32,7 +32,7 @@ MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 bsd.gz: bsd.rd
-	gzip -9nv < bsd.rd > bsd.gz
+	gzip -9cn bsd.rd > bsd.gz
 
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
@@ -40,9 +40,9 @@ bsd.rd: mr.fs bsd
 	strip -R .SUNW_ctf bsd.rd
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/macppc/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/macppc/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d

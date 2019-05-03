@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.13 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/05/03 20:03:58 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		43008
 FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 MSDOSSTART=	8192
 MSDOSSIZE=	8192
@@ -44,11 +45,6 @@ ${FS}: bsd.rd
 	    | fdisk -e `cat vnd` >/dev/null
 	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
 	newfs -t msdos ${NEWFS_ARGS_msdos} /dev/r`cat vnd`i
-	newfs -m 0 -o space -i 4096 /dev/r`cat vnd`a
-	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	cp bsd.rd ${MOUNT_POINT}/bsd.rd
-	ln ${MOUNT_POINT}/bsd.rd ${MOUNT_POINT}/bsd
-	umount ${MOUNT_POINT}
 	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
 .for FILE in ${PIFILES}
 	cp ${PRPI}/${FILE} ${MOUNT_POINT}/
@@ -60,6 +56,11 @@ ${FS}: bsd.rd
 	echo 'arm_64bit=1\nenable_uart=1\ndevice_tree_address=0x02600000\nkernel=u-boot.bin' > ${MOUNT_POINT}/config.txt
 	dd if=${PUBOOT}/pine64_plus/u-boot-sunxi-with-spl.bin \
 	    of=/dev/r`cat vnd`c bs=1024 seek=8
+	umount ${MOUNT_POINT}
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
+	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
+	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
@@ -70,9 +71,9 @@ bsd.rd: mr.fs bsd
 	rdsetroot bsd.rd mr.fs
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/arm64/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/arm64/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d

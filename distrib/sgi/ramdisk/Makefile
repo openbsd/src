@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2019/05/03 20:03:59 deraadt Exp $
 
 MTREE=		${UTILS}/mtree.conf
 
@@ -21,9 +21,9 @@ bsd.rd.IP${IP}: mr.fs bsd.IP${IP}
 	rdsetroot bsd.rd.IP${IP} mr.fs
 
 bsd.IP${IP}:
-	cd ${.CURDIR}/../../../sys/arch/sgi/compile/RAMDISK-IP${IP} && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/RAMDISK-IP${IP} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/sgi/compile/RAMDISK-IP${IP}/obj/bsd bsd.IP${IP}
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/RAMDISK-IP${IP}/obj/bsd bsd.IP${IP}
 .endfor
 
 mr.fs: instbin

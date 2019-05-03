@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.43 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.44 2019/05/03 20:03:58 deraadt Exp $
 
 LIF=		lif${OSrev}.fs
 CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/../list ${.CURDIR}/list.local
 UTILS=		${.CURDIR}/../../miniroot
@@ -28,18 +29,18 @@ ${CDROM}: bsd.rd
 	    bs=32k count=1 conv=notrunc
 	dd if=/dev/zero bs=64k count=1 >> ${.OBJDIR}/${CDROM}
 
+bsd.lif: bsd.rd
+	(cat bsd.rd ; dd if=/dev/zero count=1) | gzip -9n > bsd.lif
+
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
 	rdsetroot bsd.rd mr.fs
 	strip -R .SUNW_ctf bsd.rd
 
-bsd.lif: bsd.rd
-	(cat bsd.rd ; dd if=/dev/zero count=1) | gzip -9nv > bsd.lif
-
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/hppa/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/hppa/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d

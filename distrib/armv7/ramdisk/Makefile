@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.26 2019/04/30 23:25:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2019/05/03 20:03:58 deraadt Exp $
 
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -15,10 +16,9 @@ bsd.rd: mr.fs bsd
 	rdsetroot bsd.rd mr.fs
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/armv7/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/armv7/compile/RAMDISK/obj/bsd bsd
-
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d

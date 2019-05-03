@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2019/04/30 23:37:32 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2019/05/03 20:03:59 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		5760
@@ -6,6 +6,7 @@ FSDISKTYPE=	fakeramdisk
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -21,13 +22,13 @@ ${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 /dev/r`cat vnd`a
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
 	install -c -m 555 -o root -g wheel \
-	    ${DESTDIR}/usr/mdec/ofwbootfd ${MOUNT_POINT}/ofwboot
+	    ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/ofwboot
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/bootblk ${MOUNT_POINT}/ofwboot
+	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
@@ -60,18 +61,18 @@ ${CDROM}: bsd.rd
 	mksuncd f ${CDROM} ${.OBJDIR}/../miniroot/miniroot${OSrev}.fs
 
 bsd.gz: bsd.rd
-	gzip -c -9nv < bsd.rd > bsd.gz
+	objcopy -Sg -R .comment bsd.rd bsd.strip
+	strip ${STRIPOPTS} bsd.strip
+	gzip -9cn bsd.strip > bsd.gz
 
-bsd.rd: bsd mr.fs
-	cp bsd bsd.rd_unz
-	rdsetroot bsd.rd_unz mr.fs
-	objcopy -Sg -R .comment bsd.rd_unz bsd.rd
-	strip ${STRIPOPTS} bsd.rd
+bsd.rd: mr.fs bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd mr.fs
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/sparc64/compile/RAMDISK && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/sparc64/compile/RAMDISK/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d
@@ -108,7 +109,7 @@ install:
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
 	    lib*.a lib*.olist instbin.map \
-	    *.o *.lo *.c bsd bsd.rd{,_unz} bsd.gz bsd.strip ${FS}
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip ${FS}
 	rm -rf mr.fs.d
 	rm -rf ${CDROM} ${.OBJDIR}/cd-dir
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2019/05/01 20:53:35 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 2019/05/03 20:03:57 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		5760
@@ -6,6 +6,7 @@ FSDISKTYPE=	fakeramdisk
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISKBIG
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -17,30 +18,30 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=8192
 
 all: ${FS} ${CDROM}
 
-${FS}: bsd.rd
+${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 /dev/r`cat vnd`a
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
 	install -c -m 555 -o root -g wheel \
 	    ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 	/usr/mdec/installboot -v \
 	    ${MOUNT_POINT}/boot ${DESTDRIR}/usr/mdec/bootxx `cat vnd`
+	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-${CDROM}: bsd.rd
+${CDROM}: bsd.gz
 	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
-	cp bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp bsd.gz ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	# make sure right kernel is in /
-	ln ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
+	ln ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.gz ${.OBJDIR}/cd-dir/bsd.rd
 	ln ${.OBJDIR}/cd-dir/bsd.rd ${.OBJDIR}/cd-dir/bsd
 
 	cp ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
@@ -62,20 +63,19 @@ ${CDROM}: bsd.rd
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-bsd.rd: bsd.rd_unz
-	objcopy -Sg -R .comment bsd.rd_unz bsd.strip
+bsd.gz: bsd.rd
+	objcopy -Sg -R .comment bsd.rd bsd.strip
 	strip ${STRIPOPTS} bsd.strip
-	gzip -c -9nv bsd.strip > bsd.rd
+	gzip -9cn bsd.strip > bsd.gz
 
-bsd.rd_unz: bsd mr.fs
-	cp bsd bsd.rd_unz
-	rdsetroot bsd.rd_unz mr.fs
-	strip -R .SUNW_ctf -R .shstrtab bsd.rd_unz
+bsd.rd: mr.fs bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd mr.fs
 
 bsd:
-	cd ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISKBIG && \
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISKBIG/obj/bsd bsd
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d

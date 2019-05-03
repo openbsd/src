@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.64 2019/05/03 20:03:59 deraadt Exp $
 
 ARCHDIR=	${.CURDIR}/../${MACHINE}/ramdisk
 
@@ -62,13 +62,13 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
 	cp -p ${.CURDIR}/../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
+bsd.gz:	bsd.rd
+	strip -R .SUNW_ctf bsd.rd
+	gzip -9nv < bsd.rd > bsd.gz
+
 bsd.rd:	bsd ${IMAGE}
 	cp bsd bsd.rd
 	rdsetroot bsd.rd ${IMAGE}
-	strip -R .SUNW_ctf bsd.rd
-
-bsd.gz:	bsd.rd
-	gzip -9nv < bsd.rd > bsd.gz
 
 ${IMAGE}: instbin
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}

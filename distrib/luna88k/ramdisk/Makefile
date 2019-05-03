@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.26 2019/04/30 21:14:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.27 2019/05/03 20:03:58 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		8192
 FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -20,12 +21,12 @@ ${FS}: vn_up install_files showit vn_down
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 -f 1024 -b 8192 /dev/r`cat vnd`a
+	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
 	install -c -m 555 -o root -g wheel \
 	    ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 	ln ${MOUNT_POINT}/boot ${MOUNT_POINT}/vmunix
+	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
@@ -34,6 +35,11 @@ ${FS}: vn_up install_files showit vn_down
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
 	rdsetroot bsd.rd mr.fs
+
+bsd:
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
 mr.fs: instbin
 	rm -rf $@.d
@@ -44,11 +50,6 @@ mr.fs: instbin
 	    sh ${UTILS}/runlist.sh ${LISTS}
 	rm $@.d/instbin
 	makefs ${MRMAKEFSARGS} $@ $@.d
-
-bsd:
-	cd ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK && \
-	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
-	cp -p ${.CURDIR}/../../../sys/arch/luna88k/compile/RAMDISK/obj/bsd bsd
 
 instbin.mk instbin.cache instbin.c: instbin.conf
 	crunchgen -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
