@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.31 2017/03/18 01:48:43 deraadt Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.32 2019/05/03 16:31:34 tobias Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -188,7 +188,7 @@ evbuffer_readline(struct evbuffer *buffer)
 	u_char *data = EVBUFFER_DATA(buffer);
 	size_t len = EVBUFFER_LENGTH(buffer);
 	char *line;
-	unsigned int i;
+	size_t i;
 
 	for (i = 0; i < len; i++) {
 		if (data[i] == '\r' || data[i] == '\n')
@@ -232,7 +232,7 @@ evbuffer_readln(struct evbuffer *buffer, size_t *n_read_out,
 	u_char *start_of_eol, *end_of_eol;
 	size_t len = EVBUFFER_LENGTH(buffer);
 	char *line;
-	unsigned int i, n_to_copy, n_to_drain;
+	size_t i, n_to_copy, n_to_drain;
 
 	if (n_read_out)
 		*n_read_out = 0;
