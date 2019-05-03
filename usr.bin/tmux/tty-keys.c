@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.111 2019/05/03 14:51:31 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.112 2019/05/03 18:00:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -429,6 +429,7 @@ tty_keys_build(struct tty *tty)
 	if (o != NULL) {
 		a = options_array_first(o);
 		while (a != NULL) {
+			i = options_array_item_index(a);
 			ov = options_array_item_value(a);
 			tty_keys_add(tty, ov->string, KEYC_USER + i);
 			a = options_array_next(a);
