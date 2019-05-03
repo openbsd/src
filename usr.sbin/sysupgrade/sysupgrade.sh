@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.8 2019/04/29 22:27:39 ian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.9 2019/05/03 13:04:40 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -33,7 +33,7 @@ ug_err()
 
 usage()
 {
-	ug_err "usage: ${0##*/} [-c] [installurl]"
+	ug_err "usage: ${0##*/} [-cf] [installurl]"
 }
 
 unpriv()
@@ -63,12 +63,14 @@ rmel() {
 }
 
 CURRENT=false
+FORCE=false
 
-while getopts c arg; do
-        case ${arg} in
-        c)      CURRENT=true;;
-        *)      usage;;
-        esac
+while getopts cf arg; do
+	case ${arg} in
+	c)	CURRENT=true;;
+	f)	FORCE=true;;
+	*)	usage;;
+	esac
 done
 
 set -A _KERNV -- $(sysctl -n kern.version |
@@ -111,6 +113,10 @@ fi
 cd ${SETSDIR}
 
 unpriv -f SHA256.sig ftp -Vmo SHA256.sig ${URL}SHA256.sig
+
+if cmp -s /var/db/installed.SHA256.sig SHA256.sig && ! $FORCE; then
+	ug_err "Already on latest snapshot."
+fi
 
 _KEY=openbsd-${_KERNV[0]%.*}${_KERNV[0]#*.}-base.pub
 _NEXTKEY=openbsd-${NEXT_VERSION%.*}${NEXT_VERSION#*.}-base.pub
