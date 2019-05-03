@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.4 2019/05/03 14:44:19 ian Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.5 2019/05/03 15:18:14 florian Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -22,9 +22,8 @@
 .Nd upgrade system to the next release or a new snapshot
 .Sh SYNOPSIS
 .Nm
-.Op Fl c
-.Op Fl f
-.Op Fl n
+.Op Fl fn
+.Op Fl r | s
 .Op Ar installurl
 .Sh DESCRIPTION
 .Nm
@@ -49,12 +48,6 @@ triggering a one-shot upgrade using the files in
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
-upgrade to a snapshot.
-The default is to find out if the system is running a release or a snapshot.
-In case of release
-.Nm
-downloads the next release.
 .It Fl f
 force an already applied upgrade.
 The default is to upgrade to latest snapshot only if available.
@@ -63,6 +56,18 @@ This option has no effect on releases.
 fetch and verify the files and create
 .Pa /bsd.upgrade
 but not do reboot.
+.It Fl r
+upgrade to the next release.
+The default is to find out if the system is running a release or a snapshot.
+In case of release
+.Nm
+downloads the next release.
+.It Fl s
+upgrade to a snapshot.
+The default is to find out if the system is running a release or a snapshot.
+In case of release
+.Nm
+downloads the next release.
 .El
 .Sh FILES
 .Bl -tag -width "/home/_sysupgrade" -compact

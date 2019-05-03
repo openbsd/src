@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.11 2019/05/03 14:48:13 ian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.12 2019/05/03 15:18:14 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -33,7 +33,7 @@ ug_err()
 
 usage()
 {
-	ug_err "usage: ${0##*/} [-cfn] [installurl]"
+	ug_err "usage: ${0##*/} [-fn] [-r | -s] [installurl]"
 }
 
 unpriv()
@@ -62,18 +62,24 @@ rmel() {
 	echo -n "$_c"
 }
 
-CURRENT=false
+RELEASE=false
+SNAP=false
 FORCE=false
 REBOOT=true
 
-while getopts cfn arg; do
+while getopts fnrs arg; do
 	case ${arg} in
-	c)	CURRENT=true;;
 	f)	FORCE=true;;
 	n)	REBOOT=false;;
+	r)	RELEASE=true;;
+	s)	SNAP=true;;
 	*)	usage;;
 	esac
 done
+
+if $RELEASE && $SNAP; then
+	usage
+fi
 
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([0-9]\)\.\([0-9]\)\([^ ]*\).*/\1.\2 \3/;q')
@@ -89,12 +95,13 @@ case $# in
 *)	usage
 esac
 
-if [[ ${#_KERNV[*]} == 2 ]]; then
-	CURRENT=true
+if ! $RELEASE && [[ ${#_KERNV[*]} == 2 ]]; then
+	SNAP=true
 fi
+
 NEXT_VERSION=$(echo ${_KERNV[0]} + 0.1 | bc)
 
-if $CURRENT; then
+if $SNAP; then
 	URL=${MIRROR}/snapshots/${ARCH}/
 else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
