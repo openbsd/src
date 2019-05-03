@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.235 2019/04/25 12:14:37 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.236 2019/05/03 01:48:42 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1573,6 +1573,7 @@ show_attr(void *b, u_int16_t len, int flag0)
 				nexthop.aid = AID_INET;
 				memcpy(&nexthop.v4, data + sizeof(u_int64_t),
 				    sizeof(nexthop.v4));
+				break;
 			default:
 				printf("unhandled AID #%u", aid);
 				goto done;
