@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.228 2019/05/03 17:31:05 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.229 2019/05/03 18:38:44 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -276,12 +276,9 @@ main(int argc, char *argv[])
 			search.outkey = oarg;
 		else {
 			while (oarg != NULL) {
-				thisarg = oarg;
 				if (manconf_output(&conf.output,
-				    strsep(&oarg, ","), 0) == 0)
-					continue;
-				warnx("-O %s: Bad argument", thisarg);
-				return (int)MANDOCLEVEL_BADARG;
+				    strsep(&oarg, ","), 0) == -1)
+					return (int)MANDOCLEVEL_BADARG;
 			}
 		}
 	}

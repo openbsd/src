@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.25 2019/05/03 17:45:17 anton Exp $ */
+/*	$OpenBSD: manpath.c,v 1.26 2019/05/03 18:38:45 schwarze Exp $ */
 /*
  * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -332,8 +332,7 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		conf->toc = 1;
 		return 0;
 	default:
-		if (fromfile)
-			warnx("-O %s: Bad argument", cp);
+		warnx("-O %s: Bad argument", cp);
 		return -1;
 	}
 	if (fromfile == 0)
