@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.379 2019/04/25 12:12:16 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.380 2019/05/03 15:20:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,7 @@
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
 #define	IPSEC_AUTH_KEY_LEN		20
-#define	SET_NAME_LEN			64
+#define	SET_NAME_LEN			128
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
