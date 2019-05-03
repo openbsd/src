@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.386 2019/04/10 15:21:54 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.387 2019/05/03 15:08:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -404,6 +404,11 @@ include		: INCLUDE STRING		{
 		;
 
 as_set		: ASSET STRING '{' optnl	{
+			if (strlen($2) >= SET_NAME_LEN) {
+				yyerror("as-set name %s too long", $2);
+				free($2);
+				YYERROR;
+			}
 			if (new_as_set($2) != 0) {
 				free($2);
 				YYERROR;
