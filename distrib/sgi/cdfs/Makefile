@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.27 2019/05/03 23:49:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 2019/05/03 23:53:05 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 CDROM=		cd${OSrev}.iso
 # must match the size of `minicdroot' in disktab
 CDFSMB=	15
+MOUNT_POINT=	/mnt
 
 all: ${CDROM}
 
@@ -16,25 +17,23 @@ ALLIP=		22 26 27 28 30 32
 SGIVOLSZ=	33500
 
 ${CDROM}:
-	rm -rf ${.OBJDIR}/cd-dir
-	mkdir -p ${.OBJDIR}/cd-dir/
 	dd if=/dev/zero of=${FS} bs=1m count=${CDFSMB}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` minicdroot "OpenBSD/sgi     "
 	newfs -m 0 -o space -i 524288 /dev/r`cat vnd`a
-	mount /dev/`cat vnd`a ${.OBJDIR}/cd-dir
-	mkdir -p ${.OBJDIR}/cd-dir/${OSrev}/sgi
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
+	mkdir -p ${MOUNT_POINT}/${OSrev}/sgi
 .for IP in ${ALLIP}
 	gzip -9cf ${.OBJDIR}/../ramdisk/bsd.rd.IP${IP} > \
-	    ${.OBJDIR}/cd-dir/bsd.IP${IP}
-	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/bsd.rd.IP${IP}
-	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.IP${IP}
-	ln ${.OBJDIR}/cd-dir/bsd.IP${IP} ${.OBJDIR}/cd-dir/${OSrev}/sgi/bsd.rd.IP${IP}
+	    ${MOUNT_POINT}/bsd.IP${IP}
+	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/bsd.rd.IP${IP}
+	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/${OSrev}/sgi/bsd.IP${IP}
+	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/${OSrev}/sgi/bsd.rd.IP${IP}
 .endfor
-	cp ${DESTDIR}/usr/mdec/bootecoff ${.OBJDIR}/cd-dir/bootecoff
-	cp ${DESTDIR}/usr/mdec/boot32 ${.OBJDIR}/cd-dir/boot32
-	cp ${DESTDIR}/usr/mdec/boot64 ${.OBJDIR}/cd-dir/boot64
-	umount ${.OBJDIR}/cd-dir
+	cp ${DESTDIR}/usr/mdec/bootecoff ${MOUNT_POINT}/bootecoff
+	cp ${DESTDIR}/usr/mdec/boot32 ${MOUNT_POINT}/boot32
+	cp ${DESTDIR}/usr/mdec/boot64 ${MOUNT_POINT}/boot64
+	umount ${MOUNT_POINT}
 	df -i /dev/`cat vnd`a
 	vnconfig -u `cat vnd`
 	rm -f vnd
