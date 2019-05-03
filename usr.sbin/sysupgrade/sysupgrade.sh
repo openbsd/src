@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.9 2019/05/03 13:04:40 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.10 2019/05/03 14:44:19 ian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -33,7 +33,7 @@ ug_err()
 
 usage()
 {
-	ug_err "usage: ${0##*/} [-cf] [installurl]"
+	ug_err "usage: ${0##*/} [-cfn] [installurl]"
 }
 
 unpriv()
@@ -64,11 +64,13 @@ rmel() {
 
 CURRENT=false
 FORCE=false
+REBOOT=true
 
 while getopts cf arg; do
 	case ${arg} in
 	c)	CURRENT=true;;
 	f)	FORCE=true;;
+	n)	REBOOT=false;;
 	*)	usage;;
 	esac
 done
@@ -161,5 +163,9 @@ cp bsd.rd /nbsd.upgrade
 ln -f /nbsd.upgrade /bsd.upgrade
 rm /nbsd.upgrade
 
-echo Upgrading.
-exec reboot
+if ${REBOOT}; then
+	echo Upgrading.
+	exec reboot
+else
+	echo "Will upgrade on next reboot"
+fi
