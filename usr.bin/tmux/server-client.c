@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.278 2019/05/03 18:42:40 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.279 2019/05/03 20:44:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1671,8 +1671,7 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 			evbuffer_add(c->stdin_data, stdindata.data,
 			    stdindata.size);
 		}
-		c->stdin_callback(c, c->stdin_closed,
-		    c->stdin_callback_data);
+		c->stdin_callback(c, c->stdin_closed, c->stdin_callback_data);
 		break;
 	case MSG_RESIZE:
 		if (datalen != 0)

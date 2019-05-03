@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.150 2019/04/02 09:03:39 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.151 2019/05/03 20:44:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1185,6 +1185,8 @@ input_c0_dispatch(struct input_ctx *ictx)
 	case '\013':	/* VT */
 	case '\014':	/* FF */
 		screen_write_linefeed(sctx, 0, ictx->cell.cell.bg);
+		if (s->mode & MODE_CRLF)
+			screen_write_carriagereturn(sctx);
 		break;
 	case '\015':	/* CR */
 		screen_write_carriagereturn(sctx);
