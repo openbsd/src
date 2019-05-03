@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.70 2019/05/02 16:24:32 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.71 2019/05/03 18:39:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -2104,6 +2104,7 @@ bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			err = ESRCH;
 			break;
 		}
+		bif = bridge_getbif(ifs);
 		if ((bif->bif_flags & IFBIF_STP) == 0) {
 			err = EINVAL;
 			break;
