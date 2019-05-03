@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.226 2019/05/03 09:39:01 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.227 2019/05/03 16:14:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -119,7 +119,7 @@ main(int argc, char *argv[])
 	char		*conf_file, *defpaths, *auxpaths;
 	char		*oarg, *tagarg;
 	unsigned char	*uc;
-	size_t		 i, sz;
+	size_t		 i, sz, ssz;
 	int		 prio, best_prio;
 	enum outmode	 outmode;
 	int		 fd, startdir;
@@ -406,7 +406,7 @@ main(int argc, char *argv[])
 
 		if (outmode == OUTMODE_ONE) {
 			argc = 1;
-			best_prio = 20;
+			best_prio = 40;
 		} else if (outmode == OUTMODE_ALL)
 			argc = (int)sz;
 
@@ -425,10 +425,21 @@ main(int argc, char *argv[])
 				sec = res[i].file;
 				sec += strcspn(sec, "123456789");
 				if (sec[0] == '\0')
-					continue;
+					continue; /* No section at all. */
 				prio = sec_prios[sec[0] - '1'];
-				if (sec[1] != '/')
-					prio += 10;
+				if (search.sec != NULL) {
+					ssz = strlen(search.sec);
+					if (strncmp(sec, search.sec, ssz) == 0)
+						sec += ssz;
+				} else
+					sec++; /* Prefer without suffix. */
+				if (*sec != '/')
+					prio += 10; /* Wrong dir name. */
+				if (search.sec != NULL &&
+				    (strlen(sec) <= ssz  + 3 ||
+				     strcmp(sec + strlen(sec) - ssz,
+				      search.sec) != 0))
+					prio += 20; /* Wrong file ext. */
 				if (prio >= best_prio)
 					continue;
 				best_prio = prio;
