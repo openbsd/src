@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.64 2019/05/03 15:43:01 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.65 2019/05/03 18:59:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -94,6 +94,7 @@ cmdq_insert_after(struct cmdq_item *after, struct cmdq_item *item)
 		log_debug("%s %s: %s after %s", __func__, cmdq_name(c),
 		    item->name, after->name);
 
+		after = item;
 		item = next;
 	} while (item != NULL);
 }
