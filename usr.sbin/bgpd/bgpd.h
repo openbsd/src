@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.380 2019/05/03 15:20:29 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.381 2019/05/03 15:25:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,13 +81,13 @@
 #define	F_BLACKHOLE		0x0100
 #define	F_LONGER		0x0200
 #define	F_MPLS			0x0400
-#define	F_CTL_DETAIL		0x1000	/* only used by bgpctl */
-#define	F_CTL_ADJ_IN		0x2000
-#define	F_CTL_ADJ_OUT		0x4000
+#define	F_CTL_DETAIL		0x1000	/* only set on requests */
+#define	F_CTL_ADJ_IN		0x2000	/* only set on requests */
+#define	F_CTL_ADJ_OUT		0x4000	/* only set on requests */
 #define	F_CTL_ACTIVE		0x8000
 #define	F_RTLABEL		0x10000
 #define	F_CTL_SSV		0x20000	/* only used by bgpctl */
-#define	F_CTL_INVALID		0x40000 /* only used by bgpctl */
+#define	F_CTL_INVALID		0x40000 /* only set on requests */
 #define	F_CTL_OVS_VALID		0x80000
 #define	F_CTL_OVS_INVALID	0x100000
 #define	F_CTL_OVS_NOTFOUND	0x200000
