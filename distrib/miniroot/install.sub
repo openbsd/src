@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1119 2019/05/02 06:19:33 florian Exp $
+#	$OpenBSD: install.sub,v 1.1120 2019/05/03 20:38:15 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1117,53 +1117,47 @@ v6_config() {
 	# Preset the default answers by preserving possibly existing
 	# configuration from previous runs.
 	set -- $(v6_info $_if)
-	[[ -n $2 ]] && { _addr=$2; _prefixlen=$3; }
+	if [[ $1 == *AUTOCONF6* ]]; then
+		_addr=autoconf
+	elif [[ -n $2 ]]; then
+		_addr=$2
+		_prefixlen=$3
+	fi
 
-	ifconfig $_if inet6 >/dev/null 2>&1 && _prompt="or 'autoconf' "
-	_prompt="IPv6 address for $_if? (${_prompt}or 'none')"
+	_prompt="IPv6 address for $_if? (or 'autoconf' or 'none')"
 
 	while :; do
 		ask_until "$_prompt" "${_addr:-none}"
 		case $resp in
-		none)	return
+		none)	ifconfig $_if -inet6
+			return
 			;;
 		autoconf)
-			if ! ifconfig $_if inet6 >/dev/null 2>&1; then
-				echo "No INET6 support."
-				$AI && exit 1 || return
-			fi
-			if ifconfig $_if inet6 autoconf; then
-				echo "inet6 autoconf" >>$_hn
-				return
-			else
-				echo "inet6 autoconf failed."
-				$AI && exit 1 || return
-			fi
+			# Nuke any existing address before enabling autoconf.
+			ifconfig $_if -inet6
+			ifconfig $_if inet6 autoconf up
+			echo "inet6 autoconf" >>$_hn
+			return
 			;;
-		*)	_addr=$resp
+		*)	ifconfig $_if inet6 -autoconf
+			_addr=${resp%%/*}
+			if [[ $resp == */* ]]; then
+				_prefixlen=${resp##$_addr/}
+			else
+				ask_until "IPv6 prefix length for $_if?" "64"
+				_prefixlen=$resp
+			fi
+			if ifconfig $_if inet6 $_addr/$_prefixlen up; then
+				echo "inet6 $_addr $_prefixlen" >>$_hn
+				add_hostent "$_addr" "$_name"
+				v6_defroute $_if
+				return
+			fi
 			;;
 		esac
 
-		# Ask for prefix length if the user did not use CIDR notation.
-		if [[ $_addr == */* ]]; then
-			_prefixlen=
-		else
-			ask_until "IPv6 prefix length for $_if?" "${_prefixlen:=64}"
-			_prefixlen=$resp
-		fi
-
-		if ifconfig $_if inet6 $_addr ${_prefixlen:+prefixlen $_prefixlen} up; then
-			echo "inet6 $_addr $_prefixlen" >>$_hn
-			add_hostent "${_addr%%/*}" "$_name"
-			break
-		else
-			_addr=
-			_prefixlen=
-			$AI && exit 1
-		fi
+		$AI && exit 1
 	done
-
-	v6_defroute $_if
 }
 
 # Perform an 802.11 network scan on interface $1 and cache the result a file.
