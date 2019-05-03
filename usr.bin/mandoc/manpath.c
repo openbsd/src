@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.24 2018/11/22 11:30:15 schwarze Exp $ */
+/*	$OpenBSD: manpath.c,v 1.25 2019/05/03 17:45:17 anton Exp $ */
 /*
  * Copyright (c) 2011,2014,2015,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -235,12 +235,13 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 	    "includes", "man", "paper", "style", "indent", "width",
 	    "tag", "fragment", "mdoc", "noval", "toc"
 	};
+	const size_t ntoks = sizeof(toks) / sizeof(toks[0]);
 
 	const char	*errstr;
 	char		*oldval;
 	size_t		 len, tok;
 
-	for (tok = 0; tok < sizeof(toks)/sizeof(toks[0]); tok++) {
+	for (tok = 0; tok < ntoks; tok++) {
 		len = strlen(toks[tok]);
 		if ( ! strncmp(cp, toks[tok], len) &&
 		    strchr(" =	", cp[len]) != NULL) {
@@ -257,7 +258,7 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		warnx("-O %s=?: Missing argument value", toks[tok]);
 		return -1;
 	}
-	if (tok > 6 && *cp != '\0') {
+	if (tok > 6 && tok < ntoks && *cp != '\0') {
 		warnx("-O %s: Does not take a value: %s", toks[tok], cp);
 		return -1;
 	}
