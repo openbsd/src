@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.227 2019/05/03 16:14:31 schwarze Exp $ */
+/*	$OpenBSD: main.c,v 1.228 2019/05/03 17:31:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>	/* MACHINE */
+#include <sys/stat.h>
 #include <sys/wait.h>
 
 #include <assert.h>
@@ -683,6 +684,7 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	const char *sec, const char *arch, const char *name,
 	struct manpage **res, size_t *ressz)
 {
+	struct stat	 sb;
 	glob_t		 globinfo;
 	struct manpage	*page;
 	char		*file;
@@ -692,13 +694,13 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	form = FORM_SRC;
 	mandoc_asprintf(&file, "%s/man%s/%s.%s",
 	    paths->paths[ipath], sec, name, sec);
-	if (access(file, R_OK) != -1)
+	if (stat(file, &sb) != -1)
 		goto found;
 	free(file);
 
 	mandoc_asprintf(&file, "%s/cat%s/%s.0",
 	    paths->paths[ipath], sec, name);
-	if (access(file, R_OK) != -1) {
+	if (stat(file, &sb) != -1) {
 		form = FORM_CAT;
 		goto found;
 	}
@@ -707,7 +709,7 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	if (arch != NULL) {
 		mandoc_asprintf(&file, "%s/man%s/%s/%s.%s",
 		    paths->paths[ipath], sec, arch, name, sec);
-		if (access(file, R_OK) != -1)
+		if (stat(file, &sb) != -1)
 			goto found;
 		free(file);
 	}
@@ -721,13 +723,16 @@ fs_lookup(const struct manpaths *paths, size_t ipath,
 	if (globres == 0)
 		file = mandoc_strdup(*globinfo.gl_pathv);
 	globfree(&globinfo);
-	if (globres == 0)
-		goto found;
+	if (globres == 0) {
+		if (stat(file, &sb) != -1)
+			goto found;
+		free(file);
+	}
 	if (res != NULL || ipath + 1 != paths->sz)
 		return 0;
 
 	mandoc_asprintf(&file, "%s.%s", name, sec);
-	globres = access(file, R_OK);
+	globres = stat(file, &sb);
 	free(file);
 	return globres != -1;
 
