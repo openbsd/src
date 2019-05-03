@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.276 2019/05/03 14:51:30 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.277 2019/05/03 16:51:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -450,7 +450,7 @@ server_client_check_mouse(struct client *c, struct key_event *event)
 			x = m->x, y = m->y, b = m->b;
 			log_debug("drag update at %u,%u", x, y);
 		} else {
-			x = m->lx - m->ox, y = m->ly - m->oy, b = m->lb;
+			x = m->lx, y = m->ly, b = m->lb;
 			log_debug("drag start at %u,%u", x, y);
 		}
 	} else if (MOUSE_WHEEL(m->b)) {

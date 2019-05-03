@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.144 2019/04/25 19:36:59 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.145 2019/05/03 16:51:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -481,17 +481,16 @@ cmd_mouse_at(struct window_pane *wp, struct mouse_event *m, u_int *xp,
 	u_int	x, y;
 
 	if (last) {
-		x = m->lx;
-		y = m->ly;
+		x = m->lx + m->ox;
+		y = m->ly + m->oy;
 	} else {
 		x = m->x;
 		y = m->y;
 	}
+	log_debug("%s: x=%u, y=%u%s", __func__, x, y, last ? " (last)" : "");
 
 	if (m->statusat == 0 && y > 0)
 		y--;
-	else if (m->statusat > 0 && y >= (u_int)m->statusat)
-		y = m->statusat - 1;
 
 	if (x < wp->xoff || x >= wp->xoff + wp->sx)
 		return (-1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-pane.c,v 1.35 2018/08/18 16:14:03 nicm Exp $ */
+/* $OpenBSD: cmd-resize-pane.c,v 1.36 2019/05/03 16:51:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -148,7 +148,7 @@ cmd_resize_pane_mouse_update(struct client *c, struct mouse_event *m)
 		y--;
 	else if (m->statusat > 0 && y >= (u_int)m->statusat)
 		y = m->statusat - 1;
-	ly = m->ly; lx = m->lx;
+	ly = m->ly + m->oy; lx = m->lx + m->ox;
 	if (m->statusat == 0 && ly > 0)
 		ly--;
 	else if (m->statusat > 0 && ly >= (u_int)m->statusat)
