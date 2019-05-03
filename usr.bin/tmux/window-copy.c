@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.219 2019/05/01 06:07:14 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.220 2019/05/03 18:42:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3505,6 +3505,8 @@ window_copy_start_drag(struct client *c, struct mouse_event *m)
 	window_copy_update_cursor(wme, x, y);
 	window_copy_start_selection(wme);
 	window_copy_redraw_screen(wme);
+
+	window_copy_drag_update(c, m);
 }
 
 static void

@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.277 2019/05/03 16:51:29 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.278 2019/05/03 18:42:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -448,6 +448,8 @@ server_client_check_mouse(struct client *c, struct key_event *event)
 		type = DRAG;
 		if (c->tty.mouse_drag_flag) {
 			x = m->x, y = m->y, b = m->b;
+			if (x == m->lx && y == m->ly)
+				return (KEYC_UNKNOWN);
 			log_debug("drag update at %u,%u", x, y);
 		} else {
 			x = m->lx, y = m->ly, b = m->lb;
@@ -555,8 +557,6 @@ have_event:
 			return (KEYC_UNKNOWN);
 		px = px + m->ox;
 		py = py + m->oy;
-		m->x = x + m->ox;
-		m->y = y + m->oy;
 
 		/* Try the pane borders if not zoomed. */
 		if (~s->curw->window->flags & WINDOW_ZOOMED) {
