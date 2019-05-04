@@ -139,7 +139,9 @@ int radeon_agp_init(struct radeon_device *rdev)
 	/* Acquire AGP. */
 	ret = drm_agp_acquire(rdev->ddev);
 	if (ret) {
+#ifdef __linux__
 		DRM_ERROR("Unable to acquire AGP: %d\n", ret);
+#endif
 		return ret;
 	}
 
