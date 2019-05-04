@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.54 2018/12/23 10:46:51 natano Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.55 2019/05/04 17:57:46 deraadt Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -671,7 +671,9 @@ ufs_makedirentry(struct inode *ip, struct componentname *cnp,
 #endif
 	newdirp->d_ino = ip->i_number;
 	newdirp->d_namlen = cnp->cn_namelen;
-	memcpy(newdirp->d_name, cnp->cn_nameptr, cnp->cn_namelen + 1);
+	memset(newdirp->d_name + (cnp->cn_namelen & ~(DIR_ROUNDUP-1)),
+	    0, DIR_ROUNDUP);
+	memcpy(newdirp->d_name, cnp->cn_nameptr, cnp->cn_namelen);
 	if (OFSFMT(ip)) {
 		newdirp->d_type = 0;
 #		if (BYTE_ORDER == LITTLE_ENDIAN)
