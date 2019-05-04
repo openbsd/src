@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.14 2019/05/04 19:48:55 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.15 2019/05/04 20:18:39 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -38,12 +38,15 @@ usage()
 
 unpriv()
 {
-	local _file=$2 _rc=0 _user=_syspatch
+	local _file _rc=0 _user=_syspatch
 
-	if [[ $1 == -f && -n ${_file} ]]; then
+	if [[ $1 == -f ]]; then
+		_file=$2
+		shift 2
+	fi
+ 	if [[ -n ${_file} ]]; then
 		>${_file}
 		chown "${_user}" "${_file}"
-		shift 2
 	fi
 	(($# >= 1))
 
