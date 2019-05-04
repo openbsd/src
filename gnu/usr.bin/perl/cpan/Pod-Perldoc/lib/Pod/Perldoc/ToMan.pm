@@ -358,6 +358,9 @@ sub _filter_through_nroff {
 		length $done
 		);
 
+	# wait for it to exit
+	waitpid( $pid, 0 );
+
 	if( $? ) {
 		$self->warn( "Error from pipe to $render!\n" );
 		$self->debug( 'Error: ' . do { local $/; <$err> } );
