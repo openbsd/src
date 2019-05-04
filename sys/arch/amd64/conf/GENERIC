@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.469 2019/05/04 11:34:47 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.470 2019/05/04 17:59:40 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -522,6 +522,7 @@ lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
 bnxt*	at pci?				# Broadcom BCM573xx, BCM574xx
 ixl*	at pci?				# Intel Ethernet 700 Series
+mcx*	at pci?				# Mellanox ConnectX-4
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
