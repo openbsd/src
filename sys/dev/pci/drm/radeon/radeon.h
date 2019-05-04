@@ -2341,6 +2341,7 @@ struct radeon_device {
 	struct task			switchtask;
 	struct rasops_info		ro;
 	int				console;
+	int				primary;
 
 	struct task			burner_task;
 	int				burner_fblank;

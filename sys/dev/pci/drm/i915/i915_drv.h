@@ -1721,6 +1721,7 @@ struct inteldrm_softc {
 	struct drm_pcidev *id;
 
 	int console;
+	int primary;
 	int nscreens;
 	void (*switchcb)(void *, int, int);
 	void *switchcbarg;

@@ -1,8 +1,8 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.43 2019/04/14 10:14:51 jsg Exp $
+# $OpenBSD: files.drm,v 1.44 2019/05/04 11:34:47 kettenis Exp $
 
 # direct rendering modules
-define drmbase {[console = -1]}
+define drmbase {[primary = -1]}
 device drm: drmbase
 attach drm at drmbase
 file	dev/pci/drm/drm_agpsupport.c		drm & agp

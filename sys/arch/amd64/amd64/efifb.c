@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.23 2019/03/28 14:35:29 fcambus Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.24 2019/05/04 11:34:47 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -30,6 +30,8 @@
 
 #include <machine/biosvar.h>
 #include <machine/efifbvar.h>
+
+extern void mainbus_efifb_reattach(void);
 
 /* coreboot tables */
 
@@ -79,7 +81,6 @@ struct efifb {
 	int			 depth;
 	paddr_t			 paddr;
 	psize_t			 psize;
-	int			 detached;
 
 	struct cb_framebuffer	 cb_table_fb;
 };
@@ -142,6 +143,7 @@ struct cfdriver efifb_cd = {
 	NULL, "efifb", DV_DULL
 };
 
+int efifb_detached;
 struct efifb efifb_console;
 struct wsdisplay_charcell efifb_bs[EFIFB_HEIGHT * EFIFB_WIDTH];
 
@@ -150,17 +152,17 @@ efifb_match(struct device *parent, void *cf, void *aux)
 {
 	struct efifb_attach_args *eaa = aux;
 
+	if (efifb_detached)
+		return 0;
+
 	if (strcmp(eaa->eaa_name, efifb_cd.cd_name) == 0) {
-		if (efifb_console.paddr != 0) {
-			if (efifb_console.detached)
-				return (0);
-			return (1);
-		}
+		if (efifb_console.paddr != 0)
+			return 1;
 		if (bios_efiinfo != NULL && bios_efiinfo->fb_addr != 0)
-			return (1);
+			return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -501,16 +503,48 @@ efifb_is_console(struct pci_attach_args *pa)
 	return 0;
 }
 
-void
-efifb_cndetach(void)
+int
+efifb_is_primary(struct pci_attach_args *pa)
 {
-	efifb_console.detached = 1;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t type;
+	bus_addr_t base;
+	bus_size_t size;
+	int reg;
+
+	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+		if (!pci_mapreg_probe(pc, tag, reg, &type))
+			continue;
+
+		if (type == PCI_MAPREG_TYPE_IO)
+			continue;
+
+		if (pci_mapreg_info(pc, tag, reg, type, &base, &size, NULL))
+			continue;
+
+		if (bios_efiinfo != NULL && bios_efiinfo->fb_addr != 0)
+			return (1);
+
+		if (type & PCI_MAPREG_MEM_TYPE_64BIT)
+			reg += 4;
+	}
+
+	/* XXX coreboot framebuffer isn't matched above. */
+	return efifb_is_console(pa);;
 }
 
 void
-efifb_cnreattach(void)
+efifb_detach(void)
 {
-	efifb_console.detached = 0;
+	efifb_detached = 1;
+}
+
+void
+efifb_reattach(void)
+{
+	efifb_detached = 0;
+	mainbus_efifb_reattach();
 }
 
 int

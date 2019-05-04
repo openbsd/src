@@ -45,6 +45,11 @@ static inline bool radeon_has_atpx(void) { return false; }
 #include "vga.h"
 
 #if NVGA > 0
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+
 extern int vga_console_attached;
 #endif
 
@@ -484,22 +489,25 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 
 #if defined(__sparc64__) || defined(__macppc__)
 	if (fbnode == PCITAG_NODE(rdev->pa_tag))
-		rdev->console = 1;
+		rdev->console = rdev->primary = 1;
 #else
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA &&
 	    (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG)
 	    & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
 	    == (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) {
-		rdev->console = 1;
+		rdev->primary = 1;
 #if NVGA > 0
+		rdev->console = vga_is_console(pa->pa_iot, -1);
 		vga_console_attached = 1;
 #endif
 	}
+
 #if NEFIFB > 0
-	if (efifb_is_console(pa)) {
-		rdev->console = 1;
-		efifb_cndetach();
+	if (efifb_is_primary(pa)) {
+		rdev->primary = 1;
+		rdev->console = efifb_is_console(pa);
+		efifb_detach();
 	}
 #endif
 #endif
@@ -628,7 +636,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	kms_driver.num_ioctls = radeon_max_kms_ioctl;
 	kms_driver.driver_features |= DRIVER_MODESET;
 
-	dev = drm_attach_pci(&kms_driver, pa, is_agp, rdev->console,
+	dev = drm_attach_pci(&kms_driver, pa, is_agp, rdev->primary,
 	    self, NULL);
 	rdev->ddev = dev;
 	rdev->pdev = dev->pdev;
@@ -696,8 +704,6 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	config_mountroot(self, radeondrm_attachhook);
 }
 
-extern void mainbus_efifb_reattach(void);
-
 int
 radeondrm_forcedetach(struct radeon_device *rdev)
 {
@@ -705,7 +711,7 @@ radeondrm_forcedetach(struct radeon_device *rdev)
 	pcitag_t		 tag = rdev->pa_tag;
 
 #if NVGA > 0
-	if (rdev->console)
+	if (rdev->primary)
 		vga_console_attached = 0;
 #endif
 
@@ -716,8 +722,8 @@ radeondrm_forcedetach(struct radeon_device *rdev)
 		config_detach(&rdev->self, 0);
 		return pci_probe_device(sc, tag, NULL, NULL);
 #if NEFIFB > 0
-	} else if (rdev->console) {
-		mainbus_efifb_reattach();
+	} else if (rdev->primary) {
+		efifb_reattach();
 	}
 #endif
 
@@ -807,6 +813,7 @@ radeondrm_attachhook(struct device *self)
 	radeondrm_stdscreen.fontheight = ri->ri_font->fontheight;
 
 	aa.console = rdev->console;
+	aa.primary = rdev->primary;
 	aa.scrdata = &radeondrm_screenlist;
 	aa.accessops = &radeondrm_accessops;
 	aa.accesscookie = ri;

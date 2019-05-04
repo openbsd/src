@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_drv.c,v 1.161 2019/05/02 09:47:16 kettenis Exp $ */
+/* $OpenBSD: drm_drv.c,v 1.162 2019/05/04 11:34:47 kettenis Exp $ */
 /*-
  * Copyright 2007-2009 Owain G. Ainsworth <oga@openbsd.org>
  * Copyright © 2008 Intel Corporation
@@ -98,7 +98,7 @@ SPLAY_PROTOTYPE(drm_file_tree, drm_file, link, drm_file_cmp);
  */
 struct drm_device *
 drm_attach_pci(struct drm_driver *driver, struct pci_attach_args *pa,
-    int is_agp, int console, struct device *dev, struct drm_device *drm)
+    int is_agp, int primary, struct device *dev, struct drm_device *drm)
 {
 	struct drm_attach_args arg;
 	struct drm_softc *sc;
@@ -109,7 +109,7 @@ drm_attach_pci(struct drm_driver *driver, struct pci_attach_args *pa,
 	arg.dmat = pa->pa_dmat;
 	arg.bst = pa->pa_memt;
 	arg.is_agp = is_agp;
-	arg.console = console;
+	arg.primary = primary;
 
 	arg.pci_vendor = PCI_VENDOR(pa->pa_id);
 	arg.pci_device = PCI_PRODUCT(pa->pa_id);
@@ -180,18 +180,18 @@ drm_probe(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 	struct drm_attach_args *da = aux;
 
-	if (cf->drmdevcf_console != DRMDEVCF_CONSOLE_UNK) {
+	if (cf->drmdevcf_primary != DRMDEVCF_PRIMARY_UNK) {
 		/*
-		 * If console-ness of device specified, either match
+		 * If primary-ness of device specified, either match
 		 * exactly (at high priority), or fail.
 		 */
-		if (cf->drmdevcf_console != 0 && da->console != 0)
+		if (cf->drmdevcf_primary != 0 && da->primary != 0)
 			return (10);
 		else
 			return (0);
 	}
 
-	/* If console-ness unspecified, it wins. */
+	/* If primary-ness unspecified, it wins. */
 	return (1);
 }
 

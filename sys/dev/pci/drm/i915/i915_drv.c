@@ -3106,6 +3106,7 @@ static struct drm_driver driver = {
 
 #ifdef __amd64__
 #include "efifb.h"
+#include <machine/biosvar.h>
 #endif
 
 #if NEFIFB > 0
@@ -3432,11 +3433,18 @@ struct cfdriver inteldrm_cd = {
 void	inteldrm_init_backlight(struct inteldrm_softc *);
 int	inteldrm_intr(void *);
 
+/*
+ * Set if the mountroot hook has a fatal error.
+ */
+int	inteldrm_fatal_error;
+
 int
 inteldrm_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
+	if (inteldrm_fatal_error)
+		return 0;
 	if (drm_pciprobe(aux, pciidlist) && pa->pa_function == 0)
 		return 20;
 	return 0;
@@ -3468,20 +3476,22 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	    (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG)
 	    & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
 	    == (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) {
+		dev_priv->primary = 1;
+		dev_priv->console = vga_is_console(pa->pa_iot, -1);;
 		vga_console_attached = 1;
-		dev_priv->console = 1;
 	}
 
 #if NEFIFB > 0
-	if (efifb_is_console(pa)) {
-		dev_priv->console = 1;
-		efifb_cndetach();
+	if (efifb_is_primary(pa)) {
+		dev_priv->primary = 1;
+		dev_priv->console = efifb_is_console(pa);
+		efifb_detach();
 	}
 #endif
 
 	printf("\n");
 
-	dev = drm_attach_pci(&driver, pa, 0, dev_priv->console,
+	dev = drm_attach_pci(&driver, pa, 0, dev_priv->primary,
 	    self, &dev_priv->drm);
 
 	id = drm_find_description(PCI_VENDOR(pa->pa_id),
@@ -3561,6 +3571,24 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
+inteldrm_forcedetach(struct inteldrm_softc *dev_priv)
+{
+	struct pci_softc *psc = (struct pci_softc *)dev_priv->sc_dev.dv_parent;
+	pcitag_t tag = dev_priv->tag;
+	extern int vga_console_attached;
+
+	if (dev_priv->primary) {
+		vga_console_attached = 0;
+#if NEFIFB > 0
+		efifb_reattach();
+#endif
+	}
+	
+	config_detach(&dev_priv->sc_dev, 0);
+	pci_probe_device(psc, tag, NULL, NULL);
+}
+
+void
 inteldrm_attachhook(struct device *self)
 {
 	struct inteldrm_softc *dev_priv = (struct inteldrm_softc *)self;
@@ -3570,10 +3598,10 @@ inteldrm_attachhook(struct device *self)
 	struct drm_device *dev = &dev_priv->drm;
 
 	if (i915_driver_load(dev_priv, id))
-		return;
+		goto fail;
 
 	if (ri->ri_bits == NULL)
-		return;
+		goto fail;
 
 	printf("%s: %dx%d, %dbpp\n", dev_priv->sc_dev.dv_xname,
 	    ri->ri_width, ri->ri_height, ri->ri_depth);
@@ -3615,6 +3643,7 @@ inteldrm_attachhook(struct device *self)
 	inteldrm_stdscreen.fontheight = ri->ri_font->fontheight;
 
 	aa.console = dev_priv->console;
+	aa.primary = dev_priv->primary;
 	aa.scrdata = &inteldrm_screenlist;
 	aa.accessops = &inteldrm_accessops;
 	aa.accesscookie = dev_priv;
@@ -3638,6 +3667,10 @@ inteldrm_attachhook(struct device *self)
 	config_found_sm(self, &aa, wsemuldisplaydevprint,
 	    wsemuldisplaydevsubmatch);
 	return;
+
+fail:
+	inteldrm_fatal_error = 1;
+	inteldrm_forcedetach(dev_priv);
 }
 
 int

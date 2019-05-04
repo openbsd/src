@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.840 2019/03/22 12:07:00 sthen Exp $
+#	$OpenBSD: GENERIC,v 1.841 2019/05/04 11:34:47 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -384,14 +384,14 @@ agp*		at viaagp?	# AGP bridges
 inteldrm*	at pci?		# Intel i915, i945 DRM driver
 intagp*		at inteldrm?
 agp*		at intagp?
-drm0		at inteldrm? console 1
+drm0		at inteldrm? primary 1
 drm*		at inteldrm?
-wsdisplay0	at inteldrm? console 1
+wsdisplay0	at inteldrm? primary 1
 wsdisplay*	at inteldrm? mux -1
 radeondrm*	at pci? 	# ATI Radeon DRM driver
-drm0		at radeondrm? console 1
+drm0		at radeondrm? primary 1
 drm*		at radeondrm?
-wsdisplay0	at radeondrm? console 1
+wsdisplay0	at radeondrm? primary 1
 wsdisplay*	at radeondrm? mux -1
 
 pcppi0		at isa?
