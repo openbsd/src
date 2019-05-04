@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.335 2018/07/09 10:46:15 jmatthew Exp $
+#	$OpenBSD: files.pci,v 1.336 2019/05/04 06:40:33 jmatthew Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -827,6 +827,11 @@ file	dev/pci/ccp_pci.c		ccp_pci
 device	bnxt: ether, ifnet, ifmedia
 attach	bnxt at pci
 file	dev/pci/if_bnxt.c		bnxt
+
+# Mellanox ConnectX-4 and later
+device  mcx: ether, ifnet, ifmedia
+attach  mcx at pci
+file    dev/pci/if_mcx.c                mcx
 
 include "dev/pci/files.agp"
 include "dev/pci/drm/files.drm"
