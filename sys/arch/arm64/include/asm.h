@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.5 2018/09/07 01:32:01 mortimer Exp $	*/
+/*	$OpenBSD: asm.h,v 1.6 2019/05/04 16:18:35 kettenis Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -171,16 +171,5 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
-
-
-/*
- * Sets the trap fault handler. The exception handler will return to the
- * address in the handler register on a data abort or the xzr register to
- * clear the handler. The tmp parameter should be a register able to hold
- * the temporary data.
- */
-#define SET_FAULT_HANDLER(handler, tmp)					\
-	ldr	tmp, [x18, #CI_CURPCB];		/* Load the pcb */	\
-	str	handler, [tmp, #PCB_ONFAULT]	/* Set the handler */
 
 #endif /* !_MACHINE_ASM_H_ */
