@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.11 2009/01/31 21:21:45 grange Exp $	*/
+/*	$OpenBSD: dir.h,v 1.12 2019/05/04 15:38:12 deraadt Exp $	*/
 /*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ struct	direct {
  * without the d_name field, plus enough space for the name with a terminating
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
+#define DIR_ROUNDUP	4	/* Directory name roundup size */
 #define DIRECTSIZ(namlen)						\
 	((offsetof(struct direct, d_name) +				\
 	  ((namlen)+1)*sizeof(((struct direct *)0)->d_name[0]) + 3) & ~3)
