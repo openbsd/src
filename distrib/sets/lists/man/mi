@@ -1614,6 +1614,7 @@
 ./usr/share/man/man4/maxrtc.4
 ./usr/share/man/man4/maxtmp.4
 ./usr/share/man/man4/mbg.4
+./usr/share/man/man4/mcx.4
 ./usr/share/man/man4/mfi.4
 ./usr/share/man/man4/mfii.4
 ./usr/share/man/man4/midi.4
