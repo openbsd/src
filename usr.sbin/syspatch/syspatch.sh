@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.145 2019/04/26 20:42:46 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.146 2019/05/05 10:22:57 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -31,7 +31,7 @@ usage()
 
 apply_patch()
 {
-	local _edir _file _files _patch=$1 _ret=0 _s _upself=false
+	local _edir _file _files _patch=$1 _rc=0 _s _upself=false
 	[[ -n ${_patch} ]]
 
 	_edir=${_TMP}/${_patch}
@@ -51,14 +51,14 @@ apply_patch()
 	create_rollback ${_patch} "${_files}"
 
 	for _file in ${_files}; do
-		((_ret == 0)) || break
+		((_rc == 0)) || break
 		[[ ${_file} == usr/sbin/syspatch ]] && _upself=true
-		install_file ${_edir}/${_file} /${_file} || _ret=$?
+		install_file ${_edir}/${_file} /${_file} || _rc=$?
 	done
 
-	if ((_ret != 0)); then
+	if ((_rc != 0)); then
 		sp_err "Failed to apply patch ${_patch##${_OSrev}-}" 0
-		rollback_patch; return ${_ret}
+		rollback_patch; return ${_rc}
 	fi
 	# don't fill up /tmp when installing multiple patches at once; non-fatal
 	rm -rf ${_edir} ${_TMP}/syspatch${_patch}.tgz
@@ -80,7 +80,7 @@ install missing patches" 2)
 #   (instead of computing before installing each file)
 checkfs()
 {
-	local _d _dev _df _files="${@}" _ret _sz
+	local _d _dev _df _files="${@}" _rc _sz
 	[[ -n ${_files} ]]
 
 	set +e # ignore errors due to:
@@ -89,9 +89,9 @@ checkfs()
 	eval $(cd / &&
 		stat -qf "_dev=\"\${_dev} %Sd\";
 			local %Sd=\"\${%Sd:+\${%Sd}\+}%Uz\"" ${_files}) \
-			2>/dev/null || _ret=$?
+			2>/dev/null || _rc=$?
 	set -e
-	[[ ${_ret} == 127 ]] && sp_err "Remote filesystem, aborting" 
+	[[ ${_rc} == 127 ]] && sp_err "Remote filesystem, aborting" 
 
 	for _d in $(printf '%s\n' ${_dev} | sort -u); do
 		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
@@ -105,7 +105,7 @@ checkfs()
 create_rollback()
 {
 	# XXX annotate new files so we can remove them if we rollback?
-	local _file _patch=$1 _rbfiles _ret=0
+	local _file _patch=$1 _rbfiles _rc=0
 	[[ -n ${_patch} ]]
 	shift
 	local _files="${@}"
@@ -115,11 +115,11 @@ create_rollback()
 		[[ -f /${_file} ]] && _rbfiles="${_rbfiles} ${_file}"
 	done
 
-	tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz ${_rbfiles} || _ret=$?
+	tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz ${_rbfiles} || _rc=$?
 
-	if ((_ret != 0)); then
+	if ((_rc != 0)); then
 		sp_err "Failed to create rollback patch ${_patch##${_OSrev}-}" 0
-		rm -r ${_PDIR}/${_patch}; return ${_ret}
+		rm -r ${_PDIR}/${_patch}; return ${_rc}
 	fi
 }
 
@@ -184,7 +184,7 @@ ls_missing()
 
 rollback_patch()
 {
-	local _edir _file _files _patch _ret=0
+	local _edir _file _files _patch _rc=0
 
 	_patch="$(ls_installed | tail -1)"
 	[[ -n ${_patch} ]] || return 0 # nothing to rollback
@@ -200,13 +200,13 @@ rollback_patch()
 	checkfs ${_files} ${_PDIR} # check for read-only /var/syspatch
 
 	for _file in ${_files}; do
-		((_ret == 0)) || break
-		install_file ${_edir}/${_file} /${_file} || _ret=$?
+		((_rc == 0)) || break
+		install_file ${_edir}/${_file} /${_file} || _rc=$?
 	done
 
-	((_ret != 0)) || rm -r ${_PDIR}/${_patch} || _ret=$?
-	((_ret == 0)) ||
-		sp_err "Failed to revert patch ${_patch##${_OSrev}-}" ${_ret}
+	((_rc != 0)) || rm -r ${_PDIR}/${_patch} || _rc=$?
+	((_rc == 0)) ||
+		sp_err "Failed to revert patch ${_patch##${_OSrev}-}" ${_rc}
 	rm -rf ${_edir} # don't fill up /tmp when using `-R'; non-fatal
 	trap exit INT
 
@@ -217,7 +217,7 @@ rollback_patch()
 
 trap_handler()
 {
-	local _ret
+	local _rc
 
 	set +e # we're trapped
 	rm -rf "${_TMP}"
@@ -234,7 +234,7 @@ trap_handler()
 		if /usr/libexec/reorder_kernel; then
 			echo " done; reboot to load the new kernel"
 		else
-			_ret=$?; echo " failed!"; exit ${_ret}
+			_rc=$?; echo " failed!"; exit ${_rc}
 		fi
 	fi
 
