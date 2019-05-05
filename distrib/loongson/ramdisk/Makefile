@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2019/05/03 20:03:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2019/05/05 17:54:57 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		18432
@@ -16,7 +16,7 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 all: ${FS} ${CDROM}
 
-${FS}: bsd.rd
+${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
 	echo 'u\ne 0\n83\n\n63\n*\nw\nq\n' | fdisk -e `cat vnd` > /dev/null
@@ -42,6 +42,12 @@ ${CDROM}: bsd.rd
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/loongson ${OSREV} boot CD" \
 	    ${.OBJDIR}/cd-dir
+
+bsd.gz: bsd.rd
+	cp bsd.rd bsd.strip
+	strip bsd.strip
+	strip -R .comment -R .SUNW_ctf bsd.strip
+	gzip -9cn bsd.strip > bsd.gz
 
 bsd.rd: mr.fs bsd
 	cp bsd bsd.rd
