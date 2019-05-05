@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.193 2018/03/27 21:11:17 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.194 2019/05/05 20:11:12 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -111,7 +111,7 @@ mpi*		at pci?			# LSI Logic Fusion-MPT Message Passing Interface
 #ami*		at pci?			# AMI MegaRAID controllers
 #mfi*		at pci?			# LSI MegaRAID SAS controllers
 
-de*		at pci?			# DC21X4X-based ethernet cards
+#de*		at pci?			# DC21X4X-based ethernet cards
 fxp*		at pci?			# EtherExpress 10/100B ethernet cards
 ne*		at pci?			# NE2000-compat ethernet cards
 ne*		at pcmcia?		# PCMCIA based NE2000 cards
