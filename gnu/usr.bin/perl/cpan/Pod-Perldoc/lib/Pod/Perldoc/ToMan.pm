@@ -144,7 +144,9 @@ sub _get_podman_switches {
     #
     # See RT #77465
     #
-    #push @switches, 'utf8' => 1;
+    # Then again, do *not* comment it out on OpenBSD:
+    # mandoc handles UTF-8 input just fine.
+    push @switches, 'utf8' => 1;
 
 	$self->debug( "Pod::Man switches are [@switches]\n" );
 
