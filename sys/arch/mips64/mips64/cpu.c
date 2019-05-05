@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.71 2019/05/05 13:28:14 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.72 2019/05/05 13:36:28 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -477,8 +477,10 @@ need_resched(struct cpu_info *ci)
 {
 	ci->ci_want_resched = 1;
 
-	if (ci->ci_curproc != NULL)
+	if (ci->ci_curproc != NULL) {
 		aston(ci->ci_curproc);
+		cpu_unidle(ci);
+	}
 }
 
 #ifdef MULTIPROCESSOR
