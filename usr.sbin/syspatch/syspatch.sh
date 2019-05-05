@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.147 2019/05/05 10:24:00 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.148 2019/05/05 10:34:01 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -243,7 +243,7 @@ trap_handler()
 
 unpriv()
 {
-	local _file=$2 _user=_syspatch
+	local _file=$2 _rc=0 _user=_syspatch
 
 	if [[ $1 == -f && -n ${_file} ]]; then
 		>${_file}
@@ -253,7 +253,11 @@ unpriv()
 	fi
 	(($# >= 1))
 
-	eval su -s /bin/sh ${_user} -c "'$@'"
+	eval su -s /bin/sh ${_user} -c "'$@'" || _rc=$?
+
+	[[ -n ${_file} ]] && chown root "${_file}"
+
+	return ${_rc}
 }
 
 # only run on release (not -current nor -stable)
