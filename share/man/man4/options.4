@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.264 2019/04/21 15:33:39 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.265 2019/05/05 19:06:56 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: April 21 2019 $
+.Dd $Mdocdate: May 5 2019 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -242,8 +242,7 @@ See
 .Sh FILE SYSTEM OPTIONS
 .Bl -ohang
 .It Cd option BUFCACHEPERCENT= Ns Ar integer
-Percentage of DMA-reachable RAM to use as a file system buffer.
-It defaults to 80.
+The maximum percentage of DMA-reachable physical memory the buffer cache may use.
 .It Cd option EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
