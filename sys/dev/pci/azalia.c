@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.247 2019/04/08 10:16:10 stsp Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.248 2019/05/05 09:09:59 kettenis Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -521,7 +521,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_VENDOR(sc->pciid) == PCI_VENDOR_AMD) {
 		switch (PCI_PRODUCT(sc->pciid)) {
 		case PCI_PRODUCT_AMD_AMD64_17_HDA:
-		case PCI_PRODUCT_AMD_RAVENRIDGE_HDA:
+		case PCI_PRODUCT_AMD_AMD64_17_1X_HDA:
 			pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
 		}
 	}

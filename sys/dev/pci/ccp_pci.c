@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_pci.c,v 1.2 2019/05/02 09:52:36 kettenis Exp $ */
+/*	$OpenBSD: ccp_pci.c,v 1.3 2019/05/05 09:09:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -43,10 +43,10 @@ struct cfattach ccp_pci_ca = {
 };
 
 static const struct pci_matchid ccp_pci_devices[] = {
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_CCPV3 },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_CCPV5A },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_CCPV5B },
-	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_CCPV5C },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AMD64_16_CCP },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AMD64_17_CCP_1 },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AMD64_17_CCP_2 },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AMD64_17_1X_CCP },
 };
 
 int
