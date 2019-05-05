@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1886 2019/05/02 09:49:36 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1887 2019/05/05 09:09:59 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -741,9 +741,9 @@
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_1	0x1452		/* AMD64 17h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_2	0x1453		/* AMD64 17h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_3	0x1454		/* AMD64 17h PCIE */
-#define	PCI_PRODUCT_AMD_CCPV5A	0x1456		/* Cryptographic Co-processor v5a */
+#define	PCI_PRODUCT_AMD_AMD64_17_CCP_1	0x1456		/* AMD64 17h Crypto */
 #define	PCI_PRODUCT_AMD_AMD64_17_HDA	0x1457		/* AMD64 17h HD Audio */
-#define	PCI_PRODUCT_AMD_AMD64_17_XHCI	0x145c		/* AMD64 17h xHCI */
+#define	PCI_PRODUCT_AMD_AMD64_17_XHCI_1	0x145c		/* AMD64 17h xHCI */
 #define	PCI_PRODUCT_AMD_AMD64_17_XHCI_2	0x145f		/* AMD64 17h xHCI */
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_1	0x1460		/* AMD64 17h Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_2	0x1461		/* AMD64 17h Data Fabric */
@@ -753,7 +753,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_6	0x1465		/* AMD64 17h Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_7	0x1466		/* AMD64 17h Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_17_DF_8	0x1467		/* AMD64 17h Data Fabric */
-#define	PCI_PRODUCT_AMD_CCPV5B	0x1468		/* Cryptographic Co-processor v5b */
+#define	PCI_PRODUCT_AMD_AMD64_17_CCP_2	0x1468		/* AMD64 17h Crypto */
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_4	0x1470		/* AMD64 17h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_PCIE_5	0x1471		/* AMD64 17h PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_14_HB	0x1510		/* AMD64 14h Host */
@@ -768,7 +768,7 @@
 #define	PCI_PRODUCT_AMD_AMD64_16_MISC	0x1533		/* AMD64 16h Misc Cfg */
 #define	PCI_PRODUCT_AMD_AMD64_16_CPU_PM	0x1534		/* AMD64 16h CPU Power */
 #define	PCI_PRODUCT_AMD_AMD64_16_HB	0x1536		/* AMD64 16h Host */
-#define	PCI_PRODUCT_AMD_CCPV3	0x1537		/* Cryptographic Co-processor v3 */
+#define	PCI_PRODUCT_AMD_AMD64_16_CCP	0x1537		/* AMD64 16h Crypto */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_RC	0x1566		/* AMD64 16h Root Complex */
 #define	PCI_PRODUCT_AMD_AMD64_16_3X_HB	0x156b		/* AMD64 16h Host */
 #define	PCI_PRODUCT_AMD_AMD64_15_6X_LINK	0x1570		/* AMD64 15h Link Cfg */
@@ -795,10 +795,11 @@
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_1	0x15d3		/* AMD64 17h/1xh PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_2	0x15db		/* AMD64 17h/1xh PCIE */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_PCIE_3	0x15dc		/* AMD64 17h/1xh PCIE */
-#define	PCI_PRODUCT_AMD_CCPV5C	0x15df		/* Cryptographic Co-processor v5c */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_CCP	0x15df		/* AMD64 17h/1xh Crypto */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_1	0x15e0		/* AMD64 17h/1xh xHCI */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_2	0x15e1		/* AMD64 17h/1xh xHCI */
-#define	PCI_PRODUCT_AMD_RAVENRIDGE_HDA	0x15e3		/* Raven Ridge HD Audio */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_ACP	0x15e2		/* AMD64 17h/1xh I2S Audio */
+#define	PCI_PRODUCT_AMD_AMD64_17_1X_HDA	0x15e3		/* AMD64 17h/1xh HD Audio */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_0	0x15e8		/* AMD64 17h/1xh Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_1	0x15e9		/* AMD64 17h/1xh Data Fabric */
 #define	PCI_PRODUCT_AMD_AMD64_17_1X_DF_2	0x15ea		/* AMD64 17h/1xh Data Fabric */

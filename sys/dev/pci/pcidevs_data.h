@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1886 2019/05/02 09:49:36 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1887 2019/05/05 09:09:59 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1296,15 +1296,15 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 17h PCIE",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV5A,
-	    "Cryptographic Co-processor v5a",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_CCP_1,
+	    "AMD64 17h Crypto",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_HDA,
 	    "AMD64 17h HD Audio",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_XHCI,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_XHCI_1,
 	    "AMD64 17h xHCI",
 	},
 	{
@@ -1344,8 +1344,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 17h Data Fabric",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV5B,
-	    "Cryptographic Co-processor v5b",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_CCP_2,
+	    "AMD64 17h Crypto",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_PCIE_4,
@@ -1404,8 +1404,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 16h Host",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV3,
-	    "Cryptographic Co-processor v3",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_CCP,
+	    "AMD64 16h Crypto",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_16_3X_RC,
@@ -1512,8 +1512,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 17h/1xh PCIE",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CCPV5C,
-	    "Cryptographic Co-processor v5c",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_CCP,
+	    "AMD64 17h/1xh Crypto",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_XHCI_1,
@@ -1524,8 +1524,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AMD64 17h/1xh xHCI",
 	},
 	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_RAVENRIDGE_HDA,
-	    "Raven Ridge HD Audio",
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_ACP,
+	    "AMD64 17h/1xh I2S Audio",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_HDA,
+	    "AMD64 17h/1xh HD Audio",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_17_1X_DF_0,
