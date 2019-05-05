@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.146 2019/05/05 10:22:57 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.147 2019/05/05 10:24:00 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -217,7 +217,7 @@ rollback_patch()
 
 trap_handler()
 {
-	local _rc
+	local _rc=0
 
 	set +e # we're trapped
 	rm -rf "${_TMP}"
