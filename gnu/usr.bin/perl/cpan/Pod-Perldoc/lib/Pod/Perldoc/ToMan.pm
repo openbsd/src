@@ -229,6 +229,10 @@ sub _collect_nroff_switches {
 		push @render_switches, '-rLL=' . (int $c) . 'n' if $cols > 80;
 		}
 
+	if( $self->_is_mandoc ) {
+		push @render_switches, '-Owidth=' . $self->_get_columns;
+		}
+
 	# I hear persistent reports that adding a -c switch to $render
 	# solves many people's problems.  But I also hear that some mans
 	# don't have a -c switch, so that unconditionally adding it here
