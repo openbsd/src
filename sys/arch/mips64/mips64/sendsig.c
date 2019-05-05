@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.30 2018/07/10 04:19:59 guenther Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.31 2019/05/05 13:28:14 visa Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -228,4 +228,11 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		bcopy((caddr_t)ksc.sc_fpregs, (caddr_t)&p->p_md.md_regs->f0,
 			sizeof(ksc.sc_fpregs));
 	return (EJUSTRETURN);
+}
+
+void
+signotify(struct proc *p)
+{
+	aston(p);
+	cpu_unidle(p->p_cpu);
 }
