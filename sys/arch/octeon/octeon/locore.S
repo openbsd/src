@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 2018/02/18 14:50:08 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.18 2019/05/05 15:43:24 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -123,9 +123,20 @@ locore_start:
 	sd	v0, -8(t0)			# store to randomdata
 
 	/*
+	 * Clear the compiled BSS segment in OpenBSD code.
+	 * U-Boot is supposed to have done this, though.
+	 */
+	LA	t0, edata
+	LA	t1, end
+1:
+	sd	zero, (t0)
+	blt	t0, t1, 1b
+	daddu	t0, t0, 8
+
+	/*
 	 * Initialize stack and call machine startup.
 	 */
-	LA	t0, start - FRAMESZ(CF_SZ)
+	LA	t0, initstack_end - FRAMESZ(CF_SZ)
 	PTR_S	ra, CF_RA_OFFS(t0)		# save uboot return address
 	PTR_S	sp, 0(t0)			# and stack
 	move	sp, t0
@@ -157,3 +168,12 @@ LEAF(hw_cpu_spinup_trampoline, 0)
 	nop
 END(hw_cpu_spinup_trampoline)
 #endif /* MULTIPROCESSOR */
+
+/*
+ * Bootstrap stack for mips_init()
+ */
+	.bss
+	.align	3
+initstack:
+	.space	4096
+initstack_end:

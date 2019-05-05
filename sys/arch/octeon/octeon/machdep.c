@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 2019/04/01 07:00:52 tedu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.110 2019/05/05 15:43:24 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -230,7 +230,7 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	struct boot_info *boot_info;
 	uint32_t config4;
 
-	extern char start[], edata[], end[];
+	extern char start[], end[];
 	extern char exception[], e_exception[];
 	extern void xtlb_miss;
 
@@ -244,11 +244,6 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	 */
 	setcurcpu(&cpu_info_primary);
 #endif
-	/*
-	 * Clear the compiled BSS segment in OpenBSD code.
-	 */
-
-	bzero(edata, end - edata);
 
 	/*
 	 * Set up early console output.
