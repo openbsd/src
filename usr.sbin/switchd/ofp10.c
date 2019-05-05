@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp10.c,v 1.20 2018/09/09 14:21:32 akoshibe Exp $	*/
+/*	$OpenBSD: ofp10.c,v 1.21 2019/05/05 21:33:00 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -342,7 +342,7 @@ ofp10_packet_match(struct packet *pkt, struct ofp10_match *m, uint32_t flags)
 {
 	struct ether_header	*eh = pkt->pkt_eh;
 
-	bzero(m, sizeof(*m));
+	memset(m, 0, sizeof(*m));
 	m->m_wildcards = htonl(~flags);
 
 	if ((flags & (OFP10_WILDCARD_DL_SRC|OFP10_WILDCARD_DL_DST)) &&
@@ -377,12 +377,17 @@ ofp10_packet_in(struct switchd *sc, struct switch_connection *con,
 	if ((pin = ibuf_getdata(ibuf, sizeof(*pin))) == NULL)
 		return (-1);
 
-	bzero(&pkt, sizeof(pkt));
+	memset(&pkt, 0, sizeof(pkt));
 	len = ntohs(pin->pin_total_len);
+
 	srcport = ntohs(pin->pin_port);
 
+	if (packet_ether_input(ibuf, len, &pkt) == -1 &&
+	    pin->pin_buffer_id == htonl(OFP_PKTOUT_NO_BUFFER))
+		return(-1);
+
 	if (packet_input(sc, con->con_switch,
-	    srcport, &dstport, ibuf, len, &pkt) == -1 ||
+	    srcport, &dstport, &pkt) == -1 ||
 	    (dstport > OFP10_PORT_MAX &&
 	    dstport != OFP10_PORT_LOCAL &&
 	    dstport != OFP10_PORT_CONTROLLER)) {

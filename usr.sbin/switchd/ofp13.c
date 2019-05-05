@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofp13.c,v 1.44 2018/09/09 14:21:32 akoshibe Exp $	*/
+/*	$OpenBSD: ofp13.c,v 1.45 2019/05/05 21:33:00 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2013-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1029,7 +1029,7 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	if (pin->pin_reason != OFP_PKTIN_REASON_NO_MATCH)
 		return (-1);
 
-	bzero(&pkt, sizeof(pkt));
+	memset(&pkt, 0, sizeof(pkt));
 	len = ntohs(pin->pin_total_len);
 
 	/* very basic way of getting the source port */
@@ -1070,8 +1070,12 @@ ofp13_packet_in(struct switchd *sc, struct switch_connection *con,
 	if (ibuf_getdata(ibuf, off) == NULL)
 		return (-1);
 
+	if (packet_ether_input(ibuf, len, &pkt) == -1 &&
+	    pin->pin_buffer_id == htonl(OFP_PKTOUT_NO_BUFFER))
+		return(-1);
+
 	if (packet_input(sc, con->con_switch,
-	    srcport, &dstport, ibuf, len, &pkt) == -1 ||
+	    srcport, &dstport, &pkt) == -1 ||
 	    (dstport > OFP_PORT_MAX &&
 	    dstport != OFP_PORT_LOCAL &&
 	    dstport != OFP_PORT_CONTROLLER)) {
