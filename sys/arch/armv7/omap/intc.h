@@ -1,4 +1,4 @@
-/*	$OpenBSD: intc.h,v 1.2 2014/03/29 18:09:28 guenther Exp $ */
+/*	$OpenBSD: intc.h,v 1.3 2019/05/06 03:45:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -46,7 +46,7 @@ find_first_bit( uint32_t bits )
 	int count;
 
 	/* since CLZ is available only on ARMv5, this isn't portable
-	 * to all ARM CPUs.  This file is for OMAPINTC processor. 
+	 * to all ARM CPUs.  This file is for OMAPINTC processor.
 	 */
 	asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
 	return 31-count;

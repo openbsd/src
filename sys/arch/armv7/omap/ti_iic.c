@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_iic.c,v 1.10 2016/08/19 05:25:08 jsg Exp $	*/
+/*	$OpenBSD: ti_iic.c,v 1.11 2019/05/06 03:45:58 mlarkin Exp $	*/
 /* $NetBSD: ti_iic.c,v 1.4 2013/04/25 13:04:27 rkujawa Exp $ */
 
 /*
@@ -364,7 +364,7 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 	int err, retry;
 
 	KASSERT(op == TI_I2CREAD || op == TI_I2CWRITE);
-	DPRINTF(("ti_iic_op: addr %#x op %#x buf %p buflen %#x flags %#x\n", 
+	DPRINTF(("ti_iic_op: addr %#x op %#x buf %p buflen %#x flags %#x\n",
 	    addr, op, buf, (unsigned int) buflen, flags));
 
 	mask = I2C_IRQSTATUS_ARDY | I2C_IRQSTATUS_NACK | I2C_IRQSTATUS_AL;

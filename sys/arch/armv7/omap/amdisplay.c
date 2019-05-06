@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.9 2019/04/10 22:18:39 ians Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.10 2019/05/06 03:45:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -317,7 +317,7 @@ amdisplay_attach(struct device *parent, struct device *self, void *args)
 	    | LCD_LCDDMA_CTRL_FRAME_MODE);
 	reg |= (0x4 << LCD_LCDDMA_CTRL_BURST_SIZE_SHAMT)
 	    |  LCD_LCDDMA_CTRL_FRAME_MODE;
-	HWRITE4(sc, LCD_LCDDMA_CTRL, reg); 
+	HWRITE4(sc, LCD_LCDDMA_CTRL, reg);
 
 	/* set framebuffer location + bounds */
 	HWRITE4(sc, LCD_LCDDMA_FB0, sc->sc_fb0_dma_segs[0].ds_addr);
@@ -413,16 +413,16 @@ amdisplay_intr(void *arg)
 		HSET4(sc, LCD_RASTER_CTRL, LCD_RASTER_CTRL_LCDEN);
 	}
 
-	if (ISSET(reg, LCD_IRQ_FUF)) { 
+	if (ISSET(reg, LCD_IRQ_FUF)) {
 		DPRINTF(15, ("%s: FIFO underflow\n", DEVNAME(sc)));
 	}
-	
+
 	if (ISSET(reg, LCD_IRQ_SYNC)) {
 		sc->sc_flags |= LCD_RESET_PENDING;
 		DPRINTF(18, ("%s: sync lost\n", DEVNAME(sc)));
 	}
 
-	if (ISSET(reg, LCD_IRQ_RR_DONE)) { 
+	if (ISSET(reg, LCD_IRQ_RR_DONE)) {
 		DPRINTF(21, ("%s: frame done\n", DEVNAME(sc)));
 		HWRITE4(sc, LCD_LCDDMA_FB0, sc->sc_fb0_dma_segs[0].ds_addr);
 		HWRITE4(sc, LCD_LCDDMA_FB0_CEIL, (sc->sc_fb0_dma_segs[0].ds_addr
@@ -540,7 +540,7 @@ amdisplay_conf_crt_timings(struct amdisplay_softc *sc)
 
 	/* Lines per panel */
 	timing1 |= (height & 0x3ff);
-	timing2 |= ((height >> 10 ) & 1) 
+	timing2 |= ((height >> 10 ) & 1)
 	    << LCD_RASTER_TIMING_2_LPP_B10_SHAMT;
 
 	/* waveform settings */

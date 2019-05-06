@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplayreg.h,v 1.4 2017/08/31 21:39:25 ians Exp $ */
+/* $OpenBSD: amdisplayreg.h,v 1.5 2019/05/06 03:45:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -76,7 +76,7 @@
 #define   LCD_RASTER_SUBPANEL_HOLS              (0x1    << 29)
 #define   LCD_RASTER_SUBPANEL_LPPT              (0x2FF  << 16)
 #define   LCD_RASTER_SUBPANEL_DPDLSB            (0xFFFF <<  0)
-#define   LCD_RASTER_SUBPANEL_LPPT_SHAMT        
+#define   LCD_RASTER_SUBPANEL_LPPT_SHAMT
 #define LCD_RASTER_SUBPANEL_2                   0x3C
 #define   LCD_RASTER_SUBPANEL2_LPPT_B10         (0x1  << 8)
 #define   LCD_RASTER_SUBPANEL2_DPDMSB           (0xFF << 0)

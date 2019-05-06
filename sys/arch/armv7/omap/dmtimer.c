@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.7 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.8 2019/05/06 03:45:58 mlarkin Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -304,7 +304,7 @@ dmtimer_cpu_initclocks()
 
 	sc->sc_ticks_per_intr = sc->sc_ticks_per_second / hz;
 	sc->sc_ticks_err_cnt = sc->sc_ticks_per_second % hz;
-	sc->sc_ticks_err_sum = 0; 
+	sc->sc_ticks_err_sum = 0;
 
 	/* establish interrupts */
 	arm_intr_establish(sc->sc_irq, IPL_CLOCK, dmtimer_intr,

@@ -1,4 +1,4 @@
-/* $OpenBSD: omusbtll.c,v 1.2 2013/11/06 19:03:07 syl Exp $ */
+/* $OpenBSD: omusbtll.c,v 1.3 2019/05/06 03:45:58 mlarkin Exp $ */
 /*
  * Copyright (c) 2010 Dale Rahn <drahn@openbsd.org>
  *
@@ -60,7 +60,7 @@
 #define  USBTLL_CHANNEL_CONF_CHANMODE_SH    		1
 #define  USBTLL_CHANNEL_CONF_CHANEN			(1<<0)
 
-/* 
+/*
 ULPI_VENDOR_ID_LO_(i)		(0x0800 + (0x100 * (i)))
 ULPI_VENDOR_ID_HI_(i)		(0x0801 + (0x100 * (i)))
 ULPI_PRODUCT_ID_LO_(i)		(0x0802 + (0x100 * (i)))
