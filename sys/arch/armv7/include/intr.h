@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2018/08/20 15:02:07 visa Exp $	*/
+/*	$OpenBSD: intr.h,v 1.11 2019/05/06 03:34:43 mlarkin Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ void arm_setsoftintr(int si);
 #define _setsoftintr arm_setsoftintr
 
 #include <arm/softintr.h>
-    
+
 void *arm_intr_establish(int irqno, int level, int (*func)(void *),
     void *cookie, char *name);
 void arm_intr_disestablish(void *cookie);
