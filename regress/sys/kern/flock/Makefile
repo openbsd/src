@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2018/11/10 11:58:50 anton Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/05/06 16:32:04 anton Exp $
 
 PROGS+=		flock
 SRCS_flock=	flock.c util.c
@@ -14,9 +14,6 @@ flock-$t: flock
 	./flock ${LOCKFLAGS} $t
 REGRESS_TARGETS+=flock-$t
 .endfor
-
-# XXX known failures (talk to art)
-REGRESS_SKIP_TARGETS=	flock-5 flock-6
 
 TESTS_LOCKF!=	jot 2 1
 .for t in ${TESTS_LOCKF}
