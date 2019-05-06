@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.6 2019/05/05 06:09:47 jmc Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.7 2019/05/06 18:33:21 otto Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 5 2019 $
+.Dd $Mdocdate: May 6 2019 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ This option has no effect on releases.
 .It Fl n
 Fetch and verify the files and create
 .Pa /bsd.upgrade
-but not do reboot.
+but do not reboot.
 .It Fl r
 Upgrade to the next release.
 The default is to find out if the system is running a release or a snapshot.
