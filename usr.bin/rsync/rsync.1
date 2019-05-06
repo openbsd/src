@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.17 2019/04/04 04:19:54 bket Exp $
+.\"	$OpenBSD: rsync.1,v 1.18 2019/05/06 15:44:34 schwarze Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 4 2019 $
+.Dd $Mdocdate: May 6 2019 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -243,15 +243,6 @@ and
 .Pa baz :
 .Pp
 .Dl % rsync -t bar baz ../dest
-.Pp
-To update the out-of-date remote files in
-.Pa host:dest
-on a remote host running
-.Nm
-with the local host running
-.Nm :
-.Pp
-.Dl % rsync --rsync-path=rsync -t ../dest/* host:dest
 .\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr ssh 1 ,
