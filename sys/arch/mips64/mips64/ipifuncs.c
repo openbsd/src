@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.20 2019/03/16 06:23:03 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.21 2019/05/06 12:56:30 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -122,11 +122,8 @@ mips64_ipi_intr(void *arg)
 	return 1;
 }
 
-/*
- * Send an interprocessor interrupt.
- */
-void
-mips64_send_ipi(unsigned int cpuid, unsigned int ipimask)
+static void
+do_send_ipi(unsigned int cpuid, unsigned int ipimask)
 {
 #ifdef DEBUG
 	if (cpuid >= CPU_MAXID || get_cpu_info(cpuid) == NULL)
@@ -141,6 +138,21 @@ mips64_send_ipi(unsigned int cpuid, unsigned int ipimask)
 }
 
 /*
+ * Send an interprocessor interrupt.
+ */
+void
+mips64_send_ipi(unsigned int cpuid, unsigned int ipimask)
+{
+	/*
+	 * Ensure that preceding stores are visible to other CPUs
+	 * before sending the IPI.
+	 */
+	membar_producer();
+
+	do_send_ipi(cpuid, ipimask);
+}
+
+/*
  * Send an IPI to all in the list but ourselves.
  */
 void
@@ -151,11 +163,17 @@ mips64_multicast_ipi(unsigned int cpumask, unsigned int ipimask)
 
 	cpumask &= ~(1 << cpu_number());
 
+	/*
+	 * Ensure that preceding stores are visible to other CPUs
+	 * before sending the IPI.
+	 */
+	membar_producer();
+
 	CPU_INFO_FOREACH(cii, ci) {
 		if (!(cpumask & (1UL << ci->ci_cpuid)) || 
 		    !cpuset_isset(&cpus_running, ci))
 			continue;
-		mips64_send_ipi(ci->ci_cpuid, ipimask);
+		do_send_ipi(ci->ci_cpuid, ipimask);
 	}
 }
 
@@ -217,9 +235,6 @@ smp_rendezvous_cpus(unsigned long map,
 	smp_rv_func_arg = arg;
 	smp_rv_waiters[0] = 0;
 	smp_rv_waiters[1] = 0;
-
-	/* Ensure the parameters are visible to other CPUs. */
-	membar_producer();
 
 	/* signal other processors, which will enter the IPI with interrupts off */
 	mips64_multicast_ipi(map, MIPS64_IPI_RENDEZVOUS);
