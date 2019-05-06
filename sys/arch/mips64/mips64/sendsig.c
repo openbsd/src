@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.31 2019/05/05 13:28:14 visa Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.32 2019/05/06 12:57:56 visa Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -233,6 +233,12 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 void
 signotify(struct proc *p)
 {
+	/*
+	 * Ensure that preceding stores are visible to other CPUs
+	 * before setting the AST flag.
+	 */
+	membar_producer();
+
 	aston(p);
 	cpu_unidle(p->p_cpu);
 }

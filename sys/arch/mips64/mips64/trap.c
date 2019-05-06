@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.133 2018/06/13 14:38:42 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.134 2019/05/06 12:57:56 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -150,6 +150,13 @@ ast(void)
 	struct proc *p = ci->ci_curproc;
 
 	p->p_md.md_astpending = 0;
+
+	/*
+	 * Make sure the AST flag gets cleared before handling the AST.
+	 * Otherwise there is a risk of losing an AST that was sent
+	 * by another CPU.
+	 */
+	membar_enter();
 
 	atomic_inc_int(&uvmexp.softs);
 	mi_ast(p, ci->ci_want_resched);
