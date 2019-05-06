@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.37 2019/04/02 08:28:20 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.38 2019/05/06 17:31:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1423,7 +1423,7 @@ trust_anchor_resolve(void)
 
 	res = best_resolver();
 
-	if (res == NULL) {
+	if (res == NULL || res->state < VALIDATING) {
 		evtimer_add(&trust_anchor_timer, &tv);
 		return;
 	}
