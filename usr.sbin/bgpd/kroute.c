@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.235 2019/03/07 07:42:36 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.236 2019/05/06 09:49:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1230,19 +1230,19 @@ kr_net_redist_add(struct ktable *kt, struct network_config *net,
 
 	xr = RB_INSERT(kredist_tree, &kt->kredist, r);
 	if (xr != NULL) {
-		if (dynamic == xr->dynamic || dynamic) {
+		free(r);
+
+		if (dynamic != xr->dynamic && dynamic) {
 			/*
-			 * ignore update, equal announcement already present,
-			 * or a non-dynamic announcement is already present
-			 * which has preference.
+			 * ignore update a non-dynamic announcement is
+			 * already present which has preference.
 			 */
-			free(r);
 			return 0;
 		}
 		/*
-		 * only the case where xr->dynamic == 1 and dynamic == 0
-		 * ends up here and in this case non-dynamic announcments
-		 * are preferred. Override dynamic flag.
+		 * only equal or non-dynamic announcement ends up here.
+		 * In both cases reset the dynamic flag (nop for equal) and
+		 * redistribute.
 		 */
 		xr->dynamic = dynamic;
 	}
@@ -1281,7 +1281,6 @@ int
 kr_net_match(struct ktable *kt, struct network_config *net, u_int16_t flags)
 {
 	struct network		*xn;
-	int			 matched = 0;
 
 	TAILQ_FOREACH(xn, &kt->krn, entry) {
 		if (xn->net.prefix.aid != net->prefix.aid)
@@ -1316,9 +1315,9 @@ kr_net_match(struct ktable *kt, struct network_config *net, u_int16_t flags)
 
 		net->rd = xn->net.rd;
 		if (kr_net_redist_add(kt, net, &xn->net.attrset, 1))
-			matched = 1;
+			return (1);
 	}
-	return matched;
+	return (0);
 }
 
 struct network *
