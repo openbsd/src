@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.39 2016/08/16 13:03:58 visa Exp $ */
+/*	$OpenBSD: exception.S,v 1.40 2019/05/06 12:54:51 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -251,17 +251,22 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	jal	interrupt
 	PTR_S	a3, CF_RA_OFFS(sp)	# for debugging
 
-	MFC0	t0, COP_0_STATUS_REG	# enable interrupts before checking
-	ori	t0, SR_INT_ENAB		# for ast.
+	GET_CPU_INFO(t1, t0)
+0:
+	MFC0	t0, COP_0_STATUS_REG	# disable interrupts for checking AST
+	LI	v0, ~SR_INT_ENAB
+	and	t0, t0, v0
 	MTC0	t0, COP_0_STATUS_REG
 	MTC0_SR_IE_HAZARD
 
-	GET_CPU_INFO(t1, t0)
-0:
-	PTR_L	t0, CI_CURPROC(t1)
-	lw	v0, P_ASTPENDING(t0)	# any pending AST?
+	PTR_L	v1, CI_CURPROC(t1)
+	lw	v0, P_ASTPENDING(v1)	# any pending AST?
 	beq	v0, zero, 4f
 	nop
+
+	ori	t0, SR_INT_ENAB		# enable interrupts for handling AST
+	MTC0	t0, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
 
 	PTR_L	t0, CI_CURPROCPADDR(t1)	# curprocpaddr
 	SAVE_CPU_SREG(t0, 0)
@@ -280,12 +285,7 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	nop
 
 4:
-	MFC0	t0, COP_0_STATUS_REG	# disable interrupts
-	LI	v0, ~SR_INT_ENAB
-	and	t0, t0, v0
-	MTC0	t0, COP_0_STATUS_REG
-	MTC0_SR_IE_HAZARD
-
+	# t0 is status register from earlier
 	ori	t0, SR_EXL		# restoring to user mode.
 	MTC0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	MTC0_SR_IE_HAZARD
@@ -380,11 +380,21 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	PTR_S	a3, CF_RA_OFFS(sp)		# for debugging
 
 0:
-	GET_CPU_INFO(t1, t0)
-	PTR_L	t0, CI_CURPROC(t1)
-	lw	v0, P_ASTPENDING(t0)	# any pending AST?
+	MFC0	t0, COP_0_STATUS_REG	# disable interrupts for checking AST
+	LI	t1, ~SR_INT_ENAB
+	and	t0, t0, t1
+	MTC0	t0, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
+
+	GET_CPU_INFO(t1, v0)
+	PTR_L	v1, CI_CURPROC(t1)
+	lw	v0, P_ASTPENDING(v1)	# any pending AST?
 	beq	v0, zero, 4f
 	nop
+
+	ori	t0, SR_INT_ENAB		# enable interrupts for handling AST
+	MTC0	t0, COP_0_STATUS_REG
+	MTC0_SR_IE_HAZARD
 
 	jal	ast
 	nop
@@ -393,17 +403,13 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 	nop
 
 4:
-	MFC0	t0, COP_0_STATUS_REG	# disable interrupts
-	LI	t1, ~SR_INT_ENAB
-	and	t0, t0, t1
-	MTC0	t0, COP_0_STATUS_REG
-	MTC0_SR_IE_HAZARD
-
+	# t0 is status register from earlier
 	ori	t0, SR_EXL		# restoring to user mode.
 	MTC0	t0, COP_0_STATUS_REG	# must set exception level bit.
 	MTC0_SR_IE_HAZARD
 
-	GET_CPU_INFO(k1, k0)
+	# t1 is curcpu() from earlier
+	move	k1, t1
 	PTR_L	k0, CI_CURPROCPADDR(k1)
 	RESTORE_REG(a3, CPL, k0, 0)
 	sw	a3, CI_IPL(k1)
