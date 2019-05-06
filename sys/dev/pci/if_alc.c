@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.47 2019/03/27 07:55:24 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.48 2019/05/06 07:44:00 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1152,7 +1152,7 @@ alc_config_msi(struct alc_softc *sc)
 {
 	uint32_t ctl, mod;
 
-	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
 		/*
 		 * It seems interrupt moderation is controlled by
 		 * ALC_MSI_RETRANS_TIMER register if MSI/MSIX is active.
