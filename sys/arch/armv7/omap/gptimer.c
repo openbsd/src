@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.5 2017/09/08 05:36:51 deraadt Exp $ */
+/* $OpenBSD: gptimer.c,v 1.6 2019/05/06 03:30:10 mlarkin Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -291,7 +291,7 @@ gptimer_cpu_initclocks()
 
 	ticks_per_intr = ticks_per_second / hz;
 	ticks_err_cnt = ticks_per_second % hz;
-	ticks_err_sum = 0;; 
+	ticks_err_sum = 0;
 
 	prcm_setclock(1, PRCM_CLK_SPEED_32);
 	prcm_setclock(2, PRCM_CLK_SPEED_32);
