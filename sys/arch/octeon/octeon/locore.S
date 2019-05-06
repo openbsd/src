@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.18 2019/05/05 15:43:24 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.19 2019/05/06 17:13:22 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -129,9 +129,9 @@ locore_start:
 	LA	t0, edata
 	LA	t1, end
 1:
-	sd	zero, (t0)
-	blt	t0, t1, 1b
 	daddu	t0, t0, 8
+	blt	t0, t1, 1b
+	sd	zero, -8(t0)
 
 	/*
 	 * Initialize stack and call machine startup.
