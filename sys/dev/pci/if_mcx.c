@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.1 2019/05/04 06:40:33 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.2 2019/05/07 00:06:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -3187,7 +3187,8 @@ mcx_create_eq(struct mcx_softc *sc)
 
 	sc->sc_eq_cons = 0;
 
-	npages = howmany((1 << MCX_LOG_EQ_SIZE) * sizeof(struct mcx_eq_entry), PAGE_SIZE);
+	npages = howmany((1 << MCX_LOG_EQ_SIZE) * sizeof(struct mcx_eq_entry),
+	    MCX_PAGE_SIZE);
 	paslen = npages * sizeof(*pas);
 	insize = sizeof(struct mcx_cmd_create_eq_mb_in) + paslen;
 
@@ -3442,7 +3443,8 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 	}
 	cq = &sc->sc_cq[sc->sc_num_cq];
 
-	npages = howmany((1 << MCX_LOG_CQ_SIZE) * sizeof(struct mcx_cq_entry), PAGE_SIZE);
+	npages = howmany((1 << MCX_LOG_CQ_SIZE) * sizeof(struct mcx_cq_entry),
+	    MCX_PAGE_SIZE);
 	paslen = npages * sizeof(*pas);
 	insize = sizeof(struct mcx_cmd_create_cq_mb_in) + paslen;
 
@@ -3471,7 +3473,6 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 		goto free;
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
-	mbin->cmd_cq_ctx.cq_uar_size = htobe32((MCX_LOG_CQ_SIZE << MCX_CQ_CTX_LOG_CQ_SIZE_SHIFT)
 	    | sc->sc_uar);
 	mbin->cmd_cq_ctx.cq_eqn = htobe32(eqn);
 	/* set event moderation bits here */
@@ -3528,7 +3529,8 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	uint8_t *doorbell;
 	int insize, npages, paslen, i, token;
 
-	npages = howmany((1 << MCX_LOG_RQ_SIZE) * sizeof(struct mcx_rq_entry), PAGE_SIZE);
+	npages = howmany((1 << MCX_LOG_RQ_SIZE) * sizeof(struct mcx_rq_entry),
+	    MCX_PAGE_SIZE);
 	paslen = npages * sizeof(*pas);
 	insize = 0x10 + sizeof(struct mcx_rq_ctx) + paslen;
 
@@ -3712,7 +3714,8 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	uint8_t *doorbell;
 	int insize, npages, paslen, i, token;
 
-	npages = howmany((1 << MCX_LOG_SQ_SIZE) * sizeof(struct mcx_sq_entry), PAGE_SIZE);
+	npages = howmany((1 << MCX_LOG_SQ_SIZE) * sizeof(struct mcx_sq_entry),
+	    MCX_PAGE_SIZE);
 	paslen = npages * sizeof(*pas);
 	insize = sizeof(struct mcx_sq_ctx) + paslen;
 
