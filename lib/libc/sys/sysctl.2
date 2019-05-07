@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.25 2019/05/05 19:06:56 jmc Exp $
+.\"	$OpenBSD: sysctl.2,v 1.26 2019/05/07 18:53:35 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 5 2019 $
+.Dd $Mdocdate: May 7 2019 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -883,11 +883,11 @@ The variables are as follows:
 .Bl -tag -width "123456"
 .It Dv KERN_SEMINFO_SEMAEM Pq Va kern.seminfo.semaem
 The adjust on exit maximum value.
-.It Dv KERN_SEMINFO_SEMMNI Pq Va kern.seminfo.semni
+.It Dv KERN_SEMINFO_SEMMNI Pq Va kern.seminfo.semmni
 The maximum number of semaphore identifiers allowed.
 .It Dv KERN_SEMINFO_SEMMNS Pq Va kern.seminfo.semmns
 The maximum number of semaphores allowed in the system.
-.It Dv KERN_SEMINFO_SEMMNU Pq Va kern.seminfo.semnu
+.It Dv KERN_SEMINFO_SEMMNU Pq Va kern.seminfo.semmnu
 The maximum number of semaphore undo structures allowed in the system.
 .It Dv KERN_SEMINFO_SEMMSL Pq Va kern.seminfo.semmsl
 The maximum number of semaphores allowed per ID.
