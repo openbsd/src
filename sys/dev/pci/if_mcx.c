@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.2 2019/05/07 00:06:00 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.3 2019/05/07 00:08:33 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -4657,10 +4657,11 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots, uint
 	rqe = ring;
 	for (fills = 0; fills < nslots; fills++) {
 		ms = &slots[slot];
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, bufsize);
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, bufsize + ETHER_ALIGN);
 		if (m == NULL)
 			break;
 
+		m->m_data += ETHER_ALIGN;
 		m->m_len = m->m_pkthdr.len = bufsize;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
 		    BUS_DMA_NOWAIT) != 0) {
