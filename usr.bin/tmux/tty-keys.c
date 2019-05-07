@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.112 2019/05/03 18:00:19 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.113 2019/05/07 11:24:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -573,7 +573,6 @@ tty_keys_next(struct tty *tty)
 	cc_t			 bspace;
 	int			 delay, expired = 0, n;
 	key_code		 key;
-	struct cmdq_item	*item;
 	struct mouse_event	 m = { 0 };
 	struct key_event	*event;
 
@@ -732,9 +731,8 @@ complete_key:
 		event = xmalloc(sizeof *event);
 		event->key = key;
 		memcpy(&event->m, &m, sizeof event->m);
-
-		item = cmdq_get_callback(server_client_key_callback, event);
-		cmdq_append(c, item);
+		if (!server_client_handle_key(c, event))
+			free(event);
 	}
 
 	return (1);

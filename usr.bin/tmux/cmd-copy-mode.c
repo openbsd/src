@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-copy-mode.c,v 1.37 2019/03/12 11:16:49 nicm Exp $ */
+/* $OpenBSD: cmd-copy-mode.c,v 1.38 2019/05/07 11:24:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,10 +73,10 @@ cmd_copy_mode_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (window_pane_set_mode(wp, &window_copy_mode, NULL, args) != 0)
-		return (CMD_RETURN_NORMAL);
-	if (args_has(args, 'M'))
-		window_copy_start_drag(c, &shared->mouse);
+	if (!window_pane_set_mode(wp, &window_copy_mode, NULL, args)) {
+		if (args_has(args, 'M'))
+			window_copy_start_drag(c, &shared->mouse);
+	}
 	if (args_has(self->args, 'u'))
 		window_copy_pageup(wp, 0);
 
