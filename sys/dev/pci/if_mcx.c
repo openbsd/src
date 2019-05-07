@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.4 2019/05/07 04:12:15 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.5 2019/05/07 23:21:49 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -4988,7 +4988,7 @@ mcx_up(struct mcx_softc *sc)
 		goto destroy_rq;
 
 	/* receive queue */
-	if (mcx_create_rq(sc, sc->sc_cq[1].cq_n) != 0)
+	if (mcx_create_rq(sc, sc->sc_cq[0].cq_n) != 0)
 		goto destroy_cq;
 
 	if (mcx_create_tir(sc) != 0)
