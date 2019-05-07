@@ -146,18 +146,6 @@ init_charset(void)
 }
 
 /*
- * Is a given character a "binary" character?
- */
-int
-binary_char(LWCHAR c)
-{
-	if (utf_mode)
-		return (is_ubin_char(c));
-	c &= 0377;
-	return (!isprint((unsigned char)c) && !iscntrl((unsigned char)c));
-}
-
-/*
  * Is a given character a "control" character?
  */
 int

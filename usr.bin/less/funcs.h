@@ -56,7 +56,6 @@ void ch_init(int, int);
 void ch_close(void);
 int ch_getflags(void);
 void init_charset(void);
-int binary_char(LWCHAR);
 int control_char(LWCHAR);
 char *prchar(LWCHAR);
 char *prutfchar(LWCHAR);
