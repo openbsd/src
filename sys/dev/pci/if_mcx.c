@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.3 2019/05/07 00:08:33 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.4 2019/05/07 04:12:15 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -3473,6 +3473,7 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 		goto free;
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
+	mbin->cmd_cq_ctx.cq_uar_size = htobe32((MCX_LOG_CQ_SIZE << MCX_CQ_CTX_LOG_CQ_SIZE_SHIFT)
 	    | sc->sc_uar);
 	mbin->cmd_cq_ctx.cq_eqn = htobe32(eqn);
 	/* set event moderation bits here */
@@ -4802,7 +4803,6 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mcx_cq_entry *cqe;
 	uint8_t *cqp;
-	int count = 0;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	int rxfree, txfree;
 
@@ -4829,14 +4829,11 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 			break;
 		}
 
-		count++;
 		cq->cq_cons++;
 	}
 
-	if (count > 0) {
-		cq->cq_count++;
-		mcx_arm_cq(sc, cq);
-	}
+	cq->cq_count++;
+	mcx_arm_cq(sc, cq);
 
 	if (rxfree > 0) {
 		if_rxr_put(&sc->sc_rxr, rxfree);
