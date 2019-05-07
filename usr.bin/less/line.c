@@ -64,7 +64,6 @@ extern off_t start_attnpos;
 extern off_t end_attnpos;
 
 static char mbc_buf[MAX_UTF_CHAR_LEN];
-static int mbc_buf_len = 0;
 static int mbc_buf_index = 0;
 static off_t mbc_pos;
 
@@ -129,7 +128,6 @@ prewind(void)
 	column = 0;
 	cshift = 0;
 	overstrike = 0;
-	mbc_buf_len = 0;
 	is_null_line = 0;
 	pendc = '\0';
 	lmargin = 0;
@@ -683,6 +681,9 @@ flush_mbc_buf(off_t pos)
 int
 pappend(char c, off_t pos)
 {
+	mbstate_t mbs;
+	size_t sz;
+	wchar_t ch;
 	int r;
 
 	if (pendc) {
@@ -696,13 +697,12 @@ pappend(char c, off_t pos)
 	}
 
 	if (c == '\r' && bs_mode == BS_SPECIAL) {
-		if (mbc_buf_len > 0)  /* utf_mode must be on. */ {
+		if (mbc_buf_index > 0)  /* utf_mode must be on. */ {
 			/* Flush incomplete (truncated) sequence. */
 			r = flush_mbc_buf(mbc_pos);
-			mbc_buf_index = r + 1;
-			mbc_buf_len = 0;
+			mbc_buf_index = 0;
 			if (r)
-				return (mbc_buf_index);
+				return (r + 1);
 		}
 
 		/*
@@ -718,40 +718,43 @@ pappend(char c, off_t pos)
 	if (!utf_mode) {
 		r = do_append((LWCHAR) c, NULL, pos);
 	} else {
-		/* Perform strict validation in all possible cases. */
-		if (mbc_buf_len == 0) {
-retry:
-			mbc_buf_index = 1;
-			*mbc_buf = c;
-			if (IS_ASCII_OCTET(c)) {
-				r = do_append((LWCHAR) c, NULL, pos);
-			} else if (IS_UTF8_LEAD(c)) {
-				mbc_buf_len = utf_len(c);
+		for (;;) {
+			if (mbc_buf_index == 0)
 				mbc_pos = pos;
-				return (0);
-			} else {
-				/* UTF8_INVALID or stray UTF8_TRAIL */
-				r = flush_mbc_buf(pos);
-			}
-		} else if (IS_UTF8_TRAIL(c)) {
 			mbc_buf[mbc_buf_index++] = c;
-			if (mbc_buf_index < mbc_buf_len)
+			memset(&mbs, 0, sizeof(mbs));
+			sz = mbrtowc(&ch, mbc_buf, mbc_buf_index, &mbs);
+			
+			/* Incomplete UTF-8: wait for more bytes. */
+			if (sz == (size_t)-2)
 				return (0);
-			if (is_utf8_well_formed(mbc_buf))
-				r = do_append(get_wchar(mbc_buf), mbc_buf,
-				    mbc_pos);
+
+			/* Valid UTF-8: use the character. */
+			if (sz != (size_t)-1) {
+				r = do_append(ch, mbc_buf, mbc_pos) ?
+				    mbc_buf_index : 0;
+				break;
+			}
+
+			/* Invalid start byte: encode it. */
+			if (mbc_buf_index == 1) {
+				r = store_prchar(c, pos);
+				break;
+			}
+
+			/*
+			 * Invalid continuation.
+			 * Encode the preceding bytes.
+			 * If they fit, handle the interrupting byte.
+			 * Otherwise, tell the caller to back up
+			 * by the  number of bytes that do not fit,
+			 * plus one for the new byte.
+			 */
+			mbc_buf_index--;
+			if ((r = flush_mbc_buf(mbc_pos) + 1) == 1)
+				mbc_buf_index = 0;
 			else
-				/* Complete, but not shortest form, sequence. */
-				mbc_buf_index = r = flush_mbc_buf(mbc_pos);
-			mbc_buf_len = 0;
-		} else {
-			/* Flush incomplete (truncated) sequence.  */
-			r = flush_mbc_buf(mbc_pos);
-			mbc_buf_index = r + 1;
-			mbc_buf_len = 0;
-			/* Handle new char.  */
-			if (!r)
-				goto retry;
+				break;
 		}
 	}
 
@@ -765,10 +768,7 @@ retry:
 		linebuf[curr] = '\0';
 		pshift(hshift - cshift);
 	}
-	if (r) {
-		/* How many chars should caller back up? */
-		r = (!utf_mode) ? 1 : mbc_buf_index;
-	}
+	mbc_buf_index = 0;
 	return (r);
 }
 
@@ -913,10 +913,10 @@ pflushmbc(void)
 {
 	int r = 0;
 
-	if (mbc_buf_len > 0) {
+	if (mbc_buf_index > 0) {
 		/* Flush incomplete (truncated) sequence.  */
 		r = flush_mbc_buf(mbc_pos);
-		mbc_buf_len = 0;
+		mbc_buf_index = 0;
 	}
 	return (r);
 }
