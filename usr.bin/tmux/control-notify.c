@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.22 2018/11/19 13:35:40 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.23 2019/05/07 10:25:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,18 +28,13 @@
 
 void
 control_notify_input(struct client *c, struct window_pane *wp,
-    struct evbuffer *input)
+    const u_char *buf, size_t len)
 {
-	u_char		*buf;
-	size_t		 len;
 	struct evbuffer *message;
 	u_int		 i;
 
 	if (c->session == NULL)
 	    return;
-
-	buf = EVBUFFER_DATA(input);
-	len = EVBUFFER_LENGTH(input);
 
 	/*
 	 * Only write input if the window pane is linked to a window belonging

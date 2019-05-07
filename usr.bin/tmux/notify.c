@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.27 2019/04/26 11:38:51 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.28 2019/05/07 10:25:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -199,13 +199,13 @@ notify_hook(struct cmdq_item *item, const char *name)
 }
 
 void
-notify_input(struct window_pane *wp, struct evbuffer *input)
+notify_input(struct window_pane *wp, const u_char *buf, size_t len)
 {
 	struct client	*c;
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->flags & CLIENT_CONTROL)
-			control_notify_input(c, wp, input);
+			control_notify_input(c, wp, buf, len);
 	}
 }
 
