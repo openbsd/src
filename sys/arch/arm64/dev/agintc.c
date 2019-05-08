@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.15 2018/12/07 21:33:28 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.16 2019/05/08 14:53:54 ccardenas Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -845,7 +845,6 @@ agintc_route(struct agintc_softc *sc, int irq, int enable, struct cpu_info *ci)
 #ifdef DEBUG_AGINTC
 		printf("router %x irq %d val %016llx\n", GICD_IROUTER(irq),
 		    irq, ci->ci_mpidr & MPIDR_AFF);
-		    val);
 #endif
 		bus_space_write_8(sc->sc_iot, sc->sc_d_ioh,
 		    GICD_IROUTER(irq), ci->ci_mpidr & MPIDR_AFF);
