@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.111 2019/05/03 17:16:27 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.112 2019/05/08 19:57:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -316,7 +316,7 @@ server		: SERVER optmatch STRING	{
 			}
 
 			if ((s = server_match(srv, 0)) != NULL) {
-				if ((s->srv_conf.flags & SRVFLAG_TLS) != 
+				if ((s->srv_conf.flags & SRVFLAG_TLS) !=
 				    (srv->srv_conf.flags & SRVFLAG_TLS)) {
 					yyerror("server \"%s\": tls and "
 					    "non-tls on same address/port",
@@ -426,7 +426,7 @@ serveropts_l	: serveropts_l serveroptsl nl
 		| serveroptsl optnl
 		;
 
-serveroptsl	: LISTEN ON STRING opttls port 		{
+serveroptsl	: LISTEN ON STRING opttls port	{
 			if (listen_on($3, $4, &$5) == -1) {
 				free($3);
 				YYERROR;

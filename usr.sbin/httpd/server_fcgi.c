@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.78 2019/02/19 11:37:26 pirofti Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.79 2019/05/08 19:57:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -92,7 +92,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 	struct http_descriptor		*desc = clt->clt_descreq;
 	struct fcgi_record_header	*h;
 	struct fcgi_begin_request_body	*begin;
-	struct fastcgi_param 		*fcgiparam;
+	struct fastcgi_param		*fcgiparam;
 	char				 hbuf[HOST_NAME_MAX+1];
 	size_t				 scriptlen;
 	int				 pathlen;
@@ -297,7 +297,8 @@ server_fcgi(struct httpd *env, struct client *clt)
 	}
 
 	TAILQ_FOREACH(fcgiparam, &srv_conf->fcgiparams, entry) {
-		if (fcgi_add_param(&param, fcgiparam->name, fcgiparam->value, clt) == -1) {
+		if (fcgi_add_param(&param, fcgiparam->name, fcgiparam->value,
+		    clt) == -1) {
 			errstr = "failed to encode param";
 			goto fail;
 		}

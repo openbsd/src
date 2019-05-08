@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.130 2019/05/03 17:16:27 tb Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.131 2019/05/08 19:57:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -1720,7 +1720,7 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 		    (srv_conf->tls_flags & TLSFLAG_CA) &&
 		    tls_peer_cert_subject(clt->clt_tls_ctx) != NULL &&
 		    stravis(&user, tls_peer_cert_subject(clt->clt_tls_ctx),
-				HTTPD_LOGVIS) == -1)
+		    HTTPD_LOGVIS) == -1)
 			goto done;
 		if (desc->http_version &&
 		    stravis(&version, desc->http_version, HTTPD_LOGVIS) == -1)
@@ -1768,8 +1768,8 @@ server_log_http(struct client *clt, unsigned int code, size_t len)
 			goto finish;
 
 		key.kv_key = "X-Forwarded-Port";
-		if ((xfp = kv_find(&desc->http_headers, &key)) != NULL
-		   && xfp->kv_value == NULL)
+		if ((xfp = kv_find(&desc->http_headers, &key)) != NULL &&
+		    (xfp->kv_value == NULL))
 			xfp = NULL;
 
 		if (xfp &&

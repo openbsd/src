@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.56 2019/02/19 11:37:26 pirofti Exp $	*/
+/*	$OpenBSD: config.c,v 1.57 2019/05/08 19:57:45 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -301,8 +301,8 @@ int
 config_getserver_fcgiparams(struct httpd *env, struct imsg *imsg)
 {
 	struct server		*srv;
-	struct server_config 	*srv_conf, *iconf;
-	struct fastcgi_param 	*fp;
+	struct server_config	*srv_conf, *iconf;
+	struct fastcgi_param	*fp;
 	uint32_t		 id;
 	size_t			 c, nc, len;
 	uint8_t			*p = imsg->data;
