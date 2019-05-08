@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.698 2019/04/24 20:28:31 remi Exp $
+$OpenBSD: usbdevs,v 1.699 2019/05/08 23:51:14 kettenis Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -576,6 +576,7 @@ vendor LENOVO		0x17ef	Lenovo
 vendor WAVESENSE	0x17f4	WaveSense
 vendor VAISALA		0x1843	VAISALA
 vendor AMIT		0x18c5	AMIT
+vendor GOOGLE		0x18d1	Google
 vendor QCOM		0x18e8	Qcom
 vendor ELV		0x18ef	ELV
 vendor LINKSYS3		0x1915	Linksys
