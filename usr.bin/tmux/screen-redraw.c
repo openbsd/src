@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.61 2019/05/07 20:01:41 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.62 2019/05/08 18:07:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -447,7 +447,7 @@ screen_redraw_screen(struct client *c)
 	if (ctx.statuslines != 0 &&
 	    (flags & (CLIENT_REDRAWSTATUS|CLIENT_REDRAWSTATUSALWAYS)))
 		screen_redraw_draw_status(&ctx);
-	if (c->overlay_draw != NULL)
+	if (c->overlay_draw != NULL && (flags & CLIENT_REDRAWOVERLAY))
 		c->overlay_draw(c, &ctx);
 	tty_reset(&c->tty);
 }
