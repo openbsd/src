@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.87 2019/03/31 16:57:38 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.88 2019/05/08 12:41:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -318,8 +318,11 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 		p->reconf_action = RECONF_REINIT;
 	while ((p = TAILQ_FIRST(&xconf->peers)) != NULL) {
 		np = getpeerbyid(conf, p->conf.id);
-		if (np != NULL)
+		if (np != NULL) {
 			np->reconf_action = RECONF_KEEP;
+			/* copy the auth state since parent uses it */
+			np->auth = p->auth;
+		}
 
 		TAILQ_REMOVE(&xconf->peers, p, entry);
 		free(p);

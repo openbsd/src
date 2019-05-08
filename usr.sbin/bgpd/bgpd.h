@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.381 2019/05/03 15:25:47 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.382 2019/05/08 12:41:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -492,6 +492,7 @@ enum imsg_type {
 	IMSG_SESSION_STALE,
 	IMSG_SESSION_FLUSH,
 	IMSG_SESSION_RESTARTED,
+	IMSG_PFKEY_RELOAD,
 	IMSG_MRT_OPEN,
 	IMSG_MRT_REOPEN,
 	IMSG_MRT_CLOSE,

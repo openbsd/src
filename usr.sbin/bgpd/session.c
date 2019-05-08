@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.379 2019/04/25 12:12:16 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.380 2019/05/08 12:41:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -52,8 +52,7 @@
 #define PFD_PIPE_ROUTE_CTL	2
 #define PFD_SOCK_CTL		3
 #define PFD_SOCK_RCTL		4
-#define PFD_SOCK_PFKEY		5
-#define PFD_LISTENERS_START	6
+#define PFD_LISTENERS_START	5
 
 void	session_sighdlr(int);
 int	setup_listeners(u_int *);
@@ -129,7 +128,6 @@ int
 setup_listeners(u_int *la_cnt)
 {
 	int			 ttl = 255;
-	int			 opt;
 	struct listen_addr	*la;
 	u_int			 cnt = 0;
 
@@ -147,15 +145,8 @@ setup_listeners(u_int *la_cnt)
 			continue;
 		}
 
-		opt = 1;
-		if (setsockopt(la->fd, IPPROTO_TCP, TCP_MD5SIG,
-		    &opt, sizeof(opt)) == -1) {
-			if (errno == ENOPROTOOPT) {	/* system w/o md5sig */
-				log_warnx("md5sig not available, disabling");
-				sysdep.no_md5sig = 1;
-			} else
-				fatal("setsockopt TCP_MD5SIG");
-		}
+		if (tcp_md5_listen(la->fd, &conf->peers) == -1)
+			fatal("tcp_md5_listen");
 
 		/* set ttl to 255 so that ttl-security works */
 		if (la->sa.ss_family == AF_INET && setsockopt(la->fd,
@@ -188,7 +179,7 @@ setup_listeners(u_int *la_cnt)
 void
 session_main(int debug, int verbose)
 {
-	int			 timeout, pfkeysock;
+	int			 timeout;
 	unsigned int		 i, j, idx_peers, idx_listeners, idx_mrts;
 	u_int			 pfd_elms = 0, peer_l_elms = 0, mrt_l_elms = 0;
 	u_int			 listener_cnt, ctl_cnt, mrt_cnt;
@@ -217,7 +208,6 @@ session_main(int debug, int verbose)
 		fatal("chdir(\"/\")");
 
 	setproctitle("session engine");
-	pfkeysock = pfkey_init(&sysdep);
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -355,8 +345,6 @@ session_main(int debug, int verbose)
 			pfd[PFD_SOCK_CTL].fd = -1;
 			pfd[PFD_SOCK_RCTL].fd = -1;
 		}
-		pfd[PFD_SOCK_PFKEY].fd = pfkeysock;
-		pfd[PFD_SOCK_PFKEY].events = POLLIN;
 
 		i = PFD_LISTENERS_START;
 		TAILQ_FOREACH(la, conf->listen_addrs, entry) {
@@ -506,13 +494,6 @@ session_main(int debug, int verbose)
 		if (pfd[PFD_SOCK_RCTL].revents & POLLIN)
 			ctl_cnt += control_accept(rcsock, 1);
 
-		if (pfd[PFD_SOCK_PFKEY].revents & POLLIN) {
-			if (pfkey_read(pfkeysock, NULL) == -1) {
-				log_warnx("pfkey_read failed, exiting...");
-				session_quit = 1;
-			}
-		}
-
 		for (j = PFD_LISTENERS_START; j < idx_listeners; j++)
 			if (pfd[j].revents & POLLIN)
 				session_accept(pfd[j].fd);
@@ -540,7 +521,6 @@ session_main(int debug, int verbose)
 		    sizeof(p->conf.shutcomm));
 		session_stop(p, ERR_CEASE_ADMIN_DOWN);
 		timer_remove_all(p);
-		pfkey_remove(p);
 		free(p);
 	}
 
@@ -628,14 +608,6 @@ bgp_fsm(struct peer *peer, enum session_events event)
 
 			/* init write buffer */
 			msgbuf_init(&peer->wbuf);
-
-			/* init pfkey - remove old if any, load new ones */
-			pfkey_remove(peer);
-			if (pfkey_establish(peer) == -1) {
-				log_peer_warnx(&peer->conf,
-				    "pfkey setup failed");
-				return;
-			}
 
 			peer->stats.last_sent_errcode = 0;
 			peer->stats.last_sent_suberr = 0;
@@ -909,6 +881,9 @@ change_state(struct peer *peer, enum session_state state,
 		free(peer->rbuf);
 		peer->rbuf = NULL;
 		bzero(&peer->capa.peer, sizeof(peer->capa.peer));
+		if (!peer->template)
+			imsg_compose(ibuf_main, IMSG_PFKEY_RELOAD,
+			    peer->conf.id, 0, -1, NULL, 0);
 
 		if (event != EVNT_STOP) {
 			timer_set(peer, Timer_IdleHold, peer->IdleHoldTime);
@@ -953,6 +928,9 @@ change_state(struct peer *peer, enum session_state state,
 		}
 		break;
 	case STATE_ACTIVE:
+		if (!peer->template)
+			imsg_compose(ibuf_main, IMSG_PFKEY_RELOAD,
+			    peer->conf.id, 0, -1, NULL, 0);
 		break;
 	case STATE_OPENSENT:
 		break;
@@ -986,7 +964,6 @@ void
 session_accept(int listenfd)
 {
 	int			 connfd;
-	int			 opt;
 	socklen_t		 len;
 	struct sockaddr_storage	 cliaddr;
 	struct peer		*p = NULL;
@@ -1032,23 +1009,9 @@ open:
 			return;
 		}
 
-		if (p->conf.auth.method == AUTH_MD5SIG) {
-			if (sysdep.no_md5sig) {
-				log_peer_warnx(&p->conf,
-				    "md5sig configured but not available");
-				close(connfd);
-				return;
-			}
-			len = sizeof(opt);
-			if (getsockopt(connfd, IPPROTO_TCP, TCP_MD5SIG,
-			    &opt, &len) == -1)
-				fatal("getsockopt TCP_MD5SIG");
-			if (!opt) {	/* non-md5'd connection! */
-				log_peer_warnx(&p->conf,
-				    "connection attempt without md5 signature");
-				close(connfd);
-				return;
-			}
+		if (tcp_md5_check(connfd, p) == -1) {
+			close(connfd);
+			return;
 		}
 		p->fd = p->wbuf.fd = connfd;
 		if (session_setup_socket(p)) {
@@ -1072,7 +1035,6 @@ open:
 int
 session_connect(struct peer *peer)
 {
-	int			 opt = 1;
 	struct sockaddr		*sa;
 	socklen_t		 sa_len;
 
@@ -1098,20 +1060,7 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
-	if (peer->conf.auth.method == AUTH_MD5SIG) {
-		if (sysdep.no_md5sig) {
-			log_peer_warnx(&peer->conf,
-			    "md5sig configured but not available");
-			bgp_fsm(peer, EVNT_CON_OPENFAIL);
-			return (-1);
-		}
-		if (setsockopt(peer->fd, IPPROTO_TCP, TCP_MD5SIG,
-		    &opt, sizeof(opt)) == -1) {
-			log_peer_warn(&peer->conf, "setsockopt md5sig");
-			bgp_fsm(peer, EVNT_CON_OPENFAIL);
-			return (-1);
-		}
-	}
+	tcp_md5_set(peer->fd, peer);
 	peer->wbuf.fd = peer->fd;
 
 	/* if update source is set we need to bind() */
@@ -3238,6 +3187,11 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		if (p->demoted && !p->conf.demote_group[0])
 			session_demote(p, -1);
 
+		/* if session is not open then refresh pfkey data */
+		if (p->state < STATE_OPENSENT && !p->template)
+			imsg_compose(ibuf_main, IMSG_PFKEY_RELOAD,
+			    p->conf.id, 0, -1, NULL, 0);
+
 		/* sync the RDE in case we keep the peer */
 		if (imsg_rde(IMSG_SESSION_ADD, p->conf.id,
 		    &p->conf, sizeof(struct peer_config)) == -1)
@@ -3258,5 +3212,6 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		}
 	}
 
+	/* pfkeys of new peers already loaded by the parent process */
 	TAILQ_CONCAT(&c->peers, &nc->peers, entry);
 }

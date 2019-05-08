@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.54 2019/02/20 16:29:01 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.55 2019/05/08 12:41:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,8 @@
 #include <sys/uio.h>
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -33,13 +35,15 @@
 #include "session.h"
 #include "log.h"
 
+extern struct bgpd_sysdep sysdep;
+
 #define	PFKEY2_CHUNK sizeof(u_int64_t)
 #define	ROUNDUP(x) (((x) + (PFKEY2_CHUNK - 1)) & ~(PFKEY2_CHUNK - 1))
 #define	IOV_CNT	20
 
 static u_int32_t	sadb_msg_seq = 0;
 static u_int32_t	pid = 0; /* should pid_t but pfkey needs u_int32_t */
-static int		fd;
+static int		pfkey_fd;
 
 int	pfkey_reply(int, u_int32_t *);
 int	pfkey_send(int, uint8_t, uint8_t, uint8_t,
@@ -502,15 +506,15 @@ int
 pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, u_int8_t keylen,
     char *key, u_int32_t *spi)
 {
-	if (pfkey_send(fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_GETSPI, 0,
+	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_GETSPI, 0,
 	    src, dst, 0, 0, 0, NULL, 0, 0, NULL, 0, 0) < 0)
 		return (-1);
-	if (pfkey_reply(fd, spi) < 0)
+	if (pfkey_reply(pfkey_fd, spi) < 0)
 		return (-1);
-	if (pfkey_send(fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_UPDATE, 0,
+	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_UPDATE, 0,
 		src, dst, *spi, 0, keylen, key, 0, 0, NULL, 0, 0) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 	return (0);
 }
@@ -518,10 +522,10 @@ pfkey_sa_add(struct bgpd_addr *src, struct bgpd_addr *dst, u_int8_t keylen,
 int
 pfkey_sa_remove(struct bgpd_addr *src, struct bgpd_addr *dst, u_int32_t *spi)
 {
-	if (pfkey_send(fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_DELETE, 0,
+	if (pfkey_send(pfkey_fd, SADB_X_SATYPE_TCPSIGNATURE, SADB_DELETE, 0,
 	    src, dst, *spi, 0, 0, NULL, 0, 0, NULL, 0, 0) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 	*spi = 0;
 	return (0);
@@ -579,7 +583,7 @@ pfkey_ipsec_establish(struct peer *p)
 	case AUTH_IPSEC_MANUAL_AH:
 		satype = p->auth.method == AUTH_IPSEC_MANUAL_ESP ?
 		    SADB_SATYPE_ESP : SADB_SATYPE_AH;
-		if (pfkey_send(fd, satype, SADB_ADD, 0,
+		if (pfkey_send(pfkey_fd, satype, SADB_ADD, 0,
 		    &p->auth.local_addr, &p->conf.remote_addr,
 		    p->auth.spi_out,
 		    p->conf.auth.auth_alg_out,
@@ -590,9 +594,9 @@ pfkey_ipsec_establish(struct peer *p)
 		    p->conf.auth.enc_key_out,
 		    0, 0) < 0)
 			return (-1);
-		if (pfkey_reply(fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) < 0)
 			return (-1);
-		if (pfkey_send(fd, satype, SADB_ADD, 0,
+		if (pfkey_send(pfkey_fd, satype, SADB_ADD, 0,
 		    &p->conf.remote_addr, &p->auth.local_addr,
 		    p->auth.spi_in,
 		    p->conf.auth.auth_alg_in,
@@ -603,7 +607,7 @@ pfkey_ipsec_establish(struct peer *p)
 		    p->conf.auth.enc_key_in,
 		    0, 0) < 0)
 			return (-1);
-		if (pfkey_reply(fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) < 0)
 			return (-1);
 		break;
 	default:
@@ -611,28 +615,28 @@ pfkey_ipsec_establish(struct peer *p)
 		break;
 	}
 
-	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
 	    &p->auth.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
 	    &p->auth.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->auth.local_addr, 0, BGP_PORT) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->auth.local_addr, BGP_PORT, 0) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
 	p->auth.established = 1;
@@ -655,20 +659,20 @@ pfkey_ipsec_remove(struct peer *p)
 	case AUTH_IPSEC_MANUAL_AH:
 		satype = p->auth.method == AUTH_IPSEC_MANUAL_ESP ?
 		    SADB_SATYPE_ESP : SADB_SATYPE_AH;
-		if (pfkey_send(fd, satype, SADB_DELETE, 0,
+		if (pfkey_send(pfkey_fd, satype, SADB_DELETE, 0,
 		    &p->auth.local_addr, &p->conf.remote_addr,
 		    p->auth.spi_out, 0, 0, NULL, 0, 0, NULL,
 		    0, 0) < 0)
 			return (-1);
-		if (pfkey_reply(fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) < 0)
 			return (-1);
 
-		if (pfkey_send(fd, satype, SADB_DELETE, 0,
+		if (pfkey_send(pfkey_fd, satype, SADB_DELETE, 0,
 		    &p->conf.remote_addr, &p->auth.local_addr,
 		    p->auth.spi_in, 0, 0, NULL, 0, 0, NULL,
 		    0, 0) < 0)
 			return (-1);
-		if (pfkey_reply(fd, NULL) < 0)
+		if (pfkey_reply(pfkey_fd, NULL) < 0)
 			return (-1);
 		break;
 	default:
@@ -676,28 +680,28 @@ pfkey_ipsec_remove(struct peer *p)
 		break;
 	}
 
-	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
 	    &p->auth.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
 	    &p->auth.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->auth.local_addr, 0, BGP_PORT) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(pfkey_fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->auth.local_addr, BGP_PORT, 0) < 0)
 		return (-1);
-	if (pfkey_reply(fd, NULL) < 0)
+	if (pfkey_reply(pfkey_fd, NULL) < 0)
 		return (-1);
 
 	p->auth.established = 0;
@@ -740,16 +744,78 @@ pfkey_remove(struct peer *p)
 }
 
 int
-pfkey_init(struct bgpd_sysdep *sysdep)
+pfkey_init(void)
 {
-	if ((fd = socket(PF_KEY, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
+	if ((pfkey_fd = socket(PF_KEY, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_KEY_V2)) == -1) {
 		if (errno == EPROTONOSUPPORT) {
 			log_warnx("PF_KEY not available, disabling ipsec");
-			sysdep->no_pfkey = 1;
 			return (-1);
 		} else
 			fatal("pfkey setup failed");
 	}
-	return (fd);
+	return (pfkey_fd);
+}
+
+int
+tcp_md5_check(int fd, struct peer *p)
+{
+	socklen_t len;
+	int opt;
+
+	if (p->conf.auth.method == AUTH_MD5SIG) {
+		if (sysdep.no_md5sig) {
+			log_peer_warnx(&p->conf,
+			    "md5sig configured but not available");
+			return -1;
+		}
+		len = sizeof(opt);
+		if (getsockopt(fd, IPPROTO_TCP, TCP_MD5SIG,
+		    &opt, &len) == -1)
+			fatal("getsockopt TCP_MD5SIG");
+		if (!opt) {     /* non-md5'd connection! */
+			log_peer_warnx(&p->conf,
+			    "connection attempt without md5 signature");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+int
+tcp_md5_set(int fd, struct peer *p)
+{
+	int opt = 1;
+
+	if (p->conf.auth.method == AUTH_MD5SIG) {
+		if (sysdep.no_md5sig) {
+			log_peer_warnx(&p->conf,
+			    "md5sig configured but not available");
+			return -1;
+		}
+		if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG,
+		    &opt, sizeof(opt)) == -1) {
+			log_peer_warn(&p->conf, "setsockopt md5sig");
+			return -1;
+		}
+	}
+	return 0;
+}
+
+		
+int
+tcp_md5_listen(int fd, struct peer_head *p)
+{
+	int opt = 1;
+
+	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG,
+	    &opt, sizeof(opt)) == -1) {
+		if (errno == ENOPROTOOPT) {	/* system w/o md5sig */
+			log_warnx("md5sig not available, disabling");
+			sysdep.no_md5sig = 1;
+			return 0;
+		}
+		return -1;
+	}
+	return 0;
 }
