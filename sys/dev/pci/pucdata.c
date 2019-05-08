@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.109 2018/05/02 19:11:01 phessler Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.110 2019/05/08 15:23:20 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -98,6 +98,27 @@ const struct puc_device_description puc_devs[] = {
 	},
 	{	/* 100 Series LP KT */
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* 200 Series KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_200SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* 300 Series KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_KT, 0x0000, 0x0000 },
+	    {	0xffff, 0xffff,					0x0000, 0x0000 },
+	    {
+		{ PUC_PORT_COM, 0x10, 0x0000 },
+	    },
+	},
+	{	/* 300 Series U KT */
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_KT, 0x0000, 0x0000 },
 	    {	0xffff, 0xffff,					0x0000, 0x0000 },
 	    {
 		{ PUC_PORT_COM, 0x10, 0x0000 },
