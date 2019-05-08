@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.1 2019/04/14 10:14:53 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.2 2019/05/08 22:01:19 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -53,6 +53,7 @@
 #define atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
 #define atomic_or(n, p)		atomic_setbits_int(p, n)
 #define atomic_cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
+#define cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 #define atomic_set_release(p, v)	atomic_set((p), (v))
 
 static inline int
