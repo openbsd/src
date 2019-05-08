@@ -1,4 +1,4 @@
-/*	$Id: ids.c,v 1.12 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: ids.c,v 1.13 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -155,8 +155,7 @@ idents_remap(struct sess *sess, int isgid, struct ident *ids, size_t idsz)
  * Return zero on failure, non-zero on success.
  */
 int
-idents_add(struct sess *sess, int isgid,
-	struct ident **ids, size_t *idsz, int32_t id)
+idents_add(int isgid, struct ident **ids, size_t *idsz, int32_t id)
 {
 	struct group	*grp;
 	struct passwd	*usr;

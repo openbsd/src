@@ -1,4 +1,4 @@
-/*	$Id: server.c,v 1.11 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: server.c,v 1.12 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,7 +27,7 @@
 #include "extern.h"
 
 static int
-fcntl_nonblock(struct sess *sess, int fd)
+fcntl_nonblock(int fd)
 {
 	int	 fl;
 
@@ -64,8 +64,8 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 
 	/* Begin by making descriptors non-blocking. */
 
-	if (!fcntl_nonblock(&sess, fdin) ||
-	     !fcntl_nonblock(&sess, fdout)) {
+	if (!fcntl_nonblock(fdin) ||
+	     !fcntl_nonblock(fdout)) {
 		ERRX1("fcntl_nonblock");
 		goto out;
 	}

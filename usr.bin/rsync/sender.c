@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.22 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: sender.c,v 1.23 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -260,7 +260,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 			return 0;
 		}
 		assert(sizeof(buf) == 20);
-		blk_recv_ack(sess, buf, up->cur->blks, up->cur->idx);
+		blk_recv_ack(buf, up->cur->blks, up->cur->idx);
 		io_lowbuffer_buf(sess, *wb, &pos, *wbsz, buf, 20);
 
 		LOG3("%s: primed for %jd B total",
@@ -480,7 +480,7 @@ rsync_sender(struct sess *sess, int fdin,
 				ERRX1("io_read_flush");
 				goto out;
 			} else if (sess->mplex_read_remain == 0) {
-				c = io_read_check(sess, fdin);
+				c = io_read_check(fdin);
 				if (c < 0) {
 					ERRX1("io_read_check");
 					goto out;
@@ -507,7 +507,7 @@ rsync_sender(struct sess *sess, int fdin,
 				ERRX1("send_dl_enqueue");
 				goto out;
 			}
-			c = io_read_check(sess, fdin);
+			c = io_read_check(fdin);
 			if (c < 0) {
 				ERRX1("io_read_check");
 				goto out;

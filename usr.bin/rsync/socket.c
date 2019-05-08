@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.23 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: socket.c,v 1.24 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,8 +50,7 @@ struct	source {
  * Return <0 on failure, 0 on try another address, >0 on success.
  */
 static int
-inet_connect(struct sess *sess, int *sd,
-	const struct source *src, const char *host)
+inet_connect(int *sd, const struct source *src, const char *host)
 {
 	int	 c, flags;
 
@@ -196,7 +195,8 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
  * Return <0 on failure, 0 on try more lines, >0 on finished.
  */
 static int
-protocol_line(struct sess *sess, const char *host, const char *cp)
+protocol_line(struct sess *sess, __attribute__((unused)) const char *host,
+    const char *cp)
 {
 	int	major, minor;
 
@@ -274,7 +274,7 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 
 	assert(srcsz);
 	for (i = 0; i < srcsz; i++) {
-		c = inet_connect(&sess, sd, &src[i], f->host);
+		c = inet_connect(sd, &src[i], f->host);
 		if (c < 0) {
 			ERRX1("inet_connect");
 			goto out;

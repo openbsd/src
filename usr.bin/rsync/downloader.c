@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.20 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: downloader.c,v 1.21 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -222,8 +222,7 @@ download_free(struct download *p)
  * Returns zero on failure, non-zero on success.
  */
 static int
-buf_copy(struct sess *sess,
-	const char *buf, size_t sz, struct download *p)
+buf_copy(const char *buf, size_t sz, struct download *p)
 {
 	size_t	 rem, tocopy;
 	ssize_t	 ssz;
@@ -414,8 +413,8 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		/* Create the temporary file. */
 
-		if (mktemplate(sess, &p->fname,
-		    f->path, sess->opts->recursive) == -1) {
+		if (mktemplate(&p->fname, f->path, sess->opts->recursive) ==
+		    -1) {
 			ERRX1("mktemplate");
 			goto out;
 		}
@@ -467,7 +466,7 @@ again:
 		if (!io_read_buf(sess, p->fdin, buf, sz)) {
 			ERRX1("io_read_int");
 			goto out;
-		} else if (!buf_copy(sess, buf, sz, p)) {
+		} else if (!buf_copy(buf, sz, p)) {
 			ERRX1("buf_copy");
 			goto out;
 		}
@@ -479,7 +478,7 @@ again:
 
 		/* Fast-track more reads as they arrive. */
 
-		if ((c = io_read_check(sess, p->fdin)) < 0) {
+		if ((c = io_read_check(p->fdin)) < 0) {
 			ERRX1("io_read_check");
 			goto out;
 		} else if (c > 0)
@@ -507,7 +506,7 @@ again:
 		 */
 
 		assert(p->map != MAP_FAILED);
-		if (!buf_copy(sess, buf, sz, p)) {
+		if (!buf_copy(buf, sz, p)) {
 			ERRX1("buf_copy");
 			goto out;
 		}
@@ -517,7 +516,7 @@ again:
 
 		/* Fast-track more reads as they arrive. */
 
-		if ((c = io_read_check(sess, p->fdin)) < 0) {
+		if ((c = io_read_check(p->fdin)) < 0) {
 			ERRX1("io_read_check");
 			goto out;
 		} else if (c > 0)
@@ -526,7 +525,7 @@ again:
 		return 1;
 	}
 
-	if (!buf_copy(sess, NULL, 0, p)) {
+	if (!buf_copy(NULL, 0, p)) {
 		ERRX1("buf_copy");
 		goto out;
 	}

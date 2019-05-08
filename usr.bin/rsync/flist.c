@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.25 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: flist.c,v 1.26 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -68,7 +68,7 @@ flist_cmp(const void *p1, const void *p2)
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
+flist_dedupe(struct flist **fl, size_t *sz)
 {
 	size_t		 i, j;
 	struct flist	*new;
@@ -282,7 +282,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		 */
 
 		if (sess->mplex_reads &&
-		    io_read_check(sess, fdin) &&
+		    io_read_check(fdin) &&
 		     !io_read_flush(sess, fdin)) {
 			ERRX1("io_read_flush");
 			goto out;
@@ -334,7 +334,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 				ERRX1("io_write_uint");
 				goto out;
 			}
-			if (!idents_add(sess, 0, &uids, &uidsz, f->st.uid)) {
+			if (!idents_add(0, &uids, &uidsz, f->st.uid)) {
 				ERRX1("idents_add");
 				goto out;
 			}
@@ -347,7 +347,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 				ERRX1("io_write_uint");
 				goto out;
 			}
-			if (!idents_add(sess, 1, &gids, &gidsz, f->st.gid)) {
+			if (!idents_add(1, &gids, &gidsz, f->st.gid)) {
 				ERRX1("idents_add");
 				goto out;
 			}
@@ -514,7 +514,7 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_realloc(struct sess *sess, struct flist **fl, size_t *sz, size_t *max)
+flist_realloc(struct flist **fl, size_t *sz, size_t *max)
 {
 	void	*pp;
 
@@ -541,8 +541,7 @@ flist_realloc(struct sess *sess, struct flist **fl, size_t *sz, size_t *max)
  * Returns zero on failure, non-zero on success.
  */
 static int
-flist_append(struct sess *sess, struct flist *f, struct stat *st,
-    const char *path)
+flist_append(struct flist *f, struct stat *st, const char *path)
 {
 
 	/*
@@ -571,7 +570,7 @@ flist_append(struct sess *sess, struct flist *f, struct stat *st,
 	/* Optionally copy link information. */
 
 	if (S_ISLNK(st->st_mode)) {
-		f->link = symlink_read(sess, f->path);
+		f->link = symlink_read(f->path);
 		if (f->link == NULL) {
 			ERRX1("symlink_read");
 			return 0;
@@ -609,7 +608,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		} else if (flag == 0)
 			break;
 
-		if (!flist_realloc(sess, &fl, &flsz, &flmax)) {
+		if (!flist_realloc(&fl, &flsz, &flmax)) {
 			ERRX1("flist_realloc");
 			goto out;
 		}
@@ -824,14 +823,14 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		ERR("%s: lstat", root);
 		return 0;
 	} else if (S_ISREG(st.st_mode)) {
-		if (!flist_realloc(sess, fl, sz, max)) {
+		if (!flist_realloc(fl, sz, max)) {
 			ERRX1("flist_realloc");
 			return 0;
 		}
 		f = &(*fl)[(*sz) - 1];
 		assert(f != NULL);
 
-		if (!flist_append(sess, f, &st, root)) {
+		if (!flist_append(f, &st, root)) {
 			ERRX1("flist_append");
 			return 0;
 		}
@@ -844,14 +843,14 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		if (!sess->opts->preserve_links) {
 			WARNX("%s: skipping symlink", root);
 			return 1;
-		} else if (!flist_realloc(sess, fl, sz, max)) {
+		} else if (!flist_realloc(fl, sz, max)) {
 			ERRX1("flist_realloc");
 			return 0;
 		}
 		f = &(*fl)[(*sz) - 1];
 		assert(f != NULL);
 
-		if (!flist_append(sess, f, &st, root)) {
+		if (!flist_append(f, &st, root)) {
 			ERRX1("flist_append");
 			return 0;
 		}
@@ -958,7 +957,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 
 		/* Allocate a new file entry. */
 
-		if (!flist_realloc(sess, fl, sz, max)) {
+		if (!flist_realloc(fl, sz, max)) {
 			ERRX1("flist_realloc");
 			goto out;
 		}
@@ -986,7 +985,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		/* Optionally copy link information. */
 
 		if (S_ISLNK(ent->fts_statp->st_mode)) {
-			f->link = symlink_read(sess, f->path);
+			f->link = symlink_read(f->path);
 			if (f->link == NULL) {
 				ERRX1("symlink_read");
 				goto out;
@@ -1102,7 +1101,7 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 			ERR("%s: unveil", argv[i]);
 			goto out;
 		}
-		if (!flist_append(sess, f, &st, argv[i])) {
+		if (!flist_append(f, &st, argv[i])) {
 			ERRX1("flist_append");
 			goto out;
 		}
@@ -1149,7 +1148,7 @@ flist_gen(struct sess *sess, size_t argc, char **argv, struct flist **flp,
 
 	qsort(*flp, *sz, sizeof(struct flist), flist_cmp);
 
-	if (flist_dedupe(sess, flp, sz)) {
+	if (flist_dedupe(flp, sz)) {
 		flist_topdirs(sess, *flp, *sz);
 		return 1;
 	}
@@ -1333,7 +1332,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 
 		/* Not found: we'll delete it. */
 
-		if (!flist_realloc(sess, fl, sz, &max)) {
+		if (!flist_realloc(fl, sz, &max)) {
 			ERRX1("flist_realloc");
 			goto out;
 		}

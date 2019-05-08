@@ -1,4 +1,4 @@
-/*	$Id: uploader.c,v 1.21 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: uploader.c,v 1.22 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -215,7 +215,7 @@ pre_link(struct upload *p, struct sess *sess)
 	 */
 
 	if (rc != -1) {
-		b = symlinkat_read(sess, p->rootfd, f->path);
+		b = symlinkat_read(p->rootfd, f->path);
 		if (b == NULL) {
 			ERRX1("symlinkat_read");
 			return -1;
@@ -237,8 +237,7 @@ pre_link(struct upload *p, struct sess *sess)
 
 	if (rc == -1 || updatelink) {
 		LOG3("%s: creating symlink: %s", f->path, f->link);
-		if (mktemplate(sess, &temp,
-		    f->path, sess->opts->recursive) == -1) {
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
 			ERRX1("mktemplate");
 			return -1;
 		}
@@ -325,8 +324,7 @@ pre_dev(struct upload *p, struct sess *sess)
 
 	if (rc == -1 || updatedev) {
 		newdev = 1;
-		if (mktemplate(sess, &temp, f->path,
-		    sess->opts->recursive) == -1) {
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
 			ERRX1("mktemplate");
 			return -1;
 		}
@@ -339,7 +337,7 @@ pre_dev(struct upload *p, struct sess *sess)
 	}
 
 	rsync_set_metadata_at(sess, newdev,
-		p->rootfd, f, newdev ? temp : f->path);
+	    p->rootfd, f, newdev ? temp : f->path);
 
 	if (newdev) {
 		if (renameat(p->rootfd, temp, p->rootfd, f->path) == -1) {
@@ -402,8 +400,7 @@ pre_fifo(struct upload *p, struct sess *sess)
 
 	if (rc == -1) {
 		newfifo = 1;
-		if (mktemplate(sess, &temp, f->path,
-		    sess->opts->recursive) == -1) {
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
 			ERRX1("mktemplate");
 			return -1;
 		}
@@ -478,8 +475,7 @@ pre_sock(struct upload *p, struct sess *sess)
 
 	if (rc == -1) {
 		newsock = 1;
-		if (mktemplate(sess, &temp, f->path,
-		    sess->opts->recursive) == -1) {
+		if (mktemplate(&temp, f->path, sess->opts->recursive) == -1) {
 			ERRX1("mktemplate");
 			return -1;
 		}
@@ -682,7 +678,7 @@ pre_file(const struct upload *p, int *filefd, struct sess *sess)
  * On success, upload_free() must be called with the allocated pointer.
  */
 struct upload *
-upload_alloc(struct sess *sess, const char *root, int rootfd, int fdout,
+upload_alloc(const char *root, int rootfd, int fdout,
 	size_t clen, const struct flist *fl, size_t flsz, mode_t msk)
 {
 	struct upload	*p;
@@ -980,15 +976,15 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	}
 
 	u->bufpos = pos = 0;
-	io_buffer_int(sess, u->buf, &pos, u->bufsz, u->idx);
-	io_buffer_int(sess, u->buf, &pos, u->bufsz, blk.blksz);
-	io_buffer_int(sess, u->buf, &pos, u->bufsz, blk.len);
-	io_buffer_int(sess, u->buf, &pos, u->bufsz, blk.csum);
-	io_buffer_int(sess, u->buf, &pos, u->bufsz, blk.rem);
+	io_buffer_int(u->buf, &pos, u->bufsz, u->idx);
+	io_buffer_int(u->buf, &pos, u->bufsz, blk.blksz);
+	io_buffer_int(u->buf, &pos, u->bufsz, blk.len);
+	io_buffer_int(u->buf, &pos, u->bufsz, blk.csum);
+	io_buffer_int(u->buf, &pos, u->bufsz, blk.rem);
 	for (i = 0; i < blk.blksz; i++) {
-		io_buffer_int(sess, u->buf, &pos, u->bufsz,
+		io_buffer_int(u->buf, &pos, u->bufsz,
 			blk.blks[i].chksum_short);
-		io_buffer_buf(sess, u->buf, &pos, u->bufsz,
+		io_buffer_buf(u->buf, &pos, u->bufsz,
 			blk.blks[i].chksum_long, blk.csum);
 	}
 	assert(pos == u->bufsz);

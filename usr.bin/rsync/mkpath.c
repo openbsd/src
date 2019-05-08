@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpath.c,v 1.3 2019/05/08 20:00:25 benno Exp $ */
+/*	$OpenBSD: mkpath.c,v 1.4 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
  *	path     - path
  */
 int
-mkpath(struct sess *sess, char *path)
+mkpath(char *path)
 {
 	struct stat sb;
 	char *slash;

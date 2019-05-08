@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.15 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: blocks.c,v 1.16 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -206,8 +206,7 @@ blk_match(struct sess *sess, const struct blkset *blks,
  * Symmetrises blk_send_ack().
  */
 void
-blk_recv_ack(struct sess *sess, char buf[20],
-	const struct blkset *blocks, int32_t idx)
+blk_recv_ack(char buf[20], const struct blkset *blocks, int32_t idx)
 {
 	size_t	 pos = 0, sz;
 
@@ -218,11 +217,11 @@ blk_recv_ack(struct sess *sess, char buf[20],
 	     sizeof(int32_t); /* block remainder */
 	assert(sz == 20);
 
-	io_buffer_int(sess, buf, &pos, sz, idx);
-	io_buffer_int(sess, buf, &pos, sz, blocks->blksz);
-	io_buffer_int(sess, buf, &pos, sz, blocks->len);
-	io_buffer_int(sess, buf, &pos, sz, blocks->csum);
-	io_buffer_int(sess, buf, &pos, sz, blocks->rem);
+	io_buffer_int(buf, &pos, sz, idx);
+	io_buffer_int(buf, &pos, sz, blocks->blksz);
+	io_buffer_int(buf, &pos, sz, blocks->len);
+	io_buffer_int(buf, &pos, sz, blocks->csum);
+	io_buffer_int(buf, &pos, sz, blocks->rem);
 	assert(pos == sz);
 }
 
@@ -348,13 +347,13 @@ blk_send_ack(struct sess *sess, int fd, struct blkset *p)
 		return 0;
 	}
 
-	if (!io_unbuffer_size(sess, buf, &pos, sz, &p->blksz))
+	if (!io_unbuffer_size(buf, &pos, sz, &p->blksz))
 		ERRX1("io_unbuffer_size");
-	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->len))
+	else if (!io_unbuffer_size(buf, &pos, sz, &p->len))
 		ERRX1("io_unbuffer_size");
-	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->csum))
+	else if (!io_unbuffer_size(buf, &pos, sz, &p->csum))
 		ERRX1("io_unbuffer_size");
-	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->rem))
+	else if (!io_unbuffer_size(buf, &pos, sz, &p->rem))
 		ERRX1("io_unbuffer_size");
 	else if (p->len && p->rem >= p->len)
 		ERRX1("non-zero length is less than remainder");
@@ -394,17 +393,16 @@ blk_send(struct sess *sess, int fd, size_t idx,
 		return 0;
 	}
 
-	io_buffer_int(sess, buf, &pos, sz, idx);
-	io_buffer_int(sess, buf, &pos, sz, p->blksz);
-	io_buffer_int(sess, buf, &pos, sz, p->len);
-	io_buffer_int(sess, buf, &pos, sz, p->csum);
-	io_buffer_int(sess, buf, &pos, sz, p->rem);
+	io_buffer_int(buf, &pos, sz, idx);
+	io_buffer_int(buf, &pos, sz, p->blksz);
+	io_buffer_int(buf, &pos, sz, p->len);
+	io_buffer_int(buf, &pos, sz, p->csum);
+	io_buffer_int(buf, &pos, sz, p->rem);
 
 	for (i = 0; i < p->blksz; i++) {
-		io_buffer_int(sess, buf, &pos,
+		io_buffer_int(buf, &pos,
 			sz, p->blks[i].chksum_short);
-		io_buffer_buf(sess, buf, &pos, sz,
-			p->blks[i].chksum_long, p->csum);
+		io_buffer_buf(buf, &pos, sz, p->blks[i].chksum_long, p->csum);
 	}
 
 	assert(pos == sz);

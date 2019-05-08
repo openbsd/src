@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.16 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: io.c,v 1.17 2019/05/08 21:30:11 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,7 @@
  * Returns <0 on failure, 0 if there's no data, >0 if there is.
  */
 int
-io_read_check(struct sess *sess, int fd)
+io_read_check(int fd)
 {
 	struct pollfd	pfd;
 
@@ -53,7 +53,7 @@ io_read_check(struct sess *sess, int fd)
  * On success, fills in "sz" with the amount written.
  */
 static int
-io_write_nonblocking(struct sess *sess, int fd, const void *buf, size_t bsz,
+io_write_nonblocking(int fd, const void *buf, size_t bsz,
     size_t *sz)
 {
 	struct pollfd	pfd;
@@ -103,13 +103,13 @@ io_write_nonblocking(struct sess *sess, int fd, const void *buf, size_t bsz,
  * Returns 0 on failure, non-zero on success (all bytes written).
  */
 static int
-io_write_blocking(struct sess *sess, int fd, const void *buf, size_t sz)
+io_write_blocking(int fd, const void *buf, size_t sz)
 {
 	size_t		wsz;
 	int		c;
 
 	while (sz > 0) {
-		c = io_write_nonblocking(sess, fd, buf, sz, &wsz);
+		c = io_write_nonblocking(fd, buf, sz, &wsz);
 		if (!c) {
 			ERRX1("io_write_nonblocking");
 			return 0;
@@ -137,7 +137,7 @@ io_write_buf(struct sess *sess, int fd, const void *buf, size_t sz)
 	int	 c;
 
 	if (!sess->mplex_writes) {
-		c = io_write_blocking(sess, fd, buf, sz);
+		c = io_write_blocking(fd, buf, sz);
 		sess->total_write += sz;
 		return c;
 	}
@@ -146,11 +146,11 @@ io_write_buf(struct sess *sess, int fd, const void *buf, size_t sz)
 		wsz = sz & 0xFFFFFF;
 		tag = (7 << 24) + wsz;
 		tagbuf = htole32(tag);
-		if (!io_write_blocking(sess, fd, &tagbuf, sizeof(tagbuf))) {
+		if (!io_write_blocking(fd, &tagbuf, sizeof(tagbuf))) {
 			ERRX1("io_write_blocking");
 			return 0;
 		}
-		if (!io_write_blocking(sess, fd, buf, wsz)) {
+		if (!io_write_blocking(fd, buf, wsz)) {
 			ERRX1("io_write_blocking");
 			return 0;
 		}
@@ -185,8 +185,7 @@ io_write_line(struct sess *sess, int fd, const char *line)
  * Returns zero on failure, non-zero on success (zero or more bytes).
  */
 static int
-io_read_nonblocking(struct sess *sess,
-	int fd, void *buf, size_t bsz, size_t *sz)
+io_read_nonblocking(int fd, void *buf, size_t bsz, size_t *sz)
 {
 	struct pollfd	pfd;
 	ssize_t		rsz;
@@ -237,14 +236,13 @@ io_read_nonblocking(struct sess *sess,
  * Returns 0 on failure, non-zero on success (all bytes read).
  */
 static int
-io_read_blocking(struct sess *sess,
-	int fd, void *buf, size_t sz)
+io_read_blocking(int fd, void *buf, size_t sz)
 {
 	size_t	 rsz;
 	int	 c;
 
 	while (sz > 0) {
-		c = io_read_nonblocking(sess, fd, buf, sz, &rsz);
+		c = io_read_nonblocking(fd, buf, sz, &rsz);
 		if (!c) {
 			ERRX1("io_read_nonblocking");
 			return 0;
@@ -286,7 +284,7 @@ io_read_flush(struct sess *sess, int fd)
 	 * for the remaining data size.
 	 */
 
-	if (!io_read_blocking(sess, fd, &tagbuf, sizeof(tagbuf))) {
+	if (!io_read_blocking(fd, &tagbuf, sizeof(tagbuf))) {
 		ERRX1("io_read_blocking");
 		return 0;
 	}
@@ -304,7 +302,7 @@ io_read_flush(struct sess *sess, int fd)
 	} else if (sess->mplex_read_remain == 0)
 		return 1;
 
-	if (!io_read_blocking(sess, fd, mpbuf, sess->mplex_read_remain)) {
+	if (!io_read_blocking(fd, mpbuf, sess->mplex_read_remain)) {
 		ERRX1("io_read_blocking");
 		return 0;
 	}
@@ -347,7 +345,7 @@ io_read_buf(struct sess *sess, int fd, void *buf, size_t sz)
 
 	if (!sess->mplex_reads) {
 		assert(sess->mplex_read_remain == 0);
-		c = io_read_blocking(sess, fd, buf, sz);
+		c = io_read_blocking(fd, buf, sz);
 		sess->total_read += sz;
 		return c;
 	}
@@ -363,7 +361,7 @@ io_read_buf(struct sess *sess, int fd, void *buf, size_t sz)
 		if (sess->mplex_read_remain) {
 			rsz = sess->mplex_read_remain < sz ?
 				sess->mplex_read_remain : sz;
-			if (!io_read_blocking(sess, fd, buf, rsz)) {
+			if (!io_read_blocking(fd, buf, rsz)) {
 				ERRX1("io_read_blocking");
 				return 0;
 			}
@@ -460,8 +458,8 @@ io_write_int(struct sess *sess, int fd, int32_t val)
  * is insufficient for the new data.
  */
 void
-io_buffer_buf(struct sess *sess, void *buf,
-	size_t *bufpos, size_t buflen, const void *val, size_t valsz)
+io_buffer_buf(void *buf, size_t *bufpos, size_t buflen, const void *val,
+    size_t valsz)
 {
 
 	assert(*bufpos + valsz <= buflen);
@@ -484,7 +482,7 @@ io_lowbuffer_buf(struct sess *sess, void *buf,
 		return;
 
 	if (!sess->mplex_writes) {
-		io_buffer_buf(sess, buf, bufpos, buflen, val, valsz);
+		io_buffer_buf(buf, bufpos, buflen, val, valsz);
 		return;
 	}
 
@@ -492,8 +490,8 @@ io_lowbuffer_buf(struct sess *sess, void *buf,
 	assert(valsz == (valsz & 0xFFFFFF));
 	tagbuf = htole32((7 << 24) + valsz);
 
-	io_buffer_int(sess, buf, bufpos, buflen, tagbuf);
-	io_buffer_buf(sess, buf, bufpos, buflen, val, valsz);
+	io_buffer_int(buf, bufpos, buflen, tagbuf);
+	io_buffer_buf(buf, bufpos, buflen, val, valsz);
 }
 
 /*
@@ -544,12 +542,11 @@ io_lowbuffer_int(struct sess *sess, void *buf,
  * Like io_buffer_buf(), but for a single integer.
  */
 void
-io_buffer_int(struct sess *sess, void *buf,
-	size_t *bufpos, size_t buflen, int32_t val)
+io_buffer_int(void *buf, size_t *bufpos, size_t buflen, int32_t val)
 {
 	int32_t	nv = htole32(val);
 
-	io_buffer_buf(sess, buf, bufpos, buflen, &nv, sizeof(int32_t));
+	io_buffer_buf(buf, bufpos, buflen, &nv, sizeof(int32_t));
 }
 
 /*
@@ -659,8 +656,8 @@ io_read_int(struct sess *sess, int fd, int32_t *val)
  * Increases "bufpos" to the new position.
  */
 void
-io_unbuffer_buf(struct sess *sess, const void *buf,
-	size_t *bufpos, size_t bufsz, void *val, size_t valsz)
+io_unbuffer_buf(const void *buf, size_t *bufpos, size_t bufsz, void *val,
+    size_t valsz)
 {
 
 	assert(*bufpos + valsz <= bufsz);
@@ -672,12 +669,11 @@ io_unbuffer_buf(struct sess *sess, const void *buf,
  * Calls io_unbuffer_buf() and converts.
  */
 void
-io_unbuffer_int(struct sess *sess, const void *buf,
-	size_t *bufpos, size_t bufsz, int32_t *val)
+io_unbuffer_int(const void *buf, size_t *bufpos, size_t bufsz, int32_t *val)
 {
 	int32_t	oval;
 
-	io_unbuffer_buf(sess, buf, bufpos, bufsz, &oval, sizeof(int32_t));
+	io_unbuffer_buf(buf, bufpos, bufsz, &oval, sizeof(int32_t));
 	*val = le32toh(oval);
 }
 
@@ -685,12 +681,11 @@ io_unbuffer_int(struct sess *sess, const void *buf,
  * Calls io_unbuffer_buf() and converts.
  */
 int
-io_unbuffer_size(struct sess *sess, const void *buf,
-	size_t *bufpos, size_t bufsz, size_t *val)
+io_unbuffer_size(const void *buf, size_t *bufpos, size_t bufsz, size_t *val)
 {
 	int32_t	oval;
 
-	io_unbuffer_int(sess, buf, bufpos, bufsz, &oval);
+	io_unbuffer_int(buf, bufpos, bufsz, &oval);
 	if (oval < 0) {
 		ERRX("io_unbuffer_size: negative value");
 		return 0;
