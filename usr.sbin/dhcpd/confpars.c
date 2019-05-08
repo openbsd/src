@@ -1,4 +1,4 @@
-/*	$OpenBSD: confpars.c,v 1.33 2017/04/24 14:58:36 krw Exp $ */
+/*	$OpenBSD: confpars.c,v 1.34 2019/05/08 22:00:55 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 The Internet Software Consortium.
@@ -43,7 +43,9 @@
 
 #include <net/if.h>
 
+#include <limits.h>
 #include <netdb.h>
+#include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1207,6 +1209,12 @@ parse_option_param(FILE *cfile, struct group *group)
 					tree = tree_concat(tree, tree_const(
 					    buf, (cprefix + 7) / 8));
 				break;
+			case 'D':
+				t = parse_domain_and_comp(cfile);
+				if (!t)
+					return;
+				tree = tree_concat(tree, t);
+				break;
 			default:
 				log_warnx("Bad format %c in "
 				    "parse_option_param.", *fmt);
@@ -1467,4 +1475,89 @@ parse_address_range(FILE *cfile, struct subnet *subnet)
 
 	/* Create the new address range. */
 	new_address_range(low, high, subnet, dynamic);
+}
+
+static void
+push_domain_list(char ***domains, size_t *count, char *domain)
+{
+	*domains = reallocarray(*domains, *count + 1, sizeof **domains);
+	if (!*domains)
+		fatalx("Can't allocate domain list");
+
+	(*domains)[*count] = domain;
+	++*count;
+}
+
+static void
+free_domain_list(char **domains, size_t count)
+{
+	for (size_t i = 0; i < count; i++)
+		free(domains[i]);
+	free(domains);
+}
+
+struct tree *
+parse_domain_and_comp(FILE *cfile)
+{
+	struct tree	 *rv = NULL;
+	char		**domains = NULL;
+	char		 *val, *domain;
+	unsigned char	 *buf = NULL;
+	unsigned char	**bufptrs = NULL;
+	size_t		  bufsiz = 0, bufn = 0, count = 0;
+	int		  token = ';';
+
+	do {
+		if (token == ',')
+			token = next_token(&val, cfile);
+
+		token = next_token(&val, cfile);
+		if (token != TOK_STRING) {
+			parse_warn("string expected");
+			goto error;
+		}
+		domain = strdup(val);
+		if (domain == NULL)
+			fatalx("Can't allocate domain to compress");
+		push_domain_list(&domains, &count, domain);
+
+		/*
+		 * openbsd.org normally compresses to [7]openbsd[3]org[0].
+		 * +2 to string length provides space for leading and
+		 * trailing (root) prefix lengths not already accounted for
+		 * by dots, and also provides sufficient space for pointer
+		 * compression.
+		 */
+		bufsiz = bufsiz + 2 + strlen(domain);
+		token = peek_token(NULL, cfile);
+	} while (token == ',');
+
+	buf = malloc(bufsiz);
+	if (!buf)
+		fatalx("Can't allocate compressed domain buffer");
+	bufptrs = calloc(count + 1, sizeof *bufptrs);
+	if (!bufptrs)
+		fatalx("Can't allocate compressed pointer list");
+	bufptrs[0] = buf;
+
+	/* dn_comp takes an int for the output buffer size */
+	if (!(bufsiz <= INT_MAX))
+		fatalx("Size of compressed domain buffer too large");
+	for (size_t i = 0; i < count; i++) {
+		int n;
+
+		/* see bufsiz <= INT_MAX assertion, above */
+		n = dn_comp(domains[i], &buf[bufn], bufsiz - bufn, bufptrs,
+		    &bufptrs[count + 1]);
+		if (n == -1)
+			fatalx("Can't compress domain");
+		bufn += (size_t)n;
+	}
+
+	rv = tree_const(buf, bufn);
+error:
+	free_domain_list(domains, count);
+	free(buf);
+	free(bufptrs);
+	return rv;
 }

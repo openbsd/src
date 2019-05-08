@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.30 2019/04/02 03:21:21 krw Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.31 2019/05/08 22:00:55 krw Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: April 2 2019 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -76,13 +76,6 @@ The
 .Ar cidr
 data type specifies a network in CIDR notion.
 e.g. 1.2.3/24.
-.Pp
-The
-.Ar rfc1035
-data type specifies a list of domain names compressed
-as described in Section 4.1.4 of RFC 1035.
-The compressed list takes the form of a series of
-octets specified in hexadecimal, separated by colons.
 .Pp
 The
 .Ar int32
@@ -292,7 +285,7 @@ The
 option specifies a list of Domain Name System name servers
 available to the client.
 Servers should be listed in order of preference.
-.It Ic option domain-search Ar rfc1035 ; | Ar string Oo , Ar string ... Oc ;
+.It Ic option domain-search Ar string Oo , Ar string ... Oc ;
 The
 .Ic domain-search
 option specifies a list of the domain names that should be
@@ -306,16 +299,6 @@ it will use this list of domains in preference to any information
 provided by the
 .Ic domain-name
 option.
-.Pp
-Note that
-.Xr dhcpd 8
-calls this option
-.Ic option-119
-instead of
-.Ic domain-search
-and only supports the
-.Ar rfc1035
-variant.
 .It Ic option extensions-path Ar string ;
 A string to specify a file, retrievable via TFTP, which contains information
 which can be interpreted in the same way as the 64-octet vendor-extension
