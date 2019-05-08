@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.18 2019/03/24 17:55:58 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.19 2019/05/08 21:59:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -101,7 +101,6 @@ struct event		 ev_route;
 int			 udp4sock = -1, udp6sock = -1, routesock = -1;
 int			 ta_fd = -1;
 
-static struct trust_anchor_head	 built_in_trust_anchors;
 static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 
 void
@@ -202,11 +201,10 @@ frontend(int debug, int verbose)
 
 	TAILQ_INIT(&pending_queries);
 
-	TAILQ_INIT(&built_in_trust_anchors);
 	TAILQ_INIT(&trust_anchors);
 	TAILQ_INIT(&new_trust_anchors);
 
-	add_new_ta(&built_in_trust_anchors, KSK2017);
+	add_new_ta(&trust_anchors, KSK2017);
 
 	event_dispatch();
 
@@ -480,8 +478,6 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				parse_trust_anchor(&trust_anchors, ta_fd);
 			if (!TAILQ_EMPTY(&trust_anchors))
 				send_trust_anchors(&trust_anchors);
-			else
-				send_trust_anchors(&built_in_trust_anchors);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
