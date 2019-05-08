@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.26 2016/02/29 17:50:34 jca Exp $	*/
+/*	$OpenBSD: popen.c,v 1.27 2019/05/08 23:56:48 tedu Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include "extern.h"
 
 /*
- * Special version of popen which avoids call to shell.  This ensures noone
+ * Special version of popen which avoids call to shell.  This ensures no one
  * may create a pipe to a hidden program as a side effect of a list or dir
  * command.
  */
@@ -60,24 +60,24 @@
 #define MAX_GARGV	1000
 
 FILE *
-ftpd_popen(char *program, char *type, pid_t *pidptr)
+ftpd_ls(char *arg, char *path, pid_t *pidptr)
 {
 	char *cp;
 	FILE *iop;
-	int argc, gargc, pdes[2];
+	int argc = 0, gargc, pdes[2];
 	pid_t pid;
 	char **pop, *argv[MAX_ARGV], *gargv[MAX_GARGV];
-
-	if ((*type != 'r' && *type != 'w') || type[1])
-		return (NULL);
 
 	if (pipe(pdes) < 0)
 		return (NULL);
 
 	/* break up string into pieces */
-	for (argc = 0, cp = program;argc < MAX_ARGV-1; cp = NULL)
-		if (!(argv[argc++] = strtok(cp, " \t\n")))
-			break;
+	argv[argc++] = "/bin/ls";
+	if (arg != NULL)
+		argv[argc++] = arg;
+	if (path != NULL)
+		argv[argc++] = path;
+	argv[argc] = NULL;
 	argv[MAX_ARGV-1] = NULL;
 
 	/* glob each piece */
@@ -115,42 +115,24 @@ ftpd_popen(char *program, char *type, pid_t *pidptr)
 		goto pfree;
 		/* NOTREACHED */
 	case 0:				/* child */
-		if (*type == 'r') {
-			if (pdes[1] != STDOUT_FILENO) {
-				dup2(pdes[1], STDOUT_FILENO);
-				(void)close(pdes[1]);
-			}
-			dup2(STDOUT_FILENO, STDERR_FILENO); /* stderr too! */
-			(void)close(pdes[0]);
-		} else {
-			if (pdes[0] != STDIN_FILENO) {
-				dup2(pdes[0], STDIN_FILENO);
-				(void)close(pdes[0]);
-			}
+		if (pdes[1] != STDOUT_FILENO) {
+			dup2(pdes[1], STDOUT_FILENO);
 			(void)close(pdes[1]);
 		}
+		dup2(STDOUT_FILENO, STDERR_FILENO); /* stderr too! */
+		(void)close(pdes[0]);
 		closelog();
 
-		if (strcmp(gargv[0], "/bin/ls") == 0) {
-			extern int optreset;
-			extern int ls_main(int, char **);
+		extern int optreset;
+		extern int ls_main(int, char **);
 
-			/* reset getopt for ls_main */
-			optreset = optind = 1;
-			exit(ls_main(gargc, gargv));
-		}
-
-		execv(gargv[0], gargv);
-		_exit(1);
+		/* reset getopt for ls_main */
+		optreset = optind = 1;
+		exit(ls_main(gargc, gargv));
 	}
 	/* parent; assume fdopen can't fail...  */
-	if (*type == 'r') {
-		iop = fdopen(pdes[0], type);
-		(void)close(pdes[1]);
-	} else {
-		iop = fdopen(pdes[1], type);
-		(void)close(pdes[0]);
-	}
+	iop = fdopen(pdes[0], "r");
+	(void)close(pdes[1]);
 	*pidptr = pid;
 
 pfree:	for (argc = 1; gargv[argc] != NULL; argc++)

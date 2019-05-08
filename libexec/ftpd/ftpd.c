@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.225 2018/12/11 18:19:55 bluhm Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.226 2019/05/08 23:56:48 tedu Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1113,36 +1113,32 @@ bad:
 }
 
 void
-retrieve(char *cmd, char *name)
+retrieve(enum ret_cmd cmd, char *name)
 {
 	FILE *fin, *dout;
 	struct stat st;
 	pid_t pid;
 	time_t start;
 
-	if (cmd == NULL) {
+	if (cmd == RET_FILE) {
 		fin = fopen(name, "r");
 		st.st_size = 0;
 	} else {
-		char line[BUFSIZ];
-
-		(void) snprintf(line, sizeof(line), cmd, name);
-		name = line;
-		fin = ftpd_popen(line, "r", &pid);
+		fin = ftpd_ls("-lgA", name, &pid);
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
 	}
 	if (fin == NULL) {
 		if (errno != 0) {
 			perror_reply(550, name);
-			if (cmd == NULL) {
+			if (cmd == RET_FILE) {
 				LOGCMD("get", name);
 			}
 		}
 		return;
 	}
 	byte_count = -1;
-	if (cmd == NULL &&
+	if (cmd == RET_FILE &&
 	    (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
 		reply(550, "%s: not a plain file.", name);
 		goto done;
@@ -1175,8 +1171,8 @@ retrieve(char *cmd, char *name)
 		goto done;
 	time(&start);
 	send_data(fin, dout, st.st_blksize, st.st_size,
-	    (restart_point == 0 && cmd == NULL && S_ISREG(st.st_mode)));
-	if ((cmd == NULL) && stats)
+	    (restart_point == 0 && cmd == RET_FILE && S_ISREG(st.st_mode)));
+	if ((cmd == RET_FILE) && stats)
 		logxfer(name, byte_count, start);
 	(void) fclose(dout);
 	data = -1;
@@ -1184,7 +1180,7 @@ done:
 	if (pdata >= 0)
 		(void) close(pdata);
 	pdata = -1;
-	if (cmd == NULL) {
+	if (cmd == RET_FILE) {
 		LOGBYTES("get", name, byte_count);
 		fclose(fin);
 	} else {
@@ -1734,10 +1730,7 @@ statfilecmd(char *filename)
 	int c;
 	int atstart;
 	pid_t pid;
-	char line[LINE_MAX];
-
-	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
-	fin = ftpd_popen(line, "r", &pid);
+	fin = ftpd_ls("-lgA", filename, &pid);
 	if (fin == NULL) {
 		reply(451, "Local resource failure");
 		return;
@@ -2633,7 +2626,7 @@ send_file_list(char *whichf)
 			 */
 			if (dirname[0] == '-' && *dirlist == NULL &&
 			    transflag == 0) {
-				retrieve("/bin/ls %s", dirname);
+				retrieve(RET_FILE, dirname);
 				goto out;
 			}
 			perror_reply(550, whichf);
