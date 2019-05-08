@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.239 2019/04/23 12:31:33 kmos Exp $
+.\"	$OpenBSD: port-modules.5,v 1.240 2019/05/08 20:14:52 bcallah Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 23 2019 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -848,7 +848,7 @@ Sets
 .Ev MODFORTRAN_BUILD_DEPENDS .
 Set
 .Ev MODFORTRAN_COMPILER
-to `g77' or `gfortran', depending on what the port requires.
+to `g77', `gfortran', or `flang', depending on what the port requires.
 The default is `g77'.
 The dependencies are chosen according to
 .Ev MODFORTRAN_COMPILER .
