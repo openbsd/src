@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.15 2019/05/04 20:18:39 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.16 2019/05/08 15:06:20 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -133,7 +133,8 @@ cd ${SETSDIR}
 unpriv -f SHA256.sig ftp -Vmo SHA256.sig ${URL}SHA256.sig
 
 if cmp -s /var/db/installed.SHA256.sig SHA256.sig && ! $FORCE; then
-	ug_err "Already on latest snapshot."
+	echo "Already on latest snapshot."
+	exit 0
 fi
 
 _KEY=openbsd-${_KERNV[0]%.*}${_KERNV[0]#*.}-base.pub
