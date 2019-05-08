@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1121 2019/05/08 15:53:31 florian Exp $
+#	$OpenBSD: install.sub,v 1.1122 2019/05/08 23:23:06 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1079,15 +1079,18 @@ v6_info() {
 # in the /etc/mygate file. Ask the user to either select from a list of default
 # router candidates or to enter a router IPv6 address.
 v6_defroute() {
-	local _if=$1 _prompt _resp _routers PS3
-
-	# Only continue if there is not yet any IPv6 default route set.
-	route -n show -inet6 | egrep -q '^default[[:space:]]' && return
+	local _if _prompt _resp _routers PS3
 
 	# Get a sorted, unique list of default router canditates by issuing a
-	# ping6 to the All-Routers multicast address.
-	_routers=$(bsort $(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
-		sed -En '/^[0-9]+ bytes from /{s///;s/: .*$//p;}'))
+	# ping6 to the All-Routers multicast address on each interface that
+	# is not AUTOCONF6.
+	for _if in $(get_ifs); do
+		set -- $(v6_info $_if)
+		[[ -n $2 && $1 != *AUTOCONF6* ]] || continue
+		_resp=$(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
+			sed -En '/^[0-9]+ bytes from /{s///;s/: .*$//p;}')
+		_routers=$(bsort $_routers $_resp)
+	done
 
 	_prompt="IPv6 default router?"
 
@@ -1105,10 +1108,10 @@ v6_defroute() {
 		echo "$_resp" >>/tmp/i/mygate
 }
 
-# Configure IPv6 interface $1, add hostname $2 to the hosts file, create the
-# hostname.if file $3 and finish by executing v6_defroute(). Ask the user for
-# the IPv6 address and prefix length if the address was not specified in CIDR
-# notation, unless he chooses 'autoconf'.
+# Configure IPv6 interface $1, add hostname $2 to the hosts file,
+# create the hostname.if file $3. Ask the user for the IPv6 address
+# and prefix length if the address was not specified in CIDR notation,
+# unless he chooses 'autoconf'.
 v6_config() {
 	local _if=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
 
@@ -1150,7 +1153,6 @@ v6_config() {
 			if ifconfig $_if inet6 $_addr/$_prefixlen up; then
 				echo "inet6 $_addr $_prefixlen" >>$_hn
 				add_hostent "$_addr" "$_name"
-				v6_defroute $_if
 				return
 			fi
 			;;
@@ -1997,6 +1999,7 @@ donetconfig() {
 
 	configure_ifs
 	v4_defroute
+	v6_defroute
 
 	# As dhclient will populate /etc/resolv.conf, a symbolic link to
 	# /tmp/i/resolv.conf.shadow, mv any such file to /tmp/i/resolv.conf
