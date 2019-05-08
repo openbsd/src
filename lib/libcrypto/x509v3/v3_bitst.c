@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_bitst.c,v 1.15 2019/04/22 17:23:55 tb Exp $ */
+/* $OpenBSD: v3_bitst.c,v 1.16 2019/05/08 21:53:10 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -127,7 +127,7 @@ i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits,
     STACK_OF(CONF_VALUE) *ret)
 {
 	BIT_STRING_BITNAME *bnam;
-	STACK_OF(CONF_VALUE) *free_ret;
+	STACK_OF(CONF_VALUE) *free_ret = NULL;
 
 	if (ret == NULL) {
 		if ((free_ret = ret = sk_CONF_VALUE_new_null()) == NULL)

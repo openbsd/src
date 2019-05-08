@@ -1,4 +1,4 @@
-/* $OpenBSD: v3_pmaps.c,v 1.12 2019/04/22 17:32:09 tb Exp $ */
+/* $OpenBSD: v3_pmaps.c,v 1.13 2019/05/08 21:53:10 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -148,7 +148,7 @@ static STACK_OF(CONF_VALUE) *
 i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method, void *a,
     STACK_OF(CONF_VALUE) *extlist)
 {
-	STACK_OF(CONF_VALUE) *free_extlist;
+	STACK_OF(CONF_VALUE) *free_extlist = NULL;
 	POLICY_MAPPINGS *pmaps = a;
 	POLICY_MAPPING *pmap;
 	char issuer[80], subject[80];
