@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.216 2019/05/08 12:41:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.217 2019/05/08 18:48:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -500,15 +500,15 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 
 	/* start reconfiguration */
 	if (imsg_compose(ibuf_se, IMSG_RECONF_CONF, 0, 0, -1,
-	    conf, sizeof(struct bgpd_config)) == -1)
+	    conf, sizeof(*conf)) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_RECONF_CONF, 0, 0, -1,
-	    conf, sizeof(struct bgpd_config)) == -1)
+	    conf, sizeof(*conf)) == -1)
 		return (-1);
 
 	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_LISTENER, 0, 0, la->fd,
-		    la, sizeof(struct listen_addr)) == -1)
+		    la, sizeof(*la)) == -1)
 			return (-1);
 		la->fd = -1;
 	}
@@ -526,7 +526,7 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 			return (-1);
 		}
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_RIB, 0, 0, -1,
-		    rr, sizeof(struct rde_rib)) == -1)
+		    rr, sizeof(*rr)) == -1)
 			return (-1);
 		free(rr);
 	}
@@ -534,7 +534,7 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 	/* send peer list to the SE */
 	TAILQ_FOREACH(p, &conf->peers, entry) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
-		    &p->conf, sizeof(struct peer_config)) == -1)
+		    &p->conf, sizeof(p->conf)) == -1)
 			return (-1);
 
 		if (p->reconf_action == RECONF_REINIT)
