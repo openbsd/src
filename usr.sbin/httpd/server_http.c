@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.132 2019/05/08 21:41:06 tb Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.133 2019/05/08 21:46:56 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -1034,7 +1034,7 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 {
 	struct http_descriptor	*desc = clt->clt_descreq;
 	struct server_config	*srv_conf = clt->clt_srv_conf;
-	char			 ibuf[128], *str, *path;
+	char			 ibuf[128], *str, *path, *query;
 	const char		*errstr = NULL, *p;
 	size_t			 size;
 	int			 n, ret;
@@ -1071,6 +1071,18 @@ server_expand_http(struct client *clt, const char *val, char *buf,
 			return (NULL);
 		ret = expand_string(buf, len, "$DOCUMENT_URI", path);
 		free(path);
+		if (ret != 0)
+			return (NULL);
+	}
+	if (strstr(val, "$QUERY_STRING_ENC") != NULL) {
+		if (desc->http_query == NULL) {
+			ret = expand_string(buf, len, "$QUERY_STRING_ENC", "");
+		} else {
+			if ((query = url_encode(desc->http_query)) == NULL)
+				return (NULL);
+			ret = expand_string(buf, len, "$QUERY_STRING_ENC", query);
+			free(query);
+		}
 		if (ret != 0)
 			return (NULL);
 	}
