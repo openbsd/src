@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.111 2019/03/04 21:27:35 dlg Exp $
+.\"	$OpenBSD: systat.1,v 1.112 2019/05/08 23:54:13 tedu Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 4 2019 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -303,6 +303,13 @@ Statistics
 on disk throughput show, for each drive, data transferred in bytes,
 number of disk transactions performed, and time spent in disk accesses
 (in fractions of a second).
+Pressing
+.Ic b
+displays statistics as calculated from boot time.
+.Ic t
+changes the counters to show the average per second over
+the display refresh interval;
+this is the default.
 .It Ic malloc
 Display kernel
 .Xr malloc 9

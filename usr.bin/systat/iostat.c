@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.47 2017/04/16 14:24:03 beck Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.48 2019/05/08 23:54:13 tedu Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #include "systat.h"
 
 #include "dkstats.h"
-extern struct _disk	cur, last;
-struct bcachestats	bclast, bccur;
+extern struct _disk cur, last;
+struct bcachestats bclast, bccur;
 
 static double etime;
 
@@ -87,11 +87,28 @@ field_def *view_io_0[] = {
 	FLD_IO_WTPS, FLD_IO_SEC, FLD_IO_SVAL, FLD_IO_SSTR, NULL
 };
 
+static enum state { BOOT, TIME } state = TIME;
+
+static int
+io_keyboard_callback(int ch)
+{
+	switch (ch) {
+	case 'b':
+		state = BOOT;
+		break;
+	case 't':
+		state = TIME;
+		break;
+	default:
+		return keyboard_callback(ch);
+	}
+	return 0;
+}
 
 /* Define view managers */
 struct view_manager iostat_mgr = {
 	"Iostat", select_io, read_io, NULL, print_header,
-	print_io, keyboard_callback, NULL, NULL
+	print_io, io_keyboard_callback, NULL, NULL
 };
 
 
@@ -115,6 +132,15 @@ read_io(void)
 	size_t size;
 
 	dkreadstats();
+	if (state == BOOT) {
+		unsigned int dn;
+		for (dn = 0; dn < last.dk_ndrive; dn++) {
+			last.dk_rbytes[dn] = 0;
+			last.dk_wbytes[dn] = 0;
+			last.dk_rxfer[dn] = 0;
+			last.dk_wxfer[dn] = 0;
+		}
+	}
 	dkswap();
 	num_disp = cur.dk_ndrive + 1;
 
@@ -129,6 +155,9 @@ read_io(void)
 
 	if (bclast.numbufs == 0)
 		bclast = bccur;
+
+	if (state == BOOT)
+		memset(&bclast, 0, sizeof(bclast));
 
 	return 0;
 }
@@ -173,7 +202,7 @@ initiostat(void)
 	for (v = views_io; v->name != NULL; v++)
 		add_view(v);
 
-	return(1);
+	return (1);
 }
 
 void
@@ -206,8 +235,8 @@ void
 showdrive(int dn)
 {
 	print_fld_str(FLD_IO_DEVICE, cur.dk_name[dn]);
-	print_fld_size(FLD_IO_READ, cur.dk_rbytes[dn]/etime);
-	print_fld_size(FLD_IO_WRITE, cur.dk_wbytes[dn]/ etime);
+	print_fld_size(FLD_IO_READ, cur.dk_rbytes[dn] / etime);
+	print_fld_size(FLD_IO_WRITE, cur.dk_wbytes[dn] / etime);
 	print_fld_size(FLD_IO_RTPS, cur.dk_rxfer[dn] / etime);
 	print_fld_size(FLD_IO_WTPS, cur.dk_wxfer[dn] / etime);
 	print_fld_float(FLD_IO_SEC, ATIME(cur.dk_time, dn) / etime, 1);
