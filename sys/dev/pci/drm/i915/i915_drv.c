@@ -3583,9 +3583,11 @@ inteldrm_forcedetach(struct inteldrm_softc *dev_priv)
 		efifb_reattach();
 #endif
 	}
-	
+
+#ifdef notyet
 	config_detach(&dev_priv->sc_dev, 0);
 	pci_probe_device(psc, tag, NULL, NULL);
+#endif
 }
 
 void
