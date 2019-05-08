@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.363 2019/04/04 07:10:05 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.364 2019/05/08 15:32:02 tedu Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1362,7 +1362,7 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 			acpi_maptable(sc, xsdt->table_offsets[i], NULL, NULL,
 			    NULL, 1);
 
-		free(sdt, M_DEVBUF, 0);
+		free(sdt, M_DEVBUF, sizeof(*sdt) + len);
 	} else {
 		struct acpi_rsdt *rsdt;
 
@@ -1381,7 +1381,7 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 			acpi_maptable(sc, rsdt->table_offsets[i], NULL, NULL,
 			    NULL, 1);
 
-		free(sdt, M_DEVBUF, 0);
+		free(sdt, M_DEVBUF, sizeof(*sdt) + len);
 	}
 
 	return (0);
