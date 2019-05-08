@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.136 2018/07/10 10:17:42 bluhm Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.137 2019/05/08 23:53:26 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -44,6 +44,11 @@
 #include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
+
+#if defined(DDB)
+#include <machine/db_machdep.h>
+#include <ddb/db_output.h>
+#endif
 
 static
 #ifndef SMALL_KERNEL
@@ -370,6 +375,7 @@ free(void *addr, int type, size_t freedsize)
 	int s;
 #ifdef DIAGNOSTIC
 	long alloc;
+	static int zerowarnings;
 #endif
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
@@ -392,6 +398,13 @@ free(void *addr, int type, size_t freedsize)
 	if (size > MAXALLOCSAVE)
 		size = kup->ku_pagecnt << PAGE_SHIFT;
 #ifdef DIAGNOSTIC
+	if (freedsize == 0 && zerowarnings < 5) {
+		zerowarnings++;
+		printf("free with zero size: (%d)\n", type);
+#ifdef DDB
+		db_stack_dump();
+#endif
+	}
 	if (freedsize != 0 && freedsize > size)
 		panic("free: size too large %zu > %ld (%p) type %s",
 		    freedsize, size, addr, memname[type]);
@@ -686,8 +699,6 @@ malloc_roundup(size_t sz)
 }
 
 #if defined(DDB)
-#include <machine/db_machdep.h>
-#include <ddb/db_output.h>
 
 void
 malloc_printit(
