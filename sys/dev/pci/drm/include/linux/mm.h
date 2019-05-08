@@ -41,7 +41,7 @@ kvmalloc(size_t size, gfp_t flags)
 static inline void *
 kvmalloc_array(size_t n, size_t size, int flags)
 {
-	if (n == 0 || SIZE_MAX / n < size)
+	if (n != 0 && SIZE_MAX / n < size)
 		return NULL;
 	return malloc(n * size, M_DRM, flags);
 }

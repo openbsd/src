@@ -19,7 +19,7 @@ kmalloc(size_t size, int flags)
 static inline void *
 kmalloc_array(size_t n, size_t size, int flags)
 {
-	if (n == 0 || SIZE_MAX / n < size)
+	if (n != 0 && SIZE_MAX / n < size)
 		return NULL;
 	return malloc(n * size, M_DRM, flags);
 }
@@ -27,7 +27,7 @@ kmalloc_array(size_t n, size_t size, int flags)
 static inline void *
 kcalloc(size_t n, size_t size, int flags)
 {
-	if (n == 0 || SIZE_MAX / n < size)
+	if (n != 0 && SIZE_MAX / n < size)
 		return NULL;
 	return malloc(n * size, M_DRM, flags | M_ZERO);
 }
