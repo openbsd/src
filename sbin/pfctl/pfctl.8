@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.177 2019/04/15 21:36:44 sashan Exp $
+.\" $OpenBSD: pfctl.8,v 1.178 2019/05/08 21:09:57 sashan Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 15 2019 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -198,7 +198,10 @@ Flush the tables.
 .It Fl F Cm osfp
 Flush the passive operating system fingerprints.
 .It Fl F Cm Reset
-Reset limits, timeouts and options back to default settings.
+Reset limits, timeouts and other options back to default settings.
+See the OPTIONS section in
+.Xr pf.conf 5
+for details.
 .It Fl F Cm all
 Flush all of the above.
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.578 2019/04/25 10:05:12 yasuoka Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.579 2019/05/08 21:09:57 sashan Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2019 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1148,6 +1148,9 @@ A TCP RST is returned for blocked TCP packets,
 an ICMP UNREACHABLE is returned for blocked UDP packets,
 and all other packets are silently dropped.
 .El
+.Pp
+The default value is
+.Cm drop .
 .It Ic set Cm debug Ar level
 Set the debug
 .Ar level ,
@@ -1167,6 +1170,8 @@ and
 These keywords correspond to the similar (LOG_) values specified to the
 .Xr syslog 3
 library routine.
+The default value is
+.Cm err .
 .It Cm set Cm fingerprints Ar filename
 Load fingerprints of known operating systems from the given
 .Ar filename .
@@ -1177,6 +1182,8 @@ but can be overridden via this option.
 Setting this option may leave a small period of time where the fingerprints
 referenced by the currently active ruleset are inconsistent until the new
 ruleset finishes loading.
+The default location for fingerprints is
+.Pa /etc/pf.os .
 .It Ic set Cm hostid Ar number
 The 32-bit hostid
 .Ar number
@@ -1237,6 +1244,22 @@ Various limits can be combined on a single line:
 .Bd -literal -offset indent
 set limit { states 20000, frags 2000, src-nodes 2000 }
 .Ed
+.Pp
+.Xr pf 4
+has the following defaults:
+.Bl -column table-entries PFR_KENTRY_HIWAT_SMALL platform_dependent
+.It states Ta Dv PFSTATE_HIWAT Ta Pq 100000
+.It tables Ta Dv PFR_KTABLE_HIWAT Ta Pq 1000
+.It table-entries Ta Dv PFR_KENTRY_HIWAT Ta Pq 200000
+.It table-entries Ta Dv PFR_KENTRY_HIWAT_SMALL Ta Pq 100000
+.It frags Ta Dv NMBCLUSTERS Ns /32 Ta Pq platform dependent
+.El
+.Pp
+.Dv NMBCLUSTERS
+defines the total number of packets which can exist in-system at any one time.
+Refer to
+.In machine/param.h
+for the platform-specific value.
 .It Ic set Cm loginterface Ar interface | Cm none
 Enable collection of packet and byte count statistics for the given
 interface or interface group.
@@ -1253,6 +1276,9 @@ collects statistics on the interface named dc0:
 One can disable the loginterface using:
 .Pp
 .Dl set loginterface none
+.Pp
+The default value is
+.Cm none .
 .It Ic set Cm optimization Ar environment
 Optimize state timeouts for one of the following network environments:
 .Pp
@@ -1275,6 +1301,9 @@ Suitable for almost all networks.
 Alias for
 .Cm high-latency .
 .El
+.Pp
+The default value is
+.Cm normal .
 .It Ic set Cm reassemble yes | no Op Cm no-df
 The
 .Cm reassemble
@@ -1292,6 +1321,8 @@ instead of being dropped;
 the reassembled packet will have the
 .Dq dont-fragment
 bit cleared.
+The default value is
+.Cm yes .
 .It Ic set Cm ruleset-optimization Ar level
 .Bl -tag -width profile -compact
 .It Cm basic
@@ -1341,6 +1372,7 @@ packet filtering is not desired and can have unexpected effects.
 .Ar ifspec
 is only evaluated when the ruleset is loaded; interfaces created
 later will not be skipped.
+PF filters traffic on all interfaces by default.
 .It Ic set Cm state-defaults Ar state-option , ...
 The
 .Cm state-defaults
@@ -1393,12 +1425,13 @@ set syncookies adaptive (start 25%, end 12%)
 .It Ic set Cm timeout Ar variable value
 .Bl -tag -width "src.track" -compact
 .It Cm frag
-Seconds before an unassembled fragment is expired.
+Seconds before an unassembled fragment is expired (60 by default).
 .It Cm interval
-Interval between purging expired states and fragments.
+Interval between purging expired states and fragments (10 seconds by default).
 .It Cm src.track
 Length of time to retain a source tracking entry after the last state
-expires.
+expires (0 by default, which means there is no global limit.
+The value is defined by the rule which creates the state.).
 .El
 .Pp
 When a packet matches a stateful connection, the seconds to live for the
@@ -1410,13 +1443,13 @@ Tuning these values may improve the performance of the
 firewall at the risk of dropping valid idle connections.
 .Pp
 .Bl -tag -width Ds -compact
-.It Cm tcp.closed
+.It Cm tcp.closed Pq 90 seconds by default
 The state after one endpoint sends an RST.
-.It Cm tcp.closing
+.It Cm tcp.closing Pq 900 seconds by default
 The state after the first FIN has been sent.
-.It Cm tcp.established
+.It Cm tcp.established Pq 24 hours by default
 The fully established state.
-.It Cm tcp.finwait
+.It Cm tcp.finwait Pq 45 seconds by default
 The state after both FINs have been exchanged and the connection is closed.
 Some hosts (notably web servers on Solaris) send TCP packets even after closing
 the connection.
@@ -1425,9 +1458,9 @@ Increasing
 (and possibly
 .Cm tcp.closing )
 can prevent blocking of such packets.
-.It Cm tcp.first
+.It Cm tcp.first Pq 120 seconds by default
 The state after the first packet.
-.It Cm tcp.opening
+.It Cm tcp.opening Pq 30 seconds by default
 The state after the second packet but before both endpoints have
 acknowledged the connection.
 .El
@@ -1436,15 +1469,15 @@ ICMP and UDP are handled in a fashion similar to TCP, but with a much more
 limited set of states:
 .Pp
 .Bl -tag -width Ds -compact
-.It Cm icmp.error
+.It Cm icmp.error Pq 10 seconds by default
 The state after an ICMP error came back in response to an ICMP packet.
-.It Cm icmp.first
+.It Cm icmp.first Pq 20 seconds by default
 The state after the first packet.
-.It Cm udp.first
+.It Cm udp.first Pq 60 seconds by default
 The state after the first packet.
-.It Cm udp.multiple
+.It Cm udp.multiple Pq 60 seconds by default
 The state if both hosts have sent packets.
-.It Cm udp.single
+.It Cm udp.single Pq 30 seconds by default
 The state if the source host sends more than one packet but the destination
 host has never sent one back.
 .El
@@ -1452,21 +1485,21 @@ host has never sent one back.
 Other protocols are handled similarly to UDP:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Cm other.first
-.It Cm other.multiple
-.It Cm other.single
+.It Cm other.first Pq 60 seconds by default
+.It Cm other.multiple Pq 60 seconds by default
+.It Cm other.single Pq 30 seconds by default
 .El
 .Pp
 Timeout values can be reduced adaptively as the number of state table
 entries grows.
 .Pp
 .Bl -tag -width Ds -compact
-.It Cm adaptive.end
+.It Cm adaptive.end Pq 60000 states by default
 When reaching this number of state entries, all timeout values become
 zero, effectively purging all state entries immediately.
 This value is used to define the scale factor; it should not actually
 be reached (set a lower state limit, see below).
-.It Cm adaptive.start
+.It Cm adaptive.start Pq 120000 states by default
 When the number of state entries exceeds this value, adaptive scaling
 begins.
 All timeout values are scaled linearly with factor
@@ -1494,6 +1527,10 @@ set limit states 100000
 With 9000 state table entries, the timeout values are scaled to 50%
 (tcp.first 60, tcp.established 43200).
 .El
+.Pp
+.Dq pfctl -F Reset
+restores default values for following options: debug, all limit options,
+loginterface, reassemble, skip, syncookies, all timeouts.
 .Sh QUEUEING
 Packets can be assigned to queues for the purpose of bandwidth
 control.
