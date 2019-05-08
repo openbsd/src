@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.97 2018/10/29 14:29:44 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.98 2019/05/08 16:22:42 anton Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -128,7 +128,11 @@ int db_is_active;
 /*
  * panic on spl assertion failure?
  */
+#ifdef SPLASSERT_WATCH
+int splassert_ctl = 3;
+#else
 int splassert_ctl = 1;
+#endif
 
 /*
  * v_putc: routine to putc on virtual console
