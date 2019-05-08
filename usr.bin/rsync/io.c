@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.15 2019/03/31 09:26:05 deraadt Exp $ */
+/*	$Id: io.c,v 1.16 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,7 +41,7 @@ io_read_check(struct sess *sess, int fd)
 	pfd.events = POLLIN;
 
 	if (poll(&pfd, 1, 0) < 0) {
-		ERR(sess, "poll");
+		ERR("poll");
 		return -1;
 	}
 	return (pfd.revents & POLLIN);
@@ -71,26 +71,26 @@ io_write_nonblocking(struct sess *sess, int fd, const void *buf, size_t bsz,
 	/* Poll and check for all possible errors. */
 
 	if ((c = poll(&pfd, 1, POLL_TIMEOUT)) == -1) {
-		ERR(sess, "poll");
+		ERR("poll");
 		return 0;
 	} else if (c == 0) {
-		ERRX(sess, "poll: timeout");
+		ERRX("poll: timeout");
 		return 0;
 	} else if ((pfd.revents & (POLLERR|POLLNVAL))) {
-		ERRX(sess, "poll: bad fd");
+		ERRX("poll: bad fd");
 		return 0;
 	} else if ((pfd.revents & POLLHUP)) {
-		ERRX(sess, "poll: hangup");
+		ERRX("poll: hangup");
 		return 0;
 	} else if (!(pfd.revents & POLLOUT)) {
-		ERRX(sess, "poll: unknown event");
+		ERRX("poll: unknown event");
 		return 0;
 	}
 
 	/* Now the non-blocking write. */
 
 	if ((wsz = write(fd, buf, bsz)) < 0) {
-		ERR(sess, "write");
+		ERR("write");
 		return 0;
 	}
 
@@ -111,10 +111,10 @@ io_write_blocking(struct sess *sess, int fd, const void *buf, size_t sz)
 	while (sz > 0) {
 		c = io_write_nonblocking(sess, fd, buf, sz, &wsz);
 		if (!c) {
-			ERRX1(sess, "io_write_nonblocking");
+			ERRX1("io_write_nonblocking");
 			return 0;
 		} else if (wsz == 0) {
-			ERRX(sess, "io_write_nonblocking: short write");
+			ERRX("io_write_nonblocking: short write");
 			return 0;
 		}
 		buf += wsz;
@@ -147,11 +147,11 @@ io_write_buf(struct sess *sess, int fd, const void *buf, size_t sz)
 		tag = (7 << 24) + wsz;
 		tagbuf = htole32(tag);
 		if (!io_write_blocking(sess, fd, &tagbuf, sizeof(tagbuf))) {
-			ERRX1(sess, "io_write_blocking");
+			ERRX1("io_write_blocking");
 			return 0;
 		}
 		if (!io_write_blocking(sess, fd, buf, wsz)) {
-			ERRX1(sess, "io_write_blocking");
+			ERRX1("io_write_blocking");
 			return 0;
 		}
 		sess->total_write += wsz;
@@ -171,9 +171,9 @@ io_write_line(struct sess *sess, int fd, const char *line)
 {
 
 	if (!io_write_buf(sess, fd, line, strlen(line)))
-		ERRX1(sess, "io_write_buf");
+		ERRX1("io_write_buf");
 	else if (!io_write_byte(sess, fd, '\n'))
-		ERRX1(sess, "io_write_byte");
+		ERRX1("io_write_byte");
 	else
 		return 1;
 
@@ -203,26 +203,26 @@ io_read_nonblocking(struct sess *sess,
 	/* Poll and check for all possible errors. */
 
 	if ((c = poll(&pfd, 1, POLL_TIMEOUT)) == -1) {
-		ERR(sess, "poll");
+		ERR("poll");
 		return 0;
 	} else if (c == 0) {
-		ERRX(sess, "poll: timeout");
+		ERRX("poll: timeout");
 		return 0;
 	} else if ((pfd.revents & (POLLERR|POLLNVAL))) {
-		ERRX(sess, "poll: bad fd");
+		ERRX("poll: bad fd");
 		return 0;
 	} else if (!(pfd.revents & (POLLIN|POLLHUP))) {
-		ERRX(sess, "poll: unknown event");
+		ERRX("poll: unknown event");
 		return 0;
 	}
 
 	/* Now the non-blocking read, checking for EOF. */
 
 	if ((rsz = read(fd, buf, bsz)) < 0) {
-		ERR(sess, "read");
+		ERR("read");
 		return 0;
 	} else if (rsz == 0) {
-		ERRX(sess, "unexpected end of file");
+		ERRX("unexpected end of file");
 		return 0;
 	}
 
@@ -246,10 +246,10 @@ io_read_blocking(struct sess *sess,
 	while (sz > 0) {
 		c = io_read_nonblocking(sess, fd, buf, sz, &rsz);
 		if (!c) {
-			ERRX1(sess, "io_read_nonblocking");
+			ERRX1("io_read_nonblocking");
 			return 0;
 		} else if (rsz == 0) {
-			ERRX(sess, "io_read_nonblocking: short read");
+			ERRX("io_read_nonblocking: short read");
 			return 0;
 		}
 		buf += rsz;
@@ -287,7 +287,7 @@ io_read_flush(struct sess *sess, int fd)
 	 */
 
 	if (!io_read_blocking(sess, fd, &tagbuf, sizeof(tagbuf))) {
-		ERRX1(sess, "io_read_blocking");
+		ERRX1("io_read_blocking");
 		return 0;
 	}
 	tag = le32toh(tagbuf);
@@ -299,13 +299,13 @@ io_read_flush(struct sess *sess, int fd)
 	tag -= 7;
 
 	if (sess->mplex_read_remain > sizeof(mpbuf)) {
-		ERRX(sess, "multiplex buffer overflow");
+		ERRX("multiplex buffer overflow");
 		return 0;
 	} else if (sess->mplex_read_remain == 0)
 		return 1;
 
 	if (!io_read_blocking(sess, fd, mpbuf, sess->mplex_read_remain)) {
-		ERRX1(sess, "io_read_blocking");
+		ERRX1("io_read_blocking");
 		return 0;
 	}
 	if (mpbuf[sess->mplex_read_remain - 1] == '\n')
@@ -316,7 +316,7 @@ io_read_flush(struct sess *sess, int fd)
 	 * will control its own log levelling.
 	 */
 
-	LOG0(sess, "%.*s", (int)sess->mplex_read_remain, mpbuf);
+	LOG0("%.*s", (int)sess->mplex_read_remain, mpbuf);
 	sess->mplex_read_remain = 0;
 
 	/*
@@ -325,7 +325,7 @@ io_read_flush(struct sess *sess, int fd)
 	 */
 
 	if (tag == 1) {
-		ERRX1(sess, "error from remote host");
+		ERRX1("error from remote host");
 		return 0;
 	}
 	return 1;
@@ -364,7 +364,7 @@ io_read_buf(struct sess *sess, int fd, void *buf, size_t sz)
 			rsz = sess->mplex_read_remain < sz ?
 				sess->mplex_read_remain : sz;
 			if (!io_read_blocking(sess, fd, buf, rsz)) {
-				ERRX1(sess, "io_read_blocking");
+				ERRX1("io_read_blocking");
 				return 0;
 			}
 			sz -= rsz;
@@ -376,7 +376,7 @@ io_read_buf(struct sess *sess, int fd, void *buf, size_t sz)
 
 		assert(sess->mplex_read_remain == 0);
 		if (!io_read_flush(sess, fd)) {
-			ERRX1(sess, "io_read_flush");
+			ERRX1("io_read_flush");
 			return 0;
 		}
 	}
@@ -398,7 +398,7 @@ io_write_ulong(struct sess *sess, int fd, uint64_t val)
 
 	if (sval <= INT32_MAX && sval >= 0) {
 		if (!io_write_int(sess, fd, (int32_t)val)) {
-			ERRX1(sess, "io_write_int");
+			ERRX1("io_write_int");
 			return 0;
 		}
 		return 1;
@@ -409,9 +409,9 @@ io_write_ulong(struct sess *sess, int fd, uint64_t val)
 	nv = htole64(val);
 
 	if (!io_write_int(sess, fd, -1))
-		ERRX1(sess, "io_write_int");
+		ERRX1("io_write_int");
 	else if (!io_write_buf(sess, fd, &nv, sizeof(int64_t)))
-		ERRX1(sess, "io_write_buf");
+		ERRX1("io_write_buf");
 	else
 		return 1;
 
@@ -436,7 +436,7 @@ io_write_uint(struct sess *sess, int fd, uint32_t val)
 	nv = htole32(val);
 
 	if (!io_write_buf(sess, fd, &nv, sizeof(uint32_t))) {
-		ERRX1(sess, "io_write_buf");
+		ERRX1("io_write_buf");
 		return 0;
 	}
 	return 1;
@@ -518,7 +518,7 @@ io_lowbuffer_alloc(struct sess *sess, void **buf,
 	if (*bufsz + sz + extra > *bufmax) {
 		pp = realloc(*buf, *bufsz + sz + extra);
 		if (pp == NULL) {
-			ERR(sess, "realloc");
+			ERR("realloc");
 			return 0;
 		}
 		*buf = pp;
@@ -562,12 +562,12 @@ io_read_long(struct sess *sess, int fd, int64_t *val)
 	uint64_t	uoval;
 
 	if (!io_read_ulong(sess, fd, &uoval)) {
-		ERRX1(sess, "io_read_long");
+		ERRX1("io_read_long");
 		return 0;
 	}
 	*val = (int64_t)uoval;
 	if (*val < 0) {
-		ERRX1(sess, "io_read_long negative");
+		ERRX1("io_read_long negative");
 		return 0;
 	}
 	return 1;
@@ -586,7 +586,7 @@ io_read_ulong(struct sess *sess, int fd, uint64_t *val)
 	/* Start with the short-circuit: read as an int. */
 
 	if (!io_read_int(sess, fd, &sval)) {
-		ERRX1(sess, "io_read_int");
+		ERRX1("io_read_int");
 		return 0;
 	} else if (sval != -1) {
 		*val = (uint64_t)le32toh(sval);
@@ -596,7 +596,7 @@ io_read_ulong(struct sess *sess, int fd, uint64_t *val)
 	/* If the int is -1, read as 64 bits. */
 
 	if (!io_read_buf(sess, fd, &oval, sizeof(uint64_t))) {
-		ERRX1(sess, "io_read_buf");
+		ERRX1("io_read_buf");
 		return 0;
 	}
 
@@ -617,10 +617,10 @@ io_read_size(struct sess *sess, int fd, size_t *val)
 	int32_t	oval;
 
 	if (!io_read_int(sess, fd, &oval)) {
-		ERRX1(sess, "io_read_int");
+		ERRX1("io_read_int");
 		return 0;
 	} else if (oval < 0) {
-		ERRX(sess, "io_read_size: negative value");
+		ERRX("io_read_size: negative value");
 		return 0;
 	}
 
@@ -638,7 +638,7 @@ io_read_uint(struct sess *sess, int fd, uint32_t *val)
 	uint32_t	oval;
 
 	if (!io_read_buf(sess, fd, &oval, sizeof(uint32_t))) {
-		ERRX1(sess, "io_read_buf");
+		ERRX1("io_read_buf");
 		return 0;
 	}
 
@@ -692,7 +692,7 @@ io_unbuffer_size(struct sess *sess, const void *buf,
 
 	io_unbuffer_int(sess, buf, bufpos, bufsz, &oval);
 	if (oval < 0) {
-		ERRX(sess, "io_unbuffer_size: negative value");
+		ERRX("io_unbuffer_size: negative value");
 		return 0;
 	}
 	*val = oval;
@@ -708,7 +708,7 @@ io_read_byte(struct sess *sess, int fd, uint8_t *val)
 {
 
 	if (!io_read_buf(sess, fd, val, sizeof(uint8_t))) {
-		ERRX1(sess, "io_read_buf");
+		ERRX1("io_read_buf");
 		return 0;
 	}
 	return 1;
@@ -723,7 +723,7 @@ io_write_byte(struct sess *sess, int fd, uint8_t val)
 {
 
 	if (!io_write_buf(sess, fd, &val, sizeof(uint8_t))) {
-		ERRX1(sess, "io_write_buf");
+		ERRX1("io_write_buf");
 		return 0;
 	}
 	return 1;

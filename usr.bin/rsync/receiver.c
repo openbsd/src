@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.22 2019/03/30 07:28:55 deraadt Exp $ */
+/*	$Id: receiver.c,v 1.23 2019/05/08 20:00:25 benno Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -57,10 +57,10 @@ rsync_set_metadata(struct sess *sess, int newfile,
 		ts[1].tv_sec = f->st.mtime;
 		ts[1].tv_nsec = 0;
 		if (futimens(fd, ts) == -1) {
-			ERR(sess, "%s: futimens", path);
+			ERR("%s: futimens", path);
 			return 0;
 		}
-		LOG4(sess, "%s: updated date", f->path);
+		LOG4("%s: updated date", f->path);
 	}
 
 	/*
@@ -78,14 +78,14 @@ rsync_set_metadata(struct sess *sess, int newfile,
 	if (uid != (uid_t)-1 || gid != (gid_t)-1) {
 		if (fchown(fd, uid, gid) == -1) {
 			if (errno != EPERM) {
-				ERR(sess, "%s: fchown", path);
+				ERR("%s: fchown", path);
 				return 0;
 			}
 			if (getuid() == 0)
-				WARNX(sess, "%s: identity unknown or not available "
+				WARNX("%s: identity unknown or not available "
 				    "to user.group: %u.%u", f->path, uid, gid);
 		} else
-			LOG4(sess, "%s: updated uid and/or gid", f->path);
+			LOG4("%s: updated uid and/or gid", f->path);
 		mode &= ~(S_ISTXT | S_ISUID | S_ISGID);
 	}
 
@@ -93,10 +93,10 @@ rsync_set_metadata(struct sess *sess, int newfile,
 
 	if (newfile || sess->opts->preserve_perms) {
 		if (fchmod(fd, mode) == -1) {
-			ERR(sess, "%s: fchmod", path);
+			ERR("%s: fchmod", path);
 			return 0;
 		}
-		LOG4(sess, "%s: updated permissions", f->path);
+		LOG4("%s: updated permissions", f->path);
 	}
 
 	return 1;
@@ -118,10 +118,10 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 		ts[1].tv_sec = f->st.mtime;
 		ts[1].tv_nsec = 0;
 		if (utimensat(rootfd, path, ts, AT_SYMLINK_NOFOLLOW) == -1) {
-			ERR(sess, "%s: utimensat", path);
+			ERR("%s: utimensat", path);
 			return 0;
 		}
-		LOG4(sess, "%s: updated date", f->path);
+		LOG4("%s: updated date", f->path);
 	}
 
 	/*
@@ -139,14 +139,14 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 	if (uid != (uid_t)-1 || gid != (gid_t)-1) {
 		if (fchownat(rootfd, path, uid, gid, AT_SYMLINK_NOFOLLOW) == -1) {
 			if (errno != EPERM) {
-				ERR(sess, "%s: fchownat", path);
+				ERR("%s: fchownat", path);
 				return 0;
 			}
 			if (getuid() == 0)
-				WARNX(sess, "%s: identity unknown or not available "
+				WARNX("%s: identity unknown or not available "
 				    "to user.group: %u.%u", f->path, uid, gid);
 		} else
-			LOG4(sess, "%s: updated uid and/or gid", f->path);
+			LOG4("%s: updated uid and/or gid", f->path);
 		mode &= ~(S_ISTXT | S_ISUID | S_ISGID);
 	}
 
@@ -154,10 +154,10 @@ rsync_set_metadata_at(struct sess *sess, int newfile, int rootfd,
 
 	if (newfile || sess->opts->preserve_perms) {
 		if (fchmodat(rootfd, path, mode, AT_SYMLINK_NOFOLLOW) == -1) {
-			ERR(sess, "%s: fchmodat", path);
+			ERR("%s: fchmodat", path);
 			return 0;
 		}
-		LOG4(sess, "%s: updated permissions", f->path);
+		LOG4("%s: updated permissions", f->path);
 	}
 
 	return 1;
@@ -181,7 +181,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	mode_t		 oumask;
 
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil", NULL) == -1) {
-		ERR(sess, "pledge");
+		ERR("pledge");
 		goto out;
 	}
 
@@ -189,16 +189,16 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 
 	if (!sess->opts->server &&
 	     !io_write_int(sess, fdout, 0)) {
-		ERRX1(sess, "io_write_int");
+		ERRX1("io_write_int");
 		goto out;
 	}
 
 	if (sess->opts->server && sess->opts->del) {
 		if (!io_read_size(sess, fdin, &excl)) {
-			ERRX1(sess, "io_read_size");
+			ERRX1("io_read_size");
 			goto out;
 		} else if (excl != 0) {
-			ERRX(sess, "exclusion list is non-empty");
+			ERRX("exclusion list is non-empty");
 			goto out;
 		}
 	}
@@ -209,28 +209,28 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	 */
 
 	if (!flist_recv(sess, fdin, &fl, &flsz)) {
-		ERRX1(sess, "flist_recv");
+		ERRX1("flist_recv");
 		goto out;
 	}
 
 	/* The IO error is sent after the file list. */
 
 	if (!io_read_int(sess, fdin, &ioerror)) {
-		ERRX1(sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	} else if (ioerror != 0) {
-		ERRX1(sess, "io_error is non-zero");
+		ERRX1("io_error is non-zero");
 		goto out;
 	}
 
 	if (flsz == 0 && !sess->opts->server) {
-		WARNX(sess, "receiver has empty file list: exiting");
+		WARNX("receiver has empty file list: exiting");
 		rc = 1;
 		goto out;
 	} else if (!sess->opts->server)
-		LOG1(sess, "Transfer starting: %zu files", flsz);
+		LOG1("Transfer starting: %zu files", flsz);
 
-	LOG2(sess, "%s: receiver destination", root);
+	LOG2("%s: receiver destination", root);
 
 	/*
 	 * Create the path for our destination directory, if we're not
@@ -241,10 +241,10 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 
 	if (!sess->opts->dry_run) {
 		if ((tofree = strdup(root)) == NULL) {
-			ERR(sess, "strdup");
+			ERR("strdup");
 			goto out;
 		} else if (mkpath(sess, tofree) < 0) {
-			ERRX1(sess, "%s: mkpath", root);
+			ERRX1("%s: mkpath", root);
 			free(tofree);
 			goto out;
 		}
@@ -261,7 +261,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	if (!sess->opts->dry_run) {
 		dfd = open(root, O_RDONLY | O_DIRECTORY, 0);
 		if (dfd == -1) {
-			ERR(sess, "%s: open", root);
+			ERR("%s: open", root);
 			goto out;
 		}
 	}
@@ -274,7 +274,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	if (sess->opts->del &&
 	    sess->opts->recursive &&
 	    !flist_gen_dels(sess, root, &dfl, &dflsz, fl, flsz)) {
-		ERRX1(sess, "flist_gen_local");
+		ERRX1("flist_gen_local");
 		goto out;
 	}
 
@@ -286,17 +286,17 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	 */
 
 	if (unveil(root, "rwc") == -1) {
-		ERR(sess, "%s: unveil", root);
+		ERR("%s: unveil", root);
 		goto out;
 	} else if (unveil(NULL, NULL) == -1) {
-		ERR(sess, "%s: unveil", root);
+		ERR("%s: unveil", root);
 		goto out;
 	}
 
 	/* If we have a local set, go for the deletion. */
 
 	if (!flist_del(sess, dfd, dfl, dflsz)) {
-		ERRX1(sess, "flist_del");
+		ERRX1("flist_del");
 		goto out;
 	}
 
@@ -315,33 +315,33 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	ul = upload_alloc(sess, root, dfd, fdout,
 		CSUM_LENGTH_PHASE1, fl, flsz, oumask);
 	if (ul == NULL) {
-		ERRX1(sess, "upload_alloc");
+		ERRX1("upload_alloc");
 		goto out;
 	}
 
 	dl = download_alloc(sess, fdin, fl, flsz, dfd);
 	if (dl == NULL) {
-		ERRX1(sess, "download_alloc");
+		ERRX1("download_alloc");
 		goto out;
 	}
 
-	LOG2(sess, "%s: ready for phase 1 data", root);
+	LOG2("%s: ready for phase 1 data", root);
 
 	for (;;) {
 		if ((c = poll(pfd, PFD__MAX, POLL_TIMEOUT)) == -1) {
-			ERR(sess, "poll");
+			ERR("poll");
 			goto out;
 		} else if (c == 0) {
-			ERRX(sess, "poll: timeout");
+			ERRX("poll: timeout");
 			goto out;
 		}
 
 		for (i = 0; i < PFD__MAX; i++)
 			if (pfd[i].revents & (POLLERR|POLLNVAL)) {
-				ERRX(sess, "poll: bad fd");
+				ERRX("poll: bad fd");
 				goto out;
 			} else if (pfd[i].revents & POLLHUP) {
-				ERRX(sess, "poll: hangup");
+				ERRX("poll: hangup");
 				goto out;
 			}
 
@@ -357,7 +357,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 		if (sess->mplex_reads &&
 		    (POLLIN & pfd[PFD_SENDER_IN].revents)) {
 			if (!io_read_flush(sess, fdin)) {
-				ERRX1(sess, "io_read_flush");
+				ERRX1("io_read_flush");
 				goto out;
 			} else if (sess->mplex_read_remain == 0)
 				pfd[PFD_SENDER_IN].revents &= ~POLLIN;
@@ -376,7 +376,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 				&pfd[PFD_UPLOADER_IN].fd,
 				sess, &pfd[PFD_SENDER_OUT].fd);
 			if (c < 0) {
-				ERRX1(sess, "rsync_uploader");
+				ERRX1("rsync_uploader");
 				goto out;
 			}
 		}
@@ -395,14 +395,12 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 			c = rsync_downloader(dl, sess,
 				&pfd[PFD_DOWNLOADER_IN].fd);
 			if (c < 0) {
-				ERRX1(sess, "rsync_downloader");
+				ERRX1("rsync_downloader");
 				goto out;
 			} else if (c == 0) {
 				assert(phase == 0);
 				phase++;
-				LOG2(sess,
-				    "%s: receiver ready for phase 2 data",
-				    root);
+				LOG2("%s: receiver ready for phase 2 data", root);
 				break;
 			}
 
@@ -420,13 +418,13 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 
 	if (phase == 1) {
 		if (!io_write_int(sess, fdout, -1)) {
-			ERRX1(sess, "io_write_int");
+			ERRX1("io_write_int");
 			goto out;
 		} else if (!io_read_int(sess, fdin, &ioerror)) {
-			ERRX1(sess, "io_read_int");
+			ERRX1("io_read_int");
 			goto out;
 		} else if (ioerror != -1) {
-			ERRX(sess, "expected phase ack");
+			ERRX("expected phase ack");
 			goto out;
 		}
 	}
@@ -437,21 +435,21 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	 */
 
 	if (!rsync_uploader_tail(ul, sess)) {
-		ERRX1(sess, "rsync_uploader_tail");
+		ERRX1("rsync_uploader_tail");
 		goto out;
 	}
 
 	/* Process server statistics and say good-bye. */
 
 	if (!sess_stats_recv(sess, fdin)) {
-		ERRX1(sess, "sess_stats_recv");
+		ERRX1("sess_stats_recv");
 		goto out;
 	} else if (!io_write_int(sess, fdout, -1)) {
-		ERRX1(sess, "io_write_int");
+		ERRX1("io_write_int");
 		goto out;
 	}
 
-	LOG2(sess, "receiver finished updating");
+	LOG2("receiver finished updating");
 	rc = 1;
 out:
 	if (dfd != -1)

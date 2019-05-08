@@ -1,4 +1,4 @@
-/*	$Id: log.c,v 1.6 2019/02/18 22:47:34 benno Exp $ */
+/*	$Id: log.c,v 1.7 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,19 +23,20 @@
 
 #include "extern.h"
 
+extern int verbose;
+
 /*
  * Log a message at level "level", starting at zero, which corresponds
  * to the current verbosity level opts->verbose (whose verbosity starts
  * at one).
  */
 void
-rsync_log(struct sess *sess, const char *fname,
-	size_t line, int level, const char *fmt, ...)
+rsync_log(const char *fname, size_t line, int level, const char *fmt, ...)
 {
 	char	*buf = NULL;
 	va_list	 ap;
 
-	if (sess->opts->verbose < level + 1)
+	if (verbose < level + 1)
 		return;
 
 	if (fmt != NULL) {
@@ -61,8 +62,7 @@ rsync_log(struct sess *sess, const char *fname,
  * However, it is not like errx(3) in that it does not exit.
  */
 void
-rsync_errx(struct sess *sess, const char *fname,
-	size_t line, const char *fmt, ...)
+rsync_errx(const char *fname, size_t line, const char *fmt, ...)
 {
 	char	*buf = NULL;
 	va_list	 ap;
@@ -87,8 +87,7 @@ rsync_errx(struct sess *sess, const char *fname,
  * However, it is not like err(3) in that it does not exit.
  */
 void
-rsync_err(struct sess *sess, const char *fname,
-	size_t line, const char *fmt, ...)
+rsync_err(const char *fname, size_t line, const char *fmt, ...)
 {
 	char	*buf = NULL;
 	va_list	 ap;
@@ -114,13 +113,12 @@ rsync_err(struct sess *sess, const char *fname,
  * chain of functions from which the actual warning occurred.
  */
 void
-rsync_errx1(struct sess *sess, const char *fname,
-	size_t line, const char *fmt, ...)
+rsync_errx1(const char *fname, size_t line, const char *fmt, ...)
 {
 	char	*buf = NULL;
 	va_list	 ap;
 
-	if (sess->opts->verbose < 1)
+	if (verbose < 1)
 		return;
 
 	if (fmt != NULL) {
@@ -142,8 +140,7 @@ rsync_errx1(struct sess *sess, const char *fname,
  * Prints a warning message.
  */
 void
-rsync_warnx(struct sess *sess, const char *fname,
-	size_t line, const char *fmt, ...)
+rsync_warnx(const char *fname, size_t line, const char *fmt, ...)
 {
 	char	*buf = NULL;
 	va_list	 ap;
@@ -168,14 +165,13 @@ rsync_warnx(struct sess *sess, const char *fname,
  * It uses a level detector for when to inhibit printing.
  */
 void
-rsync_warn(struct sess *sess, int level,
-	const char *fname, size_t line, const char *fmt, ...)
+rsync_warn(int level, const char *fname, size_t line, const char *fmt, ...)
 {
 	char	*buf = NULL;
 	va_list	 ap;
 	int	 er = errno;
 
-	if (sess->opts->verbose < level)
+	if (verbose < level)
 		return;
 
 	if (fmt != NULL) {

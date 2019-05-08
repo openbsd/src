@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.8 2019/04/02 11:05:55 deraadt Exp $ */
+/*	$OpenBSD: mktemp.c,v 1.9 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 1996-1998, 2008 Theo de Raadt
  * Copyright (c) 1997, 2008-2009 Todd C. Miller
@@ -293,11 +293,11 @@ mktemplate(struct sess *sess, char **ret, const char *path, int recursive)
 		n = asprintf(ret, "%.*s/.%s.XXXXXXXXXX",
 			dirlen, path, path + dirlen + 1);
 		if (n < 0) {
-			ERR(sess, "asprintf");
+			ERR("asprintf");
 			*ret = NULL;
 		}
 	} else if ((n = asprintf(ret, ".%s.XXXXXXXXXX", path)) < 0) {
-		ERR(sess, "asprintf");
+		ERR("asprintf");
 		*ret = NULL;
 	}
 

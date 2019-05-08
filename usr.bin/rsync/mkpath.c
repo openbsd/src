@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpath.c,v 1.2 2019/02/10 23:24:14 benno Exp $ */
+/*	$OpenBSD: mkpath.c,v 1.3 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -60,12 +60,12 @@ mkpath(struct sess *sess, char *path)
 		if (stat(path, &sb)) {
 			if (errno != ENOENT || (mkdir(path, 0777) &&
 			    errno != EEXIST)) {
-				ERR(sess, "%s: stat", path);
+				ERR("%s: stat", path);
 				return (-1);
 			}
 		} else if (!S_ISDIR(sb.st_mode)) {
 			errno = ENOTDIR;
-			ERR(sess, "%s: stat", path);
+			ERR("%s: stat", path);
 			return (-1);
 		}
 

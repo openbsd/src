@@ -1,4 +1,4 @@
-/*	$Id: fargs.c,v 1.16 2019/04/04 04:19:54 bket Exp $ */
+/*	$Id: fargs.c,v 1.17 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -98,13 +98,13 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 		addargs(&args, "-r");
 	if (sess->opts->preserve_times)
 		addargs(&args, "-t");
-	if (sess->opts->verbose > 3)
+	if (verbose > 3)
 		addargs(&args, "-v");
-	if (sess->opts->verbose > 2)
+	if (verbose > 2)
 		addargs(&args, "-v");
-	if (sess->opts->verbose > 1)
+	if (verbose > 1)
 		addargs(&args, "-v");
-	if (sess->opts->verbose > 0)
+	if (verbose > 0)
 		addargs(&args, "-v");
 	if (sess->opts->one_file_system > 1)
 		addargs(&args, "-x");
@@ -129,6 +129,6 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 	return args.list;
 out:
 	freeargs(&args);
-	ERR(sess, "calloc");
+	ERR("calloc");
 	return NULL;
 }

@@ -1,4 +1,4 @@
-/*	$Id: downloader.c,v 1.19 2019/04/02 11:05:55 deraadt Exp $ */
+/*	$Id: downloader.c,v 1.20 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -102,7 +102,7 @@ log_file(struct sess *sess,
 		unit = "KB";
 	}
 
-	LOG1(sess, "%s (%.*f %s, %.1f%% downloaded)",
+	LOG1("%s (%.*f %s, %.1f%% downloaded)",
 	    f->path, prec, tot, unit, frac);
 }
 
@@ -177,7 +177,7 @@ download_alloc(struct sess *sess, int fdin,
 	struct download	*p;
 
 	if ((p = malloc(sizeof(struct download))) == NULL) {
-		ERR(sess, "malloc");
+		ERR("malloc");
 		return NULL;
 	}
 
@@ -191,7 +191,7 @@ download_alloc(struct sess *sess, int fdin,
 	p->obuf = NULL;
 	p->obufmax = OBUF_SIZE;
 	if (p->obufmax && (p->obuf = malloc(p->obufmax)) == NULL) {
-		ERR(sess, "malloc");
+		ERR("malloc");
 		free(p);
 		return NULL;
 	}
@@ -258,10 +258,10 @@ buf_copy(struct sess *sess,
 		assert(p->obufsz <= p->obufmax);
 		assert(p->obuf != NULL);
 		if ((ssz = write(p->fd, p->obuf, p->obufsz)) < 0) {
-			ERR(sess, "%s: write", p->fname);
+			ERR("%s: write", p->fname);
 			return 0;
 		} else if ((size_t)ssz != p->obufsz) {
-			ERRX(sess, "%s: short write", p->fname);
+			ERRX("%s: short write", p->fname);
 			return 0;
 		}
 		p->obufsz = 0;
@@ -274,10 +274,10 @@ buf_copy(struct sess *sess,
 
 	if (sz) {
 		if ((ssz = write(p->fd, buf, sz)) < 0) {
-			ERR(sess, "%s: write", p->fname);
+			ERR("%s: write", p->fname);
 			return 0;
 		} else if ((size_t)ssz != sz) {
-			ERRX(sess, "%s: short write", p->fname);
+			ERRX("%s: short write", p->fname);
 			return 0;
 		}
 	}
@@ -313,13 +313,13 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 	if (p->state == DOWNLOAD_READ_NEXT) {
 		if (!io_read_int(sess, p->fdin, &idx)) {
-			ERRX1(sess, "io_read_int");
+			ERRX1("io_read_int");
 			return -1;
 		} else if (idx >= 0 && (size_t)idx >= p->flsz) {
-			ERRX(sess, "index out of bounds");
+			ERRX("index out of bounds");
 			return -1;
 		} else if (idx < 0) {
-			LOG3(sess, "downloader: phase complete");
+			LOG3("downloader: phase complete");
 			return 0;
 		}
 
@@ -336,7 +336,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		download_reinit(sess, p, idx);
 		if (!blk_send_ack(sess, p->fdin, &p->blk)) {
-			ERRX1(sess, "blk_send_ack");
+			ERRX1("blk_send_ack");
 			goto out;
 		}
 
@@ -354,7 +354,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		p->ofd = openat(p->rootfd, f->path, O_RDONLY | O_NONBLOCK, 0);
 
 		if (p->ofd == -1 && errno != ENOENT) {
-			ERR(sess, "%s: openat", f->path);
+			ERR("%s: openat", f->path);
 			goto out;
 		} else if (p->ofd != -1) {
 			*ofd = p->ofd;
@@ -391,10 +391,10 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		if (p->ofd != -1 &&
 		    fstat(p->ofd, &st) == -1) {
-			ERR(sess, "%s: fstat", f->path);
+			ERR("%s: fstat", f->path);
 			goto out;
 		} else if (p->ofd != -1 && !S_ISREG(st.st_mode)) {
-			WARNX(sess, "%s: not regular", f->path);
+			WARNX("%s: not regular", f->path);
 			goto out;
 		}
 
@@ -403,7 +403,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 			p->map = mmap(NULL, p->mapsz,
 				PROT_READ, MAP_SHARED, p->ofd, 0);
 			if (p->map == MAP_FAILED) {
-				ERR(sess, "%s: mmap", f->path);
+				ERR("%s: mmap", f->path);
 				goto out;
 			}
 		}
@@ -416,12 +416,12 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 
 		if (mktemplate(sess, &p->fname,
 		    f->path, sess->opts->recursive) == -1) {
-			ERRX1(sess, "mktemplate");
+			ERRX1("mktemplate");
 			goto out;
 		}
 
 		if ((p->fd = mkstempat(p->rootfd, p->fname)) == -1) {
-			ERR(sess, "mkstempat");
+			ERR("mkstempat");
 			goto out;
 		}
 
@@ -433,7 +433,7 @@ rsync_downloader(struct download *p, struct sess *sess, int *ofd)
 		 * memory beforehand.
 		 */
 
-		LOG3(sess, "%s: temporary: %s", f->path, p->fname);
+		LOG3("%s: temporary: %s", f->path, p->fname);
 		p->state = DOWNLOAD_READ_REMOTE;
 		return 1;
 	}
@@ -454,33 +454,33 @@ again:
 	assert(p->fdin != -1);
 
 	if (!io_read_int(sess, p->fdin, &rawtok)) {
-		ERRX1(sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	}
 
 	if (rawtok > 0) {
 		sz = rawtok;
 		if ((buf = malloc(sz)) == NULL) {
-			ERR(sess, "realloc");
+			ERR("realloc");
 			goto out;
 		}
 		if (!io_read_buf(sess, p->fdin, buf, sz)) {
-			ERRX1(sess, "io_read_int");
+			ERRX1("io_read_int");
 			goto out;
 		} else if (!buf_copy(sess, buf, sz, p)) {
-			ERRX1(sess, "buf_copy");
+			ERRX1("buf_copy");
 			goto out;
 		}
 		p->total += sz;
 		p->downloaded += sz;
-		LOG4(sess, "%s: received %zu B block", p->fname, sz);
+		LOG4("%s: received %zu B block", p->fname, sz);
 		MD4_Update(&p->ctx, buf, sz);
 		free(buf);
 
 		/* Fast-track more reads as they arrive. */
 
 		if ((c = io_read_check(sess, p->fdin)) < 0) {
-			ERRX1(sess, "io_read_check");
+			ERRX1("io_read_check");
 			goto out;
 		} else if (c > 0)
 			goto again;
@@ -489,8 +489,7 @@ again:
 	} else if (rawtok < 0) {
 		tok = -rawtok - 1;
 		if (tok >= p->blk.blksz) {
-			ERRX(sess,
-			    "%s: token not in block set: %zu (have %zu blocks)",
+			ERRX("%s: token not in block set: %zu (have %zu blocks)",
 			    p->fname, tok, p->blk.blksz);
 			goto out;
 		}
@@ -509,17 +508,17 @@ again:
 
 		assert(p->map != MAP_FAILED);
 		if (!buf_copy(sess, buf, sz, p)) {
-			ERRX1(sess, "buf_copy");
+			ERRX1("buf_copy");
 			goto out;
 		}
 		p->total += sz;
-		LOG4(sess, "%s: copied %zu B", p->fname, sz);
+		LOG4("%s: copied %zu B", p->fname, sz);
 		MD4_Update(&p->ctx, buf, sz);
 
 		/* Fast-track more reads as they arrive. */
 
 		if ((c = io_read_check(sess, p->fdin)) < 0) {
-			ERRX1(sess, "io_read_check");
+			ERRX1("io_read_check");
 			goto out;
 		} else if (c > 0)
 			goto again;
@@ -528,7 +527,7 @@ again:
 	}
 
 	if (!buf_copy(sess, NULL, 0, p)) {
-		ERRX1(sess, "buf_copy");
+		ERRX1("buf_copy");
 		goto out;
 	}
 
@@ -546,24 +545,24 @@ again:
 	MD4_Final(ourmd, &p->ctx);
 
 	if (!io_read_buf(sess, p->fdin, md, MD4_DIGEST_LENGTH)) {
-		ERRX1(sess, "io_read_buf");
+		ERRX1("io_read_buf");
 		goto out;
 	} else if (memcmp(md, ourmd, MD4_DIGEST_LENGTH)) {
-		ERRX(sess, "%s: hash does not match", p->fname);
+		ERRX("%s: hash does not match", p->fname);
 		goto out;
 	}
 
 	/* Adjust our file metadata (uid, mode, etc.). */
 
 	if (!rsync_set_metadata(sess, 1, p->fd, f, p->fname)) {
-		ERRX1(sess, "rsync_set_metadata");
+		ERRX1("rsync_set_metadata");
 		goto out;
 	}
 
 	/* Finally, rename the temporary to the real file. */
 
 	if (renameat(p->rootfd, p->fname, p->rootfd, f->path) == -1) {
-		ERR(sess, "%s: renameat: %s", p->fname, f->path);
+		ERR("%s: renameat: %s", p->fname, f->path);
 		goto out;
 	}
 

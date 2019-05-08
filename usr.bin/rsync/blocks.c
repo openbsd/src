@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.14 2019/03/23 16:04:28 deraadt Exp $ */
+/*	$Id: blocks.c,v 1.15 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -68,7 +68,7 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 		hash_slow(buf + offs, (size_t)osz, md, sess);
 		have_md = 1;
 		if (memcmp(md, blks->blks[hint].chksum_long, blks->csum) == 0) {
-			LOG4(sess, "%s: found matching hinted match: "
+			LOG4("%s: found matching hinted match: "
 			    "position %jd, block %zu (position %jd, size %zu)",
 			    path,
 			    (intmax_t)offs, blks->blks[hint].idx,
@@ -89,7 +89,7 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 		if ((size_t)osz != blks->blks[i].len)
 			continue;
 
-		LOG4(sess, "%s: found matching fast match: "
+		LOG4("%s: found matching fast match: "
 		    "position %jd, block %zu (position %jd, size %zu)",
 		    path,
 		    (intmax_t)offs, blks->blks[i].idx,
@@ -106,7 +106,7 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 		if (memcmp(md, blks->blks[i].chksum_long, blks->csum))
 			continue;
 
-		LOG4(sess, "%s: sender verifies slow match", path);
+		LOG4("%s: sender verifies slow match", path);
 		return &blks->blks[i];
 	}
 
@@ -155,8 +155,7 @@ blk_match(struct sess *sess, const struct blkset *blks,
 			sz = st->offs - last;
 			st->dirty += sz;
 			st->total += sz;
-			LOG4(sess,
-			    "%s: flushing %jd B before %zu B block %zu",
+			LOG4("%s: flushing %jd B before %zu B block %zu",
 			    path, (intmax_t)sz,
 			    blk->len, blk->idx);
 			tok = -(blk->idx + 1);
@@ -180,7 +179,7 @@ blk_match(struct sess *sess, const struct blkset *blks,
 		/* Emit remaining data and send terminator token. */
 
 		sz = st->mapsz - last;
-		LOG4(sess, "%s: flushing remaining %jd B",
+		LOG4("%s: flushing remaining %jd B",
 		    path, (intmax_t)sz);
 
 		st->total += sz;
@@ -196,7 +195,7 @@ blk_match(struct sess *sess, const struct blkset *blks,
 		st->curst = st->mapsz ? BLKSTAT_DATA : BLKSTAT_TOK;
 		st->dirty = st->total = st->mapsz;
 
-		LOG4(sess, "%s: flushing whole file %zu B",
+		LOG4("%s: flushing whole file %zu B",
 		    path, st->mapsz);
 	}
 }
@@ -241,7 +240,7 @@ blk_recv(struct sess *sess, int fd, const char *path)
 	off_t		 offs = 0;
 
 	if ((s = calloc(1, sizeof(struct blkset))) == NULL) {
-		ERR(sess, "calloc");
+		ERR("calloc");
 		return NULL;
 	}
 
@@ -252,31 +251,31 @@ blk_recv(struct sess *sess, int fd, const char *path)
 	 */
 
 	if (!io_read_size(sess, fd, &s->blksz)) {
-		ERRX1(sess, "io_read_size");
+		ERRX1("io_read_size");
 		goto out;
 	} else if (!io_read_size(sess, fd, &s->len)) {
-		ERRX1(sess, "io_read_size");
+		ERRX1("io_read_size");
 		goto out;
 	} else if (!io_read_size(sess, fd, &s->csum)) {
-		ERRX1(sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	} else if (!io_read_size(sess, fd, &s->rem)) {
-		ERRX1(sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	} else if (s->rem && s->rem >= s->len) {
-		ERRX(sess, "block remainder is "
+		ERRX("block remainder is "
 			"greater than block size");
 		goto out;
 	}
 
-	LOG3(sess, "%s: read block prologue: %zu blocks of "
+	LOG3("%s: read block prologue: %zu blocks of "
 	    "%zu B, %zu B remainder, %zu B checksum", path,
 	    s->blksz, s->len, s->rem, s->csum);
 
 	if (s->blksz) {
 		s->blks = calloc(s->blksz, sizeof(struct blk));
 		if (s->blks == NULL) {
-			ERR(sess, "calloc");
+			ERR("calloc");
 			goto out;
 		}
 	}
@@ -289,7 +288,7 @@ blk_recv(struct sess *sess, int fd, const char *path)
 	for (j = 0; j < s->blksz; j++) {
 		b = &s->blks[j];
 		if (!io_read_int(sess, fd, &i)) {
-			ERRX1(sess, "io_read_int");
+			ERRX1("io_read_int");
 			goto out;
 		}
 		b->chksum_short = i;
@@ -297,7 +296,7 @@ blk_recv(struct sess *sess, int fd, const char *path)
 		assert(s->csum <= sizeof(b->chksum_long));
 		if (!io_read_buf(sess,
 		    fd, b->chksum_long, s->csum)) {
-			ERRX1(sess, "io_read_buf");
+			ERRX1("io_read_buf");
 			goto out;
 		}
 
@@ -312,12 +311,12 @@ blk_recv(struct sess *sess, int fd, const char *path)
 			s->rem : s->len;
 		offs += b->len;
 
-		LOG4(sess, "%s: read block %zu, length %zu B",
+		LOG4("%s: read block %zu, length %zu B",
 		    path, b->idx, b->len);
 	}
 
 	s->size = offs;
-	LOG3(sess, "%s: read blocks: %zu blocks, %jd B total blocked data",
+	LOG3("%s: read blocks: %zu blocks, %jd B total blocked data",
 	    path, s->blksz, (intmax_t)s->size);
 	return s;
 out:
@@ -345,22 +344,22 @@ blk_send_ack(struct sess *sess, int fd, struct blkset *p)
 	assert(sz <= sizeof(buf));
 
 	if (!io_read_buf(sess, fd, buf, sz)) {
-		ERRX1(sess, "io_read_buf");
+		ERRX1("io_read_buf");
 		return 0;
 	}
 
 	if (!io_unbuffer_size(sess, buf, &pos, sz, &p->blksz))
-		ERRX1(sess, "io_unbuffer_size");
+		ERRX1("io_unbuffer_size");
 	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->len))
-		ERRX1(sess, "io_unbuffer_size");
+		ERRX1("io_unbuffer_size");
 	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->csum))
-		ERRX1(sess, "io_unbuffer_size");
+		ERRX1("io_unbuffer_size");
 	else if (!io_unbuffer_size(sess, buf, &pos, sz, &p->rem))
-		ERRX1(sess, "io_unbuffer_size");
+		ERRX1("io_unbuffer_size");
 	else if (p->len && p->rem >= p->len)
-		ERRX1(sess, "non-zero length is less than remainder");
+		ERRX1("non-zero length is less than remainder");
 	else if (p->csum == 0 || p->csum > 16)
-		ERRX1(sess, "inappropriate checksum length");
+		ERRX1("inappropriate checksum length");
 	else
 		return 1;
 
@@ -391,7 +390,7 @@ blk_send(struct sess *sess, int fd, size_t idx,
 		p->csum); /* long checksum */
 
 	if ((buf = malloc(sz)) == NULL) {
-		ERR(sess, "malloc");
+		ERR("malloc");
 		return 0;
 	}
 
@@ -411,11 +410,11 @@ blk_send(struct sess *sess, int fd, size_t idx,
 	assert(pos == sz);
 
 	if (!io_write_buf(sess, fd, buf, sz)) {
-		ERRX1(sess, "io_write_buf");
+		ERRX1("io_write_buf");
 		goto out;
 	}
 
-	LOG3(sess, "%s: sent block prologue: %zu blocks of %zu B, "
+	LOG3("%s: sent block prologue: %zu blocks of %zu B, "
 	    "%zu B remainder, %zu B checksum",
 	    path, p->blksz, p->len, p->rem, p->csum);
 	rc = 1;

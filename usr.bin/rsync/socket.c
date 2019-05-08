@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.22 2019/03/31 08:47:46 naddy Exp $ */
+/*	$Id: socket.c,v 1.23 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -58,10 +58,10 @@ inet_connect(struct sess *sess, int *sd,
 	if (*sd != -1)
 		close(*sd);
 
-	LOG2(sess, "trying: %s, %s", src->ip, host);
+	LOG2("trying: %s, %s", src->ip, host);
 
 	if ((*sd = socket(src->family, SOCK_STREAM, 0)) == -1) {
-		ERR(sess, "socket");
+		ERR("socket");
 		return -1;
 	}
 
@@ -75,21 +75,21 @@ inet_connect(struct sess *sess, int *sd,
 	c = connect(*sd, (const struct sockaddr *)&src->sa, src->salen);
 	if (c == -1) {
 		if (errno == ECONNREFUSED || errno == EHOSTUNREACH) {
-			WARNX(sess, "connect refused: %s, %s",
+			WARNX("connect refused: %s, %s",
 			    src->ip, host);
 			return 0;
 		}
-		ERR(sess, "connect");
+		ERR("connect");
 		return -1;
 	}
 
 	/* Set up non-blocking mode. */
 
 	if ((flags = fcntl(*sd, F_GETFL, 0)) == -1) {
-		ERR(sess, "fcntl");
+		ERR("fcntl");
 		return -1;
 	} else if (fcntl(*sd, F_SETFL, flags|O_NONBLOCK) == -1) {
-		ERR(sess, "fcntl");
+		ERR("fcntl");
 		return -1;
 	}
 
@@ -119,18 +119,18 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 
 	error = getaddrinfo(host, sess->opts->port, &hints, &res0);
 
-	LOG2(sess, "resolving: %s", host);
+	LOG2("resolving: %s", host);
 
 	if (error == EAI_AGAIN || error == EAI_NONAME) {
-		ERRX(sess, "could not resolve hostname %s: %s",
+		ERRX("could not resolve hostname %s: %s",
 		    host, gai_strerror(error));
 		return NULL;
 	} else if (error == EAI_SERVICE) {
-		ERRX(sess, "could not resolve service rsync: %s",
+		ERRX("could not resolve service rsync: %s",
 		    gai_strerror(error));
 		return NULL;
 	} else if (error) {
-		ERRX(sess, "getaddrinfo: %s: %s", host, gai_strerror(error));
+		ERRX("getaddrinfo: %s: %s", host, gai_strerror(error));
 		return NULL;
 	}
 
@@ -142,14 +142,14 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 			srcsz++;
 
 	if (srcsz == 0) {
-		ERRX(sess, "no addresses resolved: %s", host);
+		ERRX("no addresses resolved: %s", host);
 		freeaddrinfo(res0);
 		return NULL;
 	}
 
 	src = calloc(srcsz, sizeof(struct source));
 	if (src == NULL) {
-		ERRX(sess, "calloc");
+		ERRX("calloc");
 		freeaddrinfo(res0);
 		return NULL;
 	}
@@ -181,7 +181,7 @@ inet_resolve(struct sess *sess, const char *host, size_t *sz)
 			    src[i].ip, INET6_ADDRSTRLEN);
 		}
 
-		LOG2(sess, "hostname resolved: %s: %s", host, src[i].ip);
+		LOG2("hostname resolved: %s: %s", host, src[i].ip);
 		i++;
 	}
 
@@ -201,7 +201,7 @@ protocol_line(struct sess *sess, const char *host, const char *cp)
 	int	major, minor;
 
 	if (strncmp(cp, "@RSYNCD: ", 9)) {
-		LOG0(sess, "%s", cp);
+		LOG0("%s", cp);
 		return 0;
 	}
 
@@ -227,7 +227,7 @@ protocol_line(struct sess *sess, const char *host, const char *cp)
 		return 0;
 	}
 
-	ERRX(sess, "rsyncd protocol error: unknown command");
+	ERRX("rsyncd protocol error: unknown command");
 	return -1;
 }
 
@@ -255,7 +255,7 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 	/* Resolve all IP addresses from the host. */
 
 	if ((src = inet_resolve(&sess, f->host, &srcsz)) == NULL) {
-		ERRX1(&sess, "inet_resolve");
+		ERRX1("inet_resolve");
 		exit(1);
 	}
 
@@ -263,7 +263,7 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw inet unveil",
 	    NULL) == -1) {
-		ERR(&sess, "pledge");
+		ERR("pledge");
 		exit(1);
 	}
 
@@ -276,7 +276,7 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 	for (i = 0; i < srcsz; i++) {
 		c = inet_connect(&sess, sd, &src[i], f->host);
 		if (c < 0) {
-			ERRX1(&sess, "inet_connect");
+			ERRX1("inet_connect");
 			goto out;
 		} else if (c > 0)
 			break;
@@ -285,16 +285,16 @@ rsync_connect(const struct opts *opts, int *sd, const struct fargs *f)
 	/* Drop the inet pledge. */
 	if (pledge("stdio unix rpath wpath cpath dpath fattr chown getpw unveil",
 	    NULL) == -1) {
-		ERR(&sess, "pledge");
+		ERR("pledge");
 		goto out;
 	}
 
 	if (i == srcsz) {
-		ERRX(&sess, "cannot connect to host: %s", f->host);
+		ERRX("cannot connect to host: %s", f->host);
 		goto out;
 	}
 
-	LOG2(&sess, "connected: %s, %s", src[i].ip, f->host);
+	LOG2("connected: %s, %s", src[i].ip, f->host);
 
 	free(src);
 	return 0;
@@ -331,7 +331,7 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 	assert(f->module != NULL);
 
 	if ((args = fargs_cmdline(&sess, f, &skip)) == NULL) {
-		ERRX1(&sess, "fargs_cmdline");
+		ERRX1("fargs_cmdline");
 		exit(1);
 	}
 
@@ -339,14 +339,14 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 
 	(void)snprintf(buf, sizeof(buf), "@RSYNCD: %d", sess.lver);
 	if (!io_write_line(&sess, sd, buf)) {
-		ERRX1(&sess, "io_write_line");
+		ERRX1("io_write_line");
 		goto out;
 	}
 
-	LOG2(&sess, "requesting module: %s, %s", f->module, f->host);
+	LOG2("requesting module: %s, %s", f->module, f->host);
 
 	if (!io_write_line(&sess, sd, f->module)) {
-		ERRX1(&sess, "io_write_line");
+		ERRX1("io_write_line");
 		goto out;
 	}
 
@@ -361,14 +361,14 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 	for (;;) {
 		for (i = 0; i < sizeof(buf); i++) {
 			if (!io_read_byte(&sess, sd, &byte)) {
-				ERRX1(&sess, "io_read_byte");
+				ERRX1("io_read_byte");
 				goto out;
 			}
 			if ((buf[i] = byte) == '\n')
 				break;
 		}
 		if (i == sizeof(buf)) {
-			ERRX(&sess, "line buffer overrun");
+			ERRX("line buffer overrun");
 			goto out;
 		} else if (i == 0)
 			continue;
@@ -385,7 +385,7 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 			buf[i - 1] = '\0';
 
 		if ((c = protocol_line(&sess, f->host, buf)) < 0) {
-			ERRX1(&sess, "protocol_line");
+			ERRX1("protocol_line");
 			goto out;
 		} else if (c > 0)
 			break;
@@ -402,11 +402,11 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 
 	for (i = skip ; args[i] != NULL; i++)
 		if (!io_write_line(&sess, sd, args[i])) {
-			ERRX1(&sess, "io_write_line");
+			ERRX1("io_write_line");
 			goto out;
 		}
 	if (!io_write_byte(&sess, sd, '\n')) {
-		ERRX1(&sess, "io_write_line");
+		ERRX1("io_write_line");
 		goto out;
 	}
 
@@ -418,14 +418,14 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 	/* Protocol exchange: get the random seed. */
 
 	if (!io_read_int(&sess, sd, &sess.seed)) {
-		ERRX1(&sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	}
 
 	/* Now we've completed the handshake. */
 
 	if (sess.rver < sess.lver) {
-		ERRX(&sess, "remote protocol is older than our own (%d < %d): "
+		ERRX("remote protocol is older than our own (%d < %d): "
 		    "this is not supported",
 		    sess.rver, sess.lver);
 		rc = 2;
@@ -433,23 +433,23 @@ rsync_socket(const struct opts *opts, int sd, const struct fargs *f)
 	}
 
 	sess.mplex_reads = 1;
-	LOG2(&sess, "read multiplexing enabled");
+	LOG2("read multiplexing enabled");
 
-	LOG2(&sess, "socket detected client version %d, server version %d, seed %d",
+	LOG2("socket detected client version %d, server version %d, seed %d",
 	    sess.lver, sess.rver, sess.seed);
 
 	assert(f->mode == FARGS_RECEIVER);
 
-	LOG2(&sess, "client starting receiver: %s", f->host);
+	LOG2("client starting receiver: %s", f->host);
 	if (!rsync_receiver(&sess, sd, sd, f->sink)) {
-		ERRX1(&sess, "rsync_receiver");
+		ERRX1("rsync_receiver");
 		goto out;
 	}
 
 #if 0
 	/* Probably the EOF. */
 	if (io_read_check(&sess, sd))
-		WARNX(&sess, "data remains in read pipe");
+		WARNX("data remains in read pipe");
 #endif
 
 	rc = 0;

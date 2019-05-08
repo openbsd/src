@@ -1,4 +1,4 @@
-/*	$Id: client.c,v 1.14 2019/03/23 16:04:28 deraadt Exp $ */
+/*	$Id: client.c,v 1.15 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,25 +50,24 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 	sess.lver = RSYNC_PROTOCOL;
 
 	if (!io_write_int(&sess, fd, sess.lver)) {
-		ERRX1(&sess, "io_write_int");
+		ERRX1("io_write_int");
 		goto out;
 	} else if (!io_read_int(&sess, fd, &sess.rver)) {
-		ERRX1(&sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	} else if (!io_read_int(&sess, fd, &sess.seed)) {
-		ERRX1(&sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	}
 
 	if (sess.rver < sess.lver) {
-		ERRX(&sess,
-		    "remote protocol %d is older than our own %d: unsupported",
+		ERRX("remote protocol %d is older than our own %d: unsupported",
 		    sess.rver, sess.lver);
 		rc = 2;
 		goto out;
 	}
 
-	LOG2(&sess, "client detected client version %d, server version %d, seed %d",
+	LOG2("client detected client version %d, server version %d, seed %d",
 	    sess.lver, sess.rver, sess.seed);
 
 	sess.mplex_reads = 1;
@@ -79,18 +78,18 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 	 */
 
 	if (f->mode != FARGS_RECEIVER) {
-		LOG2(&sess, "client starting sender: %s",
+		LOG2("client starting sender: %s",
 		    f->host == NULL ? "(local)" : f->host);
 		if (!rsync_sender(&sess, fd, fd, f->sourcesz,
 		    f->sources)) {
-			ERRX1(&sess, "rsync_sender");
+			ERRX1("rsync_sender");
 			goto out;
 		}
 	} else {
-		LOG2(&sess, "client starting receiver: %s",
+		LOG2("client starting receiver: %s",
 		    f->host == NULL ? "(local)" : f->host);
 		if (!rsync_receiver(&sess, fd, fd, f->sink)) {
-			ERRX1(&sess, "rsync_receiver");
+			ERRX1("rsync_receiver");
 			goto out;
 		}
 	}
@@ -98,7 +97,7 @@ rsync_client(const struct opts *opts, int fd, const struct fargs *f)
 #if 0
 	/* Probably the EOF. */
 	if (io_read_check(&sess, fd))
-		WARNX(&sess, "data remains in read pipe");
+		WARNX("data remains in read pipe");
 #endif
 
 	rc = 0;

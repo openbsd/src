@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.24 2019/04/04 04:19:54 bket Exp $ */
+/*	$Id: flist.c,v 1.25 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -81,7 +81,7 @@ flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
 
 	new = calloc(*sz, sizeof(struct flist));
 	if (new == NULL) {
-		ERR(sess, "calloc");
+		ERR("calloc");
 		return 0;
 	}
 
@@ -106,7 +106,7 @@ flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
 		if (strcmp(f->path, fnext->path) == 0) {
 			new[j++] = *f;
 			i++;
-			WARNX(sess, "%s: duplicate path: %s",
+			WARNX("%s: duplicate path: %s",
 			    f->wpath, f->path);
 			free(fnext->path);
 			free(fnext->link);
@@ -114,7 +114,7 @@ flist_dedupe(struct sess *sess, struct flist **fl, size_t *sz)
 			continue;
 		}
 
-		ERRX(sess, "%s: duplicate working path for "
+		ERRX("%s: duplicate working path for "
 		    "possibly different file: %s, %s",
 		    f->wpath, f->path, fnext->path);
 		free(new);
@@ -166,11 +166,11 @@ flist_topdirs(struct sess *sess, struct flist *fl, size_t flsz)
 			if (cp != NULL && cp[1] != '\0')
 				continue;
 			fl[i].st.flags |= FLSTAT_TOP_DIR;
-			LOG4(sess, "%s: top-level", fl[i].wpath);
+			LOG4("%s: top-level", fl[i].wpath);
 		}
 	} else if (flsz) {
 		fl[0].st.flags |= FLSTAT_TOP_DIR;
-		LOG4(sess, "%s: top-level", fl[0].wpath);
+		LOG4("%s: top-level", fl[0].wpath);
 	}
 }
 
@@ -191,15 +191,15 @@ flist_fts_check(struct sess *sess, FTSENT *ent)
 		return 1;
 
 	if (ent->fts_info == FTS_DC) {
-		WARNX(sess, "%s: directory cycle", ent->fts_path);
+		WARNX("%s: directory cycle", ent->fts_path);
 	} else if (ent->fts_info == FTS_DNR) {
 		errno = ent->fts_errno;
-		WARN(sess, "%s: unreadable directory", ent->fts_path);
+		WARN("%s: unreadable directory", ent->fts_path);
 	} else if (ent->fts_info == FTS_DOT) {
-		WARNX(sess, "%s: skipping dot-file", ent->fts_path);
+		WARNX("%s: skipping dot-file", ent->fts_path);
 	} else if (ent->fts_info == FTS_ERR) {
 		errno = ent->fts_errno;
-		WARN(sess, "%s", ent->fts_path);
+		WARN("%s", ent->fts_path);
 	} else if (ent->fts_info == FTS_DEFAULT) {
 		if ((sess->opts->devices && (S_ISBLK(ent->fts_statp->st_mode) ||
 		    S_ISCHR(ent->fts_statp->st_mode))) ||
@@ -208,10 +208,10 @@ flist_fts_check(struct sess *sess, FTSENT *ent)
 		    S_ISSOCK(ent->fts_statp->st_mode)))) {
 			return 1;
 		}
-		WARNX(sess, "%s: skipping special", ent->fts_path);
+		WARNX("%s: skipping special", ent->fts_path);
 	} else if (ent->fts_info == FTS_NS) {
 		errno = ent->fts_errno;
-		WARN(sess, "%s: could not stat", ent->fts_path);
+		WARN("%s: could not stat", ent->fts_path);
 	}
 
 	return 0;
@@ -265,7 +265,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 
 	/* Double-check that we've no pending multiplexed data. */
 
-	LOG2(sess, "sending file metadata list: %zu", flsz);
+	LOG2("sending file metadata list: %zu", flsz);
 
 	for (i = 0; i < flsz; i++) {
 		f = &fl[i];
@@ -284,7 +284,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		if (sess->mplex_reads &&
 		    io_read_check(sess, fdin) &&
 		     !io_read_flush(sess, fdin)) {
-			ERRX1(sess, "io_read_flush");
+			ERRX1("io_read_flush");
 			goto out;
 		}
 
@@ -299,7 +299,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		if ((FLSTAT_TOP_DIR & f->st.flags))
 			flag |= FLIST_TOP_LEVEL;
 
-		LOG3(sess, "%s: sending file metadata: "
+		LOG3("%s: sending file metadata: "
 			"size %jd, mtime %jd, mode %o",
 			fn, (intmax_t)f->st.size,
 			(intmax_t)f->st.mtime, f->st.mode);
@@ -308,22 +308,22 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		/* FIXME: buffer this. */
 
 		if (!io_write_byte(sess, fdout, flag)) {
-			ERRX1(sess, "io_write_byte");
+			ERRX1("io_write_byte");
 			goto out;
 		} else if (!io_write_int(sess, fdout, sz)) {
-			ERRX1(sess, "io_write_int");
+			ERRX1("io_write_int");
 			goto out;
 		} else if (!io_write_buf(sess, fdout, fn, sz)) {
-			ERRX1(sess, "io_write_buf");
+			ERRX1("io_write_buf");
 			goto out;
 		} else if (!io_write_long(sess, fdout, f->st.size)) {
-			ERRX1(sess, "io_write_long");
+			ERRX1("io_write_long");
 			goto out;
 		} else if (!io_write_uint(sess, fdout, (uint32_t)f->st.mtime)) {
-			ERRX1(sess, "io_write_uint");
+			ERRX1("io_write_uint");
 			goto out;
 		} else if (!io_write_uint(sess, fdout, f->st.mode)) {
-			ERRX1(sess, "io_write_uint");
+			ERRX1("io_write_uint");
 			goto out;
 		}
 
@@ -331,11 +331,11 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 
 		if (sess->opts->preserve_uids) {
 			if (!io_write_uint(sess, fdout, f->st.uid)) {
-				ERRX1(sess, "io_write_uint");
+				ERRX1("io_write_uint");
 				goto out;
 			}
 			if (!idents_add(sess, 0, &uids, &uidsz, f->st.uid)) {
-				ERRX1(sess, "idents_add");
+				ERRX1("idents_add");
 				goto out;
 			}
 		}
@@ -344,11 +344,11 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 
 		if (sess->opts->preserve_gids) {
 			if (!io_write_uint(sess, fdout, f->st.gid)) {
-				ERRX1(sess, "io_write_uint");
+				ERRX1("io_write_uint");
 				goto out;
 			}
 			if (!idents_add(sess, 1, &gids, &gidsz, f->st.gid)) {
-				ERRX1(sess, "idents_add");
+				ERRX1("idents_add");
 				goto out;
 			}
 		}
@@ -360,7 +360,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		    (sess->opts->specials && (S_ISFIFO(f->st.mode) ||
 		    S_ISSOCK(f->st.mode)))) {
 			if (!io_write_int(sess, fdout, f->st.rdev)) {
-				ERRX1(sess, "io_write_int");
+				ERRX1("io_write_int");
 				goto out;
 			}
 		}
@@ -373,11 +373,11 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 			sz = strlen(f->link);
 			assert(sz < INT32_MAX);
 			if (!io_write_int(sess, fdout, sz)) {
-				ERRX1(sess, "io_write_int");
+				ERRX1("io_write_int");
 				goto out;
 			}
 			if (!io_write_buf(sess, fdout, fn, sz)) {
-				ERRX1(sess, "io_write_buf");
+				ERRX1("io_write_buf");
 				goto out;
 			}
 		}
@@ -389,24 +389,24 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 	/* Signal end of file list. */
 
 	if (!io_write_byte(sess, fdout, 0)) {
-		ERRX1(sess, "io_write_byte");
+		ERRX1("io_write_byte");
 		goto out;
 	}
 
 	/* Conditionally write identifier lists. */
 
 	if (sess->opts->preserve_uids && !sess->opts->numeric_ids) {
-		LOG2(sess, "sending uid list: %zu", uidsz);
+		LOG2("sending uid list: %zu", uidsz);
 		if (!idents_send(sess, fdout, uids, uidsz)) {
-			ERRX1(sess, "idents_send");
+			ERRX1("idents_send");
 			goto out;
 		}
 	}
 
 	if (sess->opts->preserve_gids && !sess->opts->numeric_ids) {
-		LOG2(sess, "sending gid list: %zu", gidsz);
+		LOG2("sending gid list: %zu", gidsz);
 		if (!idents_send(sess, fdout, gids, gidsz)) {
-			ERRX1(sess, "idents_send");
+			ERRX1("idents_send");
 			goto out;
 		}
 	}
@@ -444,7 +444,7 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 
 	if (FLIST_NAME_SAME & flags) {
 		if (!io_read_byte(sess, fd, &bval)) {
-			ERRX1(sess, "io_read_byte");
+			ERRX1("io_read_byte");
 			return 0;
 		}
 		partial = bval;
@@ -454,12 +454,12 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 
 	if (FLIST_NAME_LONG & flags) {
 		if (!io_read_size(sess, fd, &pathlen)) {
-			ERRX1(sess, "io_read_size");
+			ERRX1("io_read_size");
 			return 0;
 		}
 	} else {
 		if (!io_read_byte(sess, fd, &bval)) {
-			ERRX1(sess, "io_read_byte");
+			ERRX1("io_read_byte");
 			return 0;
 		}
 		pathlen = bval;
@@ -469,12 +469,12 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	/* FIXME: maximum pathname length. */
 
 	if ((len = pathlen + partial) == 0) {
-		ERRX(sess, "security violation: zero-length pathname");
+		ERRX("security violation: zero-length pathname");
 		return 0;
 	}
 
 	if ((f->path = malloc(len + 1)) == NULL) {
-		ERR(sess, "malloc");
+		ERR("malloc");
 		return 0;
 	}
 	f->path[len] = '\0';
@@ -483,12 +483,12 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 		memcpy(f->path, last, partial);
 
 	if (!io_read_buf(sess, fd, f->path + partial, pathlen)) {
-		ERRX1(sess, "io_read_buf");
+		ERRX1("io_read_buf");
 		return 0;
 	}
 
 	if (f->path[0] == '/') {
-		ERRX(sess, "security violation: absolute pathname: %s",
+		ERRX("security violation: absolute pathname: %s",
 		    f->path);
 		return 0;
 	}
@@ -497,7 +497,7 @@ flist_recv_name(struct sess *sess, int fd, struct flist *f, uint8_t flags,
 	    (len > 2 && strcmp(f->path + len - 3, "/..") == 0) ||
 	    (len > 2 && strncmp(f->path, "../", 3) == 0) ||
 	    strcmp(f->path, "..") == 0) {
-		ERRX(sess, "%s: security violation: backtracking pathname",
+		ERRX("%s: security violation: backtracking pathname",
 		    f->path);
 		return 0;
 	}
@@ -526,7 +526,7 @@ flist_realloc(struct sess *sess, struct flist **fl, size_t *sz, size_t *max)
 	pp = recallocarray(*fl, *max,
 		*max + FLIST_CHUNK_SIZE, sizeof(struct flist));
 	if (pp == NULL) {
-		ERR(sess, "recallocarray");
+		ERR("recallocarray");
 		return 0;
 	}
 	*fl = pp;
@@ -551,7 +551,7 @@ flist_append(struct sess *sess, struct flist *f, struct stat *st,
 	 */
 
 	if ((f->path = strdup(path)) == NULL) {
-		ERR(sess, "strdup");
+		ERR("strdup");
 		return 0;
 	}
 
@@ -573,7 +573,7 @@ flist_append(struct sess *sess, struct flist *f, struct stat *st,
 	if (S_ISLNK(st->st_mode)) {
 		f->link = symlink_read(sess, f->path);
 		if (f->link == NULL) {
-			ERRX1(sess, "symlink_read");
+			ERRX1("symlink_read");
 			return 0;
 		}
 	}
@@ -604,13 +604,13 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 	for (;;) {
 		if (!io_read_byte(sess, fd, &flag)) {
-			ERRX1(sess, "io_read_byte");
+			ERRX1("io_read_byte");
 			goto out;
 		} else if (flag == 0)
 			break;
 
 		if (!flist_realloc(sess, &fl, &flsz, &flmax)) {
-			ERRX1(sess, "flist_realloc");
+			ERRX1("flist_realloc");
 			goto out;
 		}
 
@@ -620,14 +620,14 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		/* Filename first. */
 
 		if (!flist_recv_name(sess, fd, ff, flag, last)) {
-			ERRX1(sess, "flist_recv_name");
+			ERRX1("flist_recv_name");
 			goto out;
 		}
 
 		/* Read the file size. */
 
 		if (!io_read_long(sess, fd, &lval)) {
-			ERRX1(sess, "io_read_long");
+			ERRX1("io_read_long");
 			goto out;
 		}
 		ff->st.size = lval;
@@ -636,12 +636,12 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		if (!(FLIST_TIME_SAME & flag)) {
 			if (!io_read_uint(sess, fd, &uival)) {
-				ERRX1(sess, "io_read_int");
+				ERRX1("io_read_int");
 				goto out;
 			}
 			ff->st.mtime = uival;	/* beyond 2038 */
 		} else if (fflast == NULL) {
-			ERRX(sess, "same time without last entry");
+			ERRX("same time without last entry");
 			goto out;
 		}  else
 			ff->st.mtime = fflast->st.mtime;
@@ -650,12 +650,12 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 		if (!(FLIST_MODE_SAME & flag)) {
 			if (!io_read_uint(sess, fd, &uival)) {
-				ERRX1(sess, "io_read_int");
+				ERRX1("io_read_int");
 				goto out;
 			}
 			ff->st.mode = uival;
 		} else if (fflast == NULL) {
-			ERRX(sess, "same mode without last entry");
+			ERRX("same mode without last entry");
 			goto out;
 		} else
 			ff->st.mode = fflast->st.mode;
@@ -665,12 +665,12 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		if (sess->opts->preserve_uids) {
 			if (!(FLIST_UID_SAME & flag)) {
 				if (!io_read_uint(sess, fd, &uival)) {
-					ERRX1(sess, "io_read_int");
+					ERRX1("io_read_int");
 					goto out;
 				}
 				ff->st.uid = uival;
 			} else if (fflast == NULL) {
-				ERRX(sess, "same uid without last entry");
+				ERRX("same uid without last entry");
 				goto out;
 			} else
 				ff->st.uid = fflast->st.uid;
@@ -681,12 +681,12 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		if (sess->opts->preserve_gids) {
 			if (!(FLIST_GID_SAME & flag)) {
 				if (!io_read_uint(sess, fd, &uival)) {
-					ERRX1(sess, "io_read_int");
+					ERRX1("io_read_int");
 					goto out;
 				}
 				ff->st.gid = uival;
 			} else if (fflast == NULL) {
-				ERRX(sess, "same gid without last entry");
+				ERRX("same gid without last entry");
 				goto out;
 			} else
 				ff->st.gid = fflast->st.gid;
@@ -700,12 +700,12 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		    S_ISSOCK(ff->st.mode)))) {
 			if (!(FLIST_RDEV_SAME & flag)) {
 				if (!io_read_int(sess, fd, &ival)) {
-					ERRX1(sess, "io_read_int");
+					ERRX1("io_read_int");
 					goto out;
 				}
 				ff->st.rdev = ival;
 			} else if (fflast == NULL) {
-				ERRX(sess, "same device without last entry");
+				ERRX("same device without last entry");
 				goto out;
 			} else
 				ff->st.rdev = fflast->st.rdev;
@@ -716,24 +716,24 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		if (S_ISLNK(ff->st.mode) &&
 		    sess->opts->preserve_links) {
 			if (!io_read_size(sess, fd, &lsz)) {
-				ERRX1(sess, "io_read_size");
+				ERRX1("io_read_size");
 				goto out;
 			} else if (lsz == 0) {
-				ERRX(sess, "empty link name");
+				ERRX("empty link name");
 				goto out;
 			}
 			ff->link = calloc(lsz + 1, 1);
 			if (ff->link == NULL) {
-				ERR(sess, "calloc");
+				ERR("calloc");
 				goto out;
 			}
 			if (!io_read_buf(sess, fd, ff->link, lsz)) {
-				ERRX1(sess, "io_read_buf");
+				ERRX1("io_read_buf");
 				goto out;
 			}
 		}
 
-		LOG3(sess, "%s: received file metadata: "
+		LOG3("%s: received file metadata: "
 			"size %jd, mtime %jd, mode %o, rdev (%d, %d)",
 			ff->path, (intmax_t)ff->st.size,
 			(intmax_t)ff->st.mtime, ff->st.mode,
@@ -747,23 +747,23 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 
 	if (sess->opts->preserve_uids && !sess->opts->numeric_ids) {
 		if (!idents_recv(sess, fd, &uids, &uidsz)) {
-			ERRX1(sess, "idents_recv");
+			ERRX1("idents_recv");
 			goto out;
 		}
-		LOG2(sess, "received uid list: %zu", uidsz);
+		LOG2("received uid list: %zu", uidsz);
 	}
 
 	if (sess->opts->preserve_gids && !sess->opts->numeric_ids) {
 		if (!idents_recv(sess, fd, &gids, &gidsz)) {
-			ERRX1(sess, "idents_recv");
+			ERRX1("idents_recv");
 			goto out;
 		}
-		LOG2(sess, "received gid list: %zu", gidsz);
+		LOG2("received gid list: %zu", gidsz);
 	}
 
 	/* Remember to order the received list. */
 
-	LOG2(sess, "received file metadata list: %zu", flsz);
+	LOG2("received file metadata list: %zu", flsz);
 	qsort(fl, flsz, sizeof(struct flist), flist_cmp);
 	flist_topdirs(sess, fl, flsz);
 	*sz = flsz;
@@ -821,47 +821,47 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 	 */
 
 	if (lstat(root, &st) == -1) {
-		ERR(sess, "%s: lstat", root);
+		ERR("%s: lstat", root);
 		return 0;
 	} else if (S_ISREG(st.st_mode)) {
 		if (!flist_realloc(sess, fl, sz, max)) {
-			ERRX1(sess, "flist_realloc");
+			ERRX1("flist_realloc");
 			return 0;
 		}
 		f = &(*fl)[(*sz) - 1];
 		assert(f != NULL);
 
 		if (!flist_append(sess, f, &st, root)) {
-			ERRX1(sess, "flist_append");
+			ERRX1("flist_append");
 			return 0;
 		}
 		if (unveil(root, "r") == -1) {
-			ERR(sess, "%s: unveil", root);
+			ERR("%s: unveil", root);
 			return 0;
 		}
 		return 1;
 	} else if (S_ISLNK(st.st_mode)) {
 		if (!sess->opts->preserve_links) {
-			WARNX(sess, "%s: skipping symlink", root);
+			WARNX("%s: skipping symlink", root);
 			return 1;
 		} else if (!flist_realloc(sess, fl, sz, max)) {
-			ERRX1(sess, "flist_realloc");
+			ERRX1("flist_realloc");
 			return 0;
 		}
 		f = &(*fl)[(*sz) - 1];
 		assert(f != NULL);
 
 		if (!flist_append(sess, f, &st, root)) {
-			ERRX1(sess, "flist_append");
+			ERRX1("flist_append");
 			return 0;
 		}
 		if (unveil(root, "r") == -1) {
-			ERR(sess, "%s: unveil", root);
+			ERR("%s: unveil", root);
 			return 0;
 		}
 		return 1;
 	} else if (!S_ISDIR(st.st_mode)) {
-		WARNX(sess, "%s: skipping special", root);
+		WARNX("%s: skipping special", root);
 		return 1;
 	}
 
@@ -894,7 +894,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 	 */
 
 	if ((fts = fts_open(cargv, FTS_PHYSICAL, NULL)) == NULL) {
-		ERR(sess, "fts_open");
+		ERR("fts_open");
 		return 0;
 	}
 
@@ -910,7 +910,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		assert(ent->fts_statp != NULL);
 		if (S_ISLNK(ent->fts_statp->st_mode) &&
 		    !sess->opts->preserve_links) {
-			WARNX(sess, "%s: skipping symlink", ent->fts_path);
+			WARNX("%s: skipping symlink", ent->fts_path);
 			continue;
 		}
 
@@ -933,7 +933,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 				continue;
 
 			if ((xdev = malloc(sizeof(dev_t))) == NULL) {
-				ERRX1(sess, "malloc");
+				ERRX1("malloc");
 				goto out;
 			}
 
@@ -949,7 +949,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 			if (nxdev)
 				if ((xdev = realloc(xdev, sizeof(dev_t))) ==
 				    NULL) {
-					ERRX1(sess, "realloc");
+					ERRX1("realloc");
 					goto out;
 				}
 			xdev[nxdev] = ent->fts_statp->st_dev;
@@ -959,7 +959,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		/* Allocate a new file entry. */
 
 		if (!flist_realloc(sess, fl, sz, max)) {
-			ERRX1(sess, "flist_realloc");
+			ERRX1("flist_realloc");
 			goto out;
 		}
 		flsz++;
@@ -969,13 +969,13 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 
 		if (ent->fts_path[stripdir] == '\0') {
 			if (asprintf(&f->path, "%s.", ent->fts_path) < 0) {
-				ERR(sess, "asprintf");
+				ERR("asprintf");
 				f->path = NULL;
 				goto out;
 			}
 		} else {
 			if ((f->path = strdup(ent->fts_path)) == NULL) {
-				ERR(sess, "strdup");
+				ERR("strdup");
 				goto out;
 			}
 		}
@@ -988,7 +988,7 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		if (S_ISLNK(ent->fts_statp->st_mode)) {
 			f->link = symlink_read(sess, f->path);
 			if (f->link == NULL) {
-				ERRX1(sess, "symlink_read");
+				ERRX1("symlink_read");
 				goto out;
 			}
 		}
@@ -997,15 +997,15 @@ flist_gen_dirent(struct sess *sess, char *root, struct flist **fl, size_t *sz,
 		errno = 0;
 	}
 	if (errno) {
-		ERR(sess, "fts_read");
+		ERR("fts_read");
 		goto out;
 	}
 	if (unveil(root, "r") == -1) {
-		ERR(sess, "%s: unveil", root);
+		ERR("%s: unveil", root);
 		goto out;
 	}
 
-	LOG3(sess, "generated %zu filenames: %s", flsz, root);
+	LOG3("generated %zu filenames: %s", flsz, root);
 	rc = 1;
 out:
 	fts_close(fts);
@@ -1032,11 +1032,11 @@ flist_gen_dirs(struct sess *sess, size_t argc, char **argv, struct flist **flp,
 			break;
 
 	if (i == argc) {
-		LOG2(sess, "recursively generated %zu filenames", *sz);
+		LOG2("recursively generated %zu filenames", *sz);
 		return 1;
 	}
 
-	ERRX1(sess, "flist_gen_dirent");
+	ERRX1("flist_gen_dirent");
 	flist_free(*flp, max);
 	*flp = NULL;
 	*sz = 0;
@@ -1060,7 +1060,7 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 	assert(argc);
 
 	if ((fl = calloc(argc, sizeof(struct flist))) == NULL) {
-		ERR(sess, "calloc");
+		ERR("calloc");
 		return 0;
 	}
 
@@ -1068,7 +1068,7 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 		if (argv[i][0] == '\0')
 			continue;
 		if (lstat(argv[i], &st) == -1) {
-			ERR(sess, "%s: lstat", argv[i]);
+			ERR("%s: lstat", argv[i]);
 			goto out;
 		}
 
@@ -1080,15 +1080,15 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 		 */
 
 		if (S_ISDIR(st.st_mode)) {
-			WARNX(sess, "%s: skipping directory", argv[i]);
+			WARNX("%s: skipping directory", argv[i]);
 			continue;
 		} else if (S_ISLNK(st.st_mode)) {
 			if (!sess->opts->preserve_links) {
-				WARNX(sess, "%s: skipping symlink", argv[i]);
+				WARNX("%s: skipping symlink", argv[i]);
 				continue;
 			}
 		} else if (!S_ISREG(st.st_mode)) {
-			WARNX(sess, "%s: skipping special", argv[i]);
+			WARNX("%s: skipping special", argv[i]);
 			continue;
 		}
 
@@ -1099,16 +1099,16 @@ flist_gen_files(struct sess *sess, size_t argc, char **argv,
 		/* Add this file to our file-system worldview. */
 
 		if (unveil(argv[i], "r") == -1) {
-			ERR(sess, "%s: unveil", argv[i]);
+			ERR("%s: unveil", argv[i]);
 			goto out;
 		}
 		if (!flist_append(sess, f, &st, argv[i])) {
-			ERRX1(sess, "flist_append");
+			ERRX1("flist_append");
 			goto out;
 		}
 	}
 
-	LOG2(sess, "non-recursively generated %zu filenames", flsz);
+	LOG2("non-recursively generated %zu filenames", flsz);
 	*sz = flsz;
 	*flp = fl;
 	return 1;
@@ -1141,7 +1141,7 @@ flist_gen(struct sess *sess, size_t argc, char **argv, struct flist **flp,
 	/* After scanning, lock our file-system view. */
 
 	if (unveil(NULL, NULL) == -1) {
-		ERR(sess, "unveil");
+		ERR("unveil");
 		return 0;
 	}
 	if (!rc)
@@ -1154,7 +1154,7 @@ flist_gen(struct sess *sess, size_t argc, char **argv, struct flist **flp,
 		return 1;
 	}
 
-	ERRX1(sess, "flist_dedupe");
+	ERRX1("flist_dedupe");
 	flist_free(*flp, *sz);
 	*flp = NULL;
 	*sz = 0;
@@ -1206,7 +1206,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 		return 1;
 
 	if ((cargv = calloc(cargvs + 1, sizeof(char *))) == NULL) {
-		ERR(sess, "calloc");
+		ERR("calloc");
 		return 0;
 	}
 
@@ -1221,7 +1221,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 		assert(cargvs == 1);
 		assert(S_ISDIR(wfl[0].st.mode));
 		if (asprintf(&cargv[0], "%s/", root) < 0) {
-			ERR(sess, "asprintf");
+			ERR("asprintf");
 			cargv[0] = NULL;
 			goto out;
 		}
@@ -1234,18 +1234,18 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 			assert(strcmp(wfl[i].wpath, "."));
 			c = asprintf(&cargv[j], "%s/%s", root, wfl[i].wpath);
 			if (c < 0) {
-				ERR(sess, "asprintf");
+				ERR("asprintf");
 				cargv[j] = NULL;
 				goto out;
 			}
-			LOG4(sess, "%s: will scan for deletions", cargv[j]);
+			LOG4("%s: will scan for deletions", cargv[j]);
 			j++;
 		}
 		assert(j == cargvs);
 		cargv[j] = NULL;
 	}
 
-	LOG2(sess, "delete from %zu directories", cargvs);
+	LOG2("delete from %zu directories", cargvs);
 
 	/*
 	 * Next, use the standard hcreate(3) hashtable interface to hash
@@ -1257,21 +1257,21 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 	 */
 
 	if (!hcreate(wflsz)) {
-		ERR(sess, "hcreate");
+		ERR("hcreate");
 		goto out;
 	}
 
 	for (i = 0; i < wflsz; i++) {
 		memset(&hent, 0, sizeof(ENTRY));
 		if ((hent.key = strdup(wfl[i].wpath)) == NULL) {
-			ERR(sess, "strdup");
+			ERR("strdup");
 			goto out;
 		}
 		if ((hentp = hsearch(hent, ENTER)) == NULL) {
-			ERR(sess, "hsearch");
+			ERR("hsearch");
 			goto out;
 		} else if (hentp->key != hent.key) {
-			ERRX(sess, "%s: duplicate", wfl[i].wpath);
+			ERRX("%s: duplicate", wfl[i].wpath);
 			free(hent.key);
 			goto out;
 		}
@@ -1284,7 +1284,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 	 */
 
 	if ((fts = fts_open(cargv, FTS_PHYSICAL, NULL)) == NULL) {
-		ERR(sess, "fts_open");
+		ERR("fts_open");
 		goto out;
 	}
 
@@ -1312,7 +1312,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 			flag = 0;
 			for (i = 0; i < wflsz; i++) {
 				if (stat(wfl[i].path, &st) == -1) {
-					ERR(sess, "%s: stat", wfl[i].path);
+					ERR("%s: stat", wfl[i].path);
 					goto out;
 				}
 				if (ent->fts_statp->st_dev == st.st_dev) {
@@ -1334,13 +1334,13 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 		/* Not found: we'll delete it. */
 
 		if (!flist_realloc(sess, fl, sz, &max)) {
-			ERRX1(sess, "flist_realloc");
+			ERRX1("flist_realloc");
 			goto out;
 		}
 		f = &(*fl)[*sz - 1];
 
 		if ((f->path = strdup(ent->fts_path)) == NULL) {
-			ERR(sess, "strdup");
+			ERR("strdup");
 			goto out;
 		}
 		f->wpath = f->path + stripdir;
@@ -1349,7 +1349,7 @@ flist_gen_dels(struct sess *sess, const char *root, struct flist **fl,
 	}
 
 	if (errno) {
-		ERR(sess, "fts_read");
+		ERR("fts_read");
 		goto out;
 	}
 
@@ -1384,14 +1384,14 @@ flist_del(struct sess *sess, int root, const struct flist *fl, size_t flsz)
 	assert(sess->opts->recursive);
 
 	for (i = flsz - 1; i >= 0; i--) {
-		LOG1(sess, "%s: deleting", fl[i].wpath);
+		LOG1("%s: deleting", fl[i].wpath);
 		if (sess->opts->dry_run)
 			continue;
 		assert(root != -1);
 		flag = S_ISDIR(fl[i].st.mode) ? AT_REMOVEDIR : 0;
 		if (unlinkat(root, fl[i].wpath, flag) == -1 &&
 		    errno != ENOENT) {
-			ERR(sess, "%s: unlinkat", fl[i].wpath);
+			ERR("%s: unlinkat", fl[i].wpath);
 			return 0;
 		}
 	}

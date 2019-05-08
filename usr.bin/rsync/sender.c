@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.21 2019/04/02 11:05:55 deraadt Exp $ */
+/*	$Id: sender.c,v 1.22 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -119,12 +119,12 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		sz = MINIMUM(MAX_CHUNK,
 			up->stat.curlen - up->stat.curpos);
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, isz)) {
-			ERRX1(sess, "io_lowbuffer_alloc");
+			ERRX1("io_lowbuffer_alloc");
 			return 0;
 		}
 		io_lowbuffer_int(sess, *wb, &pos, *wbsz, sz);
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, sz)) {
-			ERRX1(sess, "io_lowbuffer_alloc");
+			ERRX1("io_lowbuffer_alloc");
 			return 0;
 		}
 		io_lowbuffer_buf(sess, *wb, &pos, *wbsz,
@@ -144,7 +144,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		 */
 
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, isz)) {
-			ERRX1(sess, "io_lowbuffer_alloc");
+			ERRX1("io_lowbuffer_alloc");
 			return 0;
 		}
 		io_lowbuffer_int(sess, *wb,
@@ -161,7 +161,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 
 		hash_file(up->stat.map, up->stat.mapsz, fmd, sess);
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, dsz)) {
-			ERRX1(sess, "io_lowbuffer_alloc");
+			ERRX1("io_lowbuffer_alloc");
 			return 0;
 		}
 		io_lowbuffer_buf(sess, *wb, &pos, *wbsz, fmd, dsz);
@@ -175,7 +175,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		 */
 
 		if (!sess->opts->dry_run)
-			LOG3(sess, "%s: flushed %jd KB total, %.2f%% uploaded",
+			LOG3("%s: flushed %jd KB total, %.2f%% uploaded",
 			    fl[up->cur->idx].path,
 			    (intmax_t)up->stat.total / 1024,
 			    100.0 * up->stat.dirty / up->stat.total);
@@ -219,7 +219,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 
 	if (up->cur->idx < 0) {
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, isz)) {
-			ERRX1(sess, "io_lowbuffer_alloc");
+			ERRX1("io_lowbuffer_alloc");
 			return 0;
 		}
 		io_lowbuffer_int(sess, *wb, &pos, *wbsz, -1);
@@ -227,7 +227,7 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		if (sess->opts->server && sess->rver > 27) {
 			if (!io_lowbuffer_alloc(sess,
 			    wb, wbsz, wbmax, isz)) {
-				ERRX1(sess, "io_lowbuffer_alloc");
+				ERRX1("io_lowbuffer_alloc");
 				return 0;
 			}
 			io_lowbuffer_int(sess, *wb, &pos, *wbsz, -1);
@@ -235,10 +235,10 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		up->stat.curst = BLKSTAT_PHASE;
 	} else if (sess->opts->dry_run) {
 		if (!sess->opts->server)
-			LOG1(sess, "%s", fl[up->cur->idx].wpath);
+			LOG1("%s", fl[up->cur->idx].wpath);
 
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, isz)) {
-			ERRX1(sess, "io_lowbuffer_alloc");
+			ERRX1("io_lowbuffer_alloc");
 			return 0;
 		}
 		io_lowbuffer_int(sess, *wb, &pos, *wbsz, up->cur->idx);
@@ -253,17 +253,17 @@ send_up_fsm(struct sess *sess, size_t *phase,
 		 */
 
 		if (!sess->opts->server)
-			LOG1(sess, "%s", fl[up->cur->idx].wpath);
+			LOG1("%s", fl[up->cur->idx].wpath);
 
 		if (!io_lowbuffer_alloc(sess, wb, wbsz, wbmax, 20)) {
-			ERRX1(sess, "io_lowbuffer_alloc");
+			ERRX1("io_lowbuffer_alloc");
 			return 0;
 		}
 		assert(sizeof(buf) == 20);
 		blk_recv_ack(sess, buf, up->cur->blks, up->cur->idx);
 		io_lowbuffer_buf(sess, *wb, &pos, *wbsz, buf, 20);
 
-		LOG3(sess, "%s: primed for %jd B total",
+		LOG3("%s: primed for %jd B total",
 		    fl[up->cur->idx].path, (intmax_t)up->cur->blks->size);
 		up->stat.curst = BLKSTAT_NEXT;
 	}
@@ -289,7 +289,7 @@ send_dl_enqueue(struct sess *sess, struct send_dlq *q,
 
 	if (idx == -1) {
 		if ((s = calloc(1, sizeof(struct send_dl))) == NULL) {
-			ERR(sess, "calloc");
+			ERR("calloc");
 			return 0;
 		}
 		s->idx = -1;
@@ -301,25 +301,25 @@ send_dl_enqueue(struct sess *sess, struct send_dlq *q,
 	/* Validate the index. */
 
 	if (idx < 0 || (uint32_t)idx >= flsz) {
-		ERRX(sess, "file index out of bounds: invalid %d out of %zu",
+		ERRX("file index out of bounds: invalid %d out of %zu",
 		    idx, flsz);
 		return 0;
 	} else if (S_ISDIR(fl[idx].st.mode)) {
-		ERRX(sess, "blocks requested for "
+		ERRX("blocks requested for "
 			"directory: %s", fl[idx].path);
 		return 0;
 	} else if (S_ISLNK(fl[idx].st.mode)) {
-		ERRX(sess, "blocks requested for "
+		ERRX("blocks requested for "
 			"symlink: %s", fl[idx].path);
 		return 0;
 	} else if (!S_ISREG(fl[idx].st.mode)) {
-		ERRX(sess, "blocks requested for "
+		ERRX("blocks requested for "
 			"special: %s", fl[idx].path);
 		return 0;
 	}
 
 	if ((s = calloc(1, sizeof(struct send_dl))) == NULL) {
-		ERR(sess, "callloc");
+		ERR("callloc");
 		return 0;
 	}
 	s->idx = idx;
@@ -335,7 +335,7 @@ send_dl_enqueue(struct sess *sess, struct send_dlq *q,
 	if (!sess->opts->dry_run) {
 		s->blks = blk_recv(sess, fd, fl[idx].path);
 		if (s->blks == NULL) {
-			ERRX1(sess, "blk_recv");
+			ERRX1("blk_recv");
 			return 0;
 		}
 	}
@@ -371,7 +371,7 @@ rsync_sender(struct sess *sess, int fdin,
 	ssize_t		    ssz;
 
 	if (pledge("stdio getpw rpath unveil", NULL) == -1) {
-		ERR(sess, "pledge");
+		ERR("pledge");
 		return 0;
 	}
 
@@ -387,7 +387,7 @@ rsync_sender(struct sess *sess, int fdin,
 	 */
 
 	if (!flist_gen(sess, argc, argv, &fl, &flsz)) {
-		ERRX1(sess, "flist_gen");
+		ERRX1("flist_gen");
 		goto out;
 	}
 
@@ -395,7 +395,7 @@ rsync_sender(struct sess *sess, int fdin,
 
 	if (!sess->opts->server && sess->opts->del &&
 	     !io_write_int(sess, fdout, 0)) {
-		ERRX1(sess, "io_write_int");
+		ERRX1("io_write_int");
 		goto out;
 	}
 
@@ -405,21 +405,21 @@ rsync_sender(struct sess *sess, int fdin,
 	 */
 
 	if (!flist_send(sess, fdin, fdout, fl, flsz)) {
-		ERRX1(sess, "flist_send");
+		ERRX1("flist_send");
 		goto out;
 	} else if (!io_write_int(sess, fdout, 0)) {
-		ERRX1(sess, "io_write_int");
+		ERRX1("io_write_int");
 		goto out;
 	}
 
 	/* Exit if we're the server with zero files. */
 
 	if (flsz == 0 && sess->opts->server) {
-		WARNX(sess, "sender has empty file list: exiting");
+		WARNX("sender has empty file list: exiting");
 		rc = 1;
 		goto out;
 	} else if (!sess->opts->server)
-		LOG1(sess, "Transfer starting: %zu files", flsz);
+		LOG1("Transfer starting: %zu files", flsz);
 
 	/*
 	 * If we're the server, read our exclusion list.
@@ -428,10 +428,10 @@ rsync_sender(struct sess *sess, int fdin,
 
 	if (sess->opts->server) {
 		if (!io_read_size(sess, fdin, &excl)) {
-			ERRX1(sess, "io_read_size");
+			ERRX1("io_read_size");
 			goto out;
 		} else if (excl != 0) {
-			ERRX1(sess, "exclusion list is non-empty");
+			ERRX1("exclusion list is non-empty");
 			goto out;
 		}
 	}
@@ -452,18 +452,18 @@ rsync_sender(struct sess *sess, int fdin,
 	for (;;) {
 		assert(pfd[0].fd != -1);
 		if ((c = poll(pfd, 3, POLL_TIMEOUT)) == -1) {
-			ERR(sess, "poll");
+			ERR("poll");
 			goto out;
 		} else if (c == 0) {
-			ERRX(sess, "poll: timeout");
+			ERRX("poll: timeout");
 			goto out;
 		}
 		for (i = 0; i < 3; i++)
 			if (pfd[i].revents & (POLLERR|POLLNVAL)) {
-				ERRX(sess, "poll: bad fd");
+				ERRX("poll: bad fd");
 				goto out;
 			} else if (pfd[i].revents & POLLHUP) {
-				ERRX(sess, "poll: hangup");
+				ERRX("poll: hangup");
 				goto out;
 			}
 
@@ -477,12 +477,12 @@ rsync_sender(struct sess *sess, int fdin,
 
 		if (sess->mplex_reads && (pfd[0].revents & POLLIN)) {
 			if (!io_read_flush(sess, fdin)) {
-				ERRX1(sess, "io_read_flush");
+				ERRX1("io_read_flush");
 				goto out;
 			} else if (sess->mplex_read_remain == 0) {
 				c = io_read_check(sess, fdin);
 				if (c < 0) {
-					ERRX1(sess, "io_read_check");
+					ERRX1("io_read_check");
 					goto out;
 				} else if (c > 0)
 					continue;
@@ -499,17 +499,17 @@ rsync_sender(struct sess *sess, int fdin,
 
 		if (pfd[0].revents & POLLIN) {
 			if (!io_read_int(sess, fdin, &idx)) {
-				ERRX1(sess, "io_read_int");
+				ERRX1("io_read_int");
 				goto out;
 			}
 			if (!send_dl_enqueue(sess,
 			    &sdlq, idx, fl, flsz, fdin)) {
-				ERRX1(sess, "send_dl_enqueue");
+				ERRX1("send_dl_enqueue");
 				goto out;
 			}
 			c = io_read_check(sess, fdin);
 			if (c < 0) {
-				ERRX1(sess, "io_read_check");
+				ERRX1("io_read_check");
 				goto out;
 			} else if (c > 0)
 				continue;
@@ -531,7 +531,7 @@ rsync_sender(struct sess *sess, int fdin,
 			f = &fl[up.cur->idx];
 
 			if (fstat(up.stat.fd, &st) == -1) {
-				ERR(sess, "%s: fstat", f->path);
+				ERR("%s: fstat", f->path);
 				goto out;
 			}
 
@@ -547,7 +547,7 @@ rsync_sender(struct sess *sess, int fdin,
 					up.stat.mapsz, PROT_READ,
 					MAP_SHARED, up.stat.fd, 0);
 				if (up.stat.map == MAP_FAILED) {
-					ERR(sess, "%s: mmap", f->path);
+					ERR("%s: mmap", f->path);
 					goto out;
 				}
 			}
@@ -570,7 +570,7 @@ rsync_sender(struct sess *sess, int fdin,
 			ssz = write(fdout,
 				wbuf + wbufpos, wbufsz - wbufpos);
 			if (ssz < 0) {
-				ERR(sess, "write");
+				ERR("write");
 				goto out;
 			}
 			wbufpos += ssz;
@@ -593,7 +593,7 @@ rsync_sender(struct sess *sess, int fdin,
 			assert(wbufpos == 0 && wbufsz == 0);
 			if (!send_up_fsm(sess, &phase,
 			    &up, &wbuf, &wbufsz, &wbufmax, fl)) {
-				ERRX1(sess, "send_up_fsm");
+				ERRX1("send_up_fsm");
 				goto out;
 			} else if (phase > 1)
 				break;
@@ -645,7 +645,7 @@ rsync_sender(struct sess *sess, int fdin,
 			up.stat.fd = open(fl[up.cur->idx].path,
 				O_RDONLY|O_NONBLOCK, 0);
 			if (up.stat.fd == -1) {
-				ERR(sess, "%s: open", fl[up.cur->idx].path);
+				ERR("%s: open", fl[up.cur->idx].path);
 				goto out;
 			}
 			pfd[2].fd = up.stat.fd;
@@ -653,26 +653,26 @@ rsync_sender(struct sess *sess, int fdin,
 	}
 
 	if (!TAILQ_EMPTY(&sdlq)) {
-		ERRX(sess, "phases complete with files still queued");
+		ERRX("phases complete with files still queued");
 		goto out;
 	}
 
 	if (!sess_stats_send(sess, fdout)) {
-		ERRX1(sess, "sess_stats_end");
+		ERRX1("sess_stats_end");
 		goto out;
 	}
 
 	/* Final "goodbye" message. */
 
 	if (!io_read_int(sess, fdin, &idx)) {
-		ERRX1(sess, "io_read_int");
+		ERRX1("io_read_int");
 		goto out;
 	} else if (idx != -1) {
-		ERRX(sess, "read incorrect update complete ack");
+		ERRX("read incorrect update complete ack");
 		goto out;
 	}
 
-	LOG2(sess, "sender finished updating");
+	LOG2("sender finished updating");
 	rc = 1;
 out:
 	send_up_reset(&up);

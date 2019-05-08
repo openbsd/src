@@ -1,4 +1,4 @@
-/*	$Id: session.c,v 1.6 2019/03/31 09:26:05 deraadt Exp $ */
+/*	$Id: session.c,v 1.7 2019/05/08 20:00:25 benno Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,7 @@ stats_log(struct sess *sess,
 	const char	*tru = "B", *twu = "B", *tsu = "B";
 	int		 trsz = 0, twsz = 0, tssz = 0;
 
-	assert(sess->opts->verbose);
+	assert(verbose);
 	if (sess->opts->server)
 		return;
 
@@ -85,7 +85,7 @@ stats_log(struct sess *sess,
 	} else
 		ts = tsize;
 
-	LOG1(sess, "Transfer complete: "
+	LOG1("Transfer complete: "
 	    "%.*lf %s sent, %.*lf %s read, %.*lf %s file size",
 	    trsz, tr, tru,
 	    twsz, tw, twu,
@@ -103,7 +103,7 @@ sess_stats_send(struct sess *sess, int fd)
 {
 	uint64_t tw, tr, ts;
 
-	if (sess->opts->verbose == 0)
+	if (verbose == 0)
 		return 1;
 
 	tw = sess->total_write;
@@ -112,13 +112,13 @@ sess_stats_send(struct sess *sess, int fd)
 
 	if (sess->opts->server) {
 		if (!io_write_ulong(sess, fd, tr)) {
-			ERRX1(sess, "io_write_ulong");
+			ERRX1("io_write_ulong");
 			return 0;
 		} else if (!io_write_ulong(sess, fd, tw)) {
-			ERRX1(sess, "io_write_ulong");
+			ERRX1("io_write_ulong");
 			return 0;
 		} else if (!io_write_ulong(sess, fd, ts)) {
-			ERRX1(sess, "io_write_ulong");
+			ERRX1("io_write_ulong");
 			return 0;
 		}
 	}
@@ -139,17 +139,17 @@ sess_stats_recv(struct sess *sess, int fd)
 {
 	uint64_t tr, tw, ts;
 
-	if (sess->opts->server || sess->opts->verbose == 0)
+	if (sess->opts->server || verbose == 0)
 		return 1;
 
 	if (!io_read_ulong(sess, fd, &tw)) {
-		ERRX1(sess, "io_read_ulong");
+		ERRX1("io_read_ulong");
 		return 0;
 	} else if (!io_read_ulong(sess, fd, &tr)) {
-		ERRX1(sess, "io_read_ulong");
+		ERRX1("io_read_ulong");
 		return 0;
 	} else if (!io_read_ulong(sess, fd, &ts)) {
-		ERRX1(sess, "io_read_ulong");
+		ERRX1("io_read_ulong");
 		return 0;
 	}
 
