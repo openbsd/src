@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.163 2018/10/22 14:14:08 espie Exp $
+# $OpenBSD: Update.pm,v 1.164 2019/05/08 13:04:27 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -177,7 +177,7 @@ sub process_handle
 			push(@skipped_locs, $loc);
 			next
 		    }
-		    my $r = $plist->signature->compare($p2->signature);
+		    my $r = $plist->signature->compare($p2->signature, $state);
 		    if (defined $r && $r > 0 && !$state->defines('downgrade')) {
 		    	$oldfound = 1;
 			$loc->forget;
