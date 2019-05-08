@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.40 2017/07/10 21:37:26 tedu Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.41 2019/05/08 17:33:22 tobias Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -32,14 +32,15 @@
 #include <sys/queue.h>
 #include <sys/event.h>
 
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <errno.h>
-#include <assert.h>
-#include <inttypes.h>
 
 #include "event.h"
 #include "event-internal.h"
@@ -133,25 +134,29 @@ kq_insert(struct kqop *kqop, struct kevent *kev)
 		struct kevent *newchange;
 		struct kevent *newresult;
 
+		if (nevents > INT_MAX / 2) {
+			event_warnx("%s: integer overflow", __func__);
+			return (-1);
+		}
 		nevents *= 2;
 
-		newchange = reallocarray(kqop->changes,
-		    nevents, sizeof(struct kevent));
+		newchange = recallocarray(kqop->changes,
+		    kqop->nevents, nevents, sizeof(struct kevent));
 		if (newchange == NULL) {
-			event_warn("%s: malloc", __func__);
+			event_warn("%s: recallocarray", __func__);
 			return (-1);
 		}
 		kqop->changes = newchange;
 
-		newresult = reallocarray(kqop->events,
-		    nevents, sizeof(struct kevent));
+		newresult = recallocarray(kqop->events,
+		    kqop->nevents, nevents, sizeof(struct kevent));
 
 		/*
 		 * If we fail, we don't have to worry about freeing,
 		 * the next realloc will pick it up.
 		 */
 		if (newresult == NULL) {
-			event_warn("%s: malloc", __func__);
+			event_warn("%s: recallocarray", __func__);
 			return (-1);
 		}
 		kqop->events = newresult;
