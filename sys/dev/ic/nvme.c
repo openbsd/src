@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.61 2018/01/10 15:45:46 jcs Exp $ */
+/*	$OpenBSD: nvme.c,v 1.62 2019/05/08 15:32:53 tedu Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -54,7 +54,7 @@ int	nvme_identify(struct nvme_softc *, u_int);
 void	nvme_fill_identify(struct nvme_softc *, struct nvme_ccb *, void *);
 
 int	nvme_ccbs_alloc(struct nvme_softc *, u_int);
-void	nvme_ccbs_free(struct nvme_softc *);
+void	nvme_ccbs_free(struct nvme_softc *, u_int);
 
 void *	nvme_ccb_get(void *);
 void	nvme_ccb_put(void *, void *);
@@ -278,6 +278,7 @@ nvme_attach(struct nvme_softc *sc)
 	u_int64_t cap;
 	u_int32_t reg;
 	u_int mps = PAGE_SHIFT;
+	u_int nccbs = 0;
 
 	mtx_init(&sc->sc_ccb_mtx, IPL_BIO);
 	SIMPLEQ_INIT(&sc->sc_ccb_list);
@@ -323,6 +324,7 @@ nvme_attach(struct nvme_softc *sc)
 		printf("%s: unable to allocate initial ccbs\n", DEVNAME(sc));
 		goto free_admin_q;
 	}
+	nccbs = 16;
 
 	if (nvme_enable(sc, mps) != 0) {
 		printf("%s: unable to enable controller\n", DEVNAME(sc));
@@ -337,11 +339,12 @@ nvme_attach(struct nvme_softc *sc)
 	/* we know how big things are now */
 	sc->sc_max_sgl = sc->sc_mdts / sc->sc_mps;
 
-	nvme_ccbs_free(sc);
+	nvme_ccbs_free(sc, nccbs);
 	if (nvme_ccbs_alloc(sc, 64) != 0) {
 		printf("%s: unable to allocate ccbs\n", DEVNAME(sc));
 		goto free_admin_q;
 	}
+	nccbs = 64;
 
 	sc->sc_q = nvme_q_alloc(sc, NVME_IO_Q, 128, sc->sc_dstrd);
 	if (sc->sc_q == NULL) {
@@ -386,7 +389,7 @@ free_q:
 disable:
 	nvme_disable(sc);
 free_ccbs:
-	nvme_ccbs_free(sc);
+	nvme_ccbs_free(sc, nccbs);
 free_admin_q:
 	nvme_q_free(sc, sc->sc_admin_q);
 
@@ -1216,7 +1219,7 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 	return (0);
 
 free_maps:
-	nvme_ccbs_free(sc);
+	nvme_ccbs_free(sc, nccbs);
 	return (1);
 }
 
@@ -1247,7 +1250,7 @@ nvme_ccb_put(void *cookie, void *io)
 }
 
 void
-nvme_ccbs_free(struct nvme_softc *sc)
+nvme_ccbs_free(struct nvme_softc *sc, unsigned int nccbs)
 {
 	struct nvme_ccb *ccb;
 
@@ -1257,7 +1260,7 @@ nvme_ccbs_free(struct nvme_softc *sc)
 	}
 
 	nvme_dmamem_free(sc, sc->sc_ccb_prpls);
-	free(sc->sc_ccbs, M_DEVBUF, 0);
+	free(sc->sc_ccbs, M_DEVBUF, nccbs * sizeof(*ccb));
 }
 
 struct nvme_queue *
