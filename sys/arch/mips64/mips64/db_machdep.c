@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.51 2019/03/23 05:47:23 visa Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.52 2019/05/08 15:34:19 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -470,7 +470,7 @@ db_dump_tlb_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *m)
 		last = ci->ci_hw.tlbsize;
 
 	if (pid == -1)
-		db_printf("current asid: %d\n", tlb_get_pid());
+		db_printf("current asid: 0x%02x\n", tlb_get_pid());
 	for (; tlbno < last; tlbno++) {
 		tlb_read(tlbno, &tlb);
 
