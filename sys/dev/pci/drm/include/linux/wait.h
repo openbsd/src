@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.3 2019/05/01 07:22:24 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.4 2019/05/08 23:35:23 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -144,6 +144,12 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 do {						\
 	if (!(condition))			\
 		__wait_event_intr_timeout(wq, condition, 0, 0); \
+} while (0)
+
+#define wait_event_killable(wq, condition) 		\
+do {						\
+	if (!(condition))			\
+		__wait_event_intr_timeout(wq, condition, 0, PCATCH); \
 } while (0)
 
 #define wait_event_interruptible(wq, condition) 		\
