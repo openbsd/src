@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.40 2019/05/06 16:29:19 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.41 2019/05/08 16:24:48 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -104,6 +104,8 @@ void	lf_printlist(const char *, struct lockf *);
 #define	LFPRINT(args, level)
 #endif
 
+struct lockf *lf_alloc(uid_t, int);
+void lf_free(struct lockf *);
 int lf_clearlock(struct lockf *);
 int lf_findoverlap(struct lockf *, struct lockf *, int, struct lockf **);
 struct lockf *lf_getblock(struct lockf *, struct lockf *);
@@ -129,9 +131,6 @@ lf_init(void)
 	pool_init(&lockf_pool, sizeof(struct lockf), 0, IPL_NONE,
 	    PR_WAITOK | PR_RWLOCK, "lockfpl", NULL);
 }
-
-struct lockf *lf_alloc(uid_t, int);
-void lf_free(struct lockf *);
 
 void
 ls_ref(struct lockf_state *ls)
