@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.262 2018/08/22 15:38:46 mpi Exp $
+#	$OpenBSD: GENERIC,v 1.263 2019/05/08 23:54:38 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -82,6 +82,8 @@ uslcom*	at uhub?			# Silicon Laboratories CP210x serial
 ucom*	at uslcom?
 uscom*	at uhub?			# Simple USB serial adapters
 ucom*	at uscom?
+ucrcom*	at uhub?			# Chromebook serial
+ucom*	at ucrcom?
 uark*	at uhub?			# Arkmicro ARK3116 serial
 ucom*	at uark?
 uipaq*	at uhub?			# iPAQ serial adapter
