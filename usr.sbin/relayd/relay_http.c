@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.72 2019/03/04 21:25:03 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.73 2019/05/08 23:22:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -110,17 +110,6 @@ relay_http_init(struct relay *rlay)
 }
 
 int
-relay_http_priv_init(struct rsession *con)
-{
-	struct relay_http_priv	*p;
-	if ((p = calloc(1, sizeof(struct relay_http_priv))) == NULL)
-		return (-1);
-
-	con->se_priv = p;
-	return (0);
-}
-
-int
 relay_httpdesc_init(struct ctl_relay_event *cre)
 {
 	struct http_descriptor	*desc;
@@ -163,13 +152,13 @@ relay_read_http(struct bufferevent *bev, void *arg)
 	struct relay		*rlay = con->se_relay;
 	struct protocol		*proto = rlay->rl_proto;
 	struct evbuffer		*src = EVBUFFER_INPUT(bev);
-	struct relay_http_priv	*priv = con->se_priv;
 	char			*line = NULL, *key, *value;
 	char			*urlproto, *host, *path;
 	int			 action, unique, ret;
 	const char		*errstr;
 	size_t			 size, linelen;
 	struct kv		*hdr = NULL;
+	struct kv		*upgrade = NULL, *upgrade_ws = NULL;
 
 	getmonotime(&con->se_tv_last);
 	cre->timedout = 0;
@@ -398,17 +387,6 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			unique = 0;
 
 		if (cre->line != 1) {
-			if (cre->dir == RELAY_DIR_REQUEST) {
-				if (strcasecmp("Connection", key) == 0 &&
-				    strcasecmp("Upgrade", value) == 0)
-					priv->http_upgrade_req |=
-					    HTTP_CONNECTION_UPGRADE;
-				if (strcasecmp("Upgrade", key) == 0 &&
-				    strcasecmp("websocket", value) == 0)
-					priv->http_upgrade_req |=
-					    HTTP_UPGRADE_WEBSOCKET;
-			}
-
 			if ((hdr = kv_add(&desc->http_headers, key,
 			    value, unique)) == NULL) {
 				relay_abort_http(con, 400,
@@ -445,37 +423,34 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			return;
 		}
 
-		/* HTTP 101 Switching Protocols */
-		if (cre->dir == RELAY_DIR_REQUEST) {
-			if ((priv->http_upgrade_req & HTTP_UPGRADE_WEBSOCKET) &&
-			    !(proto->httpflags & HTTPFLAG_WEBSOCKETS)) {
+		/*
+		 * HTTP 101 Switching Protocols
+		 */
+		upgrade = kv_find_value(&desc->http_headers,
+		    "Connection", "upgrade", ",");
+		upgrade_ws = kv_find_value(&desc->http_headers,
+		    "Upgrade", "websocket", ",");
+		if (cre->dir == RELAY_DIR_REQUEST && upgrade_ws != NULL) {
+			if ((proto->httpflags & HTTPFLAG_WEBSOCKETS) == 0) {
 				relay_abort_http(con, 403,
 				    "Websocket Forbidden", 0);
 				return;
-			}
-			if ((priv->http_upgrade_req & HTTP_UPGRADE_WEBSOCKET) &&
-			    !(priv->http_upgrade_req & HTTP_CONNECTION_UPGRADE))
-			{
+			} else if (upgrade == NULL) {
 				relay_abort_http(con, 400,
 				    "Bad Websocket Request", 0);
 				return;
-			}
-			if ((priv->http_upgrade_req & HTTP_UPGRADE_WEBSOCKET) &&
-			    (desc->http_method != HTTP_METHOD_GET)) {
+			} else if (desc->http_method != HTTP_METHOD_GET) {
 				relay_abort_http(con, 405,
 				    "Websocket Method Not Allowed", 0);
 				return;
 			}
 		} else if (cre->dir == RELAY_DIR_RESPONSE &&
 		    desc->http_status == 101) {
-			if (((priv->http_upgrade_req &
-			    (HTTP_CONNECTION_UPGRADE | HTTP_UPGRADE_WEBSOCKET))
-			    ==
-			    (HTTP_CONNECTION_UPGRADE | HTTP_UPGRADE_WEBSOCKET))
-			    && proto->httpflags & HTTPFLAG_WEBSOCKETS) {
+			if (upgrade_ws != NULL && upgrade != NULL &&
+			    (proto->httpflags & HTTPFLAG_WEBSOCKETS)) {
 				cre->dst->toread = TOREAD_UNLIMITED;
 				cre->dst->bev->readcb = relay_read;
-			}  else  {
+			} else {
 				relay_abort_http(con, 502,
 				    "Bad Websocket Gateway", 0);
 				return;

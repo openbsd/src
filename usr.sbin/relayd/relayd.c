@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.175 2019/04/24 19:13:49 mestre Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.176 2019/05/08 23:22:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -809,6 +809,48 @@ kv_find(struct kvtree *keys, struct kv *kv)
 		match = RB_FIND(kvtree, keys, kv);
 	}
 
+	return (match);
+}
+
+struct kv *
+kv_find_value(struct kvtree *keys, char *key, const char *value,
+    const char *delim)
+{
+	struct kv	*match, kv;
+	char		*val = NULL, *next, *ptr;
+	size_t		 len;
+
+	kv.kv_key = key;
+	if ((match = RB_FIND(kvtree, keys, &kv)) == NULL)
+		return (NULL);
+
+	if (match->kv_value == NULL)
+		return (NULL);
+
+	if (delim == NULL) {
+		if (strcasecmp(match->kv_value, value) == 0)
+			goto done;
+	} else {
+		if ((val = strdup(match->kv_value)) == NULL)
+			return (NULL);
+		for (next = ptr = val; ptr != NULL;
+		    ptr = strsep(&next, delim)) {
+			/* strip whitespace */
+			ptr += strspn(ptr, " \t");
+			len = strcspn(ptr, " \t");
+			if (strncasecmp(ptr, value, len) == 0)
+				goto done;
+		}
+	}
+
+	/* not matched */
+	match = NULL;
+ done:
+#ifdef DEBUG
+	if (match != NULL)
+		DPRINTF("%s: matched %s: %s", __func__, key, value);
+#endif
+	free(val);
 	return (match);
 }
 

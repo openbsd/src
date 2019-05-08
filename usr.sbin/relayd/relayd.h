@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.252 2019/03/04 21:25:03 benno Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.253 2019/05/08 23:22:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1324,6 +1324,8 @@ void		 relay_log(struct rsession *, char *);
 int		 kv_log(struct rsession *, struct kv *, u_int16_t,
 		     enum direction);
 struct kv	*kv_find(struct kvtree *, struct kv *);
+struct kv	*kv_find_value(struct kvtree *, char *, const char *,
+		     const char *);
 int		 kv_cmp(struct kv *, struct kv *);
 int		 rule_add(struct protocol *, struct relay_rule *, const char
 		     *);
