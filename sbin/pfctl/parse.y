@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.695 2019/04/18 21:58:59 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.696 2019/05/08 21:31:30 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -846,6 +846,8 @@ pfa_anchor	: '{'
 
 			/* steping into a brace anchor */
 			pf->asd++;
+			if (pf->asd >= PFCTL_ANCHOR_STACK_DEPTH)
+				errx(1, "pfa_anchor: anchors too deep");
 			pf->bn++;
 			pf->brace = 1;
 
