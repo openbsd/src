@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.22 2018/12/16 10:45:38 espie Exp $
+# $OpenBSD: Signature.pm,v 1.23 2019/05/08 10:19:15 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -32,6 +32,13 @@ sub always
 {
 	return 1;
 }
+
+package OpenBSD::PackingElement::Version;
+sub signature
+{
+	&OpenBSD::PackingElement::VersionElement::signature;
+}
+
 package OpenBSD::PackingElement::Dependency;
 sub signature_key
 {
