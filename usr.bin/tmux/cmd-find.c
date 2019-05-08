@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.71 2019/03/15 15:20:00 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.72 2019/05/08 18:05:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1040,12 +1040,16 @@ cmd_find_target(struct cmd_find_state *fs, struct cmdq_item *item,
 		switch (type) {
 		case CMD_FIND_PANE:
 			fs->wp = cmd_mouse_pane(m, &fs->s, &fs->wl);
-			if (fs->wp != NULL)
+			if (fs->wp != NULL) {
 				fs->w = fs->wl->window;
-			break;
+				break;
+			}
+			/* FALLTHROUGH */
 		case CMD_FIND_WINDOW:
 		case CMD_FIND_SESSION:
 			fs->wl = cmd_mouse_window(m, &fs->s);
+			if (fs->wl == NULL && fs->s != NULL)
+				fs->wl = fs->s->curw;
 			if (fs->wl != NULL) {
 				fs->w = fs->wl->window;
 				fs->wp = fs->w->active;
