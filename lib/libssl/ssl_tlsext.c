@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.44 2019/03/25 17:21:18 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.45 2019/05/08 23:49:45 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1822,7 +1822,8 @@ static struct tls_extension tls_extensions[] = {
 #ifndef OPENSSL_NO_SRTP
 	{
 		.type = TLSEXT_TYPE_use_srtp,
-		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH /* XXX */ |
+		    SSL_TLSEXT_MSG_EE,
 		.client = {
 			.needs = tlsext_srtp_client_needs,
 			.build = tlsext_srtp_client_build,
