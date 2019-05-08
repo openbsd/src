@@ -1,4 +1,4 @@
-.\" $OpenBSD: signify.1,v 1.46 2019/03/23 07:10:06 tedu Exp $
+.\" $OpenBSD: signify.1,v 1.47 2019/05/08 17:55:41 tedu Exp $
 .\"
 .\"Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
@@ -14,7 +14,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: March 23 2019 $
+.Dd $Mdocdate: May 8 2019 $
 .Dt SIGNIFY 1
 .Os
 .Sh NAME
@@ -191,7 +191,8 @@ $ ftp url | signify -Vz -t arc | tar ztf -
 .Xr fw_update 1 ,
 .Xr gzip 1 ,
 .Xr pkg_add 1 ,
-.Xr sha256 1
+.Xr sha256 1 ,
+.Xr sysupgrade 8
 .Sh HISTORY
 The
 .Nm
