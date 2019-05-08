@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.12 2019/01/09 16:42:38 visa Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.13 2019/05/08 20:27:29 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -81,6 +81,8 @@ ___start(MD_START_ARGS)
 	MD_START_SETUP
 #endif
 
+	environp = _csu_finish(argv, envp, cleanup);
+
 #ifndef RCRT0
 	if (cleanup == NULL) {
 #endif
@@ -94,8 +96,6 @@ ___start(MD_START_ARGS)
 #ifndef RCRT0
 	}
 #endif
-
-	environp = _csu_finish(argv, envp, cleanup);
 
 #ifdef MCRT0
 	atexit(_mcleanup);
