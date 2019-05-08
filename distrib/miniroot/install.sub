@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1120 2019/05/03 20:38:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.1121 2019/05/08 15:53:31 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2868,6 +2868,12 @@ do_autoinstall() {
 
 	# Email autoinstall protocol to root on next boot.
 	prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
+
+	if $UU; then
+		cat <<__EOT >>/mnt/etc/rc.firsttime
+[[ ! -e /home/_sysupgrade/keep ]] && rm -f /home/_sysupgrade/*
+__EOT
+	fi
 
 	exec reboot
 }
