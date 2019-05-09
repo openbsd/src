@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.137 2019/05/08 23:53:26 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.138 2019/05/09 14:09:01 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -402,7 +402,9 @@ free(void *addr, int type, size_t freedsize)
 		zerowarnings++;
 		printf("free with zero size: (%d)\n", type);
 #ifdef DDB
+#if 0
 		db_stack_dump();
+#endif
 #endif
 	}
 	if (freedsize != 0 && freedsize > size)
