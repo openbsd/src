@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.117 2019/02/04 18:53:10 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.118 2019/05/09 22:27:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -43,9 +43,6 @@ rde_apply_set(struct filter_set_head *sh, struct filterstate *state,
 	u_int32_t		 prep_as;
 	u_int16_t		 nl;
 	u_int8_t		 prepend;
-
-	if (state == NULL)
-		return;
 
 	TAILQ_FOREACH(set, sh, entry) {
 		switch (set->type) {
@@ -208,11 +205,8 @@ int
 rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
     struct filterstate *state, struct prefix *p)
 {
-	struct rde_aspath *asp = NULL;
+	struct rde_aspath *asp = &state->aspath;
 	int i;
-
-	if (state != NULL)
-		asp = &state->aspath;
 
 	if (f->peer.ebgp && !peer->conf.ebgp)
 		return (0);
@@ -257,7 +251,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		}
 	}
 
-	if (state != NULL && f->match.nexthop.flags != 0) {
+	if (f->match.nexthop.flags != 0) {
 		struct bgpd_addr *nexthop, *cmpaddr;
 		if (state->nexthop == NULL)
 			/* no nexthop, skip */
@@ -798,10 +792,7 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
 
-	if (state == NULL) /* withdraw should be accepted by default */
-		action = ACTION_ALLOW;
-
-	if (state && state->aspath.flags & F_ATTR_PARSE_ERR)
+	if (state->aspath.flags & F_ATTR_PARSE_ERR)
 		/*
 		 * don't try to filter bad updates just deny them
 		 * so they act as implicit withdraws
@@ -827,10 +818,8 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		     f->skip[RDE_FILTER_SKIP_PEERID]);
 
 		if (rde_filter_match(f, peer, state, p)) {
-			if (state != NULL) {
-				rde_apply_set(&f->set, state,
-				    p->re->prefix->aid, prefix_peer(p), peer);
-			}
+			rde_apply_set(&f->set, state, p->re->prefix->aid,
+			    prefix_peer(p), peer);
 			if (f->action != ACTION_NONE)
 				action = f->action;
 			if (f->quick)

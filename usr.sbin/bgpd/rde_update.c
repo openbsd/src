@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.108 2019/01/21 02:07:56 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.109 2019/05/09 22:27:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -202,7 +202,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	 * XXX apply default overrides. Not yet possible, mainly a parse.y
 	 * problem.
 	 */
-	/* rde_apply_set(asp, set, af, NULL ???, DIR_IN); */
+	/* rde_apply_set(asp, set, af, &state, DIR_IN); */
 
 	/*
 	 * XXX this is ugly because we need to have a prefix for rde_filter()
