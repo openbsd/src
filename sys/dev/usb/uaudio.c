@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.141 2019/05/01 14:51:40 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.142 2019/05/09 06:58:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2620,7 +2620,6 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 {
 	struct uaudio_blob dp;
 	unsigned int type, ifnum, altnum, nep, class, subclass;
-	int nac = 0;
 
 	while (p->rptr != p->wptr) {
 		if (!uaudio_getdesc(p, &dp))
@@ -2647,14 +2646,12 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 		switch (subclass) {
 		case UISUBCLASS_AUDIOCONTROL:
 			usbd_claim_iface(sc->udev, ifnum);
-			if (nac == 1) {
-				printf("%s: only one AC iface allowed\n",
-				    DEVNAME(sc));
-				return 0;
+			if (sc->unit_list != NULL) {
+				DPRINTF("%s: >1 AC ifaces\n", __func__);
+				goto done;
 			}
 			if (!uaudio_process_ac(sc, p, ifnum))
 				return 0;
-			nac++;
 			break;
 		case UISUBCLASS_AUDIOSTREAM:
 			usbd_claim_iface(sc->udev, ifnum);
@@ -2667,7 +2664,7 @@ uaudio_process_conf(struct uaudio_softc *sc, struct uaudio_blob *p)
 				return 0;
 		}
 	}
-
+done:
 	uaudio_fixup_params(sc);
 
 	return 1;
