@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.189 2019/05/08 12:40:57 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.190 2019/05/09 15:09:40 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -1067,8 +1067,10 @@ buf_get(struct vnode *vp, daddr_t blkno, size_t size)
 		 * new allocation, free enough buffers first
 		 * to stay at the target with our new allocation.
 		 */
-		(void) bufcache_recover_dmapages(0, npages);
-		bufcache_adjust();
+		if (bcstats.dmapages + npages > targetpages) {
+			(void) bufcache_recover_dmapages(0, npages);
+			bufcache_adjust();
+		}
 
 		/*
 		 * If we get here, we tried to free the world down
