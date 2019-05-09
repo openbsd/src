@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1127 2019/05/09 21:06:09 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1128 2019/05/09 21:55:26 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1005,7 +1005,7 @@ vlan_config() {
 # hostname.if file $3. Ask the user for the IPv4 address and network mask if the
 # address was not in specified in CIDR notation, unless he chooses 'dhcp'.
 v4_config() {
-	local _if=$1 _name=$2 _hn=$3 _prompt _addr _newaddr _mask _newmask
+	local _if=$1 _name=$2 _hn=$3 _prompt _addr _newaddr _mask
 
 	# Preset the default answers by preserving possibly existing
 	# configuration from previous runs.
@@ -1050,15 +1050,16 @@ v4_config() {
 
 		# Ask for the netmask if the user did not use CIDR notation.
 		if [[ $_newaddr == */* ]]; then
-			_newmask=
+			ifconfig $_if $_newaddr up
 		else
 			ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
-			_newmask=$resp
+			ifconfig $_if $_newaddr netmask $resp
 		fi
 
-		if ifconfig $_if inet $_newaddr ${_newmask:+netmask $_newmask} up; then
-			echo "inet $_newaddr $_newmask" >>$_hn
-			add_hostent "${_newaddr%%/*}" "$_name"
+		set -- $(v4_info $_if)
+		if [[ -n $2 ]]; then
+			echo "inet $2 $3" >>$_hn
+			add_hostent "$2" "$_name"
 			return
 		fi
 
@@ -1114,7 +1115,7 @@ v6_defroute() {
 # and prefix length if the address was not specified in CIDR notation,
 # unless he chooses 'autoconf'.
 v6_config() {
-	local _if=$1 _name=$2 _hn=$3 _addr _newaddr _prefixlen _newprefixlen _prompt
+	local _if=$1 _name=$2 _hn=$3 _addr _newaddr _prefixlen _prompt
 
 	ifconfig lo0 inet6 >/dev/null 2>&1 || return
 
@@ -1145,16 +1146,18 @@ v6_config() {
 			;;
 		esac
 
-		_newaddr=${resp%%/*}
-		if [[ $resp == */* ]]; then
-			_newprefixlen=${resp##$_newaddr/}
+		_newaddr=$resp
+		if [[ $_newaddr == */* ]]; then
+			ifconfig $_if inet6 $_newaddr up
 		else
 			ask_until "IPv6 prefix length for $_if?" "64"
-			_newprefixlen=$resp
+			ifconfig $_if inet6 $_newaddr/$resp up
 		fi
-		if ifconfig $_if inet6 $_newaddr/$_newprefixlen up; then
-			echo "inet6 $_newaddr $_newprefixlen" >>$_hn
-			add_hostent "$_newaddr" "$_name"
+
+		set -- $(v6_info $_if)
+		if [[ -n $2 ]]; then
+			echo "inet6 $2 $3" >>$_hn
+			add_hostent "$2" "$_name"
 			return
 		fi
 
