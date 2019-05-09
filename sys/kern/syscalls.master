@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.189 2019/01/11 18:46:30 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.190 2019/05/09 20:30:22 cheloha Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -157,7 +157,7 @@
 66	STD		{ int sys_vfork(void); }
 67	STD NOLOCK	{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
-68	STD		{ int sys_settimeofday(const struct timeval *tv, \
+68	STD NOLOCK	{ int sys_settimeofday(const struct timeval *tv, \
 			    const struct timezone *tzp); }
 69	STD		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
@@ -196,7 +196,7 @@
 			    size_t psize, int64_t proc_cookie); }
 87	STD NOLOCK	{ int sys_clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
-88	STD		{ int sys_clock_settime(clockid_t clock_id, \
+88	STD NOLOCK	{ int sys_clock_settime(clockid_t clock_id, \
 			    const struct timespec *tp); }
 89	STD NOLOCK	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
@@ -271,7 +271,7 @@
 137	STD		{ int sys_rmdir(const char *path); }
 138	OBSOL		t32_utimes
 139	OBSOL		4.2 sigreturn
-140	STD		{ int sys_adjtime(const struct timeval *delta, \
+140	STD NOLOCK	{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	STD		{ int sys_getlogin_r(char *namebuf, u_int namelen); }
 142	OBSOL		ogethostid
@@ -526,7 +526,7 @@
 303	STD		{ int sys___thrsigdivert(sigset_t sigmask, \
 			    siginfo_t *info, const struct timespec *timeout); }
 304	STD		{ int sys___getcwd(char *buf, size_t len); }
-305	STD		{ int sys_adjfreq(const int64_t *freq, \
+305	STD NOLOCK	{ int sys_adjfreq(const int64_t *freq, \
 			    int64_t *oldfreq); }
 306	OBSOL		getfsstat53
 307	OBSOL		statfs53

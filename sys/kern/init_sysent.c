@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.200 2019/01/11 18:52:41 deraadt Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.201 2019/05/09 20:30:22 cheloha Exp $	*/
 
 /*
  * System call switch table.
@@ -168,7 +168,7 @@ struct sysent sysent[] = {
 	    sys_vfork },			/* 66 = vfork */
 	{ 2, s(struct sys_gettimeofday_args), SY_NOLOCK | 0,
 	    sys_gettimeofday },			/* 67 = gettimeofday */
-	{ 2, s(struct sys_settimeofday_args), 0,
+	{ 2, s(struct sys_settimeofday_args), SY_NOLOCK | 0,
 	    sys_settimeofday },			/* 68 = settimeofday */
 	{ 3, s(struct sys_setitimer_args), 0,
 	    sys_setitimer },			/* 69 = setitimer */
@@ -208,7 +208,7 @@ struct sysent sysent[] = {
 	    sys_kbind },			/* 86 = kbind */
 	{ 2, s(struct sys_clock_gettime_args), SY_NOLOCK | 0,
 	    sys_clock_gettime },		/* 87 = clock_gettime */
-	{ 2, s(struct sys_clock_settime_args), 0,
+	{ 2, s(struct sys_clock_settime_args), SY_NOLOCK | 0,
 	    sys_clock_settime },		/* 88 = clock_settime */
 	{ 2, s(struct sys_clock_getres_args), SY_NOLOCK | 0,
 	    sys_clock_getres },			/* 89 = clock_getres */
@@ -312,7 +312,7 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 138 = obsolete t32_utimes */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 139 = obsolete 4.2 sigreturn */
-	{ 2, s(struct sys_adjtime_args), 0,
+	{ 2, s(struct sys_adjtime_args), SY_NOLOCK | 0,
 	    sys_adjtime },			/* 140 = adjtime */
 	{ 2, s(struct sys_getlogin_r_args), 0,
 	    sys_getlogin_r },			/* 141 = getlogin_r */
@@ -699,7 +699,7 @@ struct sysent sysent[] = {
 	    sys___thrsigdivert },		/* 303 = __thrsigdivert */
 	{ 2, s(struct sys___getcwd_args), 0,
 	    sys___getcwd },			/* 304 = __getcwd */
-	{ 2, s(struct sys_adjfreq_args), 0,
+	{ 2, s(struct sys_adjfreq_args), SY_NOLOCK | 0,
 	    sys_adjfreq },			/* 305 = adjfreq */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 306 = obsolete getfsstat53 */

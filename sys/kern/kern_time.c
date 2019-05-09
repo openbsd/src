@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.114 2019/03/26 16:43:56 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.115 2019/05/09 20:30:21 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -96,7 +96,9 @@ settime(const struct timespec *ts)
 	}
 
 	tc_setrealtimeclock(ts);
+	KERNEL_LOCK();
 	resettodr();
+	KERNEL_UNLOCK();
 
 	return (0);
 }
