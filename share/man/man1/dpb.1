@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.11 2019/03/10 21:31:49 jmc Exp $
+.\"	$OpenBSD: dpb.1,v 1.12 2019/05/09 11:09:18 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2019 $
+.Dd $Mdocdate: May 9 2019 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -208,7 +208,7 @@ Don't fetch distfiles that are not allowed for cdrom.
 Set to 1 to have the normal display in color.
 .It Ar CONNECTION_TIMEOUT
 Connection timeout for ssh.
-Defaults to 60 seconds.
+Defaults to 10 seconds (but ssh will retry 3 times).
 .It Ar CONTROL
 Let
 .Nm
@@ -267,6 +267,9 @@ Only run
 .Nm
 to figure out old distfiles and update
 .Pa %f/history .
+.It Ar LISTING_EXTRA
+Alternate way to specify
+.Fl e .
 .It Ar LOCKDIR
 Alternate way to specify the locking directory.
 .It Ar LOGDIR
