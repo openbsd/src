@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.239 2019/04/01 10:47:13 kn Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.240 2019/05/09 16:13:34 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7000,10 +7000,11 @@ iwm_notif_intr(struct iwm_softc *sc)
 	    0, sc->rxq.stat_dma.size, BUS_DMASYNC_POSTREAD);
 
 	hw = le16toh(sc->rxq.stat->closed_rb_num) & 0xfff;
+	hw &= (IWM_RX_RING_COUNT - 1);
 	while (sc->rxq.cur != hw) {
 		struct iwm_rx_data *data = &sc->rxq.data[sc->rxq.cur];
 		struct iwm_rx_packet *pkt;
-		int qid, idx, code;
+		int qid, idx, code, handled = 1;
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0, sizeof(*pkt),
 		    BUS_DMASYNC_POSTREAD);
@@ -7256,6 +7257,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 		}
 
 		default:
+			handled = 0;
 			printf("%s: unhandled firmware response 0x%x/0x%x "
 			    "rx ring %d[%d]\n",
 			    DEVNAME(sc), pkt->hdr.code, pkt->len_n_flags, qid,
@@ -7270,7 +7272,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 		 * For example, uCode issues IWM_REPLY_RX when it sends a
 		 * received frame to the driver.
 		 */
-		if (!(pkt->hdr.qid & (1 << 7))) {
+		if (handled && !(pkt->hdr.qid & (1 << 7))) {
 			iwm_cmd_done(sc, pkt);
 		}
 
