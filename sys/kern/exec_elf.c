@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.148 2019/04/20 23:11:20 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.149 2019/05/09 22:25:42 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1143,7 +1143,9 @@ coredump_setup_elf(int segment_count, void *cookie)
 	 * the section sizes and offsets
 	 */
 	ws->psections = mallocarray(ws->npsections, sizeof(Elf_Phdr),
-	    M_TEMP, M_WAITOK|M_ZERO);
+	    M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (ws->psections == NULL)
+		return ENOMEM;
 	ws->psectionslen = ws->npsections * sizeof(Elf_Phdr);
 
 	ws->notestart = ehdr.e_phoff + ws->psectionslen;
