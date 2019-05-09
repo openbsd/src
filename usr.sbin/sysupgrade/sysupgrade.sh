@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.16 2019/05/08 15:06:20 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.17 2019/05/09 21:06:09 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -132,11 +132,6 @@ cd ${SETSDIR}
 
 unpriv -f SHA256.sig ftp -Vmo SHA256.sig ${URL}SHA256.sig
 
-if cmp -s /var/db/installed.SHA256.sig SHA256.sig && ! $FORCE; then
-	echo "Already on latest snapshot."
-	exit 0
-fi
-
 _KEY=openbsd-${_KERNV[0]%.*}${_KERNV[0]#*.}-base.pub
 _NEXTKEY=openbsd-${NEXT_VERSION%.*}${NEXT_VERSION#*.}-base.pub
 
@@ -150,6 +145,12 @@ esac
 [[ -f ${SIGNIFY_KEY} ]] || ug_err "cannot find ${SIGNIFY_KEY}"
 
 unpriv -f SHA256 signify -Ve -p "${SIGNIFY_KEY}" -x SHA256.sig -m SHA256
+rm SHA256.sig
+
+if cmp -s /var/db/installed.SHA256 SHA256 && ! $FORCE; then
+	echo "Already on latest snapshot."
+	exit 0
+fi
 
 # INSTALL.*, bsd*, *.tgz
 SETS=$(sed -n -e 's/^SHA256 (\(.*\)) .*/\1/' \
@@ -157,7 +158,6 @@ SETS=$(sed -n -e 's/^SHA256 (\(.*\)) .*/\1/' \
 
 OLD_FILES=$(ls)
 OLD_FILES=$(rmel SHA256 $OLD_FILES)
-OLD_FILES=$(rmel SHA256.sig $OLD_FILES)
 DL=$SETS
 
 for f in $SETS; do
