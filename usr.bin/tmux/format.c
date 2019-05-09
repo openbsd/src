@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.190 2019/05/03 20:44:24 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.191 2019/05/09 08:38:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2035,6 +2035,12 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 		format_add(ft, "pane_dead", "%d", wp->fd == -1);
 	else
 		format_add(ft, "pane_dead", "0");
+
+	if (server_check_marked() && marked_pane.wp == wp)
+		format_add(ft, "pane_marked", "1");
+	else
+		format_add(ft, "pane_marked", "0");
+	format_add(ft, "pane_marked_set", "%d", server_check_marked());
 
 	format_add(ft, "pane_left", "%u", wp->xoff);
 	format_add(ft, "pane_top", "%u", wp->yoff);
