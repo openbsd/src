@@ -32,11 +32,11 @@ int ntabstops = 1;		/* Number of tabstops */
 int tabdefault = 8;		/* Default repeated tabstops */
 off_t highest_hilite;		/* Pos of last hilite in file found so far */
 
-static int curr;		/* Index into linebuf */
-static int column;	/* Printable length, accounting for backspaces, etc. */
+static int curr;		/* Total number of bytes in linebuf */
+static int column;		/* Display columns needed to show linebuf */
 static int overstrike;		/* Next char should overstrike previous char */
 static int is_null_line;	/* There is no current line */
-static int lmargin;		/* Left margin */
+static int lmargin;		/* Index in linebuf of start of content */
 static char pendc;
 static off_t pendpos;
 static char *end_ansi_chars;
@@ -202,20 +202,21 @@ plinenum(off_t pos)
 
 /*
  * Shift the input line left.
- * This means discarding N printable chars at the start of the buffer.
+ * Starting at lmargin, some bytes are discarded from the linebuf,
+ * until the number of display columns needed to show these bytes
+ * would exceed the argument.
  */
 static void
 pshift(int shift)
 {
-	LWCHAR prev_ch = 0;
-	unsigned char c;
-	int shifted = 0;
-	int to;
-	int from;
-	int len;
-	int width;
-	int prev_attr;
-	int next_attr;
+	int shifted = 0;  /* Number of display columns already discarded. */
+	int from;         /* Index in linebuf of the current character. */
+	int to;           /* Index in linebuf to move this character to. */
+	int len;          /* Number of bytes in this character. */
+	int width = 0;    /* Display columns needed for this character. */
+	int prev_attr;    /* Attributes of the preceding character. */
+	int next_attr;    /* Attributes of the following character. */
+	unsigned char c;  /* First byte of current character. */
 
 	if (shift > column - lmargin)
 		shift = column - lmargin;
@@ -241,44 +242,41 @@ pshift(int shift)
 			}
 			continue;
 		}
-
-		width = 0;
-
 		if (!IS_ASCII_OCTET(c) && utf_mode) {
-			/* Assumes well-formedness validation already done.  */
-			LWCHAR ch;
-
-			len = utf_len(c);
-			if (from + len > curr)
-				break;
-			ch = get_wchar(linebuf + from);
-			if (!is_composing_char(ch) &&
-			    !is_combining_char(prev_ch, ch))
-				width = is_wide_char(ch) ? 2 : 1;
-			prev_ch = ch;
+			wchar_t ch;
+			/*
+			 * Before this point, UTF-8 validity was already
+			 * checked, but for additional safety, treat
+			 * invalid bytes as single-width characters
+			 * if they ever make it here.  Similarly, treat
+			 * non-printable characters as width 1.
+			 */
+			len = mbtowc(&ch, linebuf + from, curr - from);
+			if (len == -1)
+				len = width = 1;
+			else if ((width = wcwidth(ch)) == -1)
+				width = 1;
 		} else {
 			len = 1;
 			if (c == '\b')
 				/* XXX - Incorrect if several '\b' in a row.  */
-				width = (utf_mode && is_wide_char(prev_ch)) ?
-				    -2 : -1;
-			else if (!control_char(c))
-				width = 1;
-			prev_ch = 0;
+				width = width > 0 ? -width : -1;
+			else
+				width = iscntrl(c) ? 0 : 1;
 		}
 
 		if (width == 2 && shift - shifted == 1) {
-			/* Should never happen when called by pshift_all().  */
-			attr[to] = attr[from];
 			/*
-			 * Assume a wide_char will never be the first half of a
-			 * combining_char pair, so reset prev_ch in case we're
-			 * followed by a '\b'.
+			 * Move the first half of a double-width character
+			 * off screen.  Print a space instead of the second
+			 * half.  This should never happen when called
+			 * by pshift_all().
 			 */
-			prev_ch = linebuf[to++] = ' ';
+			attr[to] = attr[from];
+			linebuf[to++] = ' ';
 			from += len;
 			shifted++;
-			continue;
+			break;
 		}
 
 		/* Adjust width for magic cookies. */
