@@ -130,11 +130,10 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 	}
 
 	/* Set up the IFP for chipset flushing */
-	if (IS_I915G(dev_priv) || IS_I915GM(dev_priv) || IS_I945G(dev_priv) ||
-	    IS_I945GM(dev_priv)) {
-		i915_alloc_ifp(dev_priv, &bpa);
-	} else if (INTEL_GEN(dev_priv) >= 4 || IS_G33(dev_priv)) {
+	if (INTEL_GEN(dev_priv) >= 4 || IS_G33(dev_priv)) {
 		i965_alloc_ifp(dev_priv, &bpa);
+	} else if (INTEL_GEN(dev_priv) == 3) {
+		i915_alloc_ifp(dev_priv, &bpa);
 	} else {
 		int nsegs;
 		/*
