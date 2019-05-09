@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1122 2019/05/08 23:23:06 krw Exp $
+#	$OpenBSD: install.sub,v 1.1123 2019/05/09 06:00:55 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3272,13 +3272,6 @@ done
 # umount all filesystems, just in case we are re-running install or upgrade.
 cd /
 umount -af >/dev/null 2>&1
-
-# Make sure only successful dhcp requests retain their state.
-for _if in $(get_ifs dhcp); do
-	set -- $(v4_info $_if)
-	[[ $1 == @(UP,*) && -n $2 ]] && continue
-	ifconfig $_if delete down -group dhcp 2>/dev/null
-done
 
 # Include machine-dependent functions and definitions.
 #
