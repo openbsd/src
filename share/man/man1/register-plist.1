@@ -1,4 +1,4 @@
-.\"	$OpenBSD: register-plist.1,v 1.2 2018/06/26 06:56:07 jmc Exp $
+.\"	$OpenBSD: register-plist.1,v 1.3 2019/05/09 09:43:28 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
+.Dd $Mdocdate: May 9 2019 $
 .Dt REGISTER-PLIST 1
 .Os
 .Sh NAME
@@ -24,6 +24,9 @@
 .Nm register-plist
 .Ar dir
 .Op Ar pkgname ...
+.Nm
+.Fl p
+.Ar dir
 .Nm
 .Fl t
 .Ar p1
@@ -42,6 +45,32 @@ packages.
 When something in the package changes, the package name should change,
 usually by increasing
 .Ev REVISION .
+.Pp
+.Nm
+checks for a lot of details, including DESCR contents. Thus changes in
+MAINTAINER, hard and symlinks existence and values, comments, and other
+things, will trigger
+.Ev REVISION
+bumps).
+.Pp
+Dependencies receive special treatment.
+Addition or deletion of dependencies should warrant a bump, but
+.Nm
+will also verify that dependencies go
+.Sq forward :
+namely it's okay for a
+.Cm @wantlib
+to go from
+.Pa liba.so.2.0
+to
+.Pa liba.so.3.0
+but not the other way around.
+.Pp
+Starting with
+.Ox 6.6 ,
+.Cm @version
+bumps allow system-wide change to affect plists without triggering an
+error.
 .Pp
 .Nm
 records a packing-list for each
@@ -63,6 +92,20 @@ On the other hand, some items like the package DESCR can't change at all.
 Since this is a generated file, porters often overlook that items such as
 the HOMEPAGE or the MAINTAINER's email address are embedded into that file,
 and thus that changing these requires a REVISION bump.
+.Pp
+.Nm
+can also be invoked with
+.Fl p
+and a
+.Ar dir .
+This will read the packing-list from standard input and check
+that it would register correctly into
+.Ar dir ,
+as used by
+target
+.Cm check-register
+in
+.Xr bsd.port.mk 5 .
 .Pp
 .Nm
 can also be invoked with
