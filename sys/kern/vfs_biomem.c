@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_biomem.c,v 1.40 2019/05/08 12:40:57 beck Exp $ */
+/*	$OpenBSD: vfs_biomem.c,v 1.41 2019/05/09 20:36:44 beck Exp $ */
 
 /*
  * Copyright (c) 2007 Artur Grabowski <art@openbsd.org>
@@ -288,7 +288,7 @@ buf_alloc_pages(struct buf *bp, vsize_t size)
 	 */
 	do {
 		i = uvm_pagealloc_multi(buf_object, offs, size,
-		    UVM_PLA_NOWAIT);
+		    UVM_PLA_NOWAIT | UVM_PLA_NOWAKE);
 		if (i == 0)
 			break;
 	} while	(bufbackoff(&dma_constraint, size) == 0);
@@ -359,7 +359,7 @@ buf_realloc_pages(struct buf *bp, struct uvm_constraint_range *where,
 
 	do {
 		r = uvm_pagerealloc_multi(bp->b_pobj, bp->b_poffs,
-		    bp->b_bufsize, UVM_PLA_NOWAIT, where);
+		    bp->b_bufsize, UVM_PLA_NOWAIT | UVM_PLA_NOWAKE, where);
 		if (r == 0)
 			break;
 	} while	((bufbackoff(where, atop(bp->b_bufsize)) == 0));
