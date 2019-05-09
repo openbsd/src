@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.143 2019/05/09 07:00:38 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.144 2019/05/09 07:09:04 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1016,6 +1016,37 @@ uaudio_alt_getrates(struct uaudio_softc *sc, struct uaudio_alt *p)
 		}
 	}
 	return 0;
+}
+
+/*
+ * return the clock unit of the given terminal unit (v2 only)
+ */
+int
+uaudio_clock_id(struct uaudio_softc *sc)
+{
+	struct uaudio_unit *u;
+
+	u = sc->clock;
+	while (1) {
+		if (u == NULL) {
+			DPRINTF("%s: NULL clock pointer\n", __func__);
+			return -1;
+		}
+		switch (u->type) {
+		case UAUDIO_AC_CLKSRC:
+			return u->id;
+		case UAUDIO_AC_CLKSEL:
+			u = u->clock;
+			break;
+		case UAUDIO_AC_CLKMULT:
+		case UAUDIO_AC_RATECONV:
+			u = u->src_list;
+			break;
+		default:
+			DPRINTF("%s: no clock\n", __func__);
+			return -1;
+		}
+	}
 }
 
 /*
@@ -2770,7 +2801,7 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 	struct usbd_interface *iface;
 	unsigned char req_buf[4];
 	unsigned int bpa, spf_max, min_blksz;
-	int err, i;
+	int err, clock_id, i;
 
 	if (dir == AUMODE_PLAY) {
 		s = &sc->pstream;
@@ -2933,9 +2964,14 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		req_buf[1] = sc->rate >> 8;
 		req_buf[2] = sc->rate >> 16;
 		req_buf[3] = sc->rate >> 24;
+		clock_id = uaudio_clock_id(sc);
+		if (clock_id < 0) {
+			printf("%s: can't get clock id\n", DEVNAME(sc));
+			goto failed;
+		}
 		if (!uaudio_req(sc, UT_WRITE_CLASS_INTERFACE,
 			UAUDIO_V2_REQ_CUR, UAUDIO_REQSEL_RATE, 0,
-			sc->ctl_ifnum, sc->clock->id, req_buf, 4)) {
+			sc->ctl_ifnum, clock_id, req_buf, 4)) {
 			DPRINTF("%s: not setting clock rate\n", __func__);
 		}
 		break;
