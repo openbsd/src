@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.89 2019/04/29 06:55:21 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.90 2019/05/09 13:12:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -448,7 +448,7 @@ key_bindings_read_only(struct cmdq_item *item, __unused void *data)
 	return (CMD_RETURN_ERROR);
 }
 
-void
+struct cmdq_item *
 key_bindings_dispatch(struct key_binding *bd, struct cmdq_item *item,
     struct client *c, struct mouse_event *m, struct cmd_find_state *fs)
 {
@@ -472,4 +472,5 @@ key_bindings_dispatch(struct key_binding *bd, struct cmdq_item *item,
 		cmdq_insert_after(item, new_item);
 	else
 		cmdq_append(c, new_item);
+	return (new_item);
 }
