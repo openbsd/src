@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1124 2019/05/09 16:59:25 krw Exp $
+#	$OpenBSD: install.sub,v 1.1125 2019/05/09 17:32:07 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1044,9 +1044,9 @@ v4_config() {
 				return
 			fi
 			;;
-		*)	_addr=$resp
-			;;
 		esac
+
+		_addr=$resp
 
 		# Ask for the netmask if the user did not use CIDR notation.
 		if [[ $_addr == */* ]]; then
@@ -1060,11 +1060,9 @@ v4_config() {
 			echo "inet $_addr $_mask" >>$_hn
 			add_hostent "${_addr%%/*}" "$_name"
 			break
-		else
-			_addr=
-			_mask=
-			$AI && exit 1
 		fi
+		_addr=
+		$AI && exit 1
 	done
 }
 
@@ -1145,20 +1143,20 @@ v6_config() {
 			echo "inet6 autoconf" >>$_hn
 			return
 			;;
-		*)	_addr=${resp%%/*}
-			if [[ $resp == */* ]]; then
-				_prefixlen=${resp##$_addr/}
-			else
-				ask_until "IPv6 prefix length for $_if?" "64"
-				_prefixlen=$resp
-			fi
-			if ifconfig $_if inet6 $_addr/$_prefixlen up; then
-				echo "inet6 $_addr $_prefixlen" >>$_hn
-				add_hostent "$_addr" "$_name"
-				return
-			fi
-			;;
 		esac
+
+		_addr=${resp%%/*}
+		if [[ $resp == */* ]]; then
+			_prefixlen=${resp##$_addr/}
+		else
+			ask_until "IPv6 prefix length for $_if?" "64"
+			_prefixlen=$resp
+		fi
+		if ifconfig $_if inet6 $_addr/$_prefixlen up; then
+			echo "inet6 $_addr $_prefixlen" >>$_hn
+			add_hostent "$_addr" "$_name"
+			return
+		fi
 
 		$AI && exit 1
 	done
