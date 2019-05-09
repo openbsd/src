@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1125 2019/05/09 17:32:07 krw Exp $
+#	$OpenBSD: install.sub,v 1.1126 2019/05/09 18:19:28 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1005,7 +1005,7 @@ vlan_config() {
 # hostname.if file $3. Ask the user for the IPv4 address and network mask if the
 # address was not in specified in CIDR notation, unless he chooses 'dhcp'.
 v4_config() {
-	local _if=$1 _name=$2 _hn=$3 _prompt _addr _mask
+	local _if=$1 _name=$2 _hn=$3 _prompt _addr _newaddr _mask _newmask
 
 	# Preset the default answers by preserving possibly existing
 	# configuration from previous runs.
@@ -1031,7 +1031,7 @@ v4_config() {
 	ifconfig $_if -group dhcp >/dev/null 2>&1
 
 	while :; do
-		ask_until "$_prompt" "$_addr"
+		ask_until "$_prompt" "${_addr:-none}"
 		case $resp in
 		none)	return
 			;;
@@ -1046,22 +1046,22 @@ v4_config() {
 			;;
 		esac
 
-		_addr=$resp
+		_newaddr=$resp
 
 		# Ask for the netmask if the user did not use CIDR notation.
-		if [[ $_addr == */* ]]; then
-			_mask=
+		if [[ $_newaddr == */* ]]; then
+			_newmask=
 		else
 			ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
-			_mask=$resp
+			_newmask=$resp
 		fi
 
-		if ifconfig $_if inet $_addr ${_mask:+netmask $_mask} up; then
-			echo "inet $_addr $_mask" >>$_hn
-			add_hostent "${_addr%%/*}" "$_name"
-			break
+		if ifconfig $_if inet $_newaddr ${_newmask:+netmask $_newmask} up; then
+			echo "inet $_newaddr $_newmask" >>$_hn
+			add_hostent "${_newaddr%%/*}" "$_name"
+			return
 		fi
-		_addr=
+
 		$AI && exit 1
 	done
 }
@@ -1114,7 +1114,7 @@ v6_defroute() {
 # and prefix length if the address was not specified in CIDR notation,
 # unless he chooses 'autoconf'.
 v6_config() {
-	local _if=$1 _name=$2 _hn=$3 _addr _prefixlen _prompt
+	local _if=$1 _name=$2 _hn=$3 _addr _newaddr _prefixlen _newprefixlen _prompt
 
 	ifconfig lo0 inet6 >/dev/null 2>&1 || return
 
@@ -1145,16 +1145,16 @@ v6_config() {
 			;;
 		esac
 
-		_addr=${resp%%/*}
+		_newaddr=${resp%%/*}
 		if [[ $resp == */* ]]; then
-			_prefixlen=${resp##$_addr/}
+			_newprefixlen=${resp##$_newaddr/}
 		else
 			ask_until "IPv6 prefix length for $_if?" "64"
-			_prefixlen=$resp
+			_newprefixlen=$resp
 		fi
-		if ifconfig $_if inet6 $_addr/$_prefixlen up; then
-			echo "inet6 $_addr $_prefixlen" >>$_hn
-			add_hostent "$_addr" "$_name"
+		if ifconfig $_if inet6 $_newaddr/$_newprefixlen up; then
+			echo "inet6 $_newaddr $_newprefixlen" >>$_hn
+			add_hostent "$_newaddr" "$_name"
 			return
 		fi
 
