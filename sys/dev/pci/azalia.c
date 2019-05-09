@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.248 2019/05/05 09:09:59 kettenis Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.249 2019/05/09 14:50:46 bcook Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -2547,37 +2547,43 @@ azalia_codec_delete(codec_t *this)
 	azalia_mixer_delete(this);
 
 	if (this->formats != NULL) {
-		free(this->formats, M_DEVBUF, 0);
+		free(this->formats, M_DEVBUF,
+		    this->nformats * sizeof(struct audio_format));
 		this->formats = NULL;
 	}
 	this->nformats = 0;
 
 	if (this->opins != NULL) {
-		free(this->opins, M_DEVBUF, 0);
+		free(this->opins, M_DEVBUF,
+		    this->nopins * sizeof(struct io_pin));
 		this->opins = NULL;
 	}
 	this->nopins = 0;
 
 	if (this->opins_d != NULL) {
-		free(this->opins_d, M_DEVBUF, 0);
+		free(this->opins_d, M_DEVBUF,
+		    this->nopins_d * sizeof(struct io_pin));
 		this->opins_d = NULL;
 	}
 	this->nopins_d = 0;
 
 	if (this->ipins != NULL) {
-		free(this->ipins, M_DEVBUF, 0);
+		free(this->ipins, M_DEVBUF,
+		    this->nipins * sizeof(struct io_pin));
 		this->ipins = NULL;
 	}
 	this->nipins = 0;
 
 	if (this->ipins_d != NULL) {
-		free(this->ipins_d, M_DEVBUF, 0);
+		free(this->ipins_d, M_DEVBUF,
+		    this->nipins_d * sizeof(struct io_pin));
 		this->ipins_d = NULL;
 	}
 	this->nipins_d = 0;
 
 	if (this->w != NULL) {
-		free(this->w, M_DEVBUF, 0);
+		free(this->w, M_DEVBUF,
+		    this->wend * sizeof(widget_t));
 		this->w = NULL;
 	}
 
