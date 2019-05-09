@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.17 2019/05/09 21:06:09 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.18 2019/05/09 21:09:37 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -33,7 +33,7 @@ ug_err()
 
 usage()
 {
-	ug_err "usage: ${0##*/} [-fn] [-r | -s] [installurl]"
+	ug_err "usage: ${0##*/} [-fkn] [-r | -s] [installurl]"
 }
 
 unpriv()
@@ -72,11 +72,13 @@ rmel() {
 RELEASE=false
 SNAP=false
 FORCE=false
+KEEP=false
 REBOOT=true
 
-while getopts fnrs arg; do
+while getopts fknrs arg; do
 	case ${arg} in
 	f)	FORCE=true;;
+	k)	KEEP=true;;
 	n)	REBOOT=false;;
 	r)	RELEASE=true;;
 	s)	SNAP=true;;
@@ -174,6 +176,8 @@ done
 
 echo Verifying sets.
 [[ -n ${DL} ]] && unpriv cksum -qC SHA256 ${DL}
+
+${KEEP} && > keep
 
 cp bsd.rd /nbsd.upgrade
 ln -f /nbsd.upgrade /bsd.upgrade
