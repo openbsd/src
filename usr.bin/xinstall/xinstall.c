@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.71 2019/02/14 11:51:42 espie Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.72 2019/05/09 22:44:53 guenther Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
-#include <utime.h>
 #include <libgen.h>
 
 #include "pathnames.h"
