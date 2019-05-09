@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1128 2019/05/09 21:55:26 krw Exp $
+#	$OpenBSD: install.sub,v 1.1129 2019/05/09 22:38:42 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1052,7 +1052,7 @@ v4_config() {
 		if [[ $_newaddr == */* ]]; then
 			ifconfig $_if $_newaddr up
 		else
-			ask_until "Netmask for $_if?" "${_mask:=255.255.255.0}"
+			ask_until "Netmask for $_if?" "${_mask:-255.255.255.0}"
 			ifconfig $_if $_newaddr netmask $resp
 		fi
 
@@ -1150,7 +1150,7 @@ v6_config() {
 		if [[ $_newaddr == */* ]]; then
 			ifconfig $_if inet6 $_newaddr up
 		else
-			ask_until "IPv6 prefix length for $_if?" "64"
+			ask_until "IPv6 prefix length for $_if?" "${_prefixlen:-64}"
 			ifconfig $_if inet6 $_newaddr/$resp up
 		fi
 
