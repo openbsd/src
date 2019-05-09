@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.78 2019/04/30 20:44:15 ratchov Exp $	*/
+/*	$OpenBSD: envy.c,v 1.79 2019/05/09 05:17:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -132,6 +132,7 @@ void delta_codec_write(struct envy_softc *, int, int, int);
 
 void ap192k_init(struct envy_softc *);
 void ap192k_codec_write(struct envy_softc *, int, int, int);
+void ap192k_set_rate(struct envy_softc *, int);
 
 void ewx_codec_write(struct envy_softc *, int, int, int);
 
@@ -319,7 +320,8 @@ struct envy_card envy_cards[] = {
 		"M-Audio Audiophile 192k",
 		2, &unkenvy_codec, 2, &ak4358_dac, 1,
 		ap192k_init,
-		ap192k_codec_write
+		ap192k_codec_write,
+		ap192k_set_rate
 	}, {
 		PCI_ID_CODE(0x1412, 0x3631),
 		"M-Audio Revolution 5.1",
@@ -485,6 +487,22 @@ ap192k_codec_write(struct envy_softc *sc, int dev, int addr, int data)
 	reg |= AP192K_GPIO_CSMASK;
 	envy_gpio_setstate(sc, reg);
 	delay(1);
+}
+
+void
+ap192k_set_rate(struct envy_softc *sc, int rate)
+{
+	int reg;
+
+	/* set AK5385 clock params */
+	reg = envy_gpio_getstate(sc) & ~(AP192K_AK5385_SPD_MASK);
+	if (rate > 96000)
+		reg |= AP192K_AK5385_CKS0 | AP192K_AK5385_DFS1;
+	else if (rate > 48000)
+		reg |= AP192K_AK5385_DFS0;
+	envy_gpio_setstate(sc, reg);
+
+	ak4358_set_rate(sc, rate);
 }
 
 /*
