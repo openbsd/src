@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.108 2018/02/10 06:25:16 jsing Exp $
+.\"	$OpenBSD: ftp.1,v 1.109 2019/05/09 14:51:34 naddy Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: February 10 2018 $
+.Dd $Mdocdate: May 9 2019 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1411,10 +1411,6 @@ will connect to the site and
 .Ic cd
 to the directory given as the path, and leave the user in interactive
 mode ready for further input.
-.Pp
-If successive auto-fetch FTP elements refer to the same host, then
-the connection is maintained between transfers, reducing overhead on
-connection creation and deletion.
 .Pp
 If
 .Ar file
