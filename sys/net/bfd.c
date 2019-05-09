@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.74 2019/01/20 22:52:23 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.75 2019/05/09 14:29:30 phessler Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -243,8 +243,7 @@ bfd_clear_task(void *arg)
 	TAILQ_REMOVE(&bfd_queue, bfd, bc_entry);
 
 	/* inform our neighbor */
-	if (rtisvalid(bfd->bc_rt))
-		bfd_senddown(bfd);
+	bfd_senddown(bfd);
 
 	rt->rt_flags &= ~RTF_BFD;
 	if (bfd->bc_so) {
@@ -1004,13 +1003,6 @@ bfd_send_control(void *x)
 int
 bfd_send(struct bfd_config *bfd, struct mbuf *m)
 {
-	struct rtentry *rt = bfd->bc_rt;
-
-	if (!rtisvalid(rt)) {
-		m_freem(m);
-		return (EHOSTDOWN);
-	}
-
 	return(sosend(bfd->bc_sosend, NULL, NULL, m, NULL, MSG_DONTWAIT));
 }
 
