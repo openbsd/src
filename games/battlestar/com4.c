@@ -1,4 +1,4 @@
-/*	$OpenBSD: com4.c,v 1.15 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: com4.c,v 1.16 2019/05/09 20:19:22 tedu Exp $	*/
 /*	$NetBSD: com4.c,v 1.3 1995/03/21 15:07:04 cgd Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ take(unsigned int from[])
 			printf("%s:\n", objsht[value]);
 			heavy = (carrying + objwt[value]) <= WEIGHT;
 			bulky = (encumber + objcumber[value]) <= CUMBER;
-			if ((TestBit(from, value) || wiz || tempwiz) && heavy && bulky && !TestBit(inven, value)) {
+			if ((TestBit(from, value) || tempwiz) && heavy && bulky && !TestBit(inven, value)) {
 				SetBit(inven, value);
 				carrying += objwt[value];
 				encumber += objcumber[value];

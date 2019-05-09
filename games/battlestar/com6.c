@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.24 2018/02/07 20:22:23 tedu Exp $	*/
+/*	$OpenBSD: com6.c,v 1.25 2019/05/09 20:19:22 tedu Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -130,13 +130,10 @@ post(char ch)
 
 	if (score_fp != NULL) {
 		fprintf(score_fp, "%s  %31s  %c%20s", date, username, ch, rate());
-		if (wiz)
-			fprintf(score_fp, "   wizard\n");
+		if (tempwiz)
+			fprintf(score_fp, "   WIZARD!\n");
 		else
-			if (tempwiz)
-				fprintf(score_fp, "   WIZARD!\n");
-			else
-				fprintf(score_fp, "\n");
+			fprintf(score_fp, "\n");
 	}
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 }

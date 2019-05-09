@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.20 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: extern.h,v 1.21 2019/05/09 20:19:23 tedu Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -283,7 +283,6 @@ extern int     followgod;
 extern int     godready;
 extern int     win;
 extern int     wintime;
-extern int     wiz;
 extern int     tempwiz;
 extern int     matchlight;
 extern int     matchcount;

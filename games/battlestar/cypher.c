@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.19 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.20 2019/05/09 20:19:22 tedu Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ cypher(void)
 			break;
 
 		case UP:
-			if (location[position].access || wiz || tempwiz) {
+			if (location[position].access || tempwiz) {
 				if (!location[position].access)
 					puts("Zap!  A gust of wind lifts you up.");
 				if (!moveplayer(location[position].up, AHEAD))
@@ -318,7 +318,7 @@ cypher(void)
 			break;
 
 		case SU:
-			if (wiz || tempwiz) {
+			if (tempwiz) {
 				getnum(&position, "\nRoom (was %d) = ", position);
 				getnum(&ourtime, "Time (was %d) = ", ourtime);
 				getnum(&fuel, "Fuel (was %d) = ", fuel);
@@ -326,8 +326,8 @@ cypher(void)
 				getnum(&CUMBER, "CUMBER (was %d) = ", CUMBER);
 				getnum(&WEIGHT, "WEIGHT (was %d) = ", WEIGHT);
 				getnum(&ourclock, "Clock (was %d) = ", ourclock);
-				if (getnum(&junk, "Wizard (was %d, %d) = ", wiz, tempwiz) != -1 && !junk)
-					tempwiz = wiz = 0;
+				if (getnum(&junk, "Wizard (was %d) = ", tempwiz) != -1 && !junk)
+					tempwiz = 0;
 				printf("\nDONE.\n");
 				return (0);	/* No commands after a SU */
 			} else
