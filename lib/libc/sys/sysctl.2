@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.26 2019/05/07 18:53:35 tedu Exp $
+.\"	$OpenBSD: sysctl.2,v 1.27 2019/05/09 15:05:47 claudio Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 7 2019 $
+.Dd $Mdocdate: May 9 2019 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -463,6 +463,7 @@ information.
 .It Dv KERN_OSREV Ta "integer" Ta "no"
 .It Dv KERN_OSTYPE Ta "string" Ta "no"
 .It Dv KERN_OSVERSION Ta "string" Ta "no"
+.It Dv KERN_PFSTATUS Ta "struct pf_status" Ta "no"
 .It Dv KERN_POOL_DEBUG Ta "integer" Ta "yes"
 .It Dv KERN_POSIX1 Ta "integer" Ta "no"
 .It Dv KERN_PROC Ta "struct kinfo_proc" Ta "no"
@@ -721,6 +722,10 @@ The system revision number.
 The system type string.
 .It Dv KERN_OSVERSION Pq Va kern.osversion
 The kernel build version.
+.It Dv KERN_PFSTATUS
+The
+.Vt struct pf_status
+structure.
 .It Dv KERN_POOL_DEBUG Pq Va kern.pool_debug
 Modify the memory pool debug level.
 Valid values are:
