@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.9 2017/06/01 14:38:28 patrick Exp $ */
+/*	$OpenBSD: pf.c,v 1.10 2019/05/09 15:01:09 claudio Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/signal.h>
@@ -46,7 +47,6 @@ const char	*pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 
 static struct pf_status status;
-extern int pf_dev;
 int num_pf = 0;
 
 field_def fields_pf[] = {
@@ -91,13 +91,11 @@ select_pf(void)
 int
 read_pf(void)
 {
-	if (pf_dev < 0) {
-		num_disp = 0;
-		return 0;
-	}
+	size_t size = sizeof(status);
+	int mib[3] = { CTL_KERN, KERN_PFSTATUS };
 
-	if (ioctl(pf_dev, DIOCGETSTATUS, &status)) {
-		error("DIOCGETSTATUS: %s", strerror(errno));
+	if (sysctl(mib, 2, &status, &size, NULL, 0) < 0) {
+		error("sysctl(PFCTL_STATUS): %s", strerror(errno));
 		return (-1);
 	}
 
