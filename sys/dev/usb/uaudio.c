@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.142 2019/05/09 06:58:13 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.143 2019/05/09 07:00:38 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2935,7 +2935,7 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 		req_buf[3] = sc->rate >> 24;
 		if (!uaudio_req(sc, UT_WRITE_CLASS_INTERFACE,
 			UAUDIO_V2_REQ_CUR, UAUDIO_REQSEL_RATE, 0,
-			a->ifnum, sc->clock->id, req_buf, 4)) {
+			sc->ctl_ifnum, sc->clock->id, req_buf, 4)) {
 			DPRINTF("%s: not setting clock rate\n", __func__);
 		}
 		break;
