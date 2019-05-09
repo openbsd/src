@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.354 2019/01/29 14:07:15 visa Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.355 2019/05/09 14:59:30 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -114,6 +114,7 @@
 #endif
 
 #include "audio.h"
+#include "pf.h"
 
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
@@ -668,6 +669,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_CPUSTATS:
 		return (sysctl_cpustats(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+#if NPF > 0
+	case KERN_PFSTATUS:
+		return (pf_sysctl(oldp, oldlenp, newp, newlen));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

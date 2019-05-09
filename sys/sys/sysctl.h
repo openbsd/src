@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.184 2019/02/07 15:11:38 visa Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.185 2019/05/09 14:59:30 claudio Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -186,7 +186,8 @@ struct ctlname {
 #define	KERN_CONSBUF		83	/* console message buffer */
 #define	KERN_AUDIO		84	/* struct: audio properties */
 #define	KERN_CPUSTATS		85	/* struct: cpu statistics */
-#define	KERN_MAXID		86	/* number of valid kern ids */
+#define	KERN_PFSTATUS		86	/* struct: pf status and stats */
+#define	KERN_MAXID		87	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -275,6 +276,7 @@ struct ctlname {
 	{ "gap", 0 }, \
 	{ "audio", CTLTYPE_STRUCT }, \
 	{ "cpustats", CTLTYPE_STRUCT }, \
+	{ "pfstatus", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -1014,6 +1016,7 @@ int bpf_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pflow_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int pipex_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int mpls_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int pf_sysctl(void *, size_t *, void *, size_t);
 
 #else	/* !_KERNEL */
 
