@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.240 2019/05/09 16:13:34 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.241 2019/05/09 16:14:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2566,7 +2566,7 @@ iwm_sta_rx_agg(struct iwm_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	    &status);
 
 	s = splnet();
-	if (err == 0 && status == IWM_ADD_STA_SUCCESS) {
+	if (!err && (status & IWM_ADD_STA_STATUS_MASK) == IWM_ADD_STA_SUCCESS) {
 		if (start) {
 			sc->sc_rx_ba_sessions++;
 			ieee80211_addba_req_accept(ic, ni, tid);
@@ -4675,7 +4675,7 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 	status = IWM_ADD_STA_SUCCESS;
 	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(add_sta_cmd),
 	    &add_sta_cmd, &status);
-	if (err == 0 && status != IWM_ADD_STA_SUCCESS)
+	if (!err && (status & IWM_ADD_STA_STATUS_MASK) != IWM_ADD_STA_SUCCESS)
 		err = EIO;
 
 	return err;
@@ -4702,7 +4702,7 @@ iwm_add_aux_sta(struct iwm_softc *sc)
 	status = IWM_ADD_STA_SUCCESS;
 	err = iwm_send_cmd_pdu_status(sc, IWM_ADD_STA, sizeof(cmd), &cmd,
 	    &status);
-	if (err == 0 && status != IWM_ADD_STA_SUCCESS)
+	if (!err && (status & IWM_ADD_STA_STATUS_MASK) != IWM_ADD_STA_SUCCESS)
 		err = EIO;
 
 	return err;
