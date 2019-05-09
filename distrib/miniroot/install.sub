@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1123 2019/05/09 06:00:55 krw Exp $
+#	$OpenBSD: install.sub,v 1.1124 2019/05/09 16:59:25 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1026,6 +1026,10 @@ v4_config() {
 	fi
 	_prompt="IPv4 address for $_if? (${_prompt}or 'none')"
 
+	# Nuke existing inet configuration.
+	ifconfig $_if -inet
+	ifconfig $_if -group dhcp >/dev/null 2>&1
+
 	while :; do
 		ask_until "$_prompt" "$_addr"
 		case $resp in
@@ -1041,7 +1045,6 @@ v4_config() {
 			fi
 			;;
 		*)	_addr=$resp
-			ifconfig $_if -group dhcp >/dev/null 2>&1
 			;;
 		esac
 
@@ -1129,21 +1132,20 @@ v6_config() {
 
 	_prompt="IPv6 address for $_if? (or 'autoconf' or 'none')"
 
+	# Nuke existing inet6 configuration.
+	ifconfig $_if -inet6
+
 	while :; do
 		ask_until "$_prompt" "${_addr:-none}"
 		case $resp in
-		none)	ifconfig $_if -inet6
-			return
+		none)	return
 			;;
 		autoconf)
-			# Nuke any existing address before enabling autoconf.
-			ifconfig $_if -inet6
 			ifconfig $_if inet6 autoconf up
 			echo "inet6 autoconf" >>$_hn
 			return
 			;;
-		*)	ifconfig $_if inet6 -autoconf
-			_addr=${resp%%/*}
+		*)	_addr=${resp%%/*}
 			if [[ $resp == */* ]]; then
 				_prefixlen=${resp##$_addr/}
 			else
