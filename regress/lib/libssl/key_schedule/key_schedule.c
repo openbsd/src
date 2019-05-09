@@ -1,4 +1,4 @@
-/* $OpenBSD: key_schedule.c,v 1.6 2018/11/13 01:32:33 beck Exp $ */
+/* $OpenBSD: key_schedule.c,v 1.7 2019/05/09 05:47:27 claudio Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -161,7 +161,9 @@ uint8_t expected_exporter_master[] = {
 	0xae, 0x31, 0x1b, 0x43, 0x09, 0xd3, 0xcf, 0x50
 };
 
-int main () {
+int
+main (int argc, char **argv)
+{
 	struct tls13_secrets *secrets;
 
 	if ((secrets = tls13_secrets_create(EVP_sha256(), 0)) == NULL)
