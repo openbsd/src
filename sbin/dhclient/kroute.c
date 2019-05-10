@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.161 2019/02/23 13:37:34 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.162 2019/05/10 16:51:13 benno Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -60,7 +60,7 @@ void		 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 unsigned int	 route_in_rtstatic(struct rt_msghdr *, uint8_t *, unsigned int);
 void		 flush_routes(int, int, int, uint8_t *, unsigned int);
 void		 add_route(char *, int, int, struct in_addr, struct in_addr,
-    struct in_addr, int);
+		    struct in_addr, struct in_addr, int);
 void		 set_routes(char *, int, int, int, struct in_addr,
     struct in_addr, uint8_t *, unsigned int);
 
@@ -370,13 +370,14 @@ flush_routes(int index, int routefd, int rdomain,
  */
 void
 add_route(char *name, int rdomain, int routefd, struct in_addr dest,
-    struct in_addr netmask, struct in_addr gateway, int flags)
+    struct in_addr netmask, struct in_addr gateway, struct in_addr ifa,
+    int flags)
 {
 	char			 destbuf[INET_ADDRSTRLEN];
 	char			 maskbuf[INET_ADDRSTRLEN];
 	struct iovec		 iov[5];
 	struct rt_msghdr	 rtm;
-	struct sockaddr_in	 sadest, sagateway, samask;
+	struct sockaddr_in	 sadest, sagateway, samask, saifa;
 	int			 index, iovcnt = 0;
 
 	index = if_nametoindex(name);
@@ -429,6 +430,19 @@ add_route(char *name, int rdomain, int routefd, struct in_addr dest,
 	iov[iovcnt].iov_base = &samask;
 	iov[iovcnt++].iov_len = sizeof(samask);
 
+	if (ifa.s_addr != INADDR_ANY) {
+		/* Add the ifa */
+		memset(&saifa, 0, sizeof(saifa));
+		saifa.sin_len = sizeof(saifa);
+		saifa.sin_family = AF_INET;
+		saifa.sin_addr.s_addr = ifa.s_addr;
+
+		rtm.rtm_msglen += sizeof(saifa);
+		iov[iovcnt].iov_base = &saifa;
+		iov[iovcnt++].iov_len = sizeof(saifa);
+		rtm.rtm_addrs |= RTA_IFA;
+	}
+
 	if (writev(routefd, iov, iovcnt) == -1) {
 		if (errno != EEXIST || log_getverbose() != 0) {
 			strlcpy(destbuf, inet_ntoa(dest),
@@ -476,7 +490,7 @@ set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
 			 *     -iface $addr
 			 */
 			add_route(name, rdomain, routefd, dest, netmask,
-			    addr, RTF_STATIC | RTF_CLONING);
+			    addr, any, RTF_STATIC | RTF_CLONING);
 		} else if (netmask.s_addr == INADDR_ANY) {
 			/*
 			 * DEFAULT ROUTE
@@ -501,7 +515,8 @@ set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
 				 *
 				 */
 				add_route(name, rdomain, routefd, gateway,
-				    broadcast, addr, RTF_STATIC | RTF_CLONING);
+				    broadcast, addr, any,
+				    RTF_STATIC | RTF_CLONING);
 			}
 
 			if (memcmp(&gateway, &addr, sizeof(addr)) == 0) {
@@ -511,15 +526,16 @@ set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
 				 * route add default -iface $addr
 				 */
 				add_route(name, rdomain, routefd, any, any,
-				    gateway, RTF_STATIC);
+				    gateway, any, RTF_STATIC);
 			} else {
 				/*
 				 * DEFAULT ROUTE IS VIA GATEWAY
 				 *
-				 * route add default $gateway
+				 * route add default $gateway -ifa $addr
+				 *
 				 */
 				add_route(name, rdomain, routefd, any, any,
-				    gateway, RTF_STATIC | RTF_GATEWAY);
+				    gateway, addr, RTF_STATIC | RTF_GATEWAY);
 			}
 		} else {
 			/*
@@ -528,7 +544,7 @@ set_routes(char *name, int index, int rdomain, int routefd, struct in_addr addr,
 			 * route add -net $dest -netmask $netmask $gateway
 			 */
 			add_route(name, rdomain, routefd, dest, netmask,
-			    gateway, RTF_STATIC | RTF_GATEWAY);
+			    gateway, any, RTF_STATIC | RTF_GATEWAY);
 		}
 	}
 }
