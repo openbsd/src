@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2019/05/03 20:03:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2019/05/10 14:45:19 deraadt Exp $
 
 FS=		miniroot${OSrev}.fs
 FSSIZE=		5760
@@ -34,7 +34,7 @@ ${FS}: bsd.gz
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-${CDROM}: bsd.rd
+${CDROM}: bsd.rd ${FS}
 	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/sparc64
 	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/sparc64
@@ -58,7 +58,7 @@ ${CDROM}: bsd.rd
 	disklabel -w `cat vnd` fakecdrom "OpenBSD${OSrev}sparc64"
 	vnconfig -u `cat vnd`
 	rm -f vnd
-	mksuncd f ${CDROM} ${.OBJDIR}/../miniroot/miniroot${OSrev}.fs
+	mksuncd f ${CDROM} ${FS}
 
 bsd.gz: bsd.rd
 	objcopy -Sg -R .comment bsd.rd bsd.strip
