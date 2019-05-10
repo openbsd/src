@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.123 2018/11/30 09:26:06 claudio Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.124 2019/05/10 18:30:15 patrick Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -392,25 +392,26 @@ ieee80211_up_to_ac(struct ieee80211com *ic, int up)
 int
 ieee80211_classify(struct ieee80211com *ic, struct mbuf *m)
 {
-	struct ether_header *eh;
+	struct ether_header eh;
 	u_int8_t ds_field;
 #if NVLAN > 0
 	if (m->m_flags & M_VLANTAG)	/* use VLAN 802.1D user-priority */
 		return EVL_PRIOFTAG(m->m_pkthdr.ether_vtag);
 #endif
-	eh = mtod(m, struct ether_header *);
-	if (eh->ether_type == htons(ETHERTYPE_IP)) {
-		struct ip *ip = (struct ip *)&eh[1];
-		if (ip->ip_v != 4)
+	m_copydata(m, 0, sizeof(eh), (caddr_t)&eh);
+	if (eh.ether_type == htons(ETHERTYPE_IP)) {
+		struct ip ip;
+		m_copydata(m, sizeof(eh), sizeof(ip), (caddr_t)&ip);
+		if (ip.ip_v != 4)
 			return 0;
-		ds_field = ip->ip_tos;
+		ds_field = ip.ip_tos;
 	}
 #ifdef INET6
-	else if (eh->ether_type == htons(ETHERTYPE_IPV6)) {
-		struct ip6_hdr *ip6 = (struct ip6_hdr *)&eh[1];
+	else if (eh.ether_type == htons(ETHERTYPE_IPV6)) {
+		struct ip6_hdr ip6;
 		u_int32_t flowlabel;
-
-		flowlabel = ntohl(ip6->ip6_flow);
+		m_copydata(m, sizeof(eh), sizeof(ip6), (caddr_t)&ip6);
+		flowlabel = ntohl(ip6.ip6_flow);
 		if ((flowlabel >> 28) != 6)
 			return 0;
 		ds_field = (flowlabel >> 20) & 0xff;
