@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.25 2019/05/03 13:02:00 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.26 2019/05/10 14:10:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -75,6 +75,7 @@ void		open_dhcp_lease(int);
 void		open_ports(void);
 void		resolve_captive_portal(void);
 void		resolve_captive_portal_done(struct asr_result *, void *);
+void		send_blocklist_fd(void);
 
 struct uw_conf	*main_conf;
 struct imsgev	*iev_frontend;
@@ -306,6 +307,9 @@ main(int argc, char *argv[])
 	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
 	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
 	main_imsg_send_config(main_conf);
+
+	if (main_conf->blocklist_file != NULL)
+		send_blocklist_fd();
 
 	if (pledge("stdio inet dns rpath sendfd", NULL) == -1)
 		fatal("pledge");
@@ -696,6 +700,9 @@ main_reload(void)
 
 	merge_config(main_conf, xconf);
 
+	if (main_conf->blocklist_file != NULL)
+		send_blocklist_fd();
+
 	return (0);
 }
 
@@ -725,6 +732,13 @@ main_imsg_send_config(struct uw_conf *xconf)
 		if (main_sendall(IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE,
 		    xconf->captive_portal_expected_response,
 		    strlen(xconf->captive_portal_expected_response) + 1)
+		    == -1)
+			return (-1);
+	}
+
+	if (xconf->blocklist_file != NULL) {
+		if (main_sendall(IMSG_RECONF_BLOCKLIST_FILE,
+		    xconf->blocklist_file, strlen(xconf->blocklist_file) + 1)
 		    == -1)
 			return (-1);
 	}
@@ -800,6 +814,9 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 	    xconf->captive_portal_expected_status;
 
 	conf->captive_portal_auto = xconf->captive_portal_auto;
+
+	free(conf->blocklist_file);
+	conf->blocklist_file = xconf->blocklist_file;
 
 	/* Add new forwarders. */
 	while ((uw_forwarder = SIMPLEQ_FIRST(&xconf->uw_forwarder_list)) !=
@@ -994,4 +1011,15 @@ resolve_captive_portal_done(struct asr_result *ar, void *arg)
 	}
 
 	freeaddrinfo(ar->ar_addrinfo);
+}
+
+void
+send_blocklist_fd(void)
+{
+	int	bl_fd;
+
+	if ((bl_fd = open(main_conf->blocklist_file, O_RDONLY)) != -1)
+		main_imsg_compose_frontend_fd(IMSG_BLFD, 0, bl_fd);
+	else
+		log_warn("%s", main_conf->blocklist_file);
 }

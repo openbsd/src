@@ -1,4 +1,4 @@
-/*	$OpenBSD: captiveportal.c,v 1.10 2019/03/15 16:48:37 florian Exp $	*/
+/*	$OpenBSD: captiveportal.c,v 1.11 2019/05/10 14:10:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -340,6 +340,13 @@ captiveportal_dispatch_main(int fd, short event, void *bula)
 			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
 			if ((nconf->captive_portal_expected_response =
 			    strdup(imsg.data)) == NULL)
+				fatal("%s: strdup", __func__);
+			break;
+		case IMSG_RECONF_BLOCKLIST_FILE:
+			/* make sure this is a string */
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
+			if ((nconf->blocklist_file = strdup(imsg.data)) ==
+			    NULL)
 				fatal("%s: strdup", __func__);
 			break;
 		case IMSG_RECONF_FORWARDER:

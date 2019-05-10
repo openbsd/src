@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.14 2019/04/02 07:47:23 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.15 2019/05/10 14:10:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -86,6 +86,7 @@ enum imsg_type {
 	IMSG_RECONF_CAPTIVE_PORTAL_HOST,
 	IMSG_RECONF_CAPTIVE_PORTAL_PATH,
 	IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE,
+	IMSG_RECONF_BLOCKLIST_FILE,
 	IMSG_RECONF_FORWARDER,
 	IMSG_RECONF_DOT_FORWARDER,
 	IMSG_RECONF_END,
@@ -120,6 +121,7 @@ enum imsg_type {
 	IMSG_NEW_TAS_DONE,
 	IMSG_RECHECK_RESOLVERS,
 	IMSG_RESOLVE_CAPTIVE_PORTAL,
+	IMSG_BLFD,
 };
 
 struct uw_forwarder {
@@ -139,6 +141,7 @@ struct uw_conf {
 	char				*captive_portal_expected_response;
 	int				 captive_portal_expected_status;
 	int				 captive_portal_auto;
+	char				*blocklist_file;
 };
 
 struct query_imsg {

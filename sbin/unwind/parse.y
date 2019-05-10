@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.4 2019/04/03 03:48:45 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.5 2019/05/10 14:10:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -102,6 +102,7 @@ typedef struct {
 %token	STRICT YES NO INCLUDE ERROR
 %token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
 %token	STATUS AUTO AUTHENTICATION NAME PREFERENCE RECURSOR DHCP
+%token	BLOCK LIST
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -118,6 +119,7 @@ grammar		: /* empty */
 		| grammar uw_pref '\n'
 		| grammar uw_forwarder '\n'
 		| grammar captive_portal '\n'
+		| grammar block_list '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -179,6 +181,21 @@ conf_main	: STRICT yesno {
 optnl		: '\n' optnl		/* zero or more newlines */
 		| /*empty*/
 		;
+
+block_list		: BLOCK LIST STRING {
+				if (conf->blocklist_file != NULL) {
+					yyerror("block list already "
+					    "configured");
+					free($3);
+					YYERROR;
+				} else {
+					conf->blocklist_file = strdup($3);
+					if (conf->blocklist_file == NULL)
+						err(1, "strdup");
+					free($3);
+				}
+			}
+			;
 
 captive_portal		: CAPTIVE PORTAL captive_portal_block
 			;
@@ -518,12 +535,14 @@ lookup(char *s)
 		{"DoT",			DOT},
 		{"authentication",	AUTHENTICATION},
 		{"auto",		AUTO},
+		{"block",		BLOCK},
 		{"captive",		CAPTIVE},
 		{"dhcp",		DHCP},
 		{"dot",			DOT},
 		{"expected",		EXPECTED},
 		{"forwarder",		FORWARDER},
 		{"include",		INCLUDE},
+		{"list",		LIST},
 		{"name",		NAME},
 		{"no",			NO},
 		{"port",		PORT},

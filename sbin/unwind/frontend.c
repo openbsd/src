@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.19 2019/05/08 21:59:13 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.20 2019/05/10 14:10:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+#include <sys/tree.h>
 #include <sys/uio.h>
 
 #include <netinet/in.h>
@@ -71,9 +72,15 @@ struct pending_query {
 	uint64_t			 imsg_id;
 	int				 fd;
 	int				 bogus;
+	int				 rcode_override;
 };
 
 TAILQ_HEAD(, pending_query)	 pending_queries;
+
+struct bl_node {
+	RB_ENTRY(bl_node)	 entry;
+	char			*domain;
+};
 
 __dead void		 frontend_shutdown(void);
 void			 frontend_sig_handler(int, short, void *);
@@ -92,6 +99,9 @@ void			 parse_dhcp_lease(int);
 void			 parse_trust_anchor(struct trust_anchor_head *, int);
 void			 send_trust_anchors(struct trust_anchor_head *);
 void			 write_trust_anchors(struct trust_anchor_head *, int);
+void			 parse_blocklist(int);
+int			 bl_cmp(struct bl_node *, struct bl_node *);
+void			 free_bl(void);
 
 struct uw_conf		*frontend_conf;
 struct imsgev		*iev_main;
@@ -102,6 +112,10 @@ int			 udp4sock = -1, udp6sock = -1, routesock = -1;
 int			 ta_fd = -1;
 
 static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
+
+RB_HEAD(bl_tree, bl_node)	 bl_head = RB_INITIALIZER(&bl_head);
+RB_PROTOTYPE(bl_tree, bl_node, entry, bl_cmp)
+RB_GENERATE(bl_tree, bl_node, entry, bl_cmp)
 
 void
 frontend_sig_handler(int sig, short event, void *bula)
@@ -386,6 +400,13 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    strdup(imsg.data)) == NULL)
 				fatal("%s: strdup", __func__);
 			break;
+		case IMSG_RECONF_BLOCKLIST_FILE:
+			/* make sure this is a string */
+			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
+			if ((nconf->blocklist_file = strdup(imsg.data)) ==
+			    NULL)
+				fatal("%s: strdup", __func__);
+			break;
 		case IMSG_RECONF_FORWARDER:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_forwarder))
 				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
@@ -416,6 +437,8 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				fatalx("%s: IMSG_RECONF_END without "
 				    "IMSG_RECONF_CONF", __func__);
 			merge_config(frontend_conf, nconf);
+			if (frontend_conf->blocklist_file == NULL)
+				free_bl();
 			nconf = NULL;
 			break;
 		case IMSG_UDP6SOCK:
@@ -478,6 +501,12 @@ frontend_dispatch_main(int fd, short event, void *bula)
 				parse_trust_anchor(&trust_anchors, ta_fd);
 			if (!TAILQ_EMPTY(&trust_anchors))
 				send_trust_anchors(&trust_anchors);
+			break;
+		case IMSG_BLFD:
+			if ((fd = imsg.fd) == -1)
+				fatalx("%s: expected to receive imsg block "
+				   "list fd but didn't receive any", __func__);
+			parse_blocklist(fd);
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -674,6 +703,7 @@ udp_receive(int fd, short events, void *arg)
 	struct udp_ev		*udpev = (struct udp_ev *)arg;
 	struct pending_query	*pq;
 	struct query_imsg	*query_imsg;
+	struct bl_node		 find;
 	ssize_t			 len, rem_len, buf_len;
 	uint16_t		 qdcount, ancount, nscount, arcount, t, c;
 	uint8_t			*queryp;
@@ -736,6 +766,8 @@ udp_receive(int fd, short events, void *arg)
 		return;
 	}
 
+	pq->rcode_override = LDNS_RCODE_NOERROR;
+
 	if ((pq->query = malloc(len)) == NULL) {
 		log_warn(NULL);
 		free(pq);
@@ -750,6 +782,14 @@ udp_receive(int fd, short events, void *arg)
 	pq->len = len;
 	pq->from = udpev->from;
 	pq->fd = fd;
+
+	find.domain = buf;
+	if (RB_FIND(bl_tree, &bl_head, &find) != NULL) {
+		pq->rcode_override = LDNS_RCODE_REFUSED;
+		TAILQ_INSERT_TAIL(&pending_queries, pq, entry);
+		send_answer(pq, NULL, 0);
+		return;
+	}
 
 	if ((query_imsg = calloc(1, sizeof(*query_imsg))) == NULL) {
 		log_warn(NULL);
@@ -791,7 +831,10 @@ send_answer(struct pending_query *pq, uint8_t *answer, ssize_t len)
 
 		LDNS_QR_SET(answer);
 		LDNS_RA_SET(answer);
-		LDNS_RCODE_SET(answer, LDNS_RCODE_SERVFAIL);
+		if (pq->rcode_override != LDNS_RCODE_NOERROR)
+			LDNS_RCODE_SET(answer, pq->rcode_override);
+		else
+			LDNS_RCODE_SET(answer, LDNS_RCODE_SERVFAIL);
 	} else {
 		if (pq->bogus) {
 			if(LDNS_CD_WIRE(pq->query)) {
@@ -1236,4 +1279,59 @@ write_trust_anchors(struct trust_anchor_head *tah, int fd)
 out:
 	ftruncate(fd, len);
 	fsync(fd);
+}
+
+void
+parse_blocklist(int fd)
+{
+	FILE		 *f;
+	struct bl_node	*bl_node;
+	char		 *line = NULL;
+	size_t		  linesize = 0;
+	ssize_t		  linelen;
+
+	if((f = fdopen(fd, "r")) == NULL) {
+		log_warn("cannot read block list");
+		close(fd);
+		return;
+	}
+
+	free_bl();
+
+	while ((linelen = getline(&line, &linesize, f)) != -1) {
+		if (line[linelen - 1] == '\n') {
+			if (linelen >= 2 && line[linelen - 2] != '.')
+				line[linelen - 1] = '.';
+			else
+				line[linelen - 1] = '\0';
+		}
+
+		bl_node = malloc(sizeof *bl_node);
+		if (bl_node == NULL)
+			fatal("%s: malloc", __func__);
+		if ((bl_node->domain = strdup(line)) == NULL)
+			fatal("%s: strdup", __func__);
+		RB_INSERT(bl_tree, &bl_head, bl_node);
+	}
+	free(line);
+	if (ferror(f))
+		log_warn("getline");
+	fclose(f);
+}
+
+int
+bl_cmp(struct bl_node *e1, struct bl_node *e2) {
+	return (strcasecmp(e1->domain, e2->domain));
+}
+
+void
+free_bl(void)
+{
+	struct bl_node	*n, *nxt;
+
+	for (n = RB_MIN(bl_tree, &bl_head); n != NULL; n = nxt) {
+		nxt = RB_NEXT(bl_tree, &bl_head, n);
+		RB_REMOVE(bl_tree, &bl_head, n);
+		free(n);
+	}
 }
