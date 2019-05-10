@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.329 2019/05/03 16:53:07 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.330 2019/05/10 12:41:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -808,6 +808,10 @@ bridge_enqueue(struct ifnet *ifp, struct mbuf *m)
 			    (m->m_flags & (M_BCAST | M_MCAST)) == 0)
 				continue;
 
+			if (bridge_filterrule(&bif->bif_brlout, eh, m) ==
+			    BRL_ACTION_BLOCK)
+				continue;
+
 			if (SLIST_NEXT(bif, bif_next) == NULL) {
 				used = 1;
 				mc = m;
@@ -818,10 +822,6 @@ bridge_enqueue(struct ifnet *ifp, struct mbuf *m)
 					continue;
 				}
 			}
-
-			if (bridge_filterrule(&bif->bif_brlout, eh, mc) ==
-			    BRL_ACTION_BLOCK)
-				continue;
 
 			error = bridge_ifenqueue(brifp, dst_if, mc);
 			if (error)
@@ -1249,7 +1249,8 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		if (protected != 0 && (protected & bif->bif_protected))
 			continue;
 
-		if (bridge_filterrule(&bif->bif_brlout, eh, m) == BRL_ACTION_BLOCK)
+		if (bridge_filterrule(&bif->bif_brlout, eh, m) ==
+		    BRL_ACTION_BLOCK)
 			continue;
 
 		/*
