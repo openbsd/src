@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.119 2018/08/06 06:30:06 mestre Exp $	*/
+/*	$OpenBSD: iked.h,v 1.120 2019/05/10 15:02:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -366,6 +366,7 @@ struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	uint32_t			 sa_msgid;	/* Last request rcvd */
 	int				 sa_msgid_set;	/* msgid initialized */
+	uint32_t			 sa_msgid_current;	/* Current requested rcvd */
 	uint32_t			 sa_reqid;	/* Next request sent */
 
 	int				 sa_type;
@@ -491,6 +492,7 @@ struct iked_message {
 	int			 msg_fd;
 	int			 msg_response;
 	int			 msg_responded;
+	int			 msg_valid;
 	int			 msg_natt;
 	int			 msg_natt_rcvd;
 	int			 msg_error;

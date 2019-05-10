@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.53 2017/11/27 18:39:35 patrick Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.54 2019/05/10 15:02:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -643,7 +643,7 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf **ep,
 	    sa->sa_local.addr.ss_len, response)) == NULL)
 		goto done;
 
-	resp.msg_msgid = response ? sa->sa_msgid : ikev2_msg_id(env, sa);
+	resp.msg_msgid = response ? sa->sa_msgid_current : ikev2_msg_id(env, sa);
 
 	/* IKE header */
 	if ((hdr = ikev2_add_header(buf, sa, resp.msg_msgid, IKEV2_PAYLOAD_SK,

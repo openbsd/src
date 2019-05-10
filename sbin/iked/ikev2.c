@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.168 2019/02/27 06:33:56 sthen Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.169 2019/05/10 15:02:17 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -438,6 +438,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL)
 		flag = IKED_REQ_INF;
 
+	if (hdr->ike_exchange != IKEV2_EXCHANGE_IKE_SA_INIT &&
+	    hdr->ike_nextpayload != IKEV2_PAYLOAD_SK)
+		return;
+
 	if (msg->msg_response) {
 		if (msg->msg_msgid > sa->sa_reqid)
 			return;
@@ -497,15 +501,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 			 */
 			return;
 		}
-		/*
-		 * If it's a new request, make sure to update the peer's
-		 * message ID and dispose of all previous responses.
-		 * We need to set sa_msgid_set in order to distinguish between
-		 * "last msgid was 0" and "msgid not set yet".
-		 */
-		sa->sa_msgid = msg->msg_msgid;
-		sa->sa_msgid_set = 1;
-		ikev2_msg_prevail(env, &sa->sa_responses, msg);
+		sa->sa_msgid_current = msg->msg_msgid;
 	}
 
 	if (sa_address(sa, &sa->sa_peer, &msg->msg_peer) == -1 ||
@@ -523,6 +519,18 @@ done:
 		ikev2_init_recv(env, msg, hdr);
 	else
 		ikev2_resp_recv(env, msg, hdr);
+
+	if (sa != NULL && !msg->msg_response && msg->msg_valid) {
+		/*
+		 * If it's a valid request, make sure to update the peer's
+		 * message ID and dispose of all previous responses.
+		 * We need to set sa_msgid_set in order to distinguish between
+		 * "last msgid was 0" and "msgid not set yet".
+		 */
+		sa->sa_msgid = sa->sa_msgid_current;
+		sa->sa_msgid_set = 1;
+		ikev2_msg_prevail(env, &sa->sa_responses, msg);
+	}
 
 	if (sa != NULL && sa->sa_state == IKEV2_STATE_CLOSED) {
 		log_debug("%s: closing SA", __func__);
@@ -2282,6 +2290,8 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 
 	if ((sa = msg->msg_sa) == NULL)
 		return;
+
+	msg->msg_valid = 1;
 
 	if (msg->msg_natt && sa->sa_natt == 0) {
 		log_debug("%s: NAT-T message received, updated SA", __func__);
