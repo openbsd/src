@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2019/01/31 19:14:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.20 2019/05/10 15:58:22 visa Exp $
 
 PROG=		noexec
 SRCS=		noexec.c testfly.S
@@ -83,6 +83,7 @@ nxmmap-mprotect: ${PROG}
     ${MACHINE} != "armv7" && \
     ${MACHINE} != "hppa" && \
     ${MACHINE} != "i386" && \
+    ${MACHINE} != "octeon" && \
     ${MACHINE} != "sparc64"
 REGRESS_TARGETS=run-regress-skiparch
 run-regress-skiparch:
