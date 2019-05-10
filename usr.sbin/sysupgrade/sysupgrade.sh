@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.18 2019/05/09 21:09:37 naddy Exp $
+# $OpenBSD: sysupgrade.sh,v 1.19 2019/05/10 01:29:14 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -162,7 +162,8 @@ OLD_FILES=$(ls)
 OLD_FILES=$(rmel SHA256 $OLD_FILES)
 DL=$SETS
 
-for f in $SETS; do
+[[ -n ${OLD_FILES} ]] && echo Verifying old sets.
+for f in ${OLD_FILES}; do
 	if cksum -C SHA256 $f >/dev/null 2>&1; then
 		DL=$(rmel $f ${DL})
 		OLD_FILES=$(rmel $f ${OLD_FILES})
@@ -174,8 +175,10 @@ for f in ${DL}; do
 	unpriv -f $f ftp -Vmo ${f} ${URL}${f}
 done
 
-echo Verifying sets.
-[[ -n ${DL} ]] && unpriv cksum -qC SHA256 ${DL}
+if [[ -n ${DL} ]]; then
+	echo Verifying sets.
+	unpriv cksum -qC SHA256 ${DL}
+fi
 
 ${KEEP} && > keep
 
