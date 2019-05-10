@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.28 2019/05/10 21:27:57 schwarze Exp $ */
+/*	$OpenBSD: strptime.c,v 1.29 2019/05/10 21:39:05 schwarze Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ _strptime(const char *buf, const char *fmt, struct tm *tm, int initialize)
 			fmt++;
 			continue;
 		}
-				
+
 		if ((c = *fmt++) != '%')
 			goto literal;
 
@@ -142,7 +142,7 @@ literal:
 			_LEGAL_ALT(0);
 			alt_format |= _ALT_O;
 			goto again;
-			
+
 		/*
 		 * "Complex" conversion rules, implemented through recursion.
 		 */
@@ -380,7 +380,7 @@ literal:
 				 * number but without the century.
 				 */
 			if (!(_conv_num(&bp, &i, 0, 99)))
-				return (NULL);				
+				return (NULL);
 			continue;
 
 		case 'G':	/* The year corresponding to the ISO week
@@ -434,8 +434,8 @@ literal:
 				bp += 3;
 			} else {
 				ep = _find_string(bp, &i,
-					       	 (const char * const *)tzname,
-					       	  NULL, 2);
+						 (const char * const *)tzname,
+						  NULL, 2);
 				if (ep == NULL)
 					return (NULL);
 
@@ -682,7 +682,7 @@ _find_string(const u_char *bp, int *tgt, const char * const *n1,
 	return NULL;
 }
 
-static int              
+static int
 leaps_thru_end_of(const int y)
 {
 	return (y >= 0) ? (y / 4 - y / 100 + y / 400) :
