@@ -1485,6 +1485,7 @@ atol
 atoll
 bsearch
 calloc
+calloc_conceal
 div
 ecvt
 exit
@@ -1526,6 +1527,7 @@ lldiv
 lsearch
 malloc
 malloc_options
+malloc_conceal
 _malloc_init
 mergesort
 optarg

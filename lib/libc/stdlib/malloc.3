@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.122 2018/12/05 17:11:59 schwarze Exp $
+.\"	$OpenBSD: malloc.3,v 1.123 2019/05/10 15:03:24 otto Exp $
 .\"
-.Dd $Mdocdate: December 5 2018 $
+.Dd $Mdocdate: May 10 2019 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -43,7 +43,9 @@
 .Nm reallocarray ,
 .Nm recallocarray ,
 .Nm freezero ,
-.Nm aligned_alloc
+.Nm aligned_alloc ,
+.Nm malloc_conceal ,
+.Nm calloc_conceal
 .Nd memory allocation and deallocation
 .Sh SYNOPSIS
 .In stdlib.h
@@ -63,6 +65,10 @@
 .Fn freezero "void *ptr" "size_t size"
 .Ft void *
 .Fn aligned_alloc "size_t alignment" "size_t size"
+.Ft void *
+.Fn malloc_conceal "size_t size"
+.Ft void *
+.Fn calloc_conceal "size_t nmemb" "size_t size"
 .Vt char *malloc_options ;
 .Sh DESCRIPTION
 The standard functions
@@ -233,6 +239,23 @@ If
 is not a multiple of
 .Fa alignment ,
 behavior is undefined.
+.Pp
+The
+.Fn malloc_conceal
+and
+.Fn calloc_conceal
+functions behave the same as
+.Fn malloc
+and
+.Fn calloc
+respectively,
+with the exception that the allocation returned is marked with the
+.Dv MAP_CONCEAL
+.Xr mmap 2
+flag and calling
+.Fn free
+on the allocation will discard the contents explicitly.
+A reallocation of a concealed allocation will leave these properties intact.
 .Sh MALLOC OPTIONS
 Upon the first call to the
 .Fn malloc
