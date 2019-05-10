@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.633 2019/04/06 08:25:05 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.634 2019/05/10 18:50:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -342,7 +342,6 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 	struct if_announcemsghdr	*ifan;
 	struct ifa_msghdr		*ifam;
 	struct if_ieee80211_data	*ifie;
-	int				 oldlinkup;
 
 	switch (rtm->rtm_type) {
 	case RTM_PROPOSAL:
@@ -376,12 +375,9 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			fatalx("down");
 
-		oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
 		interface_state(ifi);
-		if (quit == 0) {
-			if (LINK_STATE_IS_UP(ifi->link_state) != oldlinkup)
-				quit = RESTART;
-		}
+		if (quit == 0)
+			quit = RESTART;
 		break;
 
 	case RTM_80211INFO:
