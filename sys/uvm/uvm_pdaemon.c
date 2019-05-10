@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.80 2019/05/09 20:36:44 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.81 2019/05/10 02:16:50 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -217,15 +217,15 @@ uvm_pageout(void *arg)
 	  	work_done = 0; /* No work done this iteration. */
 
 		uvm_lock_fpageq();
-		if (uvm_nowait_failed) {
-			nowaitfailed = 1;
-			uvm_nowait_failed = 0;
-		}
-
 		if (!nowaitfailed && TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
 			msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", 0);
 			uvmexp.pdwoke++;
+		}
+
+		if (uvm_nowait_failed) {
+			nowaitfailed = 1;
+			uvm_nowait_failed = 0;
 		}
 
 		if ((pma = TAILQ_FIRST(&uvm.pmr_control.allocs)) != NULL) {
