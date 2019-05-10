@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.67 2019/03/25 18:36:58 jmc Exp $
+.\"	$OpenBSD: ssl.8,v 1.68 2019/05/10 12:41:49 sthen Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 25 2019 $
+.Dd $Mdocdate: May 10 2019 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -94,9 +94,9 @@ You can also sign the key yourself, using the command:
   -out /etc/ssl/server.crt
 .Ed
 .Pp
-Note that some new browsers have deprecated using the common name of a
-certificate and require that subject alt names are provided.
-This may require the use of
+Note that standard web browsers do not use the common name of a subject,
+but instead require that subject alt names are provided.
+This requires the use of
 .Ar -extfile Pa server.ext
 when self-signing.
 .Bd -literal -offset indent
