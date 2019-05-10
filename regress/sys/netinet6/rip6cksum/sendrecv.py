@@ -1,5 +1,5 @@
 #!/usr/local/bin/python2.7
-# $OpenBSD: sendrecv.py,v 1.1.1.1 2019/05/09 15:54:31 bluhm Exp $
+# $OpenBSD: sendrecv.py,v 1.2 2019/05/10 14:45:00 bluhm Exp $
 
 import os
 from scapy.all import *
@@ -7,7 +7,7 @@ from struct import pack
 import getopt, sys
 
 def usage():
-	print "raw6-sendrecv [-hi] [-c ckoff] [-r recvsz] [-s sendsz]"
+	print "sendrecv [-hi] [-c ckoff] [-r recvsz] [-s sendsz]"
 	print "    -c ckoff   set checksum offset within payload"
 	print "    -h         help, show usage"
 	print "    -i         expect icmp6 error message as response"

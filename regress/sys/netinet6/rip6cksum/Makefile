@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/05/10 02:22:34 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2019/05/10 14:45:00 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -14,13 +14,7 @@ regress:
 PROG =		rip6cksum
 WARNINGS =	yes
 
-# Set variables so that make runs with and without obj directory.
-# Only do that if necessary to keep visible output short.
-.if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 -u ./
-.else
-PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
-.endif
+PYTHON =	python2.7 -u ${.CURDIR}/
 
 REGRESS_TARGETS +=	run-error-negative
 run-error-negative:
