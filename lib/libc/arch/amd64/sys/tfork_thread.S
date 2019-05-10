@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.7 2019/03/15 05:42:38 kevlo Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.8 2019/05/10 01:31:30 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -62,14 +62,19 @@ ENTRY(__tfork_thread)
 	jz	1f
 	ret
 
+	/* the retpoline we'll use to call the child's main */
+	_ALIGN_TRAPS
+0:	JMP_RETPOLINE(r8)
+
 	/*
 	 * If we are in the child (new thread), then
 	 * set-up the call to the internal subroutine.  If it
 	 * returns, then call __threxit.
 	 */
+	_ALIGN_TRAPS
 1:
 	movq	%r9, %rdi
-	call	*%r8
+	call	0b
 
 	/*
 	 * Thread exit system call
