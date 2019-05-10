@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.29 2018/11/22 21:37:29 guenther Exp $ */
+/*	$OpenBSD: boot.h,v 1.30 2019/05/10 13:29:21 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -80,6 +80,14 @@ struct boot_dyn {
 	u_long		dt_proc[DT_PROCNUM];
 #endif
 };
+
+static void *relro_addr;
+static size_t relro_size;
+#define RCRT0_RELRO()							\
+	do {								\
+		if (relro_addr != NULL && relro_size != 0)		\
+			mprotect(relro_addr, relro_size, PROT_READ);	\
+	} while (0)
 
 /*
  * Local decls.
@@ -220,8 +228,8 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynamicp)
 			break;
 #endif
 		case PT_GNU_RELRO:
-			mprotect((void *)(phdp->p_vaddr + loff), phdp->p_memsz,
-			    PROT_READ);
+			relro_addr = (void *)(phdp->p_vaddr + loff);
+			relro_size = phdp->p_memsz;
 			/*
 			 * GNU_RELRO (a) covers the GOT, and (b) comes after
 			 * all LOAD sections, so if we found it then we're done

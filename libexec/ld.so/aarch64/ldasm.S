@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.7 2018/10/01 22:53:48 mortimer Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.8 2019/05/10 13:29:21 guenther Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -30,7 +30,11 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-ENTRY(_dl_start)
+	.section .boot.text,"ax",@progbits
+	_ALIGN_TEXT
+	.globl	_dl_start
+	.type	_dl_start,#function
+_dl_start:
 	mov	x29, sp
 	// need to worry about alignment, I think not?
 	mov	x19, sp
@@ -62,6 +66,7 @@ ENTRY(_dl_start)
 	ldr	x2, [x8, :got_lo12:_dl_dtors]
 
 	br	x0
+END(_dl_start)
 
 ENTRY(_dl_bind_start)
 	/*
@@ -103,9 +108,11 @@ ENTRY(_dl_bind_start)
 	// restore LR saved by PLT stub	
 	ldp	xzr, x30, [sp], #16
 	br	x17
+END(_dl_bind_start)
 
 ENTRY(_rtld_tlsdesc)
 	RETGUARD_SETUP(_rtld_tlsdesc, x15)
 	ldr	x0, [x0, #8]
 	RETGUARD_CHECK(_rtld_tlsdesc, x15)
 	ret
+END(_rtld_tlsdesc)

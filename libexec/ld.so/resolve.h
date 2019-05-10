@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.90 2019/04/21 04:11:42 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.91 2019/05/10 13:29:21 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,10 +30,21 @@
 #define _RESOLVE_H_
 
 #include <sys/queue.h>
-#include <link.h>
 #include <dlfcn.h>
+#include <link.h>
+#include <tib.h>
 
 #define __relro		__attribute__((section(".data.rel.ro")))
+
+#ifndef __boot
+# if DO_CLEAN_BOOT
+#  define __boot	__attribute__((section(".boot.text")))
+#  define __boot_data	__attribute__((section(".boot.data")))
+# else
+#  define __boot
+#  define __boot_data
+# endif
+#endif
 
 /* Number of low tags that are used saved internally (0 .. DT_NUM-1) */
 #define DT_NUM	(DT_PREINIT_ARRAYSZ + 1)
@@ -46,6 +57,9 @@ struct load_list {
 	Elf_Addr	moff;
 	long		foff;
 };
+
+typedef void initarrayfunc(int, const char **, char **, dl_cb_cb *);
+typedef void initfunc(void);	/* also fini and fini_array functions */
 
 /* Alpha uses 8byte entries for DT_HASH */
 #ifdef __alpha__
@@ -88,8 +102,8 @@ struct elf_object {
 			Elf_Addr	relaent;
 			Elf_Addr	strsz;
 			Elf_Addr	syment;
-			void		(*init)(void);
-			void		(*fini)(void);
+			initfunc	*init;
+			initfunc	*fini;
 			const char	*soname;
 			const char	*rpath;
 			Elf_Addr	symbolic;
@@ -101,14 +115,14 @@ struct elf_object {
 			Elf_Addr	textrel;
 			Elf_Addr	jmprel;
 			Elf_Addr	bind_now;
-			void		(**init_array)(void);
-			void		(**fini_array)(void);
+			initarrayfunc	**init_array;
+			initfunc	**fini_array;
 			Elf_Addr	init_arraysz;
 			Elf_Addr	fini_arraysz;
 			const char	*runpath;
 			Elf_Addr	flags;
 			Elf_Addr	encoding;
-			void		(**preinit_array)(void);
+			initarrayfunc	**preinit_array;
 			Elf_Addr	preinit_arraysz;
 		} u;
 	} Dyn;
@@ -291,16 +305,16 @@ typedef void lock_cb(int);
 void	_dl_thread_kern_go(lock_cb *);
 lock_cb	*_dl_thread_kern_stop(void);
 
-char	*_dl_getenv(const char *, char **);
-void	_dl_unsetenv(const char *, char **);
+char	*_dl_getenv(const char *, char **) __boot;
+void	_dl_unsetenv(const char *, char **) __boot;
 
-void	_dl_trace_setup(char **);
+void	_dl_trace_setup(char **) __boot;
 void	_dl_trace_object_setup(elf_object_t *);
 int	_dl_trace_plt(const elf_object_t *, const char *);
 
 /* tib.c */
-void	_dl_allocate_tls_offsets(void);
-void	_dl_allocate_first_tib(void);
+void	_dl_allocate_tls_offsets(void) __boot;
+void	_dl_allocate_first_tib(void) __boot;
 void	_dl_set_tls(elf_object_t *_object, Elf_Phdr *_ptls, Elf_Addr _libaddr,
 	    const char *_libname);
 extern int _dl_tib_static_done;

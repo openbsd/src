@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.46 2017/08/27 21:59:52 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.47 2019/05/10 13:29:21 guenther Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 /* XXX - DL_DATA_SIZE should be (9*8), but I can't think right now. */
 #define DL_DATA_SIZE (16*8)
 
-	.section	".text"
+	.section .boot.text,"ax",@progbits
 	.align	16
 	.register %g2,#scratch
 
@@ -136,6 +136,7 @@ _ENTRY(_dl_start)
 
 	jmp	%o0
 	 ldx	[%l7 + _dl_dtors], %g1	! %g1 = cleanup
+END(_dl_start)
 
 	/*
 	 * We have two separate entry points to the runtime linker.
@@ -164,8 +165,7 @@ _ENTRY(_dl_start)
 	 * done in the PLT entry.
 	 */
 
-	/* NOTE: _dl_bind_start_0 is untested.  Hence the debug stuff */
-
+	.text
 _ENTRY(_dl_bind_start_0)		# (x, y)
 	sethi	%hi(32768*32-8), %l1
 	sub	%o0, %o1, %l0		/* x - y */
@@ -197,6 +197,7 @@ _ENTRY(_dl_bind_start_0)		# (x, y)
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
+END(_dl_bind_start_0)
 
 _ENTRY(_dl_bind_start_1)		# (x, y)
 	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
@@ -208,3 +209,4 @@ _ENTRY(_dl_bind_start_1)		# (x, y)
 
 	jmp	%o0			/* return value == function address */
 	 restore			/* Dump our stack frame */
+END(_dl_bind_start_1)

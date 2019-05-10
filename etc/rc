@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.536 2019/04/01 11:39:46 tedu Exp $
+#	$OpenBSD: rc,v 1.537 2019/05/10 13:29:21 guenther Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -210,9 +210,11 @@ reorder_libs() {
 		cd $_tmpdir
 		ar x $_liba
 		if [[ $_lib == ld.so ]]; then
-			ld -g -x -e _dl_start \
+			args="-g -x -e _dl_start \
 			    --version-script=Symbols.map --shared -Bsymbolic \
-			    --no-undefined -o ld.so.test $(ls *.o | sort -R)
+			    --no-undefined"
+			[[ -f ld.script ]] && args="$args -T ld.script"
+			ld $args -o ld.so.test $(ls *.o | sort -R)
 			chmod u+x test-ld.so
 			[[ $(./test-ld.so ok) == './test-ld.so: ok!' ]]
 			$_install /usr/libexec/ld.so /usr/libexec/ld.so.save

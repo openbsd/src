@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.27 2017/08/28 14:12:09 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.28 2019/05/10 13:29:21 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -30,7 +30,11 @@
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
-ENTRY(_dl_start)
+	.section .boot.text,"ax",%progbits
+	_ALIGN_TEXT
+	.globl	_dl_start
+	.type	_dl_start,#function
+_dl_start:
 	mov	fp, sp
 	mov	r5, sp
 	mov	lr, r6				@ save lr
@@ -70,6 +74,7 @@ ENTRY(_dl_start)
 	.long	_DYNAMIC(GOTOFF)
 .L_dl_dtors:
 	.long	_dl_dtors(GOTOFF)
+END(_dl_start)
 
 
 ENTRY(_dl_bind_start)
@@ -89,3 +94,4 @@ ENTRY(_dl_bind_start)
 	mov	ip, r0
 	ldmia	sp!, {r0-r4,sl,fp,lr}
 	mov	pc, ip
+END(_dl_bind_start)

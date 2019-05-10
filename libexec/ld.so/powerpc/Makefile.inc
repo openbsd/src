@@ -1,3 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.2 2002/12/09 20:56:34 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2019/05/10 13:29:21 guenther Exp $
 
 CFLAGS += -fpic -msoft-float
+LD_SCRIPT = ${.CURDIR}/${MACHINE_CPU}/ld.script

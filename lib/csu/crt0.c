@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.13 2019/05/08 20:27:29 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.14 2019/05/10 13:29:21 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -49,6 +49,9 @@ static void		___start(MD_START_ARGS) __used;
 #ifndef	MD_EPROL_LABEL
 #define	MD_EPROL_LABEL	__asm("  .text\n_eprol:")
 #endif
+#ifndef RCRT0_RELRO
+#define RCRT0_RELRO()	do {} while (0)
+#endif
 
 char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
 
@@ -89,6 +92,7 @@ ___start(MD_START_ARGS)
 		size = __preinit_array_end - __preinit_array_start;
 		for (i = 0; i < size; i++)
 			__preinit_array_start[i](argc, argv, envp, NULL);
+		RCRT0_RELRO();
 		size = __init_array_end - __init_array_start;
 		for (i = 0; i < size; i++)
 			__init_array_start[i](argc, argv, envp, NULL);

@@ -17,8 +17,8 @@
 void	__init(void) __dso_hidden;
 int	main(int argc, char *argv[], char *envp[]);
 
-struct dl_cb;
-typedef void (*initarray_f)(int, char **, char **, const struct dl_cb *);
+typedef const void *dl_cb_cb(int);
+typedef void (*initarray_f)(int, char **, char **, dl_cb_cb *);
 typedef void (*init_f)(void);
 
 /*

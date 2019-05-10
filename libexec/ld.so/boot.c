@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.16 2018/10/23 04:01:45 guenther Exp $ */
+/*	$OpenBSD: boot.c,v 1.17 2019/05/10 13:29:21 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -74,7 +74,7 @@ struct boot_dyn {
 /*
  * Local decls.
  */
-void _dl_boot_bind(const long, long *, Elf_Dyn *);
+void _dl_boot_bind(const long, long *, Elf_Dyn *) __boot;
 
 void
 _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
