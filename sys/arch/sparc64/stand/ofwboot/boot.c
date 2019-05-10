@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.30 2018/12/31 11:44:57 claudio Exp $	*/
+/*	$OpenBSD: boot.c,v 1.31 2019/05/10 19:38:52 claudio Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -261,6 +261,16 @@ loadfile(int fd, char *args)
 	return (rval);
 }
 
+static int
+upgrade(void)
+{
+	struct stat sb;
+
+	if (stat("/bsd.upgrade", &sb) < 0)
+		return 0;
+	return 1;
+}
+
 int
 loadrandom(char *path, char *buf, size_t buflen)
 {
@@ -413,6 +423,12 @@ main(void)
 		just_bootline[0] = bootline;
 		just_bootline[1] = 0;
 		bootlp = just_bootline;
+	}
+	if (bootlp == kernels && upgrade()) {
+		just_bootline[0] = "/bsd.upgrade";
+		just_bootline[1] = 0;
+		bootlp = just_bootline;
+		printf("upgrade detected: switching to %s\n", *bootlp);
 	}
 	for (;;) {
 		if (bootlp) {
