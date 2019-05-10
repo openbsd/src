@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.233 2019/03/13 23:29:32 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.234 2019/05/10 09:15:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -153,6 +153,7 @@ typedef struct {
 		enum direction		 dir;
 		struct {
 			struct sockaddr_storage	 ss;
+			int			 prefixlen;
 			char			 name[HOST_NAME_MAX+1];
 		}			 addr;
 		struct {
@@ -187,7 +188,7 @@ typedef struct {
 %type	<v.number>	action ruleaf key_option
 %type	<v.port>	port
 %type	<v.host>	host
-%type	<v.addr>	address
+%type	<v.addr>	address rulesrc ruledst addrprefix
 %type	<v.tv>		timeout
 %type	<v.digest>	digest optdigest
 %type	<v.table>	tablespec
@@ -1293,6 +1294,20 @@ filterrule	: action dir quick ruleaf rulesrc ruledst {
 			rule->rule_dir = $2;
 			rule->rule_flags |= $3;
 			rule->rule_af = $4;
+			rule->rule_src.addr = $5.ss;
+			rule->rule_src.addr_mask = $5.prefixlen;
+			rule->rule_dst.addr = $6.ss;
+			rule->rule_dst.addr_mask = $6.prefixlen;
+
+			if (RELAY_AF_NEQ(rule->rule_af,
+			    rule->rule_src.addr.ss_family) ||
+			    RELAY_AF_NEQ(rule->rule_af,
+			    rule->rule_dst.addr.ss_family) ||
+			    RELAY_AF_NEQ(rule->rule_src.addr.ss_family,
+			    rule->rule_dst.addr.ss_family)) {
+				yyerror("address family mismatch");
+				YYERROR;
+			}
 
 			rulefile = NULL;
 		} ruleopts_l {
@@ -1341,10 +1356,20 @@ ruleaf		: /* empty */			{ $$ = AF_UNSPEC; }
 		| INET				{ $$ = AF_INET; }
 		;
 
-rulesrc		: /* XXX */
+rulesrc		: /* empty */		{
+			memset(&$$, 0, sizeof($$));
+		}
+		| FROM addrprefix		{
+			$$ = $2;
+		}
 		;
 
-ruledst		: /* XXX */
+ruledst		: /* empty */			{
+			memset(&$$, 0, sizeof($$));
+		}
+		| TO addrprefix			{
+			$$ = $2;
+		}
 		;
 
 ruleopts_l	: /* empty */
@@ -1967,7 +1992,7 @@ routeopts_l	: routeopts_l routeoptsl nl
 		| routeoptsl optnl
 		;
 
-routeoptsl	: ROUTE address '/' NUMBER {
+routeoptsl	: ROUTE addrprefix {
 			struct netroute	*nr;
 
 			if (router->rt_conf.af == AF_UNSPEC)
@@ -1975,14 +2000,6 @@ routeoptsl	: ROUTE address '/' NUMBER {
 			else if (router->rt_conf.af != $2.ss.ss_family) {
 				yyerror("router %s address family mismatch",
 				    router->rt_conf.name);
-				YYERROR;
-			}
-
-			if ((router->rt_conf.af == AF_INET &&
-			    ($4 > 32 || $4 < 0)) ||
-			    (router->rt_conf.af == AF_INET6 &&
-			    ($4 > 128 || $4 < 0))) {
-				yyerror("invalid prefixlen %d", $4);
 				YYERROR;
 			}
 
@@ -1995,7 +2012,7 @@ routeoptsl	: ROUTE address '/' NUMBER {
 				free(nr);
 				YYERROR;
 			}
-			nr->nr_conf.prefixlen = $4;
+			nr->nr_conf.prefixlen = $2.prefixlen;
 			nr->nr_conf.routerid = router->rt_conf.id;
 			nr->nr_router = router;
 			bcopy(&$2.ss, &nr->nr_conf.ss, sizeof($2.ss));
@@ -2166,6 +2183,26 @@ address		: STRING	{
 			h = TAILQ_FIRST(&al);
 			memcpy(&$$.ss, &h->ss, sizeof($$.ss));
 			host_free(&al);
+		}
+		;
+
+addrprefix	: address '/' NUMBER 		{
+			$$ = $1;
+			if (($$.ss.ss_family == AF_INET &&
+			    ($3 > 32 || $3 < 0)) ||
+			    ($$.ss.ss_family == AF_INET6 &&
+			    ($3 > 128 || $3 < 0))) {
+				yyerror("invalid prefixlen %d", $3);
+				YYERROR;
+			}
+			$$.prefixlen = $3;
+		}
+		| address			{
+			$$ = $1;
+			if ($$.ss.ss_family == AF_INET)
+				$$.prefixlen = 32;
+			else if ($$.ss.ss_family == AF_INET6)
+				$$.prefixlen = 128;
 		}
 		;
 

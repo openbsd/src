@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.73 2019/05/08 23:22:19 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.74 2019/05/10 09:15:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1765,13 +1765,12 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_DIR);
 		else if (proto->type != r->rule_proto)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_PROTO);
-		else if (r->rule_af != AF_UNSPEC &&
-		    (cre->ss.ss_family != r->rule_af ||
-		     cre->dst->ss.ss_family != r->rule_af))
+		else if (RELAY_AF_NEQ(r->rule_af, cre->ss.ss_family) ||
+		     RELAY_AF_NEQ(r->rule_af, cre->dst->ss.ss_family))
 			RELAY_GET_SKIP_STEP(RULE_SKIP_AF);
 		else if (RELAY_ADDR_CMP(&r->rule_src, &cre->ss) != 0)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_SRC);
-		else if (RELAY_ADDR_CMP(&r->rule_dst, &cre->dst->ss) != 0)
+		else if (RELAY_ADDR_CMP(&r->rule_dst, &con->se_sockname) != 0)
 			RELAY_GET_SKIP_STEP(RULE_SKIP_DST);
 		else if (r->rule_method != HTTP_METHOD_NONE &&
 		    (desc->http_method == HTTP_METHOD_RESPONSE ||
@@ -1870,7 +1869,7 @@ relay_calc_skip_steps(struct relay_rules *rules)
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_DIR);
 		else if (cur->rule_proto != prev->rule_proto)
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_PROTO);
-		else if (cur->rule_af != prev->rule_af)
+		else if (RELAY_AF_NEQ(cur->rule_af, prev->rule_af))
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_AF);
 		else if (RELAY_ADDR_NEQ(&cur->rule_src, &prev->rule_src))
 			RELAY_SET_SKIP_STEPS(RULE_SKIP_SRC);

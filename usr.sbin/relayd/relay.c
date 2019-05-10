@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.243 2019/05/08 23:22:19 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.244 2019/05/10 09:15:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,7 @@
 #include <arpa/inet.h>
 
 #include <limits.h>
+#include <netdb.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,6 +118,7 @@ relay_ruledebug(struct relay_rule *rule)
 {
 	struct kv	*kv = NULL;
 	u_int		 i;
+	char		 buf[NI_MAXHOST];
 
 	fprintf(stderr, "\t\t");
 
@@ -149,6 +151,25 @@ relay_ruledebug(struct relay_rule *rule)
 
 	if (rule->rule_flags & RULE_FLAG_QUICK)
 		fprintf(stderr, "quick ");
+
+	switch (rule->rule_af) {
+	case AF_INET:
+		fprintf(stderr, "inet ");
+		break;
+	case AF_INET6:
+		fprintf(stderr, "inet6 ");
+		break;
+	}
+
+	if (rule->rule_src.addr.ss_family != AF_UNSPEC)
+		fprintf(stderr, "from %s/%d ",
+		    print_host(&rule->rule_src.addr, buf, sizeof(buf)),
+		    rule->rule_src.addr_mask);
+
+	if (rule->rule_dst.addr.ss_family != AF_UNSPEC)
+		fprintf(stderr, "to %s/%d ",
+		    print_host(&rule->rule_dst.addr, buf, sizeof(buf)),
+		    rule->rule_dst.addr_mask);
 
 	for (i = 1; i < KEY_TYPE_MAX; i++) {
 		kv = &rule->rule_kv[i];
@@ -1118,7 +1139,13 @@ relay_accept(int fd, short event, void *arg)
 		con->se_in.port = ((struct sockaddr_in6 *)&ss)->sin6_port;
 		break;
 	}
-	bcopy(&ss, &con->se_in.ss, sizeof(con->se_in.ss));
+	memcpy(&con->se_in.ss, &ss, sizeof(con->se_in.ss));
+
+	slen = sizeof(con->se_sockname);
+	if (getsockname(s, (struct sockaddr *)&con->se_sockname, &slen) == -1) {
+		relay_close(con, "sockname lookup failed", 1);
+		return;
+	}
 
 	getmonotime(&con->se_tv_start);
 	bcopy(&con->se_tv_start, &con->se_tv_last, sizeof(con->se_tv_last));
@@ -1143,12 +1170,8 @@ relay_accept(int fd, short event, void *arg)
 	}
 
 	if (rlay->rl_conf.flags & F_DIVERT) {
-		slen = sizeof(con->se_out.ss);
-		if (getsockname(s, (struct sockaddr *)&con->se_out.ss,
-		    &slen) == -1) {
-			relay_close(con, "peer lookup failed", 1);
-			return;
-		}
+		memcpy(&con->se_out.ss, &con->se_sockname,
+		    sizeof(con->se_out.ss));
 		con->se_out.port = relay_socket_getport(&con->se_out.ss);
 
 		/* Detect loop and fall back to the alternate forward target */
@@ -1169,13 +1192,8 @@ relay_accept(int fd, short event, void *arg)
 		cnl->proc = ps->ps_instance;
 		cnl->proto = IPPROTO_TCP;
 
-		bcopy(&con->se_in.ss, &cnl->src, sizeof(cnl->src));
-		slen = sizeof(cnl->dst);
-		if (getsockname(s,
-		    (struct sockaddr *)&cnl->dst, &slen) == -1) {
-			relay_close(con, "failed to get local address", 1);
-			return;
-		}
+		memcpy(&cnl->src, &con->se_in.ss, sizeof(cnl->src));
+		memcpy(&cnl->dst, &con->se_sockname, sizeof(cnl->dst));
 
 		proc_compose(env->sc_ps, PROC_PFE, IMSG_NATLOOK,
 		    cnl, sizeof(*cnl));

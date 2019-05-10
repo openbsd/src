@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.253 2019/05/08 23:22:19 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.254 2019/05/10 09:15:00 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -550,6 +550,7 @@ TAILQ_HEAD(rdrlist, rdr);
 struct rsession {
 	objid_t				 se_id;
 	objid_t				 se_relayid;
+	struct sockaddr_storage		 se_sockname;
 	struct ctl_relay_event		 se_in;
 	struct ctl_relay_event		 se_out;
 	void				*se_priv;
@@ -601,11 +602,9 @@ enum rule_action {
 };
 
 struct rule_addr {
-	int				 addr_af;
 	struct sockaddr_storage		 addr;
 	u_int8_t			 addr_mask;
-	int				 addr_net;
-	in_port_t			 addr_port;
+	int				 addr_port;
 };
 
 #define RELAY_ADDR_EQ(_a, _b)						\
@@ -621,6 +620,10 @@ struct rule_addr {
 	((_a)->addr_mask != (_b)->addr_mask ||				\
 	sockaddr_cmp((struct sockaddr *)&(_a)->addr,			\
 	(struct sockaddr *)&(_b)->addr, (_a)->addr_mask) != 0)
+
+#define RELAY_AF_NEQ(_a, _b)						\
+	(((_a) != AF_UNSPEC) && ((_b) != AF_UNSPEC) &&			\
+	((_a) != (_b)))
 
 struct relay_rule {
 	objid_t			 rule_id;
