@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.17 2016/06/10 18:36:06 jcs Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.18 2019/05/10 21:20:43 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -37,7 +37,6 @@
 u_int cnvmem, extmem;		/* XXX - compatibility */
 
 bios_memmap_t bios_memmap[64];	/* This is easier */
-#ifndef EFIBOOT
 /*
  * Check gateA20
  *
@@ -145,7 +144,6 @@ bios_int12(bios_memmap_t *mp)
 
 	return ++mp;
 }
-
 
 /*
  * addrprobe(kloc): Probe memory at address kloc * 1024.
@@ -311,7 +309,6 @@ memprobe(void)
 	/* Check if gate A20 is on */
 	printf("a20=o%s] ", checkA20()? "n" : "ff!");
 }
-#endif
 
 void
 dump_biosmem(bios_memmap_t *tm)

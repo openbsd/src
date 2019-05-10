@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.24 2019/05/10 21:20:43 mlarkin Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.1 2019/05/10 21:20:42 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -47,6 +47,7 @@
 #ifdef SOFTRAID
 #include "softraid_amd64.h"
 #endif
+#include "efidev.h"
 
 #define MAX_CKSUMLEN MAXBSIZE / DEV_BSIZE	/* Max # of blks to cksum */
 
@@ -66,83 +67,25 @@ extern int bios_bootdev;
 extern int bios_cddev;
 
 static void
-diskinfo_init(struct diskinfo *dip)
+efi_hardprobe(void)
 {
-	bzero(dip, sizeof(*dip));
-	dip->diskio = biosd_diskio;
-	dip->strategy = biosstrategy;
-}
+	int		 n;
+	struct diskinfo	*dip, *dipt;
+	u_int		 bsdunit, type = 0;
+	u_int		 scsi= 0, ide = 0, atapi = 0;
+	extern struct disklist_lh
+			 efi_disklist;
 
-/* Probe for all BIOS floppies */
-static void
-floppyprobe(void)
-{
-	struct diskinfo *dip;
-	int i;
-
-	/* Floppies */
-	for (i = 0; i < 4; i++) {
-		dip = alloc(sizeof(struct diskinfo));
-		diskinfo_init(dip);
-
-		if (bios_getdiskinfo(i, &dip->bios_info)) {
-#ifdef BIOS_DEBUG
-			if (debug)
-				printf(" <!fd%u>", i);
-#endif
-			free(dip, sizeof(*dip));
-			break;
-		}
-
-		printf(" fd%u", i);
-
-		/* Fill out best we can - (fd?) */
-		dip->bios_info.bsd_dev = MAKEBOOTDEV(2, 0, 0, i, RAW_PART);
-
-		/*
-		 * Delay reading the disklabel until we're sure we want
-		 * to boot from the floppy. Doing this avoids a delay
-		 * (sometimes very long) when trying to read the label
-		 * and the drive is unplugged.
-		 */
-		dip->bios_info.flags |= BDI_BADLABEL;
-
-		/* Add to queue of disks */
-		TAILQ_INSERT_TAIL(&disklist, dip, list);
-	}
-}
-
-/* Probe for all BIOS hard disks */
-static void
-hardprobe(void)
-{
-	struct diskinfo *dip;
-	int i;
-	u_int bsdunit, type;
-	u_int scsi = 0, ide = 0;
-	const char *dc = (const char *)((0x40 << 4) + 0x75);
-
-	/* Hard disks */
-	for (i = 0x80; i < (0x80 + *dc); i++) {
-		dip = alloc(sizeof(struct diskinfo));
-		diskinfo_init(dip);
-
-		if (bios_getdiskinfo(i, &dip->bios_info)) {
-#ifdef BIOS_DEBUG
-			if (debug)
-				printf(" <!hd%u>", i&0x7f);
-#endif
-			free(dip, sizeof(*dip));
-			break;
-		}
-
-		printf(" hd%u%s", i&0x7f, (dip->bios_info.bios_edd > 0?"+":""));
+	n = 0;
+	TAILQ_FOREACH_SAFE(dip, &efi_disklist, list, dipt) {
+		TAILQ_REMOVE(&efi_disklist, dip, list);
+		n = scsi + ide;
 
 		/* Try to find the label, to figure out device type */
-		if ((bios_getdisklabel(&dip->bios_info, &dip->disklabel)) ) {
-			printf("*");
+		if ((efi_getdisklabel(dip->efi_info, &dip->disklabel))) {
+			type = 0;
+			printf(" hd%d*", n);
 			bsdunit = ide++;
-			type = 0;	/* XXX let it be IDE */
 		} else {
 			/* Best guess */
 			switch (dip->disklabel.d_type) {
@@ -159,12 +102,25 @@ hardprobe(void)
 				dip->bios_info.flags |= BDI_GOODLABEL;
 				break;
 
+			case DTYPE_ATAPI:
+				type = 6;
+				n = atapi;
+				bsdunit = atapi++;
+				dip->bios_info.flags |= BDI_GOODLABEL
+				    | BDI_EL_TORITO;
+				break;
+
 			default:
 				dip->bios_info.flags |= BDI_BADLABEL;
 				type = 0;	/* XXX Suggest IDE */
 				bsdunit = ide++;
 			}
+			printf(" %cd%d", (type == 6)? 'c' : 'h', n);
 		}
+		if (type != 6)
+			dip->bios_info.bios_number = 0x80 | n;
+		else
+			dip->bios_info.bios_number = 0xe0 | n;
 
 		dip->bios_info.checksum = 0; /* just in case */
 		/* Fill out best we can */
@@ -174,6 +130,7 @@ hardprobe(void)
 
 		/* Add to queue of disks */
 		TAILQ_INSERT_TAIL(&disklist, dip, list);
+		n++;
 	}
 }
 
@@ -191,13 +148,7 @@ diskprobe(void)
 	/* Init stuff */
 	TAILQ_INIT(&disklist);
 
-	/* Do probes */
-	floppyprobe();
-#ifdef BIOS_DEBUG
-	if (debug)
-		printf(";");
-#endif
-	hardprobe();
+	efi_hardprobe();
 
 #ifdef SOFTRAID
 	srprobe();
@@ -224,76 +175,6 @@ diskprobe(void)
 	addbootarg(BOOTARG_CKSUMLEN, sizeof(u_int32_t), &bios_cksumlen);
 	addbootarg(BOOTARG_DISKINFO, i * sizeof(bios_diskinfo_t),
 	    bios_diskinfo);
-}
-
-void
-cdprobe(void)
-{
-	struct diskinfo *dip;
-	int cddev = bios_cddev & 0xff;
-
-	/* Another BIOS boot device... */
-
-	if (bios_cddev == -1)			/* Not been set, so don't use */
-		return;
-
-	dip = alloc(sizeof(struct diskinfo));
-	diskinfo_init(dip);
-
-#if 0
-	if (bios_getdiskinfo(cddev, &dip->bios_info)) {
-		printf(" <!cd0>");	/* XXX */
-		free(dip, sizeof(*dip));
-		return;
-	}
-#endif
-
-	printf(" cd0");
-
-	dip->bios_info.bios_number = cddev;
-	dip->bios_info.bios_edd = 1;		/* Use the LBA calls */
-	dip->bios_info.flags |= BDI_GOODLABEL | BDI_EL_TORITO;
-	dip->bios_info.checksum = 0;		 /* just in case */
-	dip->bios_info.bsd_dev =
-	    MAKEBOOTDEV(6, 0, 0, 0, RAW_PART);
-
-	/* Create an imaginary disk label */
-	dip->disklabel.d_secsize = 2048;
-	dip->disklabel.d_ntracks = 1;
-	dip->disklabel.d_nsectors = 100;
-	dip->disklabel.d_ncylinders = 1;
-	dip->disklabel.d_secpercyl = dip->disklabel.d_ntracks *
-	    dip->disklabel.d_nsectors;
-
-	strncpy(dip->disklabel.d_typename, "ATAPI CD-ROM",
-	    sizeof(dip->disklabel.d_typename));
-	dip->disklabel.d_type = DTYPE_ATAPI;
-
-	strncpy(dip->disklabel.d_packname, "fictitious",
-	    sizeof(dip->disklabel.d_packname));
-	DL_SETDSIZE(&dip->disklabel, 100);
-
-	dip->disklabel.d_bbsize = 2048;
-	dip->disklabel.d_sbsize = 2048;
-
-	/* 'a' partition covering the "whole" disk */
-	DL_SETPOFFSET(&dip->disklabel.d_partitions[0], 0);
-	DL_SETPSIZE(&dip->disklabel.d_partitions[0], 100);
-	dip->disklabel.d_partitions[0].p_fstype = FS_UNUSED;
-
-	/* The raw partition is special */
-	DL_SETPOFFSET(&dip->disklabel.d_partitions[RAW_PART], 0);
-	DL_SETPSIZE(&dip->disklabel.d_partitions[RAW_PART], 100);
-	dip->disklabel.d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-
-	dip->disklabel.d_npartitions = MAXPARTITIONS;
-
-	dip->disklabel.d_magic = DISKMAGIC;
-	dip->disklabel.d_magic2 = DISKMAGIC;
-	dip->disklabel.d_checksum = dkcksum(&dip->disklabel);
-
-	/* Add to queue of disks */
-	TAILQ_INSERT_TAIL(&disklist, dip, list);
 }
 
 /* Find info on given BIOS disk */

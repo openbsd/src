@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.15 2019/05/05 19:17:03 kettenis Exp $
+#	$OpenBSD: Makefile.common,v 1.16 2019/05/10 21:20:42 mlarkin Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -25,7 +25,8 @@ AFLAGS+=	-pipe -fPIC
 .PATH:	${.CURDIR}/..
 SRCS+=	self_reloc.c
 SRCS+=	efiboot.c efidev.c efipxe.c efirng.c
-SRCS+=	conf.c
+SRCS+=	conf.c dev_i386.c cmd_i386.c diskprobe.c exec_i386.c machdep.c
+SRCS+=	memprobe.c
 
 .PATH:	${S}/stand/boot
 SRCS+=	boot.c bootarg.c cmd.c vars.c
@@ -50,8 +51,7 @@ SRCS+=	divdi3.c moddi3.c qdivrem.c
 SRCS+=	strlcpy.c
 
 .PATH:	${SADIR}/libsa
-SRCS+=	loadfile.c elf64.c elf32.c memprobe.c cmd_i386.c dev_i386.c exec_i386.c
-SRCS+=	machdep.c diskprobe.c
+SRCS+=	loadfile.c elf64.c elf32.c
 
 .if ${SOFTRAID:L} == "yes"
 SRCS+=	softraid_amd64.c

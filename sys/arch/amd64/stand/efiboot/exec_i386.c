@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.29 2019/05/10 21:20:43 mlarkin Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.1 2019/05/10 21:20:42 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -46,6 +46,8 @@
 #include "softraid_amd64.h"
 #endif
 
+#include "efiboot.h"
+
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));
 
@@ -74,6 +76,14 @@ run_loadfile(uint64_t *marks, int howto)
 	bios_bootsr_t bootsr;
 	struct sr_boot_volume *bv;
 #endif
+	int i;
+	u_long delta;
+	extern u_long efi_loadaddr;
+
+	if ((av = alloc(ac)) == NULL)
+		panic("alloc for bootarg");
+	efi_makebootargs();
+	delta = DEFAULT_KERNEL_ADDRESS - efi_loadaddr;
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
 
@@ -112,18 +122,43 @@ run_loadfile(uint64_t *marks, int howto)
 #endif
 
 	entry = marks[MARK_ENTRY] & 0x0fffffff;
+	entry += delta;
 
 	printf("entry point at 0x%lx\n", entry);
+
+	/* Sync the memory map and call ExitBootServices() */
+	efi_cleanup();
 
 	/* Pass memory map to the kernel */
 	mem_pass();
 
+	/*
+	 * This code may be used both for 64bit and 32bit.  Make sure the
+	 * bootarg is always 32bit, even on amd64.
+	 */
+#ifdef __amd64__
+	makebootargs32(av, &ac);
+#else
 	makebootargs(av, &ac);
+#endif
 
+	/*
+	 * Move the loaded kernel image to the usual place after calling
+	 * ExitBootServices().
+	 */
+	memmove((void *)marks[MARK_START] + delta, (void *)marks[MARK_START],
+	    marks[MARK_END] - marks[MARK_START]);
+	for (i = 0; i < MARK_MAX; i++)
+		marks[i] += delta;
+
+#ifdef __amd64__
+	(*run_i386)((u_long)run_i386, entry, howto, bootdev, BOOTARG_APIVER,
+	    marks[MARK_END], extmem, cnvmem, ac, (intptr_t)av);
+#else
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
 	    extmem, cnvmem, ac, (int)av);
-
+#endif
 	/* not reached */
 }
 
