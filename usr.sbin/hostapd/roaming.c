@@ -1,4 +1,4 @@
-/*	$OpenBSD: roaming.c,v 1.6 2015/01/16 06:40:17 deraadt Exp $	*/
+/*	$OpenBSD: roaming.c,v 1.7 2019/05/10 01:29:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/ioctl.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
 #include <net/if_llc.h>

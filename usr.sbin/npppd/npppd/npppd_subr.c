@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_subr.c,v 1.19 2019/01/22 09:25:29 krw Exp $ */
+/*	$OpenBSD: npppd_subr.c,v 1.20 2019/05/10 01:29:31 guenther Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -38,7 +38,6 @@
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <net/if.h>
-#include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <fcntl.h>

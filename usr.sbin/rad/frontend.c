@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.28 2019/04/12 07:03:11 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.29 2019/05/10 01:29:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -56,7 +56,6 @@
 #include <sys/uio.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
 

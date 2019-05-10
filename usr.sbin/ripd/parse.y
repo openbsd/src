@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.47 2019/05/10 01:29:31 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -33,7 +33,6 @@
 #include <err.h>
 #include <errno.h>
 #include <unistd.h>
-#include <ifaddrs.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>

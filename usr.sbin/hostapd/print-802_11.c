@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.10 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.11 2019/05/10 01:29:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
 #include <net/if_llc.h>
