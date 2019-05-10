@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.192 2019/05/10 18:04:06 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.193 2019/05/10 18:09:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -71,8 +71,8 @@ static void	 format_defaults_winlink(struct format_tree *, struct winlink *);
 	"New Session,s,new-session|" \
 	"New Window,w,new-window"
 #define DEFAULT_WINDOW_MENU \
-	"Swap Left,l,swap-window -t,-1|" \
-	"Swap Right,r,swap-window -t,+1|" \
+	"Swap Left,l,swap-window -t:-1|" \
+	"Swap Right,r,swap-window -t:+1|" \
 	"#{?pane_marked_set,,#[dim]}Swap Marked,s,swap-window|" \
 	"|" \
 	"Kill,X,kill-window|" \
