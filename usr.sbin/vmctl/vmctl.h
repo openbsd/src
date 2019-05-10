@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.30 2018/12/06 09:23:15 claudio Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.31 2019/05/10 18:11:27 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -105,7 +105,6 @@ void	 unpause_vm(uint32_t, const char *);
 int	 unpause_vm_complete(struct imsg *, int *);
 void	 send_vm(uint32_t, const char *);
 void	 vm_receive(uint32_t, const char *);
-int	 receive_vm_complete(struct imsg *, int *);
 int	 check_info_id(const char *, uint32_t);
 void	 get_info_vm(uint32_t, const char *, enum actions, unsigned int);
 int	 add_info(struct imsg *, int *);
