@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.10 2019/03/31 01:00:32 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.11 2019/05/10 13:28:40 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -42,6 +42,24 @@ struct test_vector test_vectors[] = {
 		3,
 		{
 			0x01, 0x01, 0xff
+		},
+	},
+	{
+		FAIL,
+		0,
+		"boolean (constructed - expected failure)",
+		3,
+		{
+			0x21, 0x01, 0xff
+		},
+	},
+	{
+		FAIL,
+		0,
+		"boolean (more than 1 content octet - expected failure)",
+		4,
+		{
+			0x01, 0x02, 0x00, 0xff
 		},
 	},
 	{
@@ -181,21 +199,21 @@ struct test_vector test_vectors[] = {
 		}
 	},
 	{
-		SUCCEED,
+		FAIL,
 		0,
-		"maximum long form tagging (i.e. 4 byte tag id)",
-		7,
+		"reserved for future use (expected failure)",
+		4,
 		{
-			0x1f, 0x80, 0x80, 0x80, 0x02, 0x01, 0x01
-		},
+			0x30, 0xff, 0x01, 0x01
+		}
 	},
 	{
 		FAIL,
 		0,
-		"overflow long form tagging (expected failure)",
-		8,
+		"long form tagging prohibited (expected failure)",
+		5,
 		{
-			0x1f, 0x80, 0x80, 0x80, 0x80, 0x02, 0x01, 0x01
+			0x1f, 0x80, 0x02, 0x01, 0x01
 		},
 	},
 	{
