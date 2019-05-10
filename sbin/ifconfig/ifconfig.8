@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.334 2019/04/19 04:30:57 dlg Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.335 2019/05/10 18:27:50 akoshibe Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 19 2019 $
+.Dd $Mdocdate: May 10 2019 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1626,6 +1626,20 @@ Set the port number for the port named
 .Ar interface .
 The default value is the interface index of the
 .Ar interface .
+.It Cm protected Ar interface ids
+Put
+.Ar interface
+in protected domains.
+.Ar ids
+is a comma delimited list of domain IDs, between 1 and 31, to put the
+interface in.
+Interfaces that are part of a protected domain cannot forward traffic to any
+other interface in that domain.
+Interfaces do not belong to any protected domain by default.
+.It Cm -protected Ar interface
+Remove
+.Ar interface
+from all protected domains.
 .It Cm up
 Start the switch processing packets.
 .El
