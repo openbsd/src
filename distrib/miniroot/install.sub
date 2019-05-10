@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1129 2019/05/09 22:38:42 krw Exp $
+#	$OpenBSD: install.sub,v 1.1130 2019/05/10 15:38:19 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -891,12 +891,16 @@ dhcp_request() {
 
 	ifconfig $_if group dhcp >/dev/null 2>&1
 
-	dhclient -c /dev/stdin $_if <<__EOT
+	if [[ -x /sbin/dhclient ]]; then
+		/sbin/dhclient -c /dev/stdin $_if <<__EOT
 initial-interval 1;
 backoff-cutoff 2;
 reboot 5;
 timeout 10;
 __EOT
+	else
+		echo "DHCP leases not available during install - no /sbin/dhclient."
+	fi
 
 	# Move resolv.conf to where it will be copied to the installed system.
 	mv /etc/resolv.conf.tail /tmp/i/resolv.conf.tail
@@ -1001,48 +1005,30 @@ vlan_config() {
 	ifconfig $_if $_vi parent $_vd
 }
 
-# Configure IPv4 interface $1, add hostname $2 to the hosts file and create the
-# hostname.if file $3. Ask the user for the IPv4 address and network mask if the
-# address was not in specified in CIDR notation, unless he chooses 'dhcp'.
+# Configure IPv4 on interface $1.
 v4_config() {
-	local _if=$1 _name=$2 _hn=$3 _prompt _addr _newaddr _mask
+	local _if=$1 _name=$2 _hn=$3 _addr _mask _newaddr
 
-	# Preset the default answers by preserving possibly existing
-	# configuration from previous runs.
-	if ifconfig $_if | grep -q 'groups:.* dhcp'; then
-		_addr=dhcp
-	else
-		set -- $(v4_info $_if)
-		if [[ -n $2 ]]; then
-			_addr=$2; _mask=$(hextodec $3)
-			ifconfig $_if inet $_addr delete
-		fi
+	# Set default answers based on any existing configuration.
+	set -- $(v4_info $_if)
+	if [[ -n $2 ]] && ! isin $_if $(get_ifs dhcp); then
+		_addr=$2;
+		_mask=$(hextodec $3)
 	fi
-
-	if [[ -x /sbin/dhclient ]]; then
-		_prompt="or 'dhcp' "
-		# Don't make 'dhcp' the default if dhcp was already used.
-		ifconfig dhcp >/dev/null 2>&1 || _addr=dhcp
-	fi
-	_prompt="IPv4 address for $_if? (${_prompt}or 'none')"
 
 	# Nuke existing inet configuration.
 	ifconfig $_if -inet
 	ifconfig $_if -group dhcp >/dev/null 2>&1
 
 	while :; do
-		ask_until "$_prompt" "${_addr:-none}"
+		ask_until "IPv4 address for $_if? (or 'dhcp' or 'none')" \
+			  "${_addr:-dhcp}"
 		case $resp in
 		none)	return
 			;;
-		dhcp)	if [[ ! -x /sbin/dhclient ]]; then
-				echo "DHCP not possible - no /sbin/dhclient."
-				$AI && exit 1 || continue
-			else
-				dhcp_request $_if
-				echo "dhcp" >>$_hn
-				return
-			fi
+		dhcp)	dhcp_request $_if
+			echo "dhcp" >>$_hn
+			return
 			;;
 		esac
 
@@ -1115,7 +1101,7 @@ v6_defroute() {
 # and prefix length if the address was not specified in CIDR notation,
 # unless he chooses 'autoconf'.
 v6_config() {
-	local _if=$1 _name=$2 _hn=$3 _addr _newaddr _prefixlen _prompt
+	local _if=$1 _name=$2 _hn=$3 _addr _newaddr _prefixlen
 
 	ifconfig lo0 inet6 >/dev/null 2>&1 || return
 
@@ -1129,13 +1115,12 @@ v6_config() {
 		_prefixlen=$3
 	fi
 
-	_prompt="IPv6 address for $_if? (or 'autoconf' or 'none')"
-
 	# Nuke existing inet6 configuration.
 	ifconfig $_if -inet6
 
 	while :; do
-		ask_until "$_prompt" "${_addr:-none}"
+		ask_until "IPv6 address for $_if? (or 'autoconf' or 'none')" \
+			  "${_addr:-none}"
 		case $resp in
 		none)	return
 			;;
@@ -1150,7 +1135,8 @@ v6_config() {
 		if [[ $_newaddr == */* ]]; then
 			ifconfig $_if inet6 $_newaddr up
 		else
-			ask_until "IPv6 prefix length for $_if?" "${_prefixlen:-64}"
+			ask_until "IPv6 prefix length for $_if?" \
+				  "${_prefixlen:-64}"
 			ifconfig $_if inet6 $_newaddr/$resp up
 		fi
 
