@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.72 2018/12/28 14:32:47 bluhm Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.73 2019/05/10 15:13:38 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -3492,6 +3492,7 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 	struct ofp_action_output	*oao;
 	struct switch_port		*swpo;
 	struct mbuf			*mc;
+	uint32_t			protected = 0;
 
 	m->m_pkthdr.csum_flags = 0;
 
@@ -3509,6 +3510,14 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 		}
 	}
 
+	TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
+		if (swpo->swpo_port_no ==
+		    swpld->swpld_swfcl->swfcl_in_port) {
+			protected = swpo->swpo_protected;
+			break;
+		}
+	}
+
 	switch (ntohl(oao->ao_port)) {
 	case OFP_PORT_CONTROLLER:
 		swofp_action_output_controller(sc, mc, swpld,
@@ -3521,7 +3530,8 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 	case OFP_PORT_FLOOD:
 		TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
 			if (swpo->swpo_port_no !=
-			    swpld->swpld_swfcl->swfcl_in_port)
+			    swpld->swpld_swfcl->swfcl_in_port &&
+			    (protected & swpo->swpo_protected) == 0)
 				TAILQ_INSERT_HEAD(&swpld->swpld_fwdp_q, swpo,
 				    swpo_fwdp_next);
 		}
@@ -3543,7 +3553,8 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 		break;
 	case OFP_PORT_LOCAL:
 		TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
-			if (swpo->swpo_flags & IFBIF_LOCAL) {
+			if ((swpo->swpo_flags & IFBIF_LOCAL) &&
+			    (protected & swpo->swpo_protected) == 0) {
 				TAILQ_INSERT_HEAD(&swpld->swpld_fwdp_q, swpo,
 				    swpo_fwdp_next);
 				break;
@@ -3552,7 +3563,8 @@ swofp_action_output(struct switch_softc *sc, struct mbuf *m,
 		break;
 	default:
 		TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
-			if (swpo->swpo_port_no == ntohl(oao->ao_port))
+			if (swpo->swpo_port_no == ntohl(oao->ao_port) &&
+			    (protected & swpo->swpo_protected) == 0)
 				TAILQ_INSERT_HEAD(&swpld->swpld_fwdp_q, swpo,
 				    swpo_fwdp_next);
 		}

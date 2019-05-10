@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.26 2019/04/28 22:15:57 mpi Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.27 2019/05/10 15:13:38 akoshibe Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -434,6 +434,7 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		}
 		breq->ifbr_ifsflags = swpo->swpo_flags;
 		breq->ifbr_portno = swpo->swpo_port_no;
+		breq->ifbr_protected = swpo->swpo_protected;
 		break;
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == IFF_UP)
@@ -466,6 +467,19 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		brop->ifbop_desg_bridge = bs->bs_root_pv.pv_dbridge_id;
 		brop->ifbop_last_tc_time.tv_sec = bs->bs_last_tc_time.tv_sec;
 		brop->ifbop_last_tc_time.tv_usec = bs->bs_last_tc_time.tv_usec;
+		break;
+	case SIOCBRDGSIFPROT:
+		ifs = ifunit(breq->ifbr_ifsname);
+		if (ifs == NULL) {
+			error = ENOENT;
+			break;
+		}
+		swpo = (struct switch_port *)ifs->if_switchport;
+		if (swpo == NULL || swpo->swpo_switch != sc) {
+			error = ESRCH;
+			break;
+		}
+		swpo->swpo_protected = breq->ifbr_protected;
 		break;
 	case SIOCSWGDPID:
 	case SIOCSWSDPID:
@@ -560,7 +574,7 @@ switch_port_list(struct switch_softc *sc, struct ifbifconf *bifc)
 		strlcpy(breq.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
 		breq.ifbr_ifsflags = swpo->swpo_flags;
 		breq.ifbr_portno = swpo->swpo_port_no;
-
+		breq.ifbr_protected = swpo->swpo_protected;
 		if ((error = copyout((caddr_t)&breq,
 		    (caddr_t)(bifc->ifbic_req + n), sizeof(breq))) != 0)
 			goto done;
