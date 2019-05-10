@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.17 2019/03/28 11:18:56 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.18 2019/05/10 04:40:16 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -308,7 +308,8 @@ midi_in(struct midi *iep, unsigned char *idata, int icount)
 			iep->idx = 0;
 		} else if (c >= 0xf0) {
 			iep->msg[0] = c;
-			iep->len = common_len[c & 7];
+			iep->len = common_len[c >> 5];
+			log_puti(iep->len);
 			iep->st = c;
 			iep->idx = 1;
 		} else if (c >= 0x80) {
