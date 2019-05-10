@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.169 2019/05/10 15:02:17 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.170 2019/05/10 15:18:04 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -3549,6 +3549,9 @@ ikev2_ikesa_delete(struct iked *env, struct iked_sa *sa, int initiator)
 	struct ikev2_delete		*del;
 
 	if (initiator) {
+		/* XXX: Can not have simultaneous INFORMATIONAL exchanges */
+		if (sa->sa_stateflags & IKED_REQ_INF)
+			goto done;
 		/* Send PAYLOAD_DELETE */
 		if ((buf = ibuf_static()) == NULL)
 			goto done;
@@ -3560,6 +3563,7 @@ ikev2_ikesa_delete(struct iked *env, struct iked_sa *sa, int initiator)
 		if (ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_DELETE,
 		    IKEV2_EXCHANGE_INFORMATIONAL, 0) == -1)
 			goto done;
+		sa->sa_stateflags |= IKED_REQ_INF;
 		log_debug("%s: sent delete, closing SA", __func__);
 done:
 		ibuf_release(buf);
