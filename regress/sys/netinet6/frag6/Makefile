@@ -1,22 +1,14 @@
-#	$OpenBSD: Makefile,v 1.24 2018/09/10 13:00:58 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.25 2019/05/10 02:22:34 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
-# py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
 
-.if ! (make(clean) || make(cleandir) || make(obj))
-# Check wether all required python packages are installed.  If some
-# are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
-.endif
-
-.if ! empty(PYTHON_IMPORT)
+.if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
 .BEGIN:
 	@true
 regress:
-	@echo '${PYTHON_IMPORT}'
 	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
@@ -54,7 +46,7 @@ regress:
 .MAIN: all
 
 .if make (regress) || make (all)
-.BEGIN: addr.py
+.BEGIN:
 	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} ${SUDO} true
@@ -75,18 +67,20 @@ addr.py: Makefile
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 ./
+PYTHON =	python2.7 -u ./
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 ${.CURDIR}/
+PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 .endif
 
 stamp-stack:
+	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -d
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
 	date >$@
 
 stamp-pf: addr.py pf.conf
+	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
@@ -94,10 +88,9 @@ stamp-pf: addr.py pf.conf
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e
 	date >$@
 
-REGRESS_TARGETS =
 FRAG6_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag6*.py
 
-run-regress-stack-frag6_queuelimit.py:
+run-stack-frag6_queuelimit.py:
 	@echo '\n======== $@ ========'
 	# the stack does not limit the amount of fragments during reassembly
 	@echo DISABLED
@@ -106,8 +99,9 @@ run-regress-stack-frag6_queuelimit.py:
 
 # Ping all addresses.  This ensures that the ip addresses are configured
 # and all routing table are set up to allow bidirectional packet flow.
-${sp}: run-regress-${sp}-ping6
-run-regress-${sp}-ping6: stamp-${sp}
+${sp}: run-${sp}-ping6
+REGRESS_TARGETS +=	run-${sp}-ping6
+run-${sp}-ping6: stamp-${sp}
 	@echo '\n======== $@ ========'
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
@@ -116,8 +110,9 @@ run-regress-${sp}-ping6: stamp-${sp}
 
 # Ping all addresses again but with 5000 bytes payload.  These large
 # packets get fragmented by LOCAL and must be handled by REMOTE.
-${sp}: run-regress-${sp}-fragping6
-run-regress-${sp}-fragping6: stamp-${sp}
+${sp}: run-${sp}-fragping6
+REGRESS_TARGETS +=	run-${sp}-fragping6
+run-${sp}-fragping6: stamp-${sp}
 	@echo '\n======== $@ ========'
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
@@ -125,26 +120,22 @@ run-regress-${sp}-fragping6: stamp-${sp}
 .endfor
 
 .for s in ${FRAG6_SCRIPTS}
-${sp}: run-regress-${sp}-${s}
-run-regress-${sp}-${s}: addr.py stamp-${sp}
+${sp}: run-${sp}-${s}
+REGRESS_TARGETS +=	run-${sp}-${s}
+run-${sp}-${s}: addr.py stamp-${sp}
 	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}${s}
 .endfor
-
-REGRESS_TARGETS +=	run-regress-${sp}-ping6 run-regress-${sp}-fragping6 \
-			${FRAG6_SCRIPTS:S/^/run-regress-${sp}-/}
 
 .endfor
 
 # After running the tests, turn on pf on remote machine.
 # This is the expected default configuration.
-
+REGRESS_CLEANUP +=	cleanup-pf
 cleanup-pf:
 	rm -f stamp-stack stamp-pf
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fa
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -e || true
-
-REGRESS_TARGETS +=	cleanup-pf
 
 CLEANFILES +=		addr.py *.pyc *.log stamp-*
 

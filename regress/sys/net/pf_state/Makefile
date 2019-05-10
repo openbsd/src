@@ -1,26 +1,21 @@
-#	$OpenBSD: Makefile,v 1.7 2017/11/05 13:20:29 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2019/05/10 02:22:34 bluhm Exp $
 
 # The following ports must be installed:
 #
 # python-2.7          interpreted object-oriented programming language
-# py-libdnet          python interface to libdnet
 # scapy               powerful interactive packet manipulation in python
 
 .include <bsd.own.mk>
 
 .if ! (make(clean) || make(cleandir) || make(obj))
-# Check wether all required python packages are installed.  If some
-# are missing print a warning and skip the tests, but do not fail.
-PYTHON_IMPORT !!= python2.7 -c 'from scapy.all import *' 2>&1 || true
 PF_ENABLED !!=	${SUDO} pfctl -si | grep '^Status: Enabled ' || true
 PF_ANCHOR !!=	${SUDO} pfctl -sr | grep '^anchor "regress" all$$' || true
 .endif
 
-.if ! empty(PYTHON_IMPORT)
+.if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
 .BEGIN:
 	@true
 regress:
-	@echo '${PYTHON_IMPORT}'
 	@echo Install python and the scapy module for additional tests.
 	@echo SKIPPED
 .endif
@@ -88,6 +83,7 @@ addr.py: Makefile
 	mv $@.tmp $@
 
 # load the pf rules into the kernel of the REMOTE and LOCAL machine
+REGRESS_SETUP +=	stamp-pfctl
 stamp-pfctl: addr.py pf.conf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
@@ -105,20 +101,18 @@ PYTHON =	python2.7 -u ./
 PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 .endif
 
-TARGETS +=	challenge-ack
-run-regress-challenge-ack: challenge_ack.py addr.py stamp-pfctl
+REGRESS_TARGETS +=	run-challenge-ack
+run-challenge-ack: challenge_ack.py addr.py
 	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}challenge_ack.py
 
 .if ! empty(PF_ANCHOR)
-TARGETS +=	cleanup
-run-regress-cleanup:
+REGRESS_CLEANUP +=	cleanup
+cleanup:
 	@echo '\n======== $@ ========'
 	${SUDO} pfctl -a regress -Fr
 	rm -f stamp-pfctl
 .endif
-
-REGRESS_TARGETS =	${TARGETS:S/^/run-regress-/}
 
 CLEANFILES +=		addr.py *.pyc *.log stamp-*
 
