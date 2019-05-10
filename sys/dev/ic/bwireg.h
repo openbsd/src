@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwireg.h,v 1.9 2014/06/07 11:55:02 stsp Exp $	*/
+/*	$OpenBSD: bwireg.h,v 1.10 2019/05/10 16:44:36 bcook Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -330,6 +330,13 @@
  * else it is in bus regwin.
  */
 #define BWI_GPIO_CTRL			0x0000006c
+
+/*
+ * Core reset
+ */
+#define BWI_RESET_CTRL          0x1800
+#define BWI_RESET_STATUS        0x1804
+#define BWI_RESET_CTRL_RESET    (1 << 0)
 
 /*
  * Extended PCI registers
