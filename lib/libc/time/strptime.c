@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.26 2019/05/10 12:49:16 schwarze Exp $ */
+/*	$OpenBSD: strptime.c,v 1.27 2019/05/10 20:24:58 schwarze Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ literal:
 				ep = _find_string(bp, &i, nast, NULL, 4);
 				if (ep != NULL) {
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = -5 - i;
+					tm->TM_GMTOFF = (-5 - i) * SECSPERHOUR;
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = (char *)nast[i];
@@ -509,7 +509,7 @@ literal:
 				if (ep != NULL) {
 					tm->tm_isdst = 1;
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = -4 - i;
+					tm->TM_GMTOFF = (-4 - i) * SECSPERHOUR;
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = (char *)nadt[i];
