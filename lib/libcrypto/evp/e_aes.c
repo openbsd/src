@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.37 2019/04/14 17:27:42 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.38 2019/05/10 18:41:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -828,6 +828,12 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	    {
 		EVP_CIPHER_CTX *out = ptr;
 		EVP_AES_GCM_CTX *gctx_out = out->cipher_data;
+
+		if (gctx->gcm.key) {
+			if (gctx->gcm.key != &gctx->ks)
+				return 0;
+			gctx_out->gcm.key = &gctx_out->ks;
+		}
 
 		if (gctx->iv == c->iv) {
 			gctx_out->iv = out->iv;
