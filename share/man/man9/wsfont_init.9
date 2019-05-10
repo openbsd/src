@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsfont_init.9,v 1.1 2019/05/10 17:02:08 fcambus Exp $
+.\"	$OpenBSD: wsfont_init.9,v 1.2 2019/05/10 17:24:53 schwarze Exp $
 .\"     $NetBSD: wsfont.9,v 1.18 2012/01/13 23:09:51 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,9 +72,9 @@ display can add, remove and find fonts for use by device-dependent
 blitter operations.
 .Pp
 The primary data type for manipulating fonts is the
-.Em wsdisplay_font
+.Vt wsdisplay_font
 structure in
-.Pa dev/wscons/wsconsio.h :
+.In dev/wscons/wsconsio.h :
 .Bd -literal
 struct wsdisplay_font {
 	char name[WSFONT_NAME_SIZE];	/* font name */
@@ -93,7 +93,7 @@ struct wsdisplay_font {
 .Ed
 .Pp
 The maximum font table size is
-.Em WSDISPLAY_MAXFONTSZ .
+.Dv WSDISPLAY_MAXFONTSZ .
 .Pp
 The wsfont framework supports fonts with the following encodings:
 .Bl -tag -width compact
@@ -158,7 +158,9 @@ and
 .Fa byteorder
 arguments, then the glyph data will be modified to match.
 .Pp
-The address of the wsdisplay_font pointer for the specified font is returned in
+The address of the
+.Vt wsdisplay_font
+pointer for the specified font is returned in
 the
 .Fa ptr
 argument.
