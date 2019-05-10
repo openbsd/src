@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdpass.c,v 1.4 2017/11/20 17:26:39 ratchov Exp $	*/
+/*	$OpenBSD: fdpass.c,v 1.5 2019/05/10 04:39:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -253,6 +253,8 @@ fdpass_sio_open(int num, unsigned int mode)
 {
 	int fd;
 
+	if (fdpass_peer == NULL)
+		return NULL;
 	if (!fdpass_send(fdpass_peer, FDPASS_OPEN_SND, num, mode, -1))
 		return NULL;
 	if (!fdpass_waitret(fdpass_peer, &fd))
@@ -267,6 +269,8 @@ fdpass_mio_open(int num, unsigned int mode)
 {
 	int fd;
 
+	if (fdpass_peer == NULL)
+		return NULL;
 	if (!fdpass_send(fdpass_peer, FDPASS_OPEN_MIDI, num, mode, -1))
 		return NULL;
 	if (!fdpass_waitret(fdpass_peer, &fd))
