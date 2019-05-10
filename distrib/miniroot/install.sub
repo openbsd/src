@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1130 2019/05/10 15:38:19 krw Exp $
+#	$OpenBSD: install.sub,v 1.1131 2019/05/10 20:47:54 reyk Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -710,7 +710,7 @@ _autorespond() {
 		print -r " $_l"
 	done </tmp/ai/ai.conf.tmp >/tmp/ai/ai.conf
 	[[ -n $_def ]] && resp=$_def && return
-	err_exit "\nQuestion has no answer in response file."
+	err_exit "\nQuestion has no answer in response file: \"$_q\""
 }
 
 # Capture user response either by issuing an interactive read or by searching
