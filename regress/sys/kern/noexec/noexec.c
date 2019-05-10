@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.19 2019/01/31 19:14:12 bluhm Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.20 2019/05/10 15:57:39 visa Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -44,7 +44,7 @@ int page_size;
 char label[64] = "non-exec ";
 
 #define PAD 64*1024
-#define	MAXPAGESIZE 8192
+#define	MAXPAGESIZE 16384
 #define TESTSZ 256	/* assuming the testfly() will fit */
 u_int64_t data[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8] = { 0 };
 u_int64_t bss[(PAD + TESTSZ + PAD + MAXPAGESIZE) / 8];
