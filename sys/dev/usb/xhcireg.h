@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.15 2019/02/14 18:41:00 mglocker Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.16 2019/05/10 02:05:35 guenther Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -370,7 +370,8 @@ struct xhci_trb {
 } __packed;
 
 #define XHCI_TRB_FLAGS_BITMASK						\
-    "\20\007IDT\006IOC\005CHAIN\004NOSNOOP\003ISP\002LINKSEG\001CYCLE"
+    "\20" "\040SIA" "\022TRT_OUT" "\021DIR_IN" "\012BSR" "\007IDT" 	\
+    "\006IOC" "\005CHAIN" "\004NOSNOOP" "\003ISP" "\002LINKSEG" "\001CYCLE"
 
 #define XHCI_TRB_TYPE_MASK	0xfc00
 #define XHCI_TRB_TYPE(x)	(((x) & XHCI_TRB_TYPE_MASK) >> 10)
