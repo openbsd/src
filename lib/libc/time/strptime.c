@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.25 2019/02/21 19:10:32 kn Exp $ */
+/*	$OpenBSD: strptime.c,v 1.26 2019/05/10 12:49:16 schwarze Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -464,9 +464,6 @@ literal:
 			 * C[DS]T = Central : -5 | -6
 			 * M[DS]T = Mountain: -6 | -7
 			 * P[DS]T = Pacific : -7 | -8
-			 *          Military
-			 * [A-IL-M] = -1 ... -9 (J not used)
-			 * [N-Y]  = +1 ... +12
 			 */
 			while (isspace(*bp))
 				bp++;
@@ -518,25 +515,6 @@ literal:
 					tm->TM_ZONE = (char *)nadt[i];
 #endif
 					bp = ep;
-					continue;
-				}
-
-				if ((*bp >= 'A' && *bp <= 'I') ||
-				    (*bp >= 'L' && *bp <= 'Y')) {
-#ifdef TM_GMTOFF
-					/* Argh! No 'J'! */
-					if (*bp >= 'A' && *bp <= 'I')
-						tm->TM_GMTOFF =
-						    ('A' - 1) - (int)*bp;
-					else if (*bp >= 'L' && *bp <= 'M')
-						tm->TM_GMTOFF = 'A' - (int)*bp;
-					else if (*bp >= 'N' && *bp <= 'Y')
-						tm->TM_GMTOFF = (int)*bp - 'M';
-#endif
-#ifdef TM_ZONE
-					tm->TM_ZONE = NULL; /* XXX */
-#endif
-					bp++;
 					continue;
 				}
 				return NULL;

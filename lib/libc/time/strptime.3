@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strptime.3,v 1.27 2019/02/21 19:10:32 kn Exp $
+.\"	$OpenBSD: strptime.3,v 1.28 2019/05/10 12:49:16 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 21 2019 $
+.Dd $Mdocdate: May 10 2019 $
 .Dt STRPTIME 3
 .Os
 .Sh NAME
@@ -242,15 +242,7 @@ time
 or
 .Ql Standard
 .Pq Dq S
-time;
-a single letter military timezone specified as:
-.Dq A
-through
-.Dq I
-and
-.Dq K
-through
-.Dq Y .
+time.
 .It Cm \&%Z
 timezone name or no characters when timezone information is unavailable.
 .It Cm \&%%
