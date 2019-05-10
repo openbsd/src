@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.27 2019/05/10 20:24:58 schwarze Exp $ */
+/*	$OpenBSD: strptime.c,v 1.28 2019/05/10 21:27:57 schwarze Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -519,32 +519,17 @@ literal:
 				}
 				return NULL;
 			}
-			offs = 0;
-			for (i = 0; i < 4; ) {
-				if (isdigit(*bp)) {
-					offs = offs * 10 + (*bp++ - '0');
-					i++;
-					continue;
-				}
-				if (i == 2 && *bp == ':') {
-					bp++;
-					continue;
-				}
-				break;
-			}
-			switch (i) {
-			case 2:
-				offs *= 100;
-				break;
-			case 4:
-				i = offs % 100;
-				if (i >= 60)
-					return NULL;
-				/* Convert minutes into decimal */
-				offs = (offs / 100) * 100 + (i * 50) / 30;
-				break;
-			default:
+			if (!isdigit(bp[0]) || !isdigit(bp[1]))
 				return NULL;
+			offs = ((bp[0]-'0') * 10 + (bp[1]-'0')) * SECSPERHOUR;
+			bp += 2;
+			if (*bp == ':')
+				bp++;
+			if (isdigit(*bp)) {
+				offs += (*bp++ - '0') * 10 * SECSPERMIN;
+				if (!isdigit(*bp))
+					return NULL;
+				offs += (*bp++ - '0') * SECSPERMIN;
 			}
 			if (neg)
 				offs = -offs;
