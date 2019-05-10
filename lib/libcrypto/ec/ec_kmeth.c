@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.4 2019/01/19 01:18:56 tb Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.5 2019/05/10 19:15:06 bcook Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -186,7 +186,7 @@ EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
 {
 	EC_KEY_METHOD *ret;
 
-	if ((ret = malloc(sizeof(*meth))) == NULL)
+	if ((ret = calloc(1, sizeof(*meth))) == NULL)
 		return NULL;
 	if (meth != NULL)
 		*ret = *meth;
