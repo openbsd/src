@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.81 2019/05/10 02:16:50 beck Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.82 2019/05/10 02:33:57 beck Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -212,32 +212,27 @@ uvm_pageout(void *arg)
 	uvm_unlock_pageq();
 
 	for (;;) {
-		int nowaitfailed = 0;
 		long size;
 	  	work_done = 0; /* No work done this iteration. */
 
 		uvm_lock_fpageq();
-		if (!nowaitfailed && TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
+		if (!uvm_nowait_failed && TAILQ_EMPTY(&uvm.pmr_control.allocs)) {
 			msleep(&uvm.pagedaemon, &uvm.fpageqlock, PVM,
 			    "pgdaemon", 0);
 			uvmexp.pdwoke++;
-		}
-
-		if (uvm_nowait_failed) {
-			nowaitfailed = 1;
-			uvm_nowait_failed = 0;
 		}
 
 		if ((pma = TAILQ_FIRST(&uvm.pmr_control.allocs)) != NULL) {
 			pma->pm_flags |= UVM_PMA_BUSY;
 			constraint = pma->pm_constraint;
 		} else {
-			if (nowaitfailed) {
+			if (uvm_nowait_failed) {
 				/*
 				 * XXX realisticly, this is what our
 				 * nowait callers probably care about
 				 */
 				constraint = dma_constraint;
+				uvm_nowait_failed = 0;
 			} else
 				constraint = no_constraint;
 		}
