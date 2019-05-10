@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.241 2019/04/22 20:31:37 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.242 2019/05/10 20:17:41 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1970,6 +1970,8 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	 * MWAIT instruction (SVM_INTERCEPT_MWAIT_UNCOND)
 	 * MWAIT instruction (SVM_INTERCEPT_MWAIT_COND)
 	 * MONITOR instruction (SVM_INTERCEPT_MONITOR)
+	 * RDTSCP instruction (SVM_INTERCEPT_RDTSCP)
+	 * INVLPGA instruction (SVM_INTERCEPT_INVLPGA)
 	 * XSETBV instruction (SVM_INTERCEPT_XSETBV) (if available)
 	 */
 	vmcb->v_intercept1 = SVM_INTERCEPT_INTR | SVM_INTERCEPT_NMI |
@@ -1980,7 +1982,8 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    SVM_INTERCEPT_VMLOAD | SVM_INTERCEPT_VMSAVE | SVM_INTERCEPT_STGI |
 	    SVM_INTERCEPT_CLGI | SVM_INTERCEPT_SKINIT | SVM_INTERCEPT_ICEBP |
 	    SVM_INTERCEPT_MWAIT_UNCOND | SVM_INTERCEPT_MONITOR |
-	    SVM_INTERCEPT_MWAIT_COND;
+	    SVM_INTERCEPT_MWAIT_COND | SVM_INTERCEPT_RDTSCP |
+	    SVM_INTERCEPT_INVLPGA;
 
 	if (xsave_mask)
 		vmcb->v_intercept2 |= SVM_INTERCEPT_XSETBV;
@@ -4568,6 +4571,16 @@ svm_handle_exit(struct vcpu *vcpu)
 	case SVM_VMEXIT_MWAIT:
 	case SVM_VMEXIT_MWAIT_CONDITIONAL:
 	case SVM_VMEXIT_MONITOR:
+	case SVM_VMEXIT_VMRUN:
+	case SVM_VMEXIT_VMMCALL:
+	case SVM_VMEXIT_VMLOAD:
+	case SVM_VMEXIT_VMSAVE:
+	case SVM_VMEXIT_STGI:
+	case SVM_VMEXIT_CLGI:
+	case SVM_VMEXIT_SKINIT:
+	case SVM_VMEXIT_RDTSCP:
+	case SVM_VMEXIT_ICEBP:
+	case SVM_VMEXIT_INVLPGA:
 		ret = vmm_inject_ud(vcpu);
 		update_rip = 0;
 		break;
