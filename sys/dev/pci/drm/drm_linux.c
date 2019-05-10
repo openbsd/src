@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.34 2019/04/23 11:38:55 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.35 2019/05/10 18:35:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -571,15 +571,14 @@ idr_get_next(struct idr *idr, int *id)
 {
 	struct idr_entry *res;
 
-	res = idr_find(idr, *id);
-	if (res == NULL)
-		res = SPLAY_MIN(idr_tree, &idr->tree);
-	else
-		res = SPLAY_NEXT(idr_tree, &idr->tree, res);
-	if (res == NULL)
-		return NULL;
-	*id = res->id;
-	return res->ptr;
+	SPLAY_FOREACH(res, idr_tree, &idr->tree) {
+		if (res->id >= *id) {
+			*id = res->id;
+			return res->ptr;
+		}
+	}
+
+	return NULL;
 }
 
 int
