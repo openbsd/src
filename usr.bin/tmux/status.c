@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.197 2019/05/03 10:00:48 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.198 2019/05/11 06:34:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -203,7 +203,7 @@ status_at_line(struct client *c)
 {
 	struct session	*s = c->session;
 
-	if (c->flags & CLIENT_STATUSOFF)
+	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
 		return (-1);
 	if (s->statusat != 1)
 		return (s->statusat);
@@ -216,7 +216,7 @@ status_line_size(struct client *c)
 {
 	struct session	*s = c->session;
 
-	if (c->flags & CLIENT_STATUSOFF)
+	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
 		return (0);
 	return (s->statuslines);
 }
