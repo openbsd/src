@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.38 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.39 2019/05/11 17:45:59 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -27,6 +27,14 @@
 
 /* XXX - temporary measure until proc0 is properly aligned */
 #define RW_PROC(p) (((long)p) & ~RWLOCK_MASK)
+
+/*
+ * Other OSes implement more sophisticated mechanism to determine how long the
+ * process attempting to acquire the lock should be spinning. We start with
+ * the most simple approach: we do RW_SPINS attempts at most before eventually
+ * giving up and putting the process to sleep queue.
+ */
+#define RW_SPINS	1000
 
 #ifdef MULTIPROCESSOR
 #define rw_cas(p, o, n)	(atomic_cas_ulong(p, o, n) != o)
@@ -215,6 +223,14 @@ rw_enter(struct rwlock *rwl, int flags)
 	const struct rwlock_op *op;
 	struct sleep_state sls;
 	unsigned long inc, o;
+#ifdef MULTIPROCESSOR
+	/*
+	 * If process holds the kernel lock, then we want to give up on CPU
+	 * as soon as possible so other processes waiting for the kernel lock
+	 * can progress. Hence no spinning if we hold the kernel lock.
+	 */
+	unsigned int spin = (_kernel_lock_held()) ? 0 : RW_SPINS;
+#endif
 	int error;
 #ifdef WITNESS
 	int lop_flags;
@@ -239,6 +255,18 @@ retry:
 		/* Avoid deadlocks after panic or in DDB */
 		if (panicstr || db_active)
 			return (0);
+
+#ifdef MULTIPROCESSOR
+		/*
+		 * It makes sense to try to spin just in case the lock
+		 * is acquired by writer.
+		 */
+		if ((o & RWLOCK_WRLOCK) && (spin != 0)) {
+			spin--;
+			CPU_BUSY_CYCLE();
+			continue;
+		}
+#endif
 
 		rw_enter_diag(rwl, flags);
 
