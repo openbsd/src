@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.92 2019/05/11 19:55:14 jasper Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.93 2019/05/11 19:58:02 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -274,6 +274,7 @@ struct vmd_vm {
 #define VM_STATE_RUNNING	0x01
 /* When set, VM is not started by default (PROC_PARENT only) */
 #define VM_STATE_DISABLED	0x02
+/* When set, VM is marked to be shut down */
 #define VM_STATE_SHUTDOWN	0x04
 #define VM_STATE_RECEIVED	0x08
 #define VM_STATE_PAUSED		0x10
