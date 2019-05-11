@@ -1812,14 +1812,6 @@
 ./usr/share/man/man4/sli.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/smsc.4
-./usr/share/man/man4/socppc/autoconf.4
-./usr/share/man/man4/socppc/intro.4
-./usr/share/man/man4/socppc/ipic.4
-./usr/share/man/man4/socppc/mem.4
-./usr/share/man/man4/socppc/obio.4
-./usr/share/man/man4/socppc/sociic.4
-./usr/share/man/man4/socppc/socpcic.4
-./usr/share/man/man4/socppc/tsec.4
 ./usr/share/man/man4/softraid.4
 ./usr/share/man/man4/sparc64/agten.4
 ./usr/share/man/man4/sparc64/apio.4
@@ -2503,9 +2495,6 @@
 ./usr/share/man/man8/sndiod.8
 ./usr/share/man/man8/snmpctl.8
 ./usr/share/man/man8/snmpd.8
-./usr/share/man/man8/socppc/MAKEDEV.8
-./usr/share/man/man8/socppc/boot.8
-./usr/share/man/man8/socppc/mkboot.8
 ./usr/share/man/man8/spamd-setup.8
 ./usr/share/man/man8/spamd.8
 ./usr/share/man/man8/spamdb.8

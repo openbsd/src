@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.44 2018/07/02 15:39:33 kettenis Exp $
+.\"	$OpenBSD: com.4,v 1.45 2019/05/11 07:18:15 deraadt Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd $Mdocdate: July 2 2018 $
+.Dd $Mdocdate: May 11 2019 $
 .Dt COM 4
 .Os
 .Sh NAME
@@ -94,10 +94,6 @@
 .Cd "com1 at macebus0 base 0x00398000 irq 5"
 .Cd "com0 at ioc? base 0x00020178"
 .Cd "com1 at ioc? base 0x00020170"
-.Pp
-.Cd "# socppc"
-.Cd "com0 at obio? addr 0x04500 ivec 9"
-.Cd "com1 at obio? addr 0x04600 ivec 10"
 .Pp
 .Cd "# sparc64"
 .Cd "com* at asio?"

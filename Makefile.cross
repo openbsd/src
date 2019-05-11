@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.99 2018/02/04 21:11:32 patrick Exp $
+# $OpenBSD: Makefile.cross,v 1.100 2019/05/11 07:18:14 deraadt Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -17,7 +17,7 @@ TARGET_ARCH=	mips64
 .elif	(${TARGET} == "loongson")
 TARGET_ARCH=	mips64el
 TARGET_CPU=	mips64
-.elif	(${TARGET} == "macppc" || ${TARGET} == "socppc")
+.elif	(${TARGET} == "macppc"
 TARGET_ARCH=	powerpc
 .elif	(${TARGET} == "landisk")
 TARGET_ARCH=	sh
