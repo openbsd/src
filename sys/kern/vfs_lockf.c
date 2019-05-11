@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.41 2019/05/08 16:24:48 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.42 2019/05/11 08:18:51 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -355,10 +355,9 @@ lf_setlock(struct lockf *lock)
 		/*
 		 * Lock is blocked, check for deadlock before proceeding.
 		 * Note: flock style locks cover the whole file, there is no
-		 * chance for deadlock. But for simplicity, all types of locks
-		 * are checked.
+		 * chance for deadlock.
 		 */
-		if (lf_deadlock(lock)) {
+		if ((lock->lf_flags & F_POSIX) && lf_deadlock(lock)) {
 			lf_free(lock);
 			return (EDEADLK);
 		}
@@ -844,7 +843,11 @@ lf_deadlock(struct lockf *lock)
 	struct lockf *block, *lf, *pending;
 
 	lf = TAILQ_FIRST(&lock->lf_state->ls_locks);
-	while ((block = lf_getblock(lf, lock)) != NULL) {
+	for (; (block = lf_getblock(lf, lock)) != NULL;
+	    lf = TAILQ_NEXT(block, lf_entry)) {
+		if ((block->lf_flags & F_POSIX) == 0)
+			continue;
+
 		TAILQ_FOREACH(pending, &lock->lf_state->ls_pending, lf_entry) {
 			if (pending->lf_blk == NULL)
 				continue; /* lock already unblocked */
@@ -853,8 +856,6 @@ lf_deadlock(struct lockf *lock)
 			    pending->lf_blk->lf_pid == lock->lf_pid)
 				return (1);
 		}
-
-		lf = TAILQ_NEXT(lf, lf_entry);
 	}
 
 	return (0);
