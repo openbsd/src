@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.9 2015/03/18 05:26:10 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.10 2019/05/11 13:05:25 tb Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -25,8 +25,6 @@ SSLASM+= rc4 rc4-parisc rc4-parisc
 .else
 SRCS+= rc4_enc.c rc4_skey.c
 .endif
-## rc5
-#SRCS+= rc5_enc.c 
 # sha
 CFLAGS+= -DSHA1_ASM
 SSLASM+= sha sha1-parisc sha1-parisc
