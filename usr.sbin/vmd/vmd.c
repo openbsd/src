@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.108 2018/12/09 12:26:38 claudio Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.109 2019/05/11 01:05:17 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -345,6 +345,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		log_info("%s: paused vm %d successfully",
 		    vm->vm_params.vmc_params.vcp_name,
 		    vm->vm_vmid);
+		vm->vm_paused = 1;
 		break;
 	case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
@@ -357,6 +358,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		log_info("%s: unpaused vm %d successfully.",
 		    vm->vm_params.vmc_params.vcp_name,
 		    vm->vm_vmid);
+		vm->vm_paused = 0;
 		break;
 	case IMSG_VMDOP_START_VM_RESPONSE:
 		IMSG_SIZE_CHECK(imsg, &vmr);
