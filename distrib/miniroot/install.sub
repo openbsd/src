@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1131 2019/05/10 20:47:54 reyk Exp $
+#	$OpenBSD: install.sub,v 1.1132 2019/05/11 19:11:19 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1067,33 +1067,51 @@ v6_info() {
 # in the /etc/mygate file. Ask the user to either select from a list of default
 # router candidates or to enter a router IPv6 address.
 v6_defroute() {
-	local _if _prompt _resp _routers PS3
+	local _if _v6ifs _prompt _resp _routers _dr PS3
 
-	# Get a sorted, unique list of default router canditates by issuing a
-	# ping6 to the All-Routers multicast address on each interface that
-	# is not AUTOCONF6.
+	# Only configure a default route if an IPv6 address was manually configured.
 	for _if in $(get_ifs); do
 		set -- $(v6_info $_if)
-		[[ -n $2 && $1 != *AUTOCONF6* ]] || continue
+		[[ -z $2 || $1 == *AUTOCONF6* ]] || _v6ifs="$_v6ifs $_if"
+	done
+	[[ -n $_v6ifs ]] || return
+
+	# Start with any existing default routes.
+	_routers=$(route -n show -inet6 |
+		sed -En 's/^default[[:space:]]+([^[:space:]]+).*/\1 /p')
+
+	# Add more default router canditates by ping6'ing
+	# the All-Routers multicast address.
+	for _if in $_v6ifs; do
 		_resp=$(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
 			sed -En '/^[0-9]+ bytes from /{s///;s/: .*$//p;}')
-		_routers=$(bsort $_routers $_resp)
+		for _dr in $_resp; do
+			_routers=$(addel $_dr $_routers)
+		done
 	done
 
+	[[ -n $_routers ]] && _routers=$(bsort $_routers)
 	_prompt="IPv6 default router?"
 
 	if $AI; then
-		_autorespond "$_prompt" && _resp=$resp && echo "$_prompt $_resp"
+		_autorespond "$_prompt (IPv6 address or 'none')" none &&
+			echo "$_prompt $resp"
+		[[ $resp != none ]] &&
+			route -n add -inet6 -host default $resp &&
+			echo $resp >>/tmp/i/mygate
 	else
-		PS3="$_prompt (${_routers:+list #, }IPv6 address or 'none'): "
-		select _resp in $_routers; do
-			[[ ${_resp:=$REPLY} == *:* ]] && break
-			[[ $_resp == none ]] && return
+		PS3="$_prompt (list #, IPv6 address or 'none') "
+		select _resp in none $_routers; do
+			[[ $REPLY == none || $_resp == none ]] && break
+			[[ -z $_resp ]] && _resp=$REPLY
+			# Avoid possible "file exists" errors
+			route -n -q delete -inet6 -host default $_resp
+			if route -n add -inet6 -host default $_resp; then
+				echo $_resp >>/tmp/i/mygate
+				break
+			fi
 		done
 	fi
-
-	route -n add -inet6 -host default "$_resp" &&
-		echo "$_resp" >>/tmp/i/mygate
 }
 
 # Configure IPv6 interface $1, add hostname $2 to the hosts file,
