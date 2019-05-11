@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpidump.c,v 1.22 2019/01/12 17:01:31 kettenis Exp $	*/
+/*	$OpenBSD: acpidump.c,v 1.23 2019/05/11 19:17:56 lteo Exp $	*/
 /*
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
  * All rights reserved.
@@ -640,21 +640,23 @@ asl_dump_from_devmem(void)
 		err(1, "asl_dump_from_devmem");
 
 	acpi_print_rsd_ptr(rp);
-	if (rp->addr != 0) {
-		rsdp = (struct ACPIsdt *) acpi_map_sdt(rp->addr);
-		if (memcmp(rsdp->signature, "RSDT", 4) ||
-		    acpi_checksum(rsdp, rsdp->len))
-			errx(1, "RSDT is corrupted");
 
-		acpi_handle_rsdt(rsdp);
-	} else {
+	if (rp->rev == 2 && rp->xaddr) {
 		rsdp = (struct ACPIsdt *) acpi_map_sdt(rp->xaddr);
 		if (memcmp(rsdp->signature, "XSDT", 4) ||
 		    acpi_checksum(rsdp, rsdp->len))
 			errx(1, "XSDT is corrupted");
 
 		acpi_handle_xsdt(rsdp);
-	}
+	} else if (rp->addr) {
+		rsdp = (struct ACPIsdt *) acpi_map_sdt(rp->addr);
+		if (memcmp(rsdp->signature, "RSDT", 4) ||
+		    acpi_checksum(rsdp, rsdp->len))
+			errx(1, "RSDT is corrupted");
+
+		acpi_handle_rsdt(rsdp);
+	} else
+		errx(1, "XSDT or RSDT not found");
 
 	fclose(fhdr);
 }
