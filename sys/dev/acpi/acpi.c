@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.364 2019/05/08 15:32:02 tedu Exp $ */
+/* $OpenBSD: acpi.c,v 1.365 2019/05/11 14:59:52 lteo Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1349,7 +1349,7 @@ acpi_loadtables(struct acpi_softc *sc, struct acpi_rsdp *rsdp)
 
 		sdt = acpi_maptable(sc, rsdp->rsdp_xsdt, NULL, NULL, NULL, 0);
 		if (sdt == NULL) {
-			printf("couldn't map rsdt\n");
+			printf("couldn't map xsdt\n");
 			return (ENOMEM);
 		}
 
