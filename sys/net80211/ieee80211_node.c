@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.164 2019/04/28 22:15:58 mpi Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.165 2019/05/11 23:27:08 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1063,7 +1063,7 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
 
 	if (ic->ic_if.if_flags & IFF_DEBUG) {
-		printf(" %c %s%c", fail ? '-' : '+',
+		printf("%s: %c %s%c", ic->ic_if.if_xname, fail ? '-' : '+',
 		    ether_sprintf(ni->ni_bssid),
 		    fail & 0x20 ? '!' : ' ');
 		printf(" %3d%c", ieee80211_chan2ieee(ic, ni->ni_chan),
