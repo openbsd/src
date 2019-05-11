@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.383 2019/03/03 16:31:12 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.384 2019/05/11 16:47:02 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1474,6 +1474,13 @@ rt_mpls_set(struct rtentry *rt, struct sockaddr *src, uint8_t op)
 	struct sockaddr_mpls	*psa_mpls = (struct sockaddr_mpls *)src;
 	struct rt_mpls		*rt_mpls;
 
+	if (psa_mpls == NULL && op != MPLS_OP_POP)
+		return (EOPNOTSUPP);
+	if (psa_mpls != NULL && psa_mpls->smpls_len != sizeof(*psa_mpls))
+		return (EINVAL);
+	if (psa_mpls != NULL && psa_mpls->smpls_family != AF_MPLS)
+		return (EAFNOSUPPORT);
+
 	rt->rt_llinfo = malloc(sizeof(struct rt_mpls), M_TEMP, M_NOWAIT|M_ZERO);
 	if (rt->rt_llinfo == NULL)
 		return (ENOMEM);
@@ -1481,9 +1488,7 @@ rt_mpls_set(struct rtentry *rt, struct sockaddr *src, uint8_t op)
 	rt_mpls = (struct rt_mpls *)rt->rt_llinfo;
 	if (psa_mpls != NULL)
 		rt_mpls->mpls_label = psa_mpls->smpls_label;
-
 	rt_mpls->mpls_operation = op;
-
 	/* XXX: set experimental bits */
 	rt->rt_flags |= RTF_MPLS;
 

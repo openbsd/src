@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.285 2019/04/05 12:58:34 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.286 2019/05/11 16:47:02 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1069,16 +1069,14 @@ change:
 					break;
 			}
 #ifdef MPLS
-			if ((rtm->rtm_flags & RTF_MPLS) &&
-			    info->rti_info[RTAX_SRC] != NULL) {
+			if (rtm->rtm_flags & RTF_MPLS) {
 				NET_LOCK();
 				error = rt_mpls_set(rt,
 				    info->rti_info[RTAX_SRC], info->rti_mpls);
 				NET_UNLOCK();
 				if (error)
 					break;
-			} else if (newgate || ((rtm->rtm_fmask & RTF_MPLS) &&
-			    !(rtm->rtm_flags & RTF_MPLS))) {
+			} else if (newgate || (rtm->rtm_fmask & RTF_MPLS)) {
 				NET_LOCK();
 				/* if gateway changed remove MPLS information */
 				rt_mpls_clear(rt);
@@ -1098,11 +1096,14 @@ change:
 
 			NET_LOCK();
 			/* Hack to allow some flags to be toggled */
-			if (rtm->rtm_fmask)
+			if (rtm->rtm_fmask) {
+				/* MPLS flag it is set by rt_mpls_set() */
+				rtm->rtm_fmask &= ~RTF_MPLS;
+				rtm->rtm_flags &= ~RTF_MPLS;
 				rt->rt_flags =
 				    (rt->rt_flags & ~rtm->rtm_fmask) |
 				    (rtm->rtm_flags & rtm->rtm_fmask);
-
+			}
 			rtm_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 
