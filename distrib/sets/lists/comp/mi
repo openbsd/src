@@ -23,6 +23,7 @@
 ./usr/include/arpa/tftp.h
 ./usr/include/asr.h
 ./usr/include/assert.h
+./usr/include/ber.h
 ./usr/include/bitstring.h
 ./usr/include/blf.h
 ./usr/include/bsd_auth.h
@@ -2112,6 +2113,7 @@
 ./usr/share/man/man3/bcmp.3
 ./usr/share/man/man3/bcopy.3
 ./usr/share/man/man3/bcrypt_pbkdf.3
+./usr/share/man/man3/ber.3
 ./usr/share/man/man3/bindresvport.3
 ./usr/share/man/man3/bitstring.3
 ./usr/share/man/man3/blowfish.3
