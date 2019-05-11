@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.2 2019/05/11 14:39:13 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -102,26 +102,6 @@ struct delayed_work {
 	struct timeout to;
 	struct taskq *tq;
 };
-
-struct irq_work {
-	struct task task;
-	struct taskq *tq;
-};
-
-typedef void (*irq_work_func_t)(struct irq_work *);
-
-static inline void
-init_irq_work(struct irq_work *work, irq_work_func_t func)
-{
-	work->tq = (struct taskq *)system_wq;
-	task_set(&work->task, (void (*)(void *))func, work);
-}
-
-static inline bool
-irq_work_queue(struct irq_work *work)
-{
-	return task_add(work->tq, &work->task);
-}
 
 #define system_power_efficient_wq ((struct workqueue_struct *)systq)
 
