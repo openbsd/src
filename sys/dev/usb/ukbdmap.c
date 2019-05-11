@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.43 2017/06/06 01:02:18 kevlo Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.44 2019/05/11 14:20:17 abieber Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
  *	OpenBSD: makemap.awk,v 1.14 2013/11/20 17:27:32 miod Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.45 2016/08/31 15:25:27 jca Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.46 2019/05/11 14:19:16 abieber Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -626,6 +626,27 @@ static const keysym_t ukbd_keydesc_us_dvorak[] = {
     KC(56),	KS_z,
 };
 
+static const keysym_t ukbd_keydesc_us_colemak[] = {
+/*  pos      command		normal		shifted */
+    KC(7),	KS_s,
+    KC(8),	KS_f,
+    KC(9),	KS_t,
+    KC(10),	KS_d,
+    KC(12),	KS_u,
+    KC(13),	KS_n,
+    KC(14),	KS_e,
+    KC(15),	KS_i,		KS_I,
+    KC(17),	KS_k,
+    KC(18),	KS_y,
+    KC(19),	KS_semicolon,	KS_colon,
+    KC(21),	KS_p,
+    KC(22),	KS_r,
+    KC(23),	KS_g,
+    KC(24),	KS_l,
+    KC(28),	KS_j,
+    KC(51),	KS_o,
+};
+
 static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
 /*  pos      command		normal		shifted */
     KC(57),	KS_Cmd1,	KS_Control_L,
@@ -1179,6 +1200,7 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_NO,			KB_DK,	ukbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	ukbd_keydesc_no_nodead),
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	ukbd_keydesc_us_dvorak),
+	KBD_MAP(KB_US | KB_COLEMAK,	KB_US,	ukbd_keydesc_us_colemak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	ukbd_keydesc_iopener),
 	KBD_MAP(KB_UK | KB_SWAPCTRLCAPS, KB_UK,	ukbd_keydesc_swapctrlcaps),
@@ -1190,6 +1212,8 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 		ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_BE | KB_SWAPCTRLCAPS, KB_BE,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_DVORAK | KB_SWAPCTRLCAPS,	KB_US | KB_DVORAK,
+		ukbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_US | KB_COLEMAK | KB_SWAPCTRLCAPS,	KB_US | KB_COLEMAK,
 		ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		ukbd_keydesc_swapctrlcaps),
