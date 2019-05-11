@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.27 2018/12/28 11:54:10 denis Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.28 2019/05/11 13:13:47 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -241,7 +241,7 @@ static const char *bgpnotify_minor_fsm[] = {
 /* RFC 8203 */
 #define BGP_NOTIFY_MINOR_CEASE_SHUT			2
 #define BGP_NOTIFY_MINOR_CEASE_RESET			4
-#define BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN	128
+#define BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN	255
 static const char *bgpnotify_minor_cease[] = {
 	NULL, "Maximum Number of Prefixes Reached", "Administrative Shutdown",
 	"Peer De-configured", "Administrative Reset", "Connection Rejected",
@@ -982,14 +982,14 @@ bgp_notification_print(const u_char *dat, int length)
 	u_int16_t af;
 	u_int8_t safi;
 	const u_char *p;
-	uint8_t shutdown_comm_length;
+	size_t shutdown_comm_length;
 	char shutstring[BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN + 1];
 
 	TCHECK2(dat[0], BGP_NOTIFICATION_SIZE);
 	memcpy(&bgpn, dat, BGP_NOTIFICATION_SIZE);
 
 	/* sanity checking */
-	if (length<BGP_NOTIFICATION_SIZE)
+	if (length < BGP_NOTIFICATION_SIZE)
 		return;
 
 	printf(": error %s,", bgp_notify_major(bgpn.bgpn_major));
@@ -1027,22 +1027,23 @@ bgp_notification_print(const u_char *dat, int length)
 		    (length >= BGP_NOTIFICATION_SIZE + 1)) {
 			p = dat + BGP_NOTIFICATION_SIZE;
 			TCHECK2(*p, 1);
-			shutdown_comm_length = *(p);
+			shutdown_comm_length = *p;
 
 			/* sanity checking */
 			if (shutdown_comm_length == 0)
 				return;
 			if (shutdown_comm_length >
 			    BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN)
-				return;
-			if (length < (shutdown_comm_length + 1 + BGP_NOTIFICATION_SIZE))
-				return;
+				goto trunc;
+			if (length < (shutdown_comm_length + 1 +
+			    BGP_NOTIFICATION_SIZE))
+				goto trunc;
 			TCHECK2(*(p+1), shutdown_comm_length);
 			
 			/* a proper shutdown communication */
-			printf(", Shutdown Communication [len %u]: \"",
+			printf(", Shutdown Communication [len %zu]: \"",
 			    shutdown_comm_length);
-			memset(shutstring, 0, BGP_NOTIFY_MINOR_CEASE_ADMIN_SHUTDOWN_LEN + 1);
+			memset(shutstring, 0, sizeof(shutstring));
 			memcpy(shutstring, p+1, shutdown_comm_length);
 			safeputs(shutstring);
 			printf("\"");
