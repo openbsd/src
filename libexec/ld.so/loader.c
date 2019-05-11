@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.178 2019/05/10 13:29:21 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.179 2019/05/11 21:02:35 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -789,16 +789,15 @@ void
 _dl_call_init_recurse(elf_object_t *object, int initfirst)
 {
 	struct dep_node *n;
+	int visited_flag = initfirst ? STAT_VISIT_INITFIRST : STAT_VISIT_INIT;
 
-	object->status |= STAT_VISITED;
+	object->status |= visited_flag;
 
 	TAILQ_FOREACH(n, &object->child_list, next_sib) {
-		if (n->data->status & STAT_VISITED)
+		if (n->data->status & visited_flag)
 			continue;
 		_dl_call_init_recurse(n->data, initfirst);
 	}
-
-	object->status &= ~STAT_VISITED;
 
 	if (object->status & STAT_INIT_DONE)
 		return;

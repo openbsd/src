@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.91 2019/05/10 13:29:21 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.92 2019/05/11 21:02:35 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -132,15 +132,16 @@ struct elf_object {
 	Elf_Addr	relcount;	/* DT_RELCOUNT */
 
 	int		status;
-#define	STAT_RELOC_DONE	0x01
-#define	STAT_GOT_DONE	0x02
-#define	STAT_INIT_DONE	0x04
-#define	STAT_FINI_DONE	0x08
-#define	STAT_FINI_READY	0x10
-#define	STAT_UNLOADED	0x20
-#define	STAT_NODELETE	0x40
-#define	STAT_VISITED	0x80
-#define	STAT_GNU_HASH	0x100
+#define	STAT_RELOC_DONE		0x001
+#define	STAT_GOT_DONE		0x002
+#define	STAT_INIT_DONE		0x004
+#define	STAT_FINI_DONE		0x008
+#define	STAT_FINI_READY		0x010
+#define	STAT_UNLOADED		0x020
+#define	STAT_NODELETE		0x040
+#define	STAT_GNU_HASH		0x080
+#define	STAT_VISIT_INITFIRST	0x100
+#define	STAT_VISIT_INIT		0x200
 
 	Elf_Phdr	*phdrp;
 	int		phdrc;
