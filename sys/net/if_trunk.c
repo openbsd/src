@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.139 2019/04/29 04:26:47 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.140 2019/05/11 18:10:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -1211,6 +1212,7 @@ trunk_port_state(void *arg)
 	if (tr->tr_linkstate != NULL)
 		(*tr->tr_linkstate)(tp);
 	trunk_link_active(tr, tp);
+	rtm_ifchg(&tr->tr_ac.ac_if);
 }
 
 struct trunk_port *
