@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.35 2019/05/10 18:35:00 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.36 2019/05/11 17:13:59 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -26,6 +26,7 @@
 #include <linux/mod_devicetable.h>
 #include <linux/acpi.h>
 #include <linux/pagevec.h>
+#include <linux/dma-fence-array.h>
 
 void
 tasklet_run(void *arg)
@@ -902,6 +903,110 @@ dma_fence_context_alloc(unsigned int num)
 {
 	return __sync_add_and_fetch(&drm_fence_count, num) - num;
 }
+
+static const char *
+dma_fence_array_get_driver_name(struct dma_fence *fence)
+{
+	return "dma_fence_array";
+}
+
+static const char *
+dma_fence_array_get_timeline_name(struct dma_fence *fence)
+{
+	return "unbound";
+}
+
+static void
+irq_dma_fence_array_work(struct irq_work *wrk)
+{
+	struct dma_fence_array *dfa = container_of(wrk, typeof(*dfa), work);
+
+	dma_fence_signal(&dfa->base);
+	dma_fence_put(&dfa->base);
+}
+
+static void
+dma_fence_array_cb_func(struct dma_fence *f, struct dma_fence_cb *cb)
+{
+	struct dma_fence_array_cb *array_cb =
+	    container_of(cb, struct dma_fence_array_cb, cb);
+	struct dma_fence_array *dfa = array_cb->array;
+	
+	if (atomic_dec_and_test(&dfa->num_pending))
+		irq_work_queue(&dfa->work);
+	else
+		dma_fence_put(&dfa->base);
+}
+
+static bool
+dma_fence_array_enable_signaling(struct dma_fence *fence)
+{
+	struct dma_fence_array *dfa = to_dma_fence_array(fence);
+	struct dma_fence_array_cb *cb = (void *)(&dfa[1]);
+	int i;
+
+	for (i = 0; i < dfa->num_fences; ++i) {
+		cb[i].array = dfa;
+		dma_fence_get(&dfa->base);
+		if (dma_fence_add_callback(dfa->fences[i], &cb[i].cb,
+		    dma_fence_array_cb_func)) {
+			dma_fence_put(&dfa->base);
+			if (atomic_dec_and_test(&dfa->num_pending))
+				return false;
+		}
+	}
+	
+	return true;
+}
+
+static bool dma_fence_array_signaled(struct dma_fence *fence)
+{
+	struct dma_fence_array *dfa = to_dma_fence_array(fence);
+
+	return atomic_read(&dfa->num_pending) <= 0;
+}
+
+static void dma_fence_array_release(struct dma_fence *fence)
+{
+	struct dma_fence_array *dfa = to_dma_fence_array(fence);
+	int i;
+
+	for (i = 0; i < dfa->num_fences; ++i)
+		dma_fence_put(dfa->fences[i]);
+
+	free(dfa->fences, M_DRM, 0);
+	dma_fence_free(fence);
+}
+
+struct dma_fence_array *
+dma_fence_array_create(int num_fences, struct dma_fence **fences, u64 context,
+    unsigned seqno, bool signal_on_any)
+{
+	struct dma_fence_array *dfa = malloc(sizeof(*dfa) +
+	    (num_fences * sizeof(struct dma_fence_array_cb)),
+	    M_DRM, M_WAITOK|M_CANFAIL|M_ZERO);
+	if (dfa == NULL)
+		return NULL;
+
+	mtx_init(&dfa->lock, IPL_TTY);
+	dma_fence_init(&dfa->base, &dma_fence_array_ops, &dfa->lock,
+	    context, seqno);
+	init_irq_work(&dfa->work, irq_dma_fence_array_work);
+
+	dfa->num_fences = num_fences;
+	atomic_set(&dfa->num_pending, signal_on_any ? 1 : num_fences);
+	dfa->fences = fences;
+
+	return dfa;
+}
+
+const struct dma_fence_ops dma_fence_array_ops = {
+	.get_driver_name = dma_fence_array_get_driver_name,
+	.get_timeline_name = dma_fence_array_get_timeline_name,
+	.enable_signaling = dma_fence_array_enable_signaling,
+	.signaled = dma_fence_array_signaled,
+	.release = dma_fence_array_release,
+};
 
 int
 dmabuf_read(struct file *fp, struct uio *uio, int fflags)

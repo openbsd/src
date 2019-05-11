@@ -4,37 +4,40 @@
 #define _LINUX_DMA_FENCE_ARRAY_H
 
 #include <linux/dma-fence.h>
+#include <linux/irq_work.h>
 
-#ifndef STUB
-#include <sys/types.h>
-#include <sys/systm.h>
-#define STUB() do { printf("%s: stub\n", __func__); } while(0)
-#endif
+struct dma_fence_array_cb {
+	struct dma_fence_cb cb;
+	struct dma_fence_array *array;
+};
 
 struct dma_fence_array {
 	struct dma_fence base;
 	unsigned int num_fences;
 	struct dma_fence **fences;
+	struct mutex lock;
+	struct irq_work work;
+	int num_pending;
 };
+
+extern const struct dma_fence_ops dma_fence_array_ops;
 
 static inline struct dma_fence_array *
 to_dma_fence_array(struct dma_fence *fence)
 {
-	return NULL;
+	if (fence->ops != &dma_fence_array_ops)
+		return NULL;
+
+	return container_of(fence, struct dma_fence_array, base);
 }
 
 static inline bool
 dma_fence_is_array(struct dma_fence *fence)
 {
-	return false;
+	return fence->ops == &dma_fence_array_ops;
 }
 
-static inline struct dma_fence_array *
-dma_fence_array_create(int num_fences, struct dma_fence **fences, u64 context,
-    unsigned seqno, bool signal_on_any)
-{
-	STUB();
-	return NULL;
-}
+struct dma_fence_array *dma_fence_array_create(int, struct dma_fence **,
+    u64, unsigned, bool);
 
 #endif
