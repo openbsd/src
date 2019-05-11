@@ -1,6 +1,7 @@
-/*	$OpenBSD: ikev2.c,v 1.170 2019/05/10 15:18:04 patrick Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.171 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -144,6 +145,8 @@ ssize_t	ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
 	    ssize_t);
 ssize_t ikev2_add_nat_detection(struct iked *, struct ibuf *,
 	    struct ikev2_payload **, struct iked_message *, ssize_t);
+ssize_t ikev2_add_fragmentation(struct iked *, struct ibuf *,
+	    struct ikev2_payload **, struct iked_message *, ssize_t);
 
 ssize_t	 ikev2_add_mobike(struct iked *, struct ibuf *,
 	    struct ikev2_payload **, ssize_t, struct iked_sa *);
@@ -202,6 +205,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (0);
 	case IMSG_CTL_MOBIKE:
 		return (config_getmobike(env, imsg));
+	case IMSG_CTL_FRAGMENTATION:
+		return (config_getfragmentation(env, imsg));
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
 	case IMSG_PFKEY_SOCKET:
@@ -399,9 +404,9 @@ void
 ikev2_recv(struct iked *env, struct iked_message *msg)
 {
 	struct ike_header	*hdr;
-	struct iked_message	*m;
 	struct iked_sa		*sa;
-	unsigned int		 initiator, flag = 0;
+	unsigned int		 removed, initiator, flag = 0;
+	struct iked_message	*m, *m_old;
 
 	hdr = ibuf_seek(msg->msg_data, msg->msg_offset, sizeof(*hdr));
 
@@ -439,14 +444,16 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		flag = IKED_REQ_INF;
 
 	if (hdr->ike_exchange != IKEV2_EXCHANGE_IKE_SA_INIT &&
-	    hdr->ike_nextpayload != IKEV2_PAYLOAD_SK)
+	    hdr->ike_nextpayload != IKEV2_PAYLOAD_SK &&
+	    hdr->ike_nextpayload != IKEV2_PAYLOAD_SKF)
 		return;
 
 	if (msg->msg_response) {
 		if (msg->msg_msgid > sa->sa_reqid)
 			return;
 		if (hdr->ike_exchange != IKEV2_EXCHANGE_INFORMATIONAL &&
-		    !ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr))
+		    !ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr) &&
+		    sa->sa_fragments.frag_count == 0)
 			return;
 		if (flag) {
 			if ((sa->sa_stateflags & flag) == 0)
@@ -458,10 +465,17 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 			initiator = 1;
 		}
 		/*
-		 * There's no need to keep the request around anymore
+		 * There's no need to keep the request (fragments) around
 		 */
-		if ((m = ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr)))
-			ikev2_msg_dispose(env, &sa->sa_requests, m);
+		TAILQ_FOREACH_SAFE(m, &sa->sa_requests, msg_entry, m_old) {
+			if (m->msg_msgid == msg->msg_msgid &&
+			    m->msg_exchange == hdr->ike_exchange) {
+				TAILQ_REMOVE(&sa->sa_requests, m, msg_entry);
+				timer_del(env, &m->msg_timer);
+				ikev2_msg_cleanup(env, m);
+				free(m);
+			}
+		}
 	} else {
 		/*
 		 * IKE_SA_INIT is special since it always uses the message id 0.
@@ -487,14 +501,23 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		/*
 		 * See if we have responded to this request before
 		 */
-		if ((m = ikev2_msg_lookup(env, &sa->sa_responses, msg, hdr))) {
-			if (ikev2_msg_retransmit_response(env, sa, m)) {
-				log_warn("%s: failed to retransmit a "
-				    "response", __func__);
-				sa_free(env, sa);
+		removed = 0;
+		TAILQ_FOREACH_SAFE(m, &sa->sa_responses, msg_entry, m_old) {
+			if (m->msg_msgid == msg->msg_msgid &&
+			    m->msg_exchange == hdr->ike_exchange) {
+				if (ikev2_msg_retransmit_response(env, sa, m)) {
+					log_warn("%s: failed to retransmit a "
+					    "response", __func__);
+					sa_free(env,sa);
+					return;
+				}
+				removed++;
 			}
+		}
+		if (removed > 0)
 			return;
-		} else if (sa->sa_msgid_set && msg->msg_msgid == sa->sa_msgid) {
+		else if (sa->sa_msgid_set && msg->msg_msgid == sa->sa_msgid &&
+		    !(sa->sa_fragments.frag_count)) {
 			/*
 			 * Response is being worked on, most likely we're
 			 * waiting for the CA process to get back to us
@@ -811,6 +834,9 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		return;
 	}
 
+	if (sa->sa_fragments.frag_count != 0)
+		return;
+
 	if (!ikev2_msg_frompeer(msg))
 		return;
 
@@ -1029,6 +1055,13 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	if (ikev2_add_buf(buf, sa->sa_inonce) == -1)
 		goto done;
 	len = ibuf_size(sa->sa_inonce);
+
+	/* Fragmentation Notify */
+	if (env->sc_frag) {
+		if ((len = ikev2_add_fragmentation(env, buf, &pld, &req, len))
+		    == -1)
+			goto done;
+	}
 
 	if ((env->sc_opts & IKED_OPT_NONATT) == 0) {
 		if (ntohs(port) == IKED_NATT_PORT) {
@@ -1656,6 +1689,29 @@ ikev2_add_mobike(struct iked *env, struct ibuf *e,
 	n->n_spisize = 0;
 	n->n_type = htobe16(IKEV2_N_MOBIKE_SUPPORTED);
 	log_debug("%s: done", __func__);
+
+	return (len);
+}
+
+ssize_t
+ikev2_add_fragmentation(struct iked *env, struct ibuf *buf,
+    struct ikev2_payload **pld, struct iked_message *msg, ssize_t len)
+{
+	struct ikev2_notify		*n;
+	uint8_t				*ptr;
+
+	if (*pld != NULL)
+		if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_NOTIFY) == -1)
+			return (-1);
+	if ((*pld = ikev2_add_payload(buf)) == NULL)
+		return (-1);
+	len = sizeof(*n);
+	if ((ptr = ibuf_advance(buf, len)) == NULL)
+		return (-1);
+	n = (struct ikev2_notify *) ptr;
+	n->n_protoid = 0;
+	n->n_spisize = 0;
+	n->n_type = htobe16(IKEV2_N_FRAGMENTATION_SUPPORTED);
 
 	return (len);
 }
@@ -2293,6 +2349,9 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 
 	msg->msg_valid = 1;
 
+	if (sa->sa_fragments.frag_count !=0)
+		return;
+
 	if (msg->msg_natt && sa->sa_natt == 0) {
 		log_debug("%s: NAT-T message received, updated SA", __func__);
 		sa->sa_natt = 1;
@@ -2417,6 +2476,13 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		goto done;
 	len = ibuf_size(sa->sa_rnonce);
 
+	/* Fragmentation Notify*/
+	if (sa->sa_frag) {
+		if ((len = ikev2_add_fragmentation(env, buf, &pld, &resp, len))
+		    == -1)
+			goto done;
+	}
+
 	if ((env->sc_opts & IKED_OPT_NONATT) == 0 &&
 	    msg->msg_local.ss_family != AF_UNSPEC) {
 		if ((len = ikev2_add_nat_detection(env, buf, &pld, &resp, len))
@@ -2495,6 +2561,7 @@ ikev2_send_auth_failed(struct iked *env, struct iked_sa *sa)
 	timer_del(env, &sa->sa_timer);
 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
 	timer_add(env, &sa->sa_timer, IKED_IKE_SA_DELETE_TIMEOUT);
+	config_free_fragments(&sa->sa_fragments);
 
 	return (ret);
 }
@@ -3446,6 +3513,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	nsa->sa_udpencap = sa->sa_udpencap;
 	nsa->sa_usekeepalive = sa->sa_usekeepalive;
 	nsa->sa_mobike = sa->sa_mobike;
+	nsa->sa_frag = sa->sa_frag;
 
 	/* Transfer old addresses */
 	memcpy(&nsa->sa_local, &sa->sa_local, sizeof(nsa->sa_local));

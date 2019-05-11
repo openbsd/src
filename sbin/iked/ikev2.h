@@ -1,6 +1,7 @@
-/*	$OpenBSD: ikev2.h,v 1.29 2019/04/02 09:42:55 sthen Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.30 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -78,6 +79,11 @@ struct ikev2_payload {
 	uint16_t	 pld_length;		/* Payload length with header */
 } __packed;
 
+struct ikev2_frag_payload {
+	uint16_t	 frag_num;		/* current fragment message number */
+	uint16_t	 frag_total;		/* total number of fragment messages */
+} __packed;
+
 #define IKEV2_CRITICAL_PAYLOAD	0x01	/* First bit in the reserved field */
 
 /* IKEv2 payload types */
@@ -99,6 +105,7 @@ struct ikev2_payload {
 #define IKEV2_PAYLOAD_CP	47	/* Configuration Payload */
 #define IKEV2_PAYLOAD_EAP	48	/* Extensible Authentication */
 #define IKEV2_PAYLOAD_GSPM	49	/* RFC6467 Generic Secure Password */
+#define IKEV2_PAYLOAD_SKF	53	/* RFC7383 Encrypted Fragment Payload */
 
 extern struct iked_constmap ikev2_payload_map[];
 
@@ -243,6 +250,11 @@ extern struct iked_constmap ikev2_xformauth_map[];
 #define IKEV2_XFORMDH_CURVE25519	31	/* RFC8031 */
 
 extern struct iked_constmap ikev2_xformdh_map[];
+
+#define IKEV2_IPV4_OVERHEAD		(20 + 8 + 28) /* IPv4 + UDP + IKE_HDR*/
+#define IKEV2_MAXLEN_IPV4_FRAG		(576 - IKEV2_IPV4_OVERHEAD)
+#define IKEV2_IPV6_OVERHEAD		(40 + 8 + 28) /* IPv6 + UDP + IKE_HDR*/
+#define IKEV2_MAXLEN_IPV6_FRAG		(1280 - IKEV2_IPV6_OVERHEAD)
 
 #define IKEV2_XFORMESN_NONE		0	/* No ESN */
 #define IKEV2_XFORMESN_ESN		1	/* ESN */

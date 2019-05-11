@@ -1,6 +1,7 @@
-/*	$OpenBSD: iked.h,v 1.120 2019/05/10 15:02:17 patrick Exp $	*/
+/*	$OpenBSD: iked.h,v 1.121 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -362,6 +363,21 @@ struct iked_kex {
 	struct ibuf			*kex_dhpeer;	/* pointer to i or r */
 };
 
+struct iked_frag_entry {
+	uint8_t	*frag_data;
+	size_t	 frag_size;
+};
+
+struct iked_frag {
+	struct iked_frag_entry	**frag_arr;	/* list of fragment buffers */
+	size_t			  frag_count;	/* number of fragments received */
+#define IKED_FRAG_TOTAL_MAX	  111		/* upper limit (64kB / 576B) */
+	size_t			  frag_total;	/* total numbe of fragments */
+	size_t			  frag_total_size;
+	uint8_t			  frag_nextpayload;
+
+};
+
 struct iked_sa {
 	struct iked_sahdr		 sa_hdr;
 	uint32_t			 sa_msgid;	/* Last request rcvd */
@@ -377,6 +393,8 @@ struct iked_sa {
 	struct iked_addr		 sa_peer_loaded;/* MOBIKE */
 	struct iked_addr		 sa_local;
 	int				 sa_fd;
+
+	struct iked_frag		 sa_fragments;
 
 	int				 sa_natt;	/* for IKE messages */
 	int				 sa_udpencap;	/* for pfkey */
@@ -446,6 +464,7 @@ struct iked_sa {
 	uint16_t			 sa_cpi_in;	/* IPcomp incoming*/
 
 	int				 sa_mobike;	/* MOBIKE */
+	int				 sa_frag;	/* fragmentation */
 
 	struct iked_timer		 sa_timer;	/* SA timeouts */
 #define IKED_IKE_SA_EXCHANGE_TIMEOUT	 300		/* 5 minutes */
@@ -604,6 +623,7 @@ struct iked {
 	uint8_t				 sc_decoupled;
 
 	uint8_t				 sc_mobike;	/* MOBIKE */
+	uint8_t				 sc_frag;	/* fragmentation */
 
 	struct iked_policies		 sc_policies;
 	struct iked_policy		*sc_defaultcon;
@@ -655,6 +675,7 @@ int	 control_listen(struct control_sock *);
 struct iked_policy *
 	 config_new_policy(struct iked *);
 void	 config_free_kex(struct iked_kex *);
+void	 config_free_fragments(struct iked_frag *);
 void	 config_free_sa(struct iked *, struct iked_sa *);
 struct iked_sa *
 	 config_new_sa(struct iked *, int);
@@ -703,6 +724,8 @@ int	 config_setkeys(struct iked *);
 int	 config_getkey(struct iked *, struct imsg *);
 int	 config_setmobike(struct iked *);
 int	 config_getmobike(struct iked *, struct imsg *);
+int	 config_setfragmentation(struct iked *);
+int	 config_getfragmentation(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);

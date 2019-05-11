@@ -1,6 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.79 2019/04/02 09:42:55 sthen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.80 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,6 +106,7 @@ static int		 rules = 0;
 static int		 passive = 0;
 static int		 decouple = 0;
 static int		 mobike = 1;
+static int		 fragmentation = 0;
 static char		*ocsp_url = NULL;
 
 struct ipsec_xf {
@@ -395,6 +397,7 @@ typedef struct {
 %token	IKEV1 FLOW SA TCPMD5 TUNNEL TRANSPORT COUPLE DECOUPLE SET
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
 %token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE
+%token	FRAGMENTATION NOFRAGMENTATION
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -455,6 +458,8 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET PASSIVE	{ passive = 1; }
 		| SET COUPLE	{ decouple = 0; }
 		| SET DECOUPLE	{ decouple = 1; }
+		| SET FRAGMENTATION	{ fragmentation = 1; }
+		| SET NOFRAGMENTATION	{ fragmentation = 0; }
 		| SET MOBIKE	{ mobike = 1; }
 		| SET NOMOBIKE	{ mobike = 0; }
 		| SET OCSP STRING		{
@@ -1167,6 +1172,7 @@ lookup(char *s)
 		{ "esp",		ESP },
 		{ "file",		FILENAME },
 		{ "flow",		FLOW },
+		{ "fragmentation",	FRAGMENTATION },
 		{ "from",		FROM },
 		{ "group",		GROUP },
 		{ "ike",		IKEV1 },
@@ -1181,6 +1187,7 @@ lookup(char *s)
 		{ "local",		LOCAL },
 		{ "mobike",		MOBIKE },
 		{ "name",		NAME },
+		{ "nofragmentation",	NOFRAGMENTATION },
 		{ "nomobike",		NOMOBIKE },
 		{ "ocsp",		OCSP },
 		{ "passive",		PASSIVE },
@@ -1579,6 +1586,7 @@ parse_config(const char *filename, struct iked *x_env)
 	free(ocsp_url);
 
 	mobike = 1;
+	fragmentation = 0;
 	decouple = passive = 0;
 	ocsp_url = NULL;
 
@@ -1592,6 +1600,7 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_passive = passive ? 1 : 0;
 	env->sc_decoupled = decouple ? 1 : 0;
 	env->sc_mobike = mobike;
+	env->sc_frag = fragmentation;
 	env->sc_ocsp_url = ocsp_url;
 
 	if (!rules)

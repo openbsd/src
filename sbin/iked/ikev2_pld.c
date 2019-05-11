@@ -1,6 +1,7 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.70 2018/03/22 21:11:49 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.71 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2014 Hans-Joerg Hoexer
  *
@@ -95,6 +96,10 @@ int	 ikev2_pld_auth(struct iked *, struct ikev2_payload *,
 	    struct iked_message *, size_t, size_t);
 int	 ikev2_pld_e(struct iked *, struct ikev2_payload *,
 	    struct iked_message *, size_t, size_t);
+int	 ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
+	    struct iked_message *msg, size_t offset, size_t left);
+int	 ikev2_frags_reassemble(struct iked *env,
+	    struct ikev2_payload *pld, struct iked_message *msg);
 int	 ikev2_validate_cp(struct iked_message *, size_t, size_t,
 	    struct ikev2_cp *);
 int	 ikev2_pld_cp(struct iked *, struct ikev2_payload *,
@@ -249,6 +254,9 @@ ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
 		case IKEV2_PAYLOAD_SK:
 			ret = ikev2_pld_e(env, &pld, msg, offset, left);
 			break;
+		case IKEV2_PAYLOAD_SKF:
+			ret = ikev2_pld_ef(env, &pld, msg, offset, left);
+			break;
 		case IKEV2_PAYLOAD_CP | IKED_E:
 			ret = ikev2_pld_cp(env, &pld, msg, offset, left);
 			break;
@@ -266,8 +274,9 @@ ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
 			return (-1);
 		}
 
-		/* Encrypted payload must appear last */
-		if (payload == IKEV2_PAYLOAD_SK)
+		/* Encrypted payloads must appear last */
+		if ((payload == IKEV2_PAYLOAD_SK) ||
+		    (payload == IKEV2_PAYLOAD_SKF))
 			return (0);
 
 		payload = pld.pld_nextpayload;
@@ -1251,6 +1260,23 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		msg->msg_parent->msg_cookie = msg->msg_cookie;
 		break;
+	case IKEV2_N_FRAGMENTATION_SUPPORTED:
+		if (msg->msg_e) {
+			log_debug("%s: N_FRAGMENTATION_SUPPORTED encrypted",
+			    __func__);
+			return (-1);
+		}
+		if (len != 0) {
+			log_debug("%s: ignoring malformed fragmentation"
+			    " notification: %zu", __func__, len);
+			return (0);
+		}
+		if (!env->sc_frag) {
+			log_debug("%s: fragmentation disabled", __func__);
+			return (0);
+		}
+		msg->msg_sa->sa_frag = 1;
+		break;
 	case IKEV2_N_SIGNATURE_HASH_ALGORITHMS:
 		if (msg->msg_e) {
 			log_debug("%s: SIGNATURE_HASH_ALGORITHMS: encrypted",
@@ -1585,6 +1611,164 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 }
 
 int
+ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
+    struct iked_message *msg, size_t offset, size_t left)
+{
+	struct iked_sa			*sa = msg->msg_sa;
+	struct iked_frag		*sa_frag = &sa->sa_fragments;
+	struct iked_frag_entry		*el;
+	struct ikev2_frag_payload	 frag;
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
+	uint8_t				*buf;
+	struct ibuf			*e = NULL;
+	size_t				 frag_num, frag_total;
+	size_t			 	 len;
+	int				 ret = -1;
+	ssize_t				 elen;
+
+	buf = msgbuf + offset;
+	memcpy(&frag, buf, sizeof(frag));
+	frag_num = betoh16(frag.frag_num);
+	frag_total = betoh16(frag.frag_total);
+
+	offset += sizeof(frag);
+	buf = msgbuf + offset;
+	len = left - sizeof(frag);
+
+	/* Limit number of total fragments to avoid DOS */
+	if (frag_total > IKED_FRAG_TOTAL_MAX ) {
+		log_debug("%s: Total Fragments too big  %zu",
+		    __func__, frag_total);
+		goto dropall;
+	}
+
+	/* Check sanity of fragment header */
+	if (frag_num == 0 || frag_total == 0) {
+		log_debug("%s: Malformed fragment received: %zu of %zu",
+		    __func__, frag_num, frag_total);
+		goto done;
+	}
+	log_debug("%s: Received fragment: %zu of %zu",
+	     __func__, frag_num, frag_total);
+
+	/* Check new fragmented message */
+	if (sa_frag->frag_arr == NULL) {
+		sa_frag->frag_arr = recallocarray(NULL, 0, frag_total,
+		    sizeof(struct iked_frag_entry*));
+		sa_frag->frag_total = frag_total;
+		sa_frag->frag_nextpayload = pld->pld_nextpayload;
+	}
+
+	/* Drop all fragments if frag_num or frag_total don't match */
+	if (frag_num > sa_frag->frag_total || frag_total != sa_frag->frag_total)
+		goto dropall;
+
+	/* Silent drop if fragment already stored */
+	if (sa_frag->frag_arr[frag_num-1] != NULL)
+		goto done;
+
+        /* Decrypt fragment */
+	if ((e = ibuf_new(buf, len)) == NULL)
+		goto done;
+
+	if ((e = ikev2_msg_decrypt(env, msg->msg_sa, msg->msg_data, e))
+	    == NULL ) {
+		log_debug("%s: Failed to decrypt fragment: %zu of %zu",
+		    __func__, frag_num, frag_total);
+		goto done;
+	}
+	elen = ibuf_length(e);
+
+	/* Insert new list element */
+	el = calloc(1, sizeof(struct iked_frag_entry));
+	if (el == NULL) {
+		log_debug("%s: Failed allocating new fragment: %zu of %zu",
+		    __func__, frag_num, frag_total);
+		goto done;
+	}
+
+	sa_frag->frag_arr[frag_num-1] = el;
+	el->frag_size = elen;
+	el->frag_data = calloc(1, elen);
+	if (el->frag_data == NULL) {
+		log_debug("%s: Failed allocating new fragment data: %zu of %zu",
+		    __func__, frag_num, frag_total);
+		goto done;
+	}
+
+	/* Copy plaintext to fragment */
+	memcpy(el->frag_data, ibuf_seek(e, 0, 0), elen);
+	sa_frag->frag_total_size += elen;
+	sa_frag->frag_count++;
+
+	/* If all frags are received start reassembly */
+	if (sa_frag->frag_count == sa_frag->frag_total) {
+		log_debug("%s: All fragments received: %zu of %zu",
+		    __func__, frag_num, frag_total);
+		ret = ikev2_frags_reassemble(env, pld, msg);
+	} else {
+		ret = 0;
+	}
+done:
+	ibuf_release(e);
+	return (ret);
+dropall:
+	config_free_fragments(sa_frag);
+	ibuf_release(e);
+	return -1;
+}
+
+int
+ikev2_frags_reassemble(struct iked *env, struct ikev2_payload *pld,
+    struct iked_message *msg)
+{
+	struct iked_frag		*sa_frag = &msg->msg_sa->sa_fragments;
+	struct ibuf			*e = NULL;
+	struct iked_frag_entry		*el;
+	size_t				 offset;
+	size_t				 i;
+	struct iked_message		 emsg;
+	int				 ret = -1;
+
+	/* Reassemble fragments to single buffer */
+	if ((e = ibuf_new(NULL, sa_frag->frag_total_size)) == NULL) {
+		log_debug("%s: Failed allocating SK buffer.", __func__);
+		goto done;
+	}
+
+	/* Empty queue to new buffer */
+	offset = 0;
+	for (i = 0; i < sa_frag->frag_total; i++) {
+		if ((el = sa_frag->frag_arr[i]) == NULL)
+			fatalx("Tried to reassemble shallow frag_arr");
+		memcpy(ibuf_seek(e, offset, 0), el->frag_data, el->frag_size);
+		offset += el->frag_size;
+	}
+
+	log_debug("%s: Defragmented length %zd", __func__,
+	    sa_frag->frag_total_size);
+	print_hex(ibuf_data(e), 0,  sa_frag->frag_total_size);
+
+	/*
+	 * Parse decrypted payload
+	 */
+	bzero(&emsg, sizeof(emsg));
+	memcpy(&emsg, msg, sizeof(*msg));
+	emsg.msg_data = e;
+	emsg.msg_e = 1;
+	emsg.msg_parent = msg;
+	TAILQ_INIT(&emsg.msg_proposals);
+
+	ret = ikev2_pld_payloads(env, &emsg, 0, ibuf_size(e),
+	    sa_frag->frag_nextpayload);
+done:
+	config_free_fragments(sa_frag);
+	ibuf_release(e);
+
+	return (ret);
+}
+
+int
 ikev2_pld_e(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
@@ -1595,6 +1779,13 @@ ikev2_pld_e(struct iked *env, struct ikev2_payload *pld,
 	uint8_t			*buf;
 	size_t			 len;
 	int			 ret = -1;
+
+	if (sa->sa_fragments.frag_arr != NULL) {
+		log_warn("%s: Received SK payload when SKFs are in queue.",
+		    __func__);
+		config_free_fragments(&sa->sa_fragments);
+		return (ret);
+	}
 
 	buf = msgbuf + offset;
 	len = left;

@@ -1,6 +1,7 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.54 2019/05/10 15:02:17 patrick Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.55 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -46,6 +47,9 @@
 void	 ikev1_recv(struct iked *, struct iked_message *);
 void	 ikev2_msg_response_timeout(struct iked *, void *);
 void	 ikev2_msg_retransmit_timeout(struct iked *, void *);
+int	 ikev2_check_frag_oversize(struct iked_sa *sa, struct ibuf *buf);
+int	 ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
+	    struct ibuf *in,uint8_t exchange, uint8_t firstpayload, int response);
 
 void
 ikev2_msg_cb(int fd, short event, void *arg)
@@ -616,7 +620,8 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	    __func__, outlen, encrlen, pad);
 	print_hex(ibuf_data(out), 0, ibuf_size(out));
 
-	if (ibuf_setsize(out, outlen) != 0)
+	/* Strip padding and padding length */
+	if (ibuf_setsize(out, outlen - pad - 1) != 0)
 		goto done;
 
 	ibuf_release(src);
@@ -629,6 +634,26 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 }
 
 int
+ikev2_check_frag_oversize(struct iked_sa *sa, struct ibuf *buf) {
+	size_t		len = ibuf_length(buf);
+	sa_family_t	sa_fam;
+	size_t		max;
+	size_t		ivlen, integrlen, blocklen;
+
+	sa_fam = ((struct sockaddr *)&sa->sa_local.addr)->sa_family;
+
+	max = sa_fam == AF_INET ? IKEV2_MAXLEN_IPV4_FRAG
+	    : IKEV2_MAXLEN_IPV6_FRAG;
+
+	blocklen = cipher_length(sa->sa_encr);
+	ivlen = cipher_ivlength(sa->sa_encr);
+	integrlen = hash_length(sa->sa_integr);
+
+	/* Estimated maximum packet size (with 0 < padding < blocklen) */
+	return ((len + ivlen + blocklen + integrlen) >= max) && sa->sa_frag;
+}
+
+int
 ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf **ep,
     uint8_t exchange, uint8_t firstpayload, int response)
 {
@@ -637,6 +662,12 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf **ep,
 	struct ikev2_payload		*pld;
 	struct ibuf			*buf, *e = *ep;
 	int				 ret = -1;
+
+	/* Check if msg needs to be fragmented */
+	if (ikev2_check_frag_oversize(sa, e)) {
+		return ikev2_send_encrypted_fragments(env, sa, e, exchange,
+		    firstpayload, response);
+	}
 
 	if ((buf = ikev2_msg_init(env, &resp, &sa->sa_peer.addr,
 	    sa->sa_peer.addr.ss_len, &sa->sa_local.addr,
@@ -687,6 +718,123 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf **ep,
 	ikev2_msg_cleanup(env, &resp);
 
 	return (ret);
+}
+
+int
+ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
+    struct ibuf *in, uint8_t exchange, uint8_t firstpayload, int response) {
+	struct iked_message		 resp;
+	struct ibuf			*buf, *e;
+	struct ike_header		*hdr;
+	struct ikev2_payload		*pld;
+	struct ikev2_frag_payload	*frag;
+	sa_family_t			 sa_fam;
+	size_t				 ivlen, integrlen, blocklen;
+	size_t 				 max_len, left,  offset=0;;
+	size_t				 frag_num = 1, frag_total;
+	uint8_t				*data;
+	uint32_t			 msgid;
+	int 				 ret = -1;
+
+	sa_fam = ((struct sockaddr *)&sa->sa_local.addr)->sa_family;
+
+	left = ibuf_length(in);
+
+	/* Calculate max allowed size of a fragments payload */
+	blocklen = cipher_length(sa->sa_encr);
+	ivlen = cipher_ivlength(sa->sa_encr);
+	integrlen = hash_length(sa->sa_integr);
+	max_len = (sa_fam == AF_INET ? IKEV2_MAXLEN_IPV4_FRAG
+	    : IKEV2_MAXLEN_IPV6_FRAG)
+                  - ivlen - blocklen - integrlen;
+
+	/* Total number of fragments to send */
+	frag_total = (left / max_len) + 1;
+
+	msgid = response ? sa->sa_msgid_current : ikev2_msg_id(env, sa);
+
+	while (frag_num <= frag_total) {
+		if ((buf = ikev2_msg_init(env, &resp, &sa->sa_peer.addr,
+		    sa->sa_peer.addr.ss_len, &sa->sa_local.addr,
+		    sa->sa_local.addr.ss_len, response)) == NULL)
+			goto done;
+
+		resp.msg_msgid = msgid;
+
+		/* IKE header */
+		if ((hdr = ikev2_add_header(buf, sa, resp.msg_msgid,
+		    IKEV2_PAYLOAD_SKF, exchange, response ? IKEV2_FLAG_RESPONSE
+		        : 0)) == NULL)
+			goto done;
+
+		/* Payload header */
+		if ((pld = ikev2_add_payload(buf)) == NULL)
+			goto done;
+
+		/* Fragment header */
+		if ((frag = ibuf_advance(buf, sizeof(*frag))) == NULL) {
+			log_debug("%s: failed to add SKF fragment header",
+			    __func__);
+			goto done;
+		}
+		frag->frag_num = htobe16(frag_num);
+		frag->frag_total = htobe16(frag_total);
+
+		/* Encrypt message and add as an E payload */
+		data = ibuf_seek(in, offset, 0);
+		if((e=ibuf_new(data, MIN(left, max_len))) == NULL) {
+			goto done;
+		}
+		if ((e = ikev2_msg_encrypt(env, sa, e)) == NULL) {
+			log_debug("%s: encryption failed", __func__);
+			goto done;
+		}
+		if (ibuf_cat(buf, e) != 0)
+			goto done;
+
+		if (ikev2_next_payload(pld, ibuf_size(e) + sizeof(*frag),
+		    firstpayload) == -1)
+			goto done;
+
+		if (ikev2_set_header(hdr, ibuf_size(buf) - sizeof(*hdr)) == -1)
+			goto done;
+
+		/* Add integrity checksum (HMAC) */
+		if (ikev2_msg_integr(env, sa, buf) != 0) {
+			log_debug("%s: integrity checksum failed", __func__);
+			goto done;
+		}
+
+		log_debug("%s: Fragment %zu of %zu has size of %zu bytes.",
+		    __func__, frag_num, frag_total,
+		    ibuf_size(buf) - sizeof(*hdr));
+		print_hex(ibuf_data(buf), 0,  ibuf_size(buf));
+
+		resp.msg_data = buf;
+		resp.msg_sa = sa;
+		resp.msg_fd = sa->sa_fd;
+		TAILQ_INIT(&resp.msg_proposals);
+
+		if (ikev2_msg_send(env, &resp) == -1)
+			goto done;
+
+		offset += MIN(left, max_len);
+		left -= MIN(left, max_len);
+		frag_num++;
+
+		/* MUST be zero after first fragment */
+		firstpayload = 0;
+
+		ikev2_msg_cleanup(env, &resp);
+		ibuf_release(e);
+		e = NULL;
+	}
+
+	return 0;
+done:
+	ikev2_msg_cleanup(env, &resp);
+	ibuf_release(e);
+	return ret;
 }
 
 struct ibuf *
