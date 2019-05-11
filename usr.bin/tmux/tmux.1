@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.646 2019/05/10 18:04:06 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.647 2019/05/11 06:40:01 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2019 $
+.Dd $Mdocdate: May 11 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4461,17 +4461,17 @@ as a list of menu items separated by
 .Ql | .
 Each menu item consists of three comma-separated parts:
 .Bl -enum -width Ds
-.It name
+.It
 The menu item name.
 This is a format and may include embedded styles, see the
 .Sx FORMATS
 and
 .Sx STYLES
 sections.
-.It key
+.It
 The menu item shortcut key.
 If this is empty the menu item has no key shortcut.
-.It command
+.It
 The command run when the menu item is chosen.
 .El
 .Pp
