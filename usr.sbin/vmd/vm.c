@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.46 2019/05/11 19:55:14 jasper Exp $	*/
+/*	$OpenBSD: vm.c,v 1.47 2019/05/11 19:59:32 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -584,6 +584,9 @@ int
 dump_send_header(int fd) {
 	struct vm_dump_header	   vmh;
 	int			   i;
+
+	memcpy(&vmh.vmh_signature, VM_DUMP_SIGNATURE,
+	    sizeof(vmh.vmh_signature));
 
 	vmh.vmh_cpuids[0].code = 0x00;
 	vmh.vmh_cpuids[0].leaf = 0x00;

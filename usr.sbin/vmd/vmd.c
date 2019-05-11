@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.110 2019/05/11 19:55:14 jasper Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.111 2019/05/11 19:59:32 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -553,6 +553,10 @@ vmd_check_vmh(struct vm_dump_header *vmh)
 	unsigned int code, leaf;
 	unsigned int a, b, c, d;
 
+	if (strncmp(vmh->vmh_signature, VM_DUMP_SIGNATURE, strlen(VM_DUMP_SIGNATURE)) != 0) {
+		log_warnx("%s: incompatible dump signature", __func__);
+		return (-1);
+	}
 
 	if (vmh->vmh_version != VM_DUMP_VERSION) {
 		log_warnx("%s: incompatible dump version", __func__);
