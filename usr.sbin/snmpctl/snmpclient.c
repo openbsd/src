@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpclient.c,v 1.19 2018/12/13 10:54:29 martijn Exp $	*/
+/*	$OpenBSD: snmpclient.c,v 1.20 2019/05/11 17:46:02 rob Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <ber.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -42,7 +43,6 @@
 
 #include "snmpd.h"
 #include "mib.h"
-#include "ber.h"
 #include "parser.h"
 
 struct snmpc {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.h,v 1.13 2019/01/17 06:22:54 tedu Exp $ */
+/*	$OpenBSD: aldap.h,v 1.14 2019/05/11 17:46:02 rob Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -19,9 +19,8 @@
 
 #include <stdio.h>
 
+#include <ber.h>
 #include <tls.h>
-
-#include "ber.h"
 
 #define LDAP_URL 		"ldap://"
 #define LDAPS_URL 		"ldaps://"

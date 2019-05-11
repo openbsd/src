@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.h,v 1.1 2010/05/31 17:36:31 martinh Exp $ */
+/*	$OpenBSD: aldap.h,v 1.2 2019/05/11 17:46:02 rob Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -17,8 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ber.h>
 #include <stdio.h>
-#include "ber.h"
 
 enum protocol_op {
 	LDAP_REQ_BIND		= 0,

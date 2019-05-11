@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.12 2018/04/15 11:57:29 mpf Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.13 2019/05/11 17:46:02 rob Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <ber.h>
 #include <event.h>
 #include <fcntl.h>
 #include <imsg.h>
@@ -38,7 +39,6 @@
 #include <unistd.h>
 #include <pwd.h>
 
-#include "ber.h"
 #include "snmpd.h"
 #include "mib.h"
 
