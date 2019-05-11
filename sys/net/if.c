@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.581 2019/04/28 22:15:57 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.582 2019/05/11 23:36:40 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1192,7 +1192,7 @@ if_isconnected(const struct ifnet *ifp0, unsigned int ifidx)
 		connected = 1;
 
 #if NBRIDGE > 0
-	if (ifp0->if_bridgeidx == ifp->if_bridgeidx)
+	if (ifp0->if_bridgeidx != 0 && ifp0->if_bridgeidx == ifp->if_bridgeidx)
 		connected = 1;
 #endif
 #if NCARP > 0
