@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.149 2019/05/09 22:25:42 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.150 2019/05/11 19:59:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -852,7 +852,6 @@ int
 elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
     char *os_name, size_t name_size, size_t desc_size)
 {
-	char pathbuf[MAXPATHLEN];
 	Elf_Phdr *hph, *ph;
 	Elf_Note *np = NULL;
 	size_t phsize;
@@ -866,18 +865,6 @@ elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh,
 
 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
 		if (ph->p_type == PT_OPENBSD_WXNEEDED) {
-			int wxallowed = (epp->ep_vp->v_mount &&
-			    (epp->ep_vp->v_mount->mnt_flag & MNT_WXALLOWED));
-			
-			if (!wxallowed) {
-				error = copyinstr(epp->ep_name, &pathbuf,
-				    sizeof(pathbuf), NULL);
-				log(LOG_NOTICE,
-				    "%s(%d): W^X binary outside wxallowed mountpoint\n",
-				    error ? "" : pathbuf, p->p_p->ps_pid);
-				error = EACCES;
-				goto out1;
-			}
 			epp->ep_flags |= EXEC_WXNEEDED;
 			break;
 		}
