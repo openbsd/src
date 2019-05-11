@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.93 2019/05/11 19:58:02 jasper Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.94 2019/05/11 23:07:46 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -134,6 +134,7 @@ struct vmop_info_result {
 	char			 vir_ttyname[VM_TTYNAME_MAX];
 	uid_t			 vir_uid;
 	int64_t			 vir_gid;
+	unsigned int		 vir_state;
 };
 
 struct vmop_id {

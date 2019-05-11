@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.111 2019/05/11 19:59:32 jasper Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.112 2019/05/11 23:07:46 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -484,14 +484,9 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			if (vm->vm_ttyname != NULL)
 				strlcpy(vir.vir_ttyname, vm->vm_ttyname,
 				    sizeof(vir.vir_ttyname));
-			if (vm->vm_state & VM_STATE_SHUTDOWN) {
-				/* XXX there might be a nicer way */
-				(void)strlcat(vir.vir_info.vir_name,
-				    " - stopping",
-				sizeof(vir.vir_info.vir_name));
-			}
-			log_debug("%s: vm: %d, vm_state: 0x%x",
+			log_debug("%s: running vm: %d, vm_state: 0x%x",
 			    __func__, vm->vm_vmid, vm->vm_state);
+			vir.vir_state = vm->vm_state;
 			/* get the user id who started the vm */
 			vir.vir_uid = vm->vm_uid;
 			vir.vir_gid = vm->vm_params.vmc_owner.gid;
@@ -525,6 +520,9 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				/* get the configured user id for this vm */
 				vir.vir_uid = vm->vm_params.vmc_owner.uid;
 				vir.vir_gid = vm->vm_params.vmc_owner.gid;
+				log_debug("%s: vm: %d, vm_state: 0x%x",
+				    __func__, vm->vm_vmid, vm->vm_state);
+				vir.vir_state = vm->vm_state;
 				if (proc_compose_imsg(ps, PROC_CONTROL, -1,
 				    IMSG_VMDOP_GET_INFO_VM_DATA,
 				    imsg->hdr.peerid, -1, &vir,
