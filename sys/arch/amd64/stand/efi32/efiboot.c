@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.1 2019/05/11 02:33:34 mlarkin Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.2 2019/05/11 19:14:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -115,38 +115,20 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		}
 	}
 
-#ifdef __amd64__
-	/* allocate run_i386_start() on heap */
-	if ((run_i386 = alloc(run_i386_size)) == NULL)
-		panic("alloc() failed");
-	memcpy(run_i386, run_i386_start, run_i386_size);
-#endif
-
 	/* can't use sa_cleanup since printf is used after sa_cleanup() */
 	/* sa_cleanup = efi_cleanup; */
 
-#ifdef __amd64__
-	progname = "BOOTX64";
-#else
 	progname = "BOOTIA32";
-#endif
 
 	/*
 	 * Move the stack before calling boot().  UEFI on some machines
 	 * locate the stack on our kernel load address.
 	 */
 	stack = heap + heapsiz;
-#if defined(__amd64__)
-	asm("movq	%0, %%rsp;"
-	    "mov	%1, %%edi;"
-	    "call	boot;"
-	    :: "r"(stack - 32), "r"(bios_bootdev));
-#else
 	asm("movl	%0, %%esp;"
 	    "movl	%1, (%%esp);"
 	    "call	boot;"
 	    :: "r"(stack - 32), "r"(bios_bootdev));
-#endif
 	/* must not reach here */
 	return (EFI_SUCCESS);
 }

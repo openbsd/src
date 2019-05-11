@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.1 2019/05/11 02:33:34 mlarkin Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.2 2019/05/11 19:14:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -132,15 +132,7 @@ run_loadfile(uint64_t *marks, int howto)
 	/* Pass memory map to the kernel */
 	mem_pass();
 
-	/*
-	 * This code may be used both for 64bit and 32bit.  Make sure the
-	 * bootarg is always 32bit, even on amd64.
-	 */
-#ifdef __amd64__
-	makebootargs32(av, &ac);
-#else
 	makebootargs(av, &ac);
-#endif
 
 	/*
 	 * Move the loaded kernel image to the usual place after calling
@@ -151,14 +143,10 @@ run_loadfile(uint64_t *marks, int howto)
 	for (i = 0; i < MARK_MAX; i++)
 		marks[i] += delta;
 
-#ifdef __amd64__
-	(*run_i386)((u_long)run_i386, entry, howto, bootdev, BOOTARG_APIVER,
-	    marks[MARK_END], extmem, cnvmem, ac, (intptr_t)av);
-#else
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER, marks[MARK_END],
 	    extmem, cnvmem, ac, (int)av);
-#endif
+
 	/* not reached */
 }
 

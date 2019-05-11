@@ -1,4 +1,4 @@
-/*	$OpenBSD: eficall.h,v 1.1 2019/05/11 02:36:10 mlarkin Exp $	*/
+/*	$OpenBSD: eficall.h,v 1.2 2019/05/11 19:14:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -15,12 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#if !defined(__amd64__)
-
-#define	EFI_CALL(_func_, ...) (_func_)(__VA_ARGS__)
-
-#else
 
 extern uint64_t efi_call(int, void *, ...);
 
@@ -52,4 +46,3 @@ extern uint64_t efi_call(int, void *, ...);
 #define	EFI_CALL(...)	\
     _efi_call_fn(__VA_ARGS__, _call_10, _call_9, _call_8,  _call_7, _call_6, \
 	    _call_5, _call_4, _call_3, _call_2, _call_1, _call_0)(__VA_ARGS__)
-#endif

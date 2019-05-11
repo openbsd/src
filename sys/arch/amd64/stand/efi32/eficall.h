@@ -1,4 +1,4 @@
-/*	$OpenBSD: eficall.h,v 1.1 2019/05/11 02:33:34 mlarkin Exp $	*/
+/*	$OpenBSD: eficall.h,v 1.2 2019/05/11 19:14:41 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -16,40 +16,4 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(__amd64__)
-
 #define	EFI_CALL(_func_, ...) (_func_)(__VA_ARGS__)
-
-#else
-
-extern uint64_t efi_call(int, void *, ...);
-
-#define	_call_0(_func) \
-    efi_call(0, (_func))
-#define	_call_1(_func, _1) \
-    efi_call(1, (_func), (_1))
-#define	_call_2(_func, _1, _2) \
-    efi_call(2, (_func), (_1), (_2))
-#define	_call_3(_func, _1, _2, _3) \
-    efi_call(3, (_func), (_1), (_2), (_3))
-#define	_call_4(_func, _1, _2, _3, _4) \
-    efi_call(4, (_func), (_1), (_2), (_3), (_4))
-#define	_call_5(_func, _1, _2, _3, _4, _5) \
-    efi_call(5, (_func), (_1), (_2), (_3), (_4), (_5))
-#define	_call_6(_func, _1, _2, _3, _4, _5, _6) \
-    efi_call(6, (_func), (_1), (_2), (_3), (_4), (_5), (_6))
-#define	_call_7(_func, _1, _2, _3, _4, _5, _6, _7) \
-    efi_call(7, (_func), (_1), (_2), (_3), (_4), (_5), (_6), (_7))
-#define	_call_8(_func, _1, _2, _3, _4, _5, _6, _7, _8) \
-    efi_call(8, (_func), (_1), (_2), (_3), (_4), (_5), (_6), (_7), (_8))
-#define	_call_9(_func, _1, _2, _3, _4, _5, _6, _7, _8, _9) \
-    efi_call(9, (_func), (_1), (_2), (_3), (_4), (_5), (_6), (_7), (_8), (_9))
-#define	_call_10(_func, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10) \
-    efi_call(10, (_func), (_1), (_2), (_3), (_4), (_5), (_6), (_7), (_8), (_9), (_10))
-
-#define _efi_call_fn(_func, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10,  _fn, ...) _fn
-
-#define	EFI_CALL(...)	\
-    _efi_call_fn(__VA_ARGS__, _call_10, _call_9, _call_8,  _call_7, _call_6, \
-	    _call_5, _call_4, _call_3, _call_2, _call_1, _call_0)(__VA_ARGS__)
-#endif
