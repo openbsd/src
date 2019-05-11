@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.91 2018/12/04 08:15:09 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.92 2019/05/11 19:55:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -188,10 +188,10 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		} else if ((vm = vm_getbyvmid(id)) != NULL) {
 			if (flags & VMOP_FORCE) {
 				vtp.vtp_vm_id = vm_vmid2id(vm->vm_vmid, vm);
-				vm->vm_shutdown = 1;
+				vm->vm_state |= VM_STATE_SHUTDOWN;
 				(void)terminate_vm(&vtp);
 				res = 0;
-			} else if (vm->vm_shutdown == 0) {
+			} else if (!(vm->vm_state & VM_STATE_SHUTDOWN)) {
 				log_debug("%s: sending shutdown request"
 				    " to vm %d", __func__, id);
 
@@ -202,7 +202,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				 * avoid being stuck in the ACPI-less powerdown
 				 * ("press any key to reboot") of the VM.
 				 */
-				vm->vm_shutdown = 1;
+				vm->vm_state |= VM_STATE_SHUTDOWN;
 				if (imsg_compose_event(&vm->vm_iev,
 				    IMSG_VMDOP_VM_REBOOT,
 				    0, 0, -1, NULL, 0) == -1)
@@ -222,7 +222,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				}
 			}
 			if ((flags & VMOP_WAIT) &&
-			    res == 0 && vm->vm_shutdown == 1) {
+			    res == 0 && (vm->vm_state & VM_STATE_SHUTDOWN)) {
 				if (vm->vm_peerid != (uint32_t)-1) {
 					peerid = vm->vm_peerid;
 					res = EINTR;
@@ -315,7 +315,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		ret = vm_register(ps, &vmc, &vm,
 		    imsg->hdr.peerid, vmc.vmc_owner.uid);
 		vm->vm_tty = imsg->fd;
-		vm->vm_received = 1;
+		vm->vm_state |= VM_STATE_RECEIVED;
 		break;
 	case IMSG_VMDOP_RECEIVE_VM_END:
 		if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
@@ -404,7 +404,7 @@ vmm_sighdlr(int sig, short event, void *arg)
 					ret = WEXITSTATUS(status);
 
 				/* don't reboot on pending shutdown */
-				if (ret == EAGAIN && vm->vm_shutdown)
+				if (ret == EAGAIN && (vm->vm_state & VM_STATE_SHUTDOWN))
 					ret = 0;
 
 				vmid = vm->vm_params.vmc_params.vcp_id;
@@ -529,10 +529,10 @@ vmm_dispatch_vm(int fd, short event, void *arg)
 
 		switch (imsg.hdr.type) {
 		case IMSG_VMDOP_VM_SHUTDOWN:
-			vm->vm_shutdown = 1;
+			vm->vm_state |= VM_STATE_SHUTDOWN;
 			break;
 		case IMSG_VMDOP_VM_REBOOT:
-			vm->vm_shutdown = 0;
+			vm->vm_state &= ~VM_STATE_SHUTDOWN;
 			break;
 		case IMSG_VMDOP_SEND_VM_RESPONSE:
 			IMSG_SIZE_CHECK(&imsg, &vmr);
@@ -645,7 +645,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	}
 	vcp = &vm->vm_params.vmc_params;
 
-	if (!vm->vm_received) {
+	if (!(vm->vm_state & VM_STATE_RECEIVED)) {
 		if ((vm->vm_tty = imsg->fd) == -1) {
 			log_warnx("%s: can't get tty", __func__);
 			goto err;

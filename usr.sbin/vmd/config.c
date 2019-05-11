@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.57 2018/11/26 05:44:46 ori Exp $	*/
+/*	$OpenBSD: config.c,v 1.58 2019/05/11 19:55:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -230,7 +230,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	errno = 0;
 
-	if (vm->vm_running) {
+	if (vm->vm_state & VM_STATE_RUNNING) {
 		log_warnx("%s: vm is already running", __func__);
 		errno = EALREADY;
 		return (-1);
@@ -293,7 +293,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	vm->vm_peerid = peerid;
 	vm->vm_uid = uid;
 
-	if (!vm->vm_received) {
+	if (!(vm->vm_state & VM_STATE_RECEIVED)) {
 		if (strlen(vcp->vcp_kernel)) {
 			/*
 			 * Boot kernel from disk image if path matches the
@@ -480,7 +480,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	/* Send VM information */
-	if (vm->vm_received)
+	if (vm->vm_state & VM_STATE_RECEIVED)
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_RECEIVE_VM_REQUEST, vm->vm_vmid, fd,  vmc,
 		    sizeof(struct vmop_create_params));
@@ -509,13 +509,13 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    &i, sizeof(i));
 	}
 
-	if (!vm->vm_received)
+	if (!(vm->vm_state & VM_STATE_RECEIVED))
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,  NULL, 0);
 
 	free(tapfds);
 
-	vm->vm_running = 1;
+	vm->vm_state |= VM_STATE_RUNNING;
 	return (0);
 
  fail:
@@ -562,7 +562,7 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 
 	/* If the fd is -1, the kernel will be searched on the disk */
 	vm->vm_kernel = imsg->fd;
-	vm->vm_running = 1;
+	vm->vm_state |= VM_STATE_RUNNING;
 	vm->vm_peerid = (uint32_t)-1;
 
 	return (0);

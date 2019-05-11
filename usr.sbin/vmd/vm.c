@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.45 2019/03/01 07:32:29 mlarkin Exp $	*/
+/*	$OpenBSD: vm.c,v 1.46 2019/05/11 19:55:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -279,7 +279,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	setproctitle("%s", vcp->vcp_name);
 	log_procinit(vcp->vcp_name);
 
-	if (!vm->vm_received)
+	if (!(vm->vm_state & VM_STATE_RECEIVED))
 		create_memory_map(vcp);
 
 	ret = alloc_guest_mem(vcp);
@@ -311,7 +311,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	if (pledge("stdio vmm recvfd", NULL) == -1)
 		fatal("pledge");
 
-	if (vm->vm_received) {
+	if (vm->vm_state & VM_STATE_RECEIVED) {
 		ret = read(vm->vm_receive_fd, &vrp, sizeof(vrp));
 		if (ret != sizeof(vrp)) {
 			fatal("received incomplete vrp - exiting");
@@ -359,7 +359,7 @@ start_vm(struct vmd_vm *vm, int fd)
 
 	event_init();
 
-	if (vm->vm_received) {
+	if (vm->vm_state & VM_STATE_RECEIVED) {
 		restore_emulated_hw(vcp, vm->vm_receive_fd, nicfds,
 		    vm->vm_disks, vm->vm_cdrom);
 		mc146818_start();
@@ -685,10 +685,10 @@ restore_vmr(int fd, struct vm_mem_range *vmr)
 void
 pause_vm(struct vm_create_params *vcp)
 {
-	if (current_vm->vm_paused)
+	if (current_vm->vm_state & VM_STATE_PAUSED)
 		return;
 
-	current_vm->vm_paused = 1;
+	current_vm->vm_state |= VM_STATE_PAUSED;
 
 	/* XXX: vcpu_run_loop is running in another thread and we have to wait
 	 * for the vm to exit before returning */
@@ -702,10 +702,10 @@ void
 unpause_vm(struct vm_create_params *vcp)
 {
 	unsigned int n;
-	if (!current_vm->vm_paused)
+	if (!(current_vm->vm_state & VM_STATE_PAUSED))
 		return;
 
-	current_vm->vm_paused = 0;
+	current_vm->vm_state &= ~VM_STATE_PAUSED;
 
 	i8253_start();
 	mc146818_start();
@@ -1094,7 +1094,7 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 	log_debug("%s: initializing hardware for vm %s", __func__,
 	    vcp->vcp_name);
 
-	if (!current_vm->vm_received)
+	if (!(current_vm->vm_state & VM_STATE_RECEIVED))
 		init_emulated_hw(vmc, child_cdrom, child_disks, child_taps);
 
 	ret = pthread_mutex_init(&threadmutex, NULL);
@@ -1146,7 +1146,7 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 		}
 
 		/* once more because reset_cpu changes regs */
-		if (current_vm->vm_received) {
+		if (current_vm->vm_state & VM_STATE_RECEIVED) {
 			vregsp.vrwp_vm_id = vcp->vcp_id;
 			vregsp.vrwp_vcpu_id = i;
 			vregsp.vrwp_regs = *vrs;
@@ -1295,7 +1295,7 @@ vcpu_run_loop(void *arg)
 
 		/* If we are halted or paused, wait */
 		if (vcpu_hlt[n]) {
-			while (current_vm->vm_paused == 1) {
+			while (current_vm->vm_state & VM_STATE_PAUSED) {
 				ret = pthread_cond_wait(&vcpu_run_cond[n],
 				    &vcpu_run_mtx[n]);
 				if (ret) {

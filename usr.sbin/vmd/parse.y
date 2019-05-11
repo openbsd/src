@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.51 2019/05/11 19:55:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -357,7 +357,8 @@ vm		: VM string vm_instance		{
 					log_debug("%s:%d: vm \"%s\""
 					    " skipped (%s)",
 					    file->name, yylval.lineno,
-					    vcp->vcp_name, vm->vm_running ?
+					    vcp->vcp_name,
+					    (vm->vm_state & VM_STATE_RUNNING) ?
 					    "running" : "already exists");
 				} else if (ret == -1) {
 					yyerror("vm \"%s\" failed: %s",
@@ -365,7 +366,7 @@ vm		: VM string vm_instance		{
 					YYERROR;
 				} else {
 					if (vcp_disable)
-						vm->vm_disabled = 1;
+						vm->vm_state |= VM_STATE_DISABLED;
 					log_debug("%s:%d: vm \"%s\" "
 					    "registered (%s)",
 					    file->name, yylval.lineno,

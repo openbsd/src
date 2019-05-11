@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.91 2019/05/10 18:11:27 jasper Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.92 2019/05/11 19:55:14 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -263,19 +263,20 @@ struct vmd_vm {
 	char			*vm_ttyname;
 	int			 vm_tty;
 	uint32_t		 vm_peerid;
-	/* When set, VM is running now (PROC_PARENT only) */
-	int			 vm_running;
-	/* When set, VM is not started by default (PROC_PARENT only) */
-	int			 vm_disabled;
 	/* When set, VM was defined in a config file */
 	int			 vm_from_config;
 	struct imsgev		 vm_iev;
-	int			 vm_shutdown;
 	uid_t			 vm_uid;
-	int			 vm_received;
-	int			 vm_paused;
 	int			 vm_receive_fd;
 	struct vmd_user		*vm_user;
+	unsigned int		 vm_state;
+/* When set, VM is running now (PROC_PARENT only) */
+#define VM_STATE_RUNNING	0x01
+/* When set, VM is not started by default (PROC_PARENT only) */
+#define VM_STATE_DISABLED	0x02
+#define VM_STATE_SHUTDOWN	0x04
+#define VM_STATE_RECEIVED	0x08
+#define VM_STATE_PAUSED		0x10
 
 	/* For rate-limiting */
 	struct timeval		 vm_start_tv;
