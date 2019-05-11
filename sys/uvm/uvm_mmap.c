@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.155 2019/04/02 11:02:01 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.156 2019/05/11 20:02:00 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -183,14 +183,14 @@ uvm_wxcheck(struct proc *p, char *call)
 	if (wxallowed && (pr->ps_flags & PS_WXNEEDED))
 		return (0);
 
-	/* Report W^X failures, and potentially SIGABRT */
-	if (pr->ps_wxcounter++ == 0)
-		log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
-		    pr->ps_comm, pr->ps_pid, call);
-
-	/* Send uncatchable SIGABRT for coredump */
-	if (uvm_wxabort)
+	if (uvm_wxabort) {
+		/* Report W^X failures */
+		if (pr->ps_wxcounter++ == 0)
+			log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
+			    pr->ps_comm, pr->ps_pid, call);
+		/* Send uncatchable SIGABRT for coredump */
 		sigexit(p, SIGABRT);
+	}
 
 	return (ENOTSUP);
 }
