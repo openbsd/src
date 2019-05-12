@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber.3,v 1.1 2019/05/11 17:46:02 rob Exp $
+.\" $OpenBSD: ber.3,v 1.2 2019/05/12 19:29:41 rob Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 11 2019 $
+.Dd $Mdocdate: May 12 2019 $
 .Dt BER 3
 .Os
 .Sh NAME
@@ -65,6 +65,7 @@
 .Nm ber_free
 .Nd encode and decode ASN.1 with Basic Encoding Rules
 .Sh SYNOPSIS
+.In sys/types.h
 .In ber.h
 .Ft "struct ber_element *"
 .Fn "ber_get_element" "unsigned int encoding"
