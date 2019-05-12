@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.13 2019/05/12 20:55:09 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.14 2019/05/12 20:56:11 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -397,11 +397,6 @@ test(int i)
 			return 1;
 		}
 		break;
-	/*
-	 * the current ber.c does not support bit strings
-	 * however, simply processing a bit string as an octet string seems
-	 * to work fine (as suspected by claudio)
-	 */
 	case BER_TYPE_BITSTRING:
 		if (ber_get_bitstring(elm, &bstring, &len) == -1) {
 			printf("failed (bit string) encoding check\n");
