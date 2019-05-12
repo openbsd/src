@@ -1382,6 +1382,7 @@
 ./usr/share/man/man4/fins.4
 ./usr/share/man/man4/fintek.4
 ./usr/share/man/man4/fms.4
+./usr/share/man/man4/fusbtc.4
 ./usr/share/man/man4/fuse.4
 ./usr/share/man/man4/fxp.4
 ./usr/share/man/man4/gcu.4
@@ -1645,6 +1646,7 @@
 ./usr/share/man/man4/mvrng.4
 ./usr/share/man/man4/mvrtc.4
 ./usr/share/man/man4/mvtemp.4
+./usr/share/man/man4/mvuart.4
 ./usr/share/man/man4/myx.4
 ./usr/share/man/man4/ne.4
 ./usr/share/man/man4/neo.4
@@ -1939,6 +1941,7 @@
 ./usr/share/man/man4/ubsec.4
 ./usr/share/man/man4/uchcom.4
 ./usr/share/man/man4/ucom.4
+./usr/share/man/man4/ucrcom.4
 ./usr/share/man/man4/ucycom.4
 ./usr/share/man/man4/udav.4
 ./usr/share/man/man4/udcf.4
