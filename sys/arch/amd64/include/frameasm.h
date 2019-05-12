@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.20 2018/07/23 17:54:04 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.21 2019/05/12 21:27:47 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -35,7 +35,7 @@
 
 /*
  * We clear registers when coming from userspace to prevent
- * user-controlled values from being availible for use in speculative
+ * user-controlled values from being available for use in speculative
  * execution in the kernel.  %rsp and %rbp are the kernel values when
  * this is used, so there are only 14 to clear.  32bit operations clear
  * the register upper-halves automatically.
