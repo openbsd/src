@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.221 2019/05/07 19:46:17 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.222 2019/05/12 18:16:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1046,8 +1046,6 @@ window_copy_cmd_previous_matching_bracket(struct window_copy_cmd_state *cs)
 					goto retry;
 				}
 				window_copy_cursor_previous_word(wme, "}]) ");
-				px = data->cx;
-				continue;
 			}
 			continue;
 		}
@@ -1161,7 +1159,6 @@ window_copy_cmd_next_matching_bracket(struct window_copy_cmd_state *cs)
 					goto retry;
 				}
 				window_copy_cursor_next_word_end(wme, "{[( ");
-				px = data->cx;
 				continue;
 			}
 			/* For vi, continue searching for bracket until EOL. */

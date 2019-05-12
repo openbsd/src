@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.28 2019/05/12 08:58:09 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.29 2019/05/12 18:16:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -819,7 +819,7 @@ mode_tree_display_menu(struct mode_tree_data *mtd, struct client *c, u_int x,
 		line = mtd->current;
 	else
 		line = mtd->offset + y;
-		mti = mtd->line_list[line].item;
+	mti = mtd->line_list[line].item;
 
 	if (!outside) {
 		s = mtd->menu;
