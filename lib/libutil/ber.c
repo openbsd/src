@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.4 2019/05/12 18:11:51 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.5 2019/05/12 20:13:08 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1195,7 +1195,7 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	unsigned int type;
 	int i, class, cstruct, elements = 0;
 	ssize_t len, r, totlen = 0;
-	u_char c;
+	u_char c, last = 0;
 
 	if ((r = get_id(ber, &type, &class, &cstruct)) == -1)
 		return -1;
@@ -1264,8 +1264,15 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 		for (i = 0; i < len; i++) {
 			if (ber_getc(ber, &c) != 1)
 				return -1;
+
+			/* smallest number of contents octets only */
+			if ((i == 1 && last == 0 && (c & 0x80) == 0) || 
+			    (i == 1 && last == 0xff && (c & 0x80) != 0))
+				return -1;
+
 			val <<= 8;
 			val |= c;
+			last = c;
 		}
 
 		/* sign extend if MSB is set */
