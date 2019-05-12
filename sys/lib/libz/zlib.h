@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.h,v 1.10 2014/05/21 02:20:18 mlarkin Exp $	*/
+/*	$OpenBSD: zlib.h,v 1.11 2019/05/12 15:56:56 jca Exp $	*/
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.3, July 18th, 2005
 
@@ -81,7 +81,7 @@ typedef void   (*free_func)  OF((voidpf opaque, voidpf address));
 struct internal_state;
 
 typedef struct z_stream_s {
-    Bytef    *next_in;  /* next input byte */
+    z_const Bytef *next_in;     /* next input byte */
     uInt     avail_in;  /* number of bytes available at next_in */
     z_off_t  total_in;  /* total nb of input bytes read so far */
 
@@ -89,7 +89,7 @@ typedef struct z_stream_s {
     uInt     avail_out; /* remaining free space at next_out */
     z_off_t  total_out; /* total nb of bytes output so far */
 
-    char     *msg;      /* last error message, NULL if no error */
+    z_const char *msg;  /* last error message, NULL if no error */
     struct internal_state FAR *state; /* not visible by applications */
 
     alloc_func zalloc;  /* used to allocate the internal state */
@@ -870,12 +870,13 @@ ZEXTERN int ZEXPORT inflateBackInit OF((z_streamp strm, int windowBits,
      See inflateBack() for the usage of these routines.
 
      inflateBackInit will return Z_OK on success, Z_STREAM_ERROR if any of
-   the paramaters are invalid, Z_MEM_ERROR if the internal state could not
+   the parameters are invalid, Z_MEM_ERROR if the internal state could not
    be allocated, or Z_VERSION_ERROR if the version of the library does not
    match the version of the header file.
 */
 
-typedef unsigned (*in_func) OF((void FAR *, unsigned char FAR * FAR *));
+typedef unsigned (*in_func) OF((void FAR *,
+                                z_const unsigned char FAR * FAR *));
 typedef int (*out_func) OF((void FAR *, unsigned char FAR *, unsigned));
 
 ZEXTERN int ZEXPORT inflateBack OF((z_streamp strm,

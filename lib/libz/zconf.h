@@ -1,4 +1,4 @@
-/*	$OpenBSD: zconf.h,v 1.7 2005/07/20 15:56:41 millert Exp $	*/
+/*	$OpenBSD: zconf.h,v 1.8 2019/05/12 15:56:56 jca Exp $	*/
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2005 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -123,6 +123,12 @@
 #  ifndef const /* cannot use !defined(STDC) && !defined(const) on Mac */
 #    define const       /* note: need a more gentle solution here */
 #  endif
+#endif
+
+#if defined(ZLIB_CONST) && !defined(z_const)
+#  define z_const const
+#else
+#  define z_const
 #endif
 
 /* Some Mac compilers merge all .h files incorrectly: */
