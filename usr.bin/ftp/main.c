@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.122 2019/05/12 20:58:19 jasper Exp $ */
+/*	$OpenBSD: main.c,v 1.123 2019/05/12 21:30:48 jca Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -303,6 +303,8 @@ child(int sock, int argc, char **argv)
 
 	imsg_init(&child_ibuf, sock);
 	tostdout = oarg && (strcmp(oarg, "-") == 0);
+	if (tostdout)
+		msgout = stderr;
 	if (resume && tostdout)
 		errx(1, "can't append to stdout");
 
@@ -330,7 +332,6 @@ child(int sock, int argc, char **argv)
 
 		if (tostdout) {
 			dst_fp = stdout;
-			msgout = stderr;
 		} else if ((dst_fp = fdopen(fd, "w")) == NULL)
 			err(1, "%s: fdopen", __func__);
 
