@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.365 2019/05/11 14:59:52 lteo Exp $ */
+/* $OpenBSD: acpi.c,v 1.366 2019/05/12 02:21:13 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1575,6 +1575,7 @@ acpi_write_pmreg(struct acpi_softc *sc, int reg, int offset, int regval)
 void
 acpi_map_pmregs(struct acpi_softc *sc)
 {
+	struct acpi_fadt *fadt = sc->sc_fadt;
 	bus_addr_t addr;
 	bus_size_t size, access;
 	const char *name;
@@ -1591,14 +1592,19 @@ acpi_map_pmregs(struct acpi_softc *sc)
 		case ACPIREG_SMICMD:
 			name = "smi";
 			size = access = 1;
-			addr = sc->sc_fadt->smi_cmd;
+			addr = fadt->smi_cmd;
 			break;
 		case ACPIREG_PM1A_STS:
 		case ACPIREG_PM1A_EN:
 			name = "pm1a_sts";
-			size = sc->sc_fadt->pm1_evt_len >> 1;
-			addr = sc->sc_fadt->pm1a_evt_blk;
-			access = 2;
+			size = fadt->pm1_evt_len >> 1;
+			if (fadt->pm1a_evt_blk) {
+				addr = fadt->pm1a_evt_blk;
+				access = 2;
+			} else {
+				addr = fadt->x_pm1a_evt_blk.address;
+				access = 1 << fadt->x_pm1a_evt_blk.access_size;
+			}
 			if (reg == ACPIREG_PM1A_EN && addr) {
 				addr += size;
 				name = "pm1a_en";
@@ -1606,16 +1612,26 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			break;
 		case ACPIREG_PM1A_CNT:
 			name = "pm1a_cnt";
-			size = sc->sc_fadt->pm1_cnt_len;
-			addr = sc->sc_fadt->pm1a_cnt_blk;
-			access = 2;
+			size = fadt->pm1_cnt_len;
+			if (fadt->pm1a_cnt_blk) {
+				addr = fadt->pm1a_cnt_blk;
+				access = 2;
+			} else {
+				addr = fadt->x_pm1a_cnt_blk.address;
+				access = 1 << fadt->x_pm1a_cnt_blk.access_size;
+			}
 			break;
 		case ACPIREG_PM1B_STS:
 		case ACPIREG_PM1B_EN:
 			name = "pm1b_sts";
-			size = sc->sc_fadt->pm1_evt_len >> 1;
-			addr = sc->sc_fadt->pm1b_evt_blk;
-			access = 2;
+			size = fadt->pm1_evt_len >> 1;
+			if (fadt->pm1b_evt_blk) {
+				addr = fadt->pm1b_evt_blk;
+				access = 2;
+			} else {
+				addr = fadt->x_pm1b_evt_blk.address;
+				access = 1 << fadt->x_pm1b_evt_blk.access_size;
+			}
 			if (reg == ACPIREG_PM1B_EN && addr) {
 				addr += size;
 				name = "pm1b_en";
@@ -1623,36 +1639,56 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			break;
 		case ACPIREG_PM1B_CNT:
 			name = "pm1b_cnt";
-			size = sc->sc_fadt->pm1_cnt_len;
-			addr = sc->sc_fadt->pm1b_cnt_blk;
-			access = 2;
+			size = fadt->pm1_cnt_len;
+			if (fadt->pm1b_cnt_blk) {
+				addr = fadt->pm1b_cnt_blk;
+				access = 2;
+			} else {
+				addr = fadt->x_pm1b_cnt_blk.address;
+				access = 1 << fadt->x_pm1b_cnt_blk.access_size;
+			}
 			break;
 		case ACPIREG_PM2_CNT:
 			name = "pm2_cnt";
-			size = sc->sc_fadt->pm2_cnt_len;
-			addr = sc->sc_fadt->pm2_cnt_blk;
-			access = size;
+			size = fadt->pm2_cnt_len;
+			if (fadt->pm2_cnt_blk) {
+				addr = fadt->pm2_cnt_blk;
+				access = size;
+			} else {
+				addr = fadt->x_pm2_cnt_blk.address;
+				access = 1 << fadt->x_pm2_cnt_blk.access_size;
+			}
 			break;
 #if 0
 		case ACPIREG_PM_TMR:
 			/* Allocated in acpitimer */
 			name = "pm_tmr";
-			size = sc->sc_fadt->pm_tmr_len;
-			addr = sc->sc_fadt->pm_tmr_blk;
-			access = 4;
+			size = fadt->pm_tmr_len;
+			if (fadt->pm_tmr_blk) {
+				addr = fadt->pm_tmr_blk;
+				access = 4;
+			} else {
+				addr = fadt->x_pm_tmr_blk.address;
+				access = 1 << fadt->x_pm_tmr_blk.access_size;
+			}
 			break;
 #endif
 		case ACPIREG_GPE0_STS:
 		case ACPIREG_GPE0_EN:
 			name = "gpe0_sts";
-			size = sc->sc_fadt->gpe0_blk_len >> 1;
-			addr = sc->sc_fadt->gpe0_blk;
-			access = 1;
+			size = fadt->gpe0_blk_len >> 1;
+			if (fadt->gpe0_blk) {
+				addr = fadt->gpe0_blk;
+				access = 1;
+			} else {
+				addr = fadt->x_gpe0_blk.address;
+				access = 1 << fadt->x_gpe0_blk.access_size;
+			}
 
 			dnprintf(20, "gpe0 block len : %x\n",
-			    sc->sc_fadt->gpe0_blk_len >> 1);
+			    fadt->gpe0_blk_len >> 1);
 			dnprintf(20, "gpe0 block addr: %x\n",
-			    sc->sc_fadt->gpe0_blk);
+			    fadt->gpe0_blk);
 			if (reg == ACPIREG_GPE0_EN && addr) {
 				addr += size;
 				name = "gpe0_en";
@@ -1661,14 +1697,19 @@ acpi_map_pmregs(struct acpi_softc *sc)
 		case ACPIREG_GPE1_STS:
 		case ACPIREG_GPE1_EN:
 			name = "gpe1_sts";
-			size = sc->sc_fadt->gpe1_blk_len >> 1;
-			addr = sc->sc_fadt->gpe1_blk;
-			access = 1;
+			size = fadt->gpe1_blk_len >> 1;
+			if (fadt->gpe1_blk) {
+				addr = fadt->gpe1_blk;
+				access = 1;
+			} else {
+				addr = fadt->x_gpe1_blk.address;
+				access = 1 << fadt->x_gpe1_blk.access_size;
+			}
 
 			dnprintf(20, "gpe1 block len : %x\n",
-			    sc->sc_fadt->gpe1_blk_len >> 1);
+			    fadt->gpe1_blk_len >> 1);
 			dnprintf(20, "gpe1 block addr: %x\n",
-			    sc->sc_fadt->gpe1_blk);
+			    fadt->gpe1_blk);
 			if (reg == ACPIREG_GPE1_EN && addr) {
 				addr += size;
 				name = "gpe1_en";
