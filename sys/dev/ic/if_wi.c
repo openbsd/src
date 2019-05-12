@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.168 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.169 2019/05/12 18:12:38 stsp Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1963,8 +1963,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			}
 			sc->wi_enh_security = letoh16(wreq->wi_val[0]);
 			if (sc->wi_enh_security == WI_HIDESSID_IGNPROBES)
-				ifr->ifr_flags |= IEEE80211_F_HIDENWID >>
-				    IEEE80211_F_USERSHIFT;
+				ifr->ifr_flags |= IEEE80211_F_HIDENWID;
 		}
 		break;
 	case SIOCS80211FLAGS:
@@ -1974,7 +1973,7 @@ wi_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		flags = (u_int32_t)ifr->ifr_flags << IEEE80211_F_USERSHIFT;
+		flags = (u_int32_t)ifr->ifr_flags;
 		if (sc->wi_flags & WI_FLAGS_HAS_ENH_SECURITY) {
 			sc->wi_enh_security = (flags & IEEE80211_F_HIDENWID) ?
 			    WI_HIDESSID_IGNPROBES : 0;

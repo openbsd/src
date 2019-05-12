@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.37 2019/02/19 08:12:30 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.38 2019/05/12 18:12:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -394,20 +394,21 @@ struct ieee80211_nodereq_all {
 #define SIOCG80211ALLNODES	_IOWR('i', 214, struct ieee80211_nodereq_all)
 
 /* net80211 specific interface flags */
-#define IEEE80211_F_HIDENWID	0x10000000	/* CONF: hidden ssid mode */
-#define IEEE80211_F_NOBRIDGE	0x20000000	/* CONF: no internal bridging */
-#define IEEE80211_F_HOSTAPMASK	0x30000000
-#define IEEE80211_F_USERSHIFT	28
-#define IEEE80211_F_USERBITS	"\20\01HIDENWID\02NOBRIDGE"
+#define IEEE80211_F_HIDENWID	0x00000001	/* CONF: hidden ssid mode */
+#define IEEE80211_F_NOBRIDGE	0x00000002	/* CONF: no internal bridging */
+#define IEEE80211_F_HOSTAPMASK	0x00000003
+#define IEEE80211_F_STAYAUTH	0x00000004	/* CONF: ignore deauth */
+#define IEEE80211_F_USERBITS	"\20\01HIDENWID\02NOBRIDGE\03STAYAUTH"
 
 struct ieee80211_flags {
 	const char		*f_name;
 	u_int			f_flag;
 };
 
-#define IEEE80211_FLAGS	{						\
-	{ "hidenwid", IEEE80211_F_HIDENWID >> IEEE80211_F_USERSHIFT },	\
-	{ "nobridge", IEEE80211_F_NOBRIDGE >> IEEE80211_F_USERSHIFT }	\
+#define IEEE80211_FLAGS	{			\
+	{ "hidenwid", IEEE80211_F_HIDENWID },	\
+	{ "nobridge", IEEE80211_F_NOBRIDGE },	\
+	{ "stayauth", IEEE80211_F_STAYAUTH }	\
 }
 
 #define SIOCG80211FLAGS		_IOWR('i', 216, struct ifreq)

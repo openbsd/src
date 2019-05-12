@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.95 2019/03/01 08:13:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.96 2019/05/12 18:12:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -247,6 +247,7 @@ struct ieee80211com {
 	u_int8_t		ic_scan_count;	/* count scans */
 	u_int32_t		ic_flags;	/* state flags */
 	u_int32_t		ic_xflags;	/* more flags */
+	u_int32_t		ic_userflags;	/* yet more flags */
 	u_int32_t		ic_caps;	/* capabilities */
 	u_int16_t		ic_modecaps;	/* set of mode capabilities */
 	u_int16_t		ic_curmode;	/* current mode */
@@ -395,7 +396,6 @@ struct ieee80211_ess {
 #define	IEEE80211_F_BGSCAN	0x08000000	/* STATUS: background scan */
 #define IEEE80211_F_AUTO_JOIN	0x10000000	/* CONF: auto-join active */
 #define	IEEE80211_F_VHTON	0x20000000	/* CONF: VHT enabled */
-#define IEEE80211_F_USERMASK	0xc0000000	/* CONF: ioctl flag mask */
 
 /* ic_xflags */
 #define	IEEE80211_F_TX_MGMT_ONLY 0x00000001	/* leave data frames on ifq */

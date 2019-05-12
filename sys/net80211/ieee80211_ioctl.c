@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.73 2019/02/19 08:12:30 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.74 2019/05/12 18:12:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -903,17 +903,17 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCG80211FLAGS:
-		flags = ic->ic_flags;
+		flags = ic->ic_userflags;
 #ifndef IEEE80211_STA_ONLY
 		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
 #endif
 			flags &= ~IEEE80211_F_HOSTAPMASK;
-		ifr->ifr_flags = flags >> IEEE80211_F_USERSHIFT;
+		ifr->ifr_flags = flags;
 		break;
 	case SIOCS80211FLAGS:
 		if ((error = suser(curproc)) != 0)
 			break;
-		flags = (u_int32_t)ifr->ifr_flags << IEEE80211_F_USERSHIFT;
+		flags = ifr->ifr_flags;
 		if (
 #ifndef IEEE80211_STA_ONLY
 		    ic->ic_opmode != IEEE80211_M_HOSTAP &&
@@ -922,7 +922,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EINVAL;
 			break;
 		}
-		ic->ic_flags = (ic->ic_flags & ~IEEE80211_F_USERMASK) | flags;
+		ic->ic_userflags = flags;
 		error = ENETRESET;
 		break;
 	case SIOCADDMULTI:

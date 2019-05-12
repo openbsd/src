@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.124 2019/05/10 18:30:15 patrick Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.125 2019/05/12 18:12:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -1819,7 +1819,8 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	m = ieee80211_getmgmt(M_DONTWAIT, MT_DATA,
 	    8 + 2 + 2 +
-	    2 + ((ic->ic_flags & IEEE80211_F_HIDENWID) ? 0 : ni->ni_esslen) +
+	    2 + ((ic->ic_userflags & IEEE80211_F_HIDENWID) ?
+	    0 : ni->ni_esslen) +
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    2 + 1 +
 	    2 + ((ic->ic_opmode == IEEE80211_M_IBSS) ? 2 : 254) +
@@ -1854,7 +1855,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	memset(frm, 0, 8); frm += 8;	/* timestamp is set by hardware */
 	LE_WRITE_2(frm, ni->ni_intval); frm += 2;
 	frm = ieee80211_add_capinfo(frm, ic, ni);
-	if (ic->ic_flags & IEEE80211_F_HIDENWID)
+	if (ic->ic_userflags & IEEE80211_F_HIDENWID)
 		frm = ieee80211_add_ssid(frm, NULL, 0);
 	else
 		frm = ieee80211_add_ssid(frm, ni->ni_essid, ni->ni_esslen);

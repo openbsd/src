@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.205 2019/03/29 11:05:46 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.206 2019/05/12 18:12:38 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -882,7 +882,7 @@ ieee80211_deliver_data(struct ieee80211com *ic, struct mbuf *m,
 	m1 = NULL;
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
-	    !(ic->ic_flags & IEEE80211_F_NOBRIDGE) &&
+	    !(ic->ic_userflags & IEEE80211_F_NOBRIDGE) &&
 	    eh->ether_type != htons(ETHERTYPE_PAE)) {
 		struct ieee80211_node *ni1;
 
@@ -2418,7 +2418,9 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m,
 	case IEEE80211_M_STA: {
 		int bgscan = ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
 		    ic->ic_state == IEEE80211_S_RUN);
-		if (!bgscan) /* ignore deauth during bgscan */
+		int stay_auth = ((ic->ic_userflags & IEEE80211_F_STAYAUTH) &&
+		    ic->ic_state >= IEEE80211_S_AUTH);
+		if (!(bgscan || stay_auth))
 			ieee80211_new_state(ic, IEEE80211_S_AUTH,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH);
 		}
@@ -2426,13 +2428,18 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m,
 #ifndef IEEE80211_STA_ONLY
 	case IEEE80211_M_HOSTAP:
 		if (ni != ic->ic_bss) {
+			int stay_auth =
+			    ((ic->ic_userflags & IEEE80211_F_STAYAUTH) &&
+			    (ni->ni_state == IEEE80211_STA_AUTH ||
+			    ni->ni_state == IEEE80211_STA_ASSOC));
 			if (ic->ic_if.if_flags & IFF_DEBUG)
 				printf("%s: station %s deauthenticated "
 				    "by peer (reason %d)\n",
 				    ic->ic_if.if_xname,
 				    ether_sprintf(ni->ni_macaddr),
 				    reason);
-			ieee80211_node_leave(ic, ni);
+			if (!stay_auth)
+				ieee80211_node_leave(ic, ni);
 		}
 		break;
 #endif
