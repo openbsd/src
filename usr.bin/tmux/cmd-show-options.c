@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-show-options.c,v 1.50 2019/05/12 18:16:33 nicm Exp $ */
+/* $OpenBSD: cmd-show-options.c,v 1.51 2019/05/12 18:18:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -90,8 +90,10 @@ cmd_show_options_exec(struct cmd *self, struct cmdq_item *item)
 	struct options_entry		*o;
 
 	window = (self->entry == &cmd_show_window_options_entry);
-	if (args->argc == 0)
+	if (args->argc == 0) {
+		options_scope_from_flags(args, window, fs, &oo, &cause);
 		return (cmd_show_options_all(self, item, oo));
+	}
 	argument = format_single(item, args->argv[0], c, s, wl, NULL);
 
 	name = options_match(argument, &idx, &ambiguous);
