@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.18 2019/04/28 22:15:57 mpi Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.19 2019/05/12 19:53:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -723,8 +723,12 @@ u_int8_t
 bridge_filterrule(struct brl_head *h, struct ether_header *eh, struct mbuf *m)
 {
 	struct brl_node *n;
-	u_int8_t flags;
+	u_int8_t action, flags;
 
+	if (SIMPLEQ_EMPTY(h))
+		return (BRL_ACTION_PASS);
+
+	KERNEL_LOCK();
 	SIMPLEQ_FOREACH(n, h, brl_next) {
 		if (!bridge_arpfilter(n, eh, m))
 			continue;
@@ -753,13 +757,16 @@ bridge_filterrule(struct brl_head *h, struct ether_header *eh, struct mbuf *m)
 			goto return_action;
 		}
 	}
+	KERNEL_UNLOCK();
 	return (BRL_ACTION_PASS);
 
 return_action:
 #if NPF > 0
 	pf_tag_packet(m, n->brl_tag, -1);
 #endif
-	return (n->brl_action);
+	action = n->brl_action;
+	KERNEL_UNLOCK();
+	return (action);
 }
 
 int
@@ -781,6 +788,9 @@ bridge_addrule(struct bridge_iflist *bif, struct ifbrlreq *req, int out)
 	else
 		n->brl_tag = 0;
 #endif
+
+	KERNEL_ASSERT_LOCKED();
+
 	if (out) {
 		n->brl_flags &= ~BRL_FLAG_IN;
 		n->brl_flags |= BRL_FLAG_OUT;
@@ -797,6 +807,8 @@ void
 bridge_flushrule(struct bridge_iflist *bif)
 {
 	struct brl_node *p;
+
+	KERNEL_ASSERT_LOCKED();
 
 	while (!SIMPLEQ_EMPTY(&bif->bif_brlin)) {
 		p = SIMPLEQ_FIRST(&bif->bif_brlin);

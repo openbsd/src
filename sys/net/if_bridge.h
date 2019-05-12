@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.64 2019/04/28 22:15:57 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.65 2019/05/12 19:53:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -35,6 +35,7 @@
 #ifndef _NET_IF_BRIDGE_H_
 #define _NET_IF_BRIDGE_H_
 
+#include <sys/smr.h>
 #include <sys/timeout.h>
 #include <net/pfvar.h>
 
@@ -410,14 +411,18 @@ struct bstp_state {
 
 /*
  * Bridge interface list
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	k	kernel lock
  */
 struct bridge_iflist {
-	SLIST_ENTRY(bridge_iflist)	bif_next;	/* next in list */
-	struct bridge_softc		*bridge_sc;
-	struct bstp_port		*bif_stp;	/* STP port state */
-	struct brl_head			bif_brlin;	/* input rules */
-	struct brl_head			bif_brlout;	/* output rules */
-	struct				ifnet *ifp;	/* member interface */
+	SMR_SLIST_ENTRY(bridge_iflist)	bif_next;	/* [k] next in list */
+	struct bridge_softc		*bridge_sc;	/* [I] sc backpointer */
+	struct bstp_port		*bif_stp;	/* [I] STP port state */
+	struct brl_head			bif_brlin;	/* [k] input rules */
+	struct brl_head			bif_brlout;	/* [k] output rules */
+	struct ifnet			*ifp;		/* [I] net interface */
 	u_int32_t			bif_flags;	/* member flags */
 	u_int32_t			bif_protected;	/* protected domains */
 	void				*bif_dhcookie;
@@ -463,13 +468,12 @@ struct bridge_rtnode {
 #define BRIDGE_RTABLE_MASK	(BRIDGE_RTABLE_SIZE - 1)
 
 /*
+ * Software state for each bridge
+ *
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
  *	m	per-softc mutex
  *	k	kernel lock
- */
-/*
- * Software state for each bridge
  */
 struct bridge_softc {
 	struct ifnet			sc_if;	/* the interface */
@@ -479,8 +483,8 @@ struct bridge_softc {
 	uint64_t			sc_hashkey[2];	/* [I] siphash key */
 	struct timeout			sc_brtimeout;	/* timeout state */
 	struct bstp_state		*sc_stp;	/* stp state */
-	SLIST_HEAD(, bridge_iflist)	sc_iflist;	/* [k] interface list */
-	SLIST_HEAD(, bridge_iflist)	sc_spanlist;	/* [k] span ports */
+	SMR_SLIST_HEAD(, bridge_iflist)	sc_iflist;	/* [k] interface list */
+	SMR_SLIST_HEAD(, bridge_iflist)	sc_spanlist;	/* [k] span ports */
 	struct mutex			sc_mtx;		/* mutex */
 	LIST_HEAD(, bridge_rtnode)	sc_rts[BRIDGE_RTABLE_SIZE];	/* [m] hash table */
 };
