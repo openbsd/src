@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.1 2019/05/11 17:46:02 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.2 2019/05/12 17:42:14 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1147,6 +1147,12 @@ get_len(struct ber *b, ssize_t *len)
 
 	if (u == 0x80) {
 		/* Indefinite length not supported. */
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (u == 0xff) {
+		/* Reserved for future use. */
 		errno = EINVAL;
 		return -1;
 	}
