@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.12 2019/05/09 11:09:18 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.13 2019/05/12 12:20:30 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2019 $
+.Dd $Mdocdate: May 12 2019 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -1080,7 +1080,7 @@ will create a Unix socket at the given
 .Pa path ,
 only accessible by
 .Ar LOG_USER ,
-that can accept a few commands, .e.g.,
+that can accept a few commands, e.g.,
 usable as
 .Li nc -U path
 .Pp
@@ -1098,6 +1098,15 @@ Add new pkgpath to list of paths that should not be cleaned after build
 Self explanatory
 .It Cm stats
 Show the current stats line
+.It Cm status Ar fullpkgpath ...
+Show the current status of fullpkgpath, whether it's built, installable,
+ready to build, to build later, along with current dependencies if
+applicable.
+.It Cm wipe Ar fullpkgpath ...
+Wipe out an existing lock: clean up the corresponding
+.Ar fullpkgpath
+on the appropriate host, then remove all lock and affinity info pertaining
+to the port.
 .El
 .Sh SHUTTING DOWN GRACEFULLY
 .Nm
