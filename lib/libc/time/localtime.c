@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.59 2016/09/19 12:48:21 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.60 2019/05/12 12:49:52 schwarze Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -46,7 +46,7 @@
 **		in which Daylight Saving Time is never observed.
 **	4.	They might reference tzname[0] after setting to a time zone
 **		in which Standard Time is never observed.
-**	5.	They might reference tm.TM_ZONE after calling offtime.
+**	5.	They might reference tm.tm_zone after calling offtime.
 ** What's best to do in the above cases is open to debate;
 ** for now, we just set things up so that in any of the five cases
 ** WILDABBR is used. Another possibility: initialize tzname[0] to the
@@ -214,14 +214,8 @@ DEF_WEAK(tzname);
 
 static struct tm	tm;
 
-#ifdef USG_COMPAT
 long			timezone = 0;
 int			daylight = 0;
-#endif /* defined USG_COMPAT */
-
-#ifdef ALTZONE
-time_t			altzone = 0;
-#endif /* defined ALTZONE */
 
 static long
 detzcode(const char *codep)
@@ -255,13 +249,8 @@ settzname(void)
 
 	tzname[0] = wildabbr;
 	tzname[1] = wildabbr;
-#ifdef USG_COMPAT
 	daylight = 0;
 	timezone = 0;
-#endif /* defined USG_COMPAT */
-#ifdef ALTZONE
-	altzone = 0;
-#endif /* defined ALTZONE */
 	if (sp == NULL) {
 		tzname[0] = tzname[1] = (char *)gmt;
 		return;
@@ -273,16 +262,10 @@ settzname(void)
 		const struct ttinfo *ttisp = &sp->ttis[sp->types[i]];
 
 		tzname[ttisp->tt_isdst] = &sp->chars[ttisp->tt_abbrind];
-#ifdef USG_COMPAT
 		if (ttisp->tt_isdst)
 			daylight = 1;
 		if (!ttisp->tt_isdst)
 			timezone = -(ttisp->tt_gmtoff);
-#endif /* defined USG_COMPAT */
-#ifdef ALTZONE
-		if (ttisp->tt_isdst)
-			altzone = -(ttisp->tt_gmtoff);
-#endif /* defined ALTZONE */
 	}
 	/*
 	** Finally, scrub the abbreviations.
@@ -1274,9 +1257,7 @@ localsub(const time_t *timep, long offset, struct tm *tmp)
 	result = timesub(&t, ttisp->tt_gmtoff, sp, tmp);
 	tmp->tm_isdst = ttisp->tt_isdst;
 	tzname[tmp->tm_isdst] = &sp->chars[ttisp->tt_abbrind];
-#ifdef TM_ZONE
-	tmp->TM_ZONE = &sp->chars[ttisp->tt_abbrind];
-#endif /* defined TM_ZONE */
+	tmp->tm_zone = &sp->chars[ttisp->tt_abbrind];
 	return result;
 }
 
@@ -1325,21 +1306,19 @@ gmtsub(const time_t *timep, long offset, struct tm *tmp)
 	}
 	_THREAD_PRIVATE_MUTEX_UNLOCK(gmt);
 	result = timesub(timep, offset, gmtptr, tmp);
-#ifdef TM_ZONE
 	/*
 	** Could get fancy here and deliver something such as
 	** "UTC+xxxx" or "UTC-xxxx" if offset is non-zero,
 	** but this is no time for a treasure hunt.
 	*/
 	if (offset != 0)
-		tmp->TM_ZONE = wildabbr;
+		tmp->tm_zone = wildabbr;
 	else {
 		if (gmtptr == NULL)
-			tmp->TM_ZONE = (char *)gmt;
+			tmp->tm_zone = (char *)gmt;
 		else
-			tmp->TM_ZONE = gmtptr->chars;
+			tmp->tm_zone = gmtptr->chars;
 	}
-#endif /* defined TM_ZONE */
 	return result;
 }
 
@@ -1508,9 +1487,7 @@ timesub(const time_t *timep, long offset, const struct state *sp, struct tm *tmp
 		idays -= ip[tmp->tm_mon];
 	tmp->tm_mday = (int) (idays + 1);
 	tmp->tm_isdst = 0;
-#ifdef TM_GMTOFF
-	tmp->TM_GMTOFF = offset;
-#endif /* defined TM_GMTOFF */
+	tmp->tm_gmtoff = offset;
 	return tmp;
 }
 

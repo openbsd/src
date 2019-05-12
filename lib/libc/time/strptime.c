@@ -1,4 +1,4 @@
-/*	$OpenBSD: strptime.c,v 1.29 2019/05/10 21:39:05 schwarze Exp $ */
+/*	$OpenBSD: strptime.c,v 1.30 2019/05/12 12:49:52 schwarze Exp $ */
 /*	$NetBSD: strptime.c,v 1.12 1998/01/20 21:39:40 mycroft Exp $	*/
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -416,21 +416,13 @@ literal:
 			tzset();
 			if (strncmp((const char *)bp, gmt, 3) == 0) {
 				tm->tm_isdst = 0;
-#ifdef TM_GMTOFF
-				tm->TM_GMTOFF = 0;
-#endif
-#ifdef TM_ZONE
-				tm->TM_ZONE = gmt;
-#endif
+				tm->tm_gmtoff = 0;
+				tm->tm_zone = gmt;
 				bp += 3;
 			} else if (strncmp((const char *)bp, utc, 3) == 0) {
 				tm->tm_isdst = 0;
-#ifdef TM_GMTOFF
-				tm->TM_GMTOFF = 0;
-#endif
-#ifdef TM_ZONE
-				tm->TM_ZONE = utc;
-#endif
+				tm->tm_gmtoff = 0;
+				tm->tm_zone = utc;
 				bp += 3;
 			} else {
 				ep = _find_string(bp, &i,
@@ -440,12 +432,8 @@ literal:
 					return (NULL);
 
 				tm->tm_isdst = i;
-#ifdef TM_GMTOFF
-				tm->TM_GMTOFF = -(timezone);
-#endif
-#ifdef TM_ZONE
-				tm->TM_ZONE = tzname[i];
-#endif
+				tm->tm_gmtoff = -(timezone);
+				tm->tm_zone = tzname[i];
 				bp = ep;
 			}
 			continue;
@@ -479,12 +467,8 @@ literal:
 				/*FALLTHROUGH*/
 			case 'Z':
 				tm->tm_isdst = 0;
-#ifdef TM_GMTOFF
-				tm->TM_GMTOFF = 0;
-#endif
-#ifdef TM_ZONE
-				tm->TM_ZONE = utc;
-#endif
+				tm->tm_gmtoff = 0;
+				tm->tm_zone = utc;
 				continue;
 			case '+':
 				neg = 0;
@@ -496,24 +480,16 @@ literal:
 				--bp;
 				ep = _find_string(bp, &i, nast, NULL, 4);
 				if (ep != NULL) {
-#ifdef TM_GMTOFF
-					tm->TM_GMTOFF = (-5 - i) * SECSPERHOUR;
-#endif
-#ifdef TM_ZONE
-					tm->TM_ZONE = (char *)nast[i];
-#endif
+					tm->tm_gmtoff = (-5 - i) * SECSPERHOUR;
+					tm->tm_zone = (char *)nast[i];
 					bp = ep;
 					continue;
 				}
 				ep = _find_string(bp, &i, nadt, NULL, 4);
 				if (ep != NULL) {
 					tm->tm_isdst = 1;
-#ifdef TM_GMTOFF
-					tm->TM_GMTOFF = (-4 - i) * SECSPERHOUR;
-#endif
-#ifdef TM_ZONE
-					tm->TM_ZONE = (char *)nadt[i];
-#endif
+					tm->tm_gmtoff = (-4 - i) * SECSPERHOUR;
+					tm->tm_zone = (char *)nadt[i];
 					bp = ep;
 					continue;
 				}
@@ -534,12 +510,8 @@ literal:
 			if (neg)
 				offs = -offs;
 			tm->tm_isdst = 0;	/* XXX */
-#ifdef TM_GMTOFF
-			tm->TM_GMTOFF = offs;
-#endif
-#ifdef TM_ZONE
-			tm->TM_ZONE = NULL;	/* XXX */
-#endif
+			tm->tm_gmtoff = offs;
+			tm->tm_zone = NULL;	/* XXX */
 			continue;
 
 		/*
