@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.185 2019/05/01 06:11:46 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.186 2019/05/12 16:38:02 sashan Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -316,9 +316,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 		int	error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tun", minor(dev));
-		NET_LOCK();
 		error = if_clone_create(xname, rdomain);
-		NET_UNLOCK();
 		if (error != 0)
 			return (error);
 
@@ -341,9 +339,7 @@ tapopen(dev_t dev, int flag, int mode, struct proc *p)
 		int	error;
 
 		snprintf(xname, sizeof(xname), "%s%d", "tap", minor(dev));
-		NET_LOCK();
 		error = if_clone_create(xname, rdomain);
-		NET_UNLOCK();
 		if (error != 0)
 			return (error);
 
@@ -418,11 +414,9 @@ tun_dev_close(struct tun_softc *tp, int flag, int mode, struct proc *p)
 
 	TUNDEBUG(("%s: closed\n", ifp->if_xname));
 
-	if (!(tp->tun_flags & TUN_STAYUP)) {
-		NET_LOCK();
+	if (!(tp->tun_flags & TUN_STAYUP))
 		error = if_clone_destroy(ifp->if_xname);
-		NET_UNLOCK();
-	} else {
+	else {
 		tp->tun_pgid = 0;
 		selwakeup(&tp->tun_rsel);
 	}

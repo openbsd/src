@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.582 2019/05/11 23:36:40 mpi Exp $	*/
+/*	$OpenBSD: if.c,v 1.583 2019/05/12 16:38:02 sashan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1215,8 +1215,6 @@ if_clone_create(const char *name, int rdomain)
 	struct ifnet *ifp;
 	int unit, ret;
 
-	NET_ASSERT_LOCKED();
-
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
 		return (EINVAL);
@@ -1224,17 +1222,16 @@ if_clone_create(const char *name, int rdomain)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
-	/* XXXSMP breaks atomicity */
-	NET_UNLOCK();
 	ret = (*ifc->ifc_create)(ifc, unit);
-	NET_LOCK();
 
 	if (ret != 0 || (ifp = ifunit(name)) == NULL)
 		return (ret);
 
+	NET_LOCK();
 	if_addgroup(ifp, ifc->ifc_name);
 	if (rdomain != 0)
 		if_setrdomain(ifp, rdomain);
+	NET_UNLOCK();
 
 	return (ret);
 }
@@ -1249,8 +1246,6 @@ if_clone_destroy(const char *name)
 	struct ifnet *ifp;
 	int ret;
 
-	NET_ASSERT_LOCKED();
-
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
 		return (EINVAL);
@@ -1262,17 +1257,15 @@ if_clone_destroy(const char *name)
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
 
+	NET_LOCK();
 	if (ifp->if_flags & IFF_UP) {
 		int s;
 		s = splnet();
 		if_down(ifp);
 		splx(s);
 	}
-
-	/* XXXSMP breaks atomicity */
 	NET_UNLOCK();
 	ret = (*ifc->ifc_destroy)(ifp);
-	NET_LOCK();
 
 	return (ret);
 }
@@ -1705,6 +1698,8 @@ ifunit(const char *name)
 {
 	struct ifnet *ifp;
 
+	KERNEL_ASSERT_LOCKED();
+
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (strcmp(ifp->if_xname, name) == 0)
 			return (ifp);
@@ -1878,16 +1873,12 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCIFCREATE:
 		if ((error = suser(p)) != 0)
 			return (error);
-		NET_LOCK();
 		error = if_clone_create(ifr->ifr_name, 0);
-		NET_UNLOCK();
 		return (error);
 	case SIOCIFDESTROY:
 		if ((error = suser(p)) != 0)
 			return (error);
-		NET_LOCK();
 		error = if_clone_destroy(ifr->ifr_name);
-		NET_UNLOCK();
 		return (error);
 	case SIOCSIFGATTR:
 		if ((error = suser(p)) != 0)
@@ -2098,11 +2089,12 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCSIFRDOMAIN:
 		if ((error = suser(p)) != 0)
 			break;
-		NET_LOCK();
 		error = if_createrdomain(ifr->ifr_rdomainid, ifp);
-		if (!error || error == EEXIST)
+		if (!error || error == EEXIST) {
+			NET_LOCK();
 			error = if_setrdomain(ifp, ifr->ifr_rdomainid);
-		NET_UNLOCK();
+			NET_UNLOCK();
+		}
 		break;
 
 	case SIOCAIFGROUP:
