@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.366 2019/05/12 02:21:13 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.367 2019/05/12 15:52:52 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1601,7 +1601,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->pm1a_evt_blk) {
 				addr = fadt->pm1a_evt_blk;
 				access = 2;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_pm1a_evt_blk.address;
 				access = 1 << fadt->x_pm1a_evt_blk.access_size;
 			}
@@ -1616,7 +1616,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->pm1a_cnt_blk) {
 				addr = fadt->pm1a_cnt_blk;
 				access = 2;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_pm1a_cnt_blk.address;
 				access = 1 << fadt->x_pm1a_cnt_blk.access_size;
 			}
@@ -1628,7 +1628,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->pm1b_evt_blk) {
 				addr = fadt->pm1b_evt_blk;
 				access = 2;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_pm1b_evt_blk.address;
 				access = 1 << fadt->x_pm1b_evt_blk.access_size;
 			}
@@ -1643,7 +1643,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->pm1b_cnt_blk) {
 				addr = fadt->pm1b_cnt_blk;
 				access = 2;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_pm1b_cnt_blk.address;
 				access = 1 << fadt->x_pm1b_cnt_blk.access_size;
 			}
@@ -1654,7 +1654,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->pm2_cnt_blk) {
 				addr = fadt->pm2_cnt_blk;
 				access = size;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_pm2_cnt_blk.address;
 				access = 1 << fadt->x_pm2_cnt_blk.access_size;
 			}
@@ -1667,7 +1667,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->pm_tmr_blk) {
 				addr = fadt->pm_tmr_blk;
 				access = 4;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_pm_tmr_blk.address;
 				access = 1 << fadt->x_pm_tmr_blk.access_size;
 			}
@@ -1680,7 +1680,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->gpe0_blk) {
 				addr = fadt->gpe0_blk;
 				access = 1;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_gpe0_blk.address;
 				access = 1 << fadt->x_gpe0_blk.access_size;
 			}
@@ -1701,7 +1701,7 @@ acpi_map_pmregs(struct acpi_softc *sc)
 			if (fadt->gpe1_blk) {
 				addr = fadt->gpe1_blk;
 				access = 1;
-			} else {
+			} else if (fadt->hdr_revision >= 3) {
 				addr = fadt->x_gpe1_blk.address;
 				access = 1 << fadt->x_gpe1_blk.access_size;
 			}
