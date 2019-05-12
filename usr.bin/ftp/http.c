@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.5 2019/05/12 20:58:19 jasper Exp $ */
+/*	$OpenBSD: http.c,v 1.6 2019/05/12 22:48:03 tb Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -269,9 +269,14 @@ http_get(struct url *url, struct url *proxy, off_t *offset, off_t *sz)
 	    useragent);
 	code = http_request(url->scheme, req, &headers);
 	freezero(auth, authlen);
+	auth = NULL;
+	authlen = 0;
 	free(range);
+	range = NULL;
 	free(path);
+	path = NULL;
 	free(req);
+	req = NULL;
 	switch (code) {
 	case 200:
 		if (*offset) {
