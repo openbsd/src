@@ -11,12 +11,6 @@
 #include <linux/atomic.h>
 #include <linux/compiler.h>
 
-#ifndef STUB
-#include <sys/types.h>
-#include <sys/systm.h>
-#define STUB() do { printf("%s: stub\n", __func__); } while(0)
-#endif
-
 #define IRQF_SHARED	0
 
 #define disable_irq(x)		intr_disable()
