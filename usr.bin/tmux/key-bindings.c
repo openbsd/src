@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.91 2019/05/10 18:04:06 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.92 2019/05/12 08:58:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -278,8 +278,8 @@ key_bindings_init(void)
 		"bind -n WheelDownStatus next-window",
 		"bind -n WheelUpStatus previous-window",
 		"bind -n MouseDrag1Pane if -Ft= '#{mouse_any_flag}' 'if -Ft= \"#{pane_in_mode}\" \"copy-mode -M\" \"send-keys -M\"' 'copy-mode -M'",
-		"bind -n MouseDown3Pane if-shell -Ft= '#{mouse_any_flag}' 'select-pane -t=; send-keys -M' 'select-pane -mt='",
-		"bind -n WheelUpPane if-shell -Ft= '#{mouse_any_flag}' 'send-keys -M' 'if -Ft= \"#{pane_in_mode}\" \"send-keys -M\" \"copy-mode -et=\"'",
+		"bind -n MouseDown3Pane if -Ft= '#{||:mouse_any_flag,pane_in_mode}' 'select-pane -t=; send-keys -M' 'select-pane -mt='",
+		"bind -n WheelUpPane if -Ft= '#{mouse_any_flag}' 'send-keys -M' 'if -Ft= \"#{pane_in_mode}\" \"send-keys -M\" \"copy-mode -et=\"'",
 		"bind -n MouseDown3StatusRight display-menu -t= -xM -yS -F -M \"#{client_menu}\" -T \"#[align=centre]#{client_name}\"",
 		"bind -n MouseDown3StatusLeft display-menu -t= -xM -yS -F -M \"#{session_menu}\" -T \"#[align=centre]#{session_name}\"",
 		"bind -n MouseDown3Status display-menu -t= -xW -yS -F -M \"#{window_menu}\" -T \"#[align=centre]#{window_index}:#{window_name}\"",
