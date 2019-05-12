@@ -1,8 +1,8 @@
 #!/bin/ksh
 #
-# $OpenBSD: diff.sh,v 1.5 2017/08/21 15:02:58 ajacoutot Exp $
+# $OpenBSD: diff.sh,v 1.6 2019/05/12 14:57:30 robert Exp $
 #
-# Copyright (c) 2017 Robert Nagy <robert@openbsd.org>
+# Copyright (c) 2017, 2019 Robert Nagy <robert@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,19 @@ umask 0022
 
 trap exit HUP INT TERM
 
-diff -Parq $1 $2 2>&1 | grep ' differ$' | \
+[[ "$1" != /* ]] || [[ "$2" != /* ]] &&
+	echo "paths have to be absolute" &&
+	exit 1
+
+plist=$(mktemp)
+trap 'rm -f ${plist}' EXIT
+
+padd() {
+	local _path=$1
+	readlink -f ${_path} >> ${plist}
+}
+
+diff -Parq $1 $2 2>&1 | grep ' differ$' |
 while IFS= read -r _d
 do
 	_o=$(echo $_d | cut -d ' ' -f2)
@@ -28,7 +40,7 @@ do
 	case "${_o##*.}"
 	in
 		a)
-			cmp -s ${_o} ${_n} 34 34 || echo ${_n}
+			cmp -s ${_o} ${_n} 34 34 || padd ${_n}
 			;;
 		1|3p)
 			# Needed for perl(1) because Pod::Man adds the build
@@ -39,13 +51,15 @@ do
 			trap 'rm -f ${_onm} ${_nnm}' EXIT
 			sed -E '/([0-9]+-[0-9]+-[0-9]+|=+)/d' ${_o} > ${_onm}
 			sed -E '/([0-9]+-[0-9]+-[0-9]+|=+)/d' ${_n} > ${_nnm}
-			diff -q ${_onm} ${_nnm} >/dev/null || echo ${_n}
+			diff -q ${_onm} ${_nnm} >/dev/null || padd ${_n}
 			rm -f ${_onm} ${_nnm}
 			;;
 		EFI|dat|db|tgz|*void|*dir|mk|cache-4)
 			;;
 		*)
-			echo ${_n}
+			padd ${_n}
 			;;
 	esac
 done
+
+sort -u ${plist}
