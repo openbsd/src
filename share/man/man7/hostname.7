@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.7,v 1.10 2017/05/29 12:13:50 tedu Exp $
+.\"	$OpenBSD: hostname.7,v 1.11 2019/05/12 16:55:11 schwarze Exp $
 .\"	$NetBSD: hostname.7,v 1.4 1994/11/30 19:07:14 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hostname.7	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: May 29 2017 $
+.Dd $Mdocdate: May 12 2019 $
 .Dt HOSTNAME 7
 .Os
 .Sh NAME
@@ -51,19 +51,6 @@ which must generally translate the name to an address for use.
 .Xr gethostbyname 3 . )
 Hostnames are resolved by the Internet name resolver in the following
 fashion.
-.Pp
-If the name consists of a single component, i.e., contains no dot,
-and if the environment variable
-.Ev HOSTALIASES
-is set to the name of a file,
-that file is searched for any string matching the input hostname.
-The file should consist of lines made up of two whitespace separated strings,
-the first of which is the hostname alias,
-and the second of which is the complete hostname
-to be substituted for that alias.
-If a case-insensitive match is found between the hostname to be resolved
-and the first field of a line in the file, the substituted name is looked
-up with no further processing.
 .Pp
 If the input name ends with a trailing dot,
 the trailing dot is removed,
