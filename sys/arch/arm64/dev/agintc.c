@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.16 2019/05/08 14:53:54 ccardenas Exp $ */
+/* $OpenBSD: agintc.c,v 1.17 2019/05/12 16:36:30 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -65,9 +65,10 @@
 #define GICD_CTLR		0x0000
 /* non-secure */
 #define  GICD_CTLR_RWP			(1U << 31)
-#define  GICD_CTRL_EnableGrp1		(1 << 0)
-#define  GICD_CTRL_EnableGrp1A		(1 << 1)
-#define  GICD_CTRL_ARE_NS		(1 << 4)
+#define  GICD_CTLR_EnableGrp1		(1 << 0)
+#define  GICD_CTLR_EnableGrp1A		(1 << 1)
+#define  GICD_CTLR_ARE_NS		(1 << 4)
+#define  GICD_CTLR_DS			(1 << 6)
 #define GICD_TYPER		0x0004
 #define  GICD_TYPER_LPIS		(1 << 16)
 #define  GICD_TYPER_ITLINE_M		0x1f
@@ -145,6 +146,8 @@ struct agintc_softc {
 	int			 sc_cpuremap[MAXCPUS];
 	int			 sc_nintr;
 	int			 sc_nlpi;
+	int			 sc_prio_shift;
+	int			 sc_pmr_shift;
 	int			 sc_rk3399_quirk;
 	struct evcount		 sc_spur;
 	int			 sc_ncells;
@@ -265,8 +268,9 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args	*faa = aux;
 	uint32_t		 typer;
 	uint32_t		 nsacr, oldnsacr;
+	uint32_t		 pmr, oldpmr;
 	uint32_t		 ctrl, bits;
-	int			 i, j, nintr;
+	int			 i, j, nbits, nintr;
 	int			 psw;
 	int			 offset, nredist;
 #ifdef MULTIPROCESSOR
@@ -311,6 +315,33 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
+	 * We are guaranteed to have at least 16 priority levels, so
+	 * in principle we just want to use the top 4 bits of the
+	 * (non-secure) priority field.
+	 */
+	sc->sc_prio_shift = sc->sc_pmr_shift = 4;
+
+	/*
+	 * If the system supports two security states and SCR_EL3.FIQ
+	 * is zero, the non-secure shifted view applies.  We detect
+	 * this by checking whether the number of writable bits
+	 * matches the number of implemented priority bits.  In that
+	 * case we will need to adjust the priorities that we write
+	 * into ICC_PMR_EL1 accordingly.
+	 */
+	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR);
+	if ((ctrl & GICD_CTLR_DS) == 0) {
+		__asm volatile("mrs %x0, "STR(ICC_CTLR_EL1) : "=r"(ctrl));
+		nbits = ICC_CTLR_EL1_PRIBITS(ctrl) + 1;
+		__asm volatile("mrs %x0, "STR(ICC_PMR) : "=r"(oldpmr));
+		__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
+		__asm volatile("mrs %x0, "STR(ICC_PMR) : "=r"(pmr));
+		__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(oldpmr));
+		if (nbits == 8 - (ffs(pmr) - 1))
+			sc->sc_pmr_shift--;
+	}
+
+	/*
 	 * The Rockchip RK3399 is busted.  Its GIC-500 treats all
 	 * access to its memory mapped registers as "secure".  As a
 	 * result, several registers don't behave as expected.  For
@@ -323,7 +354,9 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * We check whether we have secure mode access to these
 	 * registers by attempting to write to the GICD_NSACR register
-	 * and check whether its contents actually change.
+	 * and check whether its contents actually change.  In that
+	 * case we need to adjust the priorities we write into
+	 * GICD_IPRIORITYRn and GICRIPRIORITYRn accordingly.
 	 */
 	oldnsacr = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_NSACR(32));
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_NSACR(32),
@@ -333,7 +366,11 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_NSACR(32),
 		    oldnsacr);
 		sc->sc_rk3399_quirk = 1;
+		sc->sc_prio_shift--;
+		printf(" sec");
 	}
+
+	printf(" shift %d:%d", sc->sc_prio_shift, sc->sc_pmr_shift);
 
 	evcount_attach(&sc->sc_spur, "irq1023/spur", NULL);
 
@@ -370,7 +407,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	printf(" nirq %d, nredist %d", nintr, sc->sc_num_redist);
+	printf(" nirq %d nredist %d", nintr, sc->sc_num_redist);
 	
 	sc->sc_r_ioh = mallocarray(sc->sc_num_redist,
 	    sizeof(*sc->sc_r_ioh), M_DEVBUF, M_WAITOK);
@@ -457,9 +494,9 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* enable interrupts */
 	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR);
-	bits = GICD_CTRL_ARE_NS | GICD_CTRL_EnableGrp1A | GICD_CTRL_EnableGrp1;
+	bits = GICD_CTLR_ARE_NS | GICD_CTLR_EnableGrp1A | GICD_CTLR_EnableGrp1;
 	if (sc->sc_rk3399_quirk) {
-		bits &= ~GICD_CTRL_EnableGrp1A;
+		bits &= ~GICD_CTLR_EnableGrp1A;
 		bits <<= 1;
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR, ctrl | bits);
@@ -633,21 +670,13 @@ agintc_cpuinit(void)
 }
 
 void
-agintc_set_priority(struct agintc_softc *sc, int irq, int pri)
+agintc_set_priority(struct agintc_softc *sc, int irq, int ipl)
 {
 	struct cpu_info	*ci = curcpu();
 	int		 hwcpu = sc->sc_cpuremap[ci->ci_cpuid];
 	uint32_t	 prival;
 
-	/*
-	 * The interrupt priority registers only expose the priorities
-	 * available in non-secure mode, so the top bit is hidden.  So
-	 * here we shift into bits 4-7.
-	 * Also low values are higher priority thus NIPL - pri
-	 */
-	prival = ((NIPL - pri) << 4);
-	if (sc->sc_rk3399_quirk)
-		prival = 0x80 | (prival >> 1);
+	prival = ((0xff - ipl) << sc->sc_prio_shift) & 0xff;
 
 	if (irq >= SPI_BASE) {
 		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh,
@@ -660,29 +689,18 @@ agintc_set_priority(struct agintc_softc *sc, int irq, int pri)
 }
 
 void
-agintc_setipl(int new)
+agintc_setipl(int ipl)
 {
+	struct agintc_softc	*sc = agintc_sc;
 	struct cpu_info		*ci = curcpu();
 	int			 psw;
 	uint32_t		 prival;
 
 	/* disable here is only to keep hardware in sync with ci->ci_cpl */
 	psw = disable_interrupts();
-	ci->ci_cpl = new;
+	ci->ci_cpl = ipl;
 
-	/*
-	 * The priority mask register exposes the full range of
-	 * priorities available in secure mode, and at least bit 3-7
-	 * must be implemented.  For non-secure interrupts the top bit
-	 * must be one.  We only use 16 (13 really) interrupt
-	 * priorities, so shift into bits 3-6.
-	 * Low values are higher priority thus NIPL - pri
-	 */
-	if (new == IPL_NONE)
-		prival = 0xff;		/* minimum priority */
-	else
-		prival = 0x80 | ((NIPL - new) << 3);
-
+	prival = ((0xff - ipl) << sc->sc_pmr_shift) & 0xff;
 	__asm volatile("msr "STR(ICC_PMR)", %x0" : : "r" (prival));
 	__isb();
 
@@ -1049,16 +1067,6 @@ agintc_eoi(uint32_t eoi)
 {
 	__asm volatile("msr "STR(ICC_EOIR1)", %x0" :: "r" (eoi));
 	__isb();
-}
-
-uint32_t
-agintc_r_ictlr(void)
-{
-	int ictlr;
-
-	__asm volatile("mrs %x0, "STR(ICC_CTLR) : "=r" (ictlr));
-	__isb();
-	return ictlr;
 }
 
 void
