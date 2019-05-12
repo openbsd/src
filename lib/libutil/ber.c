@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.3 2019/05/12 17:50:32 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.4 2019/05/12 18:11:51 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1207,6 +1207,18 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	DPRINTF("ber read element size %zd\n", len);
 	totlen += r + len;
 
+	/* The encoding of boolean, integer, enumerated, and null values
+	 * must be primitive. */
+	if (class == BER_CLASS_UNIVERSAL)
+		if (type == BER_TYPE_BOOLEAN ||
+		    type == BER_TYPE_INTEGER ||
+		    type == BER_TYPE_ENUMERATED ||
+		    type == BER_TYPE_NULL)
+			if (cstruct) {
+				errno = EINVAL;
+				return -1;
+			}
+
 	/* If the total size of the element is larger than the buffer
 	 * don't bother to continue. */
 	if (len > ber->br_rend - ber->br_rptr) {
@@ -1241,6 +1253,10 @@ ber_read_element(struct ber *ber, struct ber_element *elm)
 	case BER_TYPE_EOC:	/* End-Of-Content */
 		break;
 	case BER_TYPE_BOOLEAN:
+		if (len != 1) {
+			errno = EINVAL;
+			return -1;
+		}
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
 		if (len > (ssize_t)sizeof(long long))
