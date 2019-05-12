@@ -1,3 +1,5 @@
+# $OpenBSD: Makefile,v 1.32 2019/05/12 20:58:19 jasper Exp $
+
 # Define SMALL to disable command line editing
 #CFLAGS+=-DSMALL
 

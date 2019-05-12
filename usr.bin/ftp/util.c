@@ -1,3 +1,5 @@
+/*	$OpenBSD: util.c,v 1.88 2019/05/12 20:58:19 jasper Exp $ */
+
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
  *

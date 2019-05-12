@@ -1,3 +1,5 @@
+/*	$OpenBSD: http.c,v 1.5 2019/05/12 20:58:19 jasper Exp $ */
+
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
