@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.24 2018/11/18 15:30:04 ajacoutot Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.25 2019/05/12 15:30:18 robert Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -76,6 +76,10 @@ depend:
 cleandir: clean
 
 ${_FAKE_COOKIE}:
+.if !empty(ERRATA:C/[[:digit:]]{3}_[[:alnum:]_]+//) 
+	@{ echo "***>   invalid errata format: ${ERRATA}"; \
+	exit 1; };
+.endif
 .ifndef FAKEROOT
 	@{ echo "***>   setenv FAKEROOT before doing that!"; \
 	exit 1; };
