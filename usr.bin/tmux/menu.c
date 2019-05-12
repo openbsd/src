@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.1 2019/05/10 18:04:06 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.2 2019/05/12 07:27:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -103,24 +103,8 @@ menu_parse_item(struct menu *menu, const char *s, struct client *c,
 }
 
 struct menu *
-menu_create_from_items(struct menu_item *items, u_int count, struct client *c,
-    struct cmd_find_state *fs, const char *title)
-{
-	struct menu	*menu;
-	u_int		 i;
-
-	menu = xcalloc(1, sizeof *menu);
-	menu->title = xstrdup(title);
-
-	for (i = 0; i < count; i++)
-		menu_add_item(menu, &items[i], c, fs);
-
-	return (menu);
-}
-
-struct menu *
-menu_create_from_string(const char *s, struct client *c,
-    struct cmd_find_state *fs, const char *title)
+menu_create(const char *s, struct client *c, struct cmd_find_state *fs,
+    const char *title)
 {
 	struct menu	*menu;
 	char		*copy, *string, *next;
