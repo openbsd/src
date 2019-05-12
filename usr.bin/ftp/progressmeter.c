@@ -1,4 +1,4 @@
-/*	$OpenBSD: progressmeter.c,v 1.2 2019/05/12 20:58:19 jasper Exp $ */
+/*	$OpenBSD: progressmeter.c,v 1.3 2019/05/12 21:56:27 kmos Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -328,7 +328,7 @@ stop_progress_meter(void)
 	}
 
 	format_rate(rate_str, sizeof rate_str, bytes_per_second);
-	fprintf(stderr, "%lld bytes received in %.2f seconds (%s/s)\n",
+	log_info("%lld bytes received in %.2f seconds (%s/s)\n",
 	    (end_pos) ? cur_pos - offset : *counter, elapsed, rate_str);
 }
 
