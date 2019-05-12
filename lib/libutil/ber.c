@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.2 2019/05/12 17:42:14 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.3 2019/05/12 17:50:32 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1116,6 +1116,13 @@ get_id(struct ber *b, unsigned int *tag, int *class, int *cstruct)
 	do {
 		if (ber_getc(b, &u) == -1)
 			return -1;
+
+		/* enforce minimal number of octets for tag > 30 */
+		if (i == 0 && (u & ~BER_TAG_MORE) == 0) {
+			errno = EINVAL;
+			return -1;
+		}
+
 		t = (t << 7) | (u & ~BER_TAG_MORE);
 		i++;
 		if (i > sizeof(unsigned int)) {
