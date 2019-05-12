@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.42 2019/05/11 08:18:51 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.43 2019/05/12 19:43:34 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -327,7 +327,6 @@ lf_setlock(struct lockf *lock)
 {
 	struct lockf *block;
 	struct lockf *overlap, *ltmp;
-	static char lockstr[] = "lockf";
 	int ovcase, priority, needtolink, error;
 
 	rw_assert_wrlock(&lockf_lock);
@@ -382,7 +381,7 @@ lf_setlock(struct lockf *lock)
 		TAILQ_INSERT_TAIL(&block->lf_blkhd, lock, lf_block);
 		TAILQ_INSERT_TAIL(&lock->lf_state->ls_pending, lock, lf_entry);
 		KERNEL_LOCK();
-		error = rwsleep(lock, &lockf_lock, priority, lockstr, 0);
+		error = rwsleep(lock, &lockf_lock, priority, "lockf", 0);
 		KERNEL_UNLOCK();
 		TAILQ_REMOVE(&lock->lf_state->ls_pending, lock, lf_entry);
 		wakeup_one(lock->lf_state);
