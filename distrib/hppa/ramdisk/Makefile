@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.44 2019/05/03 20:03:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.45 2019/05/12 16:05:44 deraadt Exp $
 
 LIF=		lif${OSrev}.fs
 CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
 RAMDISK=	RAMDISK
 
-LISTS=		${.CURDIR}/../list ${.CURDIR}/list.local
+LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
 
 MRDISKTYPE=	rdroot
