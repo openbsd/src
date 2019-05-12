@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.263 2019/01/06 12:59:45 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.264 2019/05/12 13:18:58 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -297,8 +297,12 @@ struct process {
 struct kcov_dev;
 struct lock_list_entry;
 
+/*
+ *  Locks used to protect struct members in this file:
+ *	s	scheduler lock
+ */
 struct proc {
-	TAILQ_ENTRY(proc) p_runq;
+	TAILQ_ENTRY(proc) p_runq;	/* [s] current run/sleep queue */
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
 	struct	process *p_p;		/* The process of this thread. */
@@ -314,7 +318,7 @@ struct proc {
 
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */
-	char	p_stat;			/* S* process status. */
+	char	p_stat;			/* [s] S* process status. */
 	char	p_pad1[1];
 	u_char	p_descfd;		/* if not 255, fdesc permits this fd */
 
@@ -328,17 +332,17 @@ struct proc {
 	long 	p_thrslpid;	/* for thrsleep syscall */
 
 	/* scheduling */
-	u_int	p_estcpu;	 /* Time averaged value of p_cpticks. */
+	u_int	p_estcpu;		/* [s] Time averaged val of p_cpticks */
 	int	p_cpticks;	 /* Ticks of cpu time. */
-	const volatile void *p_wchan;/* Sleep address. */
+	const volatile void *p_wchan;	/* [s] Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
-	const char *p_wmesg;	 /* Reason for sleep. */
-	fixpt_t	p_pctcpu;	 /* %cpu for this thread */
-	u_int	p_slptime;	 /* Time since last blocked. */
+	const char *p_wmesg;		/* [s] Reason for sleep. */
+	fixpt_t	p_pctcpu;		/* [s] %cpu for this thread */
+	u_int	p_slptime;		/* [s] Time since last blocked. */
 	u_int	p_uticks;		/* Statclock hits in user mode. */
 	u_int	p_sticks;		/* Statclock hits in system mode. */
 	u_int	p_iticks;		/* Statclock hits processing intr. */
-	struct	cpu_info * volatile p_cpu; /* CPU we're running on. */
+	struct	cpu_info * volatile p_cpu; /* [s] CPU we're running on. */
 
 	struct	rusage p_ru;		/* Statistics */
 	struct	tusage p_tu;		/* accumulated times. */
@@ -357,8 +361,8 @@ struct proc {
 	vaddr_t	 p_spstart;
 	vaddr_t	 p_spend;
 
-	u_char	p_priority;	/* Process priority. */
-	u_char	p_usrpri;	/* User-priority based on p_estcpu and ps_nice. */
+	u_char	p_priority;	/* [s] Process priority. */
+	u_char	p_usrpri;	/* [s] User-prio based on p_estcpu & ps_nice. */
 	int	p_pledge_syscall;	/* Cache of current syscall */
 
 	struct	ucred *p_ucred;		/* cached credentials */
