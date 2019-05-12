@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: nsd,v 1.10 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: nsd,v 1.11 2019/05/12 18:52:43 tim Exp $
 
 daemon="/usr/sbin/nsd-control"
 daemon_flags="-c /var/nsd/etc/nsd.conf"
@@ -8,15 +8,6 @@ daemon_flags="-c /var/nsd/etc/nsd.conf"
 . /etc/rc.d/rc.subr
 
 rc_usercheck=NO
-
-rc_pre() {
-	if ! [[ -f /var/nsd/etc/nsd_server.key ||
-	    -f /var/nsd/etc/nsd_server.pem ||
-	    -f /var/nsd/etc/nsd_control.key ||
-	    -f /var/nsd/etc/nsd_control.pem ]]; then
-		/usr/sbin/nsd-control-setup >/dev/null 2>&1
-	fi
-}
 
 rc_start() {
 	${rcexec} "${daemon} ${daemon_flags} start"
