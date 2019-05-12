@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.123 2019/05/12 21:30:48 jca Exp $ */
+/*	$OpenBSD: main.c,v 1.124 2019/05/12 21:49:52 espie Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -37,7 +37,7 @@
 #include "ftp.h"
 #include "xmalloc.h"
 
-static int		 auto_fetch(int, char **, int, char **);
+static int		 auto_fetch(int, char **);
 static void		 child(int, int, char **);
 static int		 parent(int, pid_t);
 static struct url	*proxy_parse(const char *);
@@ -188,11 +188,11 @@ main(int argc, char **argv)
 		usage();
 #endif
 
-	return auto_fetch(argc, argv, save_argc, save_argv);
+	return auto_fetch(save_argc, save_argv);
 }
 
 static int
-auto_fetch(int argc, char **argv, int sargc, char **sargv)
+auto_fetch(int sargc, char **sargv)
 {
 	pid_t	pid;
 	int	sp[2];
