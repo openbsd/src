@@ -1,4 +1,4 @@
-.\" $OpenBSD: drm.4,v 1.7 2015/12/24 01:49:34 bentley Exp $
+.\" $OpenBSD: drm.4,v 1.8 2019/05/12 17:08:14 jsg Exp $
 .\"
 .\" Copyright (c) 2008 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 24 2015 $
+.Dd $Mdocdate: May 12 2019 $
 .Dt DRM 4
 .Os
 .Sh NAME
@@ -47,8 +47,10 @@ ATI RADEON video driver
 .El
 .Sh FILES
 .Bl -tag -width "/usr/X11R6/lib/modules/dri/X_dri.so" -compact
-.It Pa /dev/drm*
-DRM device special files.
+.It Pa /dev/drm[0-9]*
+DRM primary node files.
+.It Pa /dev/drmR*
+DRM render node files.
 .It Pa /usr/X11R6/lib/modules/dri/*_dri.so
 X DRI modules.
 .El
