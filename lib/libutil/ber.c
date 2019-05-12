@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.5 2019/05/12 20:13:08 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.6 2019/05/12 20:25:10 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1008,7 +1008,6 @@ ber_dump_element(struct ber *ber, struct ber_element *root)
 		}
 		break;
 	case BER_TYPE_BITSTRING:
-		return -1;
 	case BER_TYPE_OCTETSTRING:
 	case BER_TYPE_OBJECT:
 		ber_write(ber, root->be_val, root->be_len);
