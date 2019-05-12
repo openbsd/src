@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.14 2019/05/12 20:56:11 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.15 2019/05/12 22:17:25 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -81,6 +81,15 @@ struct test_vector test_vectors[] = {
 		},
 	},
 	{
+		FAIL,
+		0,
+		"enum minimal contents octets (expected failure)",
+		4,
+		{
+			0x0a, 0x02, 0x00, 0x01
+		},
+	},
+	{
 		SUCCEED,
 		1,
 		"integer (zero)",
@@ -128,7 +137,7 @@ struct test_vector test_vectors[] = {
 	{
 		FAIL,
 		0,
-		"enforce smallest number of contents octets (expected failure)",
+		"integer minimal contents octets (expected failure)",
 		4,
 		{
 			0x02, 0x02, 0x00, 0x01
