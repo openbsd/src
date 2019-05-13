@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.13 2018/08/12 22:04:09 rob Exp $	*/
+/*	$OpenBSD: usm.c,v 1.14 2019/05/13 07:33:23 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -226,6 +226,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 
 	if (ber_get_nstring(elm, (void *)&usmparams, &len) < 0) {
 		*errp = "cannot decode security params";
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -233,6 +234,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	usm = ber_read_elements(&ber, NULL);
 	if (usm == NULL) {
 		*errp = "cannot decode security params";
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -245,6 +247,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	    &engine_boots, &engine_time, &user, &userlen, &offs2,
 	    &digest, &digestlen, &salt, &saltlen) != 0) {
 		*errp = "cannot decode USM params";
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -257,6 +260,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 	    (digestlen != (MSG_HAS_AUTH(msg) ? SNMP_USM_DIGESTLEN : 0)) ||
 	    (saltlen != (MSG_HAS_PRIV(msg) ? SNMP_USM_SALTLEN : 0))) {
 		*errp = "bad field length";
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -265,19 +269,8 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		*errp = "unknown engine id";
 		msg->sm_usmerr = OIDVAL_usmErrEngineId;
 		stats->snmp_usmnosuchengine++;
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
-	}
-
-	if (engine_boots != 0LL && engine_time != 0LL) {
-		now = snmpd_engine_time();
-		if (engine_boots != snmpd_env->sc_engine_boots ||
-		    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
-		    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
-			*errp = "out of time window";
-			msg->sm_usmerr = OIDVAL_usmErrTimeWindow;
-			stats->snmp_usmtimewindow++;
-			goto done;
-		}
 	}
 
 	msg->sm_engine_boots = (u_int32_t)engine_boots;
@@ -290,12 +283,14 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		*errp = "no such user";
 		msg->sm_usmerr = OIDVAL_usmErrUserName;
 		stats->snmp_usmnosuchuser++;
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 	if (MSG_SECLEVEL(msg) > msg->sm_user->uu_seclevel) {
 		*errp = "unsupported security model";
 		msg->sm_usmerr = OIDVAL_usmErrSecLevel;
 		stats->snmp_usmbadseclevel++;
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -307,6 +302,7 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		*errp = "bad msg digest";
 		msg->sm_usmerr = OIDVAL_usmErrDigest;
 		stats->snmp_usmwrongdigest++;
+		msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 		goto done;
 	}
 
@@ -316,10 +312,22 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 			*errp = "cannot decrypt msg";
 			msg->sm_usmerr = OIDVAL_usmErrDecrypt;
 			stats->snmp_usmdecrypterr++;
+			msg->sm_flags &= SNMP_MSGFLAG_REPORT;
 			goto done;
 		}
 		ber_replace_elements(elm, decr);
 	}
+
+	now = snmpd_engine_time();
+	if (engine_boots != snmpd_env->sc_engine_boots ||
+	    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
+	    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
+		*errp = "out of time window";
+		msg->sm_usmerr = OIDVAL_usmErrTimeWindow;
+		stats->snmp_usmtimewindow++;
+		goto done;
+	}
+
 	next = elm->be_next;
 
 done:
@@ -477,10 +485,7 @@ usm_make_report(struct snmp_message *msg)
 {
 	struct ber_oid		 usmstat = OID(MIB_usmStats, 0, 0);
 
-	/* Always send report in clear-text */
-	msg->sm_flags = 0;
 	msg->sm_context = SNMP_C_REPORT;
-	msg->sm_username[0] = '\0';
 	usmstat.bo_id[OIDIDX_usmStats] = msg->sm_usmerr;
 	usmstat.bo_n = OIDIDX_usmStats + 2;
 	if (msg->sm_varbindresp != NULL)
