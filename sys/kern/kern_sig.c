@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.229 2019/05/01 06:26:42 dlg Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.230 2019/05/13 19:21:31 bluhm Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -364,7 +364,8 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 	 */
 	if (sa->sa_handler == SIG_IGN ||
 	    (sigprop[signum] & SA_IGNORE && sa->sa_handler == SIG_DFL)) {
-		atomic_clearbits_int(&p->p_siglist, bit);	
+		atomic_clearbits_int(&p->p_siglist, bit);
+		atomic_clearbits_int(&p->p_p->ps_siglist, bit);
 		if (signum != SIGCONT)
 			ps->ps_sigignore |= bit;	/* easier in psignal */
 		ps->ps_sigcatch &= ~bit;
@@ -419,6 +420,7 @@ execsigs(struct proc *p)
 			if (nc != SIGCONT)
 				ps->ps_sigignore |= mask;
 			atomic_clearbits_int(&p->p_siglist, mask);
+			atomic_clearbits_int(&p->p_p->ps_siglist, mask);
 		}
 		ps->ps_sigact[nc] = SIG_DFL;
 	}
@@ -472,7 +474,7 @@ int
 sys_sigpending(struct proc *p, void *v, register_t *retval)
 {
 
-	*retval = p->p_siglist;
+	*retval = p->p_siglist | p->p_p->ps_siglist;
 	return (0);
 }
 
@@ -875,7 +877,6 @@ psignal(struct proc *p, int signum)
 
 /*
  * type = SPROCESS	process signal, can be diverted (sigwait())
- *	XXX if blocked in all threads, mark as pending in struct process
  * type = STHREAD	thread signal, but should be propagated if unhandled
  * type = SPROPAGATED	propagated to this thread, so don't propagate again
  */
@@ -885,6 +886,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	int s, prop;
 	sig_t action;
 	int mask;
+	int *siglist;
 	struct process *pr = p->p_p;
 	struct proc *q;
 	int wakeparent = 0;
@@ -907,7 +909,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		if (pr->ps_flags & PS_COREDUMP && signum == SIGKILL) {
 			if (pr->ps_single != NULL)
 				p = pr->ps_single;
-			atomic_setbits_int(&p->p_siglist, mask);
+			atomic_setbits_int(&p->p_p->ps_siglist, mask);
 			return;
 		}
 
@@ -962,7 +964,6 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	 */
 	if (pr->ps_flags & PS_TRACED) {
 		action = SIG_DFL;
-		atomic_setbits_int(&p->p_siglist, mask);
 	} else {
 		/*
 		 * If the signal is being ignored,
@@ -992,17 +993,23 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			if (prop & SA_TTYSTOP && pr->ps_pgrp->pg_jobc == 0)
 				return;
 		}
-
-		atomic_setbits_int(&p->p_siglist, mask);
 	}
-
-	if (prop & SA_CONT)
-		atomic_clearbits_int(&p->p_siglist, stopsigmask);
-
+	/*
+	 * If delivered to process, mark as pending there.  Continue and stop
+	 * signals will be propagated to all threads.  So they are always
+	 * marked at thread level.
+	 */
+	siglist = (type == SPROCESS) ? &pr->ps_siglist : &p->p_siglist;
+	if (prop & SA_CONT) {
+		siglist = &p->p_siglist;
+		atomic_clearbits_int(siglist, stopsigmask);
+	}
 	if (prop & SA_STOP) {
-		atomic_clearbits_int(&p->p_siglist, contsigmask);
+		siglist = &p->p_siglist;
+		atomic_clearbits_int(siglist, contsigmask);
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
+	atomic_setbits_int(siglist, mask);
 
 	/*
 	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
@@ -1045,7 +1052,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * be awakened.
 		 */
 		if ((prop & SA_CONT) && action == SIG_DFL) {
-			atomic_clearbits_int(&p->p_siglist, mask);
+			atomic_clearbits_int(siglist, mask);
 			goto out;
 		}
 		/*
@@ -1059,7 +1066,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 */
 			if (pr->ps_flags & PS_PPWAIT)
 				goto out;
-			atomic_clearbits_int(&p->p_siglist, mask);
+			atomic_clearbits_int(siglist, mask);
 			p->p_xstat = signum;
 			proc_stop(p, 0);
 			goto out;
@@ -1102,7 +1109,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			atomic_clearbits_int(&p->p_flag, P_SUSPSIG);
 			wakeparent = 1;
 			if (action == SIG_DFL)
-				atomic_clearbits_int(&p->p_siglist, mask);
+				atomic_clearbits_int(siglist, mask);
 			if (action == SIG_CATCH)
 				goto runfast;
 			if (p->p_wchan == 0)
@@ -1116,7 +1123,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * Already stopped, don't need to stop again.
 			 * (If we did the shell could get confused.)
 			 */
-			atomic_clearbits_int(&p->p_siglist, mask);
+			atomic_clearbits_int(siglist, mask);
 			goto out;
 		}
 
@@ -1181,7 +1188,7 @@ issignal(struct proc *p)
 	int s;
 
 	for (;;) {
-		mask = p->p_siglist & ~p->p_sigmask;
+		mask = SIGPENDING(p);
 		if (pr->ps_flags & PS_PPWAIT)
 			mask &= ~stopsigmask;
 		if (mask == 0)	 	/* no signal to send */
@@ -1189,6 +1196,7 @@ issignal(struct proc *p)
 		signum = ffs((long)mask);
 		mask = sigmask(signum);
 		atomic_clearbits_int(&p->p_siglist, mask);
+		atomic_clearbits_int(&p->p_p->ps_siglist, mask);
 
 		/*
 		 * We should see pending but ignored signals
@@ -1243,6 +1251,7 @@ issignal(struct proc *p)
 
 			/* take the signal! */
 			atomic_clearbits_int(&p->p_siglist, mask);
+			atomic_clearbits_int(&p->p_p->ps_siglist, mask);
 		}
 
 		prop = sigprop[signum];
@@ -1638,7 +1647,8 @@ coredump_write(void *cookie, enum uio_seg segflg, const void *data, size_t len)
 
 	csize = len;
 	do {
-		if (io->io_proc->p_siglist & sigmask(SIGKILL))
+		if (sigmask(SIGKILL) &
+		    (io->io_proc->p_siglist | io->io_proc->p_p->ps_siglist))
 			return (EINTR);
 
 		/* Rest of the loop sleeps with lock held, so... */
@@ -1740,8 +1750,8 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 			if (smask & mask) {
 				if (p->p_siglist & smask)
 					m = &p->p_siglist;
-				else if (pr->ps_mainproc->p_siglist & smask)
-					m = &pr->ps_mainproc->p_siglist;
+				else if (pr->ps_siglist & smask)
+					m = &pr->ps_siglist;
 				else {
 					/* signal got eaten by someone else? */
 					continue;
@@ -1868,7 +1878,7 @@ userret(struct proc *p)
 		KERNEL_UNLOCK();
 	}
 
-	if (SIGPENDING(p)) {
+	if (SIGPENDING(p) != 0) {
 		KERNEL_LOCK();
 		while ((signum = CURSIG(p)) != 0)
 			postsig(p, signum);

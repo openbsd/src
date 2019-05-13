@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.150 2019/05/11 19:59:26 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.151 2019/05/13 19:21:31 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1211,7 +1211,7 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 		cpi.cpi_signo = p->p_sisig;
 		cpi.cpi_sigcode = p->p_sicode;
 
-		cpi.cpi_sigpend = p->p_siglist;
+		cpi.cpi_sigpend = p->p_siglist | pr->ps_siglist;
 		cpi.cpi_sigmask = p->p_sigmask;
 		cpi.cpi_sigignore = pr->ps_sigacts->ps_sigignore;
 		cpi.cpi_sigcatch = pr->ps_sigacts->ps_sigcatch;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.264 2019/05/12 13:18:58 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.265 2019/05/13 19:21:31 bluhm Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -186,6 +186,7 @@ struct process {
 #define	ps_startzero	ps_klist
 	struct	klist ps_klist;		/* knotes attached to this process */
 	int	ps_flags;		/* PS_* flags. */
+	int	ps_siglist;		/* Signals pending for the process. */
 
 	struct	proc *ps_single;	/* Single threading to this thread. */
 	int	ps_singlecount;		/* Not yet suspended threads. */
