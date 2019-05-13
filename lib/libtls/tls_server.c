@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.44 2018/03/19 16:34:47 jsing Exp $ */
+/* $OpenBSD: tls_server.c,v 1.45 2019/05/13 22:36:01 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -52,7 +52,9 @@ tls_server_conn(struct tls *ctx)
 
 	conn_ctx->flags |= TLS_SERVER_CONN;
 
+	pthread_mutex_lock(&ctx->config->mutex);
 	ctx->config->refcount++;
+	pthread_mutex_unlock(&ctx->config->mutex);
 
 	conn_ctx->config = ctx->config;
 	conn_ctx->keypair = ctx->config->keypair;
