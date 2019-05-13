@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.323 2019/04/25 19:03:43 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.324 2019/05/13 20:10:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2199,6 +2199,8 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc,
 		tty_putcode(tty, TTYC_INVIS);
 	if (changed & GRID_ATTR_STRIKETHROUGH)
 		tty_putcode(tty, TTYC_SMXX);
+	if (changed & GRID_ATTR_OVERLINE)
+		tty_putcode(tty, TTYC_SMOL);
 	if ((changed & GRID_ATTR_CHARSET) && tty_acs_needed(tty))
 		tty_putcode(tty, TTYC_SMACS);
 }

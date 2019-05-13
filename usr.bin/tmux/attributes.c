@@ -1,4 +1,4 @@
-/* $OpenBSD: attributes.c,v 1.8 2018/10/18 07:57:57 nicm Exp $ */
+/* $OpenBSD: attributes.c,v 1.9 2019/05/13 20:10:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Joshua Elsasser <josh@elsasser.org>
@@ -31,7 +31,7 @@ attributes_tostring(int attr)
 	if (attr == 0)
 		return ("none");
 
-	len = xsnprintf(buf, sizeof buf, "%s%s%s%s%s%s%s%s%s%s%s%s",
+	len = xsnprintf(buf, sizeof buf, "%s%s%s%s%s%s%s%s%s%s%s%s%s",
 	    (attr & GRID_ATTR_BRIGHT) ? "bright," : "",
 	    (attr & GRID_ATTR_DIM) ? "dim," : "",
 	    (attr & GRID_ATTR_UNDERSCORE) ? "underscore," : "",
@@ -43,7 +43,8 @@ attributes_tostring(int attr)
 	    (attr & GRID_ATTR_UNDERSCORE_2) ? "double-underscore," : "",
 	    (attr & GRID_ATTR_UNDERSCORE_3) ? "curly-underscore," : "",
 	    (attr & GRID_ATTR_UNDERSCORE_4) ? "dotted-underscore," : "",
-	    (attr & GRID_ATTR_UNDERSCORE_5) ? "dashed-underscore," : "");
+	    (attr & GRID_ATTR_UNDERSCORE_5) ? "dashed-underscore," : "",
+	    (attr & GRID_ATTR_OVERLINE) ? "overline," : "");
 	if (len > 0)
 		buf[len - 1] = '\0';
 
@@ -73,7 +74,8 @@ attributes_fromstring(const char *str)
 		{ "double-underscore", GRID_ATTR_UNDERSCORE_2 },
 		{ "curly-underscore", GRID_ATTR_UNDERSCORE_3 },
 		{ "dotted-underscore", GRID_ATTR_UNDERSCORE_4 },
-		{ "dashed-underscore", GRID_ATTR_UNDERSCORE_5 }
+		{ "dashed-underscore", GRID_ATTR_UNDERSCORE_5 },
+		{ "overline", GRID_ATTR_OVERLINE }
 	};
 
 	if (*str == '\0' || strcspn(str, delimiters) == 0)

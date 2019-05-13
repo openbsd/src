@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.648 2019/05/13 08:56:07 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.649 2019/05/13 20:10:23 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -4091,6 +4091,7 @@ Set no attributes (turn off any active attributes).
 .Ic reverse ,
 .Ic hidden ,
 .Ic italics ,
+.Ic overline ,
 .Ic strikethrough ,
 .Ic double-underscore ,
 .Ic curly-underscore ,
@@ -4820,6 +4821,8 @@ to change the cursor colour from inside
 .Bd -literal -offset indent
 $ printf '\e033]12;red\e033\e\e'
 .Ed
+.It Em \&Smol
+Enable the overline attribute.
 .It Em \&Smulx
 Set a styled underline.
 The single parameter is one of: 0 for no underline, 1 for normal

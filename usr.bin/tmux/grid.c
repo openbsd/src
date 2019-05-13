@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.93 2019/04/02 08:45:32 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.94 2019/05/13 20:10:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -790,6 +790,7 @@ grid_string_cells_code(const struct grid_cell *lastgc,
 		{ GRID_ATTR_UNDERSCORE_3, 43 },
 		{ GRID_ATTR_UNDERSCORE_4, 44 },
 		{ GRID_ATTR_UNDERSCORE_5, 45 },
+		{ GRID_ATTR_OVERLINE, 53 },
 	};
 	n = 0;
 
