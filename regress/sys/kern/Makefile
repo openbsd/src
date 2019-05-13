@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.79 2018/12/19 21:21:59 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.80 2019/05/13 19:42:28 bluhm Exp $
 
 SUBDIR+= __syscall access accept cmsgsize
 SUBDIR+= dup2 dup2_accept dup2_self descrip
@@ -20,7 +20,7 @@ SUBDIR+= pledge
 SUBDIR+= pread preadv ptmget pty pwrite pwritev rcvtimeo
 SUBDIR+= recvwait
 SUBDIR+= rlimit-file
-SUBDIR+= sigio signal signal-stress sigprof sigsuspend
+SUBDIR+= sigio signal signal-stress sigprof sigsuspend sigpthread
 SUBDIR+= sosplice
 SUBDIR+= syscall sysvmsg sysvsem
 SUBDIR+= sysvshm unalign unfdpass wait
