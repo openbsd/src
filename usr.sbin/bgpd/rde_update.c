@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.110 2019/05/13 13:47:36 denis Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.111 2019/05/13 21:13:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -298,96 +298,155 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
     struct filterstate *state, u_int8_t aid)
 {
 	struct rde_aspath *asp = &state->aspath;
-	struct attr	*oa, *newaggr = NULL;
+	struct attr	*oa = NULL, *newaggr = NULL;
 	u_char		*pdata;
 	u_int32_t	 tmp32;
 	in_addr_t	 nexthop;
 	int		 flags, r, neednewpath = 0;
 	u_int16_t	 wlen = 0, plen;
-	u_int8_t	 l;
-	u_int16_t	 nlen = 0;
-	u_char		*ndata;
+	u_int8_t	 oalen = 0, type;
 
-	/* origin */
-	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN,
-	    ATTR_ORIGIN, &asp->origin, 1)) == -1)
-		return (-1);
-	wlen += r; len -= r;
+	if (asp->others_len > 0)
+		oa = asp->others[oalen++];
 
-	/* aspath */
-	if (!peer->conf.ebgp ||
-	    peer->conf.flags & PEERFLAG_TRANS_AS)
-		pdata = aspath_prepend(asp->aspath, peer->conf.local_as, 0,
-		    &plen);
-	else
-		pdata = aspath_prepend(asp->aspath, peer->conf.local_as, 1,
-		    &plen);
+	/* dump attributes in ascending order */
+	for (type = ATTR_ORIGIN; type < 255; type++) {
+		r = 0;
 
-	if (!rde_as4byte(peer))
-		pdata = aspath_deflate(pdata, &plen, &neednewpath);
+		while (oa && oa->type < type) {
+			if (oalen < asp->others_len)
+				oa = asp->others[oalen++];
+			else
+				oa = NULL;
+		}
 
-	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN,
-	    ATTR_ASPATH, pdata, plen)) == -1)
-		return (-1);
-	wlen += r; len -= r;
-	free(pdata);
-
-	switch (aid) {
-	case AID_INET:
-		nexthop = up_get_nexthop(peer, state);
-		if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN,
-		    ATTR_NEXTHOP, &nexthop, 4)) == -1)
-			return (-1);
-		wlen += r; len -= r;
-		break;
-	default:
-		break;
-	}
-
-	/*
-	 * The old MED from other peers MUST not be announced to others
-	 * unless the MED is originating from us or the peer is an IBGP one.
-	 * Only exception are routers with "transparent-as yes" set.
-	 */
-	if (asp->flags & F_ATTR_MED && (!peer->conf.ebgp ||
-	    asp->flags & F_ATTR_MED_ANNOUNCE ||
-	    peer->conf.flags & PEERFLAG_TRANS_AS)) {
-		tmp32 = htonl(asp->med);
-		if ((r = attr_write(buf + wlen, len, ATTR_OPTIONAL,
-		    ATTR_MED, &tmp32, 4)) == -1)
-			return (-1);
-		wlen += r; len -= r;
-	}
-
-	if (!peer->conf.ebgp) {
-		/* local preference, only valid for ibgp */
-		tmp32 = htonl(asp->lpref);
-		if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN,
-		    ATTR_LOCALPREF, &tmp32, 4)) == -1)
-			return (-1);
-		wlen += r; len -= r;
-	}
-
-	/*
-	 * dump all other path attributes. Following rules apply:
-	 *  1. well-known attrs: ATTR_ATOMIC_AGGREGATE and ATTR_AGGREGATOR
-	 *     pass unmodified (enforce flags to correct values)
-	 *     Actually ATTR_AGGREGATOR may be deflated for OLD 2-byte peers.
-	 *  2. non-transitive attrs: don't re-announce to ebgp peers
-	 *  3. transitive known attrs: announce unmodified
-	 *  4. transitive unknown attrs: set partial bit and re-announce
-	 */
-	for (l = 0; l < asp->others_len; l++) {
-		if ((oa = asp->others[l]) == NULL)
+		switch (type) {
+		/*
+		 * Attributes stored in rde_aspath
+		 */
+		case ATTR_ORIGIN:
+			if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN,
+			    ATTR_ORIGIN, &asp->origin, 1)) == -1)
+				return (-1);
 			break;
-		switch (oa->type) {
+		case ATTR_ASPATH:
+			if (!peer->conf.ebgp ||
+			    peer->conf.flags & PEERFLAG_TRANS_AS)
+				pdata = aspath_prepend(asp->aspath,
+				    peer->conf.local_as, 0, &plen);
+			else
+				pdata = aspath_prepend(asp->aspath,
+				    peer->conf.local_as, 1, &plen);
+
+			if (!rde_as4byte(peer))
+				pdata = aspath_deflate(pdata, &plen,
+				    &neednewpath);
+
+			if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN,
+			    ATTR_ASPATH, pdata, plen)) == -1)
+				return (-1);
+			free(pdata);
+			break;
+		case ATTR_NEXTHOP:
+			switch (aid) {
+			case AID_INET:
+				nexthop = up_get_nexthop(peer, state);
+				if ((r = attr_write(buf + wlen, len,
+				    ATTR_WELL_KNOWN, ATTR_NEXTHOP, &nexthop,
+				    4)) == -1)
+					return (-1);
+				break;
+			default:
+				break;
+			}
+			break;
+		case ATTR_MED:
+			/*
+			 * The old MED from other peers MUST not be announced
+			 * to others unless the MED is originating from us or
+			 * the peer is an IBGP one. Only exception are routers
+			 * with "transparent-as yes" set.
+			 */
+			if (asp->flags & F_ATTR_MED && (!peer->conf.ebgp ||
+			    asp->flags & F_ATTR_MED_ANNOUNCE ||
+			    peer->conf.flags & PEERFLAG_TRANS_AS)) {
+				tmp32 = htonl(asp->med);
+				if ((r = attr_write(buf + wlen, len,
+				    ATTR_OPTIONAL, ATTR_MED, &tmp32, 4)) == -1)
+					return (-1);
+			}
+			break;
+		case ATTR_LOCALPREF:
+			if (!peer->conf.ebgp) {
+				/* local preference, only valid for ibgp */
+				tmp32 = htonl(asp->lpref);
+				if ((r = attr_write(buf + wlen, len,
+				    ATTR_WELL_KNOWN, ATTR_LOCALPREF, &tmp32,
+				    4)) == -1)
+					return (-1);
+			}
+			break;
+		/*
+		 * multiprotocol attributes are handled elsewhere
+		 */
+		case ATTR_MP_REACH_NLRI:
+		case ATTR_MP_UNREACH_NLRI:
+			break;
+		/*
+		 * NEW to OLD conversion when sending stuff to a 2byte AS peer
+		 */
+		case ATTR_AS4_PATH:
+			if (neednewpath) {
+				if (!peer->conf.ebgp ||
+				    peer->conf.flags & PEERFLAG_TRANS_AS)
+					pdata = aspath_prepend(asp->aspath,
+					peer->conf.local_as, 0, &plen);
+				else
+					pdata = aspath_prepend(asp->aspath,
+					    peer->conf.local_as, 1, &plen);
+				flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+				if (!(asp->flags & F_PREFIX_ANNOUNCED))
+					flags |= ATTR_PARTIAL;
+				if (plen == 0)
+					r = 0;
+				else if ((r = attr_write(buf + wlen, len, flags,
+				    ATTR_AS4_PATH, pdata, plen)) == -1)
+					return (-1);
+				free(pdata);
+			}
+			break;
+		case ATTR_AS4_AGGREGATOR:
+			if (newaggr) {
+				flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
+				if (!(asp->flags & F_PREFIX_ANNOUNCED))
+					flags |= ATTR_PARTIAL;
+				if ((r = attr_write(buf + wlen, len, flags,
+				    ATTR_AS4_AGGREGATOR, newaggr->data,
+				    newaggr->len)) == -1)
+					return (-1);
+			}
+			break;
+		/*
+		 * dump all other path attributes. Following rules apply:
+		 *  1. well-known attrs: ATTR_ATOMIC_AGGREGATE and
+		 *     ATTR_AGGREGATOR pass unmodified (enforce flags
+		 *     to correct values). Actually ATTR_AGGREGATOR may be
+		 *     deflated for OLD 2-byte peers.
+		 *  2. non-transitive attrs: don't re-announce to ebgp peers
+		 *  3. transitive known attrs: announce unmodified
+		 *  4. transitive unknown attrs: set partial bit and re-announce
+		 */
 		case ATTR_ATOMIC_AGGREGATE:
+			if (oa == NULL || oa->type != type)
+				break;
 			if ((r = attr_write(buf + wlen, len,
 			    ATTR_WELL_KNOWN, ATTR_ATOMIC_AGGREGATE,
 			    NULL, 0)) == -1)
 				return (-1);
 			break;
 		case ATTR_AGGREGATOR:
+			if (oa == NULL || oa->type != type)
+				break;
 			if (!rde_as4byte(peer)) {
 				/* need to deflate the aggregator */
 				u_int8_t	t[6];
@@ -420,6 +479,8 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 		case ATTR_ORIGINATOR_ID:
 		case ATTR_CLUSTER_LIST:
 		case ATTR_LARGE_COMMUNITIES:
+			if (oa == NULL || oa->type != type)
+				break;
 			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
 			    peer->conf.ebgp) {
 				r = 0;
@@ -430,8 +491,13 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 				return (-1);
 			break;
 		case ATTR_EXT_COMMUNITIES:
+			if (oa == NULL || oa->type != type)
+				break;
 			/* handle (non-)transitive extended communities */
 			if (peer->conf.ebgp) {
+				u_char	*ndata;
+				u_int16_t nlen;
+
 				ndata = community_ext_delete_non_trans(oa->data,
 				    oa->len, &nlen);
 
@@ -443,10 +509,8 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 						return (-1);
 					}
 					free(ndata);
-				} else {
-					/* everything got removed */
-					r = 0;
 				}
+				/* else everything got removed */
 			} else {
 				if ((r = attr_write(buf + wlen, len, oa->flags,
 				    oa->type, oa->data, oa->len)) == -1)
@@ -454,6 +518,9 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			}
 			break;
 		default:
+			if (oa == NULL || oa->type != type)
+				break;
+
 			/* unknown attribute */
 			if (!(oa->flags & ATTR_TRANSITIVE)) {
 				/*
@@ -462,7 +529,6 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 				 * attributes must be quietly ignored and
 				 * not passed along to other BGP peers.
 				 */
-				r = 0;
 				break;
 			}
 			if ((r = attr_write(buf + wlen, len,
@@ -471,36 +537,6 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 				return (-1);
 			break;
 		}
-		wlen += r; len -= r;
-	}
-
-	/* NEW to OLD conversion when going sending stuff to a 2byte AS peer */
-	if (neednewpath) {
-		if (!peer->conf.ebgp ||
-		    peer->conf.flags & PEERFLAG_TRANS_AS)
-			pdata = aspath_prepend(asp->aspath, peer->conf.local_as,
-			    0, &plen);
-		else
-			pdata = aspath_prepend(asp->aspath, peer->conf.local_as,
-			    1, &plen);
-		flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
-		if (!(asp->flags & F_PREFIX_ANNOUNCED))
-			flags |= ATTR_PARTIAL;
-		if (plen == 0)
-			r = 0;
-		else if ((r = attr_write(buf + wlen, len, flags,
-		    ATTR_AS4_PATH, pdata, plen)) == -1)
-			return (-1);
-		wlen += r; len -= r;
-		free(pdata);
-	}
-	if (newaggr) {
-		flags = ATTR_OPTIONAL|ATTR_TRANSITIVE;
-		if (!(asp->flags & F_PREFIX_ANNOUNCED))
-			flags |= ATTR_PARTIAL;
-		if ((r = attr_write(buf + wlen, len, flags,
-		    ATTR_AS4_AGGREGATOR, newaggr->data, newaggr->len)) == -1)
-			return (-1);
 		wlen += r; len -= r;
 	}
 
