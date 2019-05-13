@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.241 2019/02/21 16:37:13 bluhm Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.242 2019/05/13 20:47:19 claudio Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -509,6 +509,11 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 			break;
+		case KERN_PFSTATUS:
+			if (flags == 0)
+				return;
+			warnx("use pfctl to view %s information", string);
+			return;
 		}
 		break;
 
