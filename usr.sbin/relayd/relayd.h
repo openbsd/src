@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.254 2019/05/10 09:15:00 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.255 2019/05/13 09:54:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -193,6 +193,7 @@ enum relay_state {
 	STATE_PENDING,
 	STATE_PRECONNECT,
 	STATE_CONNECTED,
+	STATE_CLOSED,
 	STATE_DONE
 };
 
@@ -556,6 +557,7 @@ struct rsession {
 	void				*se_priv;
 	SIPHASH_CTX			 se_siphashctx;
 	struct relay_table		*se_table;
+	struct relay_table		*se_table0;
 	struct event			 se_ev;
 	struct timeval			 se_timeout;
 	struct timeval			 se_tv_start;
@@ -1137,6 +1139,9 @@ int	 cmdline_symset(char *);
 const char *host_error(enum host_error);
 const char *host_status(enum host_status);
 const char *table_check(enum table_check);
+#ifdef DEBUG
+const char *relay_state(enum relay_state);
+#endif
 const char *print_availability(u_long, u_long);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 const char *print_time(struct timeval *, struct timeval *, char *, size_t);
@@ -1181,7 +1186,7 @@ int	 relay_session_cmp(struct rsession *, struct rsession *);
 char	*relay_load_fd(int, off_t *);
 int	 relay_load_certfiles(struct relay *);
 void	 relay_close(struct rsession *, const char *, int);
-int	 relay_reset_event(struct ctl_relay_event *);
+int	 relay_reset_event(struct rsession *, struct ctl_relay_event *);
 void	 relay_natlook(int, short, void *);
 void	 relay_session(struct rsession *);
 int	 relay_from_table(struct rsession *);

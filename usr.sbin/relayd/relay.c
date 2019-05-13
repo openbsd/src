@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.244 2019/05/10 09:15:00 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.245 2019/05/13 09:54:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -77,10 +77,13 @@ int		 relay_tls_ctx_create(struct relay *);
 void		 relay_tls_transaction(struct rsession *,
 		    struct ctl_relay_event *);
 void		 relay_tls_handshake(int, short, void *);
-void		 relay_connect_retry(int, short, void *);
 void		 relay_tls_connected(struct ctl_relay_event *);
 void		 relay_tls_readcb(int, short, void *);
 void		 relay_tls_writecb(int, short, void *);
+
+void		 relay_connect_retry(int, short, void *);
+void		 relay_connect_state(struct rsession *,
+		    struct ctl_relay_event *, enum relay_state);
 
 extern void	 bufferevent_read_pressure_cb(struct evbuffer *, size_t,
 		    size_t, void *);
@@ -675,6 +678,7 @@ relay_socket_listen(struct sockaddr_storage *ss, in_port_t port,
 void
 relay_connected(int fd, short sig, void *arg)
 {
+	char			 obuf[128];
 	struct rsession		*con = arg;
 	struct relay		*rlay = con->se_relay;
 	struct protocol		*proto = rlay->rl_proto;
@@ -716,6 +720,22 @@ relay_connected(int fd, short sig, void *arg)
 	}
 
 	DPRINTF("%s: session %d: successful", __func__, con->se_id);
+
+	/* Log destination if it was changed in a keep-alive connection */
+	if ((con->se_table != con->se_table0) &&
+	    (env->sc_conf.opts & (RELAYD_OPT_LOGCON|RELAYD_OPT_LOGCONERR))) {
+		con->se_table0 = con->se_table;
+		memset(&obuf, 0, sizeof(obuf));
+		(void)print_host(&con->se_out.ss, obuf, sizeof(obuf));
+		if (asprintf(&msg, " -> %s:%d",
+		    obuf, ntohs(con->se_out.port)) == -1) {
+			relay_abort_http(con, 500,
+			    "connection changed and asprintf failed", 0);
+			return;
+		}
+		relay_log(con, msg);
+		free(msg);
+	}
 
 	switch (rlay->rl_proto->type) {
 	case RELAY_PROTO_HTTP:
@@ -1477,6 +1497,17 @@ relay_bindany(int fd, short event, void *arg)
 }
 
 void
+relay_connect_state(struct rsession *con, struct ctl_relay_event *cre,
+    enum relay_state new)
+{
+	DPRINTF("%s: session %d: %s state %s -> %s",
+	    __func__, con->se_id,
+	    cre->dir == RELAY_DIR_REQUEST ? "accept" : "connect",
+	    relay_state(cre->state), relay_state(new));
+	cre->state = new;
+}
+
+void
 relay_connect_retry(int fd, short sig, void *arg)
 {
 	struct timeval	 evtpause = { 1, 0 };
@@ -1545,9 +1576,9 @@ relay_connect_retry(int fd, short sig, void *arg)
 	}
 
 	if (rlay->rl_conf.flags & F_TLSINSPECT)
-		con->se_out.state = STATE_PRECONNECT;
+		relay_connect_state(con, &con->se_out, STATE_PRECONNECT);
 	else
-		con->se_out.state = STATE_CONNECTED;
+		relay_connect_state(con, &con->se_out, STATE_CONNECTED);
 	relay_inflight--;
 	DPRINTF("%s: inflight decremented, now %d",__func__, relay_inflight);
 
@@ -1572,7 +1603,7 @@ relay_preconnect(struct rsession *con)
 	    con->se_id, privsep_process);
 	rv = relay_connect(con);
 	if (con->se_out.state == STATE_CONNECTED)
-		con->se_out.state = STATE_PRECONNECT;
+		relay_connect_state(con, &con->se_out, STATE_PRECONNECT);
 	return (rv);
 }
 
@@ -1597,7 +1628,7 @@ relay_connect(struct rsession *con)
 			return (-1);
 		}
 		relay_connected(con->se_out.s, EV_WRITE, con);
-		con->se_out.state = STATE_CONNECTED;
+		relay_connect_state(con, &con->se_out, STATE_CONNECTED);
 		return (0);
 	}
 
@@ -1654,7 +1685,7 @@ relay_connect(struct rsession *con)
 			evtimer_add(&rlay->rl_evt, &evtpause);
 
 			/* this connect is pending */
-			con->se_out.state = STATE_PENDING;
+			relay_connect_state(con, &con->se_out, STATE_PENDING);
 			return (0);
 		} else {
 			if (con->se_retry) {
@@ -1672,7 +1703,7 @@ relay_connect(struct rsession *con)
 		}
 	}
 
-	con->se_out.state = STATE_CONNECTED;
+	relay_connect_state(con, &con->se_out, STATE_CONNECTED);
 	relay_inflight--;
 	DPRINTF("%s: inflight decremented, now %d",__func__,
 	    relay_inflight);
@@ -1698,10 +1729,6 @@ relay_close(struct rsession *con, const char *msg, int err)
 	relay_session_unpublish(con);
 
 	event_del(&con->se_ev);
-	if (con->se_in.bev != NULL)
-		bufferevent_disable(con->se_in.bev, EV_READ|EV_WRITE);
-	if (con->se_out.bev != NULL)
-		bufferevent_disable(con->se_out.bev, EV_READ|EV_WRITE);
 
 	if ((env->sc_conf.opts & (RELAYD_OPT_LOGCON|RELAYD_OPT_LOGCONERR)) &&
 	    msg != NULL) {
@@ -1738,7 +1765,8 @@ relay_close(struct rsession *con, const char *msg, int err)
 
 	free(con->se_priv);
 
-	if (relay_reset_event(&con->se_in)) {
+	relay_connect_state(con, &con->se_in, STATE_DONE);
+	if (relay_reset_event(con, &con->se_in)) {
 		if (con->se_out.s == -1) {
 			/*
 			 * the output was never connected,
@@ -1752,7 +1780,8 @@ relay_close(struct rsession *con, const char *msg, int err)
 	if (con->se_in.output != NULL)
 		evbuffer_free(con->se_in.output);
 
-	if (relay_reset_event(&con->se_out)) {
+	relay_connect_state(con, &con->se_out, STATE_DONE);
+	if (relay_reset_event(con, &con->se_out)) {
 		/* Some file descriptors are available again. */
 		if (evtimer_pending(&rlay->rl_evt, NULL)) {
 			evtimer_del(&rlay->rl_evt);
@@ -1778,14 +1807,16 @@ relay_close(struct rsession *con, const char *msg, int err)
 }
 
 int
-relay_reset_event(struct ctl_relay_event *cre)
+relay_reset_event(struct rsession *con, struct ctl_relay_event *cre)
 {
 	int		 rv = 0;
 
-	DPRINTF("%s: state %d dir %d", __func__, cre->state, cre->dir);
-
-	if (cre->bev != NULL)
+	if (cre->state != STATE_DONE)
+		relay_connect_state(con, cre, STATE_CLOSED);
+	if (cre->bev != NULL) {
+		bufferevent_disable(cre->bev, EV_READ|EV_WRITE);
 		bufferevent_free(cre->bev);
+	}
 	if (cre->tls != NULL)
 		tls_close(cre->tls);
 	tls_free(cre->tls);
@@ -1796,7 +1827,6 @@ relay_reset_event(struct ctl_relay_event *cre)
 		close(cre->s);
 		rv = 1;
 	}
-	cre->state = STATE_DONE;
 	cre->bev = NULL;
 	cre->tls = NULL;
 	cre->tls_cfg = NULL;

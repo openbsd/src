@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.74 2019/05/10 09:15:00 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.75 2019/05/13 09:54:07 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -71,9 +71,11 @@ int		 relay_httpurl_test(struct ctl_relay_event *,
 		    struct relay_rule *, struct kvlist *);
 int		 relay_httpcookie_test(struct ctl_relay_event *,
 		    struct relay_rule *, struct kvlist *);
-int		 relay_apply_actions(struct ctl_relay_event *, struct kvlist *);
+int		 relay_apply_actions(struct ctl_relay_event *, struct kvlist *,
+		    struct relay_table *);
 int		 relay_match_actions(struct ctl_relay_event *,
-		    struct relay_rule *, struct kvlist *, struct kvlist *);
+		    struct relay_rule *, struct kvlist *, struct kvlist *,
+		    struct relay_table **);
 void		 relay_httpdesc_free(struct http_descriptor *);
 
 static struct relayd	*env = NULL;
@@ -1484,7 +1486,7 @@ relay_httpcookie_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 
 int
 relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
-    struct kvlist *matches, struct kvlist *actions)
+    struct kvlist *matches, struct kvlist *actions, struct relay_table **tbl)
 {
 	struct rsession		*con = cre->con;
 	struct kv		*kv, *tmp;
@@ -1493,11 +1495,9 @@ relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
 	 * Apply the following options instantly (action per match).
 	 */
 	if (rule->rule_table != NULL)
-		con->se_table = rule->rule_table;
-
+		*tbl = rule->rule_table;
 	if (rule->rule_tag != 0)
 		con->se_tag = rule->rule_tag == -1 ? 0 : rule->rule_tag;
-
 	if (rule->rule_label != 0)
 		con->se_label = rule->rule_label == -1 ? 0 : rule->rule_label;
 
@@ -1521,7 +1521,8 @@ relay_match_actions(struct ctl_relay_event *cre, struct relay_rule *rule,
 }
 
 int
-relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
+relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
+    struct relay_table *tbl)
 {
 	struct rsession		*con = cre->con;
 	struct http_descriptor	*desc = cre->desc;
@@ -1710,12 +1711,22 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions)
 	}
 
 	/*
+	 * Change the backend if the forward table has been changed.
+	 * This only works in the request direction.
+	 */
+	if (cre->dir == RELAY_DIR_REQUEST && con->se_table != tbl) {
+		relay_reset_event(con, &con->se_out);
+		con->se_table = tbl;
+		con->se_haslog = 1;
+	}
+
+	/*
 	 * log tag for request and response, request method
 	 * and end of request marker ","
 	 */
 	if ((con->se_log != NULL) &&
 	    ((meth = relay_httpmethod_byid(desc->http_method)) != NULL) &&
-	    (asprintf(&msg, " %s",meth) >= 0))
+	    (asprintf(&msg, " %s", meth) != -1))
 		evbuffer_add(con->se_log, msg, strlen(msg));
 	free(msg);
 	relay_log(con, cre->dir == RELAY_DIR_REQUEST ? "" : ";");
@@ -1745,6 +1756,7 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 	struct rsession		*con;
 	struct http_descriptor	*desc = cre->desc;
 	struct relay_rule	*r = NULL, *rule = NULL;
+	struct relay_table	*tbl = NULL;
 	u_int			 cnt = 0;
 	u_int			 action = RES_PASS;
 	struct kvlist		 actions, matches;
@@ -1794,7 +1806,7 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 
 			if (r->rule_action == RULE_ACTION_MATCH) {
 				if (relay_match_actions(cre, r, &matches,
-				    &actions) != 0) {
+				    &actions, &tbl) != 0) {
 					/* Something bad happened, drop */
 					action = RES_DROP;
 					break;
@@ -1828,13 +1840,13 @@ relay_test(struct protocol *proto, struct ctl_relay_event *cre)
 		}
 	}
 
-	if (rule != NULL && relay_match_actions(cre, rule, NULL, &actions)
+	if (rule != NULL && relay_match_actions(cre, rule, NULL, &actions, &tbl)
 	    != 0) {
 		/* Something bad happened, drop */
 		action = RES_DROP;
 	}
 
-	if (relay_apply_actions(cre, &actions) != 0) {
+	if (relay_apply_actions(cre, &actions, tbl) != 0) {
 		/* Something bad happened, drop */
 		action = RES_DROP;
 	}
