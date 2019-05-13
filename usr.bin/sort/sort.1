@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.58 2019/02/24 09:57:43 anton Exp $
+.\"	$OpenBSD: sort.1,v 1.59 2019/05/13 17:00:12 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: February 24 2019 $
+.Dd $Mdocdate: May 13 2019 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -177,10 +177,6 @@ Unknown strings are considered smaller than valid month names.
 .It Fl n , Fl Fl numeric-sort , Fl Fl sort Ns = Ns Cm numeric
 An initial numeric string, consisting of optional blank space, optional
 minus sign, and zero or more digits (including decimal point)
-.\" with
-.\" optional radix character and thousands
-.\" separator
-.\" (as defined in the current locale),
 is sorted by arithmetic value.
 Leading blank characters are ignored.
 .It Fl R , Fl Fl random-sort , Fl Fl sort Ns = Ns Cm random
@@ -498,18 +494,6 @@ which has no
 equivalent.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
-.It Ev GNUSORT_NUMERIC_COMPATIBILITY
-If defined
-.Fl t
-will not override the locale numeric symbols, that is, thousand
-separators and decimal separators.
-By default, if we specify
-.Fl t
-with the same symbol as the thousand separator or decimal point,
-the symbol will be treated as the field separator.
-Older behavior was less definite: the symbol was treated as both field
-separator and numeric separator, simultaneously.
-This environment variable enables the old behavior.
 .It Ev LANG
 Used as a last resort to determine different kinds of locale-specific
 behavior if neither the respective environment variable nor
@@ -526,15 +510,6 @@ sorting records.
 Locale settings to be used to case conversion and classification
 of characters, that is, which characters are considered
 whitespaces, etc.
-.It Ev LC_MESSAGES
-Locale settings that determine the language of output messages
-that
-.Nm
-prints out.
-.It Ev LC_NUMERIC
-Locale settings that determine the number format used in numeric sort.
-.It Ev LC_TIME
-Locale settings that determine the month format used in month sort.
 .It Ev TMPDIR
 Path to the directory in which temporary files will be stored.
 Note that

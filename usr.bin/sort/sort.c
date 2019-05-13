@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.87 2017/01/04 15:30:58 millert Exp $	*/
+/*	$OpenBSD: sort.c,v 1.88 2019/05/13 17:00:12 schwarze Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -70,12 +70,8 @@ struct sort_opts sort_opts_vals;
 bool debug_sort;
 bool need_hint;
 
-static bool gnusort_numeric_compatibility;
-
 static struct sort_mods default_sort_mods_object;
 struct sort_mods * const default_sort_mods = &default_sort_mods_object;
-
-static bool print_symbols_on_debug;
 
 /*
  * Arguments from file (when file0-from option is used:
@@ -239,45 +235,14 @@ set_hw_params(void)
 }
 
 /*
- * Convert "plain" symbol to wide symbol, with default value.
- */
-static void
-conv_mbtowc(wchar_t *wc, const char *c, const wchar_t def)
-{
-	int res;
-
-	res = mbtowc(wc, c, MB_CUR_MAX);
-	if (res < 1)
-		*wc = def;
-}
-
-/*
  * Set current locale symbols.
  */
 static void
 set_locale(void)
 {
-	struct lconv *lc;
 	const char *locale;
 
-	setlocale(LC_ALL, "");
-
-	/* Obtain LC_NUMERIC info */
-	lc = localeconv();
-
-	/* Convert to wide char form */
-	conv_mbtowc(&symbol_decimal_point, lc->decimal_point,
-	    symbol_decimal_point);
-	conv_mbtowc(&symbol_thousands_sep, lc->thousands_sep,
-	    symbol_thousands_sep);
-	conv_mbtowc(&symbol_positive_sign, lc->positive_sign,
-	    symbol_positive_sign);
-	conv_mbtowc(&symbol_negative_sign, lc->negative_sign,
-	    symbol_negative_sign);
-
-	if (getenv("GNUSORT_NUMERIC_COMPATIBILITY"))
-		gnusort_numeric_compatibility = true;
-
+	setlocale(LC_CTYPE, "");
 	locale = setlocale(LC_COLLATE, NULL);
 	if (locale != NULL) {
 		char *tmpl;
@@ -518,7 +483,6 @@ set_sort_modifier(struct sort_mods *sm, int c)
 	case 'n':
 		sm->nflag = true;
 		need_hint = true;
-		print_symbols_on_debug = true;
 		break;
 	case 'r':
 		sm->rflag = true;
@@ -529,7 +493,6 @@ set_sort_modifier(struct sort_mods *sm, int c)
 	case 'h':
 		sm->hflag = true;
 		need_hint = true;
-		print_symbols_on_debug = true;
 		break;
 	default:
 		return false;
@@ -963,16 +926,6 @@ main(int argc, char *argv[])
 					errno = EINVAL;
 					err(2, NULL);
 				}
-				if (!gnusort_numeric_compatibility) {
-					if (symbol_decimal_point == sort_opts_vals.field_sep)
-						symbol_decimal_point = WEOF;
-					if (symbol_thousands_sep == sort_opts_vals.field_sep)
-						symbol_thousands_sep = WEOF;
-					if (symbol_negative_sign == sort_opts_vals.field_sep)
-						symbol_negative_sign = WEOF;
-					if (symbol_positive_sign == sort_opts_vals.field_sep)
-						symbol_positive_sign = WEOF;
-				}
 				break;
 			case 'u':
 				sort_opts_vals.uflag = true;
@@ -1167,14 +1120,6 @@ main(int argc, char *argv[])
 		    setlocale(LC_COLLATE, NULL));
 		if (byte_sort)
 			printf("Byte sort is used\n");
-		if (print_symbols_on_debug) {
-			printf("Decimal Point: <%lc>\n", symbol_decimal_point);
-			if (symbol_thousands_sep)
-				printf("Thousands separator: <%lc>\n",
-				    symbol_thousands_sep);
-			printf("Positive sign: <%lc>\n", symbol_positive_sign);
-			printf("Negative sign: <%lc>\n", symbol_negative_sign);
-		}
 	}
 
 	if (sort_opts_vals.cflag)
