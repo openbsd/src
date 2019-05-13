@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.117 2019/02/09 15:26:15 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.118 2019/05/13 22:48:30 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -671,7 +671,7 @@ tls1_enc(SSL *s, int send)
 	SSL3_RECORD *rec;
 	unsigned char *seq;
 	unsigned long l;
-	int bs, i, j, k, pad = 0, ret, mac_size = 0;
+	int bs, i, j, k, ret, mac_size = 0;
 
 	if (send) {
 		aead = s->internal->aead_write_ctx;
@@ -904,8 +904,6 @@ tls1_enc(SSL *s, int send)
 			mac_size = EVP_MD_CTX_size(s->read_hash);
 		if ((bs != 1) && !send)
 			ret = tls1_cbc_remove_padding(s, rec, bs, mac_size);
-		if (pad && !send)
-			rec->length -= pad;
 	}
 	return ret;
 }
