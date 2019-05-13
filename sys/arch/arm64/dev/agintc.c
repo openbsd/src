@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.17 2019/05/12 16:36:30 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.18 2019/05/13 20:55:22 drahn Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -907,12 +907,10 @@ agintc_run_handler(struct intrhand *ih, void *frame, int s)
 void
 agintc_irq_handler(void *frame)
 {
-	struct cpu_info		*ci = curcpu();
 	struct agintc_softc	*sc = agintc_sc;
 	struct intrhand		*ih;
 	int			 irq, pri, s;
 
-	ci->ci_idepth++;
 	irq = agintc_iack();
 
 #ifdef DEBUG_AGINTC
@@ -931,29 +929,24 @@ agintc_irq_handler(void *frame)
 
 	if (irq == 1023) {
 		sc->sc_spur.ec_count++;
-		ci->ci_idepth--;
 		return;
 	}
 
 	if ((irq >= sc->sc_nintr && irq < LPI_BASE) ||
 	    irq >= LPI_BASE + sc->sc_nlpi) {
-		ci->ci_idepth--;
 		return;
 	}
 
 	if (irq >= LPI_BASE) {
 		ih = sc->sc_lpi_handler[irq - LPI_BASE];
-		if (ih == NULL) {
-			ci->ci_idepth--;
+		if (ih == NULL)
 			return;
-		}
 		
 		s = agintc_splraise(ih->ih_ipl);
 		agintc_run_handler(ih, frame, s);
 		agintc_eoi(irq);
 
 		agintc_splx(s);
-		ci->ci_idepth--;
 		return;
 	}
 
@@ -965,7 +958,6 @@ agintc_irq_handler(void *frame)
 	agintc_eoi(irq);
 
 	agintc_splx(s);
-	ci->ci_idepth--;
 }
 
 void *

@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.13 2018/08/08 11:06:33 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.14 2019/05/13 20:55:22 drahn Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -56,8 +56,11 @@ void (*arm_intr_dispatch)(void *) = arm_dflt_intr;
 void
 arm_cpu_intr(void *frame)
 {
-	/* XXX - change this to have irq_dispatch use function pointer */
+	struct cpu_info	*ci = curcpu();
+
+	ci->ci_idepth++;
 	(*arm_intr_dispatch)(frame);
+	ci->ci_idepth--;
 }
 void
 arm_dflt_intr(void *frame)
