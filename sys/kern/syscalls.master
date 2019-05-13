@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.190 2019/05/09 20:30:22 cheloha Exp $
+;	$OpenBSD: syscalls.master,v 1.191 2019/05/13 22:55:27 beck Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -240,7 +240,8 @@
 113	UNIMPL		fktrace
 114	STD 		{ int sys_unveil(const char *path, \
 			    const char *permissions); }
-115	OBSOL		vtrace
+115	STD		{ int sys___realpath(const char *pathname, \
+			    char *resolved); }
 116	OBSOL		t32_gettimeofday
 117	OBSOL		t32_getrusage
 118	STD		{ int sys_getsockopt(int s, int level, int name, \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.314 2019/03/24 18:14:20 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.315 2019/05/13 22:55:27 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -864,6 +864,95 @@ change_dir(struct nameidata *ndp, struct proc *p)
 		vput(vp);
 	else
 		VOP_UNLOCK(vp);
+	return (error);
+}
+
+int
+sys___realpath(struct proc *p, void *v, register_t *retval)
+{
+	struct sys___realpath_args /* {
+		syscallarg(const char *) pathname;
+		syscallarg(char *) resolved;
+	} */ *uap = v;
+	char *pathname;
+	char *cwdbuf;
+	char *rpbuf;
+	struct nameidata nd;
+	size_t pathlen;
+	int cwdlen = MAXPATHLEN * 4;
+	int error = 0;
+
+	pathname = pool_get(&namei_pool, PR_WAITOK);
+	rpbuf = pool_get(&namei_pool, PR_WAITOK);
+	cwdbuf = malloc(cwdlen, M_TEMP, M_WAITOK);
+
+	if ((error = copyinstr(SCARG(uap, pathname), pathname, MAXPATHLEN,
+	    &pathlen)))
+		goto end;
+
+	if (pathlen < 2) {
+		error = EINVAL;
+		goto end;
+	}
+
+	/* Get cwd for relative path if needed, prepend to rpbuf */
+	rpbuf[0] = '\0';
+	if (pathname[0] != '/') {
+		char *path, *bp, *bend;
+		int lenused;
+
+		bp = &cwdbuf[cwdlen];
+		bend = bp;
+		*(--bp) = '\0';
+
+		error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp, path,
+		    cwdlen/2, GETCWD_CHECK_ACCESS, p);
+
+		if (error)
+			goto end;
+
+		lenused = bend - bp;
+		*retval = lenused;
+
+		if (strlcpy(rpbuf, bp, MAXPATHLEN) >= MAXPATHLEN) {
+			error = ENAMETOOLONG;
+			goto end;
+		}
+	}
+
+	if (pathlen == 2 && pathname[0] == '/')
+		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | REALPATH,
+		    UIO_SYSSPACE, pathname, p);
+	else
+		NDINIT(&nd, CREATE, FOLLOW | LOCKLEAF | LOCKPARENT | SAVENAME |
+		    REALPATH, UIO_SYSSPACE, pathname, p);
+
+	nd.ni_cnd.cn_rpbuf = rpbuf;
+	nd.ni_cnd.cn_rpi = strlen(rpbuf);
+
+	nd.ni_pledge = PLEDGE_RPATH;
+	nd.ni_unveil = UNVEIL_READ;
+	if ((error = namei(&nd)) != 0)
+		goto end;
+
+	/* release lock and reference from namei */
+	if (nd.ni_vp) {
+		VOP_UNLOCK(nd.ni_vp);
+		vrele(nd.ni_vp);
+	}
+	if (nd.ni_dvp && nd.ni_dvp != nd.ni_vp){
+		VOP_UNLOCK(nd.ni_dvp);
+		vrele(nd.ni_dvp);
+	}
+
+	error = copyoutstr(nd.ni_cnd.cn_rpbuf, SCARG(uap, resolved),
+	    MAXPATHLEN, NULL);
+
+	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
+end:
+	pool_put(&namei_pool, rpbuf);
+	pool_put(&namei_pool, pathname);
+	free(cwdbuf, M_TEMP, cwdlen);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.39 2019/01/17 03:26:19 beck Exp $	*/
+/*	$OpenBSD: namei.h,v 1.40 2019/05/13 22:55:27 beck Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct nameidata {
 
 	/*
 	 * Lookup parameters: this structure describes the subset of
-	 * information from the nameidata structure that is passed
+	 * information from the nameidat satructure that is passed
 	 * through the VOP interface.
 	 */
 	struct componentname {
@@ -95,6 +95,8 @@ struct nameidata {
 		 * Shared between lookup and commit routines.
 		 */
 		char	*cn_pnbuf;	/* pathname buffer */
+		char	*cn_rpbuf;	/* realpath buffer */
+		size_t	cn_rpi;		/* realpath index */
 		char	*cn_nameptr;	/* pointer to looked up name */
 		long	cn_namelen;	/* length of looked up component */
 		long	cn_consume;	/* chars to consume in lookup() */
@@ -143,6 +145,7 @@ struct nameidata {
 #define MAKEENTRY	0x004000      /* entry is to be added to name cache */
 #define ISLASTCN	0x008000      /* this is last component of pathname */
 #define ISSYMLINK	0x010000      /* symlink needs interpretation */
+#define REALPATH	0x020000      /* save pathname buffer for realpath */
 #define	REQUIREDIR	0x080000      /* must be a directory */
 #define STRIPSLASHES    0x100000      /* strip trailing slashes */
 #define PDIRUNLOCK	0x200000      /* vfs_lookup() unlocked parent dir */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.76 2019/01/03 21:52:31 beck Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.77 2019/05/13 22:55:27 beck Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -60,6 +60,29 @@
 void unveil_start_relative(struct proc *p, struct nameidata *ni);
 void unveil_check_component(struct proc *p, struct nameidata *ni, struct vnode *dp );
 int unveil_check_final(struct proc *p, struct nameidata *ni);
+
+int
+component_push(struct componentname *cnp, char *component, size_t len)
+{
+	if (cnp->cn_rpi + len + 1 >= MAXPATHLEN)
+		return 0;
+	if (cnp->cn_rpi > 1)
+		cnp->cn_rpbuf[cnp->cn_rpi++] = '/';
+	memcpy(cnp->cn_rpbuf + cnp->cn_rpi,  component, len);
+	cnp->cn_rpi+=len;
+	cnp->cn_rpbuf[cnp->cn_rpi] = '\0';
+	return 1;
+}
+
+void
+component_pop(struct componentname *cnp)
+{
+	while(cnp->cn_rpi && cnp->cn_rpbuf[cnp->cn_rpi] != '/' )
+		cnp->cn_rpi--;
+	if (cnp->cn_rpi == 0 && cnp->cn_rpbuf[0] == '/')
+		cnp->cn_rpi++;
+	cnp->cn_rpbuf[cnp->cn_rpi] = '\0';
+}
 
 void
 ndinitat(struct nameidata *ndp, u_long op, u_long flags,
@@ -190,6 +213,11 @@ fail:
 	if (cnp->cn_pnbuf[0] == '/') {
 		dp = ndp->ni_rootdir;
 		vref(dp);
+		if (cnp->cn_flags & REALPATH && cnp->cn_rpi == 0) {
+			cnp->cn_rpbuf[0] = '/';
+			cnp->cn_rpbuf[1] = '\0';
+			cnp->cn_rpi = 1;
+		}
 	} else if (ndp->ni_dirfd == AT_FDCWD) {
 		dp = fdp->fd_cdir;
 		vref(dp);
@@ -303,6 +331,13 @@ badlink:
 			vref(dp);
 			ndp->ni_unveil_match = NULL;
 			unveil_check_component(p, ndp, dp);
+			if (cnp->cn_flags & REALPATH) {
+				cnp->cn_rpbuf[0] = '/';
+				cnp->cn_rpbuf[1] = '\0';
+				cnp->cn_rpi = 1;
+			}
+		} else if (cnp->cn_flags & REALPATH) {
+			component_pop(cnp);
 		}
 	}
 	pool_put(&namei_pool, cnp->cn_pnbuf);
@@ -441,6 +476,19 @@ dirloop:
 	printf("{%s}: ", cnp->cn_nameptr);
 	*cp = c; }
 #endif
+	if (cnp->cn_flags & REALPATH) {
+		size_t len = cp - cnp->cn_nameptr;
+		if (len == 2 && cnp->cn_nameptr[0] == '.' &&
+		    cnp->cn_nameptr[1] == '.')
+			component_pop(cnp);
+		else if (!(len == 1 && cnp->cn_nameptr[0] == '.')) {
+			if (!component_push(cnp, cnp->cn_nameptr, len)) {
+				error = ENAMETOOLONG;
+				goto bad;
+			}
+		}
+	}
+
 	ndp->ni_pathlen -= cnp->cn_namelen;
 	ndp->ni_next = cp;
 	/*
@@ -529,10 +577,12 @@ dirloop:
 		printf("not found\n");
 #endif
 		/*
-		 * Allow for unveiling of a file in a directory
-		 * where we don't have access to create it ourselves
+		 * Allow for unveiling or realpath'ing a file in a
+		 * directory where we don't have access to create it
+		 * ourselves
 		 */
-		if (ndp->ni_pledge == PLEDGE_UNVEIL && error == EACCES)
+		if ((ndp->ni_pledge == PLEDGE_UNVEIL ||
+		    (cnp->cn_flags & REALPATH)) && error == EACCES)
 			error = EJUSTRETURN;
 
 		if (error != EJUSTRETURN)
@@ -808,3 +858,5 @@ bad:
 	*vpp = NULL;
 	return (error);
 }
+
+
