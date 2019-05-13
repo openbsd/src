@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.332 2019/05/12 19:53:22 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.333 2019/05/13 18:14:05 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1042,8 +1042,8 @@ bridgeintr_frame(struct ifnet *brifp, struct ifnet *src_if, struct mbuf *m)
 	if (!ISSET(dst_if->if_flags, IFF_RUNNING))
 		goto bad;
 	bif = bridge_getbif(dst_if);
-	if ((bif->bif_flags & IFBIF_STP) &&
-	    (bif->bif_state == BSTP_IFSTATE_DISCARDING))
+	if ((bif == NULL) || ((bif->bif_flags & IFBIF_STP) &&
+	    (bif->bif_state == BSTP_IFSTATE_DISCARDING)))
 		goto bad;
 	/*
 	 * Do not transmit if both ports are part of the same protected
@@ -1251,6 +1251,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 	u_int32_t protected;
 
 	bif = bridge_getbif(ifp);
+	KASSERT(bif != NULL);
 	protected = bif->bif_protected;
 
 	SMR_SLIST_FOREACH_LOCKED(bif, &sc->sc_iflist, bif_next) {
