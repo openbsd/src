@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.75 2019/05/13 09:54:07 reyk Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.76 2019/05/13 15:19:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -521,6 +521,15 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			cre->toread = TOREAD_HTTP_CHUNK_LENGTH;
 			bev->readcb = relay_read_httpchunks;
 		}
+
+		/*
+		 * Ask the server to close the connection after this request
+		 * since we don't read any further request headers.
+		 */
+		if (cre->toread == TOREAD_UNLIMITED)
+			if (kv_add(&desc->http_headers, "Connection",
+			    "close", 0) == NULL)
+				goto fail;
 
 		if (cre->dir == RELAY_DIR_REQUEST) {
 			if (relay_writerequest_http(cre->dst, cre) == -1)
