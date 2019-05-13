@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.26 2019/05/10 14:10:38 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.27 2019/05/13 23:13:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -795,7 +795,6 @@ merge_config(struct uw_conf *conf, struct uw_conf *xconf)
 		free(uw_forwarder);
 	}
 
-	conf->uw_options = xconf->uw_options;
 	conf->res_pref_len = xconf->res_pref_len;
 	memcpy(&conf->res_pref, &xconf->res_pref,
 	    sizeof(conf->res_pref));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.15 2019/05/10 14:10:38 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.16 2019/05/13 23:13:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -133,7 +133,6 @@ SIMPLEQ_HEAD(uw_forwarder_head, uw_forwarder);
 struct uw_conf {
 	struct uw_forwarder_head	 uw_forwarder_list;
 	struct uw_forwarder_head	 uw_dot_forwarder_list;
-	int				 uw_options;
 	enum uw_resolver_type		 res_pref[UW_RES_NONE];
 	int				 res_pref_len;
 	char				*captive_portal_host;

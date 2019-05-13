@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2019/05/10 14:10:38 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2019/05/13 23:13:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -99,7 +99,7 @@ typedef struct {
 
 %}
 
-%token	STRICT YES NO INCLUDE ERROR
+%token	YES NO INCLUDE ERROR
 %token	FORWARDER DOT PORT CAPTIVE PORTAL URL EXPECTED RESPONSE
 %token	STATUS AUTO AUTHENTICATION NAME PREFERENCE RECURSOR DHCP
 %token	BLOCK LIST
@@ -114,7 +114,6 @@ typedef struct {
 grammar		: /* empty */
 		| grammar include '\n'
 		| grammar '\n'
-		| grammar conf_main '\n'
 		| grammar varset '\n'
 		| grammar uw_pref '\n'
 		| grammar uw_forwarder '\n'
@@ -173,10 +172,6 @@ varset		: STRING '=' string		{
 		}
 		;
 
-conf_main	: STRICT yesno {
-			conf->uw_options = $2;
-		}
-		;
 
 optnl		: '\n' optnl		/* zero or more newlines */
 		| /*empty*/
@@ -551,7 +546,6 @@ lookup(char *s)
 		{"recursor",		RECURSOR},
 		{"response",		RESPONSE},
 		{"status",		STATUS},
-		{"strict",		STRICT},
 		{"tls",			DOT},
 		{"url",			URL},
 		{"yes",			YES},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.9 2019/05/10 14:10:38 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.10 2019/05/13 23:13:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -67,10 +67,6 @@ print_config(struct uw_conf *conf)
 {
 	struct uw_forwarder	*uw_forwarder;
 	int			 i;
-
-#if notyet
-	printf("strict %s\n", yesno(conf->uw_options));
-#endif
 
 	if (conf->res_pref_len > 0) {
 		printf("preference {");
