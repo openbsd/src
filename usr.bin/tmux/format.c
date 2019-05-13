@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.193 2019/05/10 18:09:51 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.194 2019/05/13 20:07:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -60,7 +60,7 @@ static void	 format_defaults_winlink(struct format_tree *, struct winlink *);
 	"Detach & Kill,X,detach-client -P|" \
 	"Detach Others,o,detach-client -a|" \
 	"|" \
-	"#{?#{lock-command},Lock,},l,lock-client"
+	"Lock,l,lock-client"
 #define DEFAULT_SESSION_MENU \
 	"Next,n,switch-client -n|" \
 	"Previous,p,switch-client -p|" \
