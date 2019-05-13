@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.123 2019/05/10 15:03:24 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.124 2019/05/13 06:04:55 otto Exp $
 .\"
-.Dd $Mdocdate: May 10 2019 $
+.Dd $Mdocdate: May 13 2019 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -755,6 +755,12 @@ The
 .Fn aligned_alloc
 function appeared in
 .Ox 6.5 .
+The
+.Fn malloc_conceal
+and
+.Fn calloc_conceal
+functions appeared in
+.Ox 6.6 .
 .Sh CAVEATS
 When using
 .Fn malloc ,
