@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.9 2019/04/29 01:48:39 deraadt Exp $
+#	$OpenBSD: list,v 1.10 2019/05/13 23:18:21 naddy Exp $
 
 SRCDIRS distrib/special
 
@@ -61,6 +61,7 @@ LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/more usr/bin/less
 LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
+LINK	instbin					usr/bin/tee
 LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
 

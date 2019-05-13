@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1133 2019/05/13 02:26:42 ajacoutot Exp $
+#	$OpenBSD: install.sub,v 1.1134 2019/05/13 23:18:22 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2873,7 +2873,7 @@ do_autoinstall() {
 
 	echo "Performing non-interactive $AI_MODE..."
 	/$AI_MODE -af /tmp/ai/ai.$AI_MODE.conf 2>&1 </dev/null |
-		sed "s/^.*$(echo '\r')//;w/tmp/ai/ai.log"
+		tee /dev/stderr | sed "s/^.*$(echo '\r')//" >/tmp/ai/ai.log
 
 	$UU || [[ -f /tmp/ai/ai.done ]] || 
 		err_exit "failed; check /tmp/ai/ai.log"
