@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.7 2018/08/25 20:45:28 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.8 2019/05/13 03:13:29 patrick Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -174,7 +174,11 @@
 #define	 EXCP_BRK		0x3c	/* Breakpoint */
 
 /* ICC_CTLR_EL1 */
-#define	ICC_CTLR_EL1_EOIMODE	(1U << 1)
+#define	ICC_CTLR_EL1_EOIMODE		(1U << 1)
+#define	ICC_CTLR_EL1_PRIBITS_SHIFT	8
+#define	ICC_CTLR_EL1_PRIBITS_MASK	(0x7UL << 8)
+#define	ICC_CTLR_EL1_PRIBITS(reg)	\
+    (((reg) & ICC_CTLR_EL1_PRIBITS_MASK) >> ICC_CTLR_EL1_PRIBITS_SHIFT)
 
 /* ICC_IAR1_EL1 */
 #define	ICC_IAR1_EL1_SPUR	(0x03ff)
