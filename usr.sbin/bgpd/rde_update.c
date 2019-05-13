@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.109 2019/05/09 22:27:33 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.110 2019/05/13 13:47:36 denis Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -224,8 +224,11 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 		return;
 	}
 
-	path_update(&ribs[RIB_ADJ_OUT].rib, peer, &state, &addr, 0,
-	    ROA_NOTFOUND);
+	if (path_update(&ribs[RIB_ADJ_OUT].rib, peer, &state, &addr, 0,
+	    ROA_NOTFOUND) != 2) {
+		prefix_update(&ribs[RIB_ADJ_OUT].rib, peer, &addr, 0);
+		peer->up_nlricnt++;
+	}
 
 	/* no longer needed */
 	rde_filterstate_clean(&state);
