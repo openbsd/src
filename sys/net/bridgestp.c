@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.71 2019/05/03 18:39:08 mpi Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.72 2019/05/13 18:20:13 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1887,8 +1887,7 @@ bstp_initialization(struct bstp_state *bs)
 
 	if (!timeout_initialized(&bs->bs_bstptimeout))
 		timeout_set(&bs->bs_bstptimeout, bstp_tick, bs);
-	if (bs->bs_ifflags & IFF_RUNNING &&
-	    !timeout_pending(&bs->bs_bstptimeout))
+	if (!timeout_pending(&bs->bs_bstptimeout))
 		timeout_add_sec(&bs->bs_bstptimeout, 1);
 
 	LIST_FOREACH(bp, &bs->bs_bplist, bp_next) {
