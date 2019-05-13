@@ -1,4 +1,4 @@
-/*	$OpenBSD: idr.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: idr.h,v 1.2 2019/05/13 16:23:15 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -45,6 +45,11 @@ void *idr_get_next(struct idr *, int *);
 #define idr_for_each_entry(idp, entry, id) \
 	for (id = 0; ((entry) = idr_get_next(idp, &(id))) != NULL; id++)
 
+static inline bool
+idr_is_empty(const struct idr *idr)
+{
+	return SPLAY_EMPTY(&idr->tree);
+}
 
 struct ida {
 	int counter;
