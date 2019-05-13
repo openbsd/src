@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.57 2019/04/29 16:04:05 rob Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.58 2019/05/13 07:24:50 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -254,6 +254,9 @@ snmpe_parse(struct snmp_message *msg)
 			goto parsefail;
 
 		msg->sm_flags = *flagstr;
+		if ((a = usm_decode(msg, a, &msg->sm_errstr)) == NULL)
+			goto parsefail;
+
 		if (MSG_SECLEVEL(msg) < env->sc_min_seclevel ||
 		    msg->sm_secmodel != SNMP_SEC_USM) {
 			/* XXX currently only USM supported */
@@ -262,9 +265,6 @@ snmpe_parse(struct snmp_message *msg)
 			msg->sm_usmerr = OIDVAL_usmErrSecLevel;
 			goto parsefail;
 		}
-
-		if ((a = usm_decode(msg, a, &msg->sm_errstr)) == NULL)
-			goto parsefail;
 
 		if (ber_scanf_elements(a, "{xxe",
 		    &msg->sm_ctxengineid, &msg->sm_ctxengineid_len,
