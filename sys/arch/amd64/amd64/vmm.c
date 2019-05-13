@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.243 2019/05/12 20:56:34 pd Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.244 2019/05/13 15:40:34 pd Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <sys/rwlock.h>
 #include <sys/pledge.h>
 #include <sys/memrange.h>
+#include <sys/timetc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -39,6 +40,7 @@
 #include <machine/vmmvar.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/pv/pvreg.h>
 
 /* #define VMM_DEBUG */
 
@@ -198,6 +200,9 @@ void vmx_setmsrbw(struct vcpu *, uint32_t);
 void vmx_setmsrbrw(struct vcpu *, uint32_t);
 void svm_set_clean(struct vcpu *, uint32_t);
 void svm_set_dirty(struct vcpu *, uint32_t);
+
+void vmm_init_pvclock(struct vcpu *, paddr_t);
+int vmm_update_pvclock(struct vcpu *);
 
 #ifdef VMM_DEBUG
 void dump_vcpu(struct vcpu *);
@@ -3234,6 +3239,7 @@ vcpu_init(struct vcpu *vcpu)
 	vcpu->vc_virt_mode = vmm_softc->mode;
 	vcpu->vc_state = VCPU_STATE_STOPPED;
 	vcpu->vc_vpid = 0;
+	vcpu->vc_pvclock_system_gpa = 0;
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
 		ret = vcpu_init_vmx(vcpu);
@@ -4190,6 +4196,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	}
 
 	while (ret == 0) {
+		vmm_update_pvclock(vcpu);
 		if (!resume) {
 			/*
 			 * We are launching for the first time, or we are
@@ -6065,26 +6072,30 @@ vmx_handle_wrmsr(struct vcpu *vcpu)
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 
 	switch (*rcx) {
-		case MSR_MISC_ENABLE:
-			vmx_handle_misc_enable_msr(vcpu);
-			break;
-		case MSR_SMM_MONITOR_CTL:
-			/*
-			 * 34.15.5 - Enabling dual monitor treatment
-			 *
-			 * Unsupported, so inject #GP and return without
-			 * advancing %rip.
-			 */
-			ret = vmm_inject_gp(vcpu);
-			return (ret);
+	case MSR_MISC_ENABLE:
+		vmx_handle_misc_enable_msr(vcpu);
+		break;
+	case MSR_SMM_MONITOR_CTL:
+		/*
+		 * 34.15.5 - Enabling dual monitor treatment
+		 *
+		 * Unsupported, so inject #GP and return without
+		 * advancing %rip.
+		 */
+		ret = vmm_inject_gp(vcpu);
+		return (ret);
+	case KVM_MSR_SYSTEM_TIME:
+		vmm_init_pvclock(vcpu,
+		    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
+		break;
 #ifdef VMM_DEBUG
-		default:
-			/*
-			 * Log the access, to be able to identify unknown MSRs
-			 */
-			DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data "
-			    "written from guest=0x%llx:0x%llx\n", __func__,
-			    *rcx, *rdx, *rax);
+	default:
+		/*
+		 * Log the access, to be able to identify unknown MSRs
+		 */
+		DPRINTF("%s: wrmsr exit, msr=0x%llx, discarding data "
+		    "written from guest=0x%llx:0x%llx\n", __func__,
+		    *rcx, *rdx, *rax);
 #endif /* VMM_DEBUG */
 	}
 
@@ -6122,6 +6133,9 @@ svm_handle_msr(struct vcpu *vcpu)
 	if (vmcb->v_exitinfo1 == 1) {
 		if (*rcx == MSR_EFER) {
 			vmcb->v_efer = *rax | EFER_SVME;
+		} else if (*rcx == KVM_MSR_SYSTEM_TIME) {
+			vmm_init_pvclock(vcpu,
+			    (*rax & 0xFFFFFFFFULL) | (*rdx  << 32));
 		} else {
 #ifdef VMM_DEBUG
 			/* Log the access, to be able to identify unknown MSRs */
@@ -6419,6 +6433,13 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rcx = *((uint32_t *)&vmm_hv_signature[4]);
 		*rdx = *((uint32_t *)&vmm_hv_signature[8]);
 		break;
+	case 0x40000001:	/* KVM hypervisor features */
+		*rax = (1 << KVM_FEATURE_CLOCKSOURCE2) |
+		    (1 << KVM_FEATURE_CLOCKSOURCE_STABLE_BIT);
+		*rbx = 0;
+		*rcx = 0;
+		*rdx = 0;
+		break;
 	case 0x80000000:	/* Extended function level */
 		*rax = 0x80000008; /* curcpu()->ci_pnfeatset */
 		*rbx = 0;
@@ -6537,6 +6558,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	}
 
 	while (ret == 0) {
+		vmm_update_pvclock(vcpu);
 		if (!resume) {
 			/*
 			 * We are launching for the first time, or we are
@@ -6771,6 +6793,48 @@ vmm_free_vpid(uint16_t vpid)
 
 	DPRINTF("%s: freed VPID/ASID %d\n", __func__, vpid);
 	rw_exit_write(&vmm_softc->vpid_lock);
+}
+
+void
+vmm_init_pvclock(struct vcpu *vcpu, paddr_t gpa)
+{
+	vcpu->vc_pvclock_system_gpa = gpa;
+	vcpu->vc_pvclock_system_tsc_mul =
+	    (int) ((1000000000L << 20) / tc_getfrequency());
+	vmm_update_pvclock(vcpu);
+}
+
+int
+vmm_update_pvclock(struct vcpu *vcpu)
+{
+	struct pvclock_time_info *pvclock_ti;
+	struct timespec tv;
+	struct vm *vm = vcpu->vc_parent;
+	paddr_t pvclock_hpa, pvclock_gpa;
+
+	if (vcpu->vc_pvclock_system_gpa & PVCLOCK_SYSTEM_TIME_ENABLE) {
+		pvclock_gpa = vcpu->vc_pvclock_system_gpa & 0xFFFFFFFFFFFFFFF0;
+		if (!pmap_extract(vm->vm_map->pmap, pvclock_gpa, &pvclock_hpa))
+			return (EINVAL);
+		pvclock_ti = (void*) PMAP_DIRECT_MAP(pvclock_hpa);
+
+		/* START next cycle (must be odd) */
+		pvclock_ti->ti_version =
+		    (++vcpu->vc_pvclock_version << 1) | 0x1;
+
+		pvclock_ti->ti_tsc_timestamp = rdtsc();
+		nanotime(&tv);
+		pvclock_ti->ti_system_time =
+		    tv.tv_sec * 1000000000L + tv.tv_nsec;
+		pvclock_ti->ti_tsc_shift = -20;
+		pvclock_ti->ti_tsc_to_system_mul =
+		    vcpu->vc_pvclock_system_tsc_mul;
+		pvclock_ti->ti_flags = PVCLOCK_FLAG_TSC_STABLE;
+
+		/* END (must be even) */
+		pvclock_ti->ti_version &= ~0x1;
+	}
+	return (0);
 }
 
 /*

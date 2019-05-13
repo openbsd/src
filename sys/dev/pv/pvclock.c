@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.3 2018/12/05 18:02:51 reyk Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.4 2019/05/13 15:40:34 pd Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -41,25 +41,6 @@ struct pvclock_softc {
 	struct timecounter	*sc_tc;
 };
 
-struct pvclock_wall_clock {
-	uint32_t		 wc_version;
-	uint32_t		 wc_sec;
-	uint32_t		 wc_nsec;
-} __packed;
-
-struct pvclock_time_info {
-	uint32_t		 ti_version;
-	uint32_t		 ti_pad0;
-	uint64_t		 ti_tsc_timestamp;
-	uint64_t		 ti_system_time;
-	uint32_t		 ti_tsc_to_system_mul;
-	int8_t			 ti_tsc_shift;
-	uint8_t			 ti_flags;
-	uint8_t			 ti_pad[2];
-} __packed;
-
-#define PVCLOCK_FLAG_TSC_STABLE		0x01
-#define PVCLOCK_SYSTEM_TIME_ENABLE	0x01
 #define DEVNAME(_s)			((_s)->sc_dev.dv_xname)
 
 int	 pvclock_match(struct device *, void *, void *);
@@ -104,6 +85,8 @@ pvclock_match(struct device *parent, void *match, void *aux)
 	 * only support the "kvmclock".
 	 */
 	hv = &pva->pva_hv[PVBUS_KVM];
+	if (hv->hv_base == 0)
+		hv = &pva->pva_hv[PVBUS_OPENBSD];
 	if (hv->hv_base != 0) {
 		/*
 		 * We only implement support for the 2nd version of pvclock.
