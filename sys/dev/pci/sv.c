@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.34 2016/09/19 06:46:44 ratchov Exp $ */
+/*      $OpenBSD: sv.c,v 1.35 2019/05/13 21:29:28 mpi Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -1286,7 +1286,7 @@ sv_malloc(void *addr, int direction, size_t size, int pool, int flags)
                 return (0);
         error = sv_allocmem(sc, size, 16, p);
         if (error) {
-                free(p, pool, 0);
+                free(p, pool, sizeof(*p));
         	return (0);
         }
         p->next = sc->sc_dmas;
@@ -1304,7 +1304,7 @@ sv_free(void *addr, void *ptr, int pool)
                 if (KERNADDR(*p) == ptr) {
                         sv_freemem(sc, *p);
                         *p = (*p)->next;
-                        free(*p, pool, 0);
+                        free(*p, pool, sizeof(**p));
                         return;
                 }
         }
