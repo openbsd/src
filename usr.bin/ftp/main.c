@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.125 2019/05/14 02:32:08 sunil Exp $ */
+/*	$OpenBSD: main.c,v 1.126 2019/05/14 18:25:31 florian Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -116,6 +116,9 @@ main(int argc, char **argv)
 		case 'V':
 			verbose = 0;
 			break;
+		case 'v':
+			verbose = 1;
+			break;
 		case 'w':
 			connect_timeout = strtonum(optarg, 0, 200, &e);
 			if (e)
@@ -145,7 +148,6 @@ main(int argc, char **argv)
 		case 'r':
 		case 's':
 		case 't':
-		case 'v':
 			break;
 		default:
 			usage();
