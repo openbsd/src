@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.93 2017/12/12 12:33:36 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.94 2019/05/14 15:19:06 jan Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.93 2017/12/12 12:33:36 krw Exp $
+ * $Id: aic7xxx.c,v 1.94 2019/05/14 15:19:06 jan Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -1688,7 +1688,7 @@ ahc_free_tstate(struct ahc_softc *ahc, u_int scsi_id, char channel, int force)
 		scsi_id += 8;
 	tstate = ahc->enabled_targets[scsi_id];
 	if (tstate != NULL)
-		free(tstate, M_DEVBUF, 0);
+		free(tstate, M_DEVBUF, sizeof(*tstate));
 	ahc->enabled_targets[scsi_id] = NULL;
 }
 #endif
@@ -3957,8 +3957,6 @@ ahc_set_unit(struct ahc_softc *ahc, int unit)
 void
 ahc_set_name(struct ahc_softc *ahc, char *name)
 {
-	if (ahc->name != NULL)
-		free(ahc->name, M_DEVBUF, 0);
 	ahc->name = name;
 }
 
@@ -3997,21 +3995,21 @@ ahc_free(struct ahc_softc *ahc)
 				lstate = tstate->enabled_luns[j];
 				if (lstate != NULL) {
 					  /*xpt_free_path(lstate->path);*/
-					free(lstate, M_DEVBUF, 0);
+					free(lstate, M_DEVBUF, sizeof(*lstate));
 				}
 			}
 #endif
-			free(tstate, M_DEVBUF, 0);
+			free(tstate, M_DEVBUF, sizeof(*tstate));
 		}
 	}
 #ifdef AHC_TARGET_MODE
 	if (ahc->black_hole != NULL) {
 	  /*xpt_free_path(ahc->black_hole->path);*/
-		free(ahc->black_hole, M_DEVBUF, 0);
+		free(ahc->black_hole, M_DEVBUF, sizeof(*ahc->black_hole));
 	}
 #endif
 	if (ahc->seep_config != NULL)
-		free(ahc->seep_config, M_DEVBUF, 0);
+		free(ahc->seep_config, M_DEVBUF, sizeof(*ahc->seep_config));
 	return;
 }
 
@@ -4329,7 +4327,7 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 			ahc_freedmamem(ahc->parent_dmat, PAGE_SIZE,
 			    sg_map->sg_dmamap, (caddr_t)sg_map->sg_vaddr,
 			    &sg_map->sg_dmasegs, sg_map->sg_nseg);
-			free(sg_map, M_DEVBUF, 0);
+			free(sg_map, M_DEVBUF, sizeof(*sg_map));
 		}
 	}
 	/*FALLTHROUGH*/
@@ -4350,8 +4348,10 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 	case 0:
 		break;
 	}
-	if (scb_data->scbarray != NULL)
-		free(scb_data->scbarray, M_DEVBUF, 0);
+	if (scb_data->scbarray != NULL) {
+		free(scb_data->scbarray, M_DEVBUF,
+		    AHC_SCB_MAX_ALLOC * sizeof(struct scb));
+	}
 }
 
 void
@@ -4383,7 +4383,7 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 			     (caddr_t *)&sg_map->sg_vaddr, &sg_map->sg_physaddr,
 			     &sg_map->sg_dmasegs, &sg_map->sg_nseg, ahc_name(ahc),
 			     "SG space") < 0) {
-		free(sg_map, M_DEVBUF, 0);
+		free(sg_map, M_DEVBUF, sizeof(*sg_map));
 		return;
 	}
 
@@ -6859,7 +6859,7 @@ ahc_handle_en_lun(struct ahc_softc *ahc, struct cam_sim *sim, union ccb *ccb)
 					 xpt_path_target_id(ccb->ccb_h.path),
 					 xpt_path_lun_id(ccb->ccb_h.path));
 		if (status != CAM_REQ_CMP) {
-			free(lstate, M_DEVBUF, 0);
+			free(lstate, M_DEVBUF, sizeof(*lstate));
 			xpt_print_path(ccb->ccb_h.path);
 			printf("Couldn't allocate path\n");
 			ccb->ccb_h.status = CAM_RESRC_UNAVAIL;
@@ -6980,7 +6980,7 @@ ahc_handle_en_lun(struct ahc_softc *ahc, struct cam_sim *sim, union ccb *ccb)
 		xpt_print_path(ccb->ccb_h.path);
 		printf("Target mode disabled\n");
 		xpt_free_path(lstate->path);
-		free(lstate, M_DEVBUF, 0);
+		free(lstate, M_DEVBUF, sizeof(*lstate));
 
 		ahc_pause(ahc);
 		/* Can we clean up the target too? */
