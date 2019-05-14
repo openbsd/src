@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.236 2019/05/03 01:48:42 jsg Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.237 2019/05/14 16:47:30 benno Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1301,7 +1301,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, int nodescr, int flag0)
 
 	s = fmt_peer(r->descr, &r->remote_addr, -1, nodescr);
 	printf("    Nexthop %s ", log_addr(&r->exit_nexthop));
-	printf("(via %s) from %s (", log_addr(&r->true_nexthop), s);
+	printf("(via %s) Neighbor %s (", log_addr(&r->true_nexthop), s);
 	free(s);
 	id.s_addr = htonl(r->remote_id);
 	printf("%s)%c", inet_ntoa(id), EOL0(flag0));
