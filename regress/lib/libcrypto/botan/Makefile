@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2018/11/09 23:44:32 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2019/05/14 05:48:58 bluhm Exp $
 
 .if ! exists(/usr/local/bin/botan-test)
 regress:
 	# install botan2 from ports for botan tests with libressl provider
+	# pkg_add botan2
 	@echo SKIPPED
 .endif
 
@@ -13,7 +14,8 @@ regress:
 # Even if provider openssl is specified, botan-test runs a lot of
 # non-openssl tests.  This can be improved later.
 
-regress:
+REGRESS_TARGETS=	run-regress
+run-regress:
 	/usr/local/bin/botan-test --provider=openssl
 
 .include <bsd.regress.mk>
