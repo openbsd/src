@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.10 2019/01/23 19:40:20 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.11 2019/05/14 20:48:45 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -30,13 +30,13 @@
 #include <string.h>
 #include <unistd.h>
 
-static int test_close(int, int);
-static int test_coverage(int, int);
-static int test_dying(int, int);
-static int test_exec(int, int);
-static int test_fork(int, int);
-static int test_open(int, int);
-static int test_state(int, int);
+static int test_close(int, int, unsigned long);
+static int test_coverage(int, int, unsigned long);
+static int test_dying(int, int, unsigned long);
+static int test_exec(int, int, unsigned long);
+static int test_fork(int, int, unsigned long);
+static int test_open(int, int, unsigned long);
+static int test_state(int, int, unsigned long);
 
 static int check_coverage(const unsigned long *, int, unsigned long, int);
 static void do_syscall(void);
@@ -47,14 +47,13 @@ static int kcov_open(void);
 static __dead void usage(void);
 
 static const char *self;
-static unsigned long bufsize = 256 << 10;
 
 int
 main(int argc, char *argv[])
 {
 	struct {
 		const char *name;
-		int (*fn)(int, int);
+		int (*fn)(int, int, unsigned long);
 		int coverage;		/* test must produce coverage */
 	} tests[] = {
 		{ "close",	test_close,	0 },
@@ -66,7 +65,9 @@ main(int argc, char *argv[])
 		{ "state",	test_state,	1 },
 		{ NULL,		NULL,		0 },
 	};
-	unsigned long *cover;
+	const char *errstr;
+	unsigned long *cover, frac;
+	unsigned long bufsize = 256 << 10;
 	int c, fd, i;
 	int error = 0;
 	int mode = 0;
@@ -76,8 +77,16 @@ main(int argc, char *argv[])
 
 	self = argv[0];
 
-	while ((c = getopt(argc, argv, "Em:pv")) != -1)
+	while ((c = getopt(argc, argv, "b:Em:pv")) != -1)
 		switch (c) {
+		case 'b':
+			frac = strtonum(optarg, 1, 100, &errstr);
+			if (frac == 0)
+				errx(1, "buffer size fraction %s", errstr);
+			else if (frac > bufsize)
+				errx(1, "buffer size fraction too large");
+			bufsize /= frac;
+			break;
 		case 'E':
 			reexec = 1;
 			break;
@@ -129,7 +138,7 @@ main(int argc, char *argv[])
 		err(1, "mmap");
 
 	*cover = 0;
-	error = tests[i].fn(fd, mode);
+	error = tests[i].fn(fd, mode, bufsize);
 	if (verbose)
 		dump(cover, mode);
 	if (check_coverage(cover, mode, bufsize, tests[i].coverage))
@@ -145,7 +154,7 @@ main(int argc, char *argv[])
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: kcov [-Epv] -t mode test\n");
+	fprintf(stderr, "usage: kcov [-Epv] [-b fraction] -t mode test\n");
 	exit(1);
 }
 
@@ -242,7 +251,7 @@ kcov_disable(int fd)
  * Close before mmap.
  */
 static int
-test_close(int oldfd, int mode)
+test_close(int oldfd, int mode, unsigned long bufsize)
 {
 	int fd;
 
@@ -255,7 +264,7 @@ test_close(int oldfd, int mode)
  * Coverage of current thread.
  */
 static int
-test_coverage(int fd, int mode)
+test_coverage(int fd, int mode, unsigned long bufsize)
 {
 	kcov_enable(fd, mode);
 	do_syscall();
@@ -276,7 +285,7 @@ closer(void *arg)
  * Close kcov descriptor in another thread during tracing.
  */
 static int
-test_dying(int fd, int mode)
+test_dying(int fd, int mode, unsigned long bufsize)
 {
 	pthread_t th;
 	int error;
@@ -303,7 +312,7 @@ test_dying(int fd, int mode)
  * Coverage of thread after exec.
  */
 static int
-test_exec(int fd, int mode)
+test_exec(int fd, int mode, unsigned long bufsize)
 {
 	pid_t pid;
 	int status;
@@ -338,7 +347,7 @@ test_exec(int fd, int mode)
  * Coverage of thread after fork.
  */
 static int
-test_fork(int fd, int mode)
+test_fork(int fd, int mode, unsigned long bufsize)
 {
 	pid_t pid;
 	int status;
@@ -373,7 +382,7 @@ test_fork(int fd, int mode)
  * Open /dev/kcov more than once.
  */
 static int
-test_open(int oldfd, int mode)
+test_open(int oldfd, int mode, unsigned long bufsize)
 {
 	unsigned long *cover;
 	int fd;
@@ -404,7 +413,7 @@ test_open(int oldfd, int mode)
  * State transitions.
  */
 static int
-test_state(int fd, int mode)
+test_state(int fd, int mode, unsigned long bufsize)
 {
 	if (ioctl(fd, KIOENABLE, &mode) == -1) {
 		warn("KIOSETBUFSIZE -> KIOENABLE");
