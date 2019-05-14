@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.9,v 1.14 2019/05/14 12:55:54 schwarze Exp $
+.\"	$OpenBSD: syscall.9,v 1.15 2019/05/14 13:17:09 schwarze Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\"
@@ -174,12 +174,12 @@ else
 .Ed
 .Pp
 The
-.Dq SYSCALL_DEBUG
+.Dv SYSCALL_DEBUG
 parts of the code are explained in the
 .Sx Debugging
 section below.
 For the
-.Dq KTRACE
+.Dv KTRACE
 portions of the code refer to the
 .Xr ktrace 9
 document for further explanations.
@@ -193,7 +193,7 @@ should be included in the kernel configuration file (see
 This allows tracing for calls, returns, and arguments for both
 implemented and non-implemented system calls.
 A global integer variable
-.Dq scdebug
+.Va scdebug
 contains a mask for the desired logging events:
 .Pp
 .Bl -tag -width SCDEBUG_SHOWARGS__ -compact
@@ -209,9 +209,9 @@ contains a mask for the desired logging events:
 .Pp
 Use
 .Xr ddb 4
-to set the
-.Dq scdebug
-to a value desired.
+to set
+.Va scdebug
+to the desired value.
 .Sh CODE REFERENCES
 .Bl -tag -width sys/kern/syscalls.master -compact
 .It Pa sys/kern/makesyscalls.sh
