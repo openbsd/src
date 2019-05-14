@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.20 2019/05/13 02:25:16 ajacoutot Exp $
+# $OpenBSD: sysupgrade.sh,v 1.21 2019/05/14 14:27:49 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -24,6 +24,7 @@ set -e
 umask 0022
 
 ARCH=$(uname -m)
+SETSDIR=/home/_sysupgrade
 
 ug_err()
 {
@@ -54,17 +55,6 @@ unpriv()
 	[[ -n ${_file} ]] && chown root "${_file}"
 
 	return ${_rc}
-}
-
-# df(1) is run twice to sort our prefered FS list first
-get_prefetcharea() {
-	{ df -kl /{tmp,home,usr{/local,}}; df -kl ;} |
-		while read a a a a m m; do
-			[[ $m == /@(tmp|home|usr/@(src,obj,xobj))@(|/*) ]] &&
-				((a > 524288)) && echo $m && break
-			[[ $m == @(|/*) ]] &&
-				((a > 524288 * 4)) && echo $m && break
-		done
 }
 
 # Remove all occurrences of first argument from list formed by the remaining
@@ -128,20 +118,16 @@ else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
 fi
 
-SETSDIR=$(mktemp -d -p $(get_prefetcharea) .sysupgrade.XXXXXXXXXX)
-
-if [[ -n ${SETSDIR} ]]; then
-	install -d -o 0 -g 0 -m 0755 ${SETSDIR}
-	cat <<-__EOT >/auto_upgrade.conf
-		Location of sets = disk
-		Pathname to the sets = ${SETSDIR}
-		Set name(s) = done
-		Directory does not contain SHA256.sig. Continue without verification = yes
-	__EOT
-	${KEEP} || echo "rm -rf -- \"${SETSDIR}\"" >>/etc/rc.firsttime
-
+if [[ -e ${SETSDIR} ]]; then
+	eval $(stat -s ${SETSDIR})
+	[[ $st_uid -eq 0 ]] ||
+		 ug_err "${SETSDIR} needs to be owned by root:wheel"
+	[[ $st_gid -eq 0 ]] ||
+		 ug_err "${SETSDIR} needs to be owned by root:wheel"
+	[[ $st_mode -eq 040755 ]] || 
+		ug_err "${SETSDIR} is not a directory with permissions 0755"
 else
-	ug_err "Not enough space to fetch sets"
+	mkdir -p ${SETSDIR}
 fi
 
 cd ${SETSDIR}
@@ -193,6 +179,8 @@ if [[ -n ${DL} ]]; then
 	echo Verifying sets.
 	unpriv cksum -qC SHA256 ${DL}
 fi
+
+${KEEP} && > keep
 
 cp bsd.rd /nbsd.upgrade
 ln -f /nbsd.upgrade /bsd.upgrade

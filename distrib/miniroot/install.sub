@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1134 2019/05/13 23:18:22 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1135 2019/05/14 14:27:49 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -68,7 +68,7 @@ err_exit() {
 
 # Show usage of the installer script and exit.
 usage() {
-	err_exit "usage: ${0##*/} [-ax] [-f filename] [-m install | upgrade]"
+	err_exit "usage: ${0##*/} [-a] [-f filename] [-m install | upgrade]"
 }
 
 # Wait for the ftp(1) process started in start_cgiinfo() to end and extract
@@ -2881,6 +2881,12 @@ do_autoinstall() {
 	# Email autoinstall protocol to root on next boot.
 	prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
 
+	if $UU; then
+		cat <<__EOT >>/mnt/etc/rc.firsttime
+[[ ! -e /home/_sysupgrade/keep ]] && rm -f /home/_sysupgrade/*
+__EOT
+	fi
+
 	exec reboot
 }
 
@@ -3195,7 +3201,7 @@ do_upgrade() {
 	umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
 	mount_fs
 
-	rm -f /mnt/bsd.upgrade /mnt/auto_upgrade.conf
+	rm -f /mnt/bsd.upgrade
 
 	# Feed the random pool some entropy before we read from it.
 	feed_random
@@ -3222,9 +3228,8 @@ check_unattendedupgrade() {
 		if [[ -n $_d ]]; then
 			make_dev $_d
 			if mount -t ffs -r /dev/${_d}a /mnt; then
-				[[ -f /mnt/bsd.upgrade && -f /mnt/auto_upgrade.conf ]]
+				ls /mnt/bsd.upgrade 
 				_rc=$?
-				((_rc == 0)) && cp /mnt/auto_upgrade.conf /
 				umount -f /mnt
 			fi
 			rm -f /dev/{r,}$_d?
@@ -3384,6 +3389,12 @@ elif $UU; then
 	# trigger watchdog
 	(sleep 1800 && reboot) &
 
+	cat <<__EOT > /auto_upgrade.conf
+Location of sets = disk
+Pathname to the sets = /home/_sysupgrade/
+Set name(s) = done
+Directory does not contain SHA256.sig. Continue without verification = yes
+__EOT
 	get_responsefile
 	do_autoinstall
 elif [[ -z $AI_RESPFILE ]]; then
