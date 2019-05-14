@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.124 2019/05/12 21:49:52 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.125 2019/05/14 02:32:08 sunil Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -272,7 +272,6 @@ parent(int sock, pid_t child_pid)
 	}
 
 	close(sock);
- done:
 	if (waitpid(child_pid, &status, 0) == -1 && errno != ECHILD)
 		err(1, "wait");
 
