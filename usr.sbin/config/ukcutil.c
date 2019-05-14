@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.23 2017/09/27 15:14:52 deraadt Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.24 2019/05/14 13:44:25 tedu Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -29,6 +29,7 @@
 #include <sys/device.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <nlist.h>
@@ -1295,13 +1296,61 @@ add_history(int devno, short unit, short state, int newno)
 }
 
 int
+config_fromfile(const char *cmdfile) {
+	FILE *fp;
+	cmd_t cmd;
+	int i;
+
+	fp = fopen(cmdfile, "r");
+	if (fp == NULL)
+		err(1, "open %s", cmdfile);
+
+	/* Set up command table pointer */
+	cmd.table = cmd_table;
+
+	/* Edit cycle */
+	do {
+		char lbuf[100];
+
+		/* Get input */
+		if (fgets(lbuf, sizeof lbuf, fp) == NULL)
+			break;
+		parse_cmd(&cmd, lbuf);
+
+		if (cmd.cmd[0] == '\0')
+			continue;
+		for (i = 0; cmd_table[i].cmd != NULL; i++)
+			if (strstr(cmd_table[i].cmd, cmd.cmd) ==
+			    cmd_table[i].cmd)
+				break;
+
+		/* Check for valid command */
+		if (cmd_table[i].cmd == NULL) {
+			printf("Invalid command '%s'\n", cmd.cmd);
+			exit(1);
+		}
+		strlcpy(cmd.cmd, cmd_table[i].cmd, sizeof cmd.cmd);
+
+		/* Call function */
+		cmd_table[i].fcn(&cmd);
+
+	} while (1);
+	return 1;
+}
+
+int
 config(void)
 {
+	extern char *cmdfile;
 	cmd_t cmd;
 	int i, st;
 
 	/* Set up command table pointer */
 	cmd.table = cmd_table;
+
+	if (cmdfile != NULL) {
+		return config_fromfile(cmdfile);
+	}
 
 	printf("Enter 'help' for information\n");
 
