@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.65 2019/05/06 05:40:49 jmc Exp $
+.\"	$OpenBSD: vmctl.8,v 1.66 2019/05/14 12:47:17 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 6 2019 $
+.Dd $Mdocdate: May 14 2019 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -220,9 +220,7 @@ The default is 512M.
 .It Fl n Ar switch
 Add a network interface that is attached to the specified virtual
 .Ar switch .
-See
-.Sx SWITCH CONFIGURATION
-in
+See the SWITCH CONFIGURATION section in
 .Xr vm.conf 5
 for more information.
 .It Fl r Ar path
