@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.508 2019/04/04 02:28:23 naddy Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.509 2019/05/14 15:00:37 naddy Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 4 2019 $
+.Dd $Mdocdate: May 14 2019 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -377,7 +377,7 @@ requirements.
 .It Cm gen
 Generate configure script when needed, either after patching
 input files, or from scratch for some ports,
-generally using automake, autoconf, autogen and similar gnu tools.
+generally using automake, autoconf, autoreconf and similar GNU tools.
 This target only has modules
 .Po Ev MODxxx_gen Pc
 and a
@@ -914,9 +914,13 @@ Current machine architecture.
 Read-only.
 .It Ev AUTOCONF
 Location of the autoconf binary if needed.
-Defaults to autoconf (though autoreconf might be more appropriate).
+Defaults to autoconf.
 .It Ev AUTOCONF_DIR
-Where to invoke autoconf if ${CONFIGURE_STYLE} includes autoconf.
+Where to invoke autoconf or autoreconf if ${CONFIGURE_STYLE} includes
+.Sq autoconf
+or
+.Sq autoreconf ,
+respectively.
 Defaults to ${WRKSRC}.
 .\" AUTOCONF_DIR should probably be a list, and be renamed to AUTOCONF_DIRS ?
 .It Ev AUTOCONF_ENV
@@ -951,6 +955,12 @@ Several versions of automake may coexist peacefully.
 .Ev AUTOMAKE_VERSION
 must be set before trying to run automake.
 Defaults to 1.4.
+.It Ev AUTORECONF
+Location of the autoreconf binary and the arguments it is invoked with.
+Can be set to
+.Sq autogen.sh 
+if such a script is available.
+Defaults to autoreconf --force --install.
 .It Ev BASE_PKGPATH
 Full
 .Xr pkgpath 7
@@ -1444,6 +1454,10 @@ if autoconf needs to be rerun first,
 but set
 .Sq no-autoheader
 to prevent autoheader from running.
+Alternatively, add
+.Sq autoreconf
+to rerun autoconf, automake, and related tools to completely regenerate
+the GNU build framework.
 .Pp
 If
 .Sq imake ,
