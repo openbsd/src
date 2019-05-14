@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.13 2019/01/20 09:57:23 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.14 2019/05/14 13:44:45 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -428,7 +428,8 @@ kd_free(struct kcov_dev *kd)
 static inline int
 inintr(void)
 {
-#if defined(__amd64__) || defined(__i386__)
+#if defined(__amd64__) || defined(__arm__) || defined(__arm64__) || \
+    defined(__i386__)
 	return (curcpu()->ci_idepth > 0);
 #else
 	return (0);
