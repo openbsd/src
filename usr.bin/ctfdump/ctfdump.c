@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.22 2019/03/16 16:35:03 sunil Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.23 2019/05/14 03:16:55 sunil Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -21,9 +21,10 @@
 #include <sys/mman.h>
 #include <sys/ctf.h>
 
-#include <elf.h>
 #include <err.h>
 #include <fcntl.h>
+#include <gelf.h>
+#include <libelf.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -60,19 +61,9 @@ const char	*ctf_fpenc2name(uint16_t);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
 		     uint32_t);
 
-int		 elf_dump(char *, size_t, uint8_t);
-const char	*elf_idx2sym(size_t *, uint8_t);
-
-/* elf.c */
-int		 iself(const char *, size_t);
-int		 elf_getshstab(const char *, size_t, const char **, size_t *);
-ssize_t		 elf_getsymtab(const char *, size_t filesize, const char *,
-		     size_t, const Elf_Sym **, size_t *, const char **,
-		     size_t *);
-ssize_t		 elf_getsection(char *, size_t, const char *, const char *,
-		     size_t, const char **, size_t *);
-
 char		*decompress(const char *, size_t, off_t);
+int		 elf_dump(uint8_t);
+const char	*elf_idx2sym(size_t *, uint8_t);
 
 int
 main(int argc, char *argv[])
@@ -121,119 +112,162 @@ main(int argc, char *argv[])
 	if (flags == 0)
 		flags = 0xff;
 
+	if (elf_version(EV_CURRENT) == EV_NONE)
+		errx(1, "elf_version: %s", elf_errmsg(-1));
+
 	while ((filename = *argv++) != NULL)
 		error |= dump(filename, flags);
 
 	return error;
 }
 
+Elf	*e;
+Elf_Scn	*scnsymtab;
+size_t	 strtabndx, strtabsz, nsymb;
+
 int
 dump(const char *path, uint8_t flags)
 {
-	struct stat		 st;
-	int			 fd, error = 1;
-	char			*p;
+	struct stat	 st;
+	char		*p;
+	int		 fd, error = 1;
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1) {
 		warn("open");
 		return 1;
 	}
+
+	if ((e = elf_begin(fd, ELF_C_READ, NULL)) == NULL) {
+		warnx("elf_begin: %s", elf_errmsg(-1));
+		goto done;
+	}
+
+	if (elf_kind(e) == ELF_K_ELF) {
+		error = elf_dump(flags);
+		elf_end(e);
+		goto done;
+	}
+	elf_end(e);
+
 	if (fstat(fd, &st) == -1) {
 		warn("fstat");
-		close(fd);
-		return 1;
+		goto done;
 	}
 	if ((uintmax_t)st.st_size > SIZE_MAX) {
 		warnx("file too big to fit memory");
-		close(fd);
-		return 1;
+		goto done;
 	}
 
 	p = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	if (p == MAP_FAILED)
 		err(1, "mmap");
 
-	if (iself(p, st.st_size)) {
-		error = elf_dump(p, st.st_size, flags);
-	} else if (isctf(p, st.st_size)) {
+	if (isctf(p, st.st_size))
 		error = ctf_dump(p, st.st_size, flags);
-	}
 
 	munmap(p, st.st_size);
-	close(fd);
 
+ done:
+	close(fd);
 	return error;
 }
-
-const char		*strtab;
-const Elf_Sym		*symtab;
-size_t			 strtabsz, nsymb;
 
 const char *
 elf_idx2sym(size_t *idx, uint8_t type)
 {
-	const Elf_Sym	*st;
+	GElf_Sym	 sym;
+	Elf_Data	*data;
+	char		*name;
 	size_t		 i;
 
-	if (strtab == NULL)
+	if (scnsymtab == NULL || strtabndx == 0)
 		return NULL;
 
-	for (i = *idx + 1; i < nsymb; i++) {
-		st = &symtab[i];
+	data = NULL;
+	while ((data = elf_rawdata(scnsymtab, data)) != NULL) {
+		for (i = *idx + 1; i < nsymb; i++) {
+			if (gelf_getsym(data, i, &sym) != &sym)
+				continue;
+			if (GELF_ST_TYPE(sym.st_info) != type)
+				continue;
+			if (sym.st_name >= strtabsz)
+				break;
+			if ((name = elf_strptr(e, strtabndx,
+			    sym.st_name)) == NULL)
+				continue;
 
-		if (ELF_ST_TYPE(st->st_info) != type)
-			continue;
-
-		if (st->st_name >= strtabsz)
-			break;
-
-		*idx = i;
-		return strtab + st->st_name;
+			*idx = i;
+			return name;
+		}
 	}
 
 	return NULL;
 }
 
 int
-elf_dump(char *p, size_t filesize, uint8_t flags)
+elf_dump(uint8_t flags)
 {
-	Elf_Ehdr		*eh = (Elf_Ehdr *)p;
-	Elf_Shdr		*sh;
-	const char		*shstab;
-	size_t			 i, shstabsz;
+	GElf_Shdr	 shdr;
+	Elf_Scn		*scn, *scnctf;
+	Elf_Data	*data;
+	char		*name;
+	size_t		 shstrndx;
+	int		 error = 1;
 
-	/* Find section header string table location and size. */
-	if (elf_getshstab(p, filesize, &shstab, &shstabsz))
-		return 1;
-
-	/* Find symbol table and associated string table. */
-	if (elf_getsymtab(p, filesize, shstab, shstabsz, &symtab, &nsymb,
-	    &strtab, &strtabsz) == -1)
-		warnx("symbol table not found");
-
-	/* Find CTF section and dump it. */
-	for (i = 0; i < eh->e_shnum; i++) {
-		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
-
-		if ((sh->sh_link >= eh->e_shnum) ||
-		    (sh->sh_name >= shstabsz))
-			continue;
-
-		if (strncmp(shstab + sh->sh_name, ELF_CTF, strlen(ELF_CTF)))
-			continue;
-
-		if ((sh->sh_offset + sh->sh_size) > filesize)
-			continue;
-
-		if (!isctf(p + sh->sh_offset, sh->sh_size))
-			break;
-
-		return ctf_dump(p + sh->sh_offset, sh->sh_size, flags);
+	if (elf_getshdrstrndx(e, &shstrndx) != 0) {
+		warnx("elf_getshdrstrndx: %s", elf_errmsg(-1));
+		return error;
 	}
 
-	warnx("%s section not found", ELF_CTF);
-	return 1;
+	scn = scnctf = NULL;
+	while ((scn = elf_nextscn(e, scn)) != NULL) {
+		if (gelf_getshdr(scn, &shdr) != &shdr) {
+			warnx("elf_getshdr: %s", elf_errmsg(-1));
+			return error;
+		}
+
+		if ((name = elf_strptr(e, shstrndx, shdr.sh_name)) == NULL) {
+			warnx("elf_strptr: %s", elf_errmsg(-1));
+			return error;
+		}
+
+		if (strcmp(name, ELF_CTF) == 0)
+			scnctf = scn;
+
+		if (strcmp(name, ELF_SYMTAB) == 0 &&
+		    shdr.sh_type == SHT_SYMTAB && shdr.sh_entsize != 0) {
+			scnsymtab = scn;
+			nsymb = shdr.sh_size / shdr.sh_entsize;
+		}
+
+		if (strcmp(name, ELF_STRTAB) == 0 &&
+		    shdr.sh_type == SHT_STRTAB) {
+			strtabndx = elf_ndxscn(scn);
+			strtabsz = shdr.sh_size;
+		}
+	}
+
+	if (scnctf == NULL) {
+		warnx("%s section not found", ELF_CTF);
+		return error;
+	}
+
+	if (scnsymtab == NULL)
+		warnx("symbol table not found");
+
+	data = NULL;
+	while ((data = elf_rawdata(scnctf, data)) != NULL) {
+		if (data->d_buf == NULL) {
+			warnx("%s section size is zero", ELF_CTF);
+			return error;
+		}
+
+		if (isctf(data->d_buf, data->d_size))
+			error |= ctf_dump(data->d_buf, data->d_size, flags);
+	}
+
+	return error;
 }
 
 int

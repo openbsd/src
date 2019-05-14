@@ -1,11 +1,11 @@
 
 PROG=		ctfdump
-SRCS=		ctfdump.c elf.c
+SRCS=		ctfdump.c
 
 CFLAGS+=	-W -Wall -Wstrict-prototypes -Wno-unused -Wunused-variable
 
 CFLAGS+=	-DZLIB
-LDADD+=		-lz
-DPADD+=		${LIBZ}
+LDADD+=		-lelf -lz
+DPADD+=		${LIBELF} ${LIBZ}
 
 .include <bsd.prog.mk>
