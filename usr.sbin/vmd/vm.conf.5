@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.42 2019/03/07 18:54:06 kn Exp $
+.\" $OpenBSD: vm.conf.5,v 1.43 2019/05/14 06:05:45 anton Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 7 2019 $
+.Dd $Mdocdate: May 14 2019 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -144,6 +144,37 @@ See
 Kernel or BIOS image to load when booting the VM.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
+.It Cm boot device Ar device
+Force VM to boot from
+.Ar device .
+Valid values are:
+.Bl -tag -width "cdrom"
+.It Ar cdrom
+Boot the ISO image file specified using the
+.Ic cdrom
+parameter.
+.It Ar disk
+Boot from the disk image file specified using the
+.Ic disk
+parameter.
+.It Ar net
+Boot the kernel specified using the
+.Ic boot
+parameter as if the VM was network booted.
+In addition, the DHCP lease will advertise
+.Dq auto_install
+in the bootfile option making it suitable for use with
+.Xr autoinstall 8 .
+Note, this is not to be confused with
+.Xr pxeboot 8
+but rather a simulated network boot.
+.El
+.Pp
+Currently
+.Ar disk
+and
+.Ar cdrom
+only work with VMs booted using BIOS.
 .It Cm cdrom Ar path
 ISO image file.
 .It Cm enable
