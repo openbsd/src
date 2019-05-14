@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.18 2018/12/02 11:46:31 anton Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.19 2019/05/14 16:43:26 bluhm Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 2 2018 $
+.Dd $Mdocdate: May 14 2019 $
 .Dt BSD.REGRESS.MK 5
 .Os
 .Sh NAME
@@ -80,9 +80,6 @@ Points to the fully-qualified path of a file to which regression
 results are appended.
 Defaults to
 .Pa /dev/null .
-.It Ev REGRESS_MAXTIME
-Maximum limit of CPU seconds to spend on the regression test.
-Exceeding this time will result in a failure being logged.
 .It Ev REGRESS_ROOT_TARGETS
 Targets for which root access is required to run the test.
 The
@@ -216,7 +213,3 @@ since.
 The current Makefile framework was written by Artur Grabowski
 and Marc Espie for
 .Ox 3.1 .
-.Sh BUGS AND LIMITATIONS
-The build system is unable to distinguish between timeouts due to
-.Ev REGRESS_MAXTIME
-being exceeded, or a genuine failure occurring.
