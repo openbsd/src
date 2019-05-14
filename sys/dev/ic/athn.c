@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.102 2019/03/01 07:39:56 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.103 2019/05/14 21:41:10 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1303,7 +1303,7 @@ athn_filter_noisefloor(struct athn_softc *sc)
 	int nf_ext_vals[ATHN_NF_CAL_HIST_MAX];
 	int i, cur, n;
 
-	for (i = 0; i < sc->ntxchains; i++) {
+	for (i = 0; i < sc->nrxchains; i++) {
 		if (sc->nf_hist_cur > 0)
 			cur = sc->nf_hist_cur - 1;
 		else
