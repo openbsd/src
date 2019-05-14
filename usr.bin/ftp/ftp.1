@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.112 2019/05/12 21:03:17 florian Exp $
+.\"	$OpenBSD: ftp.1,v 1.113 2019/05/14 18:27:37 florian Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2019 $
+.Dd $Mdocdate: May 14 2019 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -175,6 +175,12 @@ If not specified, the default User-Agent is
 .Dq OpenBSD ftp .
 .It Fl V
 Disable verbose mode.
+.It Fl v
+Enable verbose mode.  This is the default if input is from a terminal.
+Forces
+.Nm
+to show all responses from the remote server, as well as report on data
+transfer statistics.
 .It Fl w Ar seconds
 Abort a slow connection after
 .Ar seconds .
