@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.6 2019/05/12 22:48:03 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.7 2019/05/14 02:30:00 sunil Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -464,6 +464,7 @@ http_request(int scheme, const char *req, struct http_headers **hdrs)
 	ssize_t			 buflen;
 	uint			 code;
 #ifndef NOSSL
+	size_t			 len;
 	ssize_t			 nw;
 #endif
 
@@ -473,11 +474,16 @@ http_request(int scheme, const char *req, struct http_headers **hdrs)
 	switch (scheme) {
 #ifndef NOSSL
 	case S_HTTPS:
-		do {
-			nw = tls_write(ctx, req, strlen(req));
-		} while (nw == TLS_WANT_POLLIN || nw == TLS_WANT_POLLOUT);
-		if (nw == -1)
-			errx(1, "%s: tls_write: %s", __func__, tls_error(ctx));
+		len = strlen(req);
+		while (len > 0) {
+			nw = tls_write(ctx, req, len);
+			if (nw == TLS_WANT_POLLIN || nw == TLS_WANT_POLLOUT)
+				continue;
+			if (nw < 0)
+				errx(1, "tls_write: %s", tls_error(ctx));
+			req += nw;
+			len -= nw;
+		}
 		break;
 #endif
 	case S_FTP:
