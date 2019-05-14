@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.20 2019/05/10 14:10:38 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.21 2019/05/14 14:51:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -275,7 +275,6 @@ void
 frontend_dispatch_main(int fd, short event, void *bula)
 {
 	static struct uw_conf	*nconf;
-	struct uw_forwarder	*uw_forwarder;
 	struct imsg		 imsg;
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
@@ -364,73 +363,13 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&iev_captiveportal->ev, NULL);
 			break;
 		case IMSG_RECONF_CONF:
-			if (nconf != NULL)
-				fatalx("%s: IMSG_RECONF_CONF already in "
-				    "progress", __func__);
-			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_conf))
-				fatalx("%s: IMSG_RECONF_CONF wrong length: %lu",
-				    __func__, IMSG_DATA_SIZE(imsg));
-			if ((nconf = malloc(sizeof(struct uw_conf))) == NULL)
-				fatal(NULL);
-			memcpy(nconf, imsg.data, sizeof(struct uw_conf));
-			nconf->captive_portal_host = NULL;
-			nconf->captive_portal_path = NULL;
-			nconf->captive_portal_expected_response = NULL;
-			SIMPLEQ_INIT(&nconf->uw_forwarder_list);
-			SIMPLEQ_INIT(&nconf->uw_dot_forwarder_list);
-			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_HOST:
-			/* make sure this is a string */
-			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
-			if ((nconf->captive_portal_host = strdup(imsg.data)) ==
-			    NULL)
-				fatal("%s: strdup", __func__);
-			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_PATH:
-			/* make sure this is a string */
-			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
-			if ((nconf->captive_portal_path = strdup(imsg.data)) ==
-			    NULL)
-				fatal("%s: strdup", __func__);
-			break;
 		case IMSG_RECONF_CAPTIVE_PORTAL_EXPECTED_RESPONSE:
-			/* make sure this is a string */
-			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
-			if ((nconf->captive_portal_expected_response =
-			    strdup(imsg.data)) == NULL)
-				fatal("%s: strdup", __func__);
-			break;
 		case IMSG_RECONF_BLOCKLIST_FILE:
-			/* make sure this is a string */
-			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
-			if ((nconf->blocklist_file = strdup(imsg.data)) ==
-			    NULL)
-				fatal("%s: strdup", __func__);
-			break;
 		case IMSG_RECONF_FORWARDER:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_forwarder))
-				fatalx("%s: IMSG_RECONF_FORWARDER wrong length:"
-				    " %lu", __func__, IMSG_DATA_SIZE(imsg));
-			if ((uw_forwarder = malloc(sizeof(struct
-			    uw_forwarder))) == NULL)
-				fatal(NULL);
-			memcpy(uw_forwarder, imsg.data, sizeof(struct
-			    uw_forwarder));
-			SIMPLEQ_INSERT_TAIL(&nconf->uw_forwarder_list,
-			    uw_forwarder, entry);
-			break;
 		case IMSG_RECONF_DOT_FORWARDER:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(struct uw_forwarder))
-				fatalx("%s: IMSG_RECONF_DOT_FORWARDER wrong "
-				    "length: %lu", __func__,
-				    IMSG_DATA_SIZE(imsg));
-			if ((uw_forwarder = malloc(sizeof(struct
-			    uw_forwarder))) == NULL)
-				fatal(NULL);
-			memcpy(uw_forwarder, imsg.data, sizeof(struct
-			    uw_forwarder));
-			SIMPLEQ_INSERT_TAIL(&nconf->uw_dot_forwarder_list,
-			    uw_forwarder, entry);
+			imsg_receive_config(&imsg, &nconf);
 			break;
 		case IMSG_RECONF_END:
 			if (nconf == NULL)

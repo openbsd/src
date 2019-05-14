@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.16 2019/05/13 23:13:24 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.17 2019/05/14 14:51:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -167,6 +167,7 @@ void	merge_config(struct uw_conf *, struct uw_conf *);
 void	imsg_event_add(struct imsgev *);
 int	imsg_compose_event(struct imsgev *, uint16_t, uint32_t, pid_t,
 	    int, void *, uint16_t);
+void	imsg_receive_config(struct imsg *, struct uw_conf **);
 
 struct uw_conf	*config_new_empty(void);
 void		 config_clear(struct uw_conf *);
