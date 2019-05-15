@@ -1,4 +1,4 @@
-/* $OpenBSD: ocspcheck.c,v 1.24 2017/12/01 14:42:23 visa Exp $ */
+/* $OpenBSD: ocspcheck.c,v 1.25 2019/05/15 13:44:18 bcook Exp $ */
 
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
@@ -670,7 +670,9 @@ main(int argc, char **argv)
 	 * write out the DER format response to the staplefd
 	 */
 	if (staplefd >= 0) {
-		(void) ftruncate(staplefd, 0);
+		while (ftruncate(staplefd, 0) < 0)
+			if (errno != EINTR && errno != EAGAIN)
+				err(1, "Write of OCSP response failed");
 		w = 0;
 		written = 0;
 		while (written < instaplesz) {
