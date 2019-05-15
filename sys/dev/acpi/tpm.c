@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.6 2019/05/13 22:58:52 tedu Exp $ */
+/* $OpenBSD: tpm.c,v 1.7 2019/05/15 20:59:17 deraadt Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -423,9 +423,9 @@ tpm_init(struct tpm_softc *sc)
 			break;
 
 	if (tpm_devs[i].devid)
-		printf(": %s rev 0x%x\n", tpm_devs[i].name, sc->sc_rev);
+		printf(", %s rev 0x%x", tpm_devs[i].name, sc->sc_rev);
 	else
-		printf(": device 0x%08x rev 0x%x\n", sc->sc_devid, sc->sc_rev);
+		printf(", device 0x%08x rev 0x%x", sc->sc_devid, sc->sc_rev);
 
 	return 0;
 }
