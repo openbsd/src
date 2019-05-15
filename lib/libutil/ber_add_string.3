@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_add_string.3,v 1.1 2019/05/15 03:11:52 rob Exp $
+.\" $OpenBSD: ber_add_string.3,v 1.2 2019/05/15 18:25:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -112,35 +112,107 @@ to
 .Pp
 The
 .Fn ber_add_*
-and
+functions allocate a new
+.Vt ber_element
+of the respective type.
+If
+.Fa prev
+is an empty sequence or set, they put the new element into that
+sequence or set.
+Otherwise, unless
+.Fa prev
+is
+.Dv NULL ,
+they put it behind
+.Fa prev .
+Those functions taking a second argument initialize the content
+of the new element from the second argument.
+.Pp
 .Fn ber_printf_elements
-functions may be used to populate
-.Vt ber_element .
+creates zero or more
+.Vt ber_element
+structures.
+For each byte in
+.Fa fmt ,
+arguments of the the types given in the following table are consumed
+and passed to the listed function, creating one
+.Vt ber_element
+per byte.
+The following bytes are valid:
+.Bl -column -offset indent byte ber_add_enumerated "struct ber_element *"
+.It Sy byte Ta Sy function Ta Sy arguments
+.It B   Ta Fn ber_add_bitstring  Ta 2: Vt void * , size_t
+.It b   Ta Fn ber_add_boolean    Ta 1: Vt int
+.It d   Ta Fn ber_add_integer    Ta 1: Vt int
+.It E   Ta Fn ber_add_enumerated Ta 1: Vt long long
+.It e   Ta see below             Ta 1: Vt struct ber_element *
+.It i   Ta Fn ber_add_integer    Ta 1: Vt long long
+.It O   Ta Fn ber_add_oid        Ta 1: Vt struct ber_oid *
+.It o   Ta Fn ber_add_oidstring  Ta 1: Vt char *
+.It s   Ta Fn ber_add_string     Ta 1: Vt char *
+.It t   Ta Xr ber_set_header 3   Ta 2: Vt int , unsigned int
+.It x   Ta Fn ber_add_nstring    Ta 2: Vt char * , size_t
+.It \&( Ta Fn ber_add_set        Ta 0
+.It \&) Ta see below             Ta 0
+.It \&. Ta Fn ber_add_eoc        Ta 0
+.It 0   Ta Fn ber_add_null       Ta 0
+.It {   Ta Fn ber_add_sequence   Ta 0
+.It }   Ta see below             Ta 0
+.El
+.Pp
+The
+.Sq e
+and
+.Sq t
+bytes are special in so far as they do not create new elements.
+The
+.Sq e
+byte adds an element that was already created earlier into or behind
+the previous element, or into and behind
+.Fa ber
+if the
+.Sq e
+is the first byte in
+.Fa fmt ,
+just like the
+.Fn ber_add_*
+functions would add a new element.
+The
+.Sq t
+byte changes the class and type of the last element, or of
+.Fa ber
+if
+.Sq t
+is the first byte in
+.Fa fmt ,
+without changing its position relative to other elements.
+.Pp
+A closing brace or parenthesis closes an open sequence or set,
+if any, such that the next element will be added behind rather
+than into the sequence or set.
+Only one sequence or set can be open at any time.
+Nesting is not supported without multiple function calls.
 .Sh RETURN VALUES
 Upon successful completion,
-.Fn ber_get_element ,
-.Fn ber_add_sequence ,
-.Fn ber_add_set ,
-.Fn ber_add_null ,
-.Fn ber_add_eoc ,
-.Fn ber_add_integer ,
-.Fn ber_add_enumerated ,
-.Fn ber_add_boolean ,
-.Fn ber_add_string ,
-.Fn ber_add_nstring ,
-.Fn ber_add_ostring ,
-.Fn ber_add_bitstring ,
-.Fn ber_add_oid ,
-.Fn ber_add_noid ,
-.Fn ber_add_oidstring ,
-and
-.Fn ber_printf_elements
-return a pointer to a populated
+these functions return a pointer to a populated
 .Vt ber_element .
 Otherwise
 .Dv NULL
-is returned and the global variable errno is
-set to indicate the error.
+is returned and the global variable
+.Va errno
+is set to indicate the error.
+.Pp
+.Fn ber_printf_elements
+returns
+.Dv NULL
+without setting
+.Va errno
+if
+.Fa fmt
+is an empty string and
+.Fa ber
+is
+.Dv NULL .
 .Sh SEE ALSO
 .Xr ber_get_string 3 ,
 .Xr ber_oid_cmp 3 ,
