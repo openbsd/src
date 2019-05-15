@@ -62,7 +62,6 @@ char *prutfchar(LWCHAR);
 int utf_len(char);
 int is_utf8_well_formed(const char *);
 LWCHAR get_wchar(const char *);
-void put_wchar(char **, LWCHAR);
 LWCHAR step_char(char **, int, char *);
 int is_composing_char(LWCHAR);
 int is_ubin_char(LWCHAR);

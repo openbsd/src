@@ -329,48 +329,6 @@ get_wchar(const char *p)
 }
 
 /*
- * Store a character into a UTF-8 string.
- */
-void
-put_wchar(char **pp, LWCHAR ch)
-{
-	if (!utf_mode || ch < 0x80) {
-		/* 0xxxxxxx */
-		*(*pp)++ = (char)ch;
-	} else if (ch < 0x800) {
-		/* 110xxxxx 10xxxxxx */
-		*(*pp)++ = (char)(0xC0 | ((ch >> 6) & 0x1F));
-		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
-	} else if (ch < 0x10000) {
-		/* 1110xxxx 10xxxxxx 10xxxxxx */
-		*(*pp)++ = (char)(0xE0 | ((ch >> 12) & 0x0F));
-		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
-		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
-	} else if (ch < 0x200000) {
-		/* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
-		*(*pp)++ = (char)(0xF0 | ((ch >> 18) & 0x07));
-		*(*pp)++ = (char)(0x80 | ((ch >> 12) & 0x3F));
-		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
-		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
-	} else if (ch < 0x4000000) {
-		/* 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
-		*(*pp)++ = (char)(0xF0 | ((ch >> 24) & 0x03));
-		*(*pp)++ = (char)(0x80 | ((ch >> 18) & 0x3F));
-		*(*pp)++ = (char)(0x80 | ((ch >> 12) & 0x3F));
-		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
-		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
-	} else {
-		/* 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx */
-		*(*pp)++ = (char)(0xF0 | ((ch >> 30) & 0x01));
-		*(*pp)++ = (char)(0x80 | ((ch >> 24) & 0x3F));
-		*(*pp)++ = (char)(0x80 | ((ch >> 18) & 0x3F));
-		*(*pp)++ = (char)(0x80 | ((ch >> 12) & 0x3F));
-		*(*pp)++ = (char)(0x80 | ((ch >> 6) & 0x3F));
-		*(*pp)++ = (char)(0x80 | (ch & 0x3F));
-	}
-}
-
-/*
  * Step forward or backward one character in a string.
  */
 LWCHAR
