@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.6 2019/05/15 06:54:10 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.7 2019/05/15 06:56:36 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2865,7 +2865,7 @@ mcx_hca_max_caps(struct mcx_softc *sc)
 	struct mcx_cmd_query_hca_cap_in *in;
 	struct mcx_cmd_query_hca_cap_out *out;
 	struct mcx_cmdq_mailbox *mb;
-	struct mcx_cap_device *hca = mcx_cq_mbox_data(mb);
+	struct mcx_cap_device *hca;
 	uint8_t status;
 	uint8_t token = mcx_cmdq_token(sc);
 	int error;
@@ -2937,7 +2937,7 @@ mcx_hca_set_caps(struct mcx_softc *sc)
 	struct mcx_cmd_query_hca_cap_in *in;
 	struct mcx_cmd_query_hca_cap_out *out;
 	struct mcx_cmdq_mailbox *mb;
-	struct mcx_cap_device *hca = mcx_cq_mbox_data(mb);
+	struct mcx_cap_device *hca;
 	uint8_t status;
 	uint8_t token = mcx_cmdq_token(sc);
 	int error;
