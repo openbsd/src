@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.138 2019/05/09 14:09:01 tedu Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.139 2019/05/15 21:25:50 tedu Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -375,7 +375,6 @@ free(void *addr, int type, size_t freedsize)
 	int s;
 #ifdef DIAGNOSTIC
 	long alloc;
-	static int zerowarnings;
 #endif
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
@@ -398,15 +397,17 @@ free(void *addr, int type, size_t freedsize)
 	if (size > MAXALLOCSAVE)
 		size = kup->ku_pagecnt << PAGE_SHIFT;
 #ifdef DIAGNOSTIC
-	if (freedsize == 0 && zerowarnings < 5) {
-		zerowarnings++;
-		printf("free with zero size: (%d)\n", type);
-#ifdef DDB
 #if 0
-		db_stack_dump();
-#endif
+	if (freedsize == 0) {
+		static int zerowarnings;
+		if (zerowarnings < 5) {
+			zerowarnings++;
+			printf("free with zero size: (%d)\n", type);
+#ifdef DDB
+			db_stack_dump();
 #endif
 	}
+#endif
 	if (freedsize != 0 && freedsize > size)
 		panic("free: size too large %zu > %ld (%p) type %s",
 		    freedsize, size, addr, memname[type]);
