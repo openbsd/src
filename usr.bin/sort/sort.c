@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.88 2019/05/13 17:00:12 schwarze Exp $	*/
+/*	$OpenBSD: sort.c,v 1.89 2019/05/15 09:07:46 schwarze Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -36,7 +36,6 @@
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
-#include <locale.h>
 #include <md5.h>
 #include <regex.h>
 #include <signal.h>
@@ -232,37 +231,6 @@ set_hw_params(void)
 		free_memory = user_memory;
 
 	available_free_memory = free_memory / 2;
-}
-
-/*
- * Set current locale symbols.
- */
-static void
-set_locale(void)
-{
-	const char *locale;
-
-	setlocale(LC_CTYPE, "");
-	locale = setlocale(LC_COLLATE, NULL);
-	if (locale != NULL) {
-		char *tmpl;
-		const char *byteclocale;
-
-		tmpl = sort_strdup(locale);
-		byteclocale = setlocale(LC_COLLATE, "C");
-		if (byteclocale && strcmp(byteclocale, tmpl) == 0) {
-			byte_sort = true;
-		} else {
-			byteclocale = setlocale(LC_COLLATE, "POSIX");
-			if (byteclocale && strcmp(byteclocale, tmpl) == 0)
-				byte_sort = true;
-			else
-				setlocale(LC_COLLATE, tmpl);
-		}
-		sort_free(tmpl);
-	}
-	if (!byte_sort)
-		sort_mb_cur_max = MB_CUR_MAX;
 }
 
 /*
@@ -846,7 +814,6 @@ main(int argc, char *argv[])
 
 	atexit(clear_tmp_files);
 
-	set_locale();
 	set_tmpdir();
 	set_sort_opts();
 
@@ -1113,14 +1080,9 @@ main(int argc, char *argv[])
 		ks->sm.func = get_sort_func(&(ks->sm));
 	}
 
-	if (debug_sort) {
+	if (debug_sort)
 		printf("Memory to be used for sorting: %llu\n",
 		    available_free_memory);
-		printf("Using collate rules of %s locale\n",
-		    setlocale(LC_COLLATE, NULL));
-		if (byte_sort)
-			printf("Byte sort is used\n");
-	}
 
 	if (sort_opts_vals.cflag)
 		return check(argc ? *argv : "-");

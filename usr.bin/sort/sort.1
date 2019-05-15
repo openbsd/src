@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.59 2019/05/13 17:00:12 schwarze Exp $
+.\"	$OpenBSD: sort.1,v 1.60 2019/05/15 09:07:46 schwarze Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 13 2019 $
+.Dd $Mdocdate: May 15 2019 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -60,9 +60,8 @@ option
 A record can contain any printable or unprintable characters.
 Comparisons are based on one or more sort keys extracted from
 each line of input, and are performed lexicographically,
-according to the current locale's collating rules and the
-specified command-line options that can tune the actual
-sorting behavior.
+according to the specified command-line options
+that can tune the actual sorting behavior.
 By default, if keys are not given,
 .Nm
 uses entire lines for comparison.
@@ -201,7 +200,6 @@ The files are compared by their prefixes and versions (leading
 zeros are ignored in version numbers, see example below).
 If an input string does not match the pattern, then it is compared
 using the byte compare function.
-All string comparisons are performed in the C locale.
 .Pp
 For example:
 .Bd -literal -offset indent
@@ -494,22 +492,6 @@ which has no
 equivalent.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
-.It Ev LANG
-Used as a last resort to determine different kinds of locale-specific
-behavior if neither the respective environment variable nor
-.Ev LC_ALL
-are set.
-.It Ev LC_ALL
-Locale settings that override all of the other locale settings.
-This environment variable can be used to set all these settings
-to the same value at once.
-.It Ev LC_COLLATE
-Locale settings to be used to determine the collation for
-sorting records.
-.It Ev LC_CTYPE
-Locale settings to be used to case conversion and classification
-of characters, that is, which characters are considered
-whitespaces, etc.
 .It Ev TMPDIR
 Path to the directory in which temporary files will be stored.
 Note that
@@ -553,7 +535,10 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification.
+specification, except that it ignores the user's
+.Xr locale 1
+and always assumes
+.Ev LC_ALL Ns =C.
 .Pp
 The flags
 .Op Fl gHhiMRSsTVz
@@ -603,13 +588,10 @@ This implementation of
 has no limits on input line length (other than imposed by available
 memory) or any restrictions on bytes allowed within lines.
 .Pp
-The performance depends highly on locale settings,
+The performance depends highly on
 efficient choice of sort keys and key complexity.
-The fastest sort is with the C locale, on whole lines, with option
+The fastest sort is on whole lines, with option
 .Fl s .
-In general, the C locale is the fastest, followed by single-byte
-locales with multi-byte locales being the slowest.
-The correct collation order respected in all cases.
 For the key specification, the simpler to process the
 lines the faster the search will be.
 .Pp

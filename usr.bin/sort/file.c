@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.21 2016/10/17 02:58:29 lteo Exp $	*/
+/*	$OpenBSD: file.c,v 1.22 2019/05/15 09:07:46 schwarze Exp $	*/
 
 /*-
  * Copyright (C) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
@@ -1078,7 +1078,8 @@ sort_list_to_file(struct sort_list *list, const char *outfile)
 
 	if (!sm->Mflag && !sm->Rflag && !sm->Vflag &&
 	    !sm->gflag && !sm->hflag && !sm->nflag) {
-		if ((sort_opts_vals.sort_method == SORT_DEFAULT) && byte_sort)
+		if (sort_opts_vals.sort_method == SORT_DEFAULT &&
+		    sort_mb_cur_max == 1)
 			sort_opts_vals.sort_method = SORT_RADIXSORT;
 
 	} else if (sort_opts_vals.sort_method == SORT_RADIXSORT)
