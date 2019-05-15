@@ -1,0 +1,120 @@
+.\" $OpenBSD: ber_get_string.3,v 1.1 2019/05/15 03:11:52 rob Exp $
+.\"
+.\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 15 2019 $
+.Dt BER_GET_STRING 3
+.Os
+.Sh NAME
+.Nm ber_get_null ,
+.Nm ber_get_eoc ,
+.Nm ber_get_integer ,
+.Nm ber_get_enumerated ,
+.Nm ber_get_boolean ,
+.Nm ber_get_string ,
+.Nm ber_get_nstring ,
+.Nm ber_get_ostring ,
+.Nm ber_get_bitstring ,
+.Nm ber_get_oid ,
+.Nm ber_getpos ,
+.Nm ber_scanf_elements
+.Nd access properties of ASN.1 objects decoded from BER
+.Sh SYNOPSIS
+.In sys/types.h
+.In ber.h
+.Ft "int"
+.Fn "ber_get_null" "struct ber_element *root"
+.Ft "int"
+.Fn "ber_get_eoc" "struct ber_element *root"
+.Ft "int"
+.Fn "ber_get_integer" "struct ber_element *root" "long long *val"
+.Ft "int"
+.Fn "ber_get_enumerated" "struct ber_element *root" "long long *val"
+.Ft "int"
+.Fn "ber_get_boolean" "struct ber_element *root" "int *bool"
+.Ft "int"
+.Fn "ber_get_string" "struct ber_element *root" "char **charbuf"
+.Ft "int"
+.Fn "ber_get_nstring" "struct ber_element *root" "void **buf" "size_t *size"
+.Ft "int"
+.Fn "ber_get_ostring" "struct ber_element *root" "struct ber_octetstring *ostring"
+.Ft "int"
+.Fn "ber_get_bitstring" "struct ber_element *root" "void **buf" "size_t *size"
+.Ft "int"
+.Fn "ber_get_oid" "struct ber_element *root" "struct ber_oid *oid"
+.Ft off_t
+.Fn "ber_getpos" "struct ber_element *elm"
+.Ft "int"
+.Fn "ber_scanf_elements" "struct ber_element *root" "char *format" "..."
+.Sh DESCRIPTION
+The
+.Fn ber_get_*
+and
+.Fn ber_scanf_elements
+functions may be used to save
+.Vt ber_element
+values into local variables.
+.Pp
+.Fn ber_getpos
+may be used to obtain the
+.Vt ber_element
+offset
+.Fa be_offs .
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn ber_get_null ,
+.Fn ber_get_eoc ,
+.Fn ber_get_integer ,
+.Fn ber_get_enumerated ,
+.Fn ber_get_boolean ,
+.Fn ber_get_string ,
+.Fn ber_get_nstring ,
+.Fn ber_get_ostring ,
+.Fn ber_get_bitstring ,
+.Fn ber_get_oid ,
+.Fn ber_string2oid
+and
+.Fn ber_scanf_elements
+return 0.
+Otherwise \-1 is returned and the global variable errno is
+set to indicate the error.
+.Pp
+.Fn ber_getpos
+returns the value of
+.Vt be_offs .
+.Sh SEE ALSO
+.Xr ber_add_string 3 ,
+.Xr ber_oid_cmp 3 ,
+.Xr ber_read_elements 3 ,
+.Xr ber_set_header 3
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules.
+.Sh HISTORY
+These functions first appeared as internal functions in
+.Xr snmpd 8
+in
+.Ox 4.2
+and were moved to libutil in
+.Ox 6.6 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm ber
+library was written by
+.An Claudio Jeker Aq Mt claudio@openbsd.org ,
+.An Marc Balmer Aq Mt marc@openbsd.org
+and
+.An Reyk Floeter Aq Mt reyk@openbsd.org .

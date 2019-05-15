@@ -1,0 +1,109 @@
+.\" $OpenBSD: ber_oid_cmp.3,v 1.1 2019/05/15 03:11:52 rob Exp $
+.\"
+.\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 15 2019 $
+.Dt BER_OID_CMP 3
+.Os
+.Sh NAME
+.Nm ber_oid_cmp ,
+.Nm ber_oid2ber ,
+.Nm ber_string2oid
+.Nd OID helper functions for the BER library
+.Sh SYNOPSIS
+.In sys/types.h
+.In ber.h
+.Ft "int"
+.Fn "ber_oid_cmp" "struct ber_oid *a" "struct ber_oid *b"
+.Ft "size_t"
+.Fn "ber_oid2ber" "struct ber_oid *oid" "u_int8_t *buf" "size_t size"
+.Ft "int"
+.Fn "ber_string2oid" "const char *string" "struct ber_oid *oid"
+.Sh DESCRIPTION
+Object Identifiers are commonly used in ASN.1-based protocols.
+These functions provide an interface to parse OIDs.
+For internal representation of OIDs, the following structure
+.Vt struct ber_oid
+is being used:
+.Bd -literal
+#define BER_MIN_OID_LEN		2
+#define BER_MAX_OID_LEN		32
+
+struct ber_oid {
+	u_int32_t	bo_id[BER_MAX_OID_LEN + 1];
+	size_t		bo_n;
+};
+.Ed
+.Pp
+The
+.Fn ber_oid2ber
+and
+.Fn ber_string2oid
+functions may be used to convert from and to
+.Vt struct ber_oid .
+.Pp
+.Fn ber_oid_cmp
+may be used to compare two
+.Vt ber_oid
+structures.
+.Sh RETURN VALUES
+.Fn ber_oid2ber
+returns the number of bytes written or 0 on faliure.
+.Pp
+.Fn ber_string2oid
+returns 0 on success or -1 on failure.
+.Pp
+.Fn ber_oid_cmp
+returns 0 when oids
+.Fa a
+and
+.Fa b
+are identical.
+If
+.Fa b
+is a successor of
+.Fa a ,
+1 is returned.
+If
+.Fa b
+is a predecessor of
+.Fa a ,
+-1 is returned.
+If
+.Fa b
+is larger, but a child of
+.Fa a ,
+2 is returned.
+.Sh SEE ALSO
+.Xr ber_add_string 3 ,
+.Xr ber_get_string 3 ,
+.Xr ber_read_elements 3 ,
+.Xr ber_set_header 3
+.Sh HISTORY
+These functions first appeared as internal functions in
+.Xr snmpd 8
+in
+.Ox 4.2
+and were moved to libutil in
+.Ox 6.6 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm ber
+library was written by
+.An Claudio Jeker Aq Mt claudio@openbsd.org ,
+.An Marc Balmer Aq Mt marc@openbsd.org
+and
+.An Reyk Floeter Aq Mt reyk@openbsd.org .

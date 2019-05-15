@@ -1,0 +1,167 @@
+.\" $OpenBSD: ber_add_string.3,v 1.1 2019/05/15 03:11:52 rob Exp $
+.\"
+.\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: May 15 2019 $
+.Dt BER_ADD_STRING 3
+.Os
+.Sh NAME
+.Nm ber_get_element ,
+.Nm ber_add_sequence ,
+.Nm ber_add_set ,
+.Nm ber_add_null ,
+.Nm ber_add_eoc ,
+.Nm ber_add_integer ,
+.Nm ber_add_enumerated ,
+.Nm ber_add_boolean ,
+.Nm ber_add_string ,
+.Nm ber_add_nstring ,
+.Nm ber_add_ostring ,
+.Nm ber_add_bitstring ,
+.Nm ber_add_oid ,
+.Nm ber_add_noid ,
+.Nm ber_add_oidstring ,
+.Nm ber_printf_elements
+.Nd create ASN.1 objects for BER encoding
+.Sh SYNOPSIS
+.In sys/types.h
+.In ber.h
+.Ft "struct ber_element *"
+.Fn "ber_get_element" "unsigned int encoding"
+.Ft "struct ber_element *"
+.Fn "ber_add_sequence" "struct ber_element *prev"
+.Ft "struct ber_element *"
+.Fn "ber_add_set" "struct ber_element *prev"
+.Ft "struct ber_element *"
+.Fn "ber_add_null" "struct ber_element *prev"
+.Ft "struct ber_element *"
+.Fn "ber_add_eoc" "struct ber_element *prev"
+.Ft "struct ber_element *"
+.Fn "ber_add_integer" "struct ber_element *prev" "long long val"
+.Ft "struct ber_element *"
+.Fn "ber_add_enumerated" "struct ber_element *prev" "long long val"
+.Ft "struct ber_element *"
+.Fn "ber_add_boolean" "struct ber_element *prev" "int bool"
+.Ft "struct ber_element *"
+.Fn "ber_add_string" "struct ber_element *prev" "const char *string"
+.Ft "struct ber_element *"
+.Fn "ber_add_nstring" "struct ber_element *prev" "const char *string" "size_t size"
+.Ft "struct ber_element *"
+.Fo "ber_add_ostring"
+.Fa "struct ber_element *prev"
+.Fa "struct ber_octetstring *ostring"
+.Fc
+.Ft "struct ber_element *"
+.Fo "ber_add_bitstring"
+.Fa "struct ber_element *prev"
+.Fa "const void *buf"
+.Fa "size_t size"
+.Fc
+.Ft "struct ber_element *"
+.Fn "ber_add_oid" "struct ber_element *prev" "struct ber_oid *oid"
+.Ft "struct ber_element *"
+.Fn "ber_add_noid" "struct ber_element *prev" "struct ber_oid *oid" "int n"
+.Ft "struct ber_element *"
+.Fn "ber_add_oidstring" "struct ber_element *prev" "const char *string"
+.Ft "struct ber_element *"
+.Fn "ber_printf_elements" "struct ber_element *prev" "char *format" "..."
+.Sh DESCRIPTION
+Intermediary storage of BER elements during encoding and decoding uses the
+following structure:
+.Bd -literal
+struct ber_element {
+	struct ber_element	*be_next;
+	unsigned int		 be_type;
+	unsigned int		 be_encoding;
+	size_t			 be_len;
+	off_t			 be_offs;
+	int			 be_free;
+	u_int8_t		 be_class;
+	void			(*be_cb)(void *, size_t);
+	void			*be_cbarg;
+	union {
+		struct ber_element	*bv_sub;
+		void			*bv_val;
+		long long		 bv_numeric;
+	} be_union;
+#define be_sub		be_union.bv_sub
+#define be_val		be_union.bv_val
+#define be_numeric	be_union.bv_numeric
+};
+.Ed
+.Pp
+.Fn ber_get_element
+creates a new
+.Vt ber_element
+with default values, dynamically allocates required storage, and sets
+.Fa be_encoding
+to
+.Fa encoding .
+.Pp
+The
+.Fn ber_add_*
+and
+.Fn ber_printf_elements
+functions may be used to populate
+.Vt ber_element .
+.Sh RETURN VALUES
+Upon successful completion,
+.Fn ber_get_element ,
+.Fn ber_add_sequence ,
+.Fn ber_add_set ,
+.Fn ber_add_null ,
+.Fn ber_add_eoc ,
+.Fn ber_add_integer ,
+.Fn ber_add_enumerated ,
+.Fn ber_add_boolean ,
+.Fn ber_add_string ,
+.Fn ber_add_nstring ,
+.Fn ber_add_ostring ,
+.Fn ber_add_bitstring ,
+.Fn ber_add_oid ,
+.Fn ber_add_noid ,
+.Fn ber_add_oidstring ,
+and
+.Fn ber_printf_elements
+return a pointer to a populated
+.Vt ber_element .
+Otherwise
+.Dv NULL
+is returned and the global variable errno is
+set to indicate the error.
+.Sh SEE ALSO
+.Xr ber_get_string 3 ,
+.Xr ber_oid_cmp 3 ,
+.Xr ber_read_elements 3 ,
+.Xr ber_set_header 3
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules.
+.Sh HISTORY
+These functions first appeared as internal functions in
+.Xr snmpd 8
+in
+.Ox 4.2
+and were moved to libutil in
+.Ox 6.6 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm ber
+library was written by
+.An Claudio Jeker Aq Mt claudio@openbsd.org ,
+.An Marc Balmer Aq Mt marc@openbsd.org
+and
+.An Reyk Floeter Aq Mt reyk@openbsd.org .
