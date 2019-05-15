@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.389 2019/02/20 11:56:27 gilles Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.390 2019/05/15 11:56:19 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2685,7 +2685,7 @@ smtp_tx_filtered_dataline(struct smtp_tx *tx, const char *line)
 		if (tx->error)
 			return 0;
 	}
-	io_printf(tx->filter, "%s\r\n", line ? line : ".");
+	io_printf(tx->filter, "%s\n", line ? line : ".");
 	return line ? 0 : 1;
 }
 
