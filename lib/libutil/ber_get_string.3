@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_get_string.3,v 1.1 2019/05/15 03:11:52 rob Exp $
+.\" $OpenBSD: ber_get_string.3,v 1.2 2019/05/15 18:18:21 rob Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -88,8 +88,9 @@ Upon successful completion,
 and
 .Fn ber_scanf_elements
 return 0.
-Otherwise \-1 is returned and the global variable errno is
-set to indicate the error.
+Otherwise \-1 is returned and the global variable
+.Vt errno
+is set to indicate the error.
 .Pp
 .Fn ber_getpos
 returns the value of
