@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.2 2019/05/12 20:58:19 jasper Exp $ */
+/*	$OpenBSD: cmd.c,v 1.3 2019/05/15 13:42:40 florian Exp $ */
 
 /*
  * Copyright (c) 2018 Sunil Nimmagadda <sunil@openbsd.org>
@@ -422,14 +422,16 @@ do_get(int argc, char **argv)
 		return;
 	}
 
+	init_stats(file_sz, &offset);
 	if (progressmeter) {
 		p = basename(remote_fname);
-		start_progress_meter(p, NULL, file_sz, &offset);
+		start_progress_meter(p, NULL);
 	}
 
 	copy_file(dst_fp, data_fp, &offset);
 	if (progressmeter)
 		stop_progress_meter();
+	finish_stats();
 
 	if (interrupted)
 		ftp_abort();
@@ -590,14 +592,16 @@ do_put(int argc, char **argv)
 		return;
 	}
 
+	init_stats(file_sz, &offset);
 	if (progressmeter) {
 		p = basename(remote_fname);
-		start_progress_meter(p, NULL, file_sz, &offset);
+		start_progress_meter(p, NULL);
 	}
 
 	copy_file(data_fp, src_fp, &offset);
 	if (progressmeter)
 		stop_progress_meter();
+	finish_stats();
 
 	if (interrupted)
 		ftp_abort();

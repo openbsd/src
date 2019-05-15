@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.h,v 1.2 2019/05/12 20:58:19 jasper Exp $ */
+/*	$OpenBSD: ftp.h,v 1.3 2019/05/15 13:42:40 florian Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -91,8 +91,10 @@ void		 http_save(struct url *, FILE *, off_t *);
 void		 https_init(char *);
 
 /* progressmeter.c */
-void	start_progress_meter(const char *, const char *, off_t, off_t *);
+void	init_stats(off_t, off_t *);
+void	start_progress_meter(const char *, const char *);
 void	stop_progress_meter(void);
+void	finish_stats(void);
 
 /* url.c */
 int		 scheme_lookup(const char *);

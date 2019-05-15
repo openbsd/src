@@ -1,4 +1,4 @@
-/*	$OpenBSD: progressmeter.c,v 1.4 2019/05/14 18:51:07 deraadt Exp $ */
+/*	$OpenBSD: progressmeter.c,v 1.5 2019/05/15 13:42:40 florian Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -98,7 +98,7 @@ format_rate(char *buf, int size, off_t bytes)
 		i++;
 		bytes = (bytes + 512) / 1024;
 	}
-	snprintf(buf, size, "%3lld.%1lld%c%s",
+	snprintf(buf, size, "%lld.%02lld %c%s",
 	    (long long) (bytes + 5) / 100,
 	    (long long) (bytes + 5) / 10 % 10,
 	    unit[i],
@@ -272,7 +272,7 @@ update_progress_meter(int ignore)
 }
 
 void
-start_progress_meter(const char *fn, const char *t, off_t filesize, off_t *ctr)
+init_stats(off_t filesize, off_t *ctr)
 {
 	start = last_update = monotime();
 	start_pos = *ctr;
@@ -282,6 +282,14 @@ start_progress_meter(const char *fn, const char *t, off_t filesize, off_t *ctr)
 	counter = ctr;
 	stalled = 0;
 	bytes_per_second = 0;
+
+	if (filesize > 0)
+		end_pos = filesize;
+}
+
+void
+start_progress_meter(const char *fn, const char *t)
+{
 	filename = fn;
 	title = t;
 
@@ -289,10 +297,10 @@ start_progress_meter(const char *fn, const char *t, off_t filesize, off_t *ctr)
 	 * Suppress progressmeter if filesize isn't known when
 	 * Content-Length header has bogus values.
 	 */
-	if (filesize <= 0)
+
+	if (end_pos == 0)
 		return;
 
-	end_pos = filesize;
 	setscreensize();
 	refresh_progress_meter();
 
@@ -304,9 +312,6 @@ start_progress_meter(const char *fn, const char *t, off_t filesize, off_t *ctr)
 void
 stop_progress_meter(void)
 {
-	char	rate_str[32];
-	double	elapsed;
-
 	alarm(0);
 
 	/* Ensure we complete the progress */
@@ -315,21 +320,27 @@ stop_progress_meter(void)
 
 	if (end_pos)
 		fprintf(stderr, "\n");
+}
+
+void
+finish_stats(void)
+{
+	char	rate_str[32];
+	double	elapsed;
 
 	if (!verbose)
 		return;
 
 	elapsed = monotime() - start;
-	if (end_pos == 0) {
-		if (elapsed != 0)
-			bytes_per_second = *counter / elapsed;
-		else
-			bytes_per_second = *counter;
-	}
+
+	if (elapsed != 0)
+		bytes_per_second = *counter / elapsed;
+	else
+		bytes_per_second = *counter;
 
 	format_rate(rate_str, sizeof rate_str, bytes_per_second);
-	log_info("%lld bytes received in %.2f seconds (%s/s)\n",
-	    (end_pos) ? cur_pos - offset : *counter, elapsed, rate_str);
+	log_info("%lld byte%s received in %.2f seconds (%s/s)\n",
+	    *counter, *counter != 1 ? "s" : "", elapsed, rate_str);
 }
 
 static void
