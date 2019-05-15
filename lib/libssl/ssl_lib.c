@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.204 2019/03/25 17:33:26 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.205 2019/05/15 09:13:16 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -696,14 +696,12 @@ err:
 size_t
 SSL_get_finished(const SSL *s, void *buf, size_t count)
 {
-	size_t	ret = 0;
+	size_t	ret;
 
-	if (s->s3 != NULL) {
-		ret = S3I(s)->tmp.finish_md_len;
-		if (count > ret)
-			count = ret;
-		memcpy(buf, S3I(s)->tmp.finish_md, count);
-	}
+	ret = S3I(s)->tmp.finish_md_len;
+	if (count > ret)
+		count = ret;
+	memcpy(buf, S3I(s)->tmp.finish_md, count);
 	return (ret);
 }
 
@@ -711,14 +709,12 @@ SSL_get_finished(const SSL *s, void *buf, size_t count)
 size_t
 SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 {
-	size_t	ret = 0;
+	size_t	ret;
 
-	if (s->s3 != NULL) {
-		ret = S3I(s)->tmp.peer_finish_md_len;
-		if (count > ret)
-			count = ret;
-		memcpy(buf, S3I(s)->tmp.peer_finish_md, count);
-	}
+	ret = S3I(s)->tmp.peer_finish_md_len;
+	if (count > ret)
+		count = ret;
+	memcpy(buf, S3I(s)->tmp.peer_finish_md, count);
 	return (ret);
 }
 
@@ -1637,10 +1633,8 @@ SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
 	*data = NULL;
 	*len = 0;
 
-	if (ssl->s3 != NULL) {
-		*data = ssl->s3->internal->alpn_selected;
-		*len = ssl->s3->internal->alpn_selected_len;
-	}
+	*data = ssl->s3->internal->alpn_selected;
+	*len = ssl->s3->internal->alpn_selected_len;
 }
 
 int

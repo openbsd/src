@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.2 2019/01/21 14:12:13 tb Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.3 2019/05/15 09:13:16 bcook Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018 Joel Sing <jsing@openbsd.org>
@@ -95,8 +95,7 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 	uint16_t cipher_value, max_version;
 	unsigned long cipher_id;
 
-	if (s->s3 != NULL)
-		S3I(s)->send_connection_binding = 0;
+	S3I(s)->send_connection_binding = 0;
 
 	if ((ciphers = sk_SSL_CIPHER_new_null()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
@@ -111,7 +110,7 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 
 		cipher_id = SSL3_CK_ID | cipher_value;
 
-		if (s->s3 != NULL && cipher_id == SSL3_CK_SCSV) {
+		if (cipher_id == SSL3_CK_SCSV) {
 			/*
 			 * TLS_EMPTY_RENEGOTIATION_INFO_SCSV is fatal if
 			 * renegotiating.
@@ -137,9 +136,8 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 			max_version = ssl_max_server_version(s);
 			if (max_version == 0 || s->version < max_version) {
 				SSLerror(s, SSL_R_INAPPROPRIATE_FALLBACK);
-				if (s->s3 != NULL)
-					ssl3_send_alert(s, SSL3_AL_FATAL,
-					    SSL_AD_INAPPROPRIATE_FALLBACK);
+				ssl3_send_alert(s, SSL3_AL_FATAL,
+					SSL_AD_INAPPROPRIATE_FALLBACK);
 				goto err;
 			}
 			continue;

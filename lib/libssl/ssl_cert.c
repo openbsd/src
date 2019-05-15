@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.75 2019/04/13 18:04:05 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.76 2019/05/15 09:13:16 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -508,8 +508,7 @@ SSL_get_client_CA_list(const SSL *s)
 {
 	if (s->internal->type == SSL_ST_CONNECT) {
 		/* We are in the client. */
-		if (((s->version >> 8) == SSL3_VERSION_MAJOR) &&
-		    (s->s3 != NULL))
+		if ((s->version >> 8) == SSL3_VERSION_MAJOR)
 			return (S3I(s)->tmp.ca_names);
 		else
 			return (NULL);
