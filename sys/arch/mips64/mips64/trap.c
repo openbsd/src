@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.134 2019/05/06 12:57:56 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.135 2019/05/15 03:16:16 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1743,7 +1743,6 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	p->p_md.md_fpslotva = (vaddr_t)tf->pc + 4;
 	p->p_md.md_flags |= MDP_FPUSED;
 	tf->pc = p->p_md.md_fppgva;
-	pmap_proc_iflush(p->p_p, tf->pc, 2 * 4);
 
 	return 0;
 
