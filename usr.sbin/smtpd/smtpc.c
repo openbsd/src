@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.4 2018/09/20 11:42:28 eric Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.5 2019/05/15 05:02:43 eric Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -283,8 +283,15 @@ parse_message(FILE *ifp)
 				break;
 			fatal("getline");
 		}
+
+		if (len >= 2 && line[len - 2] == '\r' && line[len - 1] == '\n')
+			line[--len - 1] = '\n';
+
 		if (fwrite(line, 1, len, mail.fp) != len)
-			fatal("frwite");
+			fatal("fwrite");
+
+		if (line[len - 1] != '\n' && fputc('\n', mail.fp) == EOF)
+			fatal("fputc");
 	}
 
 	fclose(ifp);
