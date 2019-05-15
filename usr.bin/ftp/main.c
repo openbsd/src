@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.126 2019/05/14 18:25:31 florian Exp $ */
+/*	$OpenBSD: main.c,v 1.127 2019/05/15 11:53:22 kmos Exp $ */
 
 /*
  * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
@@ -412,9 +412,10 @@ proxy_parse(const char *name)
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-46ACVM] [-D title] [-o output] "
-	    "[-S tls_options] [-U useragent] "
-	    "[-w seconds] url ...\n", getprogname());
+	fprintf(stderr, "usage:\t%s [-46AVv] [-D title] [host [port]]\n"
+	    "\t%s [-46ACMmVv] [-D title] [-o output] [-S tls_options]\n"
+	    "\t\t[-U useragent] [-w seconds] url ...\n", getprogname(),
+	     getprogname());
 
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.113 2019/05/14 18:27:37 florian Exp $
+.\"	$OpenBSD: ftp.1,v 1.114 2019/05/15 11:53:22 kmos Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2019 $
+.Dd $Mdocdate: May 15 2019 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@
 .Op Fl D Ar title
 .Op Ar host Op Ar port
 .Nm
-.Op Fl 46ACMV
+.Op Fl 46ACMmVv
 .Op Fl D Ar title
 .Op Fl o Ar output
 .Op Fl S Ar tls_options
@@ -111,6 +111,10 @@ Specify a short title for the start of the progress bar.
 Causes
 .Nm
 to never display the progress meter in cases where it would do so by default.
+.It Fl m
+Causes
+.Nm
+to display the progress meter in cases where it would not do so by default.
 .It Fl o Ar output
 When fetching a file or URL, save the contents in
 .Ar output .
