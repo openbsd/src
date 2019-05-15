@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.20 2017/08/10 17:24:30 tedu Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.21 2019/05/15 15:59:24 schwarze Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 		printit(13);
 
 	if (argc > 1) {
-		i = strtonum(argv[1], 0, 25, &errstr);
+		i = strtonum(argv[1], -25, 25, &errstr);
 		if (errstr)
 			errx(1, "rotation is %s: %s", errstr, argv[1]);
 		else
@@ -134,7 +134,9 @@ void
 printit(int rot)
 {
 	int ch;
-	
+
+	if (rot < 0)
+		rot = rot + 26;
 	while ((ch = getchar()) != EOF)
 		putchar(ROTATE(ch, rot));
 	exit(0);
