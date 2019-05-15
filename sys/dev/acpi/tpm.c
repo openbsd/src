@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.8 2019/05/15 21:18:39 tedu Exp $ */
+/* $OpenBSD: tpm.c,v 1.9 2019/05/15 21:28:21 tedu Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -268,6 +268,7 @@ tpm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	printf("\n");
 	sc->sc_enabled = 1;
 }
 
