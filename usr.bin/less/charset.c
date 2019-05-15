@@ -148,7 +148,7 @@ init_charset(void)
 /*
  * Is a given character a "control" character?
  */
-int
+static int
 control_char(LWCHAR c)
 {
 	c &= 0377;
@@ -281,7 +281,7 @@ is_utf8_well_formed(const char *s)
 /*
  * Get the value of a UTF-8 character.
  */
-LWCHAR
+static LWCHAR
 get_wchar(const char *p)
 {
 	switch (utf_len(p[0])) {
