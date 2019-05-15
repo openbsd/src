@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_read_elements.3,v 1.1 2019/05/15 03:11:52 rob Exp $
+.\" $OpenBSD: ber_read_elements.3,v 1.2 2019/05/15 09:49:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -147,9 +147,7 @@ structures or
 on a type mismatch or read error.
 .Pp
 .Fn ber_get_writebuf
-returns the number of bytes contained within buffer
-.Vt b
-within the buffer
+returns the number of bytes contained within the buffer
 .Fa buf
 or \-1 on failure.
 .Pp
