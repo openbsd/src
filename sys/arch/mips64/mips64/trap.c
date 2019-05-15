@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.135 2019/05/15 03:16:16 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.136 2019/05/15 03:17:20 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1699,7 +1699,7 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	 */
 
 	rc = uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, PROT_MASK, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_WRITE, FALSE);
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_map_protect on %p failed: %d\n",
@@ -1709,7 +1709,7 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	}
 	KERNEL_LOCK();
 	rc = uvm_fault_wire(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, PROT_MASK);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_WRITE);
 	KERNEL_UNLOCK();
 	if (rc != 0) {
 #ifdef DEBUG
