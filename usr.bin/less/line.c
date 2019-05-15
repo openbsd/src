@@ -242,7 +242,7 @@ pshift(int shift)
 			}
 			continue;
 		}
-		if (!IS_ASCII_OCTET(c) && utf_mode) {
+		if (utf_mode && !isascii(c)) {
 			wchar_t ch;
 			/*
 			 * Before this point, UTF-8 validity was already

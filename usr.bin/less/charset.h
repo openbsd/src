@@ -9,7 +9,6 @@
  * For more information, see the README file.
  */
 
-#define	IS_ASCII_OCTET(c)	(((c) & 0x80) == 0)
 #define	IS_UTF8_TRAIL(c)	(((c) & 0xC0) == 0x80)
 #define	IS_UTF8_INVALID(c)	(((c) & 0xFE) == 0xFE)
 #define	IS_UTF8_LEAD(c)		(((c) & 0xC0) == 0xC0 && !IS_UTF8_INVALID(c))

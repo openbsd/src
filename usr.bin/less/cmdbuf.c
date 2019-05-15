@@ -1069,7 +1069,7 @@ cmd_char(int c)
 retry:
 			cmd_mbc_buf_index = 1;
 			*cmd_mbc_buf = c & 0xff;
-			if (IS_ASCII_OCTET(c))
+			if (isascii((unsigned char)c))
 				cmd_mbc_buf_len = 1;
 			else if (IS_UTF8_LEAD(c)) {
 				cmd_mbc_buf_len = utf_len(c);
