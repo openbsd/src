@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.5 2019/05/07 23:21:49 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.6 2019/05/15 06:54:10 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,7 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/task.h>
+#include <sys/atomic.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -73,6 +74,15 @@
 #define MCX_LOG_CQ_SIZE		 10
 #define MCX_LOG_RQ_SIZE		 5
 #define MCX_LOG_SQ_SIZE		 10
+
+#define MCX_LOG_SQ_ENTRY_SIZE	 6
+#define MCX_SQ_ENTRY_MAX_SLOTS	 4
+#define MCX_SQ_SEGS_PER_SLOT	 \
+	(sizeof(struct mcx_sq_entry) / sizeof(struct mcx_sq_entry_seg))
+#define MCX_SQ_MAX_SEGMENTS	 \
+	1 + ((MCX_SQ_ENTRY_MAX_SLOTS-1) * MCX_SQ_SEGS_PER_SLOT)
+
+#define MCX_SQ_INLINE_SIZE	 16
 
 /* doorbell offsets */
 #define MCX_CQ_DOORBELL_OFFSET	 0
@@ -1213,6 +1223,12 @@ struct mcx_sq_ctx {
 	struct mcx_wq_ctx	sq_wq;
 } __packed __aligned(4);
 
+struct mcx_sq_entry_seg {
+	uint32_t		sqs_byte_count;
+	uint32_t		sqs_lkey;
+	uint64_t		sqs_addr;
+} __packed __aligned(4);
+
 struct mcx_sq_entry {
 	/* control segment */
 	uint32_t		sqe_opcode_index;
@@ -1242,11 +1258,7 @@ struct mcx_sq_entry {
 	uint16_t		sqe_inline_headers[9];
 
 	/* data segment */
-	uint32_t		sqe_byte_count;
-	uint32_t		sqe_lkey;
-	uint64_t		sqe_addr;
-
-	/* possibly more data segments? */
+	struct mcx_sq_entry_seg sqe_segs[1];
 } __packed __aligned(64);
 
 CTASSERT(sizeof(struct mcx_sq_entry) == 64);
@@ -3751,7 +3763,7 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	mbin->sq_wq.wq_uar_page = htobe32(sc->sc_uar);
 	mbin->sq_wq.wq_doorbell = htobe64(MCX_DMA_DVA(&sc->sc_doorbell_mem) +
 	    MCX_SQ_DOORBELL_OFFSET);
-	mbin->sq_wq.wq_log_stride = htobe16(6);	/* 6?  maybe we should use 7 to allow lots of segments */
+	mbin->sq_wq.wq_log_stride = htobe16(MCX_LOG_SQ_ENTRY_SIZE);
 	mbin->sq_wq.wq_log_size = MCX_LOG_SQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
@@ -4722,17 +4734,22 @@ mcx_process_txeof(struct mcx_softc *sc, struct mcx_cq_entry *cqe, int *txfree)
 {
 	struct mcx_slot *ms;
 	bus_dmamap_t map;
-	int slot;
+	int slot, slots;
 
 	slot = betoh16(cqe->cq_wqe_count) % (1 << MCX_LOG_SQ_SIZE);
 
 	ms = &sc->sc_tx_slots[slot];
 	map = ms->ms_map;
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+
+	slots = 1;
+	if (map->dm_nsegs > 1)
+		slots += (map->dm_nsegs+2) / MCX_SQ_SEGS_PER_SLOT;
+
+	(*txfree) += slots;
 	bus_dmamap_unload(sc->sc_dmat, map);
 	m_freem(ms->ms_m);
-
-	(*txfree)++;
+	ms->ms_m = NULL;
 }
 
 void
@@ -4967,8 +4984,9 @@ mcx_up(struct mcx_softc *sc)
 
 	for (i = 0; i < (1 << MCX_LOG_SQ_SIZE); i++) {
 		ms = &sc->sc_tx_slots[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ms->ms_map) != 0) {
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    MCX_SQ_MAX_SEGMENTS, MCLBYTES, 0, BUS_DMA_WAITOK |
+		    BUS_DMA_ALLOCNOW, &ms->ms_map) != 0) {
 			printf("%s: failed to allocate tx dma maps\n",
 			    DEVNAME(sc));
 			goto destroy_tx_slots;
@@ -5129,18 +5147,42 @@ mcx_rxrinfo(struct mcx_softc *sc, struct if_rxrinfo *ifri)
 	return (if_rxr_info_ioctl(ifri, 1, &ifr));
 }
 
+int
+mcx_load_mbuf(struct mcx_softc *sc, struct mcx_slot *ms, struct mbuf *m)
+{
+	switch (bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT)) {
+	case 0:
+		break;
+
+	case EFBIG:
+		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		    bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
+		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT) == 0)
+			break;
+
+	default:
+		return (1);
+	}
+
+	ms->ms_m = m;
+	return (0);
+}
+
 static void
 mcx_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
 	struct mcx_softc *sc = ifp->if_softc;
 	struct mcx_sq_entry *sq, *sqe;
+	struct mcx_sq_entry_seg *sqs;
 	struct mcx_slot *ms;
 	bus_dmamap_t map;
 	struct mbuf *m;
 	u_int idx, free, used;
 	uint64_t *bf;
 	size_t bf_base;
+	int i, seg, nseg;
 
 	bf_base = (sc->sc_uar * MCX_PAGE_SIZE) + MCX_UAR_BF;
 
@@ -5148,12 +5190,11 @@ mcx_start(struct ifqueue *ifq)
 	free = (sc->sc_tx_cons + (1 << MCX_LOG_SQ_SIZE)) - sc->sc_tx_prod;
 
 	used = 0;
+	bf = NULL;
 	sq = (struct mcx_sq_entry *)MCX_DMA_KVA(&sc->sc_sq_mem);
 
 	for (;;) {
-		/* each packet takes exactly one sqe */
-		if (used == free) {
-			printf("out of space\n");
+		if (used + MCX_SQ_ENTRY_MAX_SLOTS >= free) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -5165,54 +5206,64 @@ mcx_start(struct ifqueue *ifq)
 
 		sqe = sq + idx;
 		ms = &sc->sc_tx_slots[idx];
+		memset(sqe, 0, sizeof(*sqe));
 
-		/* m_defrag on single buf chains is a no op */
-		if (m_defrag(m, M_DONTWAIT)) {
-			printf("failed to defrag\n");
+		/* ctrl segment */
+		sqe->sqe_opcode_index = htobe32(MCX_SQE_WQE_OPCODE_SEND |
+		    ((sc->sc_tx_prod & 0xffff) << MCX_SQE_WQE_INDEX_SHIFT));
+		/* always generate a completion event */
+		sqe->sqe_signature = htobe32(MCX_SQE_CE_CQE_ALWAYS);
+
+		/* eth segment */
+		sqe->sqe_inline_header_size = htobe16(MCX_SQ_INLINE_SIZE);
+		m_copydata(m, 0, MCX_SQ_INLINE_SIZE,
+		    (caddr_t)sqe->sqe_inline_headers);
+		m_adj(m, MCX_SQ_INLINE_SIZE);
+
+		if (mcx_load_mbuf(sc, ms, m) != 0) {
 			m_freem(m);
 			ifp->if_oerrors++;
 			continue;
 		}
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
-		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT)) {
-			printf("failed to load mbuf\n");
-			m_freem(m);
-			ifp->if_oerrors++;
-			continue;
-		}
-
-		ms->ms_m = m;
+		bf = (uint64_t *)sqe;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+			bpf_mtap_hdr(ifp->if_bpf,
+			    (caddr_t)sqe->sqe_inline_headers,
+			    MCX_SQ_INLINE_SIZE, m, BPF_DIRECTION_OUT, NULL);
 #endif
 		map = ms->ms_map;
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
-		/* ctrl segment */
-		sqe->sqe_opcode_index = betoh32(MCX_SQE_WQE_OPCODE_SEND |
-		    ((sc->sc_tx_prod & 0xffff) << MCX_SQE_WQE_INDEX_SHIFT));
-		sqe->sqe_ds_sq_num = betoh32((sc->sc_sqn << MCX_SQE_SQ_NUM_SHIFT) |
-		    4 /* always use 64 byte sqes */);
-		/* always generate a completion event */
-		sqe->sqe_signature = betoh32(MCX_SQE_CE_CQE_ALWAYS);
+		sqe->sqe_ds_sq_num =
+		    htobe32((sc->sc_sqn << MCX_SQE_SQ_NUM_SHIFT) |
+		    (map->dm_nsegs + 3));
 
-		/* eth segment */
-		sqe->sqe_inline_header_size = htobe16(16);
-		memcpy(sqe->sqe_inline_headers, m->m_data, 16);
+		/* data segment - first wqe has one segment */
+		sqs = sqe->sqe_segs;
+		seg = 0;
+		nseg = 1;
+		for (i = 0; i < map->dm_nsegs; i++) {
+			if (seg == nseg) {
+				/* next slot */
+				idx++;
+				if (idx == (1 << MCX_LOG_SQ_SIZE))
+					idx = 0;
+				sc->sc_tx_prod++;
+				used++;
 
-		/* data segment */
-		sqe->sqe_byte_count = betoh32(map->dm_mapsize - 16);
-		sqe->sqe_lkey = betoh32(sc->sc_lkey);
-		sqe->sqe_addr = betoh64(map->dm_segs[0].ds_addr + 16);
-
-		/* write the first 64 bits to the blue flame buffer */
-		bf = (uint64_t *)sqe;
-		bus_space_write_raw_8(sc->sc_memt, sc->sc_memh, bf_base + sc->sc_bf_offset, *bf);
-		/* next write goes to the other buffer */
-		sc->sc_bf_offset ^= sc->sc_bf_size;
+				sqs = (struct mcx_sq_entry_seg *)(sq + idx);
+				seg = 0;
+				nseg = MCX_SQ_SEGS_PER_SLOT;
+			}
+			sqs[seg].sqs_byte_count =
+			    htobe32(map->dm_segs[i].ds_len);
+			sqs[seg].sqs_lkey = htobe32(sc->sc_lkey);
+			sqs[seg].sqs_addr = htobe64(map->dm_segs[i].ds_addr);
+			seg++;
+		}
 
 		idx++;
 		if (idx == (1 << MCX_LOG_SQ_SIZE))
@@ -5221,8 +5272,22 @@ mcx_start(struct ifqueue *ifq)
 		used++;
 	}
 
-	if (used)
-		*sc->sc_tx_doorbell = betoh32(sc->sc_tx_prod);
+	if (used) {
+		*sc->sc_tx_doorbell = htobe32(sc->sc_tx_prod);
+
+		membar_sync();
+
+		/*
+		 * write the first 64 bits of the last sqe we produced
+		 * to the blue flame buffer
+		 */
+		bus_space_write_raw_8(sc->sc_memt, sc->sc_memh,
+		    bf_base + sc->sc_bf_offset, *bf);
+		/* next write goes to the other buffer */
+		sc->sc_bf_offset ^= sc->sc_bf_size;
+
+		membar_sync();
+	}
 }
 
 static void
