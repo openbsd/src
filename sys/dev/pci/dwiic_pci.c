@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_pci.c,v 1.4 2019/03/16 02:40:43 jcs Exp $ */
+/* $OpenBSD: dwiic_pci.c,v 1.5 2019/05/16 01:14:08 mlarkin Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  * PCI attachment
@@ -62,6 +62,8 @@ struct cfattach dwiic_pci_ca = {
 const struct pci_matchid dwiic_pci_ids[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_I2C_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_LP_I2C_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_I2C0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_100SERIES_I2C1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_I2C_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_I2C_2 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_300SERIES_U_I2C_3 },
