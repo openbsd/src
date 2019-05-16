@@ -51,20 +51,6 @@ POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
 
 MANLOCALBUILD=	yes
 
-MLINKS=		Carp.3p carp.3p Carp.3p cluck.3p Carp.3p croak.3p \
-		Carp.3p confess.3p Carp.3p shortmess.3p Carp.3p longmess.3p \
-		Getopt::Std.3p getopt.3p Getopt::Std.3p getopts.3p \
-		File::Basename.3p dirname.3p File::Basename.3p basename.3p \
-		File::Basename.3p fileparse.3p Search::Dict.3p look.3p \
-		ExtUtils::Miniperl.3p writemain.3p \
-		IPC::Open2.3p open2.3p IPC::Open3.3p open3.3p \
-		Socket.3p sockaddr_in.3p Socket.3p sockaddr_un.3p \
-		Socket.3p inet_aton.3p Socket.3p inet_ntoa.3p \
-		Tie::Hash.3p Tie::StdHash.3p Tie::Hash.3p Tie::ExtraHash.3p \
-		Tie::Scalar.3p Tie::StdScalar.3p splain.1 diagnostics.1 \
-		Pod::Checker.3p podchecker.3p Pod::Select.3p podselect.3p \
-		Pod::Usage.3p pod2usage.3p
-
 MAN=
 _quick1=
 _quick3p=
