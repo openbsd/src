@@ -1,5 +1,5 @@
-clang - the Clang C, C++, and Objective-C compiler
-==================================================
+clang, clang++, clang-cpp - the Clang C, C++, and Objective-C compiler
+======================================================================
 
 SYNOPSIS
 --------

@@ -1487,8 +1487,6 @@
 ./usr/lib/libc++abi_p.a
 ./usr/share/man/man1/c++.1
 ./usr/share/man/man1/cc.1
-./usr/share/man/man1/clang++.1
-./usr/share/man/man1/clang-cpp.1
 ./usr/share/man/man1/clang.1
 ./usr/share/man/man1/ld.lld.1
 ./usr/share/man/man1/llvm-config.1
