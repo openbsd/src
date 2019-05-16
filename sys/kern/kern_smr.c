@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.2 2019/05/14 03:27:43 visa Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.3 2019/05/16 13:52:47 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -28,9 +28,6 @@
 #include <sys/witness.h>
 
 #include <machine/cpu.h>
-
-#define SMR_ACTIVE	0x01
-#define SMR_ENTERED	0x02
 
 #define SMR_PAUSE	100		/* pause between rounds in msec */
 
@@ -149,8 +146,6 @@ smr_grace_wait(void)
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == ci_start)
 			continue;
-		if (smr_cpu_is_idle(ci) && ci->ci_schedstate.spc_insmr == 0)
-			continue;
 		sched_peg_curproc(ci);
 	}
 	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
@@ -166,22 +161,11 @@ smr_wakeup(void *arg)
 void
 smr_read_enter(void)
 {
-	struct cpu_info *ci = curcpu();
-	struct schedstate_percpu *spc = &ci->ci_schedstate;
-
 #ifdef DIAGNOSTIC
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+
 	spc->spc_smrdepth++;
 #endif
-
-	if (smr_cpu_is_idle(ci) && (spc->spc_insmr & SMR_ENTERED) == 0) {
-		/*
-		 * Activate in two steps in order not to miss the memory
-		 * barrier with nested interrupts.
-		 */
-		spc->spc_insmr = SMR_ACTIVE;
-		membar_enter();
-		spc->spc_insmr = SMR_ACTIVE | SMR_ENTERED;
-	}
 }
 
 void
@@ -229,8 +213,6 @@ smr_idle(void)
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 
 	SMR_ASSERT_NONCRITICAL();
-
-	spc->spc_insmr = 0;
 
 	if (spc->spc_ndeferred > 0)
 		smr_dispatch(spc);

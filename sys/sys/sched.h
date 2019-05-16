@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.51 2019/02/26 14:24:21 visa Exp $	*/
+/*	$OpenBSD: sched.h,v 1.52 2019/05/16 13:52:47 visa Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -119,9 +119,6 @@ struct schedstate_percpu {
 	u_int spc_smrdepth;		/* level of smr nesting */
 	u_char spc_smrexpedite;		/* if set, dispatch smr entries
 					 * without delay */
-	volatile u_char spc_insmr;	/* if set, CPU entered smr critical
-					 * section from interrupt context
-					 * that preempted idle state */
 };
 
 struct cpustats {
