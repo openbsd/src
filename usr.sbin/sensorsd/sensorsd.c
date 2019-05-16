@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.63 2018/12/10 13:35:54 landry Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.64 2019/05/16 14:36:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -114,14 +114,6 @@ main(int argc, char *argv[])
 	int		 ch, check_period = CHECK_PERIOD;
 	const char	*errstr;
 
-	if (unveil("/etc/sensorsd.conf", "r") == -1)
-		err(1, "unveil");
-	if (unveil("/", "x") == -1)
-		err(1, "unveil");
-
-	if (pledge("stdio rpath proc exec", NULL) == -1)
-		err(1, "pledge");
-
 	while ((ch = getopt(argc, argv, "c:df:")) != -1) {
 		switch (ch) {
 		case 'c':
@@ -148,14 +140,23 @@ main(int argc, char *argv[])
 	if (argc > 0)
 		usage();
 
-	openlog("sensorsd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
-
-	create();
-
 	if (configfile == NULL)
 		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
 			err(1, "out of memory");
+
+	if (unveil(configfile, "r") == -1)
+		err(1, "unveil");
+	if (unveil("/", "x") == -1)
+		err(1, "unveil");
+
+	if (pledge("stdio rpath proc exec", NULL) == -1)
+		err(1, "pledge");
+
 	parse_config(configfile);
+
+	openlog("sensorsd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+
+	create();
 
 	if (debug == 0 && daemon(0, 0) == -1)
 		err(1, "unable to fork");
