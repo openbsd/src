@@ -1,5 +1,5 @@
 /*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
-/*	$OpenBSD: loadfile.h,v 1.11 2018/12/06 09:20:06 claudio Exp $	 */
+/*	$OpenBSD: loadfile.h,v 1.12 2019/05/16 21:16:04 claudio Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,4 +78,3 @@ int loadfile_elf(FILE *, struct vm_create_params *,
 
 size_t mread(FILE *, paddr_t, size_t);
 
-#include <machine/loadfile_machdep.h>

@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.34 2019/03/01 07:32:29 mlarkin Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.35 2019/05/16 21:16:04 claudio Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,6 +105,8 @@
 
 #include "loadfile.h"
 #include "vmd.h"
+
+#define LOADADDR(a)            ((((u_long)(a)) + offset)&0xfffffff)
 
 union {
 	Elf32_Ehdr elf32;
@@ -769,7 +771,7 @@ elf64_exec(FILE *fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 
 	if (flags & (LOAD_SYM | COUNT_SYM)) {
 		if (fseeko(fp, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
-			WARN(("lseek section headers"));
+			warn("lseek section headers");
 			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf64_Shdr);
@@ -991,7 +993,7 @@ elf32_exec(FILE *fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 
 	if (flags & (LOAD_SYM | COUNT_SYM)) {
 		if (fseeko(fp, (off_t)elf->e_shoff, SEEK_SET) == -1)  {
-			WARN(("lseek section headers"));
+			warn("lseek section headers");
 			return 1;
 		}
 		sz = elf->e_shnum * sizeof(Elf32_Shdr);
