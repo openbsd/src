@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.107 2019/03/26 20:39:33 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.108 2019/05/16 05:49:22 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -185,6 +185,8 @@ main(int argc, char *argv[])
 		kif_clear();
 		exit(1);
 	}
+        if (ospfd_conf->rtr_id.s_addr == 0)
+                ospfd_conf->rtr_id.s_addr = get_rtr_id();
 
 	if (sockname == NULL) {
 		if (asprintf(&sockname, "%s.%d", OSPFD_SOCKET,
@@ -641,6 +643,10 @@ ospf_reload(void)
 
 	if ((xconf = parse_config(conffile, ospfd_conf->opts)) == NULL)
 		return (-1);
+
+	/* No router-id was specified, keep existing value */
+        if (xconf->rtr_id.s_addr == 0)
+                xconf->rtr_id.s_addr = ospfd_conf->rtr_id.s_addr;
 
 	/* Abort the reload if rtr_id changed */
 	if (ospfd_conf->rtr_id.s_addr != xconf->rtr_id.s_addr) {

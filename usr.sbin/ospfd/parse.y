@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.96 2019/04/29 05:14:38 remi Exp $ */
+/*	$OpenBSD: parse.y,v 1.97 2019/05/16 05:49:22 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -83,7 +83,6 @@ int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
 void		 clear_config(struct ospfd_conf *xconf);
-u_int32_t	 get_rtr_id(void);
 int		 host(const char *, struct in_addr *, struct in_addr *);
 
 static struct ospfd_conf	*conf;
@@ -1253,9 +1252,6 @@ parse_config(char *filename, int opts)
 		clear_config(conf);
 		return (NULL);
 	}
-
-	if (conf->rtr_id.s_addr == 0)
-		conf->rtr_id.s_addr = get_rtr_id();
 
 	return (conf);
 }
