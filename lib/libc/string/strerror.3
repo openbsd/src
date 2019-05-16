@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strerror.3,v 1.15 2017/09/05 03:16:13 schwarze Exp $
+.\"	$OpenBSD: strerror.3,v 1.16 2019/05/16 13:35:16 schwarze Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 5 2017 $
+.Dd $Mdocdate: May 16 2019 $
 .Dt STRERROR 3
 .Os
 .Sh NAME
@@ -95,14 +95,6 @@ returns zero upon successful completion.
 If an error occurs, the error code is stored in
 .Va errno
 and the error code is returned.
-.Sh ENVIRONMENT
-On other operating systems, the behaviour of
-.Fn strerror
-and
-.Fn strerror_r
-may depend on the
-.Dv LC_MESSAGES
-.Xr locale 1 .
 .Sh ERRORS
 All these functions may fail if:
 .Bl -tag -width Er
@@ -150,3 +142,13 @@ and
 .Fn strerror_l
 since
 .Ox 6.2 .
+.Sh CAVEATS
+On systems other than
+.Ox ,
+the
+.Dv LC_MESSAGES
+.Xr locale 1
+category can cause different strings to be returned instead of the
+normal error messages; see CAVEATS in
+.Xr setlocale 3
+for details.
