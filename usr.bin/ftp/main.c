@@ -1,153 +1,449 @@
-/*	$OpenBSD: main.c,v 1.128 2019/05/15 13:42:40 florian Exp $ */
+/*	$OpenBSD: main.c,v 1.129 2019/05/16 12:44:18 florian Exp $	*/
+/*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
- * Copyright (c) 2015 Sunil Nimmagadda <sunil@openbsd.org>
+ * Copyright (C) 1997 and 1998 WIDE Project.
+ * All rights reserved.
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
+/*
+ * Copyright (c) 1985, 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
+/*
+ * FTP User Program -- Command Interface.
+ */
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <imsg.h>
-#include <libgen.h>
-#include <signal.h>
+#include <netdb.h>
+#include <pwd.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "ftp.h"
-#include "xmalloc.h"
+#include <tls.h>
 
-static int		 auto_fetch(int, char **);
-static void		 child(int, int, char **);
-static int		 parent(int, pid_t);
-static struct url	*proxy_parse(const char *);
-static struct url	*get_proxy(int);
-static void		 re_exec(int, int, char **);
-static void		 validate_output_fname(struct url *, const char *);
-static __dead void	 usage(void);
+#include "cmds.h"
+#include "ftp_var.h"
 
-struct imsgbuf		 child_ibuf;
-const char		*useragent = "OpenBSD ftp";
-int			 activemode, family = AF_UNSPEC, io_debug;
-int			 progressmeter, verbose = 1;
-volatile sig_atomic_t	 interrupted = 0;
-FILE			*msgout = stdout;
+int connect_timeout;
 
-static const char	*title;
-static char		*tls_options, *oarg;
-static int		 connect_timeout, resume;
+#ifndef NOSSL
+char * const ssl_verify_opts[] = {
+#define SSL_CAFILE		0
+	"cafile",
+#define SSL_CAPATH		1
+	"capath",
+#define SSL_CIPHERS		2
+	"ciphers",
+#define SSL_DONTVERIFY		3
+	"dont",
+#define SSL_DOVERIFY		4
+	"do",
+#define SSL_VERIFYDEPTH		5
+	"depth",
+#define SSL_MUSTSTAPLE		6
+	"muststaple",
+#define SSL_NOVERIFYTIME	7
+	"noverifytime",
+#define SSL_SESSION		8
+	"session",
+	NULL
+};
+
+struct tls_config *tls_config;
+int tls_session_fd = -1;
+
+static void
+process_ssl_options(char *cp)
+{
+	const char *errstr;
+	long long depth;
+	char *str;
+
+	while (*cp) {
+		switch (getsubopt(&cp, ssl_verify_opts, &str)) {
+		case SSL_CAFILE:
+			if (str == NULL)
+				errx(1, "missing CA file");
+			if (tls_config_set_ca_file(tls_config, str) != 0)
+				errx(1, "tls ca file failed: %s",
+				    tls_config_error(tls_config));
+			break;
+		case SSL_CAPATH:
+			if (str == NULL)
+				errx(1, "missing CA directory path");
+			if (tls_config_set_ca_path(tls_config, str) != 0)
+				errx(1, "tls ca path failed: %s",
+				    tls_config_error(tls_config));
+			break;
+		case SSL_CIPHERS:
+			if (str == NULL)
+				errx(1, "missing cipher list");
+			if (tls_config_set_ciphers(tls_config, str) != 0)
+				errx(1, "tls ciphers failed: %s",
+				    tls_config_error(tls_config));
+			break;
+		case SSL_DONTVERIFY:
+			tls_config_insecure_noverifycert(tls_config);
+			tls_config_insecure_noverifyname(tls_config);
+			break;
+		case SSL_DOVERIFY:
+			tls_config_verify(tls_config);
+			break;
+		case SSL_VERIFYDEPTH:
+			if (str == NULL)
+				errx(1, "missing depth");
+			depth = strtonum(str, 0, INT_MAX, &errstr);
+			if (errstr)
+				errx(1, "certificate validation depth is %s",
+				    errstr);
+			tls_config_set_verify_depth(tls_config, (int)depth);
+			break;
+		case SSL_MUSTSTAPLE:
+			tls_config_ocsp_require_stapling(tls_config);
+			break;
+		case SSL_NOVERIFYTIME:
+			tls_config_insecure_noverifytime(tls_config);
+			break;
+		case SSL_SESSION:
+			if (str == NULL)
+				errx(1, "missing session file");
+			if ((tls_session_fd = open(str, O_RDWR|O_CREAT,
+			    0600)) == -1)
+				err(1, "failed to open or create session file "
+				    "'%s'", str);
+			if (tls_config_set_session_fd(tls_config,
+			    tls_session_fd) == -1)
+				errx(1, "failed to set session: %s",
+				    tls_config_error(tls_config));
+			break;
+		default:
+			errx(1, "unknown -S suboption `%s'",
+			    suboptarg ? suboptarg : "");
+			/* NOTREACHED */
+		}
+	}
+}
+#endif /* !NOSSL */
+
+int family = PF_UNSPEC;
+int pipeout;
 
 int
-main(int argc, char **argv)
+main(volatile int argc, char *argv[])
 {
-	const char	 *e;
-	char		**save_argv, *term;
-	int		  ch, csock, dumb_terminal, rexec, save_argc;
+	int ch, rval;
+#ifndef SMALL
+	int top;
+#endif
+	struct passwd *pw = NULL;
+	char *cp, homedir[PATH_MAX];
+	char *outfile = NULL;
+	const char *errstr;
+	int dumb_terminal = 0;
 
-	if (isatty(fileno(stdin)) != 1)
-		verbose = 0;
+	ftpport = "ftp";
+	httpport = "http";
+#ifndef NOSSL
+	httpsport = "https";
+#endif /* !NOSSL */
+	gateport = getenv("FTPSERVERPORT");
+	if (gateport == NULL || *gateport == '\0')
+		gateport = "ftpgate";
+	doglob = 1;
+	interactive = 1;
+	autologin = 1;
+	passivemode = 1;
+	activefallback = 1;
+	preserve = 1;
+	verbose = 0;
+	progress = 0;
+	gatemode = 0;
+#ifndef NOSSL
+	cookiefile = NULL;
+#endif /* NOSSL */
+#ifndef SMALL
+	editing = 0;
+	el = NULL;
+	hist = NULL;
+	resume = 0;
+	srcaddr = NULL;
+	marg_sl = sl_init();
+#endif /* !SMALL */
+	mark = HASHBYTES;
+	epsv4 = 1;
+	epsv4bad = 0;
 
-	io_debug = getenv("IO_DEBUG") != NULL;
-	term = getenv("TERM");
-	dumb_terminal = (term == NULL || *term == '\0' ||
-	    !strcmp(term, "dumb") || !strcmp(term, "emacs") ||
-	    !strcmp(term, "su"));
-	if (isatty(STDOUT_FILENO) && isatty(STDERR_FILENO) && !dumb_terminal)
-		progressmeter = 1;
+	/* Set default operation mode based on FTPMODE environment variable */
+	if ((cp = getenv("FTPMODE")) != NULL && *cp != '\0') {
+		if (strcmp(cp, "passive") == 0) {
+			passivemode = 1;
+			activefallback = 0;
+		} else if (strcmp(cp, "active") == 0) {
+			passivemode = 0;
+			activefallback = 0;
+		} else if (strcmp(cp, "gate") == 0) {
+			gatemode = 1;
+		} else if (strcmp(cp, "auto") == 0) {
+			passivemode = 1;
+			activefallback = 1;
+		} else
+			warnx("unknown FTPMODE: %s.  Using defaults", cp);
+	}
 
-	csock = rexec = 0;
-	save_argc = argc;
-	save_argv = argv;
+	if (strcmp(__progname, "gate-ftp") == 0)
+		gatemode = 1;
+	gateserver = getenv("FTPSERVER");
+	if (gateserver == NULL)
+		gateserver = "";
+	if (gatemode) {
+		if (*gateserver == '\0') {
+			warnx(
+"Neither $FTPSERVER nor $GATE_SERVER is defined; disabling gate-ftp");
+			gatemode = 0;
+		}
+	}
+
+	cp = getenv("TERM");
+	dumb_terminal = (cp == NULL || *cp == '\0' || !strcmp(cp, "dumb") ||
+	    !strcmp(cp, "emacs") || !strcmp(cp, "su"));
+	fromatty = isatty(fileno(stdin));
+	if (fromatty) {
+		verbose = 1;		/* verbose if from a tty */
+#ifndef SMALL
+		if (!dumb_terminal)
+			editing = 1;	/* editing mode on if tty is usable */
+#endif /* !SMALL */
+	}
+
+	ttyout = stdout;
+	if (isatty(fileno(ttyout)) && !dumb_terminal && foregroundproc())
+		progress = 1;		/* progress bar on if tty is usable */
+
+#ifndef NOSSL
+	cookiefile = getenv("http_cookies");
+	if (tls_init() != 0)
+		errx(1, "tls init failed");
+	if (tls_config == NULL) {
+		tls_config = tls_config_new();
+		if (tls_config == NULL)
+			errx(1, "tls config failed");
+		if (tls_config_set_protocols(tls_config,
+		    TLS_PROTOCOLS_ALL) != 0)
+			errx(1, "tls set protocols failed: %s",
+			    tls_config_error(tls_config));
+		if (tls_config_set_ciphers(tls_config, "legacy") != 0)
+			errx(1, "tls set ciphers failed: %s",
+			    tls_config_error(tls_config));
+	}
+#endif /* !NOSSL */
+
+	httpuseragent = NULL;
+
 	while ((ch = getopt(argc, argv,
-	    "46AaCc:dD:Eegik:Mmno:pP:r:S:s:tU:vVw:xz:")) != -1) {
+		    "46AaCc:dD:Eegik:Mmno:pP:r:S:s:tU:vVw:")) != -1) {
 		switch (ch) {
 		case '4':
-			family = AF_INET;
+			family = PF_INET;
 			break;
 		case '6':
-			family = AF_INET6;
+			family = PF_INET6;
 			break;
 		case 'A':
-			activemode = 1;
+			activefallback = 0;
+			passivemode = 0;
 			break;
+
+		case 'a':
+			anonftp = 1;
+			break;
+
 		case 'C':
+#ifndef SMALL
 			resume = 1;
+#endif /* !SMALL */
 			break;
+
+		case 'c':
+#ifndef SMALL
+			cookiefile = optarg;
+#endif /* !SMALL */
+			break;
+
 		case 'D':
-			title = optarg;
+			action = optarg;
 			break;
-		case 'o':
-			oarg = optarg;
-			if (!strlen(oarg))
-				oarg = NULL;
+		case 'd':
+#ifndef SMALL
+			options |= SO_DEBUG;
+			debug++;
+#endif /* !SMALL */
+			break;
+
+		case 'E':
+			epsv4 = 0;
+			break;
+
+		case 'e':
+#ifndef SMALL
+			editing = 0;
+#endif /* !SMALL */
+			break;
+
+		case 'g':
+			doglob = 0;
+			break;
+
+		case 'i':
+			interactive = 0;
+			break;
+
+		case 'k':
+			keep_alive_timeout = strtonum(optarg, 0, INT_MAX,
+			    &errstr);
+			if (errstr != NULL) {
+				warnx("keep alive amount is %s: %s", errstr,
+					optarg);
+				usage();
+			}
 			break;
 		case 'M':
-			progressmeter = 0;
+			progress = 0;
 			break;
 		case 'm':
-			progressmeter = 1;
+			progress = -1;
 			break;
+
+		case 'n':
+			autologin = 0;
+			break;
+
+		case 'o':
+			outfile = optarg;
+			if (*outfile == '\0') {
+				pipeout = 0;
+				outfile = NULL;
+				ttyout = stdout;
+			} else {
+				pipeout = strcmp(outfile, "-") == 0;
+				ttyout = pipeout ? stderr : stdout;
+			}
+			break;
+
+		case 'p':
+			passivemode = 1;
+			activefallback = 0;
+			break;
+
+		case 'P':
+			ftpport = optarg;
+			break;
+
+		case 'r':
+			retry_connect = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr != NULL) {
+				warnx("retry amount is %s: %s", errstr,
+					optarg);
+				usage();
+			}
+			break;
+
 		case 'S':
-			tls_options = optarg;
+#ifndef NOSSL
+			process_ssl_options(optarg);
+#endif /* !NOSSL */
 			break;
+
+		case 's':
+#ifndef SMALL
+			srcaddr = optarg;
+#endif /* !SMALL */
+			break;
+
+		case 't':
+			trace = 1;
+			break;
+
+#ifndef SMALL
 		case 'U':
-			useragent = optarg;
+			free (httpuseragent);
+			if (strcspn(optarg, "\r\n") != strlen(optarg))
+				errx(1, "Invalid User-Agent: %s.", optarg);
+			if (asprintf(&httpuseragent, "User-Agent: %s",
+			    optarg) == -1)
+				errx(1, "Can't allocate memory for HTTP(S) "
+				    "User-Agent");
 			break;
-		case 'V':
-			verbose = 0;
-			break;
+#endif /* !SMALL */
+
 		case 'v':
 			verbose = 1;
 			break;
+
+		case 'V':
+			verbose = 0;
+			break;
+
 		case 'w':
-			connect_timeout = strtonum(optarg, 0, 200, &e);
-			if (e)
-				errx(1, "-w: %s", e);
-			break;
-		/* options for internal use only */
-		case 'x':
-			rexec = 1;
-			break;
-		case 'z':
-			csock = strtonum(optarg, 3, getdtablesize() - 1, &e);
-			if (e)
-				errx(1, "-z: %s", e);
-			break;
-		/* Ignoring all remaining options */
-		case 'a':
-		case 'c':
-		case 'd':
-		case 'E':
-		case 'e':
-		case 'g':
-		case 'i':
-		case 'k':
-		case 'n':
-		case 'P':
-		case 'p':
-		case 'r':
-		case 's':
-		case 't':
+			connect_timeout = strtonum(optarg, 0, 200, &errstr);
+			if (errstr)
+				errx(1, "-w: %s", errstr);
 			break;
 		default:
 			usage();
@@ -156,268 +452,517 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (rexec)
-		child(csock, argc, argv);
+#ifndef NOSSL
+	cookie_load();
+#endif /* !NOSSL */
+	if (httpuseragent == NULL)
+		httpuseragent = HTTP_USER_AGENT;
+
+	cpend = 0;	/* no pending replies */
+	proxy = 0;	/* proxy not active */
+	crflag = 1;	/* strip c.r. on ascii gets */
+	sendport = -1;	/* not using ports */
+	/*
+	 * Set up the home directory in case we're globbing.
+	 */
+	cp = getlogin();
+	if (cp != NULL) {
+		pw = getpwnam(cp);
+	}
+	if (pw == NULL)
+		pw = getpwuid(getuid());
+	if (pw != NULL) {
+		(void)strlcpy(homedir, pw->pw_dir, sizeof homedir);
+		home = homedir;
+	}
+
+	setttywidth(0);
+	(void)signal(SIGWINCH, setttywidth);
+
+	if (argc > 0) {
+		if (isurl(argv[0])) {
+			if (pipeout) {
+#ifndef SMALL
+				if (pledge("stdio rpath dns tty inet proc exec fattr",
+				    NULL) == -1)
+					err(1, "pledge");
+#else
+				if (pledge("stdio rpath dns tty inet fattr",
+				    NULL) == -1)
+					err(1, "pledge");
+#endif
+			} else {
+#ifndef SMALL
+				if (pledge("stdio rpath wpath cpath dns tty inet proc exec fattr",
+				    NULL) == -1)
+					err(1, "pledge");
+#else
+				if (pledge("stdio rpath wpath cpath dns tty inet fattr",
+				    NULL) == -1)
+					err(1, "pledge");
+#endif
+			}
+
+			rval = auto_fetch(argc, argv, outfile);
+			if (rval >= 0)		/* -1 == connected and cd-ed */
+				exit(rval);
+		} else {
+#ifndef SMALL
+			char *xargv[5];
+
+			if (setjmp(toplevel))
+				exit(0);
+			(void)signal(SIGINT, (sig_t)intr);
+			(void)signal(SIGPIPE, (sig_t)lostpeer);
+			xargv[0] = __progname;
+			xargv[1] = argv[0];
+			xargv[2] = argv[1];
+			xargv[3] = argv[2];
+			xargv[4] = NULL;
+			do {
+				setpeer(argc+1, xargv);
+				if (!retry_connect)
+					break;
+				if (!connected) {
+					macnum = 0;
+					fputs("Retrying...\n", ttyout);
+					sleep(retry_connect);
+				}
+			} while (!connected);
+			retry_connect = 0; /* connected, stop hiding msgs */
+#endif /* !SMALL */
+		}
+	}
+#ifndef SMALL
+	controlediting();
+	top = setjmp(toplevel) == 0;
+	if (top) {
+		(void)signal(SIGINT, (sig_t)intr);
+		(void)signal(SIGPIPE, (sig_t)lostpeer);
+	}
+	for (;;) {
+		cmdscanner(top);
+		top = 1;
+	}
+#else /* !SMALL */
+	usage();
+#endif /* !SMALL */
+}
+
+void
+intr(void)
+{
+	int save_errno = errno;
+
+	write(fileno(ttyout), "\n\r", 2);
+	alarmtimer(0);
+
+	errno = save_errno;
+	longjmp(toplevel, 1);
+}
+
+void
+lostpeer(void)
+{
+	int save_errno = errno;
+
+	alarmtimer(0);
+	if (connected) {
+		if (cout != NULL) {
+			(void)shutdown(fileno(cout), SHUT_RDWR);
+			(void)fclose(cout);
+			cout = NULL;
+		}
+		if (data >= 0) {
+			(void)shutdown(data, SHUT_RDWR);
+			(void)close(data);
+			data = -1;
+		}
+		connected = 0;
+	}
+	pswitch(1);
+	if (connected) {
+		if (cout != NULL) {
+			(void)shutdown(fileno(cout), SHUT_RDWR);
+			(void)fclose(cout);
+			cout = NULL;
+		}
+		connected = 0;
+	}
+	proxflag = 0;
+	pswitch(0);
+	errno = save_errno;
+}
 
 #ifndef SMALL
-	struct url	*url;
-
-	switch (argc) {
-	case 0:
-		cmd(NULL, NULL, NULL);
-		return 0;
-	case 1:
-	case 2:
-		switch (scheme_lookup(argv[0])) {
-		case -1:
-			cmd(argv[0], argv[1], NULL);
-			return 0;
-		case S_FTP:
-			if ((url = url_parse(argv[0])) == NULL)
-				exit(1);
-
-			if (url->path &&
-			    url->path[strlen(url->path) - 1] != '/')
-				break; /* auto fetch */
-
-			cmd(url->host, url->port, url->path);
-			return 0;
-		}
-		break;
-	}
-#else
-	if (argc == 0)
-		usage();
-#endif
-
-	return auto_fetch(save_argc, save_argv);
+/*
+ * Generate a prompt
+ */
+char *
+prompt(void)
+{
+	return ("ftp> ");
 }
 
-static int
-auto_fetch(int sargc, char **sargv)
+/*
+ * Command parser.
+ */
+void
+cmdscanner(int top)
 {
-	pid_t	pid;
-	int	sp[2];
+	struct cmd *c;
+	int num;
+	HistEvent hev;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sp) != 0)
-		err(1, "socketpair");
-
-	switch (pid = fork()) {
-	case -1:
-		err(1, "fork");
-	case 0:
-		close(sp[0]);
-		re_exec(sp[1], sargc, sargv);
-	}
-
-	close(sp[1]);
-	return parent(sp[0], pid);
-}
-
-static void
-re_exec(int sock, int argc, char **argv)
-{
-	char	**nargv, *sock_str;
-	int	  i, j, nargc;
-
-	nargc = argc + 4;
-	nargv = xcalloc(nargc, sizeof(*nargv));
-	xasprintf(&sock_str, "%d", sock);
-	i = 0;
-	nargv[i++] = argv[0];
-	nargv[i++] = "-z";
-	nargv[i++] = sock_str;
-	nargv[i++] = "-x";
-	for (j = 1; j < argc; j++)
-		nargv[i++] = argv[j];
-
-	execvp(nargv[0], nargv);
-	err(1, "execvp");
-}
-
-static int
-parent(int sock, pid_t child_pid)
-{
-	struct imsgbuf	ibuf;
-	struct imsg	imsg;
-	struct stat	sb;
-	off_t		offset;
-	int		fd, save_errno, sig, status;
-
-	setproctitle("%s", "parent");
-	if (pledge("stdio cpath rpath wpath sendfd", NULL) == -1)
-		err(1, "pledge");
-
-	imsg_init(&ibuf, sock);
+	if (!top && !editing)
+		(void)putc('\n', ttyout);
 	for (;;) {
-		if (read_message(&ibuf, &imsg) == 0)
+		if (!editing) {
+			if (fromatty) {
+				fputs(prompt(), ttyout);
+				(void)fflush(ttyout);
+			}
+			if (fgets(line, sizeof(line), stdin) == NULL)
+				quit(0, 0);
+			num = strlen(line);
+			if (num == 0)
+				break;
+			if (line[--num] == '\n') {
+				if (num == 0)
+					break;
+				line[num] = '\0';
+			} else if (num == sizeof(line) - 2) {
+				fputs("sorry, input line too long.\n", ttyout);
+				while ((num = getchar()) != '\n' && num != EOF)
+					/* void */;
+				break;
+			} /* else it was a line without a newline */
+		} else {
+			const char *buf;
+			cursor_pos = NULL;
+
+			if ((buf = el_gets(el, &num)) == NULL || num == 0) {
+				putc('\n', ttyout);
+				fflush(ttyout);
+				quit(0, 0);
+			}
+			if (buf[--num] == '\n') {
+				if (num == 0)
+					break;
+			}
+			if (num >= sizeof(line)) {
+				fputs("sorry, input line too long.\n", ttyout);
+				break;
+			}
+			memcpy(line, buf, (size_t)num);
+			line[num] = '\0';
+			history(hist, &hev, H_ENTER, buf);
+		}
+
+		makeargv();
+		if (margc == 0)
+			continue;
+		c = getcmd(margv[0]);
+		if (c == (struct cmd *)-1) {
+			fputs("?Ambiguous command.\n", ttyout);
+			continue;
+		}
+		if (c == 0) {
+			/*
+			 * Give editline(3) a shot at unknown commands.
+			 * XXX - bogus commands with a colon in
+			 *       them will not elicit an error.
+			 */
+			if (editing &&
+			    el_parse(el, margc, (const char **)margv) != 0)
+				fputs("?Invalid command.\n", ttyout);
+			continue;
+		}
+		if (c->c_conn && !connected) {
+			fputs("Not connected.\n", ttyout);
+			continue;
+		}
+		confirmrest = 0;
+		(*c->c_handler)(margc, margv);
+		if (bell && c->c_bell)
+			(void)putc('\007', ttyout);
+		if (c->c_handler != help)
 			break;
-
-		if (imsg.hdr.type != IMSG_OPEN)
-			errx(1, "%s: IMSG_OPEN expected", __func__);
-
-		offset = 0;
-		fd = open(imsg.data, imsg.hdr.peerid, 0666);
-		save_errno = errno;
-		if (fd != -1 && fstat(fd, &sb) == 0) {
-			if (sb.st_mode & S_IFDIR) {
-				close(fd);
-				fd = -1;
-				save_errno = EISDIR;
-			} else
-				offset = sb.st_size;
-		}
-
-		send_message(&ibuf, IMSG_OPEN, save_errno,
-		    &offset, sizeof offset, fd);
-		imsg_free(&imsg);
 	}
-
-	close(sock);
-	if (waitpid(child_pid, &status, 0) == -1 && errno != ECHILD)
-		err(1, "wait");
-
-	sig = WTERMSIG(status);
-	if (WIFSIGNALED(status) && sig != SIGPIPE)
-		errx(1, "child terminated: signal %d", sig);
-
-	return WEXITSTATUS(status);
+	(void)signal(SIGINT, (sig_t)intr);
+	(void)signal(SIGPIPE, (sig_t)lostpeer);
 }
 
-static void
-child(int sock, int argc, char **argv)
+struct cmd *
+getcmd(const char *name)
 {
-	struct url	*url;
-	FILE		*dst_fp;
-	char		*p;
-	off_t		 offset, sz;
-	int		 fd, i, tostdout;
+	const char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 
-	setproctitle("%s", "child");
-#ifndef NOSSL
-	https_init(tls_options);
-#endif
-	if (pledge("stdio inet dns recvfd tty", NULL) == -1)
-		err(1, "pledge");
-	if (!progressmeter && pledge("stdio inet dns recvfd", NULL) == -1)
-		err(1, "pledge");
+	if (name == NULL)
+		return (0);
 
-	imsg_init(&child_ibuf, sock);
-	tostdout = oarg && (strcmp(oarg, "-") == 0);
-	if (tostdout)
-		msgout = stderr;
-	if (resume && tostdout)
-		errx(1, "can't append to stdout");
-
-	for (i = 0; i < argc; i++) {
-		fd = -1;
-		offset = sz = 0;
-
-		if ((url = url_parse(argv[i])) == NULL)
-			exit(1);
-
-		validate_output_fname(url, argv[i]);
-		url_connect(url, get_proxy(url->scheme), connect_timeout);
-		if (resume)
-			fd = fd_request(url->fname, O_WRONLY|O_APPEND, &offset);
-
-		url = url_request(url, get_proxy(url->scheme), &offset, &sz);
-		if (resume && offset == 0 && fd != -1)
-			if (ftruncate(fd, 0) != 0)
-				err(1, "ftruncate");
-
-		if (fd == -1 && !tostdout &&
-		    (fd = fd_request(url->fname,
-		    O_CREAT|O_TRUNC|O_WRONLY, NULL)) == -1)
-			err(1, "Can't open file %s", url->fname);
-
-		if (tostdout) {
-			dst_fp = stdout;
-		} else if ((dst_fp = fdopen(fd, "w")) == NULL)
-			err(1, "%s: fdopen", __func__);
-
-		init_stats(sz, &offset);
-		if (progressmeter) {
-			p = basename(url->path);
-			start_progress_meter(p, title);
+	longest = 0;
+	nmatches = 0;
+	found = 0;
+	for (c = cmdtab; (p = c->c_name) != NULL; c++) {
+		for (q = name; *q == *p++; q++)
+			if (*q == 0)		/* exact match? */
+				return (c);
+		if (!*q) {			/* the name was a prefix */
+			if (q - name > longest) {
+				longest = q - name;
+				nmatches = 1;
+				found = c;
+			} else if (q - name == longest)
+				nmatches++;
 		}
-
-		url_save(url, dst_fp, &offset);
-		if (progressmeter)
-			stop_progress_meter();
-		finish_stats();
-
-		if (!tostdout)
-			fclose(dst_fp);
-
-		url_close(url);
-		url_free(url);
 	}
-
-	exit(0);
+	if (nmatches > 1)
+		return ((struct cmd *)-1);
+	return (found);
 }
 
-static struct url *
-get_proxy(int scheme)
-{
-	static struct url	*ftp_proxy, *http_proxy;
+/*
+ * Slice a string up into argc/argv.
+ */
 
-	switch (scheme) {
-	case S_HTTP:
-	case S_HTTPS:
-		if (http_proxy)
-			return http_proxy;
-		else
-			return (http_proxy = proxy_parse("http_proxy"));
-	case S_FTP:
-		if (ftp_proxy)
-			return ftp_proxy;
-		else
-			return (ftp_proxy = proxy_parse("ftp_proxy"));
+int slrflag;
+
+void
+makeargv(void)
+{
+	char *argp;
+
+	stringbase = line;		/* scan from first of buffer */
+	argbase = argbuf;		/* store from first of buffer */
+	slrflag = 0;
+	marg_sl->sl_cur = 0;		/* reset to start of marg_sl */
+	for (margc = 0; ; margc++) {
+		argp = slurpstring();
+		sl_add(marg_sl, argp);
+		if (argp == NULL)
+			break;
+	}
+	if (cursor_pos == line) {
+		cursor_argc = 0;
+		cursor_argo = 0;
+	} else if (cursor_pos != NULL) {
+		cursor_argc = margc;
+		cursor_argo = strlen(margv[margc-1]);
+	}
+}
+
+#define INC_CHKCURSOR(x)	{ (x)++ ; \
+				if (x == cursor_pos) { \
+					cursor_argc = margc; \
+					cursor_argo = ap-argbase; \
+					cursor_pos = NULL; \
+				} }
+
+/*
+ * Parse string into argbuf;
+ * implemented with FSM to
+ * handle quoting and strings
+ */
+char *
+slurpstring(void)
+{
+	int got_one = 0;
+	char *sb = stringbase;
+	char *ap = argbase;
+	char *tmp = argbase;		/* will return this if token found */
+
+	if (*sb == '!' || *sb == '$') {	/* recognize ! as a token for shell */
+		switch (slrflag) {	/* and $ as token for macro invoke */
+			case 0:
+				slrflag++;
+				INC_CHKCURSOR(stringbase);
+				return ((*sb == '!') ? "!" : "$");
+				/* NOTREACHED */
+			case 1:
+				slrflag++;
+				altarg = stringbase;
+				break;
+			default:
+				break;
+		}
+	}
+
+S0:
+	switch (*sb) {
+
+	case '\0':
+		goto OUT;
+
+	case ' ':
+	case '\t':
+		INC_CHKCURSOR(sb);
+		goto S0;
+
 	default:
-		return NULL;
+		switch (slrflag) {
+			case 0:
+				slrflag++;
+				break;
+			case 1:
+				slrflag++;
+				altarg = sb;
+				break;
+			default:
+				break;
+		}
+		goto S1;
+	}
+
+S1:
+	switch (*sb) {
+
+	case ' ':
+	case '\t':
+	case '\0':
+		goto OUT;	/* end of token */
+
+	case '\\':
+		INC_CHKCURSOR(sb);
+		goto S2;	/* slurp next character */
+
+	case '"':
+		INC_CHKCURSOR(sb);
+		goto S3;	/* slurp quoted string */
+
+	default:
+		*ap = *sb;	/* add character to token */
+		ap++;
+		INC_CHKCURSOR(sb);
+		got_one = 1;
+		goto S1;
+	}
+
+S2:
+	switch (*sb) {
+
+	case '\0':
+		goto OUT;
+
+	default:
+		*ap = *sb;
+		ap++;
+		INC_CHKCURSOR(sb);
+		got_one = 1;
+		goto S1;
+	}
+
+S3:
+	switch (*sb) {
+
+	case '\0':
+		goto OUT;
+
+	case '"':
+		INC_CHKCURSOR(sb);
+		goto S1;
+
+	default:
+		*ap = *sb;
+		ap++;
+		INC_CHKCURSOR(sb);
+		got_one = 1;
+		goto S3;
+	}
+
+OUT:
+	if (got_one)
+		*ap++ = '\0';
+	argbase = ap;			/* update storage pointer */
+	stringbase = sb;		/* update scan pointer */
+	if (got_one) {
+		return (tmp);
+	}
+	switch (slrflag) {
+		case 0:
+			slrflag++;
+			break;
+		case 1:
+			slrflag++;
+			altarg = (char *) 0;
+			break;
+		default:
+			break;
+	}
+	return (NULL);
+}
+
+/*
+ * Help command.
+ * Call each command handler with argc == 0 and argv[0] == name.
+ */
+void
+help(int argc, char *argv[])
+{
+	struct cmd *c;
+
+	if (argc == 1) {
+		StringList *buf;
+
+		buf = sl_init();
+		fprintf(ttyout, "%sommands may be abbreviated.  Commands are:\n\n",
+		    proxy ? "Proxy c" : "C");
+		for (c = cmdtab; c < &cmdtab[NCMDS]; c++)
+			if (c->c_name && (!proxy || c->c_proxy))
+				sl_add(buf, c->c_name);
+		list_vertical(buf);
+		sl_free(buf, 0);
+		return;
+	}
+
+#define HELPINDENT ((int) sizeof("disconnect"))
+
+	while (--argc > 0) {
+		char *arg;
+
+		arg = *++argv;
+		c = getcmd(arg);
+		if (c == (struct cmd *)-1)
+			fprintf(ttyout, "?Ambiguous help command %s\n", arg);
+		else if (c == NULL)
+			fprintf(ttyout, "?Invalid help command %s\n", arg);
+		else
+			fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
+				c->c_name, c->c_help);
 	}
 }
+#endif /* !SMALL */
 
-static void
-validate_output_fname(struct url *url, const char *name)
-{
-	url->fname = xstrdup(oarg ? oarg : basename(url->path));
-	if (strcmp(url->fname, "/") == 0)
-		errx(1, "No filename after host (use -o): %s", name);
-
-	if (strcmp(url->fname, ".") == 0)
-		errx(1, "No '/' after host (use -o): %s", name);
-}
-
-static struct url *
-proxy_parse(const char *name)
-{
-	struct url	*proxy;
-	char		*str;
-
-	if ((str = getenv(name)) == NULL)
-		return NULL;
-
-	if (strlen(str) == 0)
-		return NULL;
-
-	if ((proxy = url_parse(str)) == NULL)
-		exit(1);
-
-	if (proxy->scheme != S_HTTP)
-		errx(1, "Malformed proxy URL: %s", str);
-
-	return proxy;
-}
-
-static __dead void
+__dead void
 usage(void)
 {
-	fprintf(stderr, "usage:\t%s [-46AVv] [-D title] [host [port]]\n"
-	    "\t%s [-46ACMmVv] [-D title] [-o output] [-S tls_options]\n"
-	    "\t\t[-U useragent] [-w seconds] url ...\n", getprogname(),
-	     getprogname());
-
+	fprintf(stderr, "usage: "
+#ifndef SMALL
+	    "ftp [-46AadEegiMmnptVv] [-D title] [-k seconds] [-P port] "
+	    "[-r seconds]\n"
+	    "           [-s srcaddr] [host [port]]\n"
+	    "       ftp [-C] [-o output] [-s srcaddr]\n"
+	    "           ftp://[user:password@]host[:port]/file[/] ...\n"
+	    "       ftp [-C] [-c cookie] [-o output] [-S ssl_options] "
+	    "[-s srcaddr]\n"
+	    "           [-U useragent] [-w seconds] "
+	    "http[s]://[user:password@]host[:port]/file ...\n"
+	    "       ftp [-C] [-o output] [-s srcaddr] file:file ...\n"
+	    "       ftp [-C] [-o output] [-s srcaddr] host:/file[/] ...\n"
+#else /* !SMALL */
+	    "ftp [-o output] "
+	    "ftp://[user:password@]host[:port]/file[/] ...\n"
+#ifndef NOSSL
+	    "       ftp [-o output] [-S ssl_options] [-w seconds] "
+	    "http[s]://[user:password@]host[:port]/file ...\n"
+#else
+	    "       ftp [-o output] [-w seconds] http://host[:port]/file ...\n"
+#endif /* NOSSL */
+	    "       ftp [-o output] file:file ...\n"
+	    "       ftp [-o output] host:/file[/] ...\n"
+#endif /* !SMALL */
+	    );
 	exit(1);
 }
