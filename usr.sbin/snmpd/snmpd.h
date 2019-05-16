@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.82 2019/05/11 17:46:02 rob Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.83 2019/05/16 05:00:00 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -724,6 +724,7 @@ int		 smi_init(void);
 u_long		 smi_getticks(void);
 void		 smi_mibtree(struct oid *);
 struct oid	*smi_find(struct oid *);
+struct oid	*smi_nfind(struct oid *);
 struct oid	*smi_findkey(char *);
 struct oid	*smi_next(struct oid *);
 struct oid	*smi_foreach(struct oid *, u_int);

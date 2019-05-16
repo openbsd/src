@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.23 2018/12/13 10:54:29 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.24 2019/05/16 05:00:00 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -239,6 +239,12 @@ struct oid *
 smi_find(struct oid *oid)
 {
 	return (RB_FIND(oidtree, &smi_oidtree, oid));
+}
+
+struct oid *
+smi_nfind(struct oid *oid)
+{
+	return (RB_NFIND(oidtree, &smi_oidtree, oid));
 }
 
 struct oid *
