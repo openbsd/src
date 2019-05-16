@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.17 2015/11/05 22:20:11 benno Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.18 2019/05/16 06:23:15 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -87,13 +87,6 @@ ttymsg(iov, iovcnt, line, tmout)
 		return (errbuf);
 	}
 
-	if (getuid()) {
-		if (stat(device, &st) < 0)
-			return (NULL);
-		if ((st.st_mode & S_IWGRP) == 0)
-			return (NULL);
-	}
-
 	/*
 	 * open will fail on slip lines or exclusive-use lines
 	 * if not running as root; not an error.
@@ -104,6 +97,14 @@ ttymsg(iov, iovcnt, line, tmout)
 		(void) snprintf(errbuf, sizeof(errbuf),
 		    "%s: %s", device, strerror(errno));
 		return (errbuf);
+	}
+
+	if (getuid()) {
+		if (fstat(fd, &st) < 0 ||
+		    (st.st_mode & S_IWGRP) == 0) {
+			close(fd);
+			return (NULL);
+		}
 	}
 
 	for (cnt = left = 0; cnt < iovcnt; ++cnt)
