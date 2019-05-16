@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.243 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.244 2019/05/16 04:24:14 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1538,8 +1538,18 @@ uvm_mapent_tryjoin(struct vm_map *map, struct vm_map_entry *entry,
 void
 uvm_unmap_detach(struct uvm_map_deadq *deadq, int flags)
 {
-	struct vm_map_entry *entry;
+	struct vm_map_entry *entry, *tmp;
 	int waitok = flags & UVM_PLA_WAITOK;
+
+	TAILQ_FOREACH_SAFE(entry, deadq, dfree.deadq, tmp) {
+		/* Skip entries for which we have to grab the kernel lock. */
+		if (entry->aref.ar_amap || UVM_ET_ISSUBMAP(entry) ||
+		    UVM_ET_ISOBJ(entry))
+			continue;
+
+		TAILQ_REMOVE(deadq, entry, dfree.deadq);
+		uvm_mapent_free(entry);
+	}
 
 	if (TAILQ_EMPTY(deadq))
 		return;
