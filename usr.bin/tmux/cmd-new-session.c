@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.117 2019/04/26 11:38:51 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.118 2019/05/17 05:47:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -192,6 +192,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (strcmp(tmp, "-") == 0) {
 			if (c != NULL)
 				dsx = c->tty.sx;
+			else
+				dsx = 80;
 		} else {
 			dsx = strtonum(tmp, 1, USHRT_MAX, &errstr);
 			if (errstr != NULL) {
@@ -205,6 +207,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (strcmp(tmp, "-") == 0) {
 			if (c != NULL)
 				dsy = c->tty.sy;
+			else
+				dsy = 24;
 		} else {
 			dsy = strtonum(tmp, 1, USHRT_MAX, &errstr);
 			if (errstr != NULL) {
