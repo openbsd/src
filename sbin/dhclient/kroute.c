@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.162 2019/05/10 16:51:13 benno Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.163 2019/05/17 20:42:44 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -792,12 +792,18 @@ set_mtu(char *name, int ioctlfd, uint16_t mtu)
 	struct ifreq	 ifr;
 
 	memset(&ifr, 0, sizeof(ifr));
-
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_mtu = mtu;
 
+	if (ioctl(ioctlfd, SIOCGIFMTU, &ifr) == -1) {
+		log_warn("%s: SIOCGIFMTU", log_procname);
+		return;
+	}
+	if (ifr.ifr_mtu == mtu)
+		return;	/* Avoid unnecessary RTM_IFINFO! */
+
+	ifr.ifr_mtu = mtu;
 	if (ioctl(ioctlfd, SIOCSIFMTU, &ifr) == -1)
-		log_warn("%s: SIOCSIFMTU %d", log_procname, mtu);
+		log_warn("%s: SIOCSIFMTU %u", log_procname, mtu);
 }
 
 /*
