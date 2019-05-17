@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_get_string.3,v 1.3 2019/05/16 17:39:21 rob Exp $
+.\" $OpenBSD: ber_get_string.3,v 1.4 2019/05/17 14:40:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2019 $
+.Dd $Mdocdate: May 17 2019 $
 .Dt BER_GET_STRING 3
 .Os
 .Sh NAME
@@ -59,42 +59,88 @@
 .Ft "int"
 .Fn "ber_scanf_elements" "struct ber_element *root" "char *format" "..."
 .Sh DESCRIPTION
-The
-.Fn ber_get_*
+Functions which take two arguments save the value contained in the
+.Fa root
+element into the storage location pointed to by the second argument.
+Additionally,
+.Fn ber_get_nstring
 and
-.Fn ber_scanf_elements
-functions may be used to save
-.Vt ber_element
-values into local variables.
+.Fn ber_get_bitstring
+save the number of bytes contained in the string into
+.Pf * Fa size .
 .Pp
-.Fn ber_getpos
-may be used to obtain the
+.Fn ber_scanf_elements
+retrieves the values from zero or more elements starting at
+.Fa root .
+For each byte in
+.Fa fmt ,
+arguments of the types given in the following table are consumed
+and passed to the function listed, processing one
 .Vt ber_element
-offset
-.Fa be_offs .
+per byte.
+The following bytes are valid:
+.Bl -column -offset indent bytes ber_get_enumerated() "1: struct ber_element **"
+.It Sy byte Ta Sy function Ta Sy arguments
+.It B Ta Fn ber_get_bitstring  Ta 2: Vt void ** , size_t *
+.It b Ta Fn ber_get_boolean    Ta 1: Vt int *
+.It d Ta Fn ber_get_integer    Ta 1: Vt int *
+.It E Ta Fn ber_get_enumerated Ta 1: Vt long long *
+.It e Ta see below             Ta 1: Vt struct ber_element **
+.It i Ta Fn ber_get_integer    Ta 1: Vt long long *
+.It o Ta Fn ber_get_oid        Ta 1: Vt struct ber_oid *
+.It p Ta Fn ber_getpos         Ta 1: Vt off_t *
+.It S Ta see below             Ta 0
+.It s Ta Fn ber_get_string     Ta 1: Vt char **
+.It t Ta see below             Ta 2: Vt int * , unsigned int *
+.It x Ta Fn ber_get_nstring    Ta 2: Vt void **, size_t *
+.It \&( or { Ta see below      Ta 0
+.It \&) or } Ta see below      Ta 0
+.It \&. Ta Fn ber_get_eoc      Ta 0
+.It 0 Ta Fn ber_get_null       Ta 0
+.El
+.Pp
+For
+.Sq e ,
+.Sq p ,
+.Sq S ,
+and
+.Sq t ,
+the type of the element is not checked.
+For
+.Sq e ,
+a pointer to the element is stored in the corresponding pointer variable.
+For
+.Sq S ,
+the element is skipped without extracting any information from it.
+For
+.Sq t ,
+the class and type of the element are stored in the two corresponding
+variables, but if the element contains a value, that value is ignored.
+.Pp
+For an opening parenthesis or brace, it is checked that the element
+is a sequence or a set, and parsing continues with its children.
+For a closing parenthesis or brace, parsing of the current sequence
+or set is ended and parsing continues with the element following
+the sequence or set.
 .Sh RETURN VALUES
-Upon successful completion,
-.Fn ber_get_null ,
-.Fn ber_get_eoc ,
-.Fn ber_get_integer ,
-.Fn ber_get_enumerated ,
-.Fn ber_get_boolean ,
-.Fn ber_get_string ,
-.Fn ber_get_nstring ,
-.Fn ber_get_ostring ,
-.Fn ber_get_bitstring ,
-.Fn ber_get_oid ,
-.Fn ber_string2oid
-and
-.Fn ber_scanf_elements
-return 0.
-Otherwise \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
-.Pp
 .Fn ber_getpos
 returns the value of
 .Vt be_offs .
+.Pp
+.Fn ber_scanf_elements
+returns 0 for success or \-1 when encountering elements that do not
+agree with the expectations of
+.Fa fmt
+or when
+.Fa fmt
+is syntactically invalid.
+Even when
+.Fn ber_scanf_elements
+fails, some of the arguments may already have been filled in.
+.Pp
+The other functions return 0 if
+.Va root
+is of the requested type or \-1 otherwise.
 .Sh SEE ALSO
 .Xr ber_add_string 3 ,
 .Xr ber_oid_cmp 3 ,
