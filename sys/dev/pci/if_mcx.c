@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.7 2019/05/15 06:56:36 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.8 2019/05/17 07:12:32 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -187,27 +187,37 @@
 #define MCX_CMD_ALLOC_TRANSPORT_DOMAIN \
 				0x816
 #define MCX_CMD_CREATE_TIR	0x900
+#define MCX_CMD_DESTROY_TIR	0x902
 #define MCX_CMD_CREATE_SQ	0x904
 #define MCX_CMD_MODIFY_SQ	0x905
+#define MCX_CMD_DESTROY_SQ	0x906
 #define MCX_CMD_QUERY_SQ	0x907
 #define MCX_CMD_CREATE_RQ	0x908
 #define MCX_CMD_MODIFY_RQ	0x909
+#define MCX_CMD_DESTROY_RQ	0x90a
 #define MCX_CMD_QUERY_RQ	0x90b
 #define MCX_CMD_CREATE_TIS	0x912
+#define MCX_CMD_DESTROY_TIS	0x914
 #define MCX_CMD_SET_FLOW_TABLE_ROOT \
 				0x92f
 #define MCX_CMD_CREATE_FLOW_TABLE \
 				0x930
+#define MCX_CMD_DESTROY_FLOW_TABLE \
+				0x931
 #define MCX_CMD_QUERY_FLOW_TABLE \
 				0x932
 #define MCX_CMD_CREATE_FLOW_GROUP \
 				0x933
+#define MCX_CMD_DESTROY_FLOW_GROUP \
+				0x934
 #define MCX_CMD_QUERY_FLOW_GROUP \
 				0x935
 #define MCX_CMD_SET_FLOW_TABLE_ENTRY \
 				0x936
 #define MCX_CMD_QUERY_FLOW_TABLE_ENTRY \
 				0x937
+#define MCX_CMD_DELETE_FLOW_TABLE_ENTRY \
+				0x938
 #define MCX_CMD_ALLOC_FLOW_COUNTER \
 				0x939
 #define MCX_CMD_QUERY_FLOW_COUNTER \
@@ -1075,6 +1085,21 @@ struct mcx_cmd_create_tir_out {
 	uint8_t			cmd_reserved1[4];
 } __packed __aligned(4);
 
+struct mcx_cmd_destroy_tir_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_tirn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_tir_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
 struct mcx_cmd_create_tis_in {
 	uint16_t		cmd_opcode;
 	uint8_t			cmd_reserved0[4];
@@ -1096,6 +1121,21 @@ struct mcx_cmd_create_tis_out {
 	uint32_t		cmd_syndrome;
 	uint32_t		cmd_tisn;
 	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_tis_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_tisn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_tis_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
 struct mcx_cq_ctx {
@@ -1139,6 +1179,21 @@ struct mcx_cmd_create_cq_out {
 	uint32_t		cmd_syndrome;
 	uint32_t		cmd_cqn;
 	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_cq_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_cqn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_cq_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
 struct mcx_cq_entry {
@@ -1300,6 +1355,22 @@ struct mcx_cmd_modify_sq_out {
 	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
+struct mcx_cmd_destroy_sq_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_sqn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_sq_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
+
 struct mcx_rq_ctx {
 	uint32_t		rq_flags;
 #define MCX_RQ_CTX_RLKEY			(1 << 31)
@@ -1358,6 +1429,21 @@ struct mcx_cmd_modify_rq_out {
 	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
+struct mcx_cmd_destroy_rq_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_rqn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_rq_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
 struct mcx_cmd_create_flow_table_in {
 	uint16_t		cmd_opcode;
 	uint8_t			cmd_reserved0[4];
@@ -1386,6 +1472,27 @@ struct mcx_cmd_create_flow_table_out {
 	uint32_t		cmd_syndrome;
 	uint32_t		cmd_table_id;
 	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_flow_table_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_flow_table_mb_in {
+	uint8_t			cmd_table_type;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_table_id;
+	uint8_t			cmd_reserved1[40];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_flow_table_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
 struct mcx_cmd_set_flow_table_root_in {
@@ -1460,6 +1567,28 @@ struct mcx_flow_ctx {
 #define MCX_FLOW_CONTEXT_DEST_TYPE_TABLE	(1 << 24)
 #define MCX_FLOW_CONTEXT_DEST_TYPE_TIR		(2 << 24)
 
+struct mcx_cmd_destroy_flow_group_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_flow_group_mb_in {
+	uint8_t			cmd_table_type;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_table_id;
+	uint32_t		cmd_group_id;
+	uint8_t			cmd_reserved1[36];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_flow_group_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
 struct mcx_cmd_set_flow_table_entry_in {
 	uint16_t		cmd_opcode;
 	uint8_t			cmd_reserved0[4];
@@ -1511,6 +1640,29 @@ struct mcx_cmd_query_flow_table_entry_out {
 struct mcx_cmd_query_flow_table_entry_mb_out {
 	uint8_t			cmd_reserved0[48];
 	struct mcx_flow_ctx	cmd_flow_ctx;
+} __packed __aligned(4);
+
+struct mcx_cmd_delete_flow_table_entry_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
+struct mcx_cmd_delete_flow_table_entry_mb_in {
+	uint8_t			cmd_table_type;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_table_id;
+	uint8_t			cmd_reserved1[8];
+	uint32_t		cmd_flow_index;
+	uint8_t			cmd_reserved2[28];
+} __packed __aligned(4);
+
+struct mcx_cmd_delete_flow_table_entry_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
 struct mcx_cmd_query_flow_group_in {
@@ -1764,16 +1916,24 @@ static int	mcx_create_eq(struct mcx_softc *);
 static int	mcx_query_nic_vport_context(struct mcx_softc *);
 static int	mcx_query_special_contexts(struct mcx_softc *);
 static int	mcx_create_cq(struct mcx_softc *, int);
+static int	mcx_destroy_cq(struct mcx_softc *, int);
 static int	mcx_create_sq(struct mcx_softc *, int);
+static int	mcx_destroy_sq(struct mcx_softc *);
 static int	mcx_ready_sq(struct mcx_softc *);
 static int	mcx_create_rq(struct mcx_softc *, int);
+static int	mcx_destroy_rq(struct mcx_softc *);
 static int	mcx_ready_rq(struct mcx_softc *);
 static int	mcx_create_tir(struct mcx_softc *);
+static int	mcx_destroy_tir(struct mcx_softc *);
 static int	mcx_create_tis(struct mcx_softc *);
+static int	mcx_destroy_tis(struct mcx_softc *);
 static int	mcx_create_flow_table(struct mcx_softc *);
 static int	mcx_set_flow_table_root(struct mcx_softc *);
+static int	mcx_destroy_flow_table(struct mcx_softc *);
 static int	mcx_create_flow_group(struct mcx_softc *);
+static int	mcx_destroy_flow_group(struct mcx_softc *);
 static int	mcx_set_flow_table_entry(struct mcx_softc *, int);
+static int	mcx_delete_flow_table_entry(struct mcx_softc *, int);
 
 #if 0
 static int	mcx_dump_flow_table(struct mcx_softc *);
@@ -2040,6 +2200,9 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	mcx_media_status(ifp, NULL);
 
 	timeout_set(&sc->sc_rx_refill, mcx_refill, sc);
+
+	sc->sc_flow_table_id = -1;
+	sc->sc_flow_group_id = -1;
 
 	/* set interface admin down, so bringing it up will start autoneg */
 
@@ -3530,6 +3693,49 @@ free:
 }
 
 static int
+mcx_destroy_cq(struct mcx_softc *sc, int index)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_destroy_cq_in *in;
+	struct mcx_cmd_destroy_cq_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_CQ);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_cqn = htobe32(sc->sc_cq[index].cq_n);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy cq timeout\n", DEVNAME(sc));
+		return error;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy cq command corrupt\n", DEVNAME(sc));
+		return error;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy cq failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		return -1;
+	}
+
+	sc->sc_cq[index].cq_n = 0;
+	mcx_dmamem_free(sc, &sc->sc_cq[index].cq_mem);
+	sc->sc_cq[index].cq_cons = 0;
+	sc->sc_cq[index].cq_count = 0;
+	return 0;
+}
+
+static int
 mcx_create_rq(struct mcx_softc *sc, int cqn)
 {
 	struct mcx_cmdq_entry *cqe;
@@ -3663,6 +3869,46 @@ free:
 }
 
 static int
+mcx_destroy_rq(struct mcx_softc *sc)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_destroy_rq_in *in;
+	struct mcx_cmd_destroy_rq_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_RQ);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_rqn = htobe32(sc->sc_rqn);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy rq timeout\n", DEVNAME(sc));
+		return error;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy rq command corrupt\n", DEVNAME(sc));
+		return error;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy rq failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		return -1;
+	}
+
+	sc->sc_rqn = 0;
+	return 0;
+}
+
+static int
 mcx_create_tir(struct mcx_softc *sc)
 {
 	struct mcx_cmdq_entry *cqe;
@@ -3712,6 +3958,46 @@ mcx_create_tir(struct mcx_softc *sc)
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
+}
+
+static int
+mcx_destroy_tir(struct mcx_softc *sc)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_destroy_tir_in *in;
+	struct mcx_cmd_destroy_tir_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_TIR);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_tirn = htobe32(sc->sc_tirn);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy tir timeout\n", DEVNAME(sc));
+		return error;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy tir command corrupt\n", DEVNAME(sc));
+		return error;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy tir failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		return -1;
+	}
+
+	sc->sc_tirn = 0;
+	return 0;
 }
 
 static int
@@ -3797,6 +4083,46 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
+}
+
+static int
+mcx_destroy_sq(struct mcx_softc *sc)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_destroy_sq_in *in;
+	struct mcx_cmd_destroy_sq_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_SQ);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_sqn = htobe32(sc->sc_sqn);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy sq timeout\n", DEVNAME(sc));
+		return error;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy sq command corrupt\n", DEVNAME(sc));
+		return error;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy sq failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		return -1;
+	}
+
+	sc->sc_sqn = 0;
+	return 0;
 }
 
 static int
@@ -3902,6 +4228,47 @@ free:
 }
 
 static int
+mcx_destroy_tis(struct mcx_softc *sc)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_destroy_tis_in *in;
+	struct mcx_cmd_destroy_tis_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_TIS);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_tisn = htobe32(sc->sc_tisn);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy tis timeout\n", DEVNAME(sc));
+		return error;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy tis command corrupt\n", DEVNAME(sc));
+		return error;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy tis failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		return -1;
+	}
+
+	sc->sc_tirn = 0;
+	return 0;
+}
+
+#if 0
+static int
 mcx_alloc_flow_counter(struct mcx_softc *sc, int i)
 {
 	struct mcx_cmdq_entry *cqe;
@@ -3939,6 +4306,7 @@ mcx_alloc_flow_counter(struct mcx_softc *sc, int i)
 
 	return (0);
 }
+#endif
 
 static int
 mcx_create_flow_table(struct mcx_softc *sc)
@@ -4044,6 +4412,61 @@ free:
 }
 
 static int
+mcx_destroy_flow_table(struct mcx_softc *sc)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_dmamem mxm;
+	struct mcx_cmd_destroy_flow_table_in *in;
+	struct mcx_cmd_destroy_flow_table_mb_in *mb;
+	struct mcx_cmd_destroy_flow_table_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mb), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_FLOW_TABLE);
+	in->cmd_op_mod = htobe16(0);
+
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate destroy flow table mailbox\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+	mb = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
+	mb->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
+	mb->cmd_table_id = htobe32(sc->sc_flow_table_id);
+
+	mcx_cmdq_mboxes_sign(&mxm, 1);
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy flow table timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy flow table command corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy flow table failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+	sc->sc_flow_table_id = -1;
+free:
+	mcx_dmamem_free(sc, &mxm);
+	return (error);
+}
+
+
+static int
 mcx_create_flow_group(struct mcx_softc *sc)
 {
 	struct mcx_cmdq_entry *cqe;
@@ -4095,6 +4518,61 @@ mcx_create_flow_group(struct mcx_softc *sc)
 
 	sc->sc_flow_group_id = betoh32(out->cmd_group_id);
 
+free:
+	mcx_dmamem_free(sc, &mxm);
+	return (error);
+}
+
+static int
+mcx_destroy_flow_group(struct mcx_softc *sc)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_dmamem mxm;
+	struct mcx_cmd_destroy_flow_group_in *in;
+	struct mcx_cmd_destroy_flow_group_mb_in *mb;
+	struct mcx_cmd_destroy_flow_group_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mb), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_FLOW_GROUP);
+	in->cmd_op_mod = htobe16(0);
+
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate destroy flow group mailbox\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+	mb = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
+	mb->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
+	mb->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mb->cmd_group_id = htobe32(sc->sc_flow_group_id);
+
+	mcx_cmdq_mboxes_sign(&mxm, 2);
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy flow group timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy flow group command corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy flow group failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+	sc->sc_flow_group_id = -1;
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -4169,6 +4647,63 @@ mcx_set_flow_table_entry(struct mcx_softc *sc, int counter)
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: set flow table entry failed (%x, %x)\n", DEVNAME(sc), out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+free:
+	mcx_dmamem_free(sc, &mxm);
+	return (error);
+}
+
+static int
+mcx_delete_flow_table_entry(struct mcx_softc *sc, int index)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_dmamem mxm;
+	struct mcx_cmd_delete_flow_table_entry_in *in;
+	struct mcx_cmd_delete_flow_table_entry_mb_in *mbin;
+	struct mcx_cmd_delete_flow_table_entry_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out),
+	    token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DELETE_FLOW_TABLE_ENTRY);
+	in->cmd_op_mod = htobe16(0);
+
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate delete flow table entry mailbox\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
+	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
+	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mbin->cmd_flow_index = htobe32(index);
+
+	mcx_cmdq_mboxes_sign(&mxm, 2);
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: delete flow table entry timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: delete flow table entry command corrupt\n",
+		    DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: delete flow table entry %d failed (%x, %x)\n",
+		    DEVNAME(sc), index, out->cmd_status,
+		    betoh32(out->cmd_syndrome));
 		error = -1;
 		goto free;
 	}
@@ -4939,7 +5474,8 @@ mcx_intr(void *xsc)
 }
 
 static void
-mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated, int total)
+mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated,
+    int total)
 {
 	struct mcx_slot *ms;
 
@@ -4947,6 +5483,8 @@ mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated, int 
 	while (i-- > 0) {
 		ms = &slots[i];
 		bus_dmamap_destroy(sc->sc_dmat, ms->ms_map);
+		if (ms->ms_m != NULL)
+			m_freem(ms->ms_m);
 	}
 	free(slots, M_DEVBUF, total * sizeof(*ms));
 }
@@ -4994,52 +5532,41 @@ mcx_up(struct mcx_softc *sc)
 	}
 
 	if (mcx_create_cq(sc, sc->sc_eqn) != 0)
-		goto destroy_tx_slots;
-	if (mcx_create_cq(sc, sc->sc_eqn) != 0)
-		goto destroy_tx_slots;
+		goto down;
 
 	/* send queue */
 	if (mcx_create_tis(sc) != 0)
-		goto destroy_sq;
+		goto down;
 
 	if (mcx_create_sq(sc, sc->sc_cq[0].cq_n) != 0)
-		goto destroy_rq;
+		goto down;
 
 	/* receive queue */
 	if (mcx_create_rq(sc, sc->sc_cq[0].cq_n) != 0)
-		goto destroy_cq;
+		goto down;
 
 	if (mcx_create_tir(sc) != 0)
-		goto destroy_tis;
-
-	if (0) {
-		if (mcx_alloc_flow_counter(sc, 0) != 0)
-			goto destroy_tir;
-		if (mcx_alloc_flow_counter(sc, 1) != 0)
-			goto destroy_tir;
-		if (mcx_alloc_flow_counter(sc, 2) != 0)
-			goto destroy_tir;
-	}
+		goto down;
 
 	/* receive flow table mapping everything to the rq */
 	if (mcx_create_flow_table(sc) != 0)
-		goto destroy_tir;
+		goto down;
 
 	if (mcx_create_flow_group(sc) != 0)
-		goto destroy_flow_table;	/* probably don't have to unset the root table? */
+		goto down;
 
 	if (mcx_set_flow_table_entry(sc, -1) != 0)
-		goto destroy_flow_group;
+		goto down;
 
 	if (mcx_set_flow_table_root(sc) != 0)
-		goto destroy_flow_table;
+		goto down;
 
 	/* start the queues */
 	if (mcx_ready_sq(sc) != 0)
-		goto destroy_flow_table_entry;
+		goto down;
 
 	if (mcx_ready_rq(sc) != 0)
-		goto destroy_flow_table_entry;
+		goto down;
 
 	if_rxr_init(&sc->sc_rxr, 1, (1 << MCX_LOG_RQ_SIZE));
 	sc->sc_rx_cons = 0;
@@ -5054,22 +5581,6 @@ mcx_up(struct mcx_softc *sc)
 	ifq_restart(&ifp->if_snd);
 
 	return;
-destroy_flow_table_entry:
-	/* mcx_destroy_flow_table_entry(sc); */
-destroy_flow_group:
-	/* mcx_destroy_flow_group(sc); */
-destroy_flow_table:
-	/* mcx_destroy_flow_table(sc); */
-destroy_tir:
-	/* mcx_destroy_tir(sc); */
-destroy_tis:
-	/* mcx_destroy_tis(sc); */
-destroy_sq:
-	/* mcx_destroy_sq(sc); */
-destroy_rq:
-	/* mcx_destroy_rq(sc); */
-destroy_cq:
-	/* mcx_destroy_cq(sc); */
 destroy_tx_slots:
 	mcx_free_slots(sc, sc->sc_tx_slots, i, (1 << MCX_LOG_SQ_SIZE));
 	sc->sc_rx_slots = NULL;
@@ -5078,12 +5589,59 @@ destroy_tx_slots:
 destroy_rx_slots:
 	mcx_free_slots(sc, sc->sc_rx_slots, i, (1 << MCX_LOG_RQ_SIZE));
 	sc->sc_rx_slots = NULL;
+down:
+	mcx_down(sc);
 }
 
 static void
 mcx_down(struct mcx_softc *sc)
 {
-	/* destroy all the rings and stuff? */
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int i;
+
+	CLR(ifp->if_flags, IFF_RUNNING);
+
+	/*
+	 * delete flow table entries first, so no packets can arrive
+	 * after the barriers
+	 */
+	for (i = 0; i < sc->sc_flow_table_entry; i++)
+		mcx_delete_flow_table_entry(sc, i);
+	sc->sc_flow_table_entry = 0;
+
+	intr_barrier(&sc->sc_ih);
+	ifq_barrier(&ifp->if_snd);
+
+	if (sc->sc_flow_group_id != -1)
+		mcx_destroy_flow_group(sc);
+
+	if (sc->sc_flow_table_id != -1)
+		mcx_destroy_flow_table(sc);
+
+	if (sc->sc_tirn != 0)
+		mcx_destroy_tir(sc);
+	if (sc->sc_rqn != 0)
+		mcx_destroy_rq(sc);
+
+	if (sc->sc_sqn != 0)
+		mcx_destroy_sq(sc);
+	if (sc->sc_tisn != 0)
+		mcx_destroy_tis(sc);
+
+	for (i = 0; i < sc->sc_num_cq; i++)
+		mcx_destroy_cq(sc, i);
+	sc->sc_num_cq = 0;
+
+	if (sc->sc_tx_slots != NULL) {
+		mcx_free_slots(sc, sc->sc_tx_slots, (1 << MCX_LOG_SQ_SIZE),
+		    (1 << MCX_LOG_SQ_SIZE));
+		sc->sc_tx_slots = NULL;
+	}
+	if (sc->sc_rx_slots != NULL) {
+		mcx_free_slots(sc, sc->sc_rx_slots, (1 << MCX_LOG_RQ_SIZE),
+		    (1 << MCX_LOG_RQ_SIZE));
+		sc->sc_rx_slots = NULL;
+	}
 }
 
 static int
