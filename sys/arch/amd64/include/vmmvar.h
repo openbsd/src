@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.65 2019/05/13 15:40:34 pd Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.66 2019/05/17 19:07:16 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -624,6 +624,9 @@ struct vm_rwregs_params {
     SEFF0EBX_AVX512ER | SEFF0EBX_AVX512CD | \
     SEFF0EBX_AVX512BW | SEFF0EBX_AVX512VL)
 #define VMM_SEFF0ECX_MASK ~(SEFF0ECX_AVX512VBMI)
+
+/* EDX mask contains the bits to include */
+#define VMM_SEFF0EDX_MASK (SEFF0EDX_MD_CLEAR)
 
 /*
  * Extended function flags - copy from host minus:

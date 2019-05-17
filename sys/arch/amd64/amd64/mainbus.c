@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.46 2019/05/04 11:34:47 kettenis Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.47 2019/05/17 19:07:15 guenther Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -72,6 +72,8 @@
 #if NEFIFB > 0
 #include <machine/efifbvar.h>
 #endif
+
+void	replacemds(void);
 
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -204,6 +206,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 		config_found(self, &caa, mainbus_print);
 	}
+
+	/* All CPUs are attached, handle MDS */
+	replacemds();
 
 #if NACPI > 0
 	if (!acpi_hasprocfvs)

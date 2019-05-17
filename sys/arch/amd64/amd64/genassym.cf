@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.39 2018/10/04 05:00:40 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.40 2019/05/17 19:07:15 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -129,6 +129,8 @@ member	CPU_INFO_KERN_CR3	ci_kern_cr3
 member	CPU_INFO_USER_CR3	ci_user_cr3
 member	CPU_INFO_KERN_RSP	ci_kern_rsp
 member	CPU_INFO_INTR_RSP	ci_intr_rsp
+member	CPU_INFO_MDS_BUF	ci_mds_buf
+member	CPU_INFO_MDS_TMP	ci_mds_tmp
 
 export	CPUF_USERSEGS
 export	CPUF_USERXSTATE

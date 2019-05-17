@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.134 2019/03/25 20:29:25 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.135 2019/05/17 19:07:15 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -146,6 +146,7 @@ struct cpu_softc {
 
 void	replacesmap(void);
 void	replacemeltdown(void);
+void	replacemds(void);
 
 extern long _stac;
 extern long _clac;
@@ -188,6 +189,130 @@ replacemeltdown(void)
 		    PCID_SET_REUSE_SIZE);
 	}
 	splx(s);
+}
+
+void
+replacemds(void)
+{
+	static int replacedone = 0;
+	extern long mds_handler_bdw, mds_handler_ivb, mds_handler_skl;
+	extern long mds_handler_skl_sse, mds_handler_skl_avx;
+	extern long mds_handler_silvermont, mds_handler_knights;
+	struct cpu_info *ci = &cpu_info_primary;
+	CPU_INFO_ITERATOR cii;
+	void *handler = NULL, *vmm_handler = NULL;
+	const char *type;
+	int has_verw, s;
+
+	/* ci_mds_tmp must be 32byte aligned for AVX instructions */
+	CTASSERT((offsetof(struct cpu_info, ci_mds_tmp) -
+		  offsetof(struct cpu_info, ci_PAGEALIGN)) % 32 == 0);
+
+	if (replacedone)
+		return;
+	replacedone = 1;
+
+	if (strcmp(cpu_vendor, "GenuineIntel") != 0 ||
+	    ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) &&
+	     (rdmsr(MSR_ARCH_CAPABILITIES) &
+	      (ARCH_CAPABILITIES_RDCL_NO | ARCH_CAPABILITIES_MDS_NO)))) {
+		/* Unaffected, nop out the handling code */
+		has_verw = 0;
+	} else if (ci->ci_feature_sefflags_edx & SEFF0EDX_MD_CLEAR) {
+		/* new firmware, use VERW */
+		has_verw = 1;
+	} else {
+		int family = ci->ci_family;
+		int model = ci->ci_model;
+		int stepping = CPUID2STEPPING(ci->ci_signature);
+
+		has_verw = 0;
+		if (family == 0x6 &&
+		    (model == 0x2e || model == 0x1e || model == 0x1f ||
+		     model == 0x1a || model == 0x2f || model == 0x25 ||
+		     model == 0x2c || model == 0x2d || model == 0x2a ||
+		     model == 0x3e || model == 0x3a)) {
+			/* Nehalem, SandyBridge, IvyBridge */
+			handler = vmm_handler = &mds_handler_ivb;
+			type = "IvyBridge";
+			CPU_INFO_FOREACH(cii, ci) {
+				ci->ci_mds_buf = malloc(672, M_DEVBUF,
+				    M_WAITOK);
+				memset(ci->ci_mds_buf, 0, 16);
+			}
+		} else if (family == 0x6 &&
+		    (model == 0x3f || model == 0x3c || model == 0x45 ||
+		     model == 0x46 || model == 0x56 || model == 0x4f ||
+		     model == 0x47 || model == 0x3d)) {
+			/* Haswell and Broadwell */
+			handler = vmm_handler = &mds_handler_bdw;
+			type = "Broadwell";
+			CPU_INFO_FOREACH(cii, ci) {
+				ci->ci_mds_buf = malloc(1536, M_DEVBUF,
+				    M_WAITOK);
+			}
+		} else if (family == 0x6 &&
+		    ((model == 0x55 && stepping <= 5) || model == 0x4e ||
+		    model == 0x5e || (model == 0x8e && stepping <= 0xb) ||
+		    (model == 0x9e && stepping <= 0xc))) {
+			/*
+			 * Skylake, KabyLake, CoffeeLake, WhiskeyLake,
+			 * CascadeLake
+			 */
+			/* XXX mds_handler_skl_avx512 */
+			if (xgetbv(0) & XCR0_AVX) {
+				handler = &mds_handler_skl_avx;
+				type = "Skylake AVX";
+			} else {
+				handler = &mds_handler_skl_sse;
+				type = "Skylake SSE";
+			}
+			vmm_handler = &mds_handler_skl;
+			CPU_INFO_FOREACH(cii, ci) {
+				vaddr_t b64;
+				b64 = (vaddr_t)malloc(6 * 1024 + 64 + 63,
+				    M_DEVBUF, M_WAITOK);
+				ci->ci_mds_buf = (void *)((b64 + 63) & ~63);
+				memset(ci->ci_mds_buf, 0, 64);
+			}
+		} else if (family == 0x6 &&
+		    (model == 0x37 || model == 0x4a || model == 0x4c ||
+		     model == 0x4d || model == 0x5a || model == 0x5d ||
+		     model == 0x6e || model == 0x65 || model == 0x75)) {
+			/* Silvermont, Airmont */
+			handler = vmm_handler = &mds_handler_silvermont;
+			type = "Silvermont";
+			CPU_INFO_FOREACH(cii, ci) {
+				ci->ci_mds_buf = malloc(256, M_DEVBUF,
+				    M_WAITOK);
+				memset(ci->ci_mds_buf, 0, 16);
+			}
+		} else if (family == 0x6 && (model == 0x85 || model == 0x57)) {
+			handler = vmm_handler = &mds_handler_knights;
+			type = "KnightsLanding";
+			CPU_INFO_FOREACH(cii, ci) {
+				vaddr_t b64;
+				b64 = (vaddr_t)malloc(1152 + 63, M_DEVBUF,
+				    M_WAITOK);
+				ci->ci_mds_buf = (void *)((b64 + 63) & ~63);
+			}
+		}
+	}
+
+	if (handler != NULL) {
+		printf("cpu0: using %s MDS workaround\n", type);
+		s = splhigh();
+		codepatch_call(CPTAG_MDS, handler);
+		codepatch_call(CPTAG_MDS_VMM, vmm_handler);
+		splx(s);
+	} else if (has_verw)
+		printf("cpu0: using %s MDS workaround\n", "VERW");
+	else {
+		s = splhigh();
+		codepatch_nop(CPTAG_MDS);
+		codepatch_nop(CPTAG_MDS_VMM);
+		splx(s);
+	}
 }
 
 #ifdef MULTIPROCESSOR
@@ -910,6 +1035,9 @@ extern vector Xsyscall_meltdown, Xsyscall, Xsyscall32;
 void
 cpu_init_msrs(struct cpu_info *ci)
 {
+	uint64_t msr;
+	int family;
+
 	wrmsr(MSR_STAR,
 	    ((uint64_t)GSEL(GCODE_SEL, SEL_KPL) << 32) |
 	    ((uint64_t)GSEL(GUCODE32_SEL, SEL_UPL) << 48));
@@ -921,6 +1049,16 @@ cpu_init_msrs(struct cpu_info *ci)
 	wrmsr(MSR_FSBASE, 0);
 	wrmsr(MSR_GSBASE, (u_int64_t)ci);
 	wrmsr(MSR_KERNELGSBASE, 0);
+
+	family = ci->ci_family;
+	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
+	    (family > 6 || (family == 6 && ci->ci_model >= 0xd)) &&
+	    rdmsr_safe(MSR_MISC_ENABLE, &msr) == 0 &&
+	    (msr & MISC_ENABLE_FAST_STRINGS) == 0) {
+		msr |= MISC_ENABLE_FAST_STRINGS;
+		wrmsr(MSR_MISC_ENABLE, msr);
+		DPRINTF("%s: enabled fast strings\n", ci->ci_dev->dv_xname);
+	}
 
 	patinit(ci);
 }

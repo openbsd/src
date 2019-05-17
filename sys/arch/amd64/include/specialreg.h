@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.83 2019/05/02 07:00:46 mlarkin Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.84 2019/05/17 19:07:16 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -220,6 +220,8 @@
 /* SEFF EDX bits */
 #define SEFF0EDX_AVX512_4FNNIW	0x00000004 /* AVX-512 neural network insns */
 #define SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
+#define SEFF0EDX_MD_CLEAR	0x00000400 /* Microarch Data Clear */
+#define SEFF0EDX_TSXFA		0x00002000 /* TSX Forced Abort */
 #define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
 #define SEFF0EDX_STIBP		0x08000000 /* STIBP Speculation Control */
 #define SEFF0EDX_L1DF		0x10000000 /* L1D_FLUSH */
@@ -374,6 +376,7 @@
 #define ARCH_CAPABILITIES_RSBA		(1 << 2)	/* RSB Alternate */
 #define ARCH_CAPABILITIES_SKIP_L1DFL_VMENTRY	(1 << 3)
 #define ARCH_CAPABILITIES_SSB_NO	(1 << 4)	/* Spec St Byp safe */
+#define ARCH_CAPABILITIES_MDS_NO	(1 << 5) /* microarch data-sampling */
 #define MSR_FLUSH_CMD		0x10b
 #define FLUSH_CMD_L1D_FLUSH	0x1	/* (1ULL << 0) */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
