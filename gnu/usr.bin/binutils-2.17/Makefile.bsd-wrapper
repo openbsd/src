@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2019/02/24 12:57:13 kn Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2019/05/17 14:47:03 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -38,7 +38,8 @@ CONF_SUBDIRS+=	ld gas
 INST_SUBDIRS+=	ld gas
 MAN+=		gas/doc/as.1	ld/ld.bfd.1
 .if ${LINKER_VERSION:L} == "bfd"
-MLINKS+=	ld.bfd.1 ld.1
+maninstall:
+		cd ${DESTDIR}${MANDIR}1 && rm -f ld.1 && ln ld.bfd.1 ld.1
 .endif
 .endif
 
