@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.25 2019/04/05 00:59:24 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.26 2019/05/17 06:47:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -83,7 +83,7 @@ void gre_print_0(const u_char *, u_int);
 void gre_print_1(const u_char *, u_int);
 void gre_print_pptp(const u_char *, u_int, uint16_t);
 void gre_print_eoip(const u_char *, u_int, uint16_t);
-void gre_print_erspan2(const u_char *, u_int);
+void gre_print_erspan(uint16_t, const u_char *, u_int);
 void gre_print_erspan3(const u_char *, u_int);
 void gre_sre_print(u_int16_t, u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_ip_print(u_int8_t, u_int8_t, const u_char *, u_int);
@@ -270,7 +270,7 @@ gre_print_0(const u_char *p, u_int length)
 		ether_tryprint(p, length, 0);
 		break;
 	case ERSPAN_II:
-		gre_print_erspan2(p, length);
+		gre_print_erspan(flags, p, length);
 		break;
 	case 0x2000:
 		cdp_print(p, length, l, 0);
@@ -493,12 +493,18 @@ trunc:
 #define ERSPAN2_INDEX_MASK	(0xfffffU << ERSPAN2_INDEX_SHIFT)
 
 void
-gre_print_erspan2(const u_char *bp, u_int len)
+gre_print_erspan(uint16_t flags, const u_char *bp, u_int len)
 {
 	uint32_t hdr, ver, vlan, cos, en, sid, index;
 	u_int l;
 
 	printf("erspan");
+
+	if (!(flags & GRE_SP)) {
+		printf(" I: ");
+		ether_tryprint(bp, len, 0);
+		return;
+	}
 
 	l = snapend - bp;
 	if (l < sizeof(hdr))
