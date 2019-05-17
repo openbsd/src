@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.3 2019/05/16 13:52:47 visa Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.4 2019/05/17 03:53:08 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -286,9 +286,6 @@ smr_barrier_impl(int expedite)
 
 	if (panicstr != NULL || db_active)
 		return;
-
-	assertwaitok();
-	SMR_ASSERT_NONCRITICAL();
 
 	WITNESS_CHECKORDER(&smr_lock_obj, LOP_NEWORDER, NULL);
 
