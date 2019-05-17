@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.103 2019/05/14 21:41:10 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.104 2019/05/17 01:05:20 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -788,7 +788,7 @@ athn_init_pll(struct athn_softc *sc, const struct ieee80211_channel *c)
 		/* Switch core clock to 117MHz. */
 		AR_WRITE_BARRIER(sc);
 		DELAY(500);
-		AR_WRITE(sc, 0x50050, 0x304);
+		AR_WRITE(sc, AR9271_CLOCK_CONTROL, 0x304);
 	}
 	AR_WRITE_BARRIER(sc);
 	DELAY(100);

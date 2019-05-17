@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnreg.h,v 1.22 2019/02/01 16:15:07 stsp Exp $	*/
+/*	$OpenBSD: athnreg.h,v 1.23 2019/05/17 01:05:20 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1276,6 +1276,7 @@
 /*
  * AR9271 specific registers.
  */
+#define AR9271_CLOCK_CONTROL		0x050040
 #define AR9271_RESET_POWER_DOWN_CONTROL	0x050044
 #define AR9271_FIRMWARE			0x501000
 #define AR9271_FIRMWARE_TEXT		0x903000
