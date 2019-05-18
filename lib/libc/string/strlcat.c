@@ -29,28 +29,20 @@
 size_t
 strlcat(char *dst, const char *src, size_t dsize)
 {
-	const char *odst = dst;
-	const char *osrc = src;
-	size_t n = dsize;
+	const char *dbeg = dst;
+	const char *sbeg = src;
 	size_t dlen;
 
-	/* Find the end of dst and adjust bytes left but don't go past end. */
-	while (n-- != 0 && *dst != '\0')
-		dst++;
-	dlen = dst - odst;
-	n = dsize - dlen;
+	for (; dsize != 0 && *dst != '\0'; ++dst, --dsize) { }
+	dlen = dst - dbeg;
 
-	if (n-- == 0)
-		return(dlen + strlen(src));
-	while (*src != '\0') {
-		if (n != 0) {
-			*dst++ = *src;
-			n--;
-		}
-		src++;
-	}
-	*dst = '\0';
+	/* strlcpy */
+	if (dsize != 0)
+		for (dst[--dsize] = '\0'; dsize-- != 0; ++src)
+			if ((*dst++ = *src) == '\0') break;
 
-	return(dlen + (src - osrc));	/* count does not include NUL */
+	for (; *src != '\0'; ++src) { }
+
+	return (dlen + (src - sbeg));
 }
 DEF_WEAK(strlcat);
