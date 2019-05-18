@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.65 2019/05/03 18:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.66 2019/05/18 21:14:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -266,13 +266,14 @@ static enum cmd_retval
 cmdq_fire_command(struct cmdq_item *item)
 {
 	struct client		*c = item->client;
+	struct cmdq_shared	*shared = item->shared;
 	struct cmd		*cmd = item->cmd;
 	const struct cmd_entry	*entry = cmd->entry;
 	enum cmd_retval		 retval;
 	struct cmd_find_state	*fsp, fs;
 	int			 flags;
 
-	flags = !!(cmd->flags & CMD_CONTROL);
+	flags = !!(shared->flags & CMDQ_SHARED_CONTROL);
 	cmdq_guard(item, "begin", flags);
 
 	if (item->client == NULL)

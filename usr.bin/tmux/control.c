@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.20 2017/01/15 22:00:56 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.21 2019/05/18 21:14:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -70,7 +70,6 @@ control_callback(struct client *c, int closed, __unused void *data)
 {
 	char			*line, *cause;
 	struct cmd_list		*cmdlist;
-	struct cmd		*cmd;
 	struct cmdq_item	*item;
 
 	if (closed)
@@ -90,9 +89,8 @@ control_callback(struct client *c, int closed, __unused void *data)
 			item = cmdq_get_callback(control_error, cause);
 			cmdq_append(c, item);
 		} else {
-			TAILQ_FOREACH(cmd, &cmdlist->list, qentry)
-				cmd->flags |= CMD_CONTROL;
 			item = cmdq_get_command(cmdlist, NULL, NULL, 0);
+			item->shared->flags |= CMDQ_SHARED_CONTROL;
 			cmdq_append(c, item);
 			cmd_list_free(cmdlist);
 		}
