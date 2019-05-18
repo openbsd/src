@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.393 2019/05/15 12:17:18 jan Exp $ */
+/* $OpenBSD: softraid.c,v 1.394 2019/05/18 14:02:27 tim Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1954,7 +1954,8 @@ sr_ccb_free(struct sr_discipline *sd)
 	while ((ccb = TAILQ_FIRST(&sd->sd_ccb_freeq)) != NULL)
 		TAILQ_REMOVE(&sd->sd_ccb_freeq, ccb, ccb_link);
 
-	free(sd->sd_ccb, M_DEVBUF, sizeof(*sd->sd_ccb));
+	free(sd->sd_ccb, M_DEVBUF, sd->sd_max_wu * sd->sd_max_ccb_per_wu *
+	    sizeof(struct sr_ccb));
 }
 
 struct sr_ccb *
