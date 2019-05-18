@@ -1,4 +1,4 @@
-.\"	$OpenBSD: update-plist.1,v 1.2 2018/06/26 06:56:07 jmc Exp $
+.\"	$OpenBSD: update-plist.1,v 1.3 2019/05/18 18:54:39 espie Exp $
 .\"
 .\" Copyright (c) 2018 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
+.Dd $Mdocdate: May 18 2019 $
 .Dt UPDATE-PLIST 1
 .Os
 .Sh NAME
@@ -26,8 +26,10 @@
 .Nm
 .Op Fl Fmnqrvx
 .Op Fl C Ar dir
+.Op Fl c Ar var
 .Op Fl E Ar ext
 .Op Fl e Ar ext
+.Op Fl I Ar var
 .Op Fl i Ar var
 .Op Fl j Ar jobs
 .Op Fl S Ar var
@@ -83,6 +85,12 @@ Beware that this directory should then be cleaned manually if the
 dependencies's packing-lists change.
 But this will speed up packing-list regeneration for ports with
 lots of dependencies significantly.
+.It Fl c Ar var
+Variable
+.Ar var
+may be used as a way to insert
+.Cm \@ Ns comment
+when other variables vanish.
 .It Fl E Ar ext
 Write new files with
 .Ar ext
@@ -96,6 +104,12 @@ extension instead of the default
 .It Fl F
 Do not try to run
 .Xr pkg_locate 1 .
+.It Fl I Ar var
+Variable
+.Ar var
+may expand to nothing, in which case the variable from
+.Fl c Ar var
+can be used to prevent duplicate entries.
 .It Fl i Ar var
 Ignore variable
 .Ar var
@@ -214,6 +228,59 @@ and it currently does not add new substitutions for
 .Ev ARCH
 nor
 .Ev MACHINE_ARCH .
+.Pp
+Some packages (notoriously Python packages) create some directories optionally
+based on flavors.
+Options
+.Fl c
+and
+.Fl I
+can be used to avoid duplicate directory definitions.
+.Pp
+Specifically, a generated packing-list would contain
+.Bd -literal -offset indent -compact
+lib/python${MODPY_VERSION}/site-packages/bpdb/
+lib/python${MODPY_VERSION}/site-packages/bpdb/${MODPY_PYCACHE}/
+.Ed
+which expands to
+.Bd -literal -offset indent -compact
+lib/python3.7/site-packages/bpdb/
+lib/python3.7/site-packages/bpdb/__pycache__/
+.Ed
+for python3, which is fine.
+.Pp
+But for python2, variable
+.Sq MODPY_PYCACHE
+will be empty, resulting in
+.Bd -literal -offset indent -compact
+lib/python2.7/site-packages/bpdb/
+lib/python2.7/site-packages/bpdb/
+.Ed
+thus a duplicate directory,
+.Xr pkg_create 1
+won't be happy.
+.Pp
+Using
+.Ev UPDATE_PLIST_ARGS = Fl c Ar MODPY_COMMENT Fl I Ar MODPY_PYCACHE
+will result in injecting
+.Sq ${MODPY_COMMENT}
+whereever
+.Nm
+finds a duplicate directory by replacing
+.Sq ${MODPY_PYCACHE}
+with nothing.
+.Pp
+This yields
+.Bd -literal -offset indent -compact
+lib/python${MODPY_VERSION}/site-packages/bpdb/
+${MODPY_COMMENT}lib/python${MODPY_VERSION}/site-packages/bpdb/MODPY_PYCACHE}/
+.Ed
+and for python2 this expands to
+.Bd -literal -offset indent -compact
+lib/python2.7/site-packages/bpdb/
+@comment lib/python2.7/site-packages/bpdb/
+.Ed
+which is exactly what we want.
 .Pp
 Specific items such as shared libraries or binaries will gain annotations
 and special handling, for instance
