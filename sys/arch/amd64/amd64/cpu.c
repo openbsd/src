@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.135 2019/05/17 19:07:15 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.136 2019/05/18 18:11:46 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -214,8 +214,7 @@ replacemds(void)
 
 	if (strcmp(cpu_vendor, "GenuineIntel") != 0 ||
 	    ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) &&
-	     (rdmsr(MSR_ARCH_CAPABILITIES) &
-	      (ARCH_CAPABILITIES_RDCL_NO | ARCH_CAPABILITIES_MDS_NO)))) {
+	     (rdmsr(MSR_ARCH_CAPABILITIES) & ARCH_CAPABILITIES_MDS_NO))) {
 		/* Unaffected, nop out the handling code */
 		has_verw = 0;
 	} else if (ci->ci_feature_sefflags_edx & SEFF0EDX_MD_CLEAR) {
