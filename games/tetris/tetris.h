@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.12 2017/08/13 02:12:16 tedu Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.13 2019/05/18 19:38:26 rob Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -34,6 +34,8 @@
  *
  *	@(#)tetris.h	8.1 (Berkeley) 5/31/93
  */
+
+#include <limits.h>
 
 /*
  * Definitions for Tetris.
@@ -169,6 +171,7 @@ extern long	fallrate;	/* less than 1 billion; smaller => faster */
 extern int	score;		/* the obvious thing */
 
 extern char	key_msg[100];
+extern char	scorepath[PATH_MAX];
 extern int	showpreview;
 extern int	classic;
 

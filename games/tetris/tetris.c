@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.33 2018/04/25 17:41:23 tb Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.34 2019/05/18 19:38:25 rob Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@
  */
 
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -61,6 +62,7 @@ const struct shape *nextshape;
 long	fallrate;
 int	score;
 char	key_msg[100];
+char	scorepath[PATH_MAX];
 int	showpreview, classic;
 
 static void		 elide(void);
@@ -150,12 +152,22 @@ main(int argc, char *argv[])
 {
 	int pos, c;
 	char *keys;
-	int level = 2;
+	int level = 2, ret;
 	char key_write[NUMKEYS][10];
+	char *home;
 	const char *errstr;
 	int ch, i, j;
 
-	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0')
+		err(1, "getenv");
+
+	ret = snprintf(scorepath, sizeof(scorepath), "%s/%s", home,
+	    ".tetris.scores");
+	if (ret < 0 || ret >= PATH_MAX)
+		errc(1, ENAMETOOLONG, "%s/%s", home, ".tetris.scores");
+
+	if (pledge("stdio rpath wpath cpath tty unveil", NULL) == -1)
 		err(1, "pledge");
 
 	keys = "jkl pq";
@@ -220,6 +232,13 @@ main(int argc, char *argv[])
 
 	(void)signal(SIGINT, onintr);
 	scr_init();
+
+	if (unveil(scorepath, "rwc") == -1)
+		err(1, "unveil");
+
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1)
+		err(1, "pledge");
+
 	setup_board();
 
 	scr_set();
