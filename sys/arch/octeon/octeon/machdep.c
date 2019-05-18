@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.110 2019/05/05 15:43:24 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.111 2019/05/18 15:57:22 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -705,8 +705,9 @@ get_ncpusfound(void)
 static void
 process_bootargs(void)
 {
-	int i;
 	extern struct boot_desc *octeon_boot_desc;
+	const char *cp;
+	int i;
 
 	/*
 	 * U-Boot doesn't pass us anything by default, we need to explicitly
@@ -733,6 +734,31 @@ process_bootargs(void)
 					sizeof(uboot_rootdev));
 				parse_uboot_root();
                         }
+		}
+
+		if (*arg != '-')
+			continue;
+
+		for (cp = arg + 1; *cp != '\0'; cp++) {
+			switch (*cp) {
+			case '-':
+				break;
+			case 'a':
+				boothowto |= RB_ASKNAME;
+				break;
+			case 'c':
+				boothowto |= RB_CONFIG;
+				break;
+			case 'd':
+				boothowto |= RB_KDB;
+				break;
+			case 's':
+				boothowto |= RB_SINGLE;
+				break;
+			default:
+				printf("unrecognized option `%c'", *cp);
+				break;
+			}
 		}
 	}
 }
