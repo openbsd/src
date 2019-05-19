@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.31 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.32 2019/05/19 08:10:55 anton Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -104,7 +104,7 @@
 
 #include <machine/cpu.h>
 
-#include <uvm/uvm.h>	/* uvm_pageboot_alloc */
+#include <uvm/uvm_extern.h>	/* uvm_pageboot_alloc */
 
 #ifndef DDB
 #error "DDB is required for WITNESS"
