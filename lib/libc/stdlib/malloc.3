@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.124 2019/05/13 06:04:55 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.125 2019/05/19 15:30:21 schwarze Exp $
 .\"
-.Dd $Mdocdate: May 13 2019 $
+.Dd $Mdocdate: May 19 2019 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -270,6 +270,8 @@ and finally looks at the global variable
 in the program.
 Each is scanned for the flags documented below.
 Unless otherwise noted uppercase means on, lowercase means off.
+During initialization, flags occurring later modify the behaviour
+that was requested by flags processed earlier.
 .Bl -tag -width indent
 .It Cm C
 .Dq Canaries .
