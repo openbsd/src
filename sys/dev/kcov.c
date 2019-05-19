@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.14 2019/05/14 13:44:45 jsg Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.15 2019/05/19 08:55:27 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -25,6 +25,8 @@
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>
+
+#define KCOV_BUF_MEMB_SIZE	sizeof(uintptr_t)
 
 #define KCOV_CMP_CONST		0x1
 #define KCOV_CMP_SIZE(x)	((x) << 1)
@@ -343,7 +345,7 @@ kcovmmap(dev_t dev, off_t offset, int prot)
 	if (kd == NULL)
 		return (paddr_t)(-1);
 
-	if (offset < 0 || offset >= kd->kd_nmemb * sizeof(uintptr_t))
+	if (offset < 0 || offset >= kd->kd_nmemb * KCOV_BUF_MEMB_SIZE)
 		return (paddr_t)(-1);
 
 	va = (vaddr_t)kd->kd_buf + offset;
@@ -399,11 +401,13 @@ kd_init(struct kcov_dev *kd, unsigned long nmemb)
 	if (nmemb == 0 || nmemb > KCOV_BUF_MAX_NMEMB)
 		return (EINVAL);
 
-	size = roundup(nmemb * sizeof(uintptr_t), PAGE_SIZE);
-	buf = malloc(size, M_SUBPROC, M_WAITOK | M_ZERO);
-	/* malloc() can sleep, ensure the race was won. */
+	size = roundup(nmemb * KCOV_BUF_MEMB_SIZE, PAGE_SIZE);
+	buf = km_alloc(size, &kv_any, &kp_zero, &kd_waitok);
+	if (buf == NULL)
+		return (ENOMEM);
+	/* km_malloc() can sleep, ensure the race was won. */
 	if (kd->kd_state != KCOV_STATE_NONE) {
-		free(buf, M_SUBPROC, size);
+		km_free(buf, size, &kv_any, &kp_zero);
 		return (EBUSY);
 	}
 	kd->kd_buf = buf;
@@ -421,7 +425,8 @@ kd_free(struct kcov_dev *kd)
 	    __func__, kd->kd_unit, kd->kd_state, kd->kd_mode);
 
 	TAILQ_REMOVE(&kd_list, kd, kd_entry);
-	free(kd->kd_buf, M_SUBPROC, kd->kd_size);
+	if (kd->kd_buf != NULL)
+		km_free(kd->kd_buf, kd->kd_size, &kv_any, &kp_zero);
 	free(kd, M_SUBPROC, sizeof(*kd));
 }
 
