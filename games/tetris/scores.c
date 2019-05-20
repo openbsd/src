@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.23 2019/05/18 19:38:25 rob Exp $	*/
+/*	$OpenBSD: scores.c,v 1.24 2019/05/20 02:11:22 lteo Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -91,8 +91,8 @@ static char *thisuser(void);
 static void
 getscores(FILE **fpp)
 {
-	int sd, mint, i, ret;
-	char *mstr, *human, *home;
+	int sd, mint, i;
+	char *mstr, *human;
 	FILE *sf;
 
 	if (fpp != NULL) {
