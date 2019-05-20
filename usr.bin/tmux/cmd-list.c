@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list.c,v 1.16 2016/01/19 15:59:12 nicm Exp $ */
+/* $OpenBSD: cmd-list.c,v 1.17 2019/05/20 11:34:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -23,6 +23,17 @@
 
 #include "tmux.h"
 
+static struct cmd_list *
+cmd_list_new(void)
+{
+	struct cmd_list	*cmdlist;
+
+	cmdlist = xcalloc(1, sizeof *cmdlist);
+	cmdlist->references = 1;
+	TAILQ_INIT(&cmdlist->list);
+	return (cmdlist);
+}
+
 struct cmd_list *
 cmd_list_parse(int argc, char **argv, const char *file, u_int line,
     char **cause)
@@ -35,9 +46,7 @@ cmd_list_parse(int argc, char **argv, const char *file, u_int line,
 
 	copy_argv = cmd_copy_argv(argc, argv);
 
-	cmdlist = xcalloc(1, sizeof *cmdlist);
-	cmdlist->references = 1;
-	TAILQ_INIT(&cmdlist->list);
+	cmdlist = cmd_list_new();
 
 	lastsplit = 0;
 	for (i = 0; i < argc; i++) {
