@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.112 2019/05/11 23:07:46 jasper Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.113 2019/05/20 17:04:24 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -62,7 +62,7 @@ int	 vmd_check_vmh(struct vm_dump_header *);
 int	 vm_instance(struct privsep *, struct vmd_vm **,
 	    struct vmop_create_params *, uid_t);
 int	 vm_checkinsflag(struct vmop_create_params *, unsigned int, uid_t);
-uint32_t vm_claimid(const char *, int);
+int	 vm_claimid(const char *, int, uint32_t *);
 
 struct vmd	*env;
 
@@ -1176,26 +1176,34 @@ vm_remove(struct vmd_vm *vm, const char *caller)
 	free(vm);
 }
 
-uint32_t
-vm_claimid(const char *name, int uid)
+int
+vm_claimid(const char *name, int uid, uint32_t *id)
 {
 	struct name2id *n2i = NULL;
 
 	TAILQ_FOREACH(n2i, env->vmd_known, entry)
 		if (strcmp(n2i->name, name) == 0 && n2i->uid == uid)
-			return n2i->id;
+			goto out;
 
-	if (++env->vmd_nvm == 0)
-		fatalx("too many vms");
-	if ((n2i = calloc(1, sizeof(struct name2id))) == NULL)
-		fatalx("could not alloc vm name");
+	if (++env->vmd_nvm == 0) {
+		log_warnx("too many vms");
+		return -1;
+	}
+	if ((n2i = calloc(1, sizeof(struct name2id))) == NULL) {
+		log_warnx("could not alloc vm name");
+		return -1;
+	}
 	n2i->id = env->vmd_nvm;
 	n2i->uid = uid;
-	if (strlcpy(n2i->name, name, sizeof(n2i->name)) >= sizeof(n2i->name))
-		fatalx("overlong vm name");
+	if (strlcpy(n2i->name, name, sizeof(n2i->name)) >= sizeof(n2i->name)) {
+		log_warnx("vm name too long");
+		return -1;
+	}
 	TAILQ_INSERT_TAIL(env->vmd_known, n2i, entry);
 
-	return n2i->id;
+out:
+	*id = n2i->id;
+	return 0;
 }
 
 int
@@ -1206,7 +1214,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	struct vmop_owner	*vmo = NULL;
 	struct vmd_user		*usr = NULL;
-	uint32_t		 rng;
+	uint32_t		 nid, rng;
 	unsigned int		 i, j;
 	struct vmd_switch	*sw;
 	char			*s;
@@ -1329,8 +1337,16 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vm->vm_cdrom = -1;
 	vm->vm_iev.ibuf.fd = -1;
 
-	/* Assign a new internal Id if not specified */
-	vm->vm_vmid = (id == 0) ? vm_claimid(vcp->vcp_name, uid) : id;
+	/*
+	 * Assign a new internal Id if not specified and we succeed in
+	 * claiming a new Id.
+	 */
+	if (id != 0)
+		vm->vm_vmid = id;
+	else if (vm_claimid(vcp->vcp_name, uid, &nid) == -1)
+		goto fail;
+	else
+		vm->vm_vmid = nid;
 
 	log_debug("%s: registering vm %d", __func__, vm->vm_vmid);
 	TAILQ_INSERT_TAIL(env->vmd_vms, vm, vm_entry);
