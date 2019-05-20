@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.45 2019/05/10 18:53:13 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.46 2019/05/20 18:16:59 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -110,7 +110,7 @@ struct mutex windup_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
 
 static struct timehands *volatile timehands = &th0;		/* [w] */
 struct timecounter *timecounter = &dummy_timecounter;		/* [t] */
-static struct timecounter *timecounters = &dummy_timecounter;
+static struct timecounter *timecounters = NULL;
 
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
@@ -632,6 +632,9 @@ sysctl_tc_choice(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	char buf[32], *spc, *choices;
 	struct timecounter *tc;
 	int error, maxlen;
+
+	if (timecounters == NULL)
+		return (sysctl_rdstring(oldp, oldlenp, newp, ""));
 
 	spc = "";
 	maxlen = 0;
