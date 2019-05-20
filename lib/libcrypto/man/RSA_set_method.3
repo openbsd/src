@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_set_method.3,v 1.12 2018/04/18 01:07:38 schwarze Exp $
+.\"	$OpenBSD: RSA_set_method.3,v 1.13 2019/05/20 06:04:45 jmc Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2018 $
+.Dd $Mdocdate: May 20 2019 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -308,5 +308,5 @@ but will not be reflected in the return value of the
 .Fn RSA_flags
 function - in effect
 .Fn RSA_flags
-behaves more like a RSA_default_flags() function, which does not
+behaves more like an RSA_default_flags() function, which does not
 currently exist.

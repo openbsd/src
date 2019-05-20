@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.7 2018/04/10 21:37:20 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_cipher_list.3,v 1.8 2019/05/20 06:04:45 jmc Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 10 2018 $
+.Dd $Mdocdate: May 20 2019 $
 .Dt SSL_CTX_SET_CIPHER_LIST 3
 .Os
 .Sh NAME
@@ -338,7 +338,7 @@ On the server side, all cipher suites have additional requirements.
 ADH ciphers don't need a certificate, but DH-parameters must have been set.
 All other cipher suites need a corresponding certificate and key.
 .Pp
-A RSA cipher can only be chosen when a RSA certificate is available.
+A RSA cipher can only be chosen when an RSA certificate is available.
 RSA ciphers using DHE need a certificate and key and additional DH-parameters
 (see
 .Xr SSL_CTX_set_tmp_dh_callback 3 ) .

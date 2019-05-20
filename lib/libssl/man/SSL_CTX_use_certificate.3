@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_use_certificate.3,v 1.11 2019/04/09 22:01:50 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_use_certificate.3,v 1.12 2019/05/20 06:04:45 jmc Exp $
 .\" full merge up to: OpenSSL 3aaa1bd0 Mar 28 16:35:25 2017 +1000
 .\" selective merge up to: OpenSSL d1f7a1e6 Apr 26 14:05:40 2018 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 9 2019 $
+.Dd $Mdocdate: May 20 2019 $
 .Dt SSL_CTX_USE_CERTIFICATE 3
 .Os
 .Sh NAME
@@ -312,7 +312,7 @@ corresponding certificate loaded into
 .Fa ctx .
 If more than one key/certificate pair (RSA/DSA) is installed,
 the last item installed will be compared.
-If, e.g., the last item was a RSA certificate or key,
+If, e.g., the last item was an RSA certificate or key,
 the RSA key/certificate pair will be checked.
 .Fn SSL_check_private_key
 performs the same
