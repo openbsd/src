@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.44 2017/05/17 15:20:23 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.45 2019/05/20 11:46:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -129,17 +129,6 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 	return (CMD_RETURN_NORMAL);
 }
 
-static enum cmd_retval
-cmd_command_prompt_error(struct cmdq_item *item, void *data)
-{
-	char	*error = data;
-
-	cmdq_error(item, "%s", error);
-	free(error);
-
-	return (CMD_RETURN_NORMAL);
-}
-
 static int
 cmd_command_prompt_callback(struct client *c, void *data, const char *s,
     int done)
@@ -177,11 +166,11 @@ cmd_command_prompt_callback(struct client *c, void *data, const char *s,
 
 	cmdlist = cmd_string_parse(new_template, NULL, 0, &cause);
 	if (cmdlist == NULL) {
-		if (cause != NULL) {
-			new_item = cmdq_get_callback(cmd_command_prompt_error,
-			    cause);
-		} else
+		if (cause != NULL)
+			new_item = cmdq_get_error(cause);
+		else
 			new_item = NULL;
+		free(cause);
 	} else {
 		new_item = cmdq_get_command(cmdlist, NULL, NULL, 0);
 		cmd_list_free(cmdlist);

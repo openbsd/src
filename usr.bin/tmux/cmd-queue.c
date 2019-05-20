@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.66 2019/05/18 21:14:10 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.67 2019/05/20 11:46:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -327,6 +327,25 @@ cmdq_get_callback1(const char *name, cmdq_cb cb, void *data)
 	item->data = data;
 
 	return (item);
+}
+
+/* Generic error callback. */
+static enum cmd_retval
+cmdq_error_callback(struct cmdq_item *item, void *data)
+{
+	char	*error = data;
+
+	cmdq_error(item, "%s", error);
+	free(error);
+
+	return (CMD_RETURN_NORMAL);
+}
+
+/* Get an error callback for the command queue. */
+struct cmdq_item *
+cmdq_get_error(const char *error)
+{
+	return (cmdq_get_callback(cmdq_error_callback, xstrdup(error)));
 }
 
 /* Fire callback on callback queue. */
