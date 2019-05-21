@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.72 2019/02/19 08:12:30 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.73 2019/05/21 09:23:40 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -844,6 +844,7 @@ ieee80211_setbasicrates(struct ieee80211com *ic)
 	    { 2, { 2, 4 } },			/* IEEE80211_MODE_11B */
 	    { 4, { 2, 4, 11, 22 } },		/* IEEE80211_MODE_11G */
 	    { 0 },				/* IEEE80211_MODE_11N	*/
+	    { 0 },				/* IEEE80211_MODE_11AC	*/
 	};
 	enum ieee80211_phymode mode;
 	struct ieee80211_rateset *rs;
