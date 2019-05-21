@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.114 2019/05/17 19:07:16 guenther Exp $
+#	$OpenBSD: Makefile.amd64,v 1.115 2019/05/21 22:40:06 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -23,7 +23,20 @@ _archdir?=	$S/arch/${_arch}
 
 INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/include \
-		-I$S/dev/pci/drm/include/uapi
+		-I$S/dev/pci/drm/include/uapi \
+		-I$S/dev/pci/drm/amd/include/asic_reg \
+		-I$S/dev/pci/drm/amd/include \
+		-I$S/dev/pci/drm/amd/amdgpu \
+		-I$S/dev/pci/drm/amd/display \
+		-I$S/dev/pci/drm/amd/display/include \
+		-I$S/dev/pci/drm/amd/display/dc \
+		-I$S/dev/pci/drm/amd/display/amdgpu_dm \
+		-I$S/dev/pci/drm/amd/powerplay/inc \
+		-I$S/dev/pci/drm/amd/powerplay/smumgr \
+		-I$S/dev/pci/drm/amd/powerplay/hwmgr \
+		-I$S/dev/pci/drm/amd/display/dc/inc \
+		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
+		-I$S/dev/pci/drm/amd/display/modules/inc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
@@ -162,6 +175,19 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 kcov.o: $S/dev/kcov.c
 	${NORMAL_C} -fno-sanitize-coverage=trace-pc,trace-cmp
 .endif
+
+HARDFLOAT_CFLAGS= -msse -msse2
+
+dcn_calcs.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calcs.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn_calc_auto.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calc_auto.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn_calc_math.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calc_math.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml1_display_rq_dlg_calc.o: $S/dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dml_common_defs.o: $S/dev/pci/drm/amd/display/dc/dml/dml_common_defs.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
