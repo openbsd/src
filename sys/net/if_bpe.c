@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.6 2019/05/21 10:08:13 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.7 2019/05/21 10:11:10 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -176,7 +176,7 @@ bpe_clone_create(struct if_clone *ifc, int unit)
 	bpe_set_group(sc, 0);
 
 	sc->sc_txhprio = IF_HDRPRIO_PACKET;
-	sc->sc_txhprio = IF_HDRPRIO_OUTER;
+	sc->sc_rxhprio = IF_HDRPRIO_OUTER;
 
 	rw_init(&sc->sc_bridge_lock, "bpebr");
 	RBT_INIT(bpe_map, &sc->sc_bridge_map);
