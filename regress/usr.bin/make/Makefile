@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.47 2017/07/20 21:32:10 espie Exp $
+# $OpenBSD: Makefile,v 1.48 2019/05/21 17:09:06 espie Exp $
 
 REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
 		t20 t21 t22 t23 t24 t25 t26 t27 t28 t29 \
 		t30 t31 t32 t33 t34 t35 t36 t37 t38 t38j t39 \
-		t40 t41 t42 t42bis t43 t44 t45 t46 t47
+		t40 t41 t42 t42bis t43 t44 t45 t46 t47 t48
 
 # We don't pass t14 t17 t18 t20
 # and t16 yields piss poor performance
@@ -217,6 +217,9 @@ t46:
 
 t47: tok.o
 	test -f tok.o || exit 1
+
+t48:
+	cd ${.CURDIR} && make -r -f mk43 a
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
