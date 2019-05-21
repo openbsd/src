@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.31 2014/05/18 08:08:50 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.32 2019/05/21 17:21:02 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -83,8 +83,10 @@ Str_concati(const char *s1, const char *e1, const char *s2, const char *e2,
  *	are ignored.
  *
  * returns --
- *	Pointer to the array of pointers to the words.	To make life easier,
- *	the first word is always the value of the .MAKE variable.
+ *	Pointer to the array of pointers to the words.	Fills up
+ *	store_args with its size.
+ *	The returned parameters are allocated in a single buffer,
+ *	return as *buffer, to be freed later.
  */
 char **
 brk_string(const char *str, int *store_argc, char **buffer)
@@ -95,7 +97,7 @@ brk_string(const char *str, int *store_argc, char **buffer)
 	const char *p;
 	char *start, *t;
 	size_t len;
-	int argmax = 50;
+	int argmax = 50;	/* start at 50 */
 	size_t curlen = 0;
 	char **argv = ereallocarray(NULL, argmax + 1, sizeof(char *));
 
