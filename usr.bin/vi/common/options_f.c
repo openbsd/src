@@ -1,4 +1,4 @@
-/*	$OpenBSD: options_f.c,v 1.12 2017/07/03 07:01:14 bentley Exp $	*/
+/*	$OpenBSD: options_f.c,v 1.13 2019/05/21 09:24:58 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -201,6 +201,19 @@ f_section(SCR *sp, OPTION *op, char *str, u_long *valp)
 	if (strlen(str) & 1) {
 		msgq(sp, M_ERR,
 		    "The section option must be in two character groups");
+		return (1);
+	}
+	return (0);
+}
+
+/*
+ * PUBLIC: int f_secure(SCR *, OPTION *, char *, u_long *)
+ */
+int
+f_secure(SCR *sp, OPTION *op, char *str, u_long *valp)
+{
+	if (pledge("stdio rpath wpath cpath fattr flock getpw tty", NULL) == -1) {
+		msgq(sp, M_ERR, "pledge failed");
 		return (1);
 	}
 	return (0);

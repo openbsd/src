@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.26 2017/07/31 19:45:49 martijn Exp $	*/
+/*	$OpenBSD: options.c,v 1.27 2019/05/21 09:24:58 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -136,7 +136,7 @@ OPTLIST const optlist[] = {
 /* O_SECTIONS	    4BSD */
 	{"sections",	f_section,	OPT_STR,	0},
 /* O_SECURE	  4.4BSD */
-	{"secure",	NULL,		OPT_0BOOL,	OPT_NOUNSET},
+	{"secure",	f_secure,	OPT_0BOOL,	OPT_NOUNSET},
 /* O_SHELL	    4BSD */
 	{"shell",	NULL,		OPT_STR,	0},
 /* O_SHELLMETA	  4.4BSD */

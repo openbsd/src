@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_extern.h,v 1.15 2017/07/03 07:01:14 bentley Exp $	*/
+/*	$OpenBSD: com_extern.h,v 1.16 2019/05/21 09:24:58 martijn Exp $	*/
 
 int cut(SCR *, CHAR_T *, MARK *, MARK *, int);
 int cut_line(SCR *, recno_t, size_t, size_t, CB *);
@@ -75,6 +75,7 @@ int f_readonly(SCR *, OPTION *, char *, u_long *);
 int f_recompile(SCR *, OPTION *, char *, u_long *);
 int f_reformat(SCR *, OPTION *, char *, u_long *);
 int f_section(SCR *, OPTION *, char *, u_long *);
+int f_secure(SCR *, OPTION *, char *, u_long *);
 int f_ttywerase(SCR *, OPTION *, char *, u_long *);
 int f_w300(SCR *, OPTION *, char *, u_long *);
 int f_w1200(SCR *, OPTION *, char *, u_long *);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.75 2018/02/12 01:10:46 schwarze Exp $
+.\"	$OpenBSD: vi.1,v 1.76 2019/05/21 09:24:58 martijn Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: February 12 2018 $
+.Dd $Mdocdate: May 21 2019 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2456,8 +2456,9 @@ Define additional section boundaries for the
 and
 .Cm ]]
 commands.
-.It Cm secure Bq off
+.It Cm secure
 Turns off all access to external programs.
+Once set this option can't be disabled.
 .It Cm shell , sh Bq "environment variable SHELL, or /bin/sh"
 Select the shell used by the editor.
 .It Cm shellmeta Bq ~{[*?$`'\&"\e
