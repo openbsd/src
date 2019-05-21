@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.5 2019/04/23 10:53:45 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.6 2019/05/21 10:08:13 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -468,6 +468,7 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSVNETID:
 		error = bpe_set_vnetid(sc, ifr);
+		break;
 	case SIOCGVNETID:
 		ifr->ifr_vnetid = sc->sc_key.k_isid;
 		break;
