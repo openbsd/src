@@ -1,4 +1,4 @@
-.\" $OpenBSD: ber_read_elements.3,v 1.4 2019/05/16 17:39:21 rob Exp $
+.\" $OpenBSD: ber_read_elements.3,v 1.5 2019/05/21 12:30:07 rob Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2019 $
+.Dd $Mdocdate: May 21 2019 $
 .Dt BER_READ_ELEMENTS 3
 .Os
 .Sh NAME
@@ -178,16 +178,13 @@ and were moved to libutil in
 .Ox 6.6 .
 .Sh AUTHORS
 .An -nosplit
-The
-.Nm ber
-library was written by
+The BER library was written by
 .An Claudio Jeker Aq Mt claudio@openbsd.org ,
 .An Marc Balmer Aq Mt marc@openbsd.org
 and
 .An Reyk Floeter Aq Mt reyk@openbsd.org .
 .Sh CAVEATS
-The
-.Nm ber
+The BER
 API is subject to the following restrictions which are common to the
 Distinguished Encoding Rules as defined by X.690:
 .Pp
@@ -220,5 +217,4 @@ rules select just one encoding from those allowed by the basic encoding rules.
 .Bq X.690
 .Pp
 The restrictions placed on this API avoid the ambiguity inherent in
-.Nm ber
-encoded ASN.1 thereby acting as a security mitigation.
+BER encoded ASN.1 thereby acting as a security mitigation.
