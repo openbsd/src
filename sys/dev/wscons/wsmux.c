@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.45 2019/03/30 08:04:35 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.46 2019/05/21 20:57:10 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -290,7 +290,7 @@ wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
 	    (struct wsmux_softc *)wsmuxdevs[minor(dev)];
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
-	if (evar == NULL)
+	if ((flags & (FREAD | FWRITE)) == FWRITE)
 		/* Not open for read */
 		return (0);
 
