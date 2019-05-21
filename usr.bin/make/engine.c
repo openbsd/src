@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.55 2018/11/27 09:33:48 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.56 2019/05/21 17:10:49 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -551,6 +551,9 @@ recheck_command_for_shell(char **av)
 	/* optimization: if exec cmd, we avoid the intermediate shell */
 	if (strcmp(av[0], "exec") == 0)
 		av++;
+
+	if (!av[0])
+		return NULL;
 
 	for (p = runsh; *p; p++)
 		if (strcmp(av[0], *p) == 0)
