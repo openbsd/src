@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.103 2019/04/30 20:09:12 ratchov Exp $ */
+/* $OpenBSD: xhci.c,v 1.104 2019/05/21 09:20:40 stsp Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -935,7 +935,7 @@ xhci_event_xfer_isoc(struct usbd_xfer *xfer, struct xhci_pipe *xp,
 	if (xp->skip) {
 		while (1) {
 			skipxfer = SIMPLEQ_FIRST(&xp->pipe.queue);
-			if (skipxfer == xfer || xfer == NULL)
+			if (skipxfer == xfer || skipxfer == NULL)
 				break;
 			DPRINTF(("%s: skipping %p\n", __func__, skipxfer));
 			skipxfer->status = USBD_NORMAL_COMPLETION;
