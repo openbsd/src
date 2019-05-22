@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.61 2019/05/22 15:23:01 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.62 2019/05/22 15:25:25 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -250,6 +250,8 @@ bwfm_preinit(struct bwfm_softc *sc)
 		printf("%s: could not read mac address\n", DEVNAME(sc));
 		return 1;
 	}
+
+	printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(ic->ic_myaddr));
 
 	if (bwfm_fwvar_var_get_int(sc, "nmode", &nmode))
 		nmode = 0;
