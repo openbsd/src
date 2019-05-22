@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.46 2019/05/20 18:16:59 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.47 2019/05/22 19:59:37 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -32,6 +32,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <dev/rndvar.h>
 
@@ -110,7 +111,7 @@ struct mutex windup_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
 
 static struct timehands *volatile timehands = &th0;		/* [w] */
 struct timecounter *timecounter = &dummy_timecounter;		/* [t] */
-static struct timecounter *timecounters = NULL;
+static SLIST_HEAD(, timecounter) tc_list = SLIST_HEAD_INITIALIZER(tc_list);
 
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
@@ -315,8 +316,8 @@ tc_init(struct timecounter *tc)
 		}
 	}
 
-	tc->tc_next = timecounters;
-	timecounters = tc;
+	SLIST_INSERT_HEAD(&tc_list, tc, tc_next);
+
 	/*
 	 * Never automatically use a timecounter with negative quality.
 	 * Even though we run on the dummy counter, switching here may be
@@ -608,7 +609,7 @@ sysctl_tc_hardware(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	error = sysctl_string(oldp, oldlenp, newp, newlen, newname, sizeof(newname));
 	if (error != 0 || strcmp(newname, tc->tc_name) == 0)
 		return (error);
-	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
+	SLIST_FOREACH(newtc, &tc_list, tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
 			continue;
 
@@ -633,16 +634,16 @@ sysctl_tc_choice(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	struct timecounter *tc;
 	int error, maxlen;
 
-	if (timecounters == NULL)
+	if (SLIST_EMPTY(&tc_list))
 		return (sysctl_rdstring(oldp, oldlenp, newp, ""));
 
 	spc = "";
 	maxlen = 0;
-	for (tc = timecounters; tc != NULL; tc = tc->tc_next)
+	SLIST_FOREACH(tc, &tc_list, tc_next)
 		maxlen += sizeof(buf);
 	choices = malloc(maxlen, M_TEMP, M_WAITOK);
 	*choices = '\0';
-	for (tc = timecounters; tc != NULL; tc = tc->tc_next) {
+	SLIST_FOREACH(tc, &tc_list, tc_next) {
 		snprintf(buf, sizeof(buf), "%s%s(%d)",
 		    spc, tc->tc_name, tc->tc_quality);
 		spc = " ";

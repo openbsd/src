@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetc.h,v 1.8 2019/03/25 23:32:00 cheloha Exp $ */
+/*	$OpenBSD: timetc.h,v 1.9 2019/05/22 19:59:37 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -27,6 +27,8 @@
 #ifndef _KERNEL
 #error "no user-serviceable parts inside"
 #endif
+
+#include <sys/queue.h>
 
 /*-
  * `struct timecounter' is the interface between the hardware which implements
@@ -78,7 +80,7 @@ struct timecounter {
 		 */
 	void			*tc_priv;		/* [I] */
 		/* Pointer to the timecounter's private parts. */
-	struct timecounter	*tc_next;		/* [I] */
+	SLIST_ENTRY(timecounter) tc_next;		/* [I] */
 		/* Pointer to the next timecounter. */
 	int64_t			tc_freq_adj;		/* [tw] */
 		/* Current frequency adjustment. */
