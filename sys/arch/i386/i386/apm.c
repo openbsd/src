@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.118 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: apm.c,v 1.119 2019/05/22 16:11:21 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -395,7 +395,6 @@ apm_handle_event(struct apm_softc *sc, struct apmregs *regs)
 		break;
 	case APM_UPDATE_TIME:
 		DPRINTF(("update time, please\n"));
-		inittodr(time_second);
 		apm_record_event(sc, regs->bx);
 		break;
 	case APM_CRIT_SUSPEND_REQ:
