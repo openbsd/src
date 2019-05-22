@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.1 2019/05/10 21:20:42 mlarkin Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.2 2019/05/22 15:40:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -46,7 +46,12 @@
 #include "softraid_amd64.h"
 #endif
 
+#include <efi.h>
+#include <efiapi.h>
+#include "eficall.h"
 #include "efiboot.h"
+
+extern EFI_BOOT_SERVICES	*BS;
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
     __attribute__ ((noreturn));
@@ -165,6 +170,7 @@ run_loadfile(uint64_t *marks, int howto)
 void
 ucode_load(void)
 {
+	EFI_PHYSICAL_ADDRESS addr;
 	uint32_t model, family, stepping;
 	uint32_t dummy, signature;
 	uint32_t vendor[4];
@@ -200,12 +206,13 @@ ucode_load(void)
 		return;
 
 	buflen = sb.st_size;
-	if (buflen > 128*1024) {
-		printf("ucode too large\n");
+	addr = 16 * 1024 * 1024;
+	if (EFI_CALL(BS->AllocatePages, AllocateMaxAddress, EfiLoaderData,
+	    EFI_SIZE_TO_PAGES(buflen), &addr) != EFI_SUCCESS) {
+		printf("cannot allocate memory for ucode\n");
 		return;
 	}
-
-	buf = (char *)(1*1024*1024);
+	buf = (char *)((paddr_t)addr);
 
 	if (read(fd, buf, buflen) != buflen) {
 		close(fd);
