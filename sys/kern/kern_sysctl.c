@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.355 2019/05/09 14:59:30 claudio Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.356 2019/05/22 18:45:07 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -868,16 +868,20 @@ int
 sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 {
 	int error = 0;
+	int val;
 
 	if (oldp && *oldlenp < sizeof(int))
 		return (ENOMEM);
 	if (newp && newlen != sizeof(int))
 		return (EINVAL);
 	*oldlenp = sizeof(int);
+	val = *valp;
 	if (oldp)
-		error = copyout(valp, oldp, sizeof(int));
+		error = copyout(&val, oldp, sizeof(int));
 	if (error == 0 && newp)
-		error = copyin(newp, valp, sizeof(int));
+		error = copyin(newp, &val, sizeof(int));
+	if (error == 0)
+		*valp = val;
 	return (error);
 }
 
