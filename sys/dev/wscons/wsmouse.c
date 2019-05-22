@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.53 2019/05/22 18:52:14 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.54 2019/05/22 19:13:34 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -121,11 +121,9 @@
 
 #if defined(WSMUX_DEBUG) && NWSMUX > 0
 #define	DPRINTF(x)	if (wsmuxdebug) printf x
-#define	DPRINTFN(n,x)	if (wsmuxdebug > (n)) printf x
 extern int wsmuxdebug;
 #else
 #define	DPRINTF(x)
-#define	DPRINTFN(n,x)
 #endif
 
 struct wsmouse_softc {
@@ -258,7 +256,7 @@ wsmouse_detach(struct device *self, int flags)
 #if NWSMUX > 0
 	/* Tell parent mux we're leaving. */
 	if (sc->sc_base.me_parent != NULL) {
-		DPRINTF(("wsmouse_detach:\n"));
+		DPRINTF(("%s\n", __func__));
 		wsmux_detach_sc(&sc->sc_base);
 	}
 #endif
@@ -307,8 +305,8 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 
 #if NWSMUX > 0
-	DPRINTF(("wsmouseopen: %s mux=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
-		 sc->sc_base.me_parent, p));
+	DPRINTF(("%s: %s mux=%p\n", __func__, sc->sc_base.me_dv.dv_xname,
+		 sc->sc_base.me_parent));
 #endif
 
 	if (sc->sc_dying)
@@ -321,7 +319,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 #if NWSMUX > 0
 	if (sc->sc_base.me_parent != NULL) {
 		/* Grab the mouse out of the greedy hands of the mux. */
-		DPRINTF(("wsmouseopen: detach\n"));
+		DPRINTF(("%s: detach\n", __func__));
 		wsmux_detach_sc(&sc->sc_base);
 	}
 #endif
@@ -335,7 +333,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	error = wsmousedoopen(sc, evar);
 	if (error) {
-		DPRINTF(("wsmouseopen: %s open failed\n",
+		DPRINTF(("%s: %s open failed\n", __func__,
 			 sc->sc_base.me_dv.dv_xname));
 		sc->sc_base.me_evp = NULL;
 		wsevent_fini(evar);
@@ -364,7 +362,7 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc->sc_base.me_parent == NULL) {
 		int mux, error;
 
-		DPRINTF(("wsmouseclose: attach\n"));
+		DPRINTF(("%s: attach\n", __func__));
 		mux = sc->sc_base.me_dv.dv_cfdata->wsmousedevcf_mux;
 		if (mux >= 0) {
 			error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.47 2019/05/22 18:52:14 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.48 2019/05/22 19:13:34 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -191,7 +191,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 
-	DPRINTF(("wsmuxopen: %s: sc=%p p=%p\n", sc->sc_base.me_dv.dv_xname, sc, p));
+	DPRINTF(("%s: %s: sc=%p\n", __func__, sc->sc_base.me_dv.dv_xname, sc));
 
 	if ((flags & (FREAD | FWRITE)) == FWRITE) {
 		/* Not opening for read, only ioctl is available. */
@@ -200,7 +200,7 @@ wsmuxopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	if (sc->sc_base.me_parent != NULL) {
 		/* Grab the mux out of the greedy hands of the parent mux. */
-		DPRINTF(("wsmuxopen: detach\n"));
+		DPRINTF(("%s: detach\n", __func__));
 		wsmux_detach_sc(&sc->sc_base);
 	}
 
@@ -258,8 +258,9 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 	/* Open all children. */
 	rw_enter_read(&sc->sc_lock);
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
-		DPRINTF(("wsmuxopen: %s: m=%p dev=%s\n",
-			 sc->sc_base.me_dv.dv_xname, me, me->me_dv.dv_xname));
+		DPRINTF(("%s: %s: m=%p dev=%s\n", __func__,
+			 sc->sc_base.me_dv.dv_xname, me,
+			 me->me_dv.dv_xname));
 #ifdef DIAGNOSTIC
 		if (me->me_evp != NULL) {
 			printf("wsmuxopen: dev already in use\n");
@@ -271,7 +272,7 @@ wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 		}
 		error = wsevsrc_open(me, evar);
 		if (error) {
-			DPRINTF(("wsmuxopen: open failed %d\n", error));
+			DPRINTF(("%s: open failed %d\n", __func__, error));
 		}
 #else
 		/* ignore errors, failing children will not be marked open */
@@ -318,12 +319,12 @@ wsmux_do_close(struct wsmux_softc *sc)
 {
 	struct wsevsrc *me;
 
-	DPRINTF(("wsmuxclose: %s: sc=%p\n", sc->sc_base.me_dv.dv_xname, sc));
+	DPRINTF(("%s: %s: sc=%p\n", __func__, sc->sc_base.me_dv.dv_xname, sc));
 
 	/* Close all the children. */
 	rw_enter_read(&sc->sc_lock);
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
-		DPRINTF(("wsmuxclose %s: m=%p dev=%s\n",
+		DPRINTF(("%s %s: m=%p dev=%s\n", __func__,
 			 sc->sc_base.me_dv.dv_xname, me, me->me_dv.dv_xname));
 #ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
@@ -356,11 +357,11 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
 		return (EINVAL);
 	}
 
-	DPRINTFN(5,("wsmuxread: %s event read evar=%p\n",
-		    sc->sc_base.me_dv.dv_xname, evar));
+	DPRINTFN(5, ("%s: %s event read evar=%p\n", __func__,
+		     sc->sc_base.me_dv.dv_xname, evar));
 	error = wsevent_read(evar, uio, flags);
-	DPRINTFN(5,("wsmuxread: %s event read ==> error=%d\n",
-		    sc->sc_base.me_dv.dv_xname, error));
+	DPRINTFN(5, ("%s: %s event read ==> error=%d\n", __func__,
+		     sc->sc_base.me_dv.dv_xname, error));
 	return (error);
 }
 
@@ -388,7 +389,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	struct wscons_event *ev;
 	struct wsmux_device_list *l;
 
-	DPRINTF(("wsmux_do_ioctl: %s: enter sc=%p, cmd=%08lx\n",
+	DPRINTF(("%s: %s: enter sc=%p, cmd=%08lx\n", __func__,
 		 sc->sc_base.me_dv.dv_xname, sc, cmd));
 
 	switch (cmd) {
@@ -409,7 +410,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL) {
 			/* No event sink, so ignore it. */
-			DPRINTF(("wsmux_do_ioctl: event ignored\n"));
+			DPRINTF(("%s: event ignored\n", __func__));
 			return (0);
 		}
 
@@ -458,7 +459,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
 			if (me->me_ops->type == d->type &&
 			    me->me_dv.dv_unit == d->idx) {
-				DPRINTF(("wsmux_do_ioctl: detach\n"));
+				DPRINTF(("%s: detach\n", __func__));
 				wsmux_detach_sc_locked(sc, me);
 				rw_exit_write(&sc->sc_lock);
 				return (0);
@@ -486,7 +487,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data;
-		DPRINTF(("wsmux_do_ioctl: save rawkbd = %d\n", sc->sc_rawkbd));
+		DPRINTF(("%s: save rawkbd = %d\n", __func__, sc->sc_rawkbd));
 		break;
 #endif
 	case FIONBIO:
@@ -543,7 +544,7 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		}
 #endif
 		error = wsevsrc_ioctl(me, cmd, data, flag, p);
-		DPRINTF(("wsmux_do_ioctl: %s: me=%p dev=%s ==> %d\n",
+		DPRINTF(("%s: %s: me=%p dev=%s ==> %d\n", __func__,
 			 sc->sc_base.me_dv.dv_xname, me, me->me_dv.dv_xname,
 			 error));
 		if (!error)
@@ -600,9 +601,9 @@ wsmux_add_mux(int unit, struct wsmux_softc *muxsc)
 
 	rw_enter_write(&wsmux_tree_lock);
 
-	DPRINTF(("wsmux_add_mux: %s(%p) to %s(%p)\n",
-		 sc->sc_base.me_dv.dv_xname, sc, muxsc->sc_base.me_dv.dv_xname,
-		 muxsc));
+	DPRINTF(("%s: %s(%p) to %s(%p)\n", __func__,
+		 sc->sc_base.me_dv.dv_xname, sc,
+		 muxsc->sc_base.me_dv.dv_xname, muxsc));
 
 	if (sc->sc_base.me_parent != NULL || sc->sc_base.me_evp != NULL) {
 		error = EBUSY;
@@ -639,7 +640,7 @@ wsmux_create(const char *name, int unit)
 {
 	struct wsmux_softc *sc;
 
-	DPRINTF(("wsmux_create: allocating\n"));
+	DPRINTF(("%s: allocating\n", __func__));
 	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc == NULL)
 		return (NULL);
@@ -664,7 +665,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 
 	rw_enter_write(&sc->sc_lock);
 
-	DPRINTF(("wsmux_attach_sc: %s(%p): type=%d\n",
+	DPRINTF(("%s: %s(%p): type=%d\n", __func__,
 		 sc->sc_base.me_dv.dv_xname, sc, me->me_ops->type));
 
 #ifdef DIAGNOSTIC
@@ -681,7 +682,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 #if NWSDISPLAY > 0
 	if (sc->sc_displaydv != NULL) {
 		/* This is a display mux, so attach the new device to it. */
-		DPRINTF(("wsmux_attach_sc: %s: set display %p\n",
+		DPRINTF(("%s: %s: set display %p\n", __func__,
 			 sc->sc_base.me_dv.dv_xname, sc->sc_displaydv));
 		if (me->me_ops->dsetdisplay != NULL) {
 			error = wsevsrc_set_display(me, sc->sc_displaydv);
@@ -690,7 +691,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 				error = 0;
 			if (!error) {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-				DPRINTF(("wsmux_attach_sc: %s set rawkbd=%d\n",
+				DPRINTF(("%s: %s set rawkbd=%d\n", __func__,
 					 me->me_dv.dv_xname, sc->sc_rawkbd));
 				(void)wsevsrc_ioctl(me, WSKBDIO_SETMODE,
 						    &sc->sc_rawkbd, FWRITE, 0);
@@ -701,11 +702,11 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 #endif
 	if (sc->sc_base.me_evp != NULL) {
 		/* Mux is open, so open the new subdevice */
-		DPRINTF(("wsmux_attach_sc: %s: calling open of %s\n",
+		DPRINTF(("%s: %s: calling open of %s\n", __func__,
 			 sc->sc_base.me_dv.dv_xname, me->me_dv.dv_xname));
 		error = wsevsrc_open(me, sc->sc_base.me_evp);
 	} else {
-		DPRINTF(("wsmux_attach_sc: %s not open\n",
+		DPRINTF(("%s: %s not open\n", __func__,
 			 sc->sc_base.me_dv.dv_xname));
 	}
 
@@ -716,7 +717,7 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 
 	rw_exit_write(&sc->sc_lock);
 
-	DPRINTF(("wsmux_attach_sc: %s(%p) done, error=%d\n",
+	DPRINTF(("%s: %s(%p) done, error=%d\n", __func__,
 		 sc->sc_base.me_dv.dv_xname, sc, error));
 	return (error);
 }
@@ -743,7 +744,7 @@ wsmux_detach_sc_locked(struct wsmux_softc *sc, struct wsevsrc *me)
 {
 	rw_assert_wrlock(&sc->sc_lock);
 
-	DPRINTF(("wsmux_detach_sc_locked: %s(%p) parent=%p\n",
+	DPRINTF(("%s: %s(%p) parent=%p\n", __func__,
 		 me->me_dv.dv_xname, me, sc));
 
 	if (me->me_parent != sc) {
@@ -759,7 +760,7 @@ wsmux_detach_sc_locked(struct wsmux_softc *sc, struct wsevsrc *me)
 	} else
 #endif
 		if (me->me_evp != NULL) {
-		DPRINTF(("wsmux_detach_sc: close\n"));
+		DPRINTF(("%s: close\n", __func__));
 		/* mux device is open, so close multiplexee */
 		(void)wsevsrc_close(me);
 	}
@@ -767,7 +768,7 @@ wsmux_detach_sc_locked(struct wsmux_softc *sc, struct wsevsrc *me)
 	TAILQ_REMOVE(&sc->sc_cld, me, me_next);
 	me->me_parent = NULL;
 
-	DPRINTF(("wsmux_detach_sc: done sc=%p\n", sc));
+	DPRINTF(("%s: done sc=%p\n", __func__, sc));
 }
 
 /*
@@ -781,13 +782,13 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	struct wsevsrc *me;
 	int error, ok;
 
-	DPRINTF(("wsmux_displayioctl: %s: sc=%p, cmd=%08lx\n",
+	DPRINTF(("%s: %s: sc=%p, cmd=%08lx\n", __func__,
 		 sc->sc_base.me_dv.dv_xname, sc, cmd));
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (cmd == WSKBDIO_SETMODE) {
 		sc->sc_rawkbd = *(int *)data;
-		DPRINTF(("wsmux_displayioctl: rawkbd = %d\n", sc->sc_rawkbd));
+		DPRINTF(("%s: rawkbd = %d\n", __func__, sc->sc_rawkbd));
 	}
 #endif
 
@@ -799,7 +800,7 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 	ok = 0;
 	rw_enter_read(&sc->sc_lock);
 	TAILQ_FOREACH(me, &sc->sc_cld, me_next) {
-		DPRINTF(("wsmux_displayioctl: me=%p\n", me));
+		DPRINTF(("%s: me=%p\n", __func__, me));
 #ifdef DIAGNOSTIC
 		if (me->me_parent != sc) {
 			printf("wsmux_displayioctl: bad child %p\n", me);
@@ -808,7 +809,7 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 #endif
 		if (me->me_ops->ddispioctl != NULL) {
 			error = wsevsrc_display_ioctl(me, cmd, data, flag, p);
-			DPRINTF(("wsmux_displayioctl: me=%p dev=%s ==> %d\n",
+			DPRINTF(("%s: me=%p dev=%s ==> %d\n", __func__,
 				 me, me->me_dv.dv_xname, error));
 			if (!error)
 				ok = 1;
@@ -830,7 +831,7 @@ wsmux_evsrc_set_display(struct device *dv, struct device *displaydv)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
 
-	DPRINTF(("wsmux_evsrc_set_display: %s: displaydv=%p\n",
+	DPRINTF(("%s: %s: displaydv=%p\n", __func__,
 		 sc->sc_base.me_dv.dv_xname, displaydv));
 
 	if (displaydv != NULL) {
@@ -873,13 +874,12 @@ wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
 		if (me->me_ops->dsetdisplay != NULL) {
 			error = wsevsrc_set_display(me,
 			    nsc ? nsc->sc_displaydv : NULL);
-			DPRINTF(("wsmux_set_display: m=%p dev=%s error=%d\n",
+			DPRINTF(("%s: m=%p dev=%s error=%d\n", __func__,
 				 me, me->me_dv.dv_xname, error));
 			if (!error) {
 				ok = 1;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-				DPRINTF(("wsmux_set_display: %s set rawkbd=%d\n"
-,
+				DPRINTF(("%s: %s set rawkbd=%d\n", __func__,
 					 me->me_dv.dv_xname, sc->sc_rawkbd));
 				(void)wsevsrc_ioctl(me, WSKBDIO_SETMODE,
 						    &sc->sc_rawkbd, FWRITE, 0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.97 2019/05/22 18:52:14 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.98 2019/05/22 19:13:34 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -711,7 +711,7 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 	evar = sc->sc_base.me_evp;
 
 	if (evar == NULL) {
-		DPRINTF(("wskbd_input: not open\n"));
+		DPRINTF(("%s: not open\n", __func__));
 		return;
 	}
 
@@ -767,7 +767,7 @@ wskbd_enable(struct wskbd_softc *sc, int on)
 #endif
 
 	error = (*sc->sc_accessops->enable)(sc->sc_accesscookie, on);
-	DPRINTF(("wskbd_enable: sc=%p on=%d res=%d\n", sc, on, error));
+	DPRINTF(("%s: sc=%p on=%d res=%d\n", __func__, sc, on, error));
 	return (error);
 }
 
@@ -800,8 +800,8 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (ENXIO);
 
 #if NWSMUX > 0
-	DPRINTF(("wskbdopen: %s mux=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
-		 sc->sc_base.me_parent, p));
+	DPRINTF(("%s: %s mux=%p\n", __func__, sc->sc_base.me_dv.dv_xname,
+		 sc->sc_base.me_parent));
 #endif
 
 	if (sc->sc_dying)
@@ -815,7 +815,7 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 #if NWSMUX > 0
 	if (sc->sc_base.me_parent != NULL) {
 		/* Grab the keyboard out of the greedy hands of the mux. */
-		DPRINTF(("wskbdopen: detach\n"));
+		DPRINTF(("%s: detach\n", __func__));
 		wsmux_detach_sc(&sc->sc_base);
 	}
 #endif
@@ -829,7 +829,7 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	error = wskbd_do_open(sc, evar);
 	if (error) {
-		DPRINTF(("wskbdopen: %s open failed\n",
+		DPRINTF(("%s: %s open failed\n", __func__,
 			 sc->sc_base.me_dv.dv_xname));
 		sc->sc_base.me_evp = NULL;
 		wsevent_fini(evar);
@@ -867,7 +867,7 @@ wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 	if (sc->sc_base.me_parent == NULL) {
 		int mux, error;
 
-		DPRINTF(("wskbdclose: attach\n"));
+		DPRINTF(("%s: attach\n", __func__));
 		mux = sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux;
 		if (mux >= 0) {
 			error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
@@ -1271,7 +1271,7 @@ wskbd_set_display(struct device *dv, struct device *displaydv)
 	struct device *odisplaydv;
 	int error;
 
-	DPRINTF(("wskbd_set_display: %s odisp=%p disp=%p cons=%d\n",
+	DPRINTF(("%s: %s odisp=%p disp=%p cons=%d\n", __func__,
 		 dv->dv_xname, sc->sc_displaydv, displaydv, 
 		 sc->sc_isconsole));
 
