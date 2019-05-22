@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.509 2019/05/14 15:00:37 naddy Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.510 2019/05/22 21:40:37 cwen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 14 2019 $
+.Dd $Mdocdate: May 22 2019 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2496,6 +2496,25 @@ Note that this also means that
 must be configured to work within the chroot
 created by
 .Xr proot 1 .
+.Pp
+If the regular user is not allowed to run privileged commands
+without entering a password,
+you may want these additional rules in
+.Xr doas.conf 5 ,
+to reduce the amount of times the password needs to be entered
+during ports work:
+.Bd -literal -offset indent
+permit nopass                   solene cmd /usr/bin/touch
+permit nopass setenv { \\
+       TRUSTED_PKG_PATH TERM }  solene cmd /usr/sbin/pkg_add
+permit nopass setenv { \\
+       TERM }                   solene cmd /usr/sbin/pkg_delete
+.Ed
+.Pp
+Also, in such a situation,
+the regular user will still need to enter their password when
+.Xr update-plist 1
+is invoked.
 .Pp
 As
 .Xr dpb 1
