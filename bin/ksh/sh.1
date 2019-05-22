@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.151 2018/12/16 13:08:35 schwarze Exp $
+.\"	$OpenBSD: sh.1,v 1.152 2019/05/22 15:23:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2018 $
+.Dd $Mdocdate: May 22 2019 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -866,7 +866,11 @@ it keeps a record of commands run in a
 either internally in memory or in a file,
 as determined by
 .Dv HISTFILE .
-The command line and all the commands in command history
+When
+.Cm vi
+command line editing mode is enabled
+.Pq set -o vi ,
+the command line and all the commands in command history
 can be edited using commands similar to those of
 .Xr vi 1 .
 .Pp
