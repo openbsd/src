@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.96 2019/02/19 07:01:02 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.97 2019/05/22 18:52:14 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -824,7 +824,8 @@ wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 		return (EBUSY);
 
 	evar = &sc->sc_base.me_evar;
-	wsevent_init(evar);
+	if (wsevent_init(evar))
+		return (EBUSY);
 
 	error = wskbd_do_open(sc, evar);
 	if (error) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.19 2019/02/01 17:23:08 anton Exp $ */
+/* $OpenBSD: wsevent.c,v 1.20 2019/05/22 18:52:14 anton Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -98,21 +98,27 @@ const struct filterops wsevent_filtops = {
 /*
  * Initialize a wscons_event queue.
  */
-void
+int
 wsevent_init(struct wseventvar *ev)
 {
+	struct wscons_event *queue;
 
-	if (ev->q != NULL) {
-#ifdef DIAGNOSTIC
-		printf("wsevent_init: already initialized\n");
-#endif
-		return;
-	}
-	ev->get = ev->put = 0;
-	ev->q = malloc(WSEVENT_QSIZE * sizeof(struct wscons_event),
+	if (ev->q != NULL)
+		return (0);
+
+        queue = mallocarray(WSEVENT_QSIZE, sizeof(struct wscons_event),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
+	if (ev->q != NULL) {
+		free(queue, M_DEVBUF, WSEVENT_QSIZE * sizeof(struct wscons_event));
+		return (1);
+	}
+
+	ev->q = queue;
+	ev->get = ev->put = 0;
 
 	sigio_init(&ev->sigio);
+
+	return (0);
 }
 
 /*
