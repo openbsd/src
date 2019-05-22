@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.634 2019/05/10 18:50:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.635 2019/05/22 12:56:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -259,6 +259,8 @@ interface_state(struct interface_info *ifi)
 	} else {
 		ifi->link_state =
 		    ((struct if_data *)ifa->ifa_data)->ifi_link_state;
+		ifi->mtu =
+		    ((struct if_data *)ifa->ifa_data)->ifi_mtu;
 	}
 	freeifaddrs(ifap);
 
@@ -342,6 +344,7 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 	struct if_announcemsghdr	*ifan;
 	struct ifa_msghdr		*ifam;
 	struct if_ieee80211_data	*ifie;
+	uint32_t			 oldmtu;
 
 	switch (rtm->rtm_type) {
 	case RTM_PROPOSAL:
@@ -375,9 +378,13 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			fatalx("down");
 
+		oldmtu = ifi->mtu;
 		interface_state(ifi);
-		if (quit == 0)
+		if (oldmtu == ifi->mtu)
 			quit = RESTART;
+		else
+			log_debug("%s: MTU change RTM_IFINFO ignored",
+			    log_procname);
 		break;
 
 	case RTM_80211INFO:
