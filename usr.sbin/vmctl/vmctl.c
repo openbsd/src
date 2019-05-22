@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.68 2019/05/16 06:41:47 jasper Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.69 2019/05/22 16:19:21 jasper Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -715,15 +715,15 @@ add_info(struct imsg *imsg, int *ret)
 const char *
 vm_state(unsigned int mask)
 {
-	/* Presence of absence of other flags */
-	if (!mask || (mask & VM_STATE_DISABLED))
-		return "stopped";
-	else if (mask & VM_STATE_PAUSED)
+	if (mask & VM_STATE_PAUSED)
 		return "paused";
-	else if (mask & VM_STATE_SHUTDOWN)
-		return "stopping";
 	else if (mask & VM_STATE_RUNNING)
 		return "running";
+	else if (mask & VM_STATE_SHUTDOWN)
+		return "stopping";
+	/* Presence of absence of other flags */
+	else if (!mask || (mask & VM_STATE_DISABLED))
+		return "stopped";
 
 	return "unknown";
 }
