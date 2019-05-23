@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.260 2019/05/10 15:03:24 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.261 2019/05/23 06:43:18 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1371,7 +1371,8 @@ ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 	REALSIZE(sz, r);
 	if (pool->mmap_flag) {
 		clear = 1;
-		argsz = sz;
+		if (!check)
+			argsz = sz;
 	}
 	if (check) {
 		if (sz <= MALLOC_MAXCHUNK) {
