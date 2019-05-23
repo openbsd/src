@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.48 2019/05/06 07:44:00 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.49 2019/05/23 01:57:19 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -297,6 +297,7 @@ alc_mii_writereg_816x(struct device *dev, int phy, int reg, int val)
 		if ((v & MDIO_OP_BUSY) == 0)
 			break;
 	}
+
 	if (i == 0)
 		printf("%s: phy write timeout: phy %d, reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
@@ -342,7 +343,6 @@ alc_miibus_statchg(struct device *dev)
 		reg |= MAC_CFG_TX_ENB | MAC_CFG_RX_ENB;
 		CSR_WRITE_4(sc, ALC_MAC_CFG, reg);
 	}
-
 	alc_aspm(sc, 0, IFM_SUBTYPE(mii->mii_media_active));
 	alc_dsp_fixup(sc, IFM_SUBTYPE(mii->mii_media_active));
 }
@@ -397,14 +397,14 @@ alc_miiext_writereg(struct alc_softc *sc, int devaddr, int reg, int val)
 	int i;
 
 	CSR_WRITE_4(sc, ALC_EXT_MDIO, EXT_MDIO_REG(reg) |
-			EXT_MDIO_DEVADDR(devaddr));
+	    EXT_MDIO_DEVADDR(devaddr));
 	if ((sc->alc_flags & ALC_FLAG_LINK) != 0)
 		clk = MDIO_CLK_25_128;
 	else
 		clk = MDIO_CLK_25_4;
 	CSR_WRITE_4(sc, ALC_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
-			((val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT) |
-			MDIO_SUP_PREAMBLE | clk | MDIO_MODE_EXT);
+	    ((val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT) |
+	    MDIO_SUP_PREAMBLE | clk | MDIO_MODE_EXT);
 	for (i = ALC_PHY_TIMEOUT; i > 0; i--) {
 		DELAY(5);
 		v = CSR_READ_4(sc, ALC_MDIO);
@@ -662,7 +662,7 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 	if (reloaded == 0) {
 		reg = CSR_READ_4(sc, ALC_EEPROM_LD);
 		if ((reg & (EEPROM_LD_EEPROM_EXIST |
-			EEPROM_LD_FLASH_EXIST)) != 0) {
+		    EEPROM_LD_FLASH_EXIST)) != 0) {
 			for (i = 100; i > 0; i--) {
 				reg = CSR_READ_4(sc, ALC_EEPROM_LD);
 				if ((reg & (EEPROM_LD_PROGRESS |
@@ -672,7 +672,7 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 			}
 			if (i != 0) {
 				CSR_WRITE_4(sc, ALC_EEPROM_LD, reg |
-				EEPROM_LD_START);
+				    EEPROM_LD_START);
 				for (i = 100; i > 0; i--) {
 					DELAY(1000);
 					reg = CSR_READ_4(sc, ALC_EEPROM_LD);
@@ -710,10 +710,10 @@ alc_disable_l0s_l1(struct alc_softc *sc)
 		/* Another magic from vendor. */
 		pmcfg = CSR_READ_4(sc, ALC_PM_CFG);
 		pmcfg &= ~(PM_CFG_L1_ENTRY_TIMER_MASK | PM_CFG_CLK_SWH_L1 |
-		    PM_CFG_ASPM_L0S_ENB | PM_CFG_ASPM_L1_ENB | PM_CFG_MAC_ASPM_CHK |
-		    PM_CFG_SERDES_PD_EX_L1);
-		pmcfg |= PM_CFG_SERDES_BUDS_RX_L1_ENB | PM_CFG_SERDES_PLL_L1_ENB |
-		    PM_CFG_SERDES_L1_ENB;
+		    PM_CFG_ASPM_L0S_ENB | PM_CFG_ASPM_L1_ENB |
+		    PM_CFG_MAC_ASPM_CHK | PM_CFG_SERDES_PD_EX_L1);
+		pmcfg |= PM_CFG_SERDES_BUDS_RX_L1_ENB |
+		    PM_CFG_SERDES_PLL_L1_ENB | PM_CFG_SERDES_L1_ENB;
 		CSR_WRITE_4(sc, ALC_PM_CFG, pmcfg);
 	}
 }
@@ -1059,9 +1059,9 @@ alc_aspm_816x(struct alc_softc *sc, int init)
 	    PM_CFG_MAC_ASPM_CHK | PM_CFG_HOTRST);
 	if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
 	    (sc->alc_rev & 0x01) != 0)
-	pmcfg |= PM_CFG_SERDES_L1_ENB | PM_CFG_SERDES_PLL_L1_ENB;
+		pmcfg |= PM_CFG_SERDES_L1_ENB | PM_CFG_SERDES_PLL_L1_ENB;
 	if ((sc->alc_flags & ALC_FLAG_LINK) != 0) {
-	/* Link up, enable both L0s, L1s. */
+		/* Link up, enable both L0s, L1s. */
 		pmcfg |= PM_CFG_ASPM_L0S_ENB | PM_CFG_ASPM_L1_ENB |
 		    PM_CFG_MAC_ASPM_CHK;
 	} else {
@@ -1085,14 +1085,15 @@ alc_init_pcie(struct alc_softc *sc, int base)
 	val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
 	val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
 	CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
+
 	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
 		CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
-		CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
+		    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
 		CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
-		CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
-		PCIE_PHYMISC_FORCE_RCV_DET);
-		if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_1  &&
-			sc->alc_rev == ATHEROS_AR8152_B_V10) {
+		    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
+		    PCIE_PHYMISC_FORCE_RCV_DET);
+		if (sc->sc_product == PCI_PRODUCT_ATTANSIC_L2C_1 &&
+		    sc->alc_rev == ATHEROS_AR8152_B_V10) {
 			val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
 			val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
 			    PCIE_PHYMISC2_SERDES_TH_MASK);
@@ -1243,7 +1244,7 @@ alc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map mem space\n");
 		return;
 	}
-	
+
 	sc->alc_flags |= ALC_FLAG_MSI;
 	if (pci_intr_map_msi(pa, &ih) != 0) {
 		if (pci_intr_map(pa, &ih) != 0) {
