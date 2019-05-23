@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.28 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.29 2019/05/23 19:00:52 jasper Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -289,10 +289,7 @@ rtcdrain(void *v)
 	if (to != NULL)
 		timeout_del(to);
 
-	/*
-	* Drain any un-acknowledged RTC interrupts.
-	* See comment in cpu_initclocks().
-	*/
+	/* Drain any un-acknowledged RTC interrupts. */
 	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
 		; /* Nothing. */
 }
