@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.382 2019/05/08 12:41:55 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.383 2019/05/23 14:10:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,6 +91,7 @@
 #define	F_CTL_OVS_VALID		0x80000
 #define	F_CTL_OVS_INVALID	0x100000
 #define	F_CTL_OVS_NOTFOUND	0x200000
+#define	F_CTL_NEIGHBORS		0x400000 /* only used by bgpctl */
 
 /*
  * Note that these numeric assignments differ from the numbers commonly
