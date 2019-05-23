@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.12 2019/05/02 21:12:45 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.13 2019/05/23 13:41:53 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -153,19 +153,23 @@ int
 mainbus_print(void *aux, const char *pnp)
 {
 	struct fdt_attach_args *fa = aux;
-	char name[32];
+	char buf[32];
 
 	if (!pnp)
 		return (QUIET);
 
-	if (OF_getprop(fa->fa_node, "name", name, sizeof(name)) > 0) {
-		name[sizeof(name) - 1] = 0;
-		if (strcmp(name, "aliases") == 0 ||
-		    strcmp(name, "chosen") == 0 ||
-		    strcmp(name, "cpus") == 0 ||
-		    strcmp(name, "memory") == 0)
+	if (OF_getprop(fa->fa_node, "status", buf, sizeof(buf)) > 0 &&
+	    strcmp(buf, "disabled") == 0)
+		return (QUIET);
+
+	if (OF_getprop(fa->fa_node, "name", buf, sizeof(buf)) > 0) {
+		buf[sizeof(buf) - 1] = 0;
+		if (strcmp(buf, "aliases") == 0 ||
+		    strcmp(buf, "chosen") == 0 ||
+		    strcmp(buf, "cpus") == 0 ||
+		    strcmp(buf, "memory") == 0)
 			return (QUIET);
-		printf("\"%s\"", name);
+		printf("\"%s\"", buf);
 	} else
 		printf("node %u", fa->fa_node);
 
@@ -276,9 +280,6 @@ mainbus_match_status(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *fa = aux;
 	struct cfdata *cf = match;
 	char buf[32];
-
-	if (fa->fa_node == 0)
-		return 0;
 
 	if (OF_getprop(fa->fa_node, "status", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "disabled") == 0)
