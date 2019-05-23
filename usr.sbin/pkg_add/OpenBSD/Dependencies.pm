@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.171 2018/06/26 09:40:33 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.172 2019/05/23 22:33:29 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -403,9 +403,9 @@ sub solve_handle_tags
 	my $okay = 1;
 	$solver->{tag_finder} //= OpenBSD::lookup::tag->new($solver, $state);
 	for my $tag (@{$plist->{tags}}) {
+		$solver->find_in_self($plist, $state, $tag) ||
 		$solver->{tag_finder}->lookup($solver,
-		    $solver->{to_register}{$h}, $state, $tag)
-		 || $solver->find_in_self($plist, $state, $tag);
+		    $solver->{to_register}{$h}, $state, $tag);
 		if (!$solver->verify_tag($tag, $state, $plist, $h->{is_old})) {
 			$okay = 0;
 		}
