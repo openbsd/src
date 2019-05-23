@@ -57,7 +57,7 @@ check(u_char *p, size_t sz)
 int
 main(int argc, char *argv[])
 {
-	int count, p, i;
+	int count, p, r, i;
 	void * q;
 	size_t sz;
 	char mo[20];
@@ -92,7 +92,8 @@ main(int argc, char *argv[])
 #ifdef VERBOSE
 			printf("M %zu=", sz);
 #endif
-			a[i].p = malloc(sz);
+			r = arc4random_uniform(2);
+			a[i].p = r == 0 ? malloc_conceal(sz) : malloc(sz);
 			a[i].sz = sz;
 #ifdef VERBOSE
 			printf("%p\n", a[i].p);
@@ -122,7 +123,11 @@ main(int argc, char *argv[])
 	for (i = 0; i < N; i++) {
 		if (a[i].p)
 			check(a[i].p, a[i].sz);
-		free(a[i].p);
+		r = arc4random_uniform(2);
+		if (r)
+			free(a[i].p);
+		else
+			freezero(a[i].p, a[i].sz);
 	}
 	printf("\n");
 	return 0;
