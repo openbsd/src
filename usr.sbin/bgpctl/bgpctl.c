@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.237 2019/05/14 16:47:30 benno Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.238 2019/05/23 14:12:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -88,6 +88,8 @@ int		 show_rib_memory_msg(struct imsg *);
 void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 const char	*get_errstr(u_int8_t, u_int8_t);
 int		 show_result(struct imsg *);
+void		 show_mrt_dump_neighbors(struct mrt_rib *, struct mrt_peer *,
+		    void *);
 void		 show_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 network_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 show_mrt_state(struct mrt_bgp_state *, void *);
@@ -180,7 +182,9 @@ main(int argc, char *argv[])
 		ribreq.flags = res->flags;
 		ribreq.validation_state = res->validation_state;
 		show_mrt.arg = &ribreq;
-		if (!(res->flags & F_CTL_DETAIL))
+		if (res->flags & F_CTL_NEIGHBORS)
+			show_mrt.dump = show_mrt_dump_neighbors;
+		else if (!(res->flags & F_CTL_DETAIL))
 			show_rib_summary_head();
 		mrt_parse(res->mrtfd, &show_mrt, 1);
 		exit(0);
@@ -1972,6 +1976,27 @@ network_bulk(struct parse_result *res)
 	if (ferror(f))
 		err(1, "getline");
 	fclose(f);
+}
+
+void
+show_mrt_dump_neighbors(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
+{
+	struct mrt_peer_entry *p;
+	struct in_addr ina;
+	u_int16_t i;
+
+	ina.s_addr = htonl(mp->bgp_id);
+	printf("view: %s BGP ID: %s Number of peers: %u\n\n",
+	    mp->view, inet_ntoa(ina), mp->npeers);
+	printf("%-30s %8s %15s\n", "Neighbor", "AS", "BGP ID");
+	for (i = 0; i < mp->npeers; i++) {
+		p = &mp->peers[i];
+		ina.s_addr = htonl(p->bgp_id);
+		printf("%-30s %8u %15s\n", log_addr(&p->addr), p->asnum,
+		    inet_ntoa(ina));
+	}
+	/* we only print the first message */
+	exit(0);
 }
 
 void
