@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.8 2019/05/17 07:12:32 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.9 2019/05/23 06:51:36 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -82,7 +82,7 @@
 #define MCX_SQ_MAX_SEGMENTS	 \
 	1 + ((MCX_SQ_ENTRY_MAX_SLOTS-1) * MCX_SQ_SEGS_PER_SLOT)
 
-#define MCX_SQ_INLINE_SIZE	 16
+#define MCX_SQ_INLINE_SIZE	 18
 
 /* doorbell offsets */
 #define MCX_CQ_DOORBELL_OFFSET	 0
