@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.71 2019/05/23 11:13:30 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.72 2019/05/23 18:39:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -126,6 +126,7 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
 	memset(&pi, 0, sizeof pi);
 	pi.flags = flags;
 	pi.file = path;
+	pi.line = 1;
 
 	pr = cmd_parse_from_file(f, &pi);
 	fclose(f);
