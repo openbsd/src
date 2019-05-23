@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.45 2019/05/23 11:13:30 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.46 2019/05/23 14:03:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -122,7 +122,7 @@ options_value_tostring(struct options_entry *o, union options_value *ov,
 	char	*s;
 
 	if (OPTIONS_IS_COMMAND(o))
-		return (cmd_list_print(ov->cmdlist));
+		return (cmd_list_print(ov->cmdlist, 0));
 	if (OPTIONS_IS_STYLE(o))
 		return (xstrdup(style_tostring(&ov->style)));
 	if (OPTIONS_IS_NUMBER(o)) {

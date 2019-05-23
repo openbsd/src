@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.902 2019/05/23 11:13:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.903 2019/05/23 14:03:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1950,6 +1950,7 @@ void		 args_set(struct args *, u_char, const char *);
 struct args	*args_parse(const char *, int, char **);
 void		 args_free(struct args *);
 char		*args_print(struct args *);
+char		*args_escape(const char *);
 int		 args_has(struct args *, u_char);
 const char	*args_get(struct args *, u_char);
 const char	*args_first_value(struct args *, u_char, struct args_value **);
@@ -2022,7 +2023,7 @@ void		 cmd_list_append(struct cmd_list *, struct cmd *);
 void		 cmd_list_move(struct cmd_list *, struct cmd_list *);
 struct cmd_list	*cmd_list_parse(int, char **, const char *, u_int, char **);
 void		 cmd_list_free(struct cmd_list *);
-char		*cmd_list_print(struct cmd_list *);
+char		*cmd_list_print(struct cmd_list *, int);
 
 /* cmd-queue.c */
 struct cmdq_item *cmdq_get_command(struct cmd_list *, struct cmd_find_state *,
