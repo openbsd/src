@@ -1,4 +1,4 @@
-/* $OpenBSD: x509spki.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509spki.c,v 1.14 2019/05/23 02:08:34 bcook Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/err.h>
