@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.96 2019/05/10 18:04:06 nicm Exp $
+# $OpenBSD: Makefile,v 1.97 2019/05/23 11:13:30 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -38,6 +38,7 @@ SRCS=	alerts.c \
 	cmd-move-window.c \
 	cmd-new-session.c \
 	cmd-new-window.c \
+	cmd-parse.y \
 	cmd-paste-buffer.c \
 	cmd-pipe-pane.c \
 	cmd-queue.c \
@@ -63,7 +64,6 @@ SRCS=	alerts.c \
 	cmd-show-options.c \
 	cmd-source-file.c \
 	cmd-split-window.c \
-	cmd-string.c \
 	cmd-swap-pane.c \
 	cmd-swap-window.c \
 	cmd-switch-client.c \
