@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.41 2019/05/23 14:03:44 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.42 2019/05/23 18:22:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -184,7 +184,9 @@ utf8_strvis(char *dst, const char *src, size_t len, int flag)
 			src -= ud.have;
 		}
 		if (src[0] == '$' && src < end - 1) {
-			if (isalpha((u_char)src[1]) || src[1] == '_')
+			if (isalpha((u_char)src[1]) ||
+			    src[1] == '_' ||
+			    src[1] == '{')
 				*dst++ = '\\';
 			*dst++ = '$';
 		} else if (src < end - 1)
