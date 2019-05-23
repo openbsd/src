@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.41 2019/05/23 15:09:17 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.42 2019/05/23 15:11:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -462,7 +462,9 @@ resolver_dispatch_captiveportal(int fd, short event, void *bula)
 			if (captive_portal_state == NOT_BEHIND) {
 				evtimer_del(&captive_portal_check_ev);
 				schedule_recheck_all_resolvers();
-			}
+			} else if (captive_portal_state == BEHIND)
+				resolver_imsg_compose_frontend(
+				    IMSG_RESOLVER_DOWN, 0, NULL, 0);
 
 			break;
 		default:
@@ -604,12 +606,13 @@ resolver_dispatch_main(int fd, short event, void *bula)
 				log_debug("static DoT forwarders changed");
 				new_static_dot_forwarders();
 			}
-			if (resolver_conf->captive_portal_host == NULL)
-				captive_portal_state = PORTAL_UNCHECKED;
-			else if (captive_portal_state == PORTAL_UNCHECKED ||
-			    captive_portal_changed) {
+			if (captive_portal_changed) {
 				if (resolver_conf->captive_portal_auto)
 					check_captive_portal(1);
+				else {
+					captive_portal_state = PORTAL_UNCHECKED;
+					schedule_recheck_all_resolvers();
+				}
 			}
 			break;
 		default:
@@ -1042,7 +1045,9 @@ out:
 
 	best = best_resolver();
 
-	if (best->state != global_state) {
+	if (captive_portal_state == BEHIND)
+		global_state = DEAD;
+	else if (best->state != global_state) {
 		if (best->state < RESOLVING && global_state > UNKNOWN)
 			resolver_imsg_compose_frontend(IMSG_RESOLVER_DOWN, 0,
 			    NULL, 0);
@@ -1302,6 +1307,8 @@ check_captive_portal(int timer_reset)
 
 	if (resolver_conf->captive_portal_host == NULL) {
 		log_debug("%s: no captive portal url configured", __func__);
+		captive_portal_state = PORTAL_UNCHECKED;
+		schedule_recheck_all_resolvers();
 		return;
 	}
 
