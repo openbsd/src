@@ -59,7 +59,6 @@ int amdgpu_bo_list_create(struct amdgpu_device *adev, struct drm_file *filp,
 			  struct drm_amdgpu_bo_list_entry *info,
 			  unsigned num_entries, struct amdgpu_bo_list **result)
 {
-	STUB();
 	unsigned last_entry = 0, first_userptr = num_entries;
 	struct amdgpu_bo_list_entry *array;
 	struct amdgpu_bo_list *list;
