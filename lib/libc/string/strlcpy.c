@@ -20,20 +20,41 @@
 #include <string.h>
 
 /*
- * Copy string src to buffer dst of size dsize.  At most dsize-1
- * chars will be copied.  Always NUL terminates (unless dsize == 0).
- * Returns strlen(src); if retval >= dsize, truncation occurred.
+        The function copies characters from src to dst.
+
+        src is a nul terminating string.
+        dst is a string buffer.
+        dsize is the size of dst.
+        If (dsize != 0), the terminating nul is always appended to dst;
+        So, at most (dsize - 1) chars will be copied from src.
+
+        The function returns the number of truncated chars of src.
+        If the return value is zero, everything is OK;
+        otherwise truncation happened.
+
+        Example 1:
+
+                if (strlcpy(dst, src, dsize))
+                        puts("truncation");
+
+        Example 2:
+
+                size_t n;
+
+                if ((n = strlcpy(dst, src, dsize)))
+                        printf("truncation: %lu %s\n", n,
+                                n > 1 ? "chars" : "char");
  */
 size_t
 strlcpy(char *dst, const char *src, size_t dsize)
 {
-	const char *sbeg = src;
+	const char *sbeg;
 
 	if (dsize != 0)
 		for (dst[--dsize] = '\0'; dsize-- != 0; ++src)
 			if ((*dst++ = *src) == '\0') break;
 
-	for (; *src != '\0'; ++src) { }
+	for (sbeg = src; *src != '\0'; ++src) { }
 
 	return (src - sbeg);
 }
