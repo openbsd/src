@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.3 2019/05/24 18:35:41 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.4 2019/05/24 18:43:58 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -113,6 +113,8 @@ void		 kubsan_report(const char *, ...)
 static int	is_negative(struct type_descriptor *, unsigned long);
 static int	is_shift_exponent_too_large(struct type_descriptor *,
 		    unsigned long);
+
+static const char	*pathstrip(const char *);
 
 #ifdef KUBSAN_WATCH
 int kubsan_watch = 2;
@@ -455,9 +457,12 @@ int
 kubsan_format_location(struct source_location *src, char *buf,
     size_t bufsiz)
 {
+	const char *path;
+
+	path = pathstrip(src->sl_filename);
+
 	return snprintf(buf, bufsiz, "%s:%u:%u",
-	    src->sl_filename, src->sl_line & ~LOCATION_REPORTED,
-	    src->sl_column);
+	    path, src->sl_line & ~LOCATION_REPORTED, src->sl_column);
 }
 
 int
@@ -532,4 +537,27 @@ static int
 is_shift_exponent_too_large(struct type_descriptor *typ, unsigned long val)
 {
 	return (kubsan_deserialize_int(typ, val) >= NBITS(typ));
+}
+
+/*
+ * A source location is an absolute path making reports quite long.
+ * Instead, use everything after the first /sys/ segment as the path.
+ */
+static const char *
+pathstrip(const char *path)
+{
+	const char *needle = "/sys/";
+	size_t i, j;
+
+	for (i = j = 0; path[i] != '\0'; i++) {
+		if (path[i] != needle[j]) {
+			j = 0;
+			continue;
+		}
+
+		if (needle[++j] == '\0')
+			return path + i + 1;
+	}
+
+	return path;
 }
