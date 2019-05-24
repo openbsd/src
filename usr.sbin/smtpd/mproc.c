@@ -1,4 +1,4 @@
-/*	$OpenBSD: mproc.c,v 1.32 2018/12/17 08:56:31 eric Exp $	*/
+/*	$OpenBSD: mproc.c,v 1.33 2019/05/24 14:31:30 gilles Exp $	*/
 
 /*
  * Copyright (c) 2012 Eric Faurot <eric@faurot.net>
@@ -309,7 +309,7 @@ m_add(struct mproc *p, const void *data, size_t len)
 	void	*tmp;
 
 	if (p->m_pos + len + IMSG_HEADER_SIZE > MAX_IMSGSIZE) {
-		log_warnx("warn: message to large");
+		log_warnx("warn: message too large");
 		fatal(NULL);
 	}
 
