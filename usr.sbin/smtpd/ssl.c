@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.91 2019/05/21 06:38:44 otto Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.92 2019/05/24 16:29:41 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -428,7 +428,7 @@ ssl_ctx_fake_private_key(SSL_CTX *ctx, const void *data, size_t datalen,
 	 */
 	ret = SSL_CTX_use_PrivateKey(ctx, pkey);
 	if (!ret)
-		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_SSL_LIB);
+		SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_LIB_SSL);
 
 	if (pkeyptr != NULL)
 		*pkeyptr = pkey;
