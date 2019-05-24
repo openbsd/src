@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.4 2019/05/24 18:43:58 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.5 2019/05/24 18:48:05 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -296,8 +296,8 @@ kubsan_handle_out_of_bounds(struct out_of_bounds_data *data,
 }
 
 void
-kubsan_handle_overflow(struct overflow_data *data, unsigned long rhs,
-    unsigned long lhs, char op)
+kubsan_handle_overflow(struct overflow_data *data, unsigned long lhs,
+    unsigned long rhs, char op)
 {
 	char bloc[LOCATION_BUFSIZ];
 	char blhs[NUMBER_BUFSIZ];
