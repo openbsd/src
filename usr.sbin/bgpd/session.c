@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.380 2019/05/08 12:41:55 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.381 2019/05/24 11:37:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -191,6 +191,7 @@ session_main(int debug, int verbose)
 	struct ctl_conn		*ctl_conn;
 	struct listen_addr	*la;
 	void			*newp;
+	time_t			 now;
 	short			 events;
 
 	log_init(debug, LOG_DAEMON);
@@ -358,12 +359,13 @@ session_main(int debug, int verbose)
 		idx_listeners = i;
 		timeout = 240;	/* loop every 240s at least */
 
+		now = getmonotime();
 		TAILQ_FOREACH(p, &conf->peers, entry) {
 			time_t	nextaction;
 			struct peer_timer *pt;
 
 			/* check timers */
-			if ((pt = timer_nextisdue(p)) != NULL) {
+			if ((pt = timer_nextisdue(p, now)) != NULL) {
 				switch (pt->type) {
 				case Timer_Hold:
 					bgp_fsm(p, EVNT_TIMER_HOLDTIME);
@@ -405,7 +407,7 @@ session_main(int debug, int verbose)
 					fatalx("King Bula lost in time");
 				}
 			}
-			if ((nextaction = timer_nextduein(p)) != -1 &&
+			if ((nextaction = timer_nextduein(p, now)) != -1 &&
 			    nextaction < timeout)
 				timeout = nextaction;
 

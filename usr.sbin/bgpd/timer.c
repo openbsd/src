@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.17 2017/01/24 04:22:42 benno Exp $ */
+/*	$OpenBSD: timer.c,v 1.18 2019/05/24 11:37:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -49,23 +49,23 @@ timer_get(struct peer *p, enum Timer timer)
 }
 
 struct peer_timer *
-timer_nextisdue(struct peer *p)
+timer_nextisdue(struct peer *p, time_t now)
 {
 	struct peer_timer *pt;
 
 	pt = TAILQ_FIRST(&p->timers);
-	if (pt != NULL && pt->val > 0 && pt->val <= getmonotime())
+	if (pt != NULL && pt->val > 0 && pt->val <= now)
 		return (pt);
 	return (NULL);
 }
 
 time_t
-timer_nextduein(struct peer *p)
+timer_nextduein(struct peer *p, time_t now)
 {
 	struct peer_timer *pt;
 
 	if ((pt = TAILQ_FIRST(&p->timers)) != NULL && pt->val > 0)
-		return (MAXIMUM(pt->val - getmonotime(), 0));
+		return (MAXIMUM(pt->val - now, 0));
 	return (-1);
 }
 

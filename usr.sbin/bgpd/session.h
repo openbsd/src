@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.137 2019/05/08 12:41:55 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.138 2019/05/24 11:37:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -308,8 +308,8 @@ void		 session_stop(struct peer *, u_int8_t);
 /* timer.c */
 time_t			 getmonotime(void);
 struct peer_timer	*timer_get(struct peer *, enum Timer);
-struct peer_timer	*timer_nextisdue(struct peer *);
-time_t			 timer_nextduein(struct peer *);
+struct peer_timer	*timer_nextisdue(struct peer *, time_t);
+time_t			 timer_nextduein(struct peer *, time_t);
 int			 timer_running(struct peer *, enum Timer, time_t *);
 void			 timer_set(struct peer *, enum Timer, u_int);
 void			 timer_stop(struct peer *, enum Timer);
