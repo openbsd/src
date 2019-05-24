@@ -15,8 +15,8 @@ deemed necessary by the Pumpking.
 
 Code freezes (which happen in the 5.29.X series)
 
-  2019-02-20  5.29.8          Contentious changes freeze
-  2019-03-20  5.29.9          User-visible changes to correctly
+  2019-02-20  5.29.8 ✓        Contentious changes freeze
+  2019-03-20  5.29.9 ✓        User-visible changes to correctly
                               functioning programs freeze
   2019-04-20  5.29.10         Full code freeze
   2019-05-20  5.30.0          Stable release!
@@ -24,28 +24,15 @@ Code freezes (which happen in the 5.29.X series)
 =head2 Perl 5.28
 
   2018-05-20  5.28.0 ✓        Sawyer X
+  2018-11-29  5.28.1 ✓        Steve Hay
+  2019-04-??  5.28.2          Steve Hay
 
 =head2 Perl 5.26
 
   2017-05-30  5.26.0 ✓        Sawyer X
   2017-09-22  5.26.1 ✓        Steve Hay
   2018-04-14  5.26.2 ✓        Steve Hay
-
-=head2 Perl 5.24
-
-  2016-05-09  5.24.0 ✓        Ricardo Signes
-  2017-01-14  5.24.1 ✓        Steve Hay
-  2017-07-15  5.24.2 ✓        Steve Hay
-  2017-09-22  5.24.3 ✓        Steve Hay
-  2018-04-14  5.24.4 ✓        Steve Hay
-
-=head2 Perl 5.22
-
-  2015-06-01  5.22.0 ✓        Ricardo Signes
-  2015-12-13  5.22.1 ✓        Steve Hay
-  2016-04-29  5.22.2 ✓        Steve Hay
-  2017-01-14  5.22.3 ✓        Steve Hay
-  2017-07-15  5.22.4 ✓        Steve Hay
+  2018-11-29  5.26.3 ✓        Steve Hay
 
 =head1 DEVELOPMENT RELEASE SCHEDULE
 
@@ -68,12 +55,12 @@ you should reset the version numbers to the next blead series.
   2018-08-20  5.29.2 ✓        Chris BinGOs Williams
   2018-09-20  5.29.3 ✓        John Anderson (genehack)
   2018-10-20  5.29.4 ✓        Aaron Crane
-  2018-11-20  5.29.5          Karen Etheridge (ether)
-  2018-12-20  5.29.6          Abigail
-  2019-01-20  5.29.7          Abigail
-  2019-02-20  5.29.8
-  2019-03-20  5.29.9
-  2019-04-20  5.29.10
+  2018-11-20  5.29.5 ✓        Karen Etheridge (ether)
+  2018-12-18  5.29.6 ✓        Abigail
+  2019-01-20  5.29.7 ✓        Abigail
+  2019-02-20  5.29.8 ✓        Nicolas R. (atoomic)
+  2019-03-20  5.29.9 ✓        Zak B. Elep
+  2019-04-20  5.29.10         Sawyer X
 
 (RC0 for 5.30.0 will be released once we think that all the blockers have been
 addressed.  This typically means some time in April or May.)

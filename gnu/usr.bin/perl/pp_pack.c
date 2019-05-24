@@ -1727,7 +1727,10 @@ S_unpack_rec(pTHX_ tempsym_t* symptr, const char *s, const char *strbeg, const c
 	    if (!checksum) {
                 const STRLEN l = (STRLEN) (strend - s) * 3 / 4;
 		sv = sv_2mortal(newSV(l));
-		if (l) SvPOK_on(sv);
+		if (l) {
+                    SvPOK_on(sv);
+                    *SvEND(sv) = '\0';
+                }
 	    }
 
             /* Note that all legal uuencoded strings are ASCII printables, so

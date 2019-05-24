@@ -34,7 +34,7 @@ Chris C<BinGOs> Williams, Zefram, Ævar Arnfjörð Bjarmason, Stevan
 Little, Dave Rolsky, Max Maischein, Abigail, Jesse Luehrs, Tony Cook,
 Dominic Hargreaves, Aaron Crane, Aristotle Pagaltzis, Matthew Horsfall,
 Peter Martini, Sawyer X, Chad 'Exodist' Granum, Renee Bäcker, Eric Herman,
-John SJ Anderson, and Karen Etheridge.
+John SJ Anderson, Karen Etheridge, and Zak B. Elep.
 
 =head2 PUMPKIN?
 
@@ -651,11 +651,19 @@ the strings?).
  Sawyer X  5.28.0       2018-Jun-22
  Steve     5.28.1-RC1   2018-Nov-08
  Steve     5.28.1       2018-Nov-29
+ Steve     5.28.2-RC1   2019-Apr-05
+ Steve     5.28.2       2019-Apr-19
 
  Sawyer X  5.29.0       2018-Jun-26     The 5.29 development track
  Steve     5.29.1       2018-Jul-20
  BinGOs    5.29.2       2018-Aug-20
- John      5.29.3       2019-Sep-20
+ John      5.29.3       2018-Sep-20
+ Aaron     5.29.4       2018-Oct-20
+ Ether     5.29.5       2018-Nov-20
+ Abigail   5.29.6       2018-Dec-18
+ Abigail   5.29.7       2019-Jan-20
+ Nicolas R 5.29.8       2019-Feb-20
+ Zak Elep  5.29.9       2019-Mar-20
 
 =head2 SELECTED RELEASE SIZES
 

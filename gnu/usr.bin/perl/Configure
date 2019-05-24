@@ -10756,6 +10756,7 @@ hasproto='varname=$1; func=$2; shift; shift;
 while $test $# -ge 2; do
 	case "$1" in
 	$define) echo "#include <$2>";;
+	literal) echo "$2" ;;
 	esac ;
     shift 2;
 done > try.c;
@@ -16193,12 +16194,46 @@ set mbtowc d_mbtowc
 eval $inlibc
 
 : see if memmem exists
-set memmem d_memmem
-eval $inlibc
+: We need both a prototype in string.h and the symbol in libc.
+echo " "
+d_memmem_proto=''
+xx1="#$d_gnulibc HAS_GNULIBC"
+xx2='#if defined(HAS_GNULIBC) && !defined(_GNU_SOURCE)'
+xx3='#   define _GNU_SOURCE'
+xx4='#endif'
+set d_memmem_proto memmem literal "$xx1" literal "$xx2" literal "$xx3" literal "$xx4" define string.h
+eval $hasproto
+case "$d_memmem_proto" in
+    define) # see if memmem exists
+	set memmem d_memmem
+	eval $inlibc
+	;;
+    *)  val=$undef
+	set d_memmem
+	eval $setvar
+	;;
+esac
 
 : see if memrchr exists
-set memrchr d_memrchr
-eval $inlibc
+: We need both a prototype in string.h and the symbol in libc.
+echo " "
+d_memrchr_proto=''
+xx1="#$d_gnulibc HAS_GNULIBC"
+xx2='#if defined(HAS_GNULIBC) && !defined(_GNU_SOURCE)'
+xx3='#   define _GNU_SOURCE'
+xx4='#endif'
+set d_memrchr_proto memrchr literal "$xx1" literal "$xx2" literal "$xx3" literal "$xx4" define string.h
+eval $hasproto
+case "$d_memrchr_proto" in
+    define) # see if memrchr exists
+	set memrchr d_memrchr
+	eval $inlibc
+	;;
+    *)  val=$undef
+	set d_memrchr
+	eval $setvar
+	;;
+esac
 
 : see if mkdir exists
 set mkdir d_mkdir
@@ -18807,12 +18842,46 @@ set strftime d_strftime
 eval $inlibc
 
 : see if strlcat exists
-set strlcat d_strlcat
-eval $inlibc
+: We need both a prototype in string.h and the symbol in libc.
+echo " "
+d_strlcat_proto=''
+xx1="#$d_gnulibc HAS_GNULIBC"
+xx2='#if defined(HAS_GNULIBC) && !defined(_GNU_SOURCE)'
+xx3='#   define _GNU_SOURCE'
+xx4='#endif'
+set d_strlcat_proto strlcat literal "$xx1" literal "$xx2" literal "$xx3" literal "$xx4" define string.h
+eval $hasproto
+case "$d_strlcat_proto" in
+    define) # see if strlcat exists
+	set strlcat d_strlcat
+	eval $inlibc
+	;;
+    *)  val=$undef
+	set d_strlcat
+	eval $setvar
+	;;
+esac
 
 : see if strlcpy exists
-set strlcpy d_strlcpy
-eval $inlibc
+: We need both a prototype in string.h and the symbol in libc.
+echo " "
+d_strlcpy_proto=''
+xx1="#$d_gnulibc HAS_GNULIBC"
+xx2='#if defined(HAS_GNULIBC) && !defined(_GNU_SOURCE)'
+xx3='#   define _GNU_SOURCE'
+xx4='#endif'
+set d_strlcpy_proto strlcpy literal "$xx1" literal "$xx2" literal "$xx3" literal "$xx4" define string.h
+eval $hasproto
+case "$d_strlcpy_proto" in
+    define) # see if strlcpy exists
+	set strlcpy d_strlcpy
+	eval $inlibc
+	;;
+    *)  val=$undef
+	set d_strlcpy
+	eval $setvar
+	;;
+esac
 
 : see if strnlen exists
 set strnlen d_strnlen

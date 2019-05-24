@@ -47,7 +47,7 @@ Null AV pointer.
 =head1 Array Manipulation Functions
 
 =for apidoc Am|int|AvFILL|AV* av
-Same as C<av_top_index()>.  Deprecated, use C<av_top_index()> instead.
+Same as C<av_top_index()> or C<av_tindex()>.
 
 =for apidoc Am|int|av_tindex|AV* av
 Same as C<av_top_index()>.

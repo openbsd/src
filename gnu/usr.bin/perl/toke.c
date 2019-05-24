@@ -1829,14 +1829,14 @@ S_incline(pTHX_ const char *s, const char *end)
 		    }
 		    else if (GvAV(cfgv)) {
 			AV * const av = GvAV(cfgv);
-			const I32 start = CopLINE(PL_curcop)+1;
-			I32 items = AvFILLp(av) - start;
+			const line_t start = CopLINE(PL_curcop)+1;
+			SSize_t items = AvFILLp(av) - start;
 			if (items > 0) {
 			    AV * const av2 = GvAVn(gv2);
 			    SV **svp = AvARRAY(av) + start;
-			    I32 l = (I32)line_num+1;
-			    while (items--)
-				av_store(av2, l++, SvREFCNT_inc(*svp++));
+			    Size_t l = line_num+1;
+			    while (items-- && l < SSize_t_MAX && l == (line_t)l)
+				av_store(av2, (SSize_t)l++, SvREFCNT_inc(*svp++));
 			}
 		    }
 		}
@@ -2068,6 +2068,7 @@ S_newSV_maybe_utf8(pTHX_ const char *const start, STRLEN len)
     SV * const sv = newSVpvn_utf8(start, len,
                     ! IN_BYTES
                   &&  UTF
+                  &&  len != 0
                   &&  is_utf8_non_invariant_string((const U8*)start, len));
     return sv;
 }
@@ -5099,6 +5100,14 @@ Perl_yylex(pTHX)
 
 	return yylex();
     case LEX_FORMLINE:
+        if (PL_parser->sub_error_count != PL_error_count) {
+            /* There was an error parsing a formline, which tends to
+               mess up the parser.
+               Unlike interpolated sub-parsing, we can't treat any of
+               these as recoverable, so no need to check sub_no_recover.
+            */
+            yyquit();
+        }
 	assert(PL_lex_formbrack);
 	s = scan_formline(PL_bufptr);
 	if (!PL_lex_formbrack)
@@ -6518,6 +6527,7 @@ Perl_yylex(pTHX)
 		SAVEI32(PL_lex_formbrack);
 		PL_parser->form_lex_state = PL_lex_state;
 		PL_lex_formbrack = PL_lex_brackets + 1;
+                PL_parser->sub_error_count = PL_error_count;
 		goto leftbracket;
 	    }
 	}

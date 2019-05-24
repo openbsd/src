@@ -12,7 +12,7 @@ my $no_endianness = $] > 5.009 ? '' :
 my $no_signedness = $] > 5.009 ? '' :
   "Signed/unsigned pack modifiers not available on this perl";
 
-plan tests => 14717;
+plan tests => 14718;
 
 use strict;
 use warnings qw(FATAL all);
@@ -2080,4 +2080,11 @@ SKIP:
 
     fresh_perl_like('pack "c10f1073741824"', qr/Out of memory during pack/, { stderr => 1 },
 		    "integer overflow calculating allocation (multiply)");
+}
+
+{
+    # [perl #132655] heap-buffer-overflow READ of size 11
+    # only expect failure under ASAN (and maybe valgrind)
+    fresh_perl_is('0.0 + unpack("u", "ab")', "", { stderr => 1 },
+                  "ensure unpack u of invalid data nul terminates result");
 }

@@ -7,6 +7,9 @@ use Cwd;
 use File::Spec;
 use strict;
 
+-d "lib" or mkdir "lib";
+-d "lib/Storable" or mkdir "lib/Storable";
+
 my $fn = "lib/Storable/Limit.pm";
 my $ptrsize = $Config{ptrsize};
 my ($bad1, $bad2) = (65001, 25000);
@@ -29,6 +32,10 @@ sub is_miniperl {
 }
 
 if (is_miniperl()) {
+    if ($Config{usecrosscompile}) {
+        write_limits(500, 265);
+        exit;
+    }
     die "Should not run during miniperl\n";
 }
 my $prefix = "";
@@ -67,9 +74,6 @@ if ($ENV{PERL_CORE}) {
         $PERL = "$ldlib=$path $PERL";
     }
 }
-
--d "lib" or mkdir "lib";
--d "lib/Storable" or mkdir "lib/Storable";
 
 if ($^O eq "MSWin32") {
     require Win32;

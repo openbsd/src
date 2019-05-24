@@ -4723,6 +4723,9 @@ STATIC void	S_deb_stack_n(pTHX_ SV** stack_base, I32 stack_min, I32 stack_max, I
 	assert(stack_base)
 #endif
 #if defined(PERL_IN_DOIO_C)
+STATIC bool	S_argvout_final(pTHX_ MAGIC *mg, IO *io, bool not_implicit);
+#define PERL_ARGS_ASSERT_ARGVOUT_FINAL	\
+	assert(mg); assert(io)
 STATIC void	S_exec_failed(pTHX_ const char *cmd, int fd, int do_report);
 #define PERL_ARGS_ASSERT_EXEC_FAILED	\
 	assert(cmd)

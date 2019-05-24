@@ -45,7 +45,7 @@ INST_TOP	*= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-#INST_VER	*= \5.28.1
+#INST_VER	*= \5.28.2
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -693,6 +693,15 @@ DEFINES		+= -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
 # Likewise for deprecated Winsock APIs in VC++ 14.0 onwards for now.
 .IF "$(CCTYPE)" == "MSVC140" || "$(CCTYPE)" == "MSVC141"
 DEFINES		+= -D_WINSOCK_DEPRECATED_NO_WARNINGS
+.ENDIF
+
+# The Windows Server 2003 SP1 SDK compiler only defines _configthreadlocale() if
+# _MT is defined, i.e. when using /MT (the LIBCMT.lib version of the CRT), which
+# the perl build doesn't use. We therefore specify NO_THREAD_SAFE_LOCALE so that
+# perl.h doesn't set USE_THREAD_SAFE_LOCALE, which it otherwise would do since
+# _MSC_VER is 1400 for this compiler (as per MSVC80).
+.IF "$(CCTYPE)" == "SDK2003SP1"
+DEFINES		+= -DNO_THREAD_SAFE_LOCALE
 .ENDIF
 
 # In VS 2005 (VC++ 8.0) Microsoft changes time_t from 32-bit to
@@ -1622,7 +1631,7 @@ utils: $(HAVEMINIPERL) ..\utils\Makefile
 	copy ..\README.tw       ..\pod\perltw.pod
 	copy ..\README.vos      ..\pod\perlvos.pod
 	copy ..\README.win32    ..\pod\perlwin32.pod
-	copy ..\pod\perldelta.pod ..\pod\perl5281delta.pod
+	copy ..\pod\perldelta.pod ..\pod\perl5282delta.pod
 	$(MINIPERL) -I..\lib $(PL2BAT) $(UTILS)
 	$(MINIPERL) -I..\lib ..\autodoc.pl ..
 	$(MINIPERL) -I..\lib ..\pod\perlmodlib.PL -q ..
@@ -1721,7 +1730,7 @@ distclean: realclean
 	-if exist $(LIBDIR)\Win32API rmdir /s /q $(LIBDIR)\Win32API
 	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
 	-cd $(PODDIR) && del /f *.html *.bat roffitall \
-	    perl5281delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
+	    perl5282delta.pod perlaix.pod perlamiga.pod perlandroid.pod \
 	    perlapi.pod perlbs2000.pod perlce.pod perlcn.pod perlcygwin.pod \
 	    perldos.pod perlfreebsd.pod perlhaiku.pod perlhpux.pod \
 	    perlhurd.pod perlintern.pod perlirix.pod perljp.pod perlko.pod \

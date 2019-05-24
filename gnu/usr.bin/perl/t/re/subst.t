@@ -11,7 +11,7 @@ BEGIN {
     require './loc_tools.pl';
 }
 
-plan(tests => 276);
+plan(tests => 277);
 
 $_ = 'david';
 $a = s/david/rules/r;
@@ -1174,5 +1174,6 @@ __EOF__
     is $lines, 4, "RT #131930";
 }
 
-
-
+{
+    fresh_perl_is("s//00000000000format            \0          '0000000\\x{800}/;eval", "", {}, "RT #133882");
+}

@@ -1693,7 +1693,8 @@ PP(pp_repeat)
 	    else {
 		dTOPss;
 		ASSUME(MARK + 1 == SP);
-		XPUSHs(sv);
+                MEXTEND(SP, 1);
+                PUSHs(sv);
 		MARK[1] = &PL_sv_undef;
 	    }
 	    SP = MARK + 2;

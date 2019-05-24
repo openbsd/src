@@ -206,7 +206,7 @@ You can also run an actual diff of the contents of the modules, comparing core
 to CPAN, to ensure that there were no erroneous/extraneous changes that need to
 be dealt with. You do this by not passing the C<-x> option:
 
-    $ ./perl -Ilib Porting/core-cpan-diff -a -o /tmp/corediffs
+    $ ./perl -Ilib Porting/core-cpan-diff -a -o ~/corediffs
 
 Passing C<-u cpan> will probably be helpful, since it limits the search to
 distributions with 'cpan' upstream source.  (It's OK for blead upstream to
@@ -237,6 +237,16 @@ maint, then diff the two outputs. Compare this with what you expect, and if
 necessary, fix things up. For example, you might think that both blead
 and maint are synchronised with a particular CPAN module, but one might
 have some extra changes.
+
+In any case, any cpan-first distribution that is listed as having files
+"Customized for blead" in the output of cpan-core-diff should have requests
+submitted to the maintainer(s) to make a cpan release to catch up with blead.
+
+Additionally, all files listed as "modified" but not "customized for blead"
+should have entries added under the C<CUSTOMIZED> key in
+F<Porting/Maintainers.pl>, as well as checksums updated via:
+
+    cd t; ./perl -I../lib porting/customized.t --regen
 
 =head4 Sync CPAN modules with the corresponding cpanE<sol> distro
 
@@ -393,7 +403,7 @@ L<"update Module::CoreList">).
 =head3 Bump the version number
 
 Do not do this yet for a BLEAD-POINT release! You will do this at the end of
-the release process.
+the release process (after building the final tarball, tagging etc).
 
 Increase the version number (e.g. from 5.12.0 to 5.12.1).
 
@@ -425,9 +435,11 @@ F<pod/perlpolicy.pod>.
 When doing a BLEAD-POINT or BLEAD-FINAL release, also make sure the
 C<PERL_API_*> constants in F<patchlevel.h> are in sync with the version
 you're releasing, unless you're absolutely sure the release you're about to
-make is 100% binary compatible to an earlier release. When releasing a MAINT
-perl version, the C<PERL_API_*> constants C<MUST NOT> be changed as we aim
-to guarantee binary compatibility in maint branches.
+make is 100% binary compatible to an earlier release. Note: for BLEAD-POINT
+releases the bump should have already occured at the end of the previous release
+and this is somethig you would have to do at the very end.
+When releasing a MAINT perl version, the C<PERL_API_*> constants C<MUST NOT>
+be changed as we aim to guarantee binary compatibility in maint branches.
 
 After editing, regenerate uconfig.h (this must be run on a system with a
 /bin/sh available):
@@ -469,6 +481,7 @@ version number.
 =head3 update INSTALL
 
 Review and update INSTALL to account for the change in version number.
+INSTALL for a BLEAD-POINT release should already contain the expected version.
 The lines in F<INSTALL> about "is not binary compatible with" may require a
 correct choice of earlier version to declare incompatibility with. These are
 in the "Changes and Incompatibilities" and "Coexistence with earlier versions
@@ -520,6 +533,9 @@ C<-Dusethreads>
 
 If you have multiple compilers on your machine, you might also consider
 compiling with C<-Dcc=$other_compiler>.
+
+You can also consider pushing the repo to GitHub where Travis CI is enabled
+which would smoke different flavors of Perl for you.
 
 =head3 update perlport
 
@@ -732,7 +748,7 @@ Also, you may want to generate and view an HTML version of it to check
 formatting, e.g.
 
     $ ./perl -Ilib ext/Pod-Html/bin/pod2html pod/perldelta.pod > \
-        /tmp/perldelta.html
+        ~/perldelta.html
 
 If you make changes, be sure to commit them.
 
@@ -782,6 +798,13 @@ Then build a clean perl and do a full test
     $ make test
 
 Once all tests pass, commit your changes.
+
+=head3 final check of perldelta placeholders
+
+Check for any 'XXX' leftover section in the perldelta.
+Either fill them or remove these sections appropriately.
+
+    $ git grep XX pod/perldelta.pod
 
 =head3 build a clean perl
 
@@ -1001,7 +1024,9 @@ which is why you should test from the tarball.
 
 =head4 Run the Installation Verification Procedure utility
 
-    $ ./perl utils/perlivp
+    $ ./perl ./perlivp
+    # Or, perhaps:
+    $ ./perl5.x.y ./perlivp5.x.y
     ...
     All tests successful.
     $
@@ -1064,7 +1089,7 @@ Test L<perlbug> with the following:
     (edit report)
     Action (Send/Display/Edit/Subject/Save to File): f
     Name of file to save message in [perlbug.rep]:
-    Action (Send/Display/Edit/Subject/Save to File): q
+    Action (Send/Display/Edit/Subject/Save to File): Q
 
 and carefully examine the output (in F<perlbug.rep]>), especially
 the "Locally applied patches" section. If everything appears okay, then
@@ -1126,8 +1151,10 @@ you have it configured:
     cpan-upload perl-5.X.Y.tar.xz
 
 Do not proceed any further until you are sure that your tarballs are on CPAN.
-Check your authors directory www.cpan.org (the globally balanced "fast"
-mirror) to confirm that your uploads have been successful.
+Check your authors directory metacpan.org to confirm that your uploads have
+been successful.
+
+    https://metacpan.org/author/YOUR_PAUSE_ID
 
 =for checklist skip RC BLEAD-POINT
 

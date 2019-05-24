@@ -20,7 +20,7 @@ use Storable qw(freeze thaw dclone);
 
 $Storable::flags = Storable::FLAGS_COMPAT;
 
-use Test::More tests => 38;
+use Test::More tests => 39;
 
 package OBJ_REAL;
 
@@ -364,5 +364,17 @@ else {
         dclone $t;
     };
     like $@, qr/Max\. recursion depth with nested structures exceeded/,
-      'Caught href stack overflow '.MAX_DEPTH*2;
+      'Caught href stack overflow '.MAX_DEPTH_HASH*2;
+}
+
+{
+    # perl #133326
+    my @tt;
+    #$Storable::DEBUGME=1;
+    for (1..16000) {
+        my $t = [[[]]];
+        push @tt, $t;
+    }
+    ok(eval { dclone \@tt; 1 },
+       "low depth structure shouldn't be treated as nested");
 }

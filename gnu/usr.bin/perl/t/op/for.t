@@ -5,7 +5,7 @@ BEGIN {
     require "./test.pl";
 }
 
-plan(124);
+plan(126);
 
 # A lot of tests to check that reversed for works.
 
@@ -663,4 +663,18 @@ is(fscope(), 1, 'return via loop in sub');
         $i++;
     }
     is($foo, "outside", "RT #123994 array outside");
+}
+
+# RT #133558 'reverse' under AIX was causing loop to terminate
+# immediately, probably due to compiler bug
+
+{
+    my @a = qw(foo);
+    my @b;
+    push @b, $_ for (reverse @a);
+    is "@b", "foo", " RT #133558 reverse array";
+
+    @b = ();
+    push @b, $_ for (reverse 'bar');
+    is "@b", "bar", " RT #133558 reverse list";
 }

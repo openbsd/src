@@ -17,6 +17,115 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.29.9 - Sir Arthur Conan Doyle, The Adventure of the Dancing Men
+
+L<Announced on 2019-03-21 by Zak Elep|https://www.nntp.perl.org/group/perl.perl5.porters/2019/03/msg253978.html>
+
+  What one man can invent, another can discover.
+
+=head2 v5.29.8 -  Isaac Asimov, Foundation: “Never let your sense of morals get in the way of doing what's right.”
+
+L<Announced on 2019-02-20 by Atoomic|https://www.nntp.perl.org/group/perl.perl5.porters/2019/02/msg253750.html>
+
+=head2 v5.29.7 - Edsger W. Dijkstra: "Programming Considered as a Human Activity", IFIP Congress, New York, 1965.
+
+L<Announced on 2019-01-20 by Abigail|https://www.nntp.perl.org/group/perl.perl5.porters/2019/01/msg253444.html>
+
+When I became acquainted with the notion of algorithmic languages I
+never challenged the then prevailing notion that the problems of
+language design and implementation were mostly a question of
+compromises: every new convenience for the user had to be paid for
+by the implementation, either in the form of increased trouble
+during translation, or during execution or during both. Well, we
+are most certainly not living in Heaven and I am not going to deny
+the possibility of a conflict between convenience and efficiency,
+but now I do protest when this conflict is presented as a complete
+summing up of the situation. I am of the opinion that is worth-while
+to investigate what extent the needs of Man and Machine go hand in
+hand and to see what techniques we can devise of the benefit of all
+of us. I trust that this investigation will bear fruits and if this
+talk made some of you share this fervent hope, it has achieved its aim.
+
+=head2 v5.29.6 - Rudyard Kipling: "How the Camel Got His Hump"
+
+L<Announced on 2018-12-18 by Abigail|https://www.nntp.perl.org/group/perl.perl5.porters/2018/12/msg253187.html>
+
+  The Camel's hump is an ugly lump
+    Which well you may see at the Zoo;
+  But uglier yet is the hump we get
+    From having little to do.
+
+  Kiddies and grown-ups too-oo-oo
+  If we haven't enough to do-oo-oo,
+        We get the hump -
+        Cameelious hump -
+  The hump that is black and blue!
+
+  We climb out of bed with a frouzly head
+    And a snarly-yarly voice.
+  We shiver and scowl and we grunt and we growl
+    At our bath and our boots and our toys;
+
+  And there ought to be a corner for me
+  (And I know there is one for you)
+        When we get the hump -
+        Cameelious hump -
+  The hump that is black and blue!
+
+  The cure for this ill is to not sit still,
+    Or frowst with a book by the fire;
+  But to take a large hoe and a shovel also,
+    And dig till you gentle perspire;
+
+  And then you will find that the sun and the wind,
+  And the Djinn of the Garden too,
+        Have lifted the hump -
+        The horrible hump -
+  The hump that is black and blue!
+
+  I get it as well as you-oo-oo -
+  If I haven't enough to do-oo-oo!
+        We all get hump -
+        Cameelious hump -
+  Kiddies and grown-ups too!
+
+
+=head2 v5.29.5 - T. S. Eliot, "The Naming Of Cats"
+
+L<Announced on 2018-11-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2018/11/msg252839.html>
+
+  The Naming of Cats is a difficult matter,
+  It isn't just one of your holiday games;
+  You may think at first I'm as mad as a hatter
+  When I tell you, a cat must have THREE DIFFERENT NAMES.
+  First of all, there's the name that the family use daily,
+  Such as Peter, Augustus, Alonzo or James,
+  Such as Victor or Jonathan, George or Bill Bailey--
+  All of them sensible everyday names.
+  There are fancier names if you think they sound sweeter,
+  Some for the gentlemen, some for the dames:
+  Such as Plato, Admetus, Electra, Demeter--
+  But all of them sensible everyday names.
+  But I tell you, a cat needs a name that's particular,
+  A name that's peculiar, and more dignified,
+  Else how can he keep up his tail perpendicular,
+  Or spread out his whiskers, or cherish his pride?
+  Of names of this kind, I can give you a quorum,
+  Such as Munkustrap, Quaxo, or Coricopat,
+  Such as Bombalurina, or else Jellylorum-
+  Names that never belong to more than one cat.
+  But above and beyond there's still one name left over,
+  And that is the name that you never will guess;
+  The name that no human research can discover--
+  But THE CAT HIMSELF KNOWS, and will never confess.
+  When you notice a cat in profound meditation,
+  The reason, I tell you, is always the same:
+  His mind is engaged in a rapt contemplation
+  Of the thought, of the thought, of the thought of his name:
+  His ineffable effable
+  Effanineffable
+  Deep and inscrutable singular Name.
+
 =head2 v5.29.4 - The Mountain Goats, "Oceanographer's Choice"
 
 L<Announced on 2018-10-20 by Aaron Crane|https://www.nntp.perl.org/group/perl.perl5.porters/2018/10/msg252575.html>
@@ -109,6 +218,41 @@ L<Announced on 2018-07-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl
 L<Announced on 2018-06-26 by Sawyer X|http://nntp.perl.org/group/perl.perl5.porters/251297>
 
   Courage is the only antidote for danger.
+
+=head2 v5.28.2-RC1 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": The Quangle Wangle's Hat
+
+L<Announced on 2019-04-05 by Steve Hay|http://www.nntp.perl.org/group/perl.perl5.porters/2019/04/msg254218.html>
+
+  On the top of the Crumpetty Tree
+    The Quangle Wangle sat,
+  But his face you could not see,
+    On account of his Beaver Hat.
+  For his Hat was a hundred and two feet wide,
+  With ribbons and bibbons on every side,
+  And bells, and buttons, and loops, and lace,
+  So that nobody ever could see the face
+      Of the Quangle Wangle Quee.
+
+=head2 v5.28.1 - Humphrey Burton, "Leonard Bernstein"
+
+L<Announced on 2018-11-29 by Steve Hay|http://nntp.perl.org/group/perl.perl5.porters/2018/11/msg252975.html>
+
+On August 25, 1983, Leonard Bernstein celebrated his sixty-fifth
+birthday in his birthplace, Lawrence, Massachusetts.  He had actually
+lived in the town for only a few weeks as a newborn baby, and had last
+visited it forty-nine years previously, in 1934, to get the name on his
+birth certificate altered from Louis to Leonard.  But the citizens of
+Lawrence proposed to dedicate an outdoor theater to him in their
+heritage park and to provide not one but two local orchestras--the
+Merrimack Valley Philharmonic to play excerpts from his own compositions
+and the Greater Boston Youth Symphony and Chorus to perform the "Ode to
+Joy" and accompany Bernstein himself reading (for the only time in his
+life) the text of A Lincoln Portrait.  So Bernstein turned down birthday
+invitations from Tanglewood and Central Park, New York, and the
+Hollywood Bowl and drove through the cheering if slightly bewildered
+crowds lining the streets of Lawrence in an open-topped 1928 Ford
+roadster, looking as homespun as James Stewart in Frank Capra's classic,
+It's a Wonderful Life.
 
 =head2 v5.28.0 - Martin Luther King, Jr., 1967
 
@@ -403,6 +547,23 @@ L<Announced on 2017-05-31 by Sawyer X|http://www.nntp.perl.org/group/perl.perl5.
   pleasure brings no happiness, but only a deeper despair.
 
     -- Bertrand Russell, The Road to Happiness
+
+=head2 v5.26.3 - Humphrey Burton, "Leonard Bernstein"
+
+L<Announced on 2018-11-29 by Steve Hay|http://nntp.perl.org/group/perl.perl5.porters/2018/11/msg252974.html>
+
+The origins of the name "Bernstein" are sometimes linked with the German
+noun Bernstein, which means "amber"--a translucent yellowish fossilized
+resin, used for ornaments and thought to possess magical properties.
+Leonard Bernstein would later call himself "Lenny Amber" when he needed
+a pseudonym for the popular piano transcriptions he published in his
+mid-twenties, and his business affairs would be organized within a
+company called Amberson Enterprises.  There are several towns and
+villages named Bernstein in Germany and Austria (where the pronunciation
+is BernSTINE), but Bernstein's parents came from Jewish ghettos in
+northwestern Ukraine, where the last syllable is usually pronounced
+BernSHTAYN or STEEN.  Sam insisted, however, on the mid-European style
+employed by the earlier immigrants.
 
 =head2 v5.26.2 - Desmond Morris, "Catwatching: The Essential Guide to Cat Behaviour"
 

@@ -394,6 +394,7 @@ foreach my $file (@corefiles) {
     if (copy_if_diff($file,"$installarchlib/CORE/$file")) {
 	if ($file =~ /\.(\Q$so\E|\Q$dlext\E)$/) {
 	    strip("-S", "$installarchlib/CORE/$file") if $^O eq 'darwin';
+	    fix_dep_names("$installarchlib/CORE/$file");
 	    chmod($SO_MODE, "$installarchlib/CORE/$file");
 	} else {
 	    chmod($NON_SO_MODE, "$installarchlib/CORE/$file");
@@ -824,6 +825,29 @@ sub strip
 	    print "# file '$file' skipped\n" if $opts{verbose};
 	}
     }
+}
+
+sub fix_dep_names {
+    my $file = shift;
+
+    $^O eq "darwin" && $Config{osvers} =~ /^(1[5-9]|[2-9])/
+      && $Config{useshrplib}
+      or return;
+
+    my @opts;
+    my $so = $Config{so};
+    my $libperl = "$Config{archlibexp}/CORE/libperl.$Config{so}";
+    if ($file =~ /\blibperl.\Q$Config{so}\E$/a) {
+        push @opts, -id => $libperl;
+    }
+    else {
+        push @opts, -change => getcwd . "/libperl.$so", $libperl;
+    }
+    push @opts, $file;
+
+    $opts{verbose} and print "  install_name_tool @opts\n";
+    system "install_name_tool", @opts
+      and die "Cannot update $file dependency paths\n";
 }
 
 # ex: set ts=8 sts=4 sw=4 et:

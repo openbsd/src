@@ -480,3 +480,12 @@ Bareword found where operator expected at - line 2, near "2p0"
 	(Missing operator before p0?)
 syntax error at - line 2, near "2p0"
 Execution of - aborted due to compilation errors.
+########
+# NAME [perl #132158] format with syntax errors
+format=
+@
+=h
+=cut
+EXPECT
+syntax error at - line 4, next token ???
+Execution of - aborted due to compilation errors.

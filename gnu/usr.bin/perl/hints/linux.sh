@@ -178,6 +178,16 @@ case "$plibpth" in
     ;;
 esac
 
+# For the musl libc, perl should #define _GNU_SOURCE.  Otherwise, some
+# available functions, like memem, won't be used.  See the discussion in
+# [perl #133760].  musl doesn't offer an easy way to identify it, but,
+# at least on alpine linux, the ldd --version output contains the
+# string 'musl.'
+case `ldd --version 2>&1` in
+    musl*)  ccflags="$ccflags -D_GNU_SOURCE" ;;
+        *) ;;
+esac
+
 # libquadmath is sometimes installed as gcc internal library,
 # so contrary to our usual policy of *not* looking at gcc internal
 # directories we now *do* look at them, in case they contain

@@ -51,8 +51,8 @@ foreach my $type ('script_run', 'sr', 'atomic_script_run', 'asr') {
     unlike("\N{HEBREW LETTER ALEF}\N{HEBREW LETTER TAV}\N{MODIFIER LETTER SMALL Y}", $script_run, "Hebrew then Latin isn't a script run");
     like("9876543210\N{DESERET SMALL LETTER WU}", $script_run, "0-9 are the digits for Deseret");
     like("\N{DESERET SMALL LETTER WU}9876543210", $script_run, "Also when they aren't in the initial position");
-    unlike("\N{DESERET SMALL LETTER WU}\N{FULLWIDTH DIGIT FIVE}", $script_run, "Fullwidth digits aren't the digits for Deseret");
-    unlike("\N{FULLWIDTH DIGIT SIX}\N{DESERET SMALL LETTER LONG I}", $script_run, "... likewise if the digits come first");
+    like("\N{DESERET SMALL LETTER WU}\N{FULLWIDTH DIGIT FIVE}", $script_run, "Fullwidth digits may be digits for Deseret");
+    like("\N{FULLWIDTH DIGIT SIX}\N{DESERET SMALL LETTER LONG I}", $script_run, "... likewise if the digits come first");
 
     like("1234567890\N{ARABIC LETTER ALEF}", $script_run, "[0-9] work for Arabic");
     unlike("1234567890\N{ARABIC LETTER ALEF}\N{ARABIC-INDIC DIGIT FOUR}\N{ARABIC-INDIC DIGIT FIVE}", $script_run, "... but not in combination with real ARABIC digits");
@@ -96,5 +96,20 @@ foreach my $type ('script_run', 'sr', 'atomic_script_run', 'asr') {
 
       like("abc", qr/(*asr:a[bc]*c)/, "Outer asr works on a run");
     unlike("abc", qr/(*asr:a(*asr:[bc]*)c)/, "Nested asr works to exclude some things");
+
+    like("A\x{ff10}\x{ff19}B", qr/^(*sr:.{4})/,
+         "Non-ASCII Common digits work with Latin"); # perl #133547
+    like("A\x{ff10}BC", qr/^(*sr:.{4})/,
+         "Non-ASCII Common digits work with Latin"); # perl #133547
+    like("A\x{1d7ce}\x{1d7cf}B", qr/^(*sr:.{4})/,
+         "Non-ASCII Common digits work with Latin"); # perl #133547
+    like("A\x{1d7ce}BC", qr/^(*sr:.{4})/,
+         "Non-ASCII Common digits work with Latin"); # perl #133547
+    like("\x{1d7ce}\x{1d7cf}AB", qr/^(*sr:.{4})/,
+         "Non-ASCII Common digits work with Latin"); # perl #133547
+    like("α\x{1d7ce}βγ", qr/^(*sr:.{4})/,
+         "Non-ASCII Common digits work with Greek"); # perl #133547
+    like("\x{1d7ce}αβγ", qr/^(*sr:.{4})/,
+         "Non-ASCII Common digits work with Greek"); # perl #133547
 
 done_testing();

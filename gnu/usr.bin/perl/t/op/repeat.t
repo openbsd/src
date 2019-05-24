@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc( '../lib' );
 }
 
-plan(tests => 49);
+plan(tests => 50);
 
 # compile time
 
@@ -192,3 +192,85 @@ fresh_perl_like(
 
 eval q{() = (() or ((0) x 0)); 1};
 is($@, "", "RT #130247");
+
+# yes, the newlines matter
+fresh_perl_is(<<'PERL', "", { stderr => 1 }, "(perl #133778) MARK mishandling");
+map{s[][];eval;0}<DATA>__END__
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+()x0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+0
+PERL

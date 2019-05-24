@@ -418,6 +418,24 @@ typedef struct stcxt {
     SV *(**retrieve_vtbl)(pTHX_ struct stcxt *, const char *);	/* retrieve dispatch table */
     SV *prev;			/* contexts chained backwards in real recursion */
     SV *my_sv;			/* the blessed scalar who's SvPVX() I am */
+
+    /* recur_sv:
+
+       A hashref of hashrefs or arrayref of arrayrefs is actually a
+       chain of four SVs, eg for an array ref containing an array ref:
+
+         RV -> AV (element) -> RV -> AV
+
+       To make this depth appear natural from a perl level we only
+       want to count this as two levels, so store_ref() stores it's RV
+       into recur_sv and store_array()/store_hash() will only count
+       that level if the AV/HV *isn't* recur_sv.
+
+       We can't just have store_hash()/store_array() not count that
+       level, since it's possible for XS code to store an AV or HV
+       directly as an element (though perl code trying to access such
+       an object will generally croak.)
+     */
     SV *recur_sv;               /* check only one recursive SV */
     int in_retrieve_overloaded; /* performance hack for retrieving overloaded objects */
     int flags;			/* controls whether to bless or tie objects */
@@ -431,8 +449,13 @@ typedef struct stcxt {
 
 #define RECURSION_TOO_DEEP() \
     (cxt->max_recur_depth != -1 && ++cxt->recur_depth > cxt->max_recur_depth)
+
+/* There's cases where we need to check whether the hash recursion
+   limit has been reached without bumping the recursion levels, so the
+   hash check doesn't bump the depth.
+*/
 #define RECURSION_TOO_DEEP_HASH() \
-    (cxt->max_recur_depth_hash != -1 && ++cxt->recur_depth > cxt->max_recur_depth_hash)
+    (cxt->max_recur_depth_hash != -1 && cxt->recur_depth > cxt->max_recur_depth_hash)
 #define MAX_DEPTH_ERROR "Max. recursion depth with nested structures exceeded"
 
 static int storable_free(pTHX_ SV *sv, MAGIC* mg);
@@ -2360,21 +2383,20 @@ static int store_ref(pTHX_ stcxt_t *cxt, SV *sv)
     } else
         PUTMARK(is_weak ? SX_WEAKREF : SX_REF);
 
-    TRACEME(("recur_depth %" IVdf ", recur_sv (0x%" UVxf ")", cxt->recur_depth,
-             PTR2UV(cxt->recur_sv)));
-    if (cxt->entry && cxt->recur_sv == sv) {
-        if (RECURSION_TOO_DEEP()) {
-#if PERL_VERSION < 15
-            cleanup_recursive_data(aTHX_ (SV*)sv);
-#endif
-            CROAK((MAX_DEPTH_ERROR));
-        }
-    }
     cxt->recur_sv = sv;
 
+    TRACEME((">ref recur_depth %" IVdf ", recur_sv (0x%" UVxf ") max %" IVdf, cxt->recur_depth,
+             PTR2UV(cxt->recur_sv), cxt->max_recur_depth));
+    if (RECURSION_TOO_DEEP()) {
+#if PERL_VERSION < 15
+        cleanup_recursive_data(aTHX_ (SV*)sv);
+#endif
+        CROAK((MAX_DEPTH_ERROR));
+    }
+
     retval = store(aTHX_ cxt, sv);
-    if (cxt->entry && cxt->recur_sv == sv && cxt->recur_depth > 0) {
-        TRACEME(("recur_depth --%" IVdf, cxt->recur_depth));
+    if (cxt->max_recur_depth != -1 && cxt->recur_depth > 0) {
+        TRACEME(("<ref recur_depth --%" IVdf, cxt->recur_depth));
         --cxt->recur_depth;
     }
     return retval;
@@ -2635,6 +2657,7 @@ static int store_array(pTHX_ stcxt_t *cxt, AV *av)
     UV len = av_len(av) + 1;
     UV i;
     int ret;
+    SV *const recur_sv = cxt->recur_sv;
 
     TRACEME(("store_array (0x%" UVxf ")", PTR2UV(av)));
 
@@ -2659,9 +2682,9 @@ static int store_array(pTHX_ stcxt_t *cxt, AV *av)
         TRACEME(("size = %d", (int)l));
     }
 
-    TRACEME(("recur_depth %" IVdf ", recur_sv (0x%" UVxf ")", cxt->recur_depth,
-             PTR2UV(cxt->recur_sv)));
-    if (cxt->entry && cxt->recur_sv == (SV*)av) {
+    TRACEME((">array recur_depth %" IVdf ", recur_sv (0x%" UVxf ") max %" IVdf, cxt->recur_depth,
+             PTR2UV(cxt->recur_sv), cxt->max_recur_depth));
+    if (recur_sv != (SV*)av) {
         if (RECURSION_TOO_DEEP()) {
             /* with <= 5.14 it recurses in the cleanup also, needing 2x stack size */
 #if PERL_VERSION < 15
@@ -2670,7 +2693,6 @@ static int store_array(pTHX_ stcxt_t *cxt, AV *av)
             CROAK((MAX_DEPTH_ERROR));
         }
     }
-    cxt->recur_sv = (SV*)av;
 
     /*
      * Now store each item recursively.
@@ -2701,9 +2723,12 @@ static int store_array(pTHX_ stcxt_t *cxt, AV *av)
             return ret;
     }
 
-    if (cxt->entry && cxt->recur_sv == (SV*)av && cxt->recur_depth > 0) {
-        TRACEME(("recur_depth --%" IVdf, cxt->recur_depth));
-        --cxt->recur_depth;
+    if (recur_sv != (SV*)av) {
+        assert(cxt->max_recur_depth == -1 || cxt->recur_depth > 0);
+        if (cxt->max_recur_depth != -1 && cxt->recur_depth > 0) {
+            TRACEME(("<array recur_depth --%" IVdf, cxt->recur_depth));
+            --cxt->recur_depth;
+        }
     }
     TRACEME(("ok (array)"));
 
@@ -2766,6 +2791,7 @@ static int store_hash(pTHX_ stcxt_t *cxt, HV *hv)
 #endif
                          ) ? 1 : 0);
     unsigned char hash_flags = (SvREADONLY(hv) ? SHV_RESTRICTED : 0);
+    SV * const recur_sv = cxt->recur_sv;
 
     /* 
      * Signal hash by emitting SX_HASH, followed by the table length.
@@ -2817,17 +2843,17 @@ static int store_hash(pTHX_ stcxt_t *cxt, HV *hv)
         TRACEME(("size = %d, used = %d", (int)l, (int)HvUSEDKEYS(hv)));
     }
 
-    TRACEME(("recur_depth %" IVdf ", recur_sv (0x%" UVxf ")", cxt->recur_depth,
-             PTR2UV(cxt->recur_sv)));
-    if (cxt->entry && cxt->recur_sv == (SV*)hv) {
-        if (RECURSION_TOO_DEEP_HASH()) {
-#if PERL_VERSION < 15
-            cleanup_recursive_data(aTHX_ (SV*)hv);
-#endif
-            CROAK((MAX_DEPTH_ERROR));
-        }
+    TRACEME((">hash recur_depth %" IVdf ", recur_sv (0x%" UVxf ") max %" IVdf, cxt->recur_depth,
+             PTR2UV(cxt->recur_sv), cxt->max_recur_depth_hash));
+    if (recur_sv != (SV*)hv && cxt->max_recur_depth_hash != -1) {
+        ++cxt->recur_depth;
     }
-    cxt->recur_sv = (SV*)hv;
+    if (RECURSION_TOO_DEEP_HASH()) {
+#if PERL_VERSION < 15
+        cleanup_recursive_data(aTHX_ (SV*)hv);
+#endif
+        CROAK((MAX_DEPTH_ERROR));
+    }
 
     /*
      * Save possible iteration state via each() on that table.
@@ -3107,8 +3133,9 @@ static int store_hash(pTHX_ stcxt_t *cxt, HV *hv)
     TRACEME(("ok (hash 0x%" UVxf ")", PTR2UV(hv)));
 
  out:
-    if (cxt->entry && cxt->recur_sv == (SV*)hv && cxt->recur_depth > 0) {
-        TRACEME(("recur_depth --%" IVdf , cxt->recur_depth));
+    assert(cxt->max_recur_depth_hash != -1 && cxt->recur_depth > 0);
+    TRACEME(("<hash recur_depth --%" IVdf , cxt->recur_depth));
+    if (cxt->max_recur_depth_hash != -1 && recur_sv != (SV*)hv && cxt->recur_depth > 0) {
         --cxt->recur_depth;
     }
     HvRITER_set(hv, riter);		/* Restore hash iterator state */
@@ -3221,6 +3248,7 @@ static int store_lhash(pTHX_ stcxt_t *cxt, HV *hv, unsigned char hash_flags)
 #ifdef DEBUGME
     UV len = (UV)HvTOTALKEYS(hv);
 #endif
+    SV * const recur_sv = cxt->recur_sv;
     if (hash_flags) {
         TRACEME(("store_lhash (0x%" UVxf ") (flags %x)", PTR2UV(hv),
                  (int) hash_flags));
@@ -3231,15 +3259,15 @@ static int store_lhash(pTHX_ stcxt_t *cxt, HV *hv, unsigned char hash_flags)
 
     TRACEME(("recur_depth %" IVdf ", recur_sv (0x%" UVxf ")", cxt->recur_depth,
              PTR2UV(cxt->recur_sv)));
-    if (cxt->entry && cxt->recur_sv == (SV*)hv) {
-        if (RECURSION_TOO_DEEP_HASH()) {
-#if PERL_VERSION < 15
-            cleanup_recursive_data(aTHX_ (SV*)hv);
-#endif
-            CROAK((MAX_DEPTH_ERROR));
-        }
+    if (recur_sv != (SV*)hv && cxt->max_recur_depth_hash != -1) {
+        ++cxt->recur_depth;
     }
-    cxt->recur_sv = (SV*)hv;
+    if (RECURSION_TOO_DEEP_HASH()) {
+#if PERL_VERSION < 15
+        cleanup_recursive_data(aTHX_ (SV*)hv);
+#endif
+        CROAK((MAX_DEPTH_ERROR));
+    }
 
     array = HvARRAY(hv);
     for (i = 0; i <= (Size_t)HvMAX(hv); i++) {
@@ -3252,7 +3280,7 @@ static int store_lhash(pTHX_ stcxt_t *cxt, HV *hv, unsigned char hash_flags)
                 return ret;
         }
     }
-    if (cxt->entry && cxt->recur_sv == (SV*)hv && cxt->recur_depth > 0) {
+    if (recur_sv == (SV*)hv && cxt->max_recur_depth_hash != -1 && cxt->recur_depth > 0) {
         TRACEME(("recur_depth --%" IVdf, cxt->recur_depth));
         --cxt->recur_depth;
     }

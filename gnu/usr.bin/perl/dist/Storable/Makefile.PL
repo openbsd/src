@@ -90,12 +90,19 @@ sub depend {
         # blib.pm needs arch/lib
         $extra_deps = ' Storable.pm';
     }
+    my $whichperl;
+    if ($Config::Config{usecrosscompile}) {
+        $whichperl = '$(PERLRUN)';
+    }
+    else {
+        $whichperl = '$(FULLPERLRUNINST)';
+    }
     my $linktype = uc($_[0]->{LINKTYPE});
     my $limit_pm = File::Spec->catfile('lib', 'Storable', 'Limit.pm');
     "
 $limit_pm : stacksize \$(INST_$linktype)$extra_deps
 	\$(MKPATH) \$(INST_LIB)
-	\$(FULLPERLRUNINST) stacksize $options
+	$whichperl stacksize $options
 
 release : dist
 	git tag \$(VERSION)

@@ -185,11 +185,20 @@ PerlIOScalar_read(pTHX_ PerlIO *f, void *vbuf, Size_t count)
         /* I assume that Off_t is at least as large as len (which 
          * seems safe) and that the size of the buffer in our SV is
          * always less than half the size of the address space
+         *
+         * Which turns out not to be the case on 64-bit Windows, since
+         * a build with USE_LARGE_FILES=undef defines Off_t as long,
+         * which is 32-bits on 64-bit Windows.  This doesn't appear to
+         * be the case on other 64-bit platforms.
          */
-        STATIC_ASSERT_STMT(sizeof(Off_t) >= sizeof(len));
+#if Off_t_size >= Size_t_size
         assert(len < ((~(STRLEN)0) >> 1));
         if ((Off_t)len <= s->posn)
 	    return 0;
+#else
+        if (len <= (STRLEN)s->posn)
+            return 0;
+#endif
 	got = len - (STRLEN)(s->posn);
 	if ((STRLEN)got > (STRLEN)count)
 	    got = (STRLEN)count;

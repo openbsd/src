@@ -565,9 +565,9 @@ Perl_grok_numeric_radix(pTHX_ const char **sp, const char *send)
 Helper for C<grok_number()>, accepts various ways of spelling "infinity"
 or "not a number", and returns one of the following flag combinations:
 
-  IS_NUMBER_INFINITE
+  IS_NUMBER_INFINITY
   IS_NUMBER_NAN
-  IS_NUMBER_INFINITE | IS_NUMBER_NEG
+  IS_NUMBER_INFINITY | IS_NUMBER_NEG
   IS_NUMBER_NAN | IS_NUMBER_NEG
   0
 

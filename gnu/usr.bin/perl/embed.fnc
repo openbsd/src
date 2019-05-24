@@ -440,6 +440,7 @@ p	|bool|do_exec3	|NN const char *incmd|int fd|int do_report
 #endif
 #if defined(PERL_IN_DOIO_C)
 s	|void	|exec_failed	|NN const char *cmd|int fd|int do_report
+s	|bool	|argvout_final	|NN MAGIC *mg|NN IO *io|bool not_implicit
 #endif
 #if defined(HAS_MSG) || defined(HAS_SEM) || defined(HAS_SHM)
 : Defined in doio.c, used only in pp_sys.c

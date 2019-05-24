@@ -2,39 +2,32 @@
 
 =head1 NAME
 
-perldelta - what is new for perl v5.28.1
+perldelta - what is new for perl v5.28.2
 
 =head1 DESCRIPTION
 
-This document describes differences between the 5.28.0 release and the 5.28.1
+This document describes differences between the 5.28.1 release and the 5.28.2
 release.
 
-If you are upgrading from an earlier release such as 5.26.0, first read
-L<perl5280delta>, which describes differences between 5.26.0 and 5.28.0.
-
-=head1 Security
-
-=head2 [CVE-2018-18311] Integer overflow leading to buffer overflow and segmentation fault
-
-Integer arithmetic in C<Perl_my_setenv()> could wrap when the combined length
-of the environment variable name and value exceeded around 0x7fffffff.  This
-could lead to writing beyond the end of an allocated buffer with attacker
-supplied data.
-
-L<[perl #133204]|https://rt.perl.org/Ticket/Display.html?id=133204>
-
-=head2 [CVE-2018-18312] Heap-buffer-overflow write in S_regatom (regcomp.c)
-
-A crafted regular expression could cause heap-buffer-overflow write during
-compilation, potentially allowing arbitrary code execution.
-
-L<[perl #133423]|https://rt.perl.org/Ticket/Display.html?id=133423>
+If you are upgrading from an earlier release such as 5.28.0, first read
+L<perl5281delta>, which describes differences between 5.28.0 and 5.28.1.
 
 =head1 Incompatible Changes
 
-There are no changes intentionally incompatible with 5.28.0.  If any exist,
-they are bugs, and we request that you submit a report.  See
-L</Reporting Bugs> below.
+=head2 Any set of digits in the Common script are legal in a script run of
+another script
+
+There are several sets of digits in the Common script.  C<[0-9]> is the most
+familiar.  But there are also C<[\x{FF10}-\x{FF19}]> (FULLWIDTH DIGIT ZERO -
+FULLWIDTH DIGIT NINE), and several sets for use in mathematical notation, such
+as the MATHEMATICAL DOUBLE-STRUCK DIGITs.  Any of these sets should be able to
+appear in script runs of, say, Greek.  But the previous design overlooked all
+but the ASCII digits C<[0-9]>, so the design was flawed.  This has been fixed,
+so is both a bug fix and an incompatibility.
+
+All digits in a run still have to come from the same set of ten digits.
+
+L<[perl #133547]|https://rt.perl.org/Ticket/Display.html?id=133547>
 
 =head1 Modules and Pragmata
 
@@ -44,7 +37,45 @@ L</Reporting Bugs> below.
 
 =item *
 
-L<Module::CoreList> has been upgraded from version 5.20180622 to 5.20181129_28.
+L<Module::CoreList> has been upgraded from version 5.20181129_28 to 5.20190419.
+
+=item *
+
+L<PerlIO::scalar> has been upgraded from version 0.29 to 0.30.
+
+=item *
+
+L<Storable> has been upgraded from version 3.08 to 3.08_01.
+
+=back
+
+=head1 Platform Support
+
+=head2 Platform-Specific Notes
+
+=over 4
+
+=item Windows
+
+The Windows Server 2003 SP1 Platform SDK build, with its early x64 compiler and
+tools, was accidentally broken in Perl 5.27.9.  This has now been fixed.
+
+=item Mac OS X
+
+Perl's build and testing process on Mac OS X for C<-Duseshrplib> builds is now
+compatible with Mac OS X System Integrity Protection (SIP).
+
+SIP prevents binaries in F</bin> (and a few other places) being passed the
+C<DYLD_LIBRARY_PATH> environment variable.  For our purposes this prevents
+C<DYLD_LIBRARY_PATH> from being passed to the shell, which prevents that
+variable being passed to the testing or build process, so running C<perl>
+couldn't find F<libperl.dylib>.
+
+To work around that, the initial build of the F<perl> executable expects to
+find F<libperl.dylib> in the build directory, and the library path is then
+adjusted during installation to point to the installed library.
+
+L<[perl #126706]|https://rt.perl.org/Ticket/Display.html?id=126706>
 
 =back
 
@@ -54,41 +85,68 @@ L<Module::CoreList> has been upgraded from version 5.20180622 to 5.20181129_28.
 
 =item *
 
-Perl 5.28 introduced an C<index()> optimization when comparing to -1 (or
-indirectly, e.g. >= 0).  When this optimization was triggered inside a C<when>
-clause it caused a warning ("Argument %s isn't numeric in smart match").  This
-has now been fixed.
-L<[perl #133368]|https://rt.perl.org/Ticket/Display.html?id=133368>
+If an in-place edit is still in progress during global destruction and the
+process exit code (as stored in C<$?>) is zero, perl will now treat the
+in-place edit as successful, replacing the input file with any output produced.
+
+This allows code like:
+
+  perl -i -ne 'print "Foo"; last'
+
+to replace the input file, while code like:
+
+  perl -i -ne 'print "Foo"; die'
+
+will not.  Partly resolves [perl #133659].
+
+L<[perl #133659]|https://rt.perl.org/Ticket/Display.html?id=133659>
 
 =item *
 
-Matching of decimal digits in script runs, introduced in Perl 5.28, had a bug
-that led to C<"1\N{THAI DIGIT FIVE}"> matching C</^(*sr:\d+)$/> when it should
-not.  This has now been fixed.
+A regression in Perl 5.28 caused the following code to fail
+
+ close(STDIN); open(CHILD, "|wc -l")'
+
+because the child's stdin would be closed on exec.  This has now been fixed.
 
 =item *
 
-The new in-place editing code no longer leaks directory handles.
-L<[perl #133314]|https://rt.perl.org/Ticket/Display.html?id=133314>
+C<pack "u", "invalid uuencoding"> now properly NUL terminates the zero-length
+SV produced.
+
+L<[perl #132655]|https://rt.perl.org/Ticket/Display.html?id=132655>
+
+=item *
+
+Failing to compile a format now aborts compilation.  Like other errors in
+sub-parses this could leave the parser in a strange state, possibly crashing
+perl if compilation continued.
+
+L<[perl #132158]|https://rt.perl.org/Ticket/Display.html?id=132158>
+
+=item *
+
+See L</Any set of digits in the Common script are legal in a script run of
+another script>.
 
 =back
 
 =head1 Acknowledgements
 
-Perl 5.28.1 represents approximately 5 months of development since Perl 5.28.0
-and contains approximately 6,100 lines of changes across 44 files from 12
+Perl 5.28.2 represents approximately 4 months of development since Perl 5.28.1
+and contains approximately 2,500 lines of changes across 75 files from 13
 authors.
 
 Excluding auto-generated files, documentation and release tools, there were
-approximately 700 lines of changes to 12 .pm, .t, .c and .h files.
+approximately 1,200 lines of changes to 29 .pm, .t, .c and .h files.
 
 Perl continues to flourish into its fourth decade thanks to a vibrant community
 of users and developers.  The following people are known to have contributed
-the improvements that became Perl 5.28.1:
+the improvements that became Perl 5.28.2:
 
-Aaron Crane, Abigail, Chris 'BinGOs' Williams, Dagfinn Ilmari Mannsåker, David
-Mitchell, James E Keenan, John SJ Anderson, Karen Etheridge, Karl Williamson,
-Sawyer X, Steve Hay, Tony Cook.
+Aaron Crane, Abigail, Andy Dougherty, David Mitchell, Karen Etheridge, Karl
+Williamson, Leon Timmermans, Nicolas R., Sawyer X, Steve Hay, Tina Müller,
+Tony Cook, Zak B. Elep.
 
 The list above is almost certainly incomplete as it is automatically generated
 from version control history.  In particular, it does not include the names of

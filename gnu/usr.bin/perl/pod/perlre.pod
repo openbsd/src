@@ -2529,15 +2529,12 @@ characters from their native scripts and base Chinese.  Perl follows
 Unicode's UTS 39 (L<http://unicode.org/reports/tr39/>) Unicode Security
 Mechanisms in allowing such mixtures.
 
-The rules used for matching decimal digits are somewhat different.  Many
+The rules used for matching decimal digits are slightly stricter.  Many
 scripts have their own sets of digits equivalent to the Western C<0>
 through C<9> ones.  A few, such as Arabic, have more than one set.  For
 a string to be considered a script run, all digits in it must come from
-the same set, as determined by the first digit encountered. The ASCII
-C<[0-9]> are accepted as being in any script, even those that have their
-own set.  This is because these are often used in commerce even in such
-scripts.  But any mixing of the ASCII and other digits will cause the
-sequence to not be a script run, failing the match.  As an example,
+the same set of ten, as determined by the first digit encountered.
+As an example,
 
  qr/(*script_run: \d+ \b )/x
 
@@ -2558,11 +2555,11 @@ accent of some type.  These are considered to be in the script of the
 master character, and so never cause a script run to not match.
 
 The other one is "Common".  This consists of mostly punctuation, emoji,
-and characters used in mathematics and music, and the ASCII digits C<0>
-through C<9>.  These characters can appear intermixed in text in many of
-the world's scripts.  These also don't cause a script run to not match,
-except any ASCII digits encountered have to obey the decimal digit rules
-described above.
+and characters used in mathematics and music, the ASCII digits C<0>
+through C<9>, and full-width forms of these digits.  These characters
+can appear intermixed in text in many of the world's scripts.  These
+also don't cause a script run to not match.  But like other scripts, all
+digits in a run must come from the same set of 10.
 
 This construct is non-capturing.  You can add parentheses to I<pattern>
 to capture, if desired.  You will have to do this if you plan to use

@@ -733,9 +733,9 @@ keep a reference count on its arguments and cannot be made to
 do so.  Such arrays are not even supposed to be accessible to
 Perl code, but are only used internally.
 
-=item Cannot yet reorder sv_catpvfn() arguments from va_list
+=item Cannot yet reorder sv_vcatpvfn() arguments from va_list
 
-(F) Some XS code tried to use C<sv_catpvfn()> or a related function with a
+(F) Some XS code tried to use C<sv_vcatpvfn()> or a related function with a
 format string that specifies explicit indexes for some of the elements, and
 using a C-style variable-argument list (a C<va_list>).  This is not currently
 supported.  XS authors wanting to do this must instead construct a C array

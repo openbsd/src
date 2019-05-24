@@ -429,7 +429,7 @@ __EOF__
 
     # exit or die should leave original content in file
     for my $inplace (qw/-i -i.bak/) {
-        for my $prog (qw/die exit/) {
+        for my $prog ("die", "exit 1") {
             open my $fh, ">", $work or die "$0: failed to open '$work': $!";
             print $fh $yada;
             close $fh or die "Failed to close: $!";
@@ -443,7 +443,7 @@ __EOF__
             my $data = do { local $/; <$in> };
             close $in;
             is ($data, $yada, "check original content still in file");
-            unlink $work;
+            unlink $work, "$work.bak";
         }
     }
 
