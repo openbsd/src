@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.29 2018/05/24 11:38:24 gilles Exp $	*/
+/*	$OpenBSD: ca.c,v 1.30 2019/05/24 12:51:15 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -504,9 +504,6 @@ ca_engine_init(void)
 		name = "unknown RSA engine";
 
 	log_debug("debug: %s: using %s", __func__, name);
-
-	if (rsa_default->flags & RSA_FLAG_SIGN_VER)
-		fatalx("unsupported RSA engine");
 
 	if (rsa_default->rsa_mod_exp == NULL)
 		rsae_method.rsa_mod_exp = NULL;
