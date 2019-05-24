@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.2 2018/07/31 10:07:13 kettenis Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.3 2019/05/24 18:54:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <sys/malloc.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
@@ -91,6 +92,8 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 	int node = *(int *)ia->ia_cookie;
 	uint32_t voltage, ramp_delay;
 	uint8_t id1, id2;
+
+	pinctrl_byname(node, "default");
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
