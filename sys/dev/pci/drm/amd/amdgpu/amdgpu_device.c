@@ -2783,6 +2783,8 @@ int amdgpu_device_suspend(struct drm_device *dev, bool suspend, bool fbcon)
 	}
 
 	adev = dev->dev_private;
+	if (adev->shutdown)
+		return 0;
 
 #ifdef notyet
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
