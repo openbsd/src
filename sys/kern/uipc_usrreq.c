@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.139 2019/02/13 11:55:21 martijn Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.140 2019/05/24 15:17:29 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -267,7 +267,8 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				sbappend(so2, &so2->so_rcv, m);
 			so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
 			so->so_snd.sb_cc = so2->so_rcv.sb_cc;
-			sorwakeup(so2);
+			if (so2->so_rcv.sb_cc > 0)
+				sorwakeup(so2);
 			m = NULL;
 			break;
 
