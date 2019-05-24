@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.9 2019/05/23 06:51:36 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.10 2019/05/24 05:59:13 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -124,11 +124,13 @@
 #define MCX_REG_OP_WRITE	0
 #define MCX_REG_OP_READ		1
 
+#define MCX_REG_PMLP		0x5002
 #define MCX_REG_PMTU		0x5003
 #define MCX_REG_PTYS		0x5004
 #define MCX_REG_PAOS		0x5006
 #define MCX_REG_PFCC		0x5007
 #define MCX_REG_PPCNT		0x5008
+#define MCX_REG_MCIA		0x9014
 
 #define MCX_ETHER_CAP_SGMII	(1 << 0)
 #define MCX_ETHER_CAP_1000_KX	(1 << 1)
@@ -410,6 +412,34 @@ struct mcx_reg_pfcc {
 	uint16_t		rp_dev_stall_min;
 	uint16_t		rp_dev_stall_crit;
 	uint8_t			rp_reserved6[12];
+} __packed __aligned(4);
+
+#define MCX_PMLP_MODULE_NUM_MASK	0xff
+struct mcx_reg_pmlp {
+	uint8_t			rp_rxtx;
+	uint8_t			rp_local_port;
+	uint8_t			rp_reserved0;
+	uint8_t			rp_width;
+	uint32_t		rp_lane0_mapping;
+	uint32_t		rp_lane1_mapping;
+	uint32_t		rp_lane2_mapping;
+	uint32_t		rp_lane3_mapping;
+	uint8_t			rp_reserved1[44];
+} __packed __aligned(4);
+
+#define MCX_MCIA_EEPROM_BYTES	32
+struct mcx_reg_mcia {
+	uint8_t			rm_l;
+	uint8_t			rm_module;
+	uint8_t			rm_reserved0;
+	uint8_t			rm_status;
+	uint8_t			rm_i2c_addr;
+	uint8_t			rm_page_num;
+	uint16_t		rm_dev_addr;
+	uint16_t		rm_reserved1;
+	uint16_t		rm_size;
+	uint32_t		rm_reserved2;
+	uint8_t			rm_data[48];
 } __packed __aligned(4);
 
 struct mcx_cmd_query_issi_in {
@@ -1967,6 +1997,7 @@ static void	mcx_start(struct ifqueue *);
 static void	mcx_watchdog(struct ifnet *);
 static void	mcx_media_status(struct ifnet *, struct ifmediareq *);
 static int	mcx_media_change(struct ifnet *);
+static int	mcx_get_sffpage(struct ifnet *, struct if_sffpage *);
 
 static inline uint32_t
 		mcx_rd(struct mcx_softc *, bus_size_t);
@@ -5674,6 +5705,10 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
+	case SIOCGIFSFFPAGE:
+		error = mcx_get_sffpage(ifp, (struct if_sffpage *)data);
+		break;
+
 	case SIOCGIFRXR:
 		error = mcx_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
 		break;
@@ -5691,6 +5726,47 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	splx(s);
 
 	return (error);
+}
+
+static int
+mcx_get_sffpage(struct ifnet *ifp, struct if_sffpage *sff)
+{
+	struct mcx_softc *sc = (struct mcx_softc *)ifp->if_softc;
+	struct mcx_reg_mcia mcia;
+	struct mcx_reg_pmlp pmlp;
+	int offset, error;
+
+	/* get module number */
+	memset(&pmlp, 0, sizeof(pmlp));
+	pmlp.rp_local_port = 1;
+	error = mcx_read_hca_reg(sc, MCX_REG_PMLP, &pmlp, sizeof(pmlp));
+	if (error != 0) {
+		printf("%s: unable to get eeprom module number\n",
+		    DEVNAME(sc));
+		return error;
+	}
+
+	for (offset = 0; offset < 256; offset += MCX_MCIA_EEPROM_BYTES) {
+		memset(&mcia, 0, sizeof(mcia));
+		mcia.rm_l = 0;
+		mcia.rm_module = betoh32(pmlp.rp_lane0_mapping) &
+		    MCX_PMLP_MODULE_NUM_MASK;
+		mcia.rm_i2c_addr = sff->sff_addr / 2;	/* apparently */
+		mcia.rm_page_num = sff->sff_page;
+		mcia.rm_dev_addr = htobe16(offset);
+		mcia.rm_size = htobe16(MCX_MCIA_EEPROM_BYTES);
+
+		error = mcx_read_hca_reg(sc, MCX_REG_MCIA, &mcia, sizeof(mcia));
+		if (error != 0) {
+			printf("%s: unable to read eeprom at %x\n",
+			    DEVNAME(sc), offset);
+			return error;
+		}
+
+		memcpy(sff->sff_data + offset, mcia.rm_data, MCX_MCIA_EEPROM_BYTES);
+	}
+
+	return 0;
 }
 
 static int
