@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.7 2018/08/19 08:23:47 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.8 2019/05/24 08:24:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -198,6 +198,7 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busex = sc->sc_busex;
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_memex = sc->sc_memex;
+	pba.pba_pmemex = sc->sc_memex;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
 	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.6 2018/08/09 12:25:38 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.7 2019/05/24 08:24:01 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -244,6 +244,7 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = &sc->sc_bus;
 	pba.pba_ioex = sc->sc_ioex;
 	pba.pba_memex = sc->sc_memex;
+	pba.pba_pmemex = sc->sc_memex;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
