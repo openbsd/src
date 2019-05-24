@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.5 2019/05/24 18:48:05 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.6 2019/05/24 18:51:05 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -76,7 +76,7 @@ struct unreachable_data {
 	struct source_location d_src;
 };
 
-struct type_mismatch {
+struct type_mismatch_data {
 	struct source_location d_src;
 	struct type_descriptor *d_type;
 	uint8_t d_align;	/* log2 alignment */
@@ -92,7 +92,8 @@ void	kubsan_handle_overflow(struct overflow_data *, unsigned long,
 	    unsigned long, char);
 void	kubsan_handle_pointer_overflow(struct pointer_overflow_data *,
 	    unsigned long, unsigned long);
-void	kubsan_handle_type_mismatch(struct type_mismatch *, unsigned long);
+void	kubsan_handle_type_mismatch(struct type_mismatch_data *,
+	    unsigned long);
 void    kubsan_handle_shift_out_of_bounds(struct shift_out_of_bounds_data *,
 	    unsigned long, unsigned long);
 void	kubsan_handle_ureachable(struct unreachable_data *);
@@ -208,7 +209,7 @@ __ubsan_handle_sub_overflow(struct overflow_data *data,
 }
 
 void
-__ubsan_handle_type_mismatch_v1(struct type_mismatch *data,
+__ubsan_handle_type_mismatch_v1(struct type_mismatch_data *data,
     unsigned long ptr)
 {
 	kubsan_handle_type_mismatch(data, ptr);
@@ -331,7 +332,8 @@ kubsan_handle_pointer_overflow(struct pointer_overflow_data *data,
 }
 
 void
-kubsan_handle_type_mismatch(struct type_mismatch *data, unsigned long ptr)
+kubsan_handle_type_mismatch(struct type_mismatch_data *data,
+    unsigned long ptr)
 {
 	char bloc[LOCATION_BUFSIZ];
 	unsigned long align = 1UL << data->d_align;
