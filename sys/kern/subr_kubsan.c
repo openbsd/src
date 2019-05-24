@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.2 2019/03/19 20:13:54 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.3 2019/05/24 18:35:41 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -45,6 +45,12 @@ struct invalid_value_data {
 	struct type_descriptor *d_type;
 };
 
+struct nonnull_arg_data {
+	struct source_location d_src;
+	struct source_location d_attr_src;	/* __attribute__ location */
+	int d_idx;
+};
+
 struct out_of_bounds_data {
 	struct source_location d_src;
 	struct type_descriptor *d_atype;	/* array type */
@@ -80,6 +86,7 @@ struct type_mismatch {
 void	kubsan_handle_load_invalid_value(struct invalid_value_data *,
 	    unsigned long);
 void	kubsan_handle_negate_overflow(struct overflow_data *, unsigned long);
+void	kubsan_handle_nonnull_arg(struct nonnull_arg_data *);
 void	kubsan_handle_out_of_bounds(struct out_of_bounds_data *, unsigned long);
 void	kubsan_handle_overflow(struct overflow_data *, unsigned long,
 	    unsigned long, char);
@@ -96,7 +103,7 @@ uint64_t	 kubsan_deserialize_uint(struct type_descriptor *,
 		    unsigned long);
 void		 kubsan_format_int(struct type_descriptor *, unsigned long,
 		    char *, size_t);
-void		 kubsan_format_location(struct source_location *, char *,
+int		 kubsan_format_location(struct source_location *, char *,
 		    size_t);
 int		 kubsan_is_reported(struct source_location *);
 const char	*kubsan_kind(uint8_t);
@@ -149,6 +156,12 @@ __ubsan_handle_load_invalid_value(struct invalid_value_data *data,
     unsigned long val)
 {
 	kubsan_handle_load_invalid_value(data, val);
+}
+
+void
+__ubsan_handle_nonnull_arg(struct nonnull_arg_data *data)
+{
+	kubsan_handle_nonnull_arg(data);
 }
 
 void
@@ -230,6 +243,37 @@ kubsan_handle_negate_overflow(struct overflow_data *data, unsigned long val)
 	kubsan_report("kubsan: %s: negate overflow: negation of %s cannot be "
 	    "represented in type %s\n",
 	    bloc, bval, data->d_type->t_name);
+}
+
+void
+kubsan_handle_nonnull_arg(struct nonnull_arg_data *data)
+{
+	char bloc[LOCATION_BUFSIZ];
+	char *attr = NULL;
+	int n;
+
+	if (kubsan_is_reported(&data->d_src))
+		return;
+
+	/*
+	 * Using a dedicated buffer for the attribute location would cause a too
+	 * large stack frame. Try to use the tail of the existing location
+	 * buffer.
+	 */
+	n = kubsan_format_location(&data->d_src, bloc, sizeof(bloc));
+	if (n + 1 < sizeof(bloc) && data->d_attr_src.sl_filename) {
+		int nn;
+
+		nn = kubsan_format_location(&data->d_attr_src, bloc + n + 1,
+		    sizeof(bloc) - n - 1);
+		if (nn < sizeof(bloc) - n - 1)
+			attr = bloc + n + 1;
+	}
+
+	kubsan_report("kubsan: %s: null pointer passed as argument %d, which "
+	    "is declared to never be null%s%s\n",
+	    bloc, data->d_idx,
+	    attr ? " in " : "", attr ? attr : "");
 }
 
 void
@@ -407,11 +451,11 @@ kubsan_format_int(struct type_descriptor *typ, unsigned long val,
 	}
 }
 
-void
+int
 kubsan_format_location(struct source_location *src, char *buf,
     size_t bufsiz)
 {
-	snprintf(buf, bufsiz, "%s:%u:%u",
+	return snprintf(buf, bufsiz, "%s:%u:%u",
 	    src->sl_filename, src->sl_line & ~LOCATION_REPORTED,
 	    src->sl_column);
 }
