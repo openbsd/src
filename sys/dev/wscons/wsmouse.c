@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.54 2019/05/22 19:13:34 anton Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.55 2019/05/24 06:05:38 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -349,11 +349,9 @@ wsmouseclose(dev_t dev, int flags, int mode, struct proc *p)
 	struct wseventvar *evar = sc->sc_base.me_evp;
 
 	if ((flags & (FREAD | FWRITE)) == FWRITE)
-		return (0);			/* see wsmouseopen() */
-
-	if (evar == NULL)
-		/* not open for read */
+		/* Not open for read */
 		return (0);
+
 	sc->sc_base.me_evp = NULL;
 	(*sc->sc_accessops->disable)(sc->sc_accesscookie);
 	wsevent_fini(evar);
