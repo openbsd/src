@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.31 2019/05/24 14:40:33 gilles Exp $	*/
+/*	$OpenBSD: ca.c,v 1.32 2019/05/24 15:34:05 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -174,6 +174,7 @@ ca_X509_verify(void *certificate, void *chain, const char *CAfile,
 	X509_STORE     *store = NULL;
 	X509_STORE_CTX *xsc = NULL;
 	int		ret = 0;
+	long		error = 0;
 
 	if ((store = X509_STORE_new()) == NULL)
 		goto end;
@@ -197,8 +198,10 @@ ca_X509_verify(void *certificate, void *chain, const char *CAfile,
 end:
 	*errstr = NULL;
 	if (ret != 1) {
-		if (xsc)
-			*errstr = X509_verify_cert_error_string(xsc->error);
+		if (xsc) {
+			error = X509_STORE_CTX_get_error(xsc);
+			*errstr = X509_verify_cert_error_string(error);
+		}
 		else if (ERR_peek_last_error())
 			*errstr = ERR_error_string(ERR_peek_last_error(), NULL);
 	}
