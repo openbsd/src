@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.50 2019/02/26 14:24:21 visa Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.51 2019/05/25 18:11:10 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -542,7 +542,7 @@ schedclock(struct proc *p)
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int s;
 
-	if (p == spc->spc_idleproc)
+	if (p == spc->spc_idleproc || spc->spc_spinning)
 		return;
 
 	SCHED_LOCK(s);
