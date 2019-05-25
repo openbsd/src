@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.904 2019/05/25 06:58:10 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.905 2019/05/25 07:18:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2016,12 +2016,13 @@ void	    	 cmd_parse_empty(struct cmd_parse_input *);
 struct cmd_parse_result *cmd_parse_from_file(FILE *, struct cmd_parse_input *);
 struct cmd_parse_result *cmd_parse_from_string(const char *,
 		     struct cmd_parse_input *);
+struct cmd_parse_result *cmd_parse_from_arguments(int, char **,
+		     struct cmd_parse_input *);
 
 /* cmd-list.c */
 struct cmd_list	*cmd_list_new(void);
 void		 cmd_list_append(struct cmd_list *, struct cmd *);
 void		 cmd_list_move(struct cmd_list *, struct cmd_list *);
-struct cmd_list	*cmd_list_parse(int, char **, const char *, u_int, char **);
 void		 cmd_list_free(struct cmd_list *);
 char		*cmd_list_print(struct cmd_list *, int);
 

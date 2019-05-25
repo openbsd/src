@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list.c,v 1.19 2019/05/23 14:03:44 nicm Exp $ */
+/* $OpenBSD: cmd-list.c,v 1.20 2019/05/25 07:18:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,62 +54,6 @@ cmd_list_move(struct cmd_list *cmdlist, struct cmd_list *from)
 		TAILQ_INSERT_TAIL(&cmdlist->list, cmd, qentry);
 	}
 	cmdlist->group = cmd_list_next_group++;
-}
-
-struct cmd_list *
-cmd_list_parse(int argc, char **argv, const char *file, u_int line,
-    char **cause)
-{
-	struct cmd_list	*cmdlist;
-	struct cmd	*cmd;
-	int		 i, lastsplit;
-	size_t		 arglen, new_argc;
-	char	       **copy_argv, **new_argv;
-
-	copy_argv = cmd_copy_argv(argc, argv);
-
-	cmdlist = cmd_list_new();
-
-	lastsplit = 0;
-	for (i = 0; i < argc; i++) {
-		arglen = strlen(copy_argv[i]);
-		if (arglen == 0 || copy_argv[i][arglen - 1] != ';')
-			continue;
-		copy_argv[i][arglen - 1] = '\0';
-
-		if (arglen > 1 && copy_argv[i][arglen - 2] == '\\') {
-			copy_argv[i][arglen - 2] = ';';
-			continue;
-		}
-
-		new_argc = i - lastsplit;
-		new_argv = copy_argv + lastsplit;
-		if (arglen != 1)
-			new_argc++;
-
-		cmd = cmd_parse(new_argc, new_argv, file, line, cause);
-		if (cmd == NULL)
-			goto bad;
-		TAILQ_INSERT_TAIL(&cmdlist->list, cmd, qentry);
-
-		lastsplit = i + 1;
-	}
-
-	if (lastsplit != argc) {
-		cmd = cmd_parse(argc - lastsplit, copy_argv + lastsplit,
-		    file, line, cause);
-		if (cmd == NULL)
-			goto bad;
-		TAILQ_INSERT_TAIL(&cmdlist->list, cmd, qentry);
-	}
-
-	cmd_free_argv(argc, copy_argv);
-	return (cmdlist);
-
-bad:
-	cmd_list_free(cmdlist);
-	cmd_free_argv(argc, copy_argv);
-	return (NULL);
 }
 
 void
