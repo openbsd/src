@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.98 2019/05/23 21:36:42 espie Exp $
+# $OpenBSD: Makefile,v 1.99 2019/05/25 07:29:04 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -32,7 +32,6 @@ SRCS=	alerts.c \
 	cmd-list-panes.c \
 	cmd-list-sessions.c \
 	cmd-list-windows.c \
-	cmd-list.c \
 	cmd-load-buffer.c \
 	cmd-lock-server.c \
 	cmd-move-window.c \
