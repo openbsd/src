@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.151 2019/05/25 07:29:04 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.152 2019/05/25 10:44:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -383,9 +383,9 @@ cmd_get_alias(const char *name)
 static const struct cmd_entry *
 cmd_find(const char *name, char **cause)
 {
-	const struct cmd_entry **loop, *entry, *found = NULL;
-	int			 ambiguous;
-	char			 s[BUFSIZ];
+	const struct cmd_entry	**loop, *entry, *found = NULL;
+	int			  ambiguous;
+	char			  s[BUFSIZ];
 
 	ambiguous = 0;
 	for (loop = cmd_table; *loop != NULL; loop++) {

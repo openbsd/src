@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.69 2019/05/23 13:08:43 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.70 2019/05/25 10:44:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -32,11 +32,11 @@ static struct cmdq_list global_queue = TAILQ_HEAD_INITIALIZER(global_queue);
 static const char *
 cmdq_name(struct client *c)
 {
-	static char	s[32];
+	static char	s[256];
 
 	if (c == NULL)
 		return ("<global>");
-	xsnprintf(s, sizeof s, "<%p>", c);
+	xsnprintf(s, sizeof s, "<%s>", c->name);
 	return (s);
 }
 
