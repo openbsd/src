@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.70 2019/05/25 10:44:09 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.71 2019/05/25 10:46:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,7 +36,10 @@ cmdq_name(struct client *c)
 
 	if (c == NULL)
 		return ("<global>");
-	xsnprintf(s, sizeof s, "<%s>", c->name);
+	if (c->name != NULL)
+		xsnprintf(s, sizeof s, "<%s>", c->name);
+	else
+		xsnprintf(s, sizeof s, "<%p>", c);
 	return (s);
 }
 
