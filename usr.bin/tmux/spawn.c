@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.3 2019/05/03 20:44:24 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.4 2019/05/25 06:58:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -329,7 +329,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	}
 	if (cwd != NULL)
 		log_debug("%s: cwd=%s", __func__, cwd);
-	cmd_log_argv(new_wp->argc, new_wp->argv, __func__);
+	cmd_log_argv(new_wp->argc, new_wp->argv, "%s", __func__);
 	environ_log(child, "%s: environment ", __func__);
 
 	/* If the command is empty, don't fork a child process. */
