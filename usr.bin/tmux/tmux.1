@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.651 2019/05/23 11:13:30 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.652 2019/05/25 16:51:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2019 $
+.Dd $Mdocdate: May 25 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3946,9 +3946,13 @@ For example:
 .Pp
 Comparisons may be expressed by prefixing two comma-separated
 alternatives by
-.Ql ==
+.Ql == ,
+.Ql != ,
+.Ql < ,
+.Ql > ,
+.Ql <=
 or
-.Ql !=
+.Ql >=
 and a colon.
 For example
 .Ql #{==:#{host},myhost}
