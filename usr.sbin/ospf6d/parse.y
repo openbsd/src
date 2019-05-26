@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2019/04/29 05:14:38 remi Exp $ */
+/*	$OpenBSD: parse.y,v 1.44 2019/05/26 09:27:09 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -117,6 +117,7 @@ typedef struct {
 		int64_t		 number;
 		char		*string;
 		struct redistribute *redist;
+		struct in_addr	 id;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -139,6 +140,7 @@ typedef struct {
 %type	<v.number>	yesno no optlist, optlist_l option demotecount
 %type	<v.string>	string dependon
 %type	<v.redist>	redistribute
+%type	<v.id>		areaid
 
 %%
 
@@ -456,15 +458,8 @@ comma		: ','
 		| /*empty*/
 		;
 
-area		: AREA STRING {
-			struct in_addr	id;
-			if (inet_aton($2, &id) == 0) {
-				yyerror("error parsing area");
-				free($2);
-				YYERROR;
-			}
-			free($2);
-			area = conf_get_area(id);
+area		: AREA areaid {
+			area = conf_get_area($2);
 
 			memcpy(&areadefs, defs, sizeof(areadefs));
 			defs = &areadefs;
@@ -476,6 +471,23 @@ area		: AREA STRING {
 
 demotecount	: NUMBER	{ $$ = $1; }
 		| /*empty*/	{ $$ = 1; }
+		;
+
+areaid		: NUMBER {
+			if ($1 < 0 || $1 > 0xffffffff) {
+				yyerror("invalid area id");
+				YYERROR;
+			}
+			$$.s_addr = htonl($1);
+		}
+		| STRING {
+			if (inet_aton($1, &$$) == 0) {
+				yyerror("error parsing area");
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
 		;
 
 areaopts_l	: areaopts_l areaoptsl nl

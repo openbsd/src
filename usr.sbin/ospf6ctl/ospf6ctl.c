@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.49 2018/07/12 13:45:03 remi Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.50 2019/05/26 09:27:09 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 		break;
 	case SHOW_DBBYAREA:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0, -1,
-		    &res->addr, sizeof(res->addr));
+		    &res->area, sizeof(res->area));
 		break;
 	case SHOW_DBEXT:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_EXT, 0, 0, -1, NULL, 0);
