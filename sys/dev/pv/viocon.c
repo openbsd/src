@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.6 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.7 2019/05/26 15:20:04 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -193,8 +193,8 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 		goto err;
 	}
 
-	virtio_negotiate_features(vsc, VIRTIO_CONSOLE_F_SIZE,
-	    viocon_feature_names);
+	vsc->sc_driver_features = VIRTIO_CONSOLE_F_SIZE;
+	virtio_negotiate_features(vsc, viocon_feature_names);
 
 	printf("\n");
 	DPRINTF("%s: softc: %p\n", __func__, sc);
@@ -277,7 +277,7 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	 */
 	vp->vp_tx_buf = vp->vp_rx_buf + vp->vp_rx->vq_num * BUFSIZE;
 
-	if (vsc->sc_features & VIRTIO_CONSOLE_F_SIZE) {
+	if (virtio_has_feature(vsc, VIRTIO_CONSOLE_F_SIZE)) {
 		vp->vp_cols = virtio_read_device_config_2(vsc,
 		    VIRTIO_CONSOLE_COLS);
 		vp->vp_rows = virtio_read_device_config_2(vsc,

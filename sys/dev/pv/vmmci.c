@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.4 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.5 2019/05/26 15:20:04 sf Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -94,7 +94,6 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vmmci_softc *sc = (struct vmmci_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
-	uint64_t features;
 
 	if (vsc->sc_child != NULL)
 		panic("already attached to something else");
@@ -105,10 +104,11 @@ vmmci_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	sc->sc_virtio = vsc;
 
-	features = VMMCI_F_TIMESYNC | VMMCI_F_ACK | VMMCI_F_SYNCRTC;
-	features = virtio_negotiate_features(vsc, features, NULL);
+	vsc->sc_driver_features = VMMCI_F_TIMESYNC | VMMCI_F_ACK |
+	    VMMCI_F_SYNCRTC;
+	virtio_negotiate_features(vsc, NULL);
 
-	if (features & VMMCI_F_TIMESYNC) {
+	if (virtio_has_feature(vsc, VMMCI_F_TIMESYNC)) {
 		strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
 		    sizeof(sc->sc_sensordev.xname));
 		sc->sc_sensor.type = SENSOR_TIMEDELTA;
@@ -128,7 +128,7 @@ vmmci_activate(struct device *self, int act)
 	struct vmmci_softc	*sc = (struct vmmci_softc *)self;
 	struct virtio_softc	*vsc = sc->sc_virtio;
 
-	if ((vsc->sc_features & VMMCI_F_ACK) == 0)
+	if (virtio_has_feature(vsc, VMMCI_F_ACK) == 0)
 		return (0);
 
 	switch (act) {
@@ -183,8 +183,7 @@ vmmci_config_change(struct virtio_softc *vsc)
 		break;
 	}
 
-	if ((cmd != VMMCI_NONE) &&
-	    (vsc->sc_features & VMMCI_F_ACK))
+	if ((cmd != VMMCI_NONE) && virtio_has_feature(vsc, VMMCI_F_ACK))
 		virtio_write_device_config_4(vsc, VMMCI_CONFIG_COMMAND, cmd);
 
 	return (1);

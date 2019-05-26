@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.2 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.3 2019/05/26 15:20:04 sf Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -96,7 +96,7 @@ viornd_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	sc->sc_virtio = vsc;
 
-	virtio_negotiate_features(vsc, 0, NULL);
+	virtio_negotiate_features(vsc, NULL);
 
 	if (sc->sc_dev.dv_cfdata->cf_flags & VIORND_ONESHOT) {
 		sc->sc_interval = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.12 2019/03/24 18:22:36 sf Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.13 2019/05/26 15:20:04 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -171,7 +171,6 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	struct vioblk_softc *sc = (struct vioblk_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
 	struct scsibus_attach_args saa;
-	uint64_t features;
 	int qsize;
 
 	vsc->sc_vqs = &sc->sc_vq[0];
@@ -182,15 +181,12 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_BIO;
 	sc->sc_virtio = vsc;
+	vsc->sc_driver_features = VIRTIO_BLK_F_RO | VIRTIO_F_NOTIFY_ON_EMPTY |
+	     VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX | VIRTIO_BLK_F_FLUSH;
 
-        features = virtio_negotiate_features(vsc,
-	    (VIRTIO_BLK_F_RO       | VIRTIO_F_NOTIFY_ON_EMPTY |
-	     VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
-	     VIRTIO_BLK_F_FLUSH),
-	    vioblk_feature_names);
+        virtio_negotiate_features(vsc, vioblk_feature_names);
 
-
-	if (features & VIRTIO_BLK_F_SIZE_MAX) {
+	if (virtio_has_feature(vsc, VIRTIO_BLK_F_SIZE_MAX)) {
 		uint32_t size_max = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SIZE_MAX);
 		if (size_max < PAGE_SIZE) {
@@ -199,7 +195,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	if (features & VIRTIO_BLK_F_SEG_MAX) {
+	if (virtio_has_feature(vsc, VIRTIO_BLK_F_SEG_MAX)) {
 		uint32_t seg_max = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SEG_MAX);
 		if (seg_max < SEG_MAX) {
@@ -220,7 +216,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	qsize = sc->sc_vq[0].vq_num;
 	sc->sc_vq[0].vq_done = vioblk_vq_done;
 
-	if (features & VIRTIO_F_NOTIFY_ON_EMPTY) {
+	if (virtio_has_feature(vsc, VIRTIO_F_NOTIFY_ON_EMPTY)) {
 		virtio_stop_vq_intr(vsc, &sc->sc_vq[0]);
 		sc->sc_notify_on_empty = 1;
 	}
@@ -252,7 +248,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = 2;
 	DNPRINTF(1, "%s: qsize: %d\n", __func__, qsize);
-	if (features & VIRTIO_BLK_F_RO)
+	if (virtio_has_feature(vsc, VIRTIO_BLK_F_RO))
 		sc->sc_link.flags |= SDEV_READONLY;
 
 	bzero(&saa, sizeof(saa));
@@ -430,7 +426,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		break;
 
 	case SYNCHRONIZE_CACHE:
-		if ((vsc->sc_features & VIRTIO_BLK_F_FLUSH) == 0) {
+		if (!virtio_has_feature(vsc, VIRTIO_BLK_F_FLUSH)) {
 			vioblk_scsi_done(xs, XS_NOERROR);
 			return;
 		}
@@ -553,13 +549,10 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		delay(1000);
 	} while(--timeout > 0);
 	if (timeout <= 0) {
-		uint32_t features;
 		printf("%s: SCSI_POLL timed out\n", __func__);
 		vioblk_reset(sc);
 		virtio_reinit_start(vsc);
-		features = virtio_negotiate_features(vsc, vsc->sc_features,
-		    NULL);
-		KASSERT(features == vsc->sc_features);
+		virtio_reinit_end(vsc);
 	}
 	splx(s);
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.10 2019/03/24 18:22:36 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.11 2019/05/26 15:20:04 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -515,7 +515,6 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vio_softc *sc = (struct vio_softc *)self;
 	struct virtio_softc *vsc = (struct virtio_softc *)parent;
-	uint64_t features;
 	int i;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
@@ -531,23 +530,13 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_NET;
 	vsc->sc_vqs = &sc->sc_vq[0];
 	vsc->sc_config_change = 0;
-
-	features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
+	vsc->sc_driver_features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
 	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
-	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM;
-	/*
-	 * VIRTIO_F_RING_EVENT_IDX can be switched off by setting bit 2 in the
-	 * driver flags, see config(8)
-	 */
-	if (!(sc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_EVENT_IDX) &&
-	    !(vsc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_EVENT_IDX))
-		features |= VIRTIO_F_RING_EVENT_IDX;
-	else
-		printf(": RingEventIdx disabled by UKC");
+	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
+	    VIRTIO_F_RING_EVENT_IDX;
 
-	features = virtio_negotiate_features(vsc, features,
-	    virtio_net_feature_names);
-	if (features & VIRTIO_NET_F_MAC) {
+	virtio_negotiate_features(vsc, virtio_net_feature_names);
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MAC)) {
 		vio_get_lladr(&sc->sc_ac, vsc);
 	} else {
 		ether_fakeaddr(ifp);
@@ -555,7 +544,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	if (features & VIRTIO_NET_F_MRG_RXBUF) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF)) {
 		sc->sc_hdr_size = sizeof(struct virtio_net_hdr);
 		ifp->if_hardmtu = 16000; /* arbitrary limit */
 	} else {
@@ -575,12 +564,12 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_nvqs = 2;
 	sc->sc_vq[VQTX].vq_done = vio_tx_intr;
 	virtio_start_vq_intr(vsc, &sc->sc_vq[VQRX]);
-	if (features & VIRTIO_F_RING_EVENT_IDX)
+	if (virtio_has_feature(vsc, VIRTIO_F_RING_EVENT_IDX))
 		virtio_postpone_intr_far(&sc->sc_vq[VQTX]);
 	else
 		virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
-	if ((features & VIRTIO_NET_F_CTRL_VQ)
-	    && (features & VIRTIO_NET_F_CTRL_RX)) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_VQ)
+	    && virtio_has_feature(vsc, VIRTIO_NET_F_CTRL_RX)) {
 		if (virtio_alloc_vq(vsc, &sc->sc_vq[VQCTL], 2, NBPG, 1,
 		    "control") == 0) {
 			sc->sc_vq[VQCTL].vq_done = vio_ctrleof;
@@ -598,7 +587,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = vio_start;
 	ifp->if_ioctl = vio_ioctl;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-	if (features & VIRTIO_NET_F_CSUM)
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_CSUM))
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
 	IFQ_SET_MAXLEN(&ifp->if_snd, vsc->sc_vqs[1].vq_num - 1);
 	ifmedia_init(&sc->sc_media, 0, vio_media_change, vio_media_status);
@@ -629,7 +618,7 @@ vio_link_state(struct ifnet *ifp)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	int link_state = LINK_STATE_FULL_DUPLEX;
 
-	if (vsc->sc_features & VIRTIO_NET_F_STATUS) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_STATUS)) {
 		int status = virtio_read_device_config_2(vsc,
 		    VIRTIO_NET_CONFIG_STATUS);
 		if (!(status & VIRTIO_NET_S_LINK_UP))
@@ -706,7 +695,6 @@ vio_stop(struct ifnet *ifp, int disable)
 		vio_rx_drain(sc);
 
 	virtio_reinit_start(vsc);
-	virtio_negotiate_features(vsc, vsc->sc_features, NULL);
 	virtio_start_vq_intr(vsc, &sc->sc_vq[VQRX]);
 	virtio_stop_vq_intr(vsc, &sc->sc_vq[VQTX]);
 	if (vsc->sc_nvqs >= 3)
@@ -815,7 +803,7 @@ again:
 	}
 	if (ifq_is_oactive(&ifp->if_snd)) {
 		int r;
-		if (vsc->sc_features & VIRTIO_F_RING_EVENT_IDX)
+		if (virtio_has_feature(vsc, VIRTIO_F_RING_EVENT_IDX))
 			r = virtio_postpone_intr_smart(&sc->sc_vq[VQTX]);
 		else
 			r = virtio_start_vq_intr(vsc, &sc->sc_vq[VQTX]);
@@ -1069,7 +1057,7 @@ again:
 	if (r) {
 		vio_populate_rx_mbufs(sc);
 		/* set used event index to the next slot */
-		if (vsc->sc_features & VIRTIO_F_RING_EVENT_IDX) {
+		if (virtio_has_feature(vsc, VIRTIO_F_RING_EVENT_IDX)) {
 			if (virtio_start_vq_intr(vq->vq_owner, vq))
 				goto again;
 		}

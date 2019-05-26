@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.18 2019/04/17 21:44:32 sf Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.19 2019/05/26 15:20:04 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -126,15 +126,15 @@ virtio_log_features(uint64_t host, uint64_t neg,
  *	<dequeue finished requests>; // virtio_dequeue() still can be called
  *	<revoke pending requests in the vqs if any>;
  *	virtio_reinit_start(sc);     // dequeue prohibitted
- *	newfeatures = virtio_negotiate_features(sc, requestedfeatures);
  *	<some other initialization>;
  *	virtio_reinit_end(sc);	     // device activated; enqueue allowed
- * Once attached, feature negotiation can only be allowed after virtio_reset.
+ * Once attached, features are assumed to not change again.
  */
 void
 virtio_reset(struct virtio_softc *sc)
 {
 	virtio_device_reset(sc);
+	sc->sc_active_features = 0;
 }
 
 void
@@ -144,6 +144,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
+	virtio_negotiate_features(sc, NULL);
 	for (i = 0; i < sc->sc_nvqs; i++) {
 		int n;
 		struct virtqueue *vq = &sc->sc_vqs[i];
@@ -300,7 +301,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	if (((vq_size - 1) & vq_size) != 0)
 		panic("vq_size not power of two: %d", vq_size);
 
-	hdrlen = (sc->sc_features & VIRTIO_F_RING_EVENT_IDX) ? 3 : 2;
+	hdrlen = virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX) ? 3 : 2;
 
 	/* allocsize1: descriptor table + avail ring + pad */
 	allocsize1 = VIRTQUEUE_ALIGN(sizeof(struct vring_desc) * vq_size
@@ -676,7 +677,7 @@ virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 
 notify:
 	if (notifynow) {
-		if (vq->vq_owner->sc_features & VIRTIO_F_RING_EVENT_IDX) {
+		if (virtio_has_feature(vq->vq_owner, VIRTIO_F_RING_EVENT_IDX)) {
 			uint16_t o = vq->vq_avail->idx;
 			uint16_t n = vq->vq_avail_idx;
 			uint16_t t;
@@ -873,7 +874,7 @@ virtio_postpone_intr_far(struct virtqueue *vq)
 void
 virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 {
-	if ((sc->sc_features & VIRTIO_F_RING_EVENT_IDX)) {
+	if (virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX)) {
 		/*
 		 * No way to disable the interrupt completely with
 		 * RingEventIdx. Instead advance used_event by half
@@ -897,7 +898,7 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 	 * interrupts is done through setting the latest
 	 * consumed index in the used_event field
 	 */
-	if (sc->sc_features & VIRTIO_F_RING_EVENT_IDX)
+	if (virtio_has_feature(sc, VIRTIO_F_RING_EVENT_IDX))
 		VQ_USED_EVENT(vq) = vq->vq_used_idx;
 	else
 		vq->vq_avail->flags &= ~VRING_AVAIL_F_NO_INTERRUPT;

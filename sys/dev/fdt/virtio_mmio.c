@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.7 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.8 2019/05/26 15:20:04 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -91,8 +91,8 @@ void		virtio_mmio_write_device_config_8(struct virtio_softc *, int, uint64_t);
 uint16_t	virtio_mmio_read_queue_size(struct virtio_softc *, uint16_t);
 void		virtio_mmio_setup_queue(struct virtio_softc *, struct virtqueue *, uint64_t);
 void		virtio_mmio_set_status(struct virtio_softc *, int);
-uint64_t	virtio_mmio_negotiate_features(struct virtio_softc *, uint64_t,
-					      const struct virtio_feature_name *);
+int		virtio_mmio_negotiate_features(struct virtio_softc *,
+    const struct virtio_feature_name *);
 int		virtio_mmio_intr(void *);
 
 struct virtio_mmio_softc {
@@ -300,28 +300,42 @@ virtio_mmio_detach(struct device *self, int flags)
  * Prints available / negotiated features if guest_feature_names != NULL and
  * VIRTIO_DEBUG is 1
  */
-uint64_t
-virtio_mmio_negotiate_features(struct virtio_softc *vsc, uint64_t guest_features,
-			  const struct virtio_feature_name *guest_feature_names)
+int
+virtio_mmio_negotiate_features(struct virtio_softc *vsc,
+    const struct virtio_feature_name *guest_feature_names)
 {
 	struct virtio_mmio_softc *sc = (struct virtio_mmio_softc *)vsc;
 	uint64_t host, neg;
 
+	vsc->sc_active_features = 0;
+
 	/*
-	 * indirect descriptors can be switched off by setting bit 1 in the
-	 * driver flags, see config(8)
+	 * We enable indirect descriptors by default. They can be switched
+	 * off by setting bit 1 in the driver flags, see config(8).
 	 */
 	if (!(vsc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_INDIRECT) &&
 	    !(vsc->sc_child->dv_cfdata->cf_flags & VIRTIO_CF_NO_INDIRECT)) {
-		guest_features |= VIRTIO_F_RING_INDIRECT_DESC;
-	} else {
+		vsc->sc_driver_features |= VIRTIO_F_RING_INDIRECT_DESC;
+	} else if (guest_feature_names != NULL) {
 		printf("RingIndirectDesc disabled by UKC\n");
 	}
+	/*
+	 * The driver must add VIRTIO_F_RING_EVENT_IDX if it supports it.
+	 * If it did, check if it is disabled by bit 2 in the driver flags.
+	 */
+	if ((vsc->sc_driver_features & VIRTIO_F_RING_EVENT_IDX) &&
+	    ((vsc->sc_dev.dv_cfdata->cf_flags & VIRTIO_CF_NO_EVENT_IDX) ||
+	    (vsc->sc_child->dv_cfdata->cf_flags & VIRTIO_CF_NO_EVENT_IDX))) {
+		if (guest_feature_names != NULL)
+			printf(" RingEventIdx disabled by UKC");
+		vsc->sc_driver_features &= ~(VIRTIO_F_RING_EVENT_IDX);
+	}
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 	    VIRTIO_MMIO_HOST_FEATURES_SEL, 0);
 	host = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 				VIRTIO_MMIO_HOST_FEATURES);
-	neg = host & guest_features;
+	neg = host & vsc->sc_driver_features;
 #if VIRTIO_DEBUG
 	if (guest_feature_names)
 		virtio_log_features(host, neg, guest_feature_names);
@@ -330,13 +344,13 @@ virtio_mmio_negotiate_features(struct virtio_softc *vsc, uint64_t guest_features
 	    VIRTIO_MMIO_GUEST_FEATURES_SEL, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			  VIRTIO_MMIO_GUEST_FEATURES, neg);
-	vsc->sc_features = neg;
+	vsc->sc_active_features = neg;
 	if (neg & VIRTIO_F_RING_INDIRECT_DESC)
 		vsc->sc_indirect = 1;
 	else
 		vsc->sc_indirect = 0;
 
-	return neg;
+	return 0;
 }
 
 /*

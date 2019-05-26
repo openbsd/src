@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.4 2019/03/24 18:21:12 sf Exp $	 */
+/* $OpenBSD: viomb.c,v 1.5 2019/05/26 15:20:04 sf Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -158,8 +158,9 @@ viomb_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_ipl = IPL_BIO;
 	vsc->sc_config_change = viomb_config_change;
 
-	virtio_negotiate_features(vsc, VIRTIO_BALLOON_F_MUST_TELL_HOST,
-	    viomb_feature_names);
+	vsc->sc_driver_features = VIRTIO_BALLOON_F_MUST_TELL_HOST;
+	if (virtio_negotiate_features(vsc, viomb_feature_names) != 0)
+		goto err;
 
 	if ((virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE], VQ_INFLATE,
 	     sizeof(u_int32_t) * PGS_PER_REQ, 1, "inflate") != 0))
@@ -365,7 +366,7 @@ viomb_deflate(struct viomb_softc *sc)
 	virtio_enqueue_p(vq, slot, b->bl_dmamap, 0,
 			 sizeof(u_int32_t) * nvpages, VRING_READ);
 
-	if (!(vsc->sc_features & VIRTIO_BALLOON_F_MUST_TELL_HOST))
+	if (!virtio_has_feature(vsc, VIRTIO_BALLOON_F_MUST_TELL_HOST))
 		uvm_pglistfree(&b->bl_pglist);
 	virtio_enqueue_commit(vsc, vq, slot, VRING_NOTIFY);
 	return;
@@ -463,7 +464,7 @@ viomb_deflate_intr(struct virtqueue *vq)
 			sizeof(u_int32_t) * nvpages,
 			BUS_DMASYNC_POSTWRITE);
 
-	if (vsc->sc_features & VIRTIO_BALLOON_F_MUST_TELL_HOST)
+	if (virtio_has_feature(vsc, VIRTIO_BALLOON_F_MUST_TELL_HOST))
 		uvm_pglistfree(&b->bl_pglist);
 
 	VIOMBDEBUG(sc, "updating sc->sc_actual from %u to %llu\n",

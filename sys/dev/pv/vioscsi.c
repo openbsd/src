@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.12 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.13 2019/05/26 15:20:04 sf Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -126,7 +126,7 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_vqs = sc->sc_vqs;
 	vsc->sc_nvqs = nitems(sc->sc_vqs);
 
-	virtio_negotiate_features(vsc, 0, NULL);
+	virtio_negotiate_features(vsc, NULL);
 	uint32_t cmd_per_lun = virtio_read_device_config_4(vsc,
 	    VIRTIO_SCSI_CONFIG_CMD_PER_LUN);
 	uint32_t seg_max = virtio_read_device_config_4(vsc,
