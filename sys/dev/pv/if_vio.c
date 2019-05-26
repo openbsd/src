@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.11 2019/05/26 15:20:04 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.12 2019/05/26 15:22:31 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -544,13 +544,16 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF)) {
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF) ||
+	    vsc->sc_version_1) {
 		sc->sc_hdr_size = sizeof(struct virtio_net_hdr);
-		ifp->if_hardmtu = 16000; /* arbitrary limit */
 	} else {
 		sc->sc_hdr_size = offsetof(struct virtio_net_hdr, num_buffers);
-		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
 	}
+	if (virtio_has_feature(vsc, VIRTIO_NET_F_MRG_RXBUF))
+		ifp->if_hardmtu = 16000; /* arbitrary limit */
+	else
+		ifp->if_hardmtu = MCLBYTES - sc->sc_hdr_size - ETHER_HDR_LEN;
 
 	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQRX], 0, MCLBYTES, 2, "rx") != 0)
 		goto err;

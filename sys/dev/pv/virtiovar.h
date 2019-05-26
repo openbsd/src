@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtiovar.h,v 1.13 2019/05/26 15:20:04 sf Exp $	*/
+/*	$OpenBSD: virtiovar.h,v 1.14 2019/05/26 15:22:31 sf Exp $	*/
 /*	$NetBSD: virtiovar.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -82,6 +82,8 @@
 /* flags for config(8) */
 #define VIRTIO_CF_NO_INDIRECT		1
 #define VIRTIO_CF_NO_EVENT_IDX		2
+#define VIRTIO_CF_PREFER_VERSION_1	4
+#define VIRTIO_CF_NO_VERSION_1		8
 
 struct vq_entry {
 	SLIST_ENTRY(vq_entry)	 qe_list;	/* free list */
@@ -131,6 +133,8 @@ struct virtqueue {
 
 	/* interrupt handler */
 	int			(*vq_done)(struct virtqueue*);
+	/* 1.x only: offset for notify address calculation */
+	uint32_t		vq_notify_off;
 };
 
 struct virtio_feature_name {
@@ -167,6 +171,7 @@ struct virtio_softc {
 	uint64_t		 sc_driver_features;
 	uint64_t		 sc_active_features;
 	int			 sc_indirect;
+	int			 sc_version_1;
 
 	int			 sc_nvqs;	/* set by child */
 	struct virtqueue	*sc_vqs;	/* set by child */
