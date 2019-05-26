@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.6 2019/05/26 17:34:45 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.7 2019/05/26 18:19:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -226,9 +226,9 @@ menu_key_cb(struct client *c, struct key_event *event)
 			}
 			return (0);
 		}
-		md->choice = m->y - (md->py + 1);
 		if (MOUSE_RELEASE(m->b))
 			goto chosen;
+		md->choice = m->y - (md->py + 1);
 		if (md->choice != old)
 			c->flags |= CLIENT_REDRAWOVERLAY;
 		return (0);
