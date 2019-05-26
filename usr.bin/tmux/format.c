@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.197 2019/05/26 17:34:45 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.198 2019/05/26 18:43:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -84,8 +84,8 @@ static void	 format_defaults_winlink(struct format_tree *, struct winlink *);
 	"New After,w,new-window -a|" \
 	"New At End,W,new-window"
 #define DEFAULT_PANE_MENU \
-	"#{?mouse_word,Search For #[underscore]#{=/9/...:mouse_word},},,copy-mode -t=; send -Xt= search-backward \"#{q:mouse_word}\"|" \
-	"#{?mouse_word,Type #[underscore]#{=/9/...:mouse_word},},,send-keys -l \"#{q:mouse_word}\"|" \
+	"#{?mouse_word,Search For #[underscore]#{=/9/...:mouse_word},},C-r,copy-mode -t=; send -Xt= search-backward \"#{q:mouse_word}\"|" \
+	"#{?mouse_word,Type #[underscore]#{=/9/...:mouse_word},},C-y,send-keys -l \"#{q:mouse_word}\"|" \
 	"|" \
 	"#{?mouse_word,Copy #[underscore]#{=/9/...:mouse_word},},c,set-buffer \"#{q:mouse_word}\"|" \
 	"#{?mouse_line,Copy Line,},l,set-buffer \"#{q:mouse_line}\"|" \
