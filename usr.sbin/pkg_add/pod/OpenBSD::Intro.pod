@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Intro.pod,v 1.17 2012/01/15 14:16:16 espie Exp $
+$OpenBSD: OpenBSD::Intro.pod,v 1.18 2019/05/26 15:34:25 espie Exp $
 
 =head1 NAME
 
@@ -12,8 +12,7 @@ OpenBSD::Intro - Introduction to the pkg tools internals
 =head1 DESCRIPTION
 
 Note that the C<OpenBSD::> namespace of perl modules is not limited to
-package tools, but also includes L<pkg-config(1)> and L<makewhatis(8)>
-support modules.
+package tools, but also includes L<pkg-config(1)> support modules.
 This document only covers package tools material.
 
 The design of the package tools revolves around a few central ideas:
