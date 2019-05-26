@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.23 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.24 2019/05/26 15:14:16 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -55,6 +55,7 @@ void		virtio_pci_attach(struct device *, struct device *, void *);
 int		virtio_pci_detach(struct device *, int);
 
 void		virtio_pci_kick(struct virtio_softc *, uint16_t);
+int		virtio_pci_adjust_config_region(struct virtio_pci_softc *);
 uint8_t		virtio_pci_read_device_config_1(struct virtio_softc *, int);
 uint16_t	virtio_pci_read_device_config_2(struct virtio_softc *, int);
 uint32_t	virtio_pci_read_device_config_4(struct virtio_softc *, int);
@@ -87,14 +88,33 @@ enum irq_type {
 struct virtio_pci_softc {
 	struct virtio_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_ptag;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_iosize;
 
+	bus_space_tag_t		sc_notify_iot;
+	bus_space_handle_t	sc_notify_ioh;
+	bus_size_t		sc_notify_iosize;
+
+	bus_space_tag_t		sc_devcfg_iot;
+	bus_space_handle_t	sc_devcfg_ioh;
+	bus_size_t		sc_devcfg_iosize;
+	/*
+	 * With 0.9, the offset of the devcfg region in the io bar changes
+	 * depending on MSI-X being enabled or not.
+	 * With 1.0, this field is still used to remember if MSI-X is enabled
+	 * or not.
+	 */
+	unsigned int		sc_devcfg_offset;
+
+	bus_space_tag_t		sc_isr_iot;
+	bus_space_handle_t	sc_isr_ioh;
+	bus_size_t		sc_isr_iosize;
+
 	void			*sc_ih[MAX_MSIX_VECS];
 
-	int			sc_config_offset;
 	enum irq_type		sc_irq_type;
 };
 
@@ -213,9 +233,8 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	vsc->sc_ops = &virtio_pci_ops;
 	sc->sc_pc = pc;
+	sc->sc_ptag = pa->pa_tag;
 	vsc->sc_dmat = pa->pa_dmat;
-	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
-	sc->sc_irq_type = IRQ_NO_MSIX;
 
 	/*
 	 * For virtio, ignore normal MSI black/white-listing depending on the
@@ -229,11 +248,33 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+	    VIRTIO_CONFIG_QUEUE_NOTIFY, 2, &sc->sc_notify_ioh) != 0) {
+		printf("%s: can't map notify i/o space\n",
+		    vsc->sc_dev.dv_xname);
+		return;
+	}
+	sc->sc_notify_iosize = 2;
+	sc->sc_notify_iot = sc->sc_iot;
+
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+	    VIRTIO_CONFIG_ISR_STATUS, 1, &sc->sc_isr_ioh) != 0) {
+		printf("%s: can't map isr i/o space\n",
+		    vsc->sc_dev.dv_xname);
+		return;
+	}
+	sc->sc_isr_iosize = 1;
+	sc->sc_isr_iot = sc->sc_iot;
+
+	sc->sc_devcfg_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
+	sc->sc_irq_type = IRQ_NO_MSIX;
+	if (virtio_pci_adjust_config_region(sc) != 0)
+		return;
+
 	virtio_device_reset(vsc);
 	virtio_pci_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_ACK);
 	virtio_pci_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 
-	/* XXX: use softc as aux... */
 	vsc->sc_childdevid = id;
 	vsc->sc_child = NULL;
 	config_found(self, sc, NULL);
@@ -312,6 +353,20 @@ virtio_pci_detach(struct device *self, int flags)
 	return 0;
 }
 
+int
+virtio_pci_adjust_config_region(struct virtio_pci_softc *sc)
+{
+	sc->sc_devcfg_iosize = sc->sc_iosize - sc->sc_devcfg_offset;
+	sc->sc_devcfg_iot = sc->sc_iot;
+	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, sc->sc_devcfg_offset,
+	    sc->sc_devcfg_iosize, &sc->sc_devcfg_ioh) != 0) {
+		printf("%s: can't map config i/o space\n",
+		    sc->sc_sc.sc_dev.dv_xname);
+		return 1;
+	}
+	return 0;
+}
+
 /*
  * Feature negotiation.
  * Prints available / negotiated features if guest_feature_names != NULL and
@@ -359,24 +414,21 @@ uint8_t
 virtio_pci_read_device_config_1(struct virtio_softc *vsc, int index)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index);
+	return bus_space_read_1(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index);
 }
 
 uint16_t
 virtio_pci_read_device_config_2(struct virtio_softc *vsc, int index)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index);
+	return bus_space_read_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index);
 }
 
 uint32_t
 virtio_pci_read_device_config_4(struct virtio_softc *vsc, int index)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	return bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index);
+	return bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index);
 }
 
 uint64_t
@@ -385,11 +437,10 @@ virtio_pci_read_device_config_8(struct virtio_softc *vsc, int index)
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
 	uint64_t r;
 
-	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index + sizeof(uint32_t));
+	r = bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
+	    index + sizeof(uint32_t));
 	r <<= 32;
-	r += bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index);
+	r += bus_space_read_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index);
 	return r;
 }
 
@@ -398,8 +449,7 @@ virtio_pci_write_device_config_1(struct virtio_softc *vsc, int index,
     uint8_t value)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index, value);
+	bus_space_write_1(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index, value);
 }
 
 void
@@ -407,8 +457,7 @@ virtio_pci_write_device_config_2(struct virtio_softc *vsc, int index,
     uint16_t value)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index, value);
+	bus_space_write_2(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index, value);
 }
 
 void
@@ -416,8 +465,7 @@ virtio_pci_write_device_config_4(struct virtio_softc *vsc,
 			     int index, uint32_t value)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index, value);
+	bus_space_write_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh, index, value);
 }
 
 void
@@ -425,10 +473,10 @@ virtio_pci_write_device_config_8(struct virtio_softc *vsc,
 			     int index, uint64_t value)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index, value & 0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-	    sc->sc_config_offset + index + sizeof(uint32_t), value >> 32);
+	bus_space_write_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
+	    index, value & 0xffffffff);
+	bus_space_write_4(sc->sc_devcfg_iot, sc->sc_devcfg_ioh,
+	    index + sizeof(uint32_t), value >> 32);
 }
 
 int
@@ -461,7 +509,7 @@ virtio_pci_free_irqs(struct virtio_pci_softc *sc)
 	struct virtio_softc *vsc = &sc->sc_sc;
 	int i;
 
-	if (sc->sc_config_offset == VIRTIO_CONFIG_DEVICE_CONFIG_MSI) {
+	if (sc->sc_devcfg_offset == VIRTIO_CONFIG_DEVICE_CONFIG_MSI) {
 		for (i = 0; i < vsc->sc_nvqs; i++) {
 			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
 			    VIRTIO_CONFIG_QUEUE_SELECT, i);
@@ -477,7 +525,8 @@ virtio_pci_free_irqs(struct virtio_pci_softc *sc)
 		}
 	}
 
-	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
+	sc->sc_devcfg_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
+	virtio_pci_adjust_config_region(sc);
 }
 
 int
@@ -489,8 +538,8 @@ virtio_pci_setup_msix(struct virtio_pci_softc *sc, struct pci_attach_args *pa,
 
 	if (virtio_pci_msix_establish(sc, pa, 0, virtio_pci_config_intr, vsc))
 		return 1;
-	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, VIRTIO_MSI_CONFIG_VECTOR, 0);
+	sc->sc_devcfg_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
+	virtio_pci_adjust_config_region(sc);
 
 	if (shared) {
 		if (virtio_pci_msix_establish(sc, pa, 1,
@@ -538,8 +587,7 @@ virtio_pci_legacy_intr(void *arg)
 	int isr, r = 0;
 
 	/* check and ack the interrupt */
-	isr = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-	    VIRTIO_CONFIG_ISR_STATUS);
+	isr = bus_space_read_1(sc->sc_isr_iot, sc->sc_isr_ioh, 0);
 	if (isr == 0)
 		return 0;
 	KERNEL_LOCK();
@@ -561,8 +609,7 @@ virtio_pci_legacy_intr_mpsafe(void *arg)
 	int isr, r = 0;
 
 	/* check and ack the interrupt */
-	isr = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-	    VIRTIO_CONFIG_ISR_STATUS);
+	isr = bus_space_read_1(sc->sc_isr_iot, sc->sc_isr_ioh, 0);
 	if (isr == 0)
 		return 0;
 	if ((isr & VIRTIO_CONFIG_ISR_CONFIG_CHANGE) &&
@@ -630,6 +677,5 @@ void
 virtio_pci_kick(struct virtio_softc *vsc, uint16_t idx)
 {
 	struct virtio_pci_softc *sc = (struct virtio_pci_softc *)vsc;
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, VIRTIO_CONFIG_QUEUE_NOTIFY,
-	    idx);
+	bus_space_write_2(sc->sc_notify_iot, sc->sc_notify_ioh, 0, idx);
 }
