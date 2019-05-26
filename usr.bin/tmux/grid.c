@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.94 2019/05/13 20:10:23 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.95 2019/05/26 17:34:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1349,4 +1349,23 @@ grid_unwrap_position(struct grid *gd, u_int *px, u_int *py, u_int wx, u_int wy)
 	}
 	*px = wx;
 	*py = yy;
+}
+
+/* Get length of line. */
+u_int
+grid_line_length(struct grid *gd, u_int py)
+{
+	struct grid_cell	gc;
+	u_int			px;
+
+	px = grid_get_line(gd, py)->cellsize;
+	if (px > gd->sx)
+		px = gd->sx;
+	while (px > 0) {
+		grid_get_cell(gd, px - 1, py, &gc);
+		if (gc.data.size != 1 || *gc.data.data != ' ')
+			break;
+		px--;
+	}
+	return (px);
 }

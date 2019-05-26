@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.42 2019/05/23 18:22:13 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.43 2019/05/26 17:34:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -409,4 +409,24 @@ utf8_padcstr(const char *s, u_int width)
 		out[slen++] = ' ';
 	out[slen] = '\0';
 	return (out);
+}
+
+int
+utf8_cstrhas(const char *s, const struct utf8_data *ud)
+{
+	struct utf8_data	*copy, *loop;
+	int			 found = 0;
+
+	copy = utf8_fromcstr(s);
+	for (loop = copy; loop->size != 0; loop++) {
+		if (loop->size != ud->size)
+			continue;
+		if (memcmp(loop->data, ud->data, loop->size) == 0) {
+			found = 1;
+			break;
+		}
+	}
+	free(copy);
+
+	return (found);
 }

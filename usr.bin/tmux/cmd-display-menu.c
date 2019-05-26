@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.2 2019/05/12 07:27:08 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.3 2019/05/26 17:34:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -79,7 +79,7 @@ cmd_display_menu_exec(struct cmd *self, struct cmdq_item *item)
 		title = format_single(NULL, args_get(args, 'T'), c, s, wl, wp);
 	else
 		title = xstrdup("");
-	menu = menu_create(string, c, fs, title);
+	menu = menu_create(string, item, c, fs, title);
 	free(title);
 	if (menu == NULL) {
 		cmdq_error(item, "invalid menu %s", string);
