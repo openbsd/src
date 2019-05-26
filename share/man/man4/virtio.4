@@ -1,4 +1,4 @@
-.\"     $OpenBSD: virtio.4,v 1.15 2019/05/26 15:22:30 sf Exp $
+.\"     $OpenBSD: virtio.4,v 1.16 2019/05/26 20:37:03 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -56,14 +56,11 @@ control interface
 The
 .Nm
 driver conforms to the virtio 0.9.5 specification.
-The virtio 1.0 standard is only supported for pci devices.
+The virtio 1.0 standard is only supported for PCI devices.
 .Pp
 By default 0.9 is preferred over 1.0.
 This can be changed by setting the bit 0x4 in the flags.
-.Pp
-Setting the bit 0x8 in the flags disables the 1.0 support completely.
-.Sh BUGS
-.Nm Big-endian architectures are not yet supported.
+Setting the bit 0x8 in the flags disables 1.0 support completely.
 .Sh SEE ALSO
 .Xr intro 4
 .Sh HISTORY
@@ -83,3 +80,6 @@ It is based on the
 .Nx
 driver by
 .An Minoura Makoto .
+.Sh BUGS
+.Nm
+big-endian architectures are not yet supported.
