@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.19 2012/08/30 02:52:16 william Exp $
+$OpenBSD: OpenBSD::Ustar.pod,v 1.20 2019/05/26 15:48:26 espie Exp $
 
 =head1 NAME
 
@@ -43,7 +43,11 @@ OpenBSD::Ustar - simple access to Ustar C<tar(1)> archives
 
 C<OpenBSD::Ustar> provides an API to read, write and copy archives compatible
 with C<tar(1)>.
-For the time being, it can only handle the USTAR archive format.
+
+For the time being, it can only handle the USTAR archive format,
+but is supports the C<XHDR> (x blocktype) extension for accurately 
+representing long hard links and symbolic links.
+It also accurately recognize some common extensions that it doesn't process.
 
 A filehandle C<$fh> is associated with an C<OpenBSD::Ustar> object through
 C<new>. For archive reading, the filehandle should support
