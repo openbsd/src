@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.26 2019/05/17 06:47:10 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.27 2019/05/26 22:42:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -222,6 +222,14 @@ gre_print_0(const u_char *p, u_int length)
 	}
 
 	printf(" ");
+
+	switch (packettype) {
+	case PT_ERSPAN:
+		gre_print_erspan(flags, p, length);
+		return;
+	default:
+		break;
+	}
 
 	switch (proto) {
 	case 0:

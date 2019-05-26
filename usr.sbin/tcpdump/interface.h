@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.80 2019/04/05 00:57:59 dlg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.81 2019/05/26 22:42:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.80 2019/04/05 00:57:59 dlg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.81 2019/05/26 22:42:42 dlg Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -64,6 +64,7 @@ extern char *device;		/* as specified by -i  */
 #define PT_MPLS		10	/* MPLS (over UDP) */
 #define PT_TFTP		11	/* Trivial File Transfer Protocol */
 #define PT_VXLAN	12	/* Virtual eXtensible Local Area Network */
+#define PT_ERSPAN	13	/* GRE ERSPAN Type I or II */
 
 #ifndef min
 #define min(a,b) ((a)>(b)?(b):(a))
