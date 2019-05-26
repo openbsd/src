@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.8,v 1.28 2018/09/30 13:24:33 schwarze Exp $
+.\"	$OpenBSD: intro.8,v 1.29 2019/05/26 00:52:22 naddy Exp $
 .\"	$NetBSD: intro.8,v 1.3 1994/11/30 19:36:24 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)intro.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 30 2018 $
+.Dd $Mdocdate: May 26 2019 $
 .Dt INTRO 8
 .Os
 .Sh NAME
@@ -83,7 +83,9 @@ Thus it is not started by default.
 To enable or disable daemon processes,
 administrators should edit the file
 .Xr rc.conf.local 8
-or use the rcctl(8) utility.
+or use the
+.Xr rcctl 8
+utility.
 The
 .Xr rc.conf.local 8
 file overrides variable assignments in
