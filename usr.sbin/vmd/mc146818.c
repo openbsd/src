@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.18 2018/07/12 10:15:44 mlarkin Exp $ */
+/* $OpenBSD: mc146818.c,v 1.19 2019/05/27 19:21:43 jasper Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -216,7 +216,7 @@ rtc_update_rega(uint32_t data)
 		    __func__);
 
 	rtc.regs[MC_REGA] = data;
-	if (rtc.regs[MC_REGB] & MC_REGB_PIE)
+	if ((rtc.regs[MC_REGA] ^ data) & 0x0f)
 		rtc_reschedule_per();
 }
 
