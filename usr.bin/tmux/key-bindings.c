@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.93 2019/05/23 11:13:30 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.94 2019/05/27 12:16:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,8 +242,8 @@ key_bindings_init(void)
 		"bind w choose-tree -Zw",
 		"bind x confirm-before -p\"kill-pane #P? (y/n)\" kill-pane",
 		"bind z resize-pane -Z",
-		"bind { swap-pane -U",
-		"bind } swap-pane -D",
+		"bind '{' swap-pane -U",
+		"bind '}' swap-pane -D",
 		"bind '~' show-messages",
 		"bind PPage copy-mode -u",
 		"bind -r Up select-pane -U",
@@ -347,8 +347,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode M-r send -X middle-line",
 		"bind -Tcopy-mode M-v send -X page-up",
 		"bind -Tcopy-mode M-w send -X copy-selection-and-cancel",
-		"bind -Tcopy-mode M-{ send -X previous-paragraph",
-		"bind -Tcopy-mode M-} send -X next-paragraph",
+		"bind -Tcopy-mode 'M-{' send -X previous-paragraph",
+		"bind -Tcopy-mode 'M-}' send -X next-paragraph",
 		"bind -Tcopy-mode M-Up send -X halfpage-up",
 		"bind -Tcopy-mode M-Down send -X halfpage-down",
 		"bind -Tcopy-mode C-Up send -X scroll-up",
@@ -413,8 +413,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi t command-prompt -1p'(jump to forward)' 'send -X jump-to-forward \"%%%\"'",
 		"bind -Tcopy-mode-vi v send -X rectangle-toggle",
 		"bind -Tcopy-mode-vi w send -X next-word",
-		"bind -Tcopy-mode-vi { send -X previous-paragraph",
-		"bind -Tcopy-mode-vi } send -X next-paragraph",
+		"bind -Tcopy-mode-vi '{' send -X previous-paragraph",
+		"bind -Tcopy-mode-vi '}' send -X next-paragraph",
 		"bind -Tcopy-mode-vi % send -X next-matching-bracket",
 		"bind -Tcopy-mode-vi MouseDown1Pane select-pane",
 		"bind -Tcopy-mode-vi MouseDrag1Pane select-pane\\; send -X begin-selection",
