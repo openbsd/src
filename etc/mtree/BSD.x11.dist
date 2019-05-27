@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.53 2019/04/26 09:53:00 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.54 2019/05/27 07:03:11 jsg Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -86,6 +86,8 @@
                     ..
                 ..
                 pixman-1
+                ..
+                vulkan
                 ..
                 xcb
                 ..
@@ -386,6 +388,10 @@
                 mk
                 ..
                 util-macros
+                ..
+                vulkan
+                    icd.d
+                    ..
                 ..
                 xcb
                 ..
