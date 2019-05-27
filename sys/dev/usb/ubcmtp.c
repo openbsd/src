@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.19 2019/01/13 14:30:16 mpi Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.20 2019/05/27 15:50:26 jcs Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -118,6 +118,7 @@ struct ubcmtp_finger {
 #define UBCMTP_TYPE4_TPLEN	UBCMTP_TYPE4_TPOFF + UBCMTP_ALL_FINGER_SIZE
 #define UBCMTP_TYPE4_TPIFACE	2
 #define UBCMTP_TYPE4_BTOFF	31
+#define UBCMTP_TYPE4_FINGERPAD	(1 * sizeof(uint16_t))
 
 #define UBCMTP_FINGER_ORIENT	16384
 #define UBCMTP_SN_PRESSURE	45
@@ -336,6 +337,7 @@ struct ubcmtp_softc {
 	int			sc_tp_epaddr;	/* endpoint addr */
 	int			tp_maxlen;	/* max size of tp data */
 	int			tp_offset;	/* finger offset into data */
+	int			tp_fingerpad;	/* padding between finger data */
 	uint8_t			*tp_pkt;
 
 	struct usbd_interface	*sc_bt_iface;	/* button interface */
@@ -429,6 +431,7 @@ ubcmtp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_udev = uaa->device;
 	sc->sc_status = 0;
+	sc->tp_fingerpad = 0;
 
 	if ((udd = usbd_get_device_descriptor(dev)) == NULL) {
 		printf("ubcmtp: failed getting device descriptor\n");
@@ -486,6 +489,7 @@ ubcmtp_attach(struct device *parent, struct device *self, void *aux)
 		sc->tp_maxlen = UBCMTP_TYPE4_TPLEN;
 		sc->tp_offset = UBCMTP_TYPE4_TPOFF;
 		sc->sc_tp_iface = uaa->ifaces[UBCMTP_TYPE4_TPIFACE];
+		sc->tp_fingerpad = UBCMTP_TYPE4_FINGERPAD;
 		usbd_claim_iface(sc->sc_udev, UBCMTP_TYPE4_TPIFACE);
 		break;
 	}
@@ -790,9 +794,9 @@ void
 ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct ubcmtp_softc *sc = priv;
-	struct ubcmtp_finger *pkt;
+	struct ubcmtp_finger *finger;
 	u_int32_t pktlen;
-	int i, s, btn, contacts, fingers;
+	int off, s, btn, contacts = 0;
 
 	if (usbd_is_dying(sc->sc_udev) || !(sc->sc_status & UBCMTP_ENABLED))
 		return;
@@ -813,15 +817,16 @@ ubcmtp_tp_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (sc->tp_pkt == NULL || pktlen < sc->tp_offset)
 		return;
 
-	pkt = (struct ubcmtp_finger *)(sc->tp_pkt + sc->tp_offset);
-	fingers = (pktlen - sc->tp_offset) / sizeof(struct ubcmtp_finger);
-
 	contacts = 0;
-	for (i = 0; i < fingers; i++) {
-		if ((int16_t)letoh16(pkt[i].touch_major) == 0)
+	for (off = sc->tp_offset; off < pktlen;
+	    off += (sizeof(struct ubcmtp_finger) + sc->tp_fingerpad)) {
+		finger = (struct ubcmtp_finger *)(sc->tp_pkt + off);
+
+		if ((int16_t)letoh16(finger->touch_major) == 0)
 			continue; /* finger lifted */
-		sc->frame[contacts].x = (int16_t)letoh16(pkt[i].abs_x);
-		sc->frame[contacts].y = (int16_t)letoh16(pkt[i].abs_y);
+
+		sc->frame[contacts].x = (int16_t)letoh16(finger->abs_x);
+		sc->frame[contacts].y = (int16_t)letoh16(finger->abs_y);
 		sc->frame[contacts].pressure = DEFAULT_PRESSURE;
 		contacts++;
 	}
