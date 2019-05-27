@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.381 2019/05/24 11:37:52 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.382 2019/05/27 09:14:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -112,6 +112,14 @@ struct imsgbuf		*ibuf_main;
 
 struct mrt_head		 mrthead;
 time_t			 pauseaccept;
+
+static inline int
+peer_compare(const struct peer *a, const struct peer *b)
+{
+	return a->conf.id - b->conf.id;
+}
+
+RB_GENERATE(peer_head, peer, entry, peer_compare);
 
 void
 session_sighdlr(int sig)
@@ -241,9 +249,7 @@ session_main(int debug, int verbose)
 	while (session_quit == 0) {
 		/* check for peers to be initialized or deleted */
 		if (!pending_reconf) {
-			for (p = TAILQ_FIRST(&conf->peers); p != NULL;
-			   p = next) {
-				next = TAILQ_NEXT(p, entry);
+			RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
 				/* cloned peer that idled out? */
 				if (p->template && (p->state == STATE_IDLE ||
 				    p->state == STATE_ACTIVE) &&
@@ -269,7 +275,7 @@ session_main(int debug, int verbose)
 					p->conf.demote_group[0] = 0;
 					session_stop(p, ERR_CEASE_PEER_UNCONF);
 					log_peer_warnx(&p->conf, "removed");
-					TAILQ_REMOVE(&conf->peers, p, entry);
+					RB_REMOVE(peer_head, &conf->peers, p);
 					timer_remove_all(p);
 					pfkey_remove(p);
 					free(p);
@@ -360,7 +366,7 @@ session_main(int debug, int verbose)
 		timeout = 240;	/* loop every 240s at least */
 
 		now = getmonotime();
-		TAILQ_FOREACH(p, &conf->peers, entry) {
+		RB_FOREACH(p, peer_head, &conf->peers) {
 			time_t	nextaction;
 			struct peer_timer *pt;
 
@@ -504,7 +510,7 @@ session_main(int debug, int verbose)
 			session_dispatch_msg(&pfd[j],
 			    peer_l[j - idx_listeners]);
 
-		TAILQ_FOREACH(p, &conf->peers, entry)
+		RB_FOREACH(p, peer_head, &conf->peers)
 			if (p->rbuf && p->rbuf->wpos)
 				session_process_msg(p);
 
@@ -516,8 +522,8 @@ session_main(int debug, int verbose)
 			control_dispatch_msg(&pfd[j], &ctl_cnt, &conf->peers);
 	}
 
-	while ((p = TAILQ_FIRST(&conf->peers)) != NULL) {
-		TAILQ_REMOVE(&conf->peers, p, entry);
+	RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
+		RB_REMOVE(peer_head, &conf->peers, p);
 		strlcpy(p->conf.shutcomm,
 		    "bgpd shutting down",
 		    sizeof(p->conf.shutcomm));
@@ -2560,7 +2566,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			memcpy(&p->conf, imsg.data, sizeof(struct peer_config));
 			p->state = p->prev_state = STATE_NONE;
 			p->reconf_action = RECONF_REINIT;
-			TAILQ_INSERT_TAIL(&nconf->peers, p, entry);
+			if (RB_INSERT(peer_head, &nconf->peers, p) != NULL)
+				fatalx("%s: peer tree is corrupt", __func__);
 			break;
 		case IMSG_RECONF_LISTENER:
 			if (idx != PFD_PIPE_MAIN)
@@ -2673,7 +2680,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			kif = imsg.data;
 			depend_ok = kif->depend_state;
 
-			TAILQ_FOREACH(p, &conf->peers, entry)
+			RB_FOREACH(p, peer_head, &conf->peers)
 				if (!strcmp(p->conf.if_depend, kif->ifname)) {
 					if (depend_ok && !p->depend_ok) {
 						p->depend_ok = depend_ok;
@@ -2890,7 +2897,7 @@ getpeerbydesc(struct bgpd_config *c, const char *descr)
 	struct peer	*p, *res = NULL;
 	int		 match = 0;
 
-	TAILQ_FOREACH(p, &c->peers, entry)
+	RB_FOREACH(p, peer_head, &conf->peers)
 		if (!strcmp(p->conf.descr, descr)) {
 			res = p;
 			match++;
@@ -2916,13 +2923,13 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 	sa2addr(ip, &addr, NULL);
 
 	/* we might want a more effective way to find peers by IP */
-	TAILQ_FOREACH(p, &c->peers, entry)
+	RB_FOREACH(p, peer_head, &conf->peers)
 		if (!p->conf.template &&
 		    !memcmp(&addr, &p->conf.remote_addr, sizeof(addr)))
 			return (p);
 
 	/* try template matching */
-	TAILQ_FOREACH(p, &c->peers, entry)
+	RB_FOREACH(p, peer_head, &conf->peers)
 		if (p->conf.template &&
 		    p->conf.remote_addr.aid == addr.aid &&
 		    session_match_mask(p, &addr))
@@ -2936,7 +2943,7 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 			fatal(NULL);
 		memcpy(newpeer, loose, sizeof(struct peer));
 		for (id = UINT_MAX; id > UINT_MAX / 2; id--) {
-			TAILQ_FOREACH(p, &c->peers, entry)
+			RB_FOREACH(p, peer_head, &conf->peers)
 				if (p->conf.id == id)
 					break;
 			if (p == NULL)		/* we found a free id */
@@ -2949,7 +2956,8 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 		newpeer->rbuf = NULL;
 		init_peer(newpeer);
 		bgp_fsm(newpeer, EVNT_START);
-		TAILQ_INSERT_TAIL(&c->peers, newpeer, entry);
+		if (RB_INSERT(peer_head, &c->peers, newpeer) != NULL)
+			fatalx("%s: peer tree is corrupt", __func__);
 		return (newpeer);
 	}
 
@@ -2959,13 +2967,11 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 struct peer *
 getpeerbyid(struct bgpd_config *c, u_int32_t peerid)
 {
-	struct peer *p;
+	static struct peer lookup;
 
-	/* we might want a more effective way to find peers by id */
-	TAILQ_FOREACH(p, &c->peers, entry)
-		if (p->conf.id == peerid)
-			return (p);
-	return (NULL);
+	lookup.conf.id = peerid;
+
+	return RB_FIND(peer_head, &c->peers, &lookup);
 }
 
 int
@@ -3167,9 +3173,9 @@ session_stop(struct peer *peer, u_int8_t subcode)
 void
 merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 {
-	struct peer *p, *np;
+	struct peer *p, *np, *next;
 
-	TAILQ_FOREACH(p, &c->peers, entry) {
+	RB_FOREACH(p, peer_head, &conf->peers) {
 		/* templates are handled specially */
 		if (p->template != NULL)
 			continue;
@@ -3180,7 +3186,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		}
 
 		memcpy(&p->conf, &np->conf, sizeof(p->conf));
-		TAILQ_REMOVE(&nc->peers, np, entry);
+		RB_REMOVE(peer_head, &nc->peers, np);
 		free(np);
 
 		p->reconf_action = RECONF_KEEP;
@@ -3202,7 +3208,7 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 		/* apply the config to all clones of a template */
 		if (p->conf.template) {
 			struct peer *xp;
-			TAILQ_FOREACH(xp, &conf->peers, entry) {
+			RB_FOREACH(xp, peer_head, &conf->peers) {
 				if (xp->template != p)
 					continue;
 				session_template_clone(xp, NULL, xp->conf.id,
@@ -3215,5 +3221,9 @@ merge_peers(struct bgpd_config *c, struct bgpd_config *nc)
 	}
 
 	/* pfkeys of new peers already loaded by the parent process */
-	TAILQ_CONCAT(&c->peers, &nc->peers, entry);
+	RB_FOREACH_SAFE(np, peer_head, &nc->peers, next) {
+		RB_REMOVE(peer_head, &nc->peers, np);
+		if (RB_INSERT(peer_head, &conf->peers, np) != NULL)
+			fatalx("%s: peer tree is corrupt", __func__);
+	}
 }

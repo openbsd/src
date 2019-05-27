@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.88 2019/05/08 12:41:55 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.89 2019/05/27 09:14:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,7 @@ new_config(void)
 		fatal(NULL);
 
 	/* init the various list for later */
-	TAILQ_INIT(&conf->peers);
+	RB_INIT(&conf->peers);
 	TAILQ_INIT(&conf->networks);
 	SIMPLEQ_INIT(&conf->l3vpns);
 	SIMPLEQ_INIT(&conf->prefixsets);
@@ -157,7 +157,7 @@ free_prefixtree(struct prefixset_tree *p)
 void
 free_config(struct bgpd_config *conf)
 {
-	struct peer		*p;
+	struct peer		*p, *next;
 	struct listen_addr	*la;
 	struct mrt		*m;
 
@@ -183,8 +183,8 @@ free_config(struct bgpd_config *conf)
 	}
 	free(conf->mrt);
 
-	while ((p = TAILQ_FIRST(&conf->peers)) != NULL) {
-		TAILQ_REMOVE(&conf->peers, p, entry);
+	RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
+		RB_REMOVE(peer_head, &conf->peers, p);
 		free(p);
 	}
 
@@ -199,7 +199,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 {
 	struct listen_addr	*nla, *ola, *next;
 	struct network		*n;
-	struct peer		*p, *np;
+	struct peer		*p, *np, *nextp;
 
 	/*
 	 * merge the freshly parsed conf into the running xconf
@@ -314,9 +314,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	 *   peer if so mark it RECONF_KEEP. Remove all old peers.
 	 * - swap lists (old peer list is actually empty).
 	 */
-	TAILQ_FOREACH(p, &conf->peers, entry)
+	RB_FOREACH(p, peer_head, &conf->peers)
 		p->reconf_action = RECONF_REINIT;
-	while ((p = TAILQ_FIRST(&xconf->peers)) != NULL) {
+	RB_FOREACH_SAFE(p, peer_head, &xconf->peers, nextp) {
 		np = getpeerbyid(conf, p->conf.id);
 		if (np != NULL) {
 			np->reconf_action = RECONF_KEEP;
@@ -324,10 +324,14 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 			np->auth = p->auth;
 		}
 
-		TAILQ_REMOVE(&xconf->peers, p, entry);
+		RB_REMOVE(peer_head, &xconf->peers, p);
 		free(p);
 	}
-	TAILQ_CONCAT(&xconf->peers, &conf->peers, entry);
+	RB_FOREACH_SAFE(np, peer_head, &conf->peers, nextp) {
+		RB_REMOVE(peer_head, &conf->peers, np);
+		if (RB_INSERT(peer_head, &xconf->peers, np) != NULL)
+			fatalx("%s: peer tree is corrupt", __func__);
+	}
 
 	/* conf is merged so free it */
 	free_config(conf);

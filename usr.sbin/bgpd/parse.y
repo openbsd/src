@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.387 2019/05/03 15:08:47 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.388 2019/05/27 09:14:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1208,7 +1208,8 @@ neighbor	: {	curpeer = new_peer(); }
 
 			if (neighbor_consistent(curpeer) == -1)
 				YYERROR;
-			TAILQ_INSERT_TAIL(new_peers, curpeer, entry);
+			if (RB_INSERT(peer_head, new_peers, curpeer) != NULL)
+				fatalx("%s: peer tree is corrupt", __func__);
 			curpeer = curgroup;
 		}
 		;
@@ -1816,7 +1817,7 @@ filter_peer	: ANY		{
 				fatal(NULL);
 			$$->p.remote_as = $$->p.groupid = $$->p.peerid = 0;
 			$$->next = NULL;
-			TAILQ_FOREACH(p, new_peers, entry)
+			RB_FOREACH(p, peer_head, new_peers)
 				if (!memcmp(&p->conf.remote_addr,
 				    &$1, sizeof(p->conf.remote_addr))) {
 					$$->p.peerid = p->conf.id;
@@ -1843,7 +1844,7 @@ filter_peer	: ANY		{
 				fatal(NULL);
 			$$->p.remote_as = $$->p.peerid = 0;
 			$$->next = NULL;
-			TAILQ_FOREACH(p, new_peers, entry)
+			RB_FOREACH(p, peer_head, new_peers)
 				if (!strcmp(p->conf.group, $2)) {
 					$$->p.groupid = p->conf.groupid;
 					break;
@@ -3965,7 +3966,7 @@ get_id(struct peer *newpeer)
 	if (newpeer->conf.remote_addr.aid) {
 		/* neighbor */
 		if (cur_peers)
-			TAILQ_FOREACH(p, cur_peers, entry)
+			RB_FOREACH(p, peer_head, cur_peers)
 				if (memcmp(&p->conf.remote_addr,
 				    &newpeer->conf.remote_addr,
 				    sizeof(p->conf.remote_addr)) == 0)
@@ -3977,7 +3978,7 @@ get_id(struct peer *newpeer)
 	} else {
 		/* group */
 		if (cur_peers)
-			TAILQ_FOREACH(p, cur_peers, entry)
+			RB_FOREACH(p, peer_head, cur_peers)
 				if (strcmp(p->conf.group,
 				    newpeer->conf.group) == 0)
 					break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.383 2019/05/23 14:10:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.384 2019/05/27 09:14:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -233,7 +233,7 @@ TAILQ_HEAD(listen_addrs, listen_addr);
 TAILQ_HEAD(filter_set_head, filter_set);
 
 struct peer;
-TAILQ_HEAD(peer_head, peer);
+RB_HEAD(peer_head, peer);
 
 struct l3vpn;
 SIMPLEQ_HEAD(l3vpn_head, l3vpn);

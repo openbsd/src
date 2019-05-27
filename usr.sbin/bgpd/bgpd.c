@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.217 2019/05/08 18:48:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.218 2019/05/27 09:14:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -367,7 +367,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 	kr_shutdown(conf->fib_priority, conf->default_tableid);
 	pftable_clear_all();
 
-	TAILQ_FOREACH(p, &conf->peers, entry)
+	RB_FOREACH(p, peer_head, &conf->peers)
 		pfkey_remove(p);
 
 	while ((rr = SIMPLEQ_FIRST(&ribnames)) != NULL) {
@@ -532,7 +532,7 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 	}
 
 	/* send peer list to the SE */
-	TAILQ_FOREACH(p, &conf->peers, entry) {
+	RB_FOREACH(p, peer_head, &conf->peers) {
 		if (imsg_compose(ibuf_se, IMSG_RECONF_PEER, p->conf.id, 0, -1,
 		    &p->conf, sizeof(p->conf)) == -1)
 			return (-1);

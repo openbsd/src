@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.134 2019/03/31 16:57:38 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.135 2019/05/27 09:14:32 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -784,7 +784,7 @@ print_rule(struct bgpd_config *conf, struct filter_rule *r)
 		printf("eeeeeeeps. ");
 
 	if (r->peer.peerid) {
-		TAILQ_FOREACH(p, &conf->peers, entry)
+		RB_FOREACH(p, peer_head, &conf->peers)
 			if (p->conf.id == r->peer.peerid)
 				break;
 		if (p == NULL)
@@ -792,7 +792,7 @@ print_rule(struct bgpd_config *conf, struct filter_rule *r)
 		else
 			printf("%s ", log_addr(&p->conf.remote_addr));
 	} else if (r->peer.groupid) {
-		TAILQ_FOREACH(p, &conf->peers, entry)
+		RB_FOREACH(p, peer_head, &conf->peers)
 			if (p->conf.groupid == r->peer.groupid)
 				break;
 		if (p == NULL)
@@ -939,14 +939,14 @@ print_groups(struct bgpd_config *conf)
 	const char		 *c;
 
 	peer_cnt = 0;
-	TAILQ_FOREACH(p, &conf->peers, entry)
+	RB_FOREACH(p, peer_head, &conf->peers)
 		peer_cnt++;
 
 	if ((peerlist = calloc(peer_cnt, sizeof(struct peer_config *))) == NULL)
 		fatal("print_groups calloc");
 
 	i = 0;
-	TAILQ_FOREACH(p, &conf->peers, entry)
+	RB_FOREACH(p, peer_head, &conf->peers)
 		peerlist[i++] = &p->conf;
 
 	qsort(peerlist, peer_cnt, sizeof(struct peer_config *), peer_compare);
