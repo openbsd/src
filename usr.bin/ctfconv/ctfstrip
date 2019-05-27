@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: ctfstrip,v 1.10 2019/02/18 11:05:43 sunil Exp $
+# $OpenBSD: ctfstrip,v 1.11 2019/05/27 09:31:08 jca Exp $
 #
 # Copyright (c) 2017 Martin Pieuchot
 #
@@ -30,18 +30,15 @@ usage() {
 
 trap "cleanup" 1 2 3 13 15
 
-args=$(getopt So: $*)
-if [ $? -ne 0 ]; then
-	usage
-fi
-set -- $args
-while [ $# -ne 0 ]; do
-    case "$1" in
-	-S)	STRIPFLAG=-g; shift;;
-	-o)	OUTFILE="$2"; shift; shift;;
-	--)	shift; break;;
-    esac
+while getopts So: opt; do
+	case $opt in
+		S)	STRIPFLAG=-g;;
+		o)	OUTFILE="$OPTARG";;
+		\?)	usage;;
+	esac
 done
+
+shift $((OPTIND - 1))
 
 if [ $# -ne 1 ]; then
 	usage
