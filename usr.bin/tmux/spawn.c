@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.4 2019/05/25 06:58:10 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.5 2019/05/27 12:48:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -161,6 +161,8 @@ spawn_window(struct spawn_context *sc, char **cause)
 			xasprintf(cause, "couldn't create window %d", idx);
 			return (NULL);
 		}
+		if (s->curw == NULL)
+			s->curw = sc->wl;
 		sc->wl->session = s;
 		winlink_set_window(sc->wl, w);
 	} else
