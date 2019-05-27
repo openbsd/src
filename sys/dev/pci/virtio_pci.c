@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.27 2019/05/26 15:22:31 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.28 2019/05/27 15:55:01 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -176,7 +176,10 @@ uint64_t _cread(struct virtio_pci_softc *sc, unsigned off, unsigned size)
 		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, off);
 		break;
 	case 8:
-		val = bus_space_read_8(sc->sc_iot, sc->sc_ioh, off);
+		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    off + sizeof(uint32_t));
+		val <<= 32;
+		val += bus_space_read_4(sc->sc_iot, sc->sc_ioh, off);
 		break;
 	}
 	return val;
@@ -204,7 +207,10 @@ uint64_t _cread(struct virtio_pci_softc *sc, unsigned off, unsigned size)
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh, off, val);	\
 			break;							\
 		case 8:								\
-			bus_space_write_8(sc->sc_iot, sc->sc_ioh, off, val);	\
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh, off,		\
+			    (val) & 0xffffffff);				\
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,		\
+			    (off) + sizeof(uint32_t), (uint64_t)(val) >> 32);	\
 			break;							\
 		}								\
 	} while (0)
