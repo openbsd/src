@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.42 2019/01/21 11:08:37 jsing Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.43 2019/05/28 06:49:46 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -723,7 +723,7 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 		return;
 	}
 
-	if ((len % sizeof(struct sockaddr_storage)) != 0)
+	if (len % (sizeof(struct sockaddr_storage) + sizeof(int)) != 0)
 		fatalx("IMSG_CONSTRAINT_DNS len");
 
 	p = data;
@@ -733,6 +733,9 @@ constraint_msg_dns(u_int32_t id, u_int8_t *data, size_t len)
 		memcpy(&h->ss, p, sizeof(h->ss));
 		p += sizeof(h->ss);
 		len -= sizeof(h->ss);
+		memcpy(&h->notauth, p, sizeof(int));
+		p += sizeof(int);
+		len -= sizeof(int);
 
 		if (ncstr == NULL || cstr->addr_head.pool) {
 			ncstr = new_constraint();

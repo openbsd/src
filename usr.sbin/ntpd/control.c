@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.14 2019/01/14 16:30:21 florian Exp $ */
+/*	$OpenBSD: control.c,v 1.15 2019/05/28 06:49:46 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -339,13 +339,17 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 {
 	const char	*a = "not resolved";
 	const char	*pool = "", *addr_head_name = "";
+	const char	*auth = "";
 	u_int8_t	 shift, best, validdelaycnt, jittercnt;
 	time_t		 now;
 
 	now = getmonotime();
 
-	if (p->addr)
+	if (p->addr) {
 		a = log_sockaddr((struct sockaddr *)&p->addr->ss);
+		if (p->addr->notauth)
+			auth = " (non-dnssec lookup)";
+	}
 	if (p->addr_head.pool)
 		pool = "from pool ";
 
@@ -353,7 +357,7 @@ build_show_peer(struct ctl_show_peer *cp, struct ntp_peer *p)
 		addr_head_name = p->addr_head.name;
 
 	snprintf(cp->peer_desc, sizeof(cp->peer_desc),
-	    "%s %s%s", a, pool, addr_head_name);
+	    "%s %s%s%s", a, pool, addr_head_name, auth);
 
 	validdelaycnt = best = 0;
 	cp->offset = cp->delay = 0.0;

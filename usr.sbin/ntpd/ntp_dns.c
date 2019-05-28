@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.20 2017/04/17 16:03:15 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.21 2019/05/28 06:49:46 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,8 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
+#include <netinet/in.h>
+
 #include <err.h>
 #include <errno.h>
 #include <poll.h>
@@ -28,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <resolv.h>
 #include <unistd.h>
 
 #include "ntpd.h"
@@ -55,6 +58,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 	struct pollfd		 pfd[1];
 	int			 nfds, nullfd;
 
+	res_init();
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");
 
@@ -164,15 +168,21 @@ dns_dispatch_imsg(void)
 				break;
 			buf = imsg_create(ibuf_dns, imsg.hdr.type,
 			    imsg.hdr.peerid, 0,
-			    cnt * sizeof(struct sockaddr_storage));
+			    cnt * (sizeof(struct sockaddr_storage) + sizeof(int)));
 			if (cnt > 0) {
 				if (buf) {
-					for (h = hn; h != NULL; h = h->next)
+					for (h = hn; h != NULL; h = h->next) {
 						if (imsg_add(buf, &h->ss,
 						    sizeof(h->ss)) == -1) {
 							buf = NULL;
 							break;
 						}
+						if (imsg_add(buf, &h->notauth,
+						    sizeof(int)) == -1) {
+							buf = NULL;
+							break;
+						}
+					}
 				}
 				host_dns_free(hn);
 				hn = NULL;
