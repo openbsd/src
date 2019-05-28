@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_np.h,v 1.2 2019/02/04 17:18:08 tedu Exp $	*/
+/*	$OpenBSD: pthread_np.h,v 1.3 2019/05/28 10:33:03 jca Exp $	*/
 /*
  * Copyright (c) 1996-98 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -33,6 +33,8 @@
  */
 #ifndef _PTHREAD_NP_H_
 #define _PTHREAD_NP_H_
+
+#include <pthread.h>
 
 /*
  * Non-POSIX type definitions:
