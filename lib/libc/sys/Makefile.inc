@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.156 2019/01/11 18:46:30 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.157 2019/05/28 13:08:56 beck Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -109,7 +109,7 @@ PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
 DPSEUDO_NOERR=${PSEUDO_NOERR:.o=.do}
 
-HIDDEN= ___getcwd.o fork.o sigaction.o _ptrace.o ${CANCEL:=.o}
+HIDDEN= ___realpath.o ___getcwd.o fork.o sigaction.o _ptrace.o ${CANCEL:=.o}
 PHIDDEN=${HIDDEN:.o=.po}
 SHIDDEN=${HIDDEN:.o=.so}
 DHIDDEN=${HIDDEN:.o=.do}
