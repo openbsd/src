@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.39 2019/04/30 20:04:31 patrick Exp $ */
+/* $OpenBSD: machdep.c,v 1.40 2019/05/28 20:32:30 patrick Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -812,8 +812,10 @@ initarm(struct arm64_bootparams *abp)
 	// NOTE that 1GB of ram is mapped in by default in
 	// the bootstrap memory config, so nothing is necessary
 	// until pmap_bootstrap_finalize is called??
+	pmap_map_early((paddr_t)config, PAGE_SIZE);
 	if (!fdt_init(config) || fdt_get_size(config) == 0)
 		panic("initarm: no FDT");
+	pmap_map_early((paddr_t)config, round_page(fdt_get_size(config)));
 
 	struct fdt_reg reg;
 	void *node;

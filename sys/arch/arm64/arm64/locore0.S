@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.4 2018/01/21 22:30:41 kettenis Exp $ */
+/* $OpenBSD: locore0.S,v 1.5 2019/05/28 20:32:30 patrick Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -193,6 +193,12 @@ virtdone:
 	.xword pagetable
 .Lpagetable_end:
 	.xword pagetable_end
+.Lpagetable_l1_ttbr0_idx:
+	.xword pagetable_l1_ttbr0_idx
+.Lpagetable_l1_ttbr0_num:
+	.xword pagetable_l1_ttbr0_num
+.Lpagetable_l1_ttbr0_pa:
+	.xword pagetable_l1_ttbr0_pa
 
 .Lesym:
 	.xword esym
@@ -277,15 +283,28 @@ create_pagetables:
 	mov	x10, #1
 	bl	build_l1_block_pagetable
 
-	/* Create a mapping for the FDT */
-	mov	x7, #NORMAL_MEM // #NORMAL
-	mov	x9, x23
-	mov	x8, x9		/* VA start (== PA start) */
-	mov	x10, #1
-	bl	build_l1_block_pagetable
+	/* Store pa of l1 table space start */
+	adr	x7, .Lpagetable_l1_ttbr0_pa
+	ldr	x7, [x7]
+	sub	x7, x7, x29 // VA -> PA
+	str	x27, [x7]
+
+	/* Store idx of created l1 table */
+	adr	x7, .Lpagetable_l1_ttbr0_idx
+	ldr	x7, [x7]
+	sub	x7, x7, x29 // VA -> PA
+	lsr	x9, x27, #L0_SHIFT
+	and	x9, x9, #Ln_ADDR_MASK
+	str	x9, [x7]
+
+	adr	x7, .Lpagetable_l1_ttbr0_num
+	ldr	x7, [x7]
+	sub	x7, x7, x29 // VA -> PA
+	ldr	x7, [x7]
 
 	/* Move to the l0 table */
-	add	x27, x27, #PAGE_SIZE * 2	// pagetable_l0_ttbr0:
+	lsl	x7, x7, PAGE_SHIFT
+	add	x27, x27, x7	// pagetable_l0_ttbr0:
 
 	/* Link the l0 -> l1 table */
 	mov	x9, x6

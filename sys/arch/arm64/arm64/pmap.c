@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.61 2019/04/16 14:32:44 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.62 2019/05/28 20:32:30 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2187,13 +2187,29 @@ pmap_map_early(paddr_t spa, psize_t len)
 {
 	extern pd_entry_t pagetable_l0_ttbr0[];
 	extern pd_entry_t pagetable_l1_ttbr0[];
+	extern uint64_t pagetable_l1_ttbr0_idx[];
+	extern uint64_t pagetable_l1_ttbr0_num;
+	extern uint64_t pagetable_l1_ttbr0_pa;
 	paddr_t pa, epa = spa + len;
+	uint64_t i, idx = ~0;
 
 	for (pa = spa & ~(L1_SIZE - 1); pa < epa; pa += L1_SIZE) {
-		if (pagetable_l0_ttbr0[VP_IDX0(pa)] == 0)
-			panic("%s: outside existing L0 entry", __func__);
+		for (i = 0; i < pagetable_l1_ttbr0_num; i++) {
+			if (pagetable_l1_ttbr0_idx[i] == ~0)
+				break;
+			if (pagetable_l1_ttbr0_idx[i] == VP_IDX0(pa))
+				break;
+		}
+		if (i == pagetable_l1_ttbr0_num)
+			panic("%s: outside existing L0 entries", __func__);
+		if (pagetable_l1_ttbr0_idx[i] == ~0) {
+			pagetable_l0_ttbr0[VP_IDX0(pa)] =
+			    (pagetable_l1_ttbr0_pa + i * PAGE_SIZE) | L0_TABLE;
+			pagetable_l1_ttbr0_idx[i] = VP_IDX0(pa);
+		}
 
-		pagetable_l1_ttbr0[VP_IDX1(pa)] = pa | L1_BLOCK |
+		idx = i * (PAGE_SIZE / sizeof(uint64_t)) + VP_IDX1(pa);
+		pagetable_l1_ttbr0[idx] = pa | L1_BLOCK |
 		    ATTR_IDX(PTE_ATTR_WB) | ATTR_SH(SH_INNER) |
 		    ATTR_nG | ATTR_UXN | ATTR_AF | ATTR_AP(0);
 	}
