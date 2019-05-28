@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.20 2019/03/11 17:08:52 anton Exp $ */
+/* $OpenBSD: ns8250.c,v 1.21 2019/05/28 07:36:37 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -74,6 +74,7 @@ ns8250_init(int fd, uint32_t vmid)
 	}
 	com1_dev.fd = fd;
 	com1_dev.irq = 4;
+	com1_dev.portid = NS8250_COM1;
 	com1_dev.rcv_pending = 0;
 	com1_dev.vmid = vmid;
 	com1_dev.byte_out = 0;
@@ -509,10 +510,10 @@ vcpu_process_com_scr(struct vm_exit *vei)
 	/*
 	 * vei_dir == VEI_DIR_OUT : out instruction
 	 *
-	 * Write to SCR
+	 * The 8250 does not have a scratch register.
 	 */
 	if (vei->vei.vei_dir == VEI_DIR_OUT) {
-		com1_dev.regs.scr = vei->vei.vei_data;
+		com1_dev.regs.scr = 0xFF;
 	} else {
 		/*
 		 * vei_dir == VEI_DIR_IN : in instruction
@@ -647,6 +648,7 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 	}
 	com1_dev.fd = con_fd;
 	com1_dev.irq = 4;
+	com1_dev.portid = NS8250_COM1;
 	com1_dev.rcv_pending = 0;
 	com1_dev.vmid = vmid;
 	com1_dev.byte_out = 0;

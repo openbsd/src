@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.h,v 1.7 2019/03/11 17:08:52 anton Exp $ */
+/* $OpenBSD: ns8250.h,v 1.8 2019/05/28 07:36:37 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -18,14 +18,30 @@
 /*
  * Emulated 8250 UART
  */
-#define COM1_DATA	0x3f8
-#define COM1_IER	0x3f9
-#define COM1_IIR	0x3fa
-#define COM1_LCR	0x3fb
-#define COM1_MCR	0x3fc
-#define COM1_LSR	0x3fd
-#define COM1_MSR	0x3fe
-#define COM1_SCR	0x3ff
+#define COM1_BASE       0x3f8
+#define COM1_DATA	COM1_BASE+COM_OFFSET_DATA
+#define COM1_IER	COM1_BASE+COM_OFFSET_IER
+#define COM1_IIR	COM1_BASE+COM_OFFSET_IIR
+#define COM1_LCR	COM1_BASE+COM_OFFSET_LCR
+#define COM1_MCR	COM1_BASE+COM_OFFSET_MCR
+#define COM1_LSR	COM1_BASE+COM_OFFSET_LSR
+#define COM1_MSR	COM1_BASE+COM_OFFSET_MSR
+#define COM1_SCR	COM1_BASE+COM_OFFSET_SCR
+
+#define COM_OFFSET_DATA 0
+#define COM_OFFSET_IER  1
+#define COM_OFFSET_IIR  2
+#define COM_OFFSET_LCR  3
+#define COM_OFFSET_MCR  4
+#define COM_OFFSET_LSR  5
+#define COM_OFFSET_MSR  6
+#define COM_OFFSET_SCR  7
+
+/* ns8250 port identifier */
+enum ns8250_portid {
+	NS8250_COM1,
+	NS8250_COM2,
+};
 
 /* ns8250 UART registers */
 struct ns8250_regs {
@@ -50,6 +66,7 @@ struct ns8250_dev {
 	struct event rate;
 	struct event wake;
 	struct timeval rate_tv;
+	enum ns8250_portid portid;
 	int fd;
 	int irq;
 	int rcv_pending;
