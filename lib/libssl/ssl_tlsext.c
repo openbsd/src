@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.46 2019/05/28 17:16:42 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.47 2019/05/28 17:34:32 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1460,7 +1460,7 @@ tlsext_versions_server_parse(SSL *s, CBS *cbs, int *alert)
 	}
 
 	/*
-	 * XXX if we haven't mached a version we should
+	 * XXX if we haven't matched a version we should
 	 * fail - but we currently need to succeed to
 	 * ignore this before the server code for 1.3
 	 * is set up and initialized.
@@ -1476,7 +1476,7 @@ tlsext_versions_server_parse(SSL *s, CBS *cbs, int *alert)
 	*alert = SSL_AD_PROTOCOL_VERSION;
 	return 0;
 
-err:
+ err:
 	*alert = SSL_AD_DECODE_ERROR;
 	return 0;
 }
