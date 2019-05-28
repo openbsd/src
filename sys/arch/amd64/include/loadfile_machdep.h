@@ -1,5 +1,4 @@
-/* XXX - DSR */
-/*	$OpenBSD: loadfile_machdep.h,v 1.8 2019/05/15 06:52:33 mlarkin Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.9 2019/05/28 04:51:26 mlarkin Exp $	*/
 /*	$NetBSD: loadfile_machdep.h,v 1.1 1999/04/29 03:17:12 tsubai Exp $	*/
 
 /*-
