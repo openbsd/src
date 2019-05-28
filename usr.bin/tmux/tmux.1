@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.658 2019/05/28 09:50:54 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.659 2019/05/28 11:46:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -1239,13 +1239,14 @@ show debugging information about jobs and terminals.
 .It Xo Ic source-file
 .Op Fl nq
 .Ar path
+.Ar ...
 .Xc
 .D1 (alias: Ic source )
-Execute commands from
+Execute commands from one or more files specified by
 .Ar path
-(which may be a
+(which may be
 .Xr glob 7
-pattern).
+patterns).
 If
 .Fl q
 is given, no error will be returned if
