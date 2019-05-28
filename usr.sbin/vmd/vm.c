@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.48 2019/05/12 20:56:34 pd Exp $	*/
+/*	$OpenBSD: vm.c,v 1.49 2019/05/28 03:20:59 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -132,7 +132,7 @@ static const struct vcpu_reg_state vcpu_init_flat64 = {
 	.vrs_gprs[VCPU_REGS_RFLAGS] = 0x2,
 	.vrs_gprs[VCPU_REGS_RIP] = 0x0,
 	.vrs_gprs[VCPU_REGS_RSP] = 0x0,
-	.vrs_crs[VCPU_REGS_CR0] = CR0_CD | CR0_NW | CR0_ET | CR0_PE | CR0_PG,
+	.vrs_crs[VCPU_REGS_CR0] = CR0_ET | CR0_PE | CR0_PG,
 	.vrs_crs[VCPU_REGS_CR3] = PML4_PAGE,
 	.vrs_crs[VCPU_REGS_CR4] = CR4_PAE | CR4_PSE,
 	.vrs_crs[VCPU_REGS_PDPTE0] = 0ULL,
