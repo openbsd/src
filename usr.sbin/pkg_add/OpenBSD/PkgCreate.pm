@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.154 2019/05/28 19:31:42 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.155 2019/05/28 23:24:44 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1299,6 +1299,7 @@ sub add_extra_info
 		$fullpkgpath //= '';
 		$ftp //= 'no';
 		$ftp = 'yes' if $ftp =~ m/^yes$/io;
+		$cdrom = 'yes' if defined $cdrom && $cdrom =~ m/^yes$/io;
 
 		OpenBSD::PackingElement::ExtraInfo->add($plist,
 		    $fullpkgpath, $cdrom, $ftp);
