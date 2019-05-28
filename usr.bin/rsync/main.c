@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.45 2019/05/08 20:00:25 benno Exp $ */
+/*	$Id: main.c,v 1.46 2019/05/28 18:20:30 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -271,7 +271,7 @@ main(int argc, char *argv[])
 {
 	struct opts	 opts;
 	pid_t		 child;
-	int		 fds[2], sd, rc, c, st, i;
+	int		 fds[2], sd = -1, rc, c, st, i;
 	struct sess	  sess;
 	struct fargs	*fargs;
 	char		**args;
