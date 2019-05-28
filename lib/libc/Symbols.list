@@ -35,6 +35,7 @@ _exit
 _thread_canceled
 _thread_sys___get_tcb
 _thread_sys___getcwd
+_thread_sys___realpath
 _thread_sys___semctl
 _thread_sys___set_tcb
 _thread_sys___syscall
