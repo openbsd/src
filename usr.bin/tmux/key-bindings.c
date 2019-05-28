@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.95 2019/05/28 07:18:42 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.96 2019/05/28 09:50:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -299,7 +299,7 @@ key_bindings_init(void)
 		"bind -n MouseDown3Status display-menu -t= -xW -yS -T \"#[align=centre]#{window_index}:#{window_name}\""
 			" 'Swap Left' 'l' {swap-window -t:-1}"
 			" 'Swap Right' 'r' {swap-window -t:+1}"
-			" '#{?pane_marked_set,,#[dim]}Swap Marked' 's' {swap-window}"
+			" '#{?pane_marked_set,,-}Swap Marked' 's' {swap-window}"
 			" ''"
 			" 'Kill' 'X' {kill-window}"
 			" 'Respawn' 'R' {respawn-window -k}"
@@ -319,7 +319,7 @@ key_bindings_init(void)
 			" ''"
 			" 'Swap Up' 'u' {swap-pane -U}"
 			" 'Swap Down' 'd' {swap-pane -D}"
-			" '#{?pane_marked_set,,#[dim]}Swap Marked' 's' {swap-pane}"
+			" '#{?pane_marked_set,,-}Swap Marked' 's' {swap-pane}"
 			" ''"
 			" 'Kill' 'X' {kill-pane}"
 			" 'Respawn' 'R' {respawn-pane -k}"
