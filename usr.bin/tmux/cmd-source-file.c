@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-source-file.c,v 1.39 2019/05/28 11:46:30 nicm Exp $ */
+/* $OpenBSD: cmd-source-file.c,v 1.40 2019/05/28 12:20:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Tiago Cunha <me@tiagocunha.org>
@@ -96,6 +96,8 @@ cmd_source_file_exec(struct cmd *self, struct cmdq_item *item)
 		globfree(&g);
 	}
 	if (cfg_finished) {
+		if (retval == CMD_RETURN_ERROR && c->session == NULL)
+			c->retval = 1;
 		new_item = cmdq_get_callback(cmd_source_file_done, NULL);
 		cmdq_insert_after(item, new_item);
 	}
