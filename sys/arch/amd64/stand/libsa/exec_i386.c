@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.30 2019/05/15 06:52:33 mlarkin Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.31 2019/05/28 17:38:02 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -83,12 +83,12 @@ caddr_t pt_base_addr;
  * causes compile errors related to RBT_HEAD.
  */
 #define NKL2_KIMG_ENTRIES       64
+#define NPDPG			512
 
 void
 run_loadfile(uint64_t *marks, int howto)
 {
 	uint64_t entry;
-	int long_kernel;
 	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
@@ -156,40 +156,35 @@ run_loadfile(uint64_t *marks, int howto)
 	 * Other entry values indicate kernels that have random
 	 * base VA and launch in 64 bit (long) mode.
 	 */
-	if (marks[MARK_ENTRY] == LEGACY_KERNEL_ENTRY_POINT) {
+	if (entry == LEGACY_KERNEL_ENTRY_POINT) {
 		/*
 		 * Legacy boot code expects entry 0x1001000, so mask
 		 * off the high bits.
 		 */
 		entry &= 0xFFFFFFF;
-		long_kernel = 0;
-	} else
-		long_kernel = 1;
+
+		/*
+		 * Launch a legacy kernel
+		 */
+		(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER,
+		    marks[MARK_END] & 0xfffffff, extmem, cnvmem, ac, (int)av);
+		/* not reached */
+	}
 
 	/*
 	 * Launch a long mode/randomly linked (post-6.5) kernel?
 	 */
-	if (long_kernel) {
-		new_av = boot_alloc(); /* Replaces old heap */
-		memcpy((void *)new_av, av, ac);
+	new_av = boot_alloc(); /* Replaces old heap */
+	memcpy((void *)new_av, av, ac);
 
-		/* Stack grows down, so grab two pages. We'll waste the 2nd */
-		stack = boot_alloc();
-		stack = boot_alloc();
+	/* Stack grows down, so grab two pages. We'll waste the 2nd */
+	stack = boot_alloc();
+	stack = boot_alloc();
 
-		pml4 = make_kernel_page_tables(marks[MARK_ENTRY]);
-		launch_amd64_kernel_long((void *)launch_amd64_kernel_long,
-		    pml4, stack, marks[MARK_ENTRY], howto,
-		    bootdev, BOOTARG_APIVER, marks[MARK_END],
-		    extmem, cnvmem, ac, (uint64_t)new_av);
-	} else {
-		/*
-		 * Launch a legacy kernel
-		 */
-
-		(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER,
-		    marks[MARK_END] & 0xfffffff, extmem, cnvmem, ac, (int)av);
-	}
+	pml4 = make_kernel_page_tables(entry);
+	launch_amd64_kernel_long((void *)launch_amd64_kernel_long,
+	    pml4, stack, entry, howto, bootdev, BOOTARG_APIVER,
+	    marks[MARK_END], extmem, cnvmem, ac, (uint64_t)new_av);
 	/* not reached */
 }
 
@@ -344,7 +339,7 @@ make_kernel_page_tables(uint64_t entry)
 		/*
 		 * Map [k...511] PTEs.
 		 */
-		for (j = k; j < 512; j++)
+		for (j = k; j < NPDPG; j++)
 			pml1[j] = (uint64_t)(((8 + i) * NBPD_L2) +
 			    (j - kern_pml1) * PAGE_SIZE) | PG_V | PG_RW;
 	}
@@ -356,8 +351,8 @@ make_kernel_page_tables(uint64_t entry)
 	pml2 = (uint64_t *)boot_alloc();
 	pml3[0] = (uint64_t)pml2 | PG_V | PG_RW; /* Covers 0-1GB */
 
-	for (i = 0; i < 512; i++)
-		pml2[i] = (i << 21) | PG_V | PG_RW | PG_PS;
+	for (i = 0; i < NPDPG; i++)
+		pml2[i] = (i << L2_SHIFT) | PG_V | PG_RW | PG_PS;
 
 	return (caddr_t)pml4;
 }
