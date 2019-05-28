@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.199 2019/05/23 12:47:52 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.200 2019/05/28 18:53:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -348,10 +348,8 @@ status_redraw(struct client *c)
 	/* Resize the target screen. */
 	if (screen_size_x(&sl->screen) != width ||
 	    screen_size_y(&sl->screen) != lines) {
-		if (screen_size_x(&sl->screen) != width)
-			force = 1;
 		screen_resize(&sl->screen, width, lines, 0);
-		changed = 1;
+		changed = force = 1;
 	}
 	screen_write_start(&ctx, NULL, &sl->screen);
 
@@ -865,7 +863,7 @@ status_prompt_paste(struct client *c)
 		if ((pb = paste_get_top(NULL)) == NULL)
 			return (0);
 		bufdata = paste_buffer_data(pb, &bufsize);
-		ud = xreallocarray(NULL, bufsize, sizeof *ud);
+		ud = xreallocarray(NULL, bufsize + 1, sizeof *ud);
 		udp = ud;
 		for (i = 0; i != bufsize; /* nothing */) {
 			more = utf8_open(udp, bufdata[i]);
