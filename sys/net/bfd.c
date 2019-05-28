@@ -1,4 +1,4 @@
-/*	$OpenBSD: bfd.c,v 1.75 2019/05/09 14:29:30 phessler Exp $	*/
+/*	$OpenBSD: bfd.c,v 1.76 2019/05/28 18:39:06 kn Exp $	*/
 
 /*
  * Copyright (c) 2016-2018 Peter Hessler <phessler@openbsd.org>
@@ -927,7 +927,7 @@ bfd_set_state(struct bfd_config *bfd, unsigned int state)
 		bfd->bc_laststate = bfd->bc_state;
 	/* FALLTHROUGH */
 	case BFD_STATE_DOWN:
-		if (bfd->bc_laststate == BFD_STATE_UP) {
+		if (bfd->bc_state == BFD_STATE_UP) {
 			bfd->bc_laststate = bfd->bc_state;
 			bfd_set_uptime(bfd);
 		}
