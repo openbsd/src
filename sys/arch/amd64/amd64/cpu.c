@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.136 2019/05/18 18:11:46 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.137 2019/05/28 18:17:01 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -299,14 +299,23 @@ replacemds(void)
 	}
 
 	if (handler != NULL) {
-		printf("cpu0: using %s MDS workaround\n", type);
+		printf("cpu0: using %s MDS workaround%s\n", type, "");
 		s = splhigh();
 		codepatch_call(CPTAG_MDS, handler);
 		codepatch_call(CPTAG_MDS_VMM, vmm_handler);
 		splx(s);
-	} else if (has_verw)
-		printf("cpu0: using %s MDS workaround\n", "VERW");
-	else {
+	} else if (has_verw) {
+		/* The new firmware enhances L1D_FLUSH MSR to flush MDS too */
+		if (cpu_info_primary.ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr == 1) {
+			s = splhigh();
+			codepatch_nop(CPTAG_MDS_VMM);
+			splx(s);
+			type = " (except on vmm entry)";
+		} else {
+			type = "";
+		}
+		printf("cpu0: using %s MDS workaround%s\n", "VERW", type);
+	} else {
 		s = splhigh();
 		codepatch_nop(CPTAG_MDS);
 		codepatch_nop(CPTAG_MDS_VMM);
