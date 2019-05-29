@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.235 2019/05/29 11:48:28 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.236 2019/05/29 11:52:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -992,7 +992,7 @@ optdigest	: digest			{
 		;
 
 proto		: relay_proto PROTO STRING	{
-			struct protocol *p;
+			struct protocol	*p;
 
 			if (!loadcfg) {
 				free($3);
@@ -1688,18 +1688,9 @@ relay		: RELAY STRING	{
 				YYACCEPT;
 			}
 
-			TAILQ_FOREACH(r, conf->sc_relays, rl_entry)
-				if (!strcmp(r->rl_conf.name, $2))
-					break;
-			if (r != NULL) {
-				yyerror("relay %s defined twice", $2);
-				free($2);
-				YYERROR;
-			}
-			TAILQ_INIT(&relays);
-
 			if ((r = calloc(1, sizeof (*r))) == NULL)
 				fatal("out of memory");
+			TAILQ_INIT(&relays);
 
 			if (strlcpy(r->rl_conf.name, $2,
 			    sizeof(r->rl_conf.name)) >=
@@ -1731,7 +1722,15 @@ relay		: RELAY STRING	{
 			dstmode = RELAY_DSTMODE_DEFAULT;
 			rlay = r;
 		} '{' optnl relayopts_l '}'	{
-			struct relay	*r;
+			struct relay		*r;
+			struct relay_config	*rlconf = &rlay->rl_conf;
+
+			if (relay_findbyname(conf, rlconf->name) != NULL ||
+			    relay_findbyaddr(conf, rlconf) != NULL) {
+				yyerror("relay %s or listener defined twice",
+				    rlconf->name);
+				YYERROR;
+			}
 
 			if (rlay->rl_conf.ss.ss_family == AF_UNSPEC) {
 				yyerror("relay %s has no listener",
@@ -1755,11 +1754,13 @@ relay		: RELAY STRING	{
 				rlay->rl_proto = &conf->sc_proto_default;
 				rlay->rl_conf.proto = conf->sc_proto_default.id;
 			}
+
 			if (relay_load_certfiles(conf, rlay) == -1) {
 				yyerror("cannot load certificates for relay %s",
 				    rlay->rl_conf.name);
 				YYERROR;
 			}
+
 			conf->sc_relaycount++;
 			SPLAY_INIT(&rlay->rl_sessions);
 			TAILQ_INSERT_TAIL(conf->sc_relays, rlay, rl_entry);
@@ -3290,9 +3291,11 @@ relay_inherit(struct relay *ra, struct relay *rb)
 
 	if (relay_findbyname(conf, rb->rl_conf.name) != NULL ||
 	    relay_findbyaddr(conf, &rb->rl_conf) != NULL) {
-		yyerror("relay %s defined twice", rb->rl_conf.name);
+		yyerror("relay %s or listener defined twice",
+		    rb->rl_conf.name);
 		goto err;
 	}
+
 	if (relay_load_certfiles(conf, rb) == -1) {
 		yyerror("cannot load certificates for relay %s",
 		    rb->rl_conf.name);
