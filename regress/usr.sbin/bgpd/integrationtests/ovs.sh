@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: ovs.sh,v 1.1 2019/03/22 20:44:31 denis Exp $
+#	$OpenBSD: ovs.sh,v 1.2 2019/05/29 08:52:50 claudio Exp $
 
 set -e
 
@@ -80,6 +80,18 @@ route -T ${RDOMAIN2} exec ${BGPD} \
 sleep 2
 
 echo test 1
+route -T ${RDOMAIN1} exec bgpctl sh rib ovs valid | \
+	grep ${PAIR2VALID}
+route -T ${RDOMAIN1} exec bgpctl sh rib ovs invalid | \
+	grep ${PAIR2INVALIDAS}
+route -T ${RDOMAIN1} exec bgpctl sh rib ovs not-found | \
+	grep ${PAIR2NOTFOUND}
+
+echo reload config
+route -T ${RDOMAIN1} exec bgpctl reload
+sleep 2
+
+echo test 2
 route -T ${RDOMAIN1} exec bgpctl sh rib ovs valid | \
 	grep ${PAIR2VALID}
 route -T ${RDOMAIN1} exec bgpctl sh rib ovs invalid | \
