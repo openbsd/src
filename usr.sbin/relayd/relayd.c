@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.176 2019/05/08 23:22:19 reyk Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.177 2019/05/29 11:48:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 
@@ -1234,6 +1235,105 @@ pkey_add(struct relayd *env, EVP_PKEY *pkey, char *hash)
 	TAILQ_INSERT_TAIL(env->sc_pkeys, ca_pkey, pkey_entry);
 
 	return (ca_pkey);
+}
+
+char *
+relay_load_fd(int fd, off_t *len)
+{
+	char		*buf = NULL;
+	struct stat	 st;
+	off_t		 size;
+	ssize_t		 rv;
+	int		 err;
+
+	if (fstat(fd, &st) != 0)
+		goto fail;
+	size = st.st_size;
+	if ((buf = calloc(1, size + 1)) == NULL)
+		goto fail;
+	if ((rv = pread(fd, buf, size, 0)) != size)
+		goto fail;
+
+	close(fd);
+
+	*len = size;
+	return (buf);
+
+ fail:
+	err = errno;
+	free(buf);
+	close(fd);
+	errno = err;
+	return (NULL);
+}
+
+int
+relay_load_certfiles(struct relayd *env, struct relay *rlay)
+{
+	char	 certfile[PATH_MAX];
+	char	 hbuf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+	struct protocol *proto = rlay->rl_proto;
+	int	 useport = htons(rlay->rl_conf.port);
+
+	if (rlay->rl_conf.flags & F_TLSCLIENT) {
+		if (strlen(proto->tlsca)) {
+			if ((rlay->rl_tls_ca_fd =
+			    open(proto->tlsca, O_RDONLY)) == -1)
+				return (-1);
+			log_debug("%s: using ca %s", __func__, proto->tlsca);
+		}
+		if (strlen(proto->tlscacert)) {
+			if ((rlay->rl_tls_cacert_fd =
+			    open(proto->tlscacert, O_RDONLY)) == -1)
+				return (-1);
+			log_debug("%s: using ca certificate %s", __func__,
+			    proto->tlscacert);
+		}
+		if (strlen(proto->tlscakey) && proto->tlscapass != NULL) {
+			if ((rlay->rl_tls_cakey =
+			    ssl_load_key(env, proto->tlscakey,
+			    &rlay->rl_conf.tls_cakey_len,
+			    proto->tlscapass)) == NULL)
+				return (-1);
+			log_debug("%s: using ca key %s", __func__,
+			    proto->tlscakey);
+		}
+	}
+
+	if ((rlay->rl_conf.flags & F_TLS) == 0)
+		return (0);
+
+	if (print_host(&rlay->rl_conf.ss, hbuf, sizeof(hbuf)) == NULL)
+		return (-1);
+
+	if (snprintf(certfile, sizeof(certfile),
+	    "/etc/ssl/%s:%u.crt", hbuf, useport) == -1)
+		return (-1);
+	if ((rlay->rl_tls_cert_fd = open(certfile, O_RDONLY)) == -1) {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/%s.crt", hbuf) == -1)
+			return (-1);
+		if ((rlay->rl_tls_cert_fd = open(certfile, O_RDONLY)) == -1)
+			return (-1);
+		useport = 0;
+	}
+	log_debug("%s: using certificate %s", __func__, certfile);
+
+	if (useport) {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/private/%s:%u.key", hbuf, useport) == -1)
+			return -1;
+	} else {
+		if (snprintf(certfile, sizeof(certfile),
+		    "/etc/ssl/private/%s.key", hbuf) == -1)
+			return -1;
+	}
+	if ((rlay->rl_tls_key = ssl_load_key(env, certfile,
+	    &rlay->rl_conf.tls_key_len, NULL)) == NULL)
+		return (-1);
+	log_debug("%s: using private key %s", __func__, certfile);
+
+	return (0);
 }
 
 void

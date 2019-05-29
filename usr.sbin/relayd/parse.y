@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.234 2019/05/10 09:15:00 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.235 2019/05/29 11:48:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1755,7 +1755,7 @@ relay		: RELAY STRING	{
 				rlay->rl_proto = &conf->sc_proto_default;
 				rlay->rl_conf.proto = conf->sc_proto_default.id;
 			}
-			if (relay_load_certfiles(rlay) == -1) {
+			if (relay_load_certfiles(conf, rlay) == -1) {
 				yyerror("cannot load certificates for relay %s",
 				    rlay->rl_conf.name);
 				YYERROR;
@@ -3293,7 +3293,7 @@ relay_inherit(struct relay *ra, struct relay *rb)
 		yyerror("relay %s defined twice", rb->rl_conf.name);
 		goto err;
 	}
-	if (relay_load_certfiles(rb) == -1) {
+	if (relay_load_certfiles(conf, rb) == -1) {
 		yyerror("cannot load certificates for relay %s",
 		    rb->rl_conf.name);
 		goto err;

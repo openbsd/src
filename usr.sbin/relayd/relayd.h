@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.255 2019/05/13 09:54:07 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.256 2019/05/29 11:48:29 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -1183,8 +1183,6 @@ void	 relay(struct privsep *, struct privsep_proc *);
 int	 relay_privinit(struct relay *);
 void	 relay_notify_done(struct host *, const char *);
 int	 relay_session_cmp(struct rsession *, struct rsession *);
-char	*relay_load_fd(int, off_t *);
-int	 relay_load_certfiles(struct relay *);
 void	 relay_close(struct rsession *, const char *, int);
 int	 relay_reset_event(struct rsession *, struct ctl_relay_event *);
 void	 relay_natlook(int, short, void *);
@@ -1298,6 +1296,8 @@ struct relay	*relay_findbyname(struct relayd *, const char *);
 struct relay	*relay_findbyaddr(struct relayd *, struct relay_config *);
 EVP_PKEY	*pkey_find(struct relayd *, char *hash);
 struct ca_pkey	*pkey_add(struct relayd *, EVP_PKEY *, char *hash);
+char		*relay_load_fd(int, off_t *);
+int		 relay_load_certfiles(struct relayd *, struct relay *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_key(char **, off_t);
