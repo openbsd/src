@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.8 2019/05/29 19:34:42 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.9 2019/05/29 20:05:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1118,8 +1118,23 @@ yylex_token_escape(char **buf, size_t *len)
 	switch (ch) {
 	case EOF:
 		return (0);
+	case 'a':
+		ch = '\a';
+		break;
+	case 'b':
+		ch = '\b';
+		break;
 	case 'e':
 		ch = '\033';
+		break;
+	case 'f':
+		ch = '\f';
+		break;
+	case 's':
+		ch = ' ';
+		break;
+	case 'v':
+		ch = '\v';
 		break;
 	case 'r':
 		ch = '\r';

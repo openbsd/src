@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.20 2019/05/28 07:18:42 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.21 2019/05/29 20:05:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -246,7 +246,7 @@ window_buffer_draw(__unused void *modedata, void *itemdata,
 		at = 0;
 		while (end != pdata + psize && *end != '\n') {
 			if ((sizeof line) - at > 5) {
-				cp = vis(line + at, *end, VIS_TAB|VIS_OCTAL, 0);
+				cp = vis(line + at, *end, VIS_OCTAL|VIS_TAB, 0);
 				at = cp - line;
 			}
 			end++;
