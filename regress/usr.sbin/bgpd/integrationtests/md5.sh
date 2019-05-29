@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: md5.sh,v 1.2 2019/02/27 05:41:32 benno Exp $
+#	$OpenBSD: md5.sh,v 1.3 2019/05/29 08:54:53 claudio Exp $
 
 set -e
 
@@ -62,11 +62,6 @@ route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.md5.rdomain2.conf
 
 sleep 3
-echo debuging
-route -T ${RDOMAIN1} exec bgpctl neigh RDOMAIN2 clear
-route -T ${RDOMAIN2} exec bgpctl neigh RDOMAIN1 clear
-sleep 20
-tail -25 /var/log/daemon
 
 echo test1
 route -T ${RDOMAIN1} exec bgpctl sh sum | \
@@ -75,8 +70,6 @@ route -T ${RDOMAIN1} exec bgpctl sh sum | \
 		else { print "no session"; exit 1; } 
 	}} END { if (f != 1) { print "bad bgpctl output"; exit 2; }}'
 
-sleep 1
-
 echo test2
 route -T ${RDOMAIN2} exec bgpctl sh sum | \
 	awk '{ if ($1 ~ /^RDOMAIN1/) { f=1; print $7; 
@@ -84,6 +77,24 @@ route -T ${RDOMAIN2} exec bgpctl sh sum | \
 		else { print "no session"; exit 1; } 
 	}} END { if (f != 1) { print "bad bgpctl output"; exit 2; }}'
 
-sleep 1
+echo resetting sessions
+route -T ${RDOMAIN1} exec bgpctl neigh RDOMAIN2 clear
+#route -T ${RDOMAIN2} exec bgpctl neigh RDOMAIN1 clear
+sleep 10
+#tail -25 /var/log/daemon
+
+echo test3
+route -T ${RDOMAIN1} exec bgpctl sh sum | \
+	awk '{ if ($1 ~ /^RDOMAIN2/) { f=1; print $7; 
+		if ($7 == "0") { print "ok"; exit 0; }
+		else { print "no session"; exit 1; } 
+	}} END { if (f != 1) { print "bad bgpctl output"; exit 2; }}'
+
+echo test4
+route -T ${RDOMAIN2} exec bgpctl sh sum | \
+	awk '{ if ($1 ~ /^RDOMAIN1/) { f=1; print $7; 
+		if ($7 == "0") { print "ok"; exit 0; }
+		else { print "no session"; exit 1; } 
+	}} END { if (f != 1) { print "bad bgpctl output"; exit 2; }}'
 
 exit 0
