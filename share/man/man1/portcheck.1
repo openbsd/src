@@ -1,4 +1,4 @@
-.\"     $OpenBSD: portcheck.1,v 1.1 2018/06/26 05:38:49 espie Exp $
+.\"     $OpenBSD: portcheck.1,v 1.2 2019/05/29 19:37:06 fcambus Exp $
 .\"
 .\" Copyright (c) 2013 Vadim Zhukov
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2018 $
+.Dd $Mdocdate: May 29 2019 $
 .Dt PORTCHECK 1
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ be left by mistake when creating a new port based on another one.
 Excludes files and subdirectories matching given shell globbing pattern
 from any checks.
 Note that matching is done against relative path, and not against
-absoulte path or base name either.
+absolute path or base name either.
 I.e., to exclude the
 .Dq x11/kde4/libs/logs
 from checks, you must pass the whole line as argument, not just

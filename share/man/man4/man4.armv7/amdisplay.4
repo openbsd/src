@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amdisplay.4,v 1.3 2017/08/18 22:53:48 ians Exp $
+.\"	$OpenBSD: amdisplay.4,v 1.4 2019/05/29 19:37:06 fcambus Exp $
 .\"
 .\" Copyright (c) 2017 Ian Sutton <ians@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2017 $
+.Dd $Mdocdate: May 29 2019 $
 .Dt AMDISPLAY 4 armv7
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ The
 driver supports the LCD controller integrated in Texas Instruments' line of
 AM335x SoCs.
 The LCDC reads a framebuffer from memory via DMA and scans it out
-at the proper frequency to suit a display (along with the neccesary
+at the proper frequency to suit a display (along with the necessary
 hsync/vsync/etc. signals) to a PHY transmitter.
 The BeagleBone Black uses NXP/Freescale's TDA19988 HDMI transmitter,
 which is additionally supported by the
