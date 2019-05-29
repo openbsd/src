@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.47 2019/05/28 17:34:32 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.48 2019/05/29 17:25:27 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -677,6 +677,9 @@ tlsext_sni_server_parse(SSL *s, CBS *cbs, int *alert)
 int
 tlsext_sni_server_needs(SSL *s)
 {
+	if (s->internal->hit)
+		return 0;
+
 	return (s->session->tlsext_hostname != NULL);
 }
 
