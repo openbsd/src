@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.10 2019/05/24 05:59:13 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.11 2019/05/29 04:31:16 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -1888,6 +1888,7 @@ struct mcx_softc {
 	int			 sc_flow_group_id;
 	uint16_t		 sc_flow_counter_id[4];
 	int			 sc_flow_table_entry;
+	int			 sc_hardmtu;
 
 	struct mcx_cq		 sc_cq[MCX_MAX_CQS];
 	int			 sc_num_cq;
@@ -1928,10 +1929,7 @@ static int	mcx_version(struct mcx_softc *);
 static int	mcx_init_wait(struct mcx_softc *);
 static int	mcx_enable_hca(struct mcx_softc *);
 static int	mcx_teardown_hca(struct mcx_softc *, uint16_t);
-static int	mcx_read_hca_reg(struct mcx_softc *, uint16_t, void *, int);
-#if 0
-static int	mcx_write_hca_reg(struct mcx_softc *, uint16_t, const void *, int);
-#endif
+static int	mcx_access_hca_reg(struct mcx_softc *, uint16_t, int, void *, int);
 static int	mcx_issi(struct mcx_softc *);
 static int	mcx_pages(struct mcx_softc *, struct mcx_hwmem *, uint16_t);
 static int	mcx_hca_max_caps(struct mcx_softc *);
@@ -1945,6 +1943,7 @@ static int	mcx_alloc_tdomain(struct mcx_softc *);
 static int	mcx_create_eq(struct mcx_softc *);
 static int	mcx_query_nic_vport_context(struct mcx_softc *);
 static int	mcx_query_special_contexts(struct mcx_softc *);
+static int	mcx_set_port_mtu(struct mcx_softc *, int);
 static int	mcx_create_cq(struct mcx_softc *, int);
 static int	mcx_destroy_cq(struct mcx_softc *, int);
 static int	mcx_create_sq(struct mcx_softc *, int);
@@ -2193,6 +2192,11 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
+	if (mcx_set_port_mtu(sc, MCX_HARDMTU) != 0) {
+		/* error printed by mcx_set_port_mtu */
+		goto teardown;
+	}
+
 	/* PRM makes no mention of msi interrupts, just legacy and msi-x */
 	if (pci_intr_map_msix(pa, 0, &sc->sc_ih) != 0 &&
 	    pci_intr_map(pa, &sc->sc_ih) != 0) {
@@ -2218,7 +2222,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = mcx_ioctl;
 	ifp->if_qstart = mcx_start;
 	ifp->if_watchdog = mcx_watchdog;
-	ifp->if_hardmtu = MCX_HARDMTU;
+	ifp->if_hardmtu = sc->sc_hardmtu;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1024);
 
@@ -2694,7 +2698,7 @@ mcx_cmdq_mbox_dump(struct mcx_dmamem *mboxes, int num)
 #endif
 
 static int
-mcx_read_hca_reg(struct mcx_softc *sc, uint16_t reg, void *data, int len)
+mcx_access_hca_reg(struct mcx_softc *sc, uint16_t reg, int op, void *data, int len)
 {
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
@@ -2709,7 +2713,7 @@ mcx_read_hca_reg(struct mcx_softc *sc, uint16_t reg, void *data, int len)
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_ACCESS_REG);
-	in->cmd_op_mod = htobe16(MCX_REG_OP_READ);
+	in->cmd_op_mod = htobe16(op);
 	in->cmd_register_id = htobe16(reg);
 
 	nmb = howmany(len, MCX_CMDQ_MAILBOX_DATASIZE);
@@ -2749,14 +2753,6 @@ free:
 
 	return (error);
 }
-
-#if 0
-static int
-mcx_write_hca_reg(struct mcx_softc *sc, uint16_t reg, const uint8_t *data, int len)
-{
-	return (0);
-}
-#endif
 
 static int
 mcx_set_issi(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe, unsigned int slot)
@@ -3309,7 +3305,7 @@ mcx_iff(struct mcx_softc *sc)
 		return (-1);
 	}
 	ctx = (struct mcx_nic_vport_ctx *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 240);
-	ctx->vp_mtu = htobe32(MCX_HARDMTU);
+	ctx->vp_mtu = htobe32(sc->sc_hardmtu);
 	ctx->vp_flags = htobe16(MCX_NIC_VPORT_CTX_PROMISC_UCAST |
 	    MCX_NIC_VPORT_CTX_PROMISC_MCAST |
 	    MCX_NIC_VPORT_CTX_PROMISC_ALL);
@@ -3627,6 +3623,33 @@ mcx_query_special_contexts(struct mcx_softc *sc)
 
 	sc->sc_lkey = betoh32(out->cmd_resd_lkey);
 	return (0);
+}
+
+static int
+mcx_set_port_mtu(struct mcx_softc *sc, int mtu)
+{
+	struct mcx_reg_pmtu pmtu;
+	int error;
+
+	/* read max mtu */
+	memset(&pmtu, 0, sizeof(pmtu));
+	pmtu.rp_local_port = 1;
+	error = mcx_access_hca_reg(sc, MCX_REG_PMTU, MCX_REG_OP_READ, &pmtu, sizeof(pmtu));
+	if (error != 0) {
+		printf(", unable to get port MTU\n");
+		return error;
+	}
+
+	mtu = min(mtu, betoh16(pmtu.rp_max_mtu));
+	pmtu.rp_admin_mtu = htobe16(mtu);
+	error = mcx_access_hca_reg(sc, MCX_REG_PMTU, MCX_REG_OP_WRITE, &pmtu, sizeof(pmtu));
+	if (error != 0) {
+		printf(", unable to set port MTU\n");
+		return error;
+	}
+
+	sc->sc_hardmtu = mtu;
+	return 0;
 }
 
 static int
@@ -5279,7 +5302,7 @@ mcx_rx_fill(struct mcx_softc *sc)
 		return (1);
 
 	slots = mcx_rx_fill_slots(sc, MCX_DMA_KVA(&sc->sc_rq_mem), sc->sc_rx_slots,
-	    &sc->sc_rx_prod, MCLBYTES, slots);
+	    &sc->sc_rx_prod, sc->sc_hardmtu, slots);
 	if_rxr_put(&sc->sc_rxr, slots);
 	return (0);
 }
@@ -5536,8 +5559,8 @@ mcx_up(struct mcx_softc *sc)
 
 	for (i = 0; i < (1 << MCX_LOG_RQ_SIZE); i++) {
 		ms = &sc->sc_rx_slots[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ms->ms_map) != 0) {
+		if (bus_dmamap_create(sc->sc_dmat, sc->sc_hardmtu, 1, sc->sc_hardmtu,
+		    0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ms->ms_map) != 0) {
 			printf("%s: failed to allocate rx dma maps\n",
 			    DEVNAME(sc));
 			goto destroy_rx_slots;
@@ -5553,8 +5576,8 @@ mcx_up(struct mcx_softc *sc)
 
 	for (i = 0; i < (1 << MCX_LOG_SQ_SIZE); i++) {
 		ms = &sc->sc_tx_slots[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    MCX_SQ_MAX_SEGMENTS, MCLBYTES, 0, BUS_DMA_WAITOK |
+		if (bus_dmamap_create(sc->sc_dmat, sc->sc_hardmtu,
+		    MCX_SQ_MAX_SEGMENTS, sc->sc_hardmtu, 0, BUS_DMA_WAITOK |
 		    BUS_DMA_ALLOCNOW, &ms->ms_map) != 0) {
 			printf("%s: failed to allocate tx dma maps\n",
 			    DEVNAME(sc));
@@ -5739,7 +5762,7 @@ mcx_get_sffpage(struct ifnet *ifp, struct if_sffpage *sff)
 	/* get module number */
 	memset(&pmlp, 0, sizeof(pmlp));
 	pmlp.rp_local_port = 1;
-	error = mcx_read_hca_reg(sc, MCX_REG_PMLP, &pmlp, sizeof(pmlp));
+	error = mcx_access_hca_reg(sc, MCX_REG_PMLP, MCX_REG_OP_READ, &pmlp, sizeof(pmlp));
 	if (error != 0) {
 		printf("%s: unable to get eeprom module number\n",
 		    DEVNAME(sc));
@@ -5756,7 +5779,7 @@ mcx_get_sffpage(struct ifnet *ifp, struct if_sffpage *sff)
 		mcia.rm_dev_addr = htobe16(offset);
 		mcia.rm_size = htobe16(MCX_MCIA_EEPROM_BYTES);
 
-		error = mcx_read_hca_reg(sc, MCX_REG_MCIA, &mcia, sizeof(mcia));
+		error = mcx_access_hca_reg(sc, MCX_REG_MCIA, MCX_REG_OP_READ, &mcia, sizeof(mcia));
 		if (error != 0) {
 			printf("%s: unable to read eeprom at %x\n",
 			    DEVNAME(sc), offset);
@@ -5775,7 +5798,7 @@ mcx_rxrinfo(struct mcx_softc *sc, struct if_rxrinfo *ifri)
 	struct if_rxring_info ifr;
 
 	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_size = MCLBYTES;
+	ifr.ifr_size = sc->sc_hardmtu;
 	ifr.ifr_info = sc->sc_rxr;
 
 	return (if_rxr_info_ioctl(ifri, 1, &ifr));
@@ -5976,7 +5999,7 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ptys.rp_local_port = 1;
 	ptys.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH;
 
-	if (mcx_read_hca_reg(sc, MCX_REG_PTYS, &ptys, sizeof(ptys)) != 0) {
+	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_READ, &ptys, sizeof(ptys)) != 0) {
 		printf("%s: unable to read port type/speed\n", DEVNAME(sc));
 		return;
 	}
