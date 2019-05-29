@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpathtest.c,v 1.6 2019/05/13 21:47:09 beck Exp $ */
+/*	$OpenBSD: realpathtest.c,v 1.7 2019/05/29 13:53:59 beck Exp $ */
 
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <limits.h>
@@ -111,6 +112,15 @@ main(int argc, char *argv[])
 	RP_SHOULD_FAIL("//.//usr/bin/.././../herp/derp", r2, r3);
 	RP_SHOULD_FAIL("/../.../usr/bin", r2, r3);
 	RP_SHOULD_FAIL("/bsd/herp", r2, r3);
+
+	/* relative paths */
+	if (mkdir("hoobla", 0755) == -1) {
+		if (errno != EEXIST)
+			err(1, "mkdir");
+	}
+	RP_SHOULD_SUCCEED("hoobla", r2, r3);
+	RP_SHOULD_SUCCEED("hoobla/porkrind", r2, r3); /* XXX posix */
+	RP_SHOULD_FAIL("hoobla/porkrind/peepee", r2, r3);
 
 	/* total size */
 	memset(big, '/', PATH_MAX + 1);
