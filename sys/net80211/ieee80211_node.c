@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.165 2019/05/11 23:27:08 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.166 2019/05/29 07:17:26 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -814,8 +814,7 @@ ieee80211_begin_scan(struct ifnet *ifp)
 	 * Reset the current mode. Setting the current mode will also
 	 * reset scan state.
 	 */
-	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO ||
-	    (ic->ic_caps & IEEE80211_C_SCANALLBAND))
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ieee80211_setmode(ic, ic->ic_curmode);
 
