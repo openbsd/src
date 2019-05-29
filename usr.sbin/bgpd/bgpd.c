@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.218 2019/05/27 09:14:32 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.219 2019/05/29 08:48:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -799,11 +799,9 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 				log_warnx("pfkey reload: no such peer: id=%u",
 				    imsg.hdr.peerid);
 			else {
-				pfkey_remove(p);
-				if (pfkey_establish(p) == -1) {
+				if (pfkey_establish(p) == -1)
 					log_peer_warnx(&p->conf,
 					    "pfkey setup failed");
-				}
 			}
 			break;
 		case IMSG_CTL_RELOAD:

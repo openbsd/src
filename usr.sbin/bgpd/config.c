@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.89 2019/05/27 09:14:32 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.90 2019/05/29 08:48:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -322,6 +322,9 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 			np->reconf_action = RECONF_KEEP;
 			/* copy the auth state since parent uses it */
 			np->auth = p->auth;
+		} else {
+			/* peer no longer exists, clear pfkey state */
+			pfkey_remove(p);
 		}
 
 		RB_REMOVE(peer_head, &xconf->peers, p);
