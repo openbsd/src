@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.150 2019/05/28 06:49:46 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.151 2019/05/29 18:48:33 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -474,7 +474,7 @@ int
 ntp_dispatch_imsg_dns(void)
 {
 	struct imsg		 imsg;
-	struct ntp_peer		*peer, *npeer;
+	struct ntp_peer		*peer, *npeer, *tmp;
 	u_int16_t		 dlen;
 	u_char			*p;
 	struct ntp_addr		*h;
@@ -502,6 +502,21 @@ ntp_dispatch_imsg_dns(void)
 			if (peer->addr != NULL) {
 				log_warnx("IMSG_HOST_DNS but addr != NULL!");
 				break;
+			}
+
+			/*
+			 * For the redo dns case we want to have only one clone
+			 * of the pool peer, since it wil be cloned again
+			 */
+			if (peer->addr_head.pool) {
+				TAILQ_FOREACH_SAFE(npeer, &conf->ntp_peers,
+				    entry, tmp) {
+					if (npeer->id == peer->id)
+						continue;
+					if (strcmp(npeer->addr_head.name,
+					    peer->addr_head.name) == 0)
+						peer_remove(npeer);
+				}
 			}
 
 			dlen = imsg.hdr.len - IMSG_HEADER_SIZE;
@@ -576,6 +591,19 @@ peer_remove(struct ntp_peer *p)
 	TAILQ_REMOVE(&conf->ntp_peers, p, entry);
 	free(p);
 	peer_cnt--;
+}
+
+void
+peer_addr_head_clear(struct ntp_peer *p)
+{
+	struct ntp_addr *a = p->addr_head.a;
+	while (a) {
+		struct ntp_addr *next = a->next;
+		free(a);
+		a = next;
+	}
+	p->addr_head.a = NULL;
+	p->addr = NULL;
 }
 
 static void

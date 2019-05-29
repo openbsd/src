@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.105 2017/05/30 23:30:48 benno Exp $ */
+/*	$OpenBSD: client.c,v 1.106 2019/05/29 18:48:33 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -129,6 +129,12 @@ client_query(struct ntp_peer *p)
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
 		set_next(p, MAXIMUM(SETTIME_TIMEOUT,
 		    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
+		return (0);
+	}
+
+	if (conf->status.synced && p->addr->notauth) {
+		peer_addr_head_clear(p);
+		client_nextaddr(p);
 		return (0);
 	}
 

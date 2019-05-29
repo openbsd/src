@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.139 2019/05/28 06:49:46 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.140 2019/05/29 18:48:33 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -313,6 +313,7 @@ enum ctl_actions {
 
 /* ntp.c */
 void	 ntp_main(struct ntpd_conf *, struct passwd *, int, char **);
+void	 peer_addr_head_clear(struct ntp_peer *);
 int	 priv_adjtime(void);
 void	 priv_settime(double);
 void	 priv_dns(int, char *, u_int32_t);
