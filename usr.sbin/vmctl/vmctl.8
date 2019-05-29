@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.66 2019/05/14 12:47:17 schwarze Exp $
+.\"	$OpenBSD: vmctl.8,v 1.67 2019/05/29 21:32:43 reyk Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 14 2019 $
+.Dd $Mdocdate: May 29 2019 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ Using
 .Xr cu 1
 connect to the console of the VM with the specified
 .Ar id .
-.It Cm create Ar disk Oo Fl b Ar base | Fl i Ar disk Oc Op Fl s Ar size
+.It Cm create Oo Fl b Ar base | Fl i Ar disk Oc Oo Fl s Ar size Oc Ar disk
 Create a VM disk image file with the specified
 .Ar disk
 path.
@@ -144,7 +144,7 @@ under the same path.
 An alias for the
 .Cm status
 command.
-.It Xo Cm start Ar id | name
+.It Xo Cm start
 .Op Fl cL
 .Bk -words
 .Op Fl B Ar device
@@ -155,6 +155,7 @@ command.
 .Op Fl n Ar switch
 .Op Fl r Ar path
 .Op Fl t Ar name
+.Ar id | name
 .Ek
 .Xc
 Start a new VM
@@ -240,7 +241,7 @@ interface names.
 .It Cm status Op Ar id
 List VMs running on the host, optionally listing just the selected VM
 .Ar id .
-.It Cm stop Oo Ar id | Fl a Oc Op Fl fw
+.It Cm stop Oo Fl fw Oc Oo Fl a | Ar id Oc 
 Stop (terminate) a VM defined by the specified VM
 .Ar id
 or all running VMs
@@ -394,7 +395,7 @@ A requested VM-based operation could not be completed.
 .Sh EXAMPLES
 Create a 4.5 Gigabyte disk image, disk.img:
 .Bd -literal -offset indent
-$ vmctl create disk.img -s 4.5G
+$ vmctl create -s 4.5G disk.img
 .Ed
 .Pp
 Convert a disk image from the
@@ -402,19 +403,19 @@ Convert a disk image from the
 format to
 .Sq qcow2 :
 .Bd -literal -offset indent
-$ vmctl create disk.qcow2 -i disk.img
+$ vmctl create -i disk.img disk.qcow2
 .Ed
 .Pp
 Create a new VM with 1GB memory, one network interface, one disk image
 ('disk.img') and boot from kernel '/bsd':
 .Bd -literal -offset indent
-# vmctl start "myvm" -m 1G -i 1 -b /bsd -d disk.img
+# vmctl start -m 1G -i 1 -b /bsd -d disk.img "myvm"
 .Ed
 .Pp
 Start a new VM instance with the name 'myvm' from a pre-configured
 VM 'openbsd.4G':
 .Bd -literal -offset indent
-# vmctl start "myvm" -t "openbsd.4G" -d mydisk.img
+# vmctl start -t "openbsd.4G" -d mydisk.img "myvm"
 .Ed
 .Pp
 Terminate VM number 1:

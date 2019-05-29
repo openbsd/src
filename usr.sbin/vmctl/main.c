@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2019/03/18 20:27:12 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.56 2019/05/29 21:32:43 reyk Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -72,7 +72,7 @@ int		 ctl_receive(struct parse_result *, int, char *[]);
 struct ctl_command ctl_commands[] = {
 	{ "console",	CMD_CONSOLE,	ctl_console,	"id" },
 	{ "create",	CMD_CREATE,	ctl_create,
-		"disk [-b base | -i disk] [-s size]", 1 },
+		"[-b base | -i disk] [-s size] disk", 1 },
 	{ "load",	CMD_LOAD,	ctl_load,	"filename" },
 	{ "log",	CMD_LOG,	ctl_log,	"[brief | verbose]" },
 	{ "pause",	CMD_PAUSE,	ctl_pause,	"id" },
@@ -81,11 +81,11 @@ struct ctl_command ctl_commands[] = {
 	{ "reset",	CMD_RESET,	ctl_reset,	"[all | switches | vms]" },
 	{ "send",	CMD_SEND,	ctl_send,	"id",	1},
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
-	{ "start",	CMD_START,	ctl_start,	"id | name"
+	{ "start",	CMD_START,	ctl_start,
 	    " [-cL] [-B device] [-b path] [-d disk] [-i count]\n"
-	    "\t\t[-m size] [-n switch] [-r path] [-t name]" },
+	    "\t\t[-m size] [-n switch] [-r path] [-t name] id | name" },
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
-	{ "stop",	CMD_STOP,	ctl_stop,	"[id | -a] [-fw]" },
+	{ "stop",	CMD_STOP,	ctl_stop,	"[-fw] [id | -a]" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
 	{ "wait",	CMD_WAITFOR,	ctl_waitfor,	"id" },
 	{ NULL }
@@ -561,21 +561,7 @@ int
 ctl_create(struct parse_result *res, int argc, char *argv[])
 {
 	int		 ch, ret, type;
-	const char	*disk, *format, *base, *input;
-
-	if (argc < 2)
-		ctl_usage(res->ctl);
-
-	base = input = NULL;
-	type = parse_disktype(argv[1], &disk);
-
-	if (pledge("stdio rpath wpath cpath unveil", NULL) == -1)
-		err(1, "pledge");
-	if (unveil(disk, "rwc") == -1)
-		err(1, "unveil");
-
-	argc--;
-	argv++;
+	const char	*disk, *format, *base = NULL, *input = NULL;
 
 	while ((ch = getopt(argc, argv, "b:i:s:")) != -1) {
 		switch (ch) {
@@ -601,8 +587,15 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0)
+	if (argc < 1)
 		ctl_usage(res->ctl);
+
+	type = parse_disktype(argv[0], &disk);
+
+	if (pledge("stdio rpath wpath cpath unveil", NULL) == -1)
+		err(1, "pledge");
+	if (unveil(disk, "rwc") == -1)
+		err(1, "unveil");
 
 	if (input) {
 		if (base && input)
@@ -839,15 +832,6 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	char		 path[PATH_MAX];
 	const char	*s;
 
-	if (argc < 2)
-		ctl_usage(res->ctl);
-
-	if (parse_vmid(res, argv[1], 0) == -1)
-		errx(1, "invalid id: %s", argv[1]);
-
-	argc--;
-	argv++;
-
 	while ((ch = getopt(argc, argv, "b:B:cd:i:Lm:n:r:t:")) != -1) {
 		switch (ch) {
 		case 'b':
@@ -920,8 +904,11 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0)
+	if (argc != 1)
 		ctl_usage(res->ctl);
+
+	if (parse_vmid(res, argv[0], 0) == -1)
+		errx(1, "invalid id: %s", argv[0]);
 
 	for (i = res->nnets; i < res->nifs; i++) {
 		/* Add interface that is not attached to a switch */
@@ -938,14 +925,6 @@ int
 ctl_stop(struct parse_result *res, int argc, char *argv[])
 {
 	int		 ch, ret;
-
-	if (argc < 2)
-		ctl_usage(res->ctl);
-
-	if ((ret = parse_vmid(res, argv[1], 0)) == 0) {
-		argc--;
-		argv++;
-	}
 
 	while ((ch = getopt(argc, argv, "afw")) != -1) {
 		switch (ch) {
@@ -966,8 +945,12 @@ ctl_stop(struct parse_result *res, int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0)
+	if (argc > 1)
 		ctl_usage(res->ctl);
+	else if (argc == 1)
+		ret = parse_vmid(res, argv[0], 0);
+	else
+		ret = -1;
 
 	/* VM id is only expected without the -a flag */
 	if ((res->action != CMD_STOPALL && ret == -1) ||
