@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.35 2019/05/30 13:11:53 deraadt Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.36 2019/05/30 13:34:54 beck Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -405,8 +405,8 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 
 	path = malloc(len, M_TEMP, M_WAITOK);
 
-	bp = &path[len];
-	*(--bp) = '\0';
+	bp = &path[len - 1];
+	*bp = '\0';
 
 	/*
 	 * 5th argument here is "max number of vnodes to traverse".
