@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.12 2019/05/30 03:56:26 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.13 2019/05/30 05:55:10 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2198,9 +2198,12 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
-	/* PRM makes no mention of msi interrupts, just legacy and msi-x */
-	if (pci_intr_map_msix(pa, 0, &sc->sc_ih) != 0 &&
-	    pci_intr_map(pa, &sc->sc_ih) != 0) {
+	/*
+	 * PRM makes no mention of msi interrupts, just legacy and msi-x.
+	 * mellanox support tells me legacy interrupts are not supported,
+	 * so we're stuck with just msi-x.
+	 */
+	if (pci_intr_map_msix(pa, 0, &sc->sc_ih) != 0) {
 		printf(": unable to map interrupt\n");
 		goto teardown;
 	}
