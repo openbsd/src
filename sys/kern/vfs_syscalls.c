@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.315 2019/05/13 22:55:27 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.316 2019/05/30 12:58:20 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -875,16 +875,13 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 		syscallarg(char *) resolved;
 	} */ *uap = v;
 	char *pathname;
-	char *cwdbuf;
 	char *rpbuf;
 	struct nameidata nd;
 	size_t pathlen;
-	int cwdlen = MAXPATHLEN * 4;
 	int error = 0;
 
 	pathname = pool_get(&namei_pool, PR_WAITOK);
 	rpbuf = pool_get(&namei_pool, PR_WAITOK);
-	cwdbuf = malloc(cwdlen, M_TEMP, M_WAITOK);
 
 	if ((error = copyinstr(SCARG(uap, pathname), pathname, MAXPATHLEN,
 	    &pathlen)))
@@ -898,26 +895,30 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 	/* Get cwd for relative path if needed, prepend to rpbuf */
 	rpbuf[0] = '\0';
 	if (pathname[0] != '/') {
-		char *path, *bp, *bend;
-		int lenused;
+		int cwdlen = MAXPATHLEN * 4; /* for vfs_getcwd_common */
+		char *cwdbuf, *bp;
 
-		bp = &cwdbuf[cwdlen];
-		bend = bp;
-		*(--bp) = '\0';
+		cwdbuf = malloc(cwdlen, M_TEMP, M_WAITOK);
 
-		error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp, path,
+		/* vfs_getcwd_common fills this in backwards */
+		bp = &cwdbuf[cwdlen - 1];
+		*bp = '\0';
+
+		error = vfs_getcwd_common(p->p_fd->fd_cdir, NULL, &bp, cwdbuf,
 		    cwdlen/2, GETCWD_CHECK_ACCESS, p);
 
-		if (error)
+		if (error) {
+			free(cwdbuf, M_TEMP, cwdlen);
 			goto end;
-
-		lenused = bend - bp;
-		*retval = lenused;
+		}
 
 		if (strlcpy(rpbuf, bp, MAXPATHLEN) >= MAXPATHLEN) {
+			free(cwdbuf, M_TEMP, cwdlen);
 			error = ENAMETOOLONG;
 			goto end;
 		}
+
+		free(cwdbuf, M_TEMP, cwdlen);
 	}
 
 	if (pathlen == 2 && pathname[0] == '/')
@@ -952,7 +953,6 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 end:
 	pool_put(&namei_pool, rpbuf);
 	pool_put(&namei_pool, pathname);
-	free(cwdbuf, M_TEMP, cwdlen);
 	return (error);
 }
 
