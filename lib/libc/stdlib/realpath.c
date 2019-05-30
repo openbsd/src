@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath.c,v 1.24 2019/05/29 11:54:49 deraadt Exp $ */
+/*	$OpenBSD: realpath.c,v 1.25 2019/05/30 13:22:48 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -32,6 +32,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <syslog.h>
+#include <stdarg.h>
 
 /* A slightly modified copy of this file exists in libexec/ld.so */
 
@@ -42,8 +44,8 @@
  * components.  Returns (resolved) on success, or (NULL) on failure,
  * in which case the path which caused trouble is left in (resolved).
  */
-char *
-realpath(const char *path, char *resolved)
+static char *
+urealpath(const char *path, char *resolved)
 {
 	const char *p;
 	char *q;
@@ -51,6 +53,7 @@ realpath(const char *path, char *resolved)
 	unsigned symlinks;
 	int serrno, mem_allocated;
 	ssize_t slen;
+	int trailingslash = 0;
 	char left[PATH_MAX], next_token[PATH_MAX], symlink[PATH_MAX];
 
 	if (path == NULL) {
@@ -230,4 +233,134 @@ err:
 	if (mem_allocated)
 		free(resolved);
 	return (NULL);
+}
+
+/*
+ * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION
+ * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+int __realpath(const char *pathname, char *resolved);
+PROTO_NORMAL(__realpath);
+
+/*
+ * wrapper for kernel __realpath
+ */
+
+char *
+realpath(const char *path, char *resolved)
+{
+	char pbuf[PATH_MAX], rbuf[PATH_MAX], expected[PATH_MAX];
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+	int usererrno = 0, kernelerrno = 0, trailingslash = 0, save_errno;
+	int kernelonly = (getenv("USE_KERNEL_REALPATH") != NULL);
+	ssize_t i;
+
+	rbuf[0] = pbuf[0] = expected[0] = '\0';
+
+	if (!kernelonly) {
+		memset(expected, 0, sizeof(expected));
+		if (urealpath(path, expected) == NULL) {
+			usererrno = errno;
+			expected[0] = '\0';
+		}
+	}
+
+	if (path == NULL) {
+		kernelerrno = EINVAL;
+		goto out;
+	}
+	if (path[0] == '\0') {
+		kernelerrno = ENOENT;
+		goto out;
+	}
+	if (strlcat(pbuf, path, sizeof(pbuf)) >= sizeof(pbuf)) {
+		kernelerrno = ENAMETOOLONG;
+		goto out;
+	}
+
+	if (pbuf[strlen(pbuf) - 1] == '/')
+		trailingslash = 1;
+
+	if (__realpath(pbuf, rbuf) == -1)
+		kernelerrno = errno;
+
+	/*
+	 * XXX XXX XXX
+	 *
+	 * The old userland implementation strips trailing slashes.
+	 * According to Dr. POSIX, realpathing "/bsd" should be fine,
+	 * realpathing "/bsd/" should return ENOTDIR.
+	 *
+	 * Similar, but *different* to the above, The old userland
+	 * implementation allows for realpathing "/nonexistent" but
+	 * not "/nonexistent/", Both those should return ENOENT
+	 * according to POSIX.
+	 *
+	 * This hack should go away once we decide to match POSIX.
+	 * which we should as soon as is convenient.
+	 */
+	if (kernelerrno == ENOTDIR) {
+		/* Try again without the trailing slash. */
+		kernelerrno = 0;
+		for (i = strlen(pbuf); i > 1 && pbuf[i - 1] == '/'; i--)
+			pbuf[i - 1] = '\0';
+		rbuf[0] = '\0';
+		if (__realpath(pbuf, rbuf) == -1)
+			kernelerrno = errno;
+	}
+
+out:
+	if (!kernelonly) {
+		/* syslog if kernel and userland are different */
+		save_errno = errno;
+		if (strcmp(rbuf, expected) != 0 || (usererrno == 0 &&
+		    kernelerrno != 0))
+			syslog_r(LOG_CRIT | LOG_CONS, &sdata,
+			    "realpath '%s' -> '%s' errno %d, "
+			    "expected '%s' errno %d", path, rbuf,
+			    kernelerrno, expected, usererrno);
+		errno = save_errno;
+
+		/* use userland result */
+		if (usererrno) {
+			errno = usererrno;
+			return NULL;
+		}
+		else
+			errno = 0;
+		if (resolved == NULL)
+			resolved = strdup(expected);
+		else if (strlcpy(resolved, expected, PATH_MAX) >= PATH_MAX) {
+			errno = ENAMETOOLONG;
+			return NULL;
+		}
+
+	} else {
+		/* use kernel result */
+		if (kernelerrno) {
+			errno = kernelerrno;
+			return NULL;
+		}
+		else
+			errno = 0;
+		if (resolved == NULL)
+			resolved = strdup(rbuf);
+		else if (strlcpy(resolved, rbuf, PATH_MAX) >= PATH_MAX) {
+			errno = ENAMETOOLONG;
+			return NULL;
+		}
+	}
+	return (resolved);
 }
