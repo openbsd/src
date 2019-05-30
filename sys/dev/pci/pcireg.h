@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.56 2018/08/03 22:18:13 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.57 2019/05/30 21:44:21 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -617,6 +617,7 @@ typedef u_int8_t pci_revision_t;
  * Extended Message Signaled Interrups; access via capability pointer.
  */
 #define PCI_MSIX_MC_MSIXE	0x80000000
+#define PCI_MSIX_MC_FM		0x40000000
 #define PCI_MSIX_MC_TBLSZ_MASK	0x07ff0000
 #define PCI_MSIX_MC_TBLSZ_SHIFT	16
 #define PCI_MSIX_MC_TBLSZ(reg)	\
@@ -626,7 +627,7 @@ typedef u_int8_t pci_revision_t;
 #define  PCI_MSIX_TABLE_OFF	~(PCI_MSIX_TABLE_BIR)
 
 #define PCI_MSIX_MA(i)		((i) * 16 + 0)
-#define PCI_MSIX_MAU32(i)	((i) * 16 + 0)
+#define PCI_MSIX_MAU32(i)	((i) * 16 + 4)
 #define PCI_MSIX_MD(i)		((i) * 16 + 8)
 #define PCI_MSIX_VC(i)		((i) * 16 + 12)
 #define  PCI_MSIX_VC_MASK	0x00000001
