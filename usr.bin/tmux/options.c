@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.46 2019/05/23 14:03:44 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.47 2019/05/30 20:54:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -365,7 +365,8 @@ options_array_set(struct options_entry *o, u_int idx, const char *value,
 		pr = cmd_parse_from_string(value, NULL);
 		switch (pr->status) {
 		case CMD_PARSE_EMPTY:
-			*cause = xstrdup("empty command");
+			if (cause != NULL)
+				*cause = xstrdup("empty command");
 			return (-1);
 		case CMD_PARSE_ERROR:
 			if (cause != NULL)

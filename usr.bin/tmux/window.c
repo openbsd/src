@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.229 2019/05/07 10:25:15 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.230 2019/05/30 20:54:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1136,7 +1136,7 @@ window_pane_reset_mode(struct window_pane *wp)
 	} else {
 		log_debug("%s: next mode is %s", __func__, next->mode->name);
 		wp->screen = next->screen;
-		if (next != NULL && next->mode->resize != NULL)
+		if (next->mode->resize != NULL)
 			next->mode->resize(next, wp->sx, wp->sy);
 	}
 	wp->flags |= (PANE_REDRAW|PANE_CHANGED);

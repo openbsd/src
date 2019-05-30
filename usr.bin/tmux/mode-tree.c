@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.33 2019/05/28 07:18:42 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.34 2019/05/30 20:54:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -480,7 +480,7 @@ mode_tree_add(struct mode_tree_data *mtd, struct mode_tree_item *parent,
 
 	saved = mode_tree_find_item(&mtd->saved, tag);
 	if (saved != NULL) {
-		if (parent == NULL || (parent != NULL && parent->expanded))
+		if (parent == NULL || parent->expanded)
 			mti->tagged = saved->tagged;
 		mti->expanded = saved->expanded;
 	} else if (expanded == -1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.154 2019/05/20 05:35:46 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.155 2019/05/30 20:54:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2409,7 +2409,6 @@ input_osc_52(struct input_ctx *ictx, const char *p)
 			outlen = 4 * ((len + 2) / 3) + 1;
 			out = xmalloc(outlen);
 			if ((outlen = b64_ntop(buf, len, out, outlen)) == -1) {
-				abort();
 				free(out);
 				return;
 			}
