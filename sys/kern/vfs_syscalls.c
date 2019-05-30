@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.316 2019/05/30 12:58:20 beck Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.317 2019/05/30 13:11:53 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -949,6 +949,10 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 	error = copyoutstr(nd.ni_cnd.cn_rpbuf, SCARG(uap, resolved),
 	    MAXPATHLEN, NULL);
 
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_NAMEI))
+		ktrnamei(p, nd.ni_cnd.cn_rpbuf);
+#endif
 	pool_put(&namei_pool, nd.ni_cnd.cn_pnbuf);
 end:
 	pool_put(&namei_pool, rpbuf);

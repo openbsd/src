@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.34 2019/05/30 13:10:23 deraadt Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.35 2019/05/30 13:11:53 deraadt Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -421,6 +421,11 @@ sys___getcwd(struct proc *p, void *v, register_t *retval)
 
 	/* Put the result into user buffer */
 	error = copyoutstr(bp, SCARG(uap, buf), MAXPATHLEN, NULL);
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_NAMEI))
+		ktrnamei(p, bp);
+#endif
 
 out:
 	free(path, M_TEMP, len);
