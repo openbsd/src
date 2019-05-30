@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.151 2019/05/29 18:48:33 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.152 2019/05/30 13:42:19 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -316,6 +316,11 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		    (peer_cnt == 0 && sensors_cnt == 0)))
 			priv_settime(0);	/* no good peers, don't wait */
 
+		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
+			if (constraint_query(cstr) == -1)
+				continue;
+		}
+
 		if (ibuf_main->w.queued > 0)
 			pfd[PFD_PIPE_MAIN].events |= POLLOUT;
 		if (ibuf_dns->w.queued > 0)
@@ -330,15 +335,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		}
 		ctls = i;
 
-		TAILQ_FOREACH(cstr, &conf->constraints, entry) {
-			if (constraint_query(cstr) == -1)
-				continue;
-		}
-
 		now = getmonotime();
-		if (constraint_cnt)
-			nextaction = now + 1;
-
 		timeout = nextaction - now;
 		if (timeout < 0)
 			timeout = 0;

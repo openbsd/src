@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.43 2019/05/28 06:49:46 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.44 2019/05/30 13:42:19 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -41,6 +41,7 @@
 #include <ctype.h>
 #include <tls.h>
 #include <pwd.h>
+#include <math.h>
 
 #include "ntpd.h"
 
@@ -773,7 +774,7 @@ constraint_update(void)
 {
 	struct constraint *cstr;
 	int	 cnt, i;
-	time_t	*sum;
+	time_t	*values;
 	time_t	 now;
 
 	now = getmonotime();
@@ -784,29 +785,31 @@ constraint_update(void)
 			continue;
 		cnt++;
 	}
+	if (cnt == 0)
+		return;
 
-	if ((sum = calloc(cnt, sizeof(time_t))) == NULL)
+	if ((values = calloc(cnt, sizeof(time_t))) == NULL)
 		fatal("calloc");
 
 	i = 0;
 	TAILQ_FOREACH(cstr, &conf->constraints, entry) {
 		if (cstr->state != STATE_REPLY_RECEIVED)
 			continue;
-		sum[i++] = cstr->constraint + (now - cstr->last);
+		values[i++] = cstr->constraint + (now - cstr->last);
 	}
 
-	qsort(sum, cnt, sizeof(time_t), constraint_cmp);
+	qsort(values, cnt, sizeof(time_t), constraint_cmp);
 
 	/* calculate median */
 	i = cnt / 2;
 	if (cnt % 2 == 0)
-		if (sum[i - 1] < sum[i])
-			i -= 1;
+		conf->constraint_median = (values[i - 1] + values[i]) / 2;
+	else
+		conf->constraint_median = values[i];
 
 	conf->constraint_last = now;
-	conf->constraint_median = sum[i];
 
-	free(sum);
+	free(values);
 }
 
 void
@@ -826,7 +829,7 @@ int
 constraint_check(double val)
 {
 	struct timeval	tv;
-	double		constraint;
+	double		diff;
 	time_t		now;
 
 	if (conf->constraint_median == 0)
@@ -836,10 +839,9 @@ constraint_check(double val)
 	now = getmonotime();
 	tv.tv_sec = conf->constraint_median + (now - conf->constraint_last);
 	tv.tv_usec = 0;
-	constraint = gettime_from_timeval(&tv);
+	diff = fabs(val - gettime_from_timeval(&tv));
 
-	if (((val - constraint) > CONSTRAINT_MARGIN) ||
-	    ((constraint - val) > CONSTRAINT_MARGIN)) {
+	if (diff > CONSTRAINT_MARGIN) {
 		/* XXX get new constraint if too many errors happened */
 		if (conf->constraint_errors++ >
 		    (CONSTRAINT_ERROR_MARGIN * peer_cnt)) {
