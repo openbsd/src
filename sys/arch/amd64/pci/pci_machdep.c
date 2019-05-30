@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.69 2018/08/19 08:23:47 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.70 2019/05/30 22:03:14 kettenis Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -475,7 +475,8 @@ msix_addroute(struct pic *pic, struct cpu_info *ci, int pin, int vec, int type)
 	    _bus_space_map(memt, base + offset, tblsz * 16, 0, &memh))
 		panic("%s: cannot map registers", __func__);
 
-	bus_space_write_8(memt, memh, PCI_MSIX_MA(entry), addr);
+	bus_space_write_4(memt, memh, PCI_MSIX_MA(entry), addr);
+	bus_space_write_4(memt, memh, PCI_MSIX_MAU32(entry), 0);
 	bus_space_write_4(memt, memh, PCI_MSIX_MD(entry), vec);
 	bus_space_barrier(memt, memh, PCI_MSIX_MA(entry), 16,
 	    BUS_SPACE_BARRIER_WRITE);
