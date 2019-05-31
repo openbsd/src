@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.510 2019/05/22 21:40:37 cwen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.511 2019/05/31 21:27:48 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 22 2019 $
+.Dd $Mdocdate: May 31 2019 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -491,13 +491,9 @@ with existing stuff, and saved if new, with loud complaints if it changed
 without a REVISION bump.
 Arch-independent packages are created in ${PACKAGE_REPOSITORY}/no-arch,
 and copied into ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/all as needed.
-If ${PERMIT_PACKAGE_FTP} is set to
+If ${PERMIT_PACKAGE} is set to
 .Sq Yes ,
 copies built packages into ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp, using
-hard links if possible.
-If ${PERMIT_PACKAGE_CDROM} is set to
-.Sq Yes ,
-copies built packages into ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom, using
 hard links if possible.
 .It Cm patch
 Apply distribution and
@@ -1237,14 +1233,10 @@ Deposits result in
 Can be set to
 .Sq Yes
 to compute a checksum for all packages,
-.Sq cdrom
-to compute it only for
-.Ev PERMIT_PACKAGE_CDROM
-packages
 or to
 .Sq ftp
 to compute it only for
-.Ev PERMIT_PACKAGE_FTP
+.Ev PERMIT_PACKAGE
 packages.
 Defaults to
 .Sq no ,
@@ -2327,10 +2319,10 @@ PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0.
-.It Ev PERMIT_DISTFILES_FTP , PERMIT_PACKAGE_CDROM , PERMIT_PACKAGE_FTP
+.It Ev PERMIT_DISTFILES , PERMIT_PACKAGE
 Set to
 .Sq Yes
-if package or distribution files can be allowed on FTP sites or CD-ROM without
+if the distribution files or the package can be allowed on FTP sites without
 legal issues.
 Set to reason not to otherwise.
 PERMIT_* lines in the Makefile should be preceded with a comment explaining
@@ -2339,20 +2331,10 @@ Porters must be very thorough in their checks.
 In case of doubt, ask.
 .Pp
 If
-.Ev PERMIT_PACKAGE_CDROM
+.Ev PERMIT_PACKAGE
 is set to
 .Sq Yes ,
-.Ev PERMIT_PACKAGE_FTP
-and
-.Ev PERMIT_DISTFILES_FTP
-will default to
-.Sq Yes .
-.Pp
-If
-.Ev PERMIT_PACKAGE_FTP
-is set to
-.Sq Yes ,
-.Ev PERMIT_DISTFILES_FTP
+.Ev PERMIT_DISTFILES
 will default to
 .Sq Yes .
 .It Ev PKG_ADD
@@ -3720,8 +3702,7 @@ must be in PLIST-lib.
 The following variables are subpackage dependent:
 .Ev COMMENT ,
 .Ev PKG_ARCH ,
-.Ev PERMIT_PACKAGE_FTP ,
-.Ev PERMIT_PACKAGE_CDROM ,
+.Ev PERMIT_PACKAGE
 .Ev PKGFILE ,
 .Ev PKGNAME ,
 .Ev PKGSTEM ,
@@ -4074,10 +4055,7 @@ Derived directly from
 .Ev PREFIX .
 .It Ev CDROM_PACKAGES
 Old user settings.
-Base location where packages suitable for a CD-ROM (see
-PERMIT_PACKAGE_CDROM) will be placed.
-Now hardwired to
-.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom .
+Base location where packages suitable for a CD-ROM would be placed.
 .It Ev COMMENT
 Used to be the name of the comment file for a package.
 It now holds the comment itself.
@@ -4166,7 +4144,7 @@ Use
 instead.
 .It Ev MIRROR_DISTFILE
 Use
-.Ev PERMIT_DISTFILES_FTP
+.Ev PERMIT_DISTFILES
 to determine which files can be mirrored instead.
 See
 .Xr mirroring-ports 7 .
@@ -4276,13 +4254,17 @@ becomes
 PATCHFILES=foo.diff.gz:0
 MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
-.It Ev PERMIT_DISTFILES_CDROM
+.\" keep the long form so searching can find them
+.It Ev PERMIT_DISTFILES_CDROM , PERMIT_DISTFILES_FTP , PERMIT_PACKAGE_CDROM , PERMIT_PACKAGE_FTP
 The
 .Ox
-project does not ship distfiles on cdrom.
-Concentrate on real questions instead, make sure
-.Ev PERMIT_PACKAGE_CDROM
-is set correctly.
+project no longer produces cdrom, so the
+.Ev PERMIT_*_CDROM
+variables were dropped,
+and
+.Ev PERMIT_DISTFILES_FTP / PERMIT_PACKAGE_FTP
+were shortened to
+.Ev PERMIT_DISTFILES / PERMIT_PACKAGE .
 .It Ev PKG_CMD
 Replaced by
 .Ev PKG_CREATE .
@@ -4330,7 +4312,7 @@ No longer needed with modern
 Port has cryptographic issues.
 .Ox
 focuses on
-.Ev PERMIT_PACKAGE_{FTP,CDROM}
+.Ev PERMIT_PACKAGE
 instead.
 .It Ev SED_PLIST
 Old pipeline for creating packing-lists at the ports level.
