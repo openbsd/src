@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.111 2019/05/13 21:13:04 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.112 2019/05/31 09:46:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -518,6 +518,10 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			}
 			break;
 		default:
+			if (oa == NULL && type >= ATTR_FIRST_UNKNOWN)
+				/* there is no attribute left to dump */
+				goto done;
+
 			if (oa == NULL || oa->type != type)
 				break;
 
@@ -537,9 +541,10 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 				return (-1);
 			break;
 		}
-		wlen += r; len -= r;
+		wlen += r;
+		len -= r;
 	}
-
+done:
 	return (wlen);
 }
 
