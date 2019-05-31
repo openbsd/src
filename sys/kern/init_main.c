@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.284 2019/02/26 14:24:21 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.285 2019/05/31 04:46:18 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -330,7 +330,7 @@ main(void *framep)
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
-	limit0.p_refcnt = 1;
+	limit0.pl_refcnt = 1;
 
 	/* Allocate a prototype map so we have something to fork. */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),

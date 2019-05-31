@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.59 2019/01/06 12:59:45 visa Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.60 2019/05/31 04:46:18 visa Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -236,7 +236,7 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 	if (limp->rlim_max > alimp->rlim_max)
 		if ((error = suser(p)) != 0)
 			return (error);
-	if (p->p_p->ps_limit->p_refcnt > 1) {
+	if (p->p_p->ps_limit->pl_refcnt > 1) {
 		struct plimit *l = p->p_p->ps_limit;
 
 		/* limcopy() can sleep, so copy before decrementing refcnt */
@@ -552,14 +552,14 @@ limcopy(struct plimit *lim)
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
-	newlim->p_refcnt = 1;
+	newlim->pl_refcnt = 1;
 	return (newlim);
 }
 
 void
 limfree(struct plimit *lim)
 {
-	if (--lim->p_refcnt > 0)
+	if (--lim->pl_refcnt > 0)
 		return;
 	pool_put(&plimit_pool, lim);
 }

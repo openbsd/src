@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.209 2019/01/06 12:59:45 visa Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.210 2019/05/31 04:46:18 visa Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -240,7 +240,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 
 	/* post-copy fixups */
 	pr->ps_pptr = parent;
-	pr->ps_limit->p_refcnt++;
+	pr->ps_limit->pl_refcnt++;
 	if (pr->ps_limit->pl_rlimit[RLIMIT_CPU].rlim_cur != RLIM_INFINITY)
 		timeout_add_msec(&pr->ps_rucheck_to, RUCHECK_INTERVAL);
 
