@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.72 2019/05/29 19:34:42 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.73 2019/05/31 21:41:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -202,7 +202,7 @@ cmdq_get_command(struct cmd_list *cmdlist, struct cmd_find_state *current,
 {
 	struct cmdq_item	*item, *first = NULL, *last = NULL;
 	struct cmd		*cmd;
-	struct cmdq_shared	*shared;
+	struct cmdq_shared	*shared = NULL;
 	u_int			 group = 0;
 
 	TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
