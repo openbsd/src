@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.27 2019/01/23 09:57:36 phessler Exp $
+# $OpenBSD: files.arm64,v 1.28 2019/05/31 08:02:04 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 64
@@ -38,6 +38,7 @@ file	arch/arm64/arm64/support.S
 file	arch/arm64/arm64/bus_dma.c
 
 file	arch/arm64/dev/arm64_bus_space.c
+file	arch/arm64/dev/pci_machdep.c
 
 file	arch/arm64/arm64/db_disasm.c		ddb
 file	arch/arm64/arm64/db_interface.c		ddb

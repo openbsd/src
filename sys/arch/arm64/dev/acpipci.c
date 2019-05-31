@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.8 2019/05/24 08:24:01 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.9 2019/05/31 08:02:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -334,11 +334,15 @@ acpipci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	bus_space_write_4(am->am_iot, am->am_ioh, tag | reg, data);
 }
 
+#define PCI_INTX		0
+#define PCI_MSI			1
+#define PCI_MSIX		2
+
 struct acpipci_intr_handle {
 	pci_chipset_tag_t	ih_pc;
 	pcitag_t		ih_tag;
 	int			ih_intrpin;
-	int			ih_msi;
+	int			ih_type;
 };
 
 int
@@ -418,7 +422,7 @@ acpipci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		ih->ih_pc = pa->pa_pc;
 		ih->ih_tag = pa->pa_tag;
 		ih->ih_intrpin = index;
-		ih->ih_msi = 0;
+		ih->ih_type = PCI_INTX;
 		*ihp = (pci_intr_handle_t)ih;
 
 		return 0;
@@ -441,8 +445,7 @@ acpipci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	ih = malloc(sizeof(struct acpipci_intr_handle), M_DEVBUF, M_WAITOK);
 	ih->ih_pc = pa->pa_pc;
 	ih->ih_tag = pa->pa_tag;
-	ih->ih_intrpin = pa->pa_intrpin;
-	ih->ih_msi = 1;
+	ih->ih_type = PCI_MSI;
 	*ihp = (pci_intr_handle_t)ih;
 
 	return 0;
@@ -452,7 +455,26 @@ int
 acpipci_intr_map_msix(struct pci_attach_args *pa, int vec,
     pci_intr_handle_t *ihp)
 {
-	return -1;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	struct acpipci_intr_handle *ih;
+	pcireg_t reg;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		return -1;
+
+	if (vec > PCI_MSIX_MC_TBLSZ(reg))
+		return -1;
+
+	ih = malloc(sizeof(struct acpipci_intr_handle), M_DEVBUF, M_WAITOK);
+	ih->ih_pc = pa->pa_pc;
+	ih->ih_tag = pa->pa_tag;
+	ih->ih_intrpin = vec;
+	ih->ih_type = PCI_MSIX;
+	*ihp = (pci_intr_handle_t)ih;
+
+	return 0;
 }
 
 const char *
@@ -461,8 +483,12 @@ acpipci_intr_string(void *v, pci_intr_handle_t ihp)
 	struct acpipci_intr_handle *ih = (struct acpipci_intr_handle *)ihp;
 	static char irqstr[32];
 
-	if (ih->ih_msi)
+	switch (ih->ih_type) {
+	case PCI_MSI:
 		return "msi";
+	case PCI_MSIX:
+		return "msix";
+	}
 
 	snprintf(irqstr, sizeof(irqstr), "irq %d", ih->ih_intrpin);
 	return irqstr;
@@ -472,6 +498,7 @@ void *
 acpipci_intr_establish(void *v, pci_intr_handle_t ihp, int level,
     int (*func)(void *), void *arg, char *name)
 {
+	struct acpipci_softc *sc = v;
 	struct acpipci_intr_handle *ih = (struct acpipci_intr_handle *)ihp;
 	struct interrupt_controller *ic;
 	void *cookie;
@@ -483,11 +510,9 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 	}
 	if (ic == NULL)
 		return NULL;
-	
-	if (ih->ih_msi) {
+
+	if (ih->ih_type != PCI_INTX) {
 		uint64_t addr, data;
-		pcireg_t reg;
-		int off;
 
 		/* Map Requester ID through IORT to get sideband data. */
 		data = acpipci_iort_map_msi(ih->ih_pc, ih->ih_tag);
@@ -498,25 +523,11 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 
 		/* TODO: translate address to the PCI device's view */
 
-		if (pci_get_capability(ih->ih_pc, ih->ih_tag, PCI_CAP_MSI,
-		    &off, &reg) == 0)
-			panic("%s: no msi capability", __func__);
-
-		if (reg & PCI_MSI_MC_C64) {
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MA, addr);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MAU32, addr >> 32);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MD64, data);
-		} else {
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MA, addr);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MD32, data);
-		}
-		pci_conf_write(ih->ih_pc, ih->ih_tag,
-		    off, reg | PCI_MSI_MC_MSIE);
+		if (ih->ih_type == PCI_MSIX) {
+			pci_msix_enable(ih->ih_pc, ih->ih_tag,
+			    &sc->sc_bus_memt, ih->ih_intrpin, addr, data);
+		} else
+			pci_msi_enable(ih->ih_pc, ih->ih_tag, addr, data);
 	} else {
 		cookie = acpi_intr_establish(ih->ih_intrpin, 0, level,
 		    func, arg, name);

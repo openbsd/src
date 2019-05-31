@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.3 2018/08/19 08:23:47 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.4 2019/05/31 08:02:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -97,5 +97,9 @@ struct arm64_pci_chipset {
 
 #define	pci_dev_postattach(a, b)
 
-void	 pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
+void	pci_mcfg_init(bus_space_tag_t, bus_addr_t, int, int, int);
 pci_chipset_tag_t pci_lookup_segment(int);
+
+void	pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, uint32_t);
+void	pci_msix_enable(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
+	    int, bus_addr_t, uint32_t);
