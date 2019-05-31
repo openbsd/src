@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.74 2019/05/29 07:17:26 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.75 2019/05/31 11:50:07 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -1007,7 +1007,6 @@ enum ieee80211_phymode
 ieee80211_next_mode(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	uint16_t mode;
 
 	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO) {
 		/*
@@ -1019,52 +1018,36 @@ ieee80211_next_mode(struct ifnet *ifp)
 	}
 
 	/*
-	 * Always scan in AUTO mode if the driver scans all bands, and
-	 * leave the current mode as it is.
+	 * Get the next supported mode
 	 */
-	if (ic->ic_caps & IEEE80211_C_SCANALLBAND)
-		return (IEEE80211_MODE_AUTO);
-
-	/*
-	 * Get the next supported mode; effectively, this alternates between
-	 * the 11a (5GHz) and 11b/g (2GHz) modes. What matters is that each
-	 * supported channel gets scanned.
-	 */
-	for (mode = ic->ic_curmode + 1; mode <= IEEE80211_MODE_MAX; mode++) {
+	for (++ic->ic_curmode;
+	    ic->ic_curmode <= IEEE80211_MODE_MAX;
+	    ic->ic_curmode++) {
 		/* 
 		 * Skip over 11n mode. Its set of channels is the superset
 		 * of all channels supported by the other modes.
 		 */
-		if (mode == IEEE80211_MODE_11N)
+		if (ic->ic_curmode == IEEE80211_MODE_11N)
 			continue;
 		/* 
 		 * Skip over 11ac mode. Its set of channels is the set
 		 * of all channels supported by 11a.
 		 */
-		if (mode == IEEE80211_MODE_11AC)
+		if (ic->ic_curmode == IEEE80211_MODE_11AC)
 			continue;
 
-		if (ic->ic_modecaps & (1 << IEEE80211_MODE_11G)) {
-			/* 
-			 * Skip over 11b mode. Its set of channels is
-			 * the set of all channels supported by 11g.
-			 */
-			if (mode == IEEE80211_MODE_11B)
-				continue;
-		}
-
-		/* Start over if we have already tried all modes. */
-		if (mode == IEEE80211_MODE_MAX) {
-			mode = IEEE80211_MODE_AUTO;
+		/* Always scan in AUTO mode if the driver scans all bands. */
+		if (ic->ic_curmode >= IEEE80211_MODE_MAX ||
+		    (ic->ic_caps & IEEE80211_C_SCANALLBAND)) {
+			ic->ic_curmode = IEEE80211_MODE_AUTO;
 			break;
 		}
 
-		if (ic->ic_modecaps & (1 << mode))
+		if (ic->ic_modecaps & (1 << ic->ic_curmode))
 			break;
 	}
 
-	if (mode != ic->ic_curmode)
-		ieee80211_setmode(ic, mode);
+	ieee80211_setmode(ic, ic->ic_curmode);
 
 	return (ic->ic_curmode);
 }
@@ -1075,41 +1058,26 @@ ieee80211_next_mode(struct ifnet *ifp)
  * work here assumes how things work elsewhere in this code.
  *
  * Because the result of this function is ultimately used to select a
- * rate from the rate set of the returned mode, it must return one of the
- * legacy 11a/b/g modes; 11n and 11ac modes use MCS instead of rate sets.
+ * rate from the rate set of the returned mode, it must not return
+ * IEEE80211_MODE_11N, which uses MCS instead of rates for unicast frames.
  */
 enum ieee80211_phymode
 ieee80211_chan2mode(struct ieee80211com *ic,
     const struct ieee80211_channel *chan)
 {
 	/*
-	 * Are we fixed in 11a/b/g mode?
 	 * NB: this assumes the channel would not be supplied to us
 	 *     unless it was already compatible with the current mode.
 	 */
-	if (ic->ic_curmode == IEEE80211_MODE_11A ||
-	    ic->ic_curmode == IEEE80211_MODE_11B ||
-	    ic->ic_curmode == IEEE80211_MODE_11G)
+	if (ic->ic_curmode != IEEE80211_MODE_11N &&
+	    ic->ic_curmode != IEEE80211_MODE_11AC &&
+	    (ic->ic_curmode != IEEE80211_MODE_AUTO ||
+	    chan == IEEE80211_CHAN_ANYC))
 		return ic->ic_curmode;
-
-	/* If no channel was provided, return the most suitable legacy mode. */
-	if (chan == IEEE80211_CHAN_ANYC) {
-		switch (ic->ic_curmode) {
-		case IEEE80211_MODE_AUTO:
-		case IEEE80211_MODE_11N:
-			if (ic->ic_modecaps & (1 << IEEE80211_MODE_11A))
-				return IEEE80211_MODE_11A;
-			if (ic->ic_modecaps & (1 << IEEE80211_MODE_11G))
-				return IEEE80211_MODE_11G;
-			return IEEE80211_MODE_11B;
-		case IEEE80211_MODE_11AC:
-			return IEEE80211_MODE_11A;
-		default:
-			return ic->ic_curmode;
-		}
-	}
-
-	/* Deduce a legacy mode based on the channel characteristics. */
+	/*
+	 * In autoselect or 11n mode; deduce a mode based on the channel
+	 * characteristics.
+	 */
 	if (IEEE80211_IS_CHAN_5GHZ(chan))
 		return IEEE80211_MODE_11A;
 	else if (chan->ic_flags & (IEEE80211_CHAN_OFDM|IEEE80211_CHAN_DYN))
