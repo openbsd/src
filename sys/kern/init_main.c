@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.285 2019/05/31 04:46:18 visa Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.286 2019/05/31 19:51:09 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -518,7 +518,9 @@ main(void *framep)
 		getnanotime(&pr->ps_start);
 		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 			nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
+			mtx_enter(&pr->ps_mtx);
 			timespecclear(&p->p_rtime);
+			mtx_leave(&pr->ps_mtx);
 		}
 	}
 

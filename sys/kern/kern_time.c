@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.116 2019/05/21 08:30:35 stsp Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.117 2019/05/31 19:51:10 mpi Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -106,6 +106,7 @@ settime(const struct timespec *ts)
 int
 clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 {
+	struct process *pr = p->p_p;
 	struct bintime bt;
 	struct proc *q;
 	int error = 0;
@@ -126,14 +127,18 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 	case CLOCK_PROCESS_CPUTIME_ID:
 		nanouptime(tp);
 		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
-		timespecadd(tp, &p->p_p->ps_tu.tu_runtime, tp);
+		mtx_enter(&pr->ps_mtx);
+		timespecadd(tp, &pr->ps_tu.tu_runtime, tp);
 		timespecadd(tp, &p->p_rtime, tp);
+		mtx_leave(&pr->ps_mtx);
 		break;
 	case CLOCK_THREAD_CPUTIME_ID:
 		nanouptime(tp);
 		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
+		mtx_enter(&pr->ps_mtx);
 		timespecadd(tp, &p->p_tu.tu_runtime, tp);
 		timespecadd(tp, &p->p_rtime, tp);
+		mtx_leave(&pr->ps_mtx);
 		break;
 	default:
 		/* check for clock from pthread_getcpuclockid() */
@@ -142,8 +147,11 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 			q = tfind(__CLOCK_PTID(clock_id) - THREAD_PID_OFFSET);
 			if (q == NULL || q->p_p != p->p_p)
 				error = ESRCH;
-			else
+			else {
+				mtx_enter(&pr->ps_mtx);
 				*tp = q->p_tu.tu_runtime;
+				mtx_leave(&pr->ps_mtx);
+			}
 			KERNEL_UNLOCK();
 		} else
 			error = EINVAL;

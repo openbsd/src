@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.186 2019/05/13 19:21:31 bluhm Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.187 2019/05/31 19:51:10 mpi Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -536,6 +536,14 @@ struct kinfo_vmentry {
  * p_tpgid, p_tsess, p_vm_rssize, p_u[us]time_{sec,usec}, p_cpuid
  */
 
+#if defined(_KERNEL)
+#define PR_LOCK(pr)	mtx_enter(&(pr)->ps_mtx)
+#define PR_UNLOCK(pr)	mtx_leave(&(pr)->ps_mtx)
+#else
+#define PR_LOCK(pr)	/* nothing */
+#define PR_UNLOCK(pr)	/* nothing */
+#endif
+
 #define PTRTOINT64(_x)	((u_int64_t)(u_long)(_x))
 
 #define FILL_KPROC(kp, copy_str, p, pr, uc, pg, paddr, \
@@ -574,6 +582,7 @@ do {									\
 	(kp)->p_jobc = (pg)->pg_jobc;					\
 									\
 	(kp)->p_estcpu = (p)->p_estcpu;					\
+	PR_LOCK(pr);							\
 	if (isthread) {							\
 		(kp)->p_rtime_sec = (p)->p_tu.tu_runtime.tv_sec;	\
 		(kp)->p_rtime_usec = (p)->p_tu.tu_runtime.tv_nsec/1000;	\
@@ -589,6 +598,7 @@ do {									\
 		(kp)->p_sticks = (pr)->ps_tu.tu_sticks;			\
 		(kp)->p_iticks = (pr)->ps_tu.tu_iticks;			\
 	}								\
+	PR_UNLOCK(pr);							\
 	(kp)->p_cpticks = (p)->p_cpticks;				\
 									\
 	if (show_addresses)						\

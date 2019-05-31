@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.356 2019/05/22 18:45:07 claudio Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.357 2019/05/31 19:51:09 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1645,7 +1645,9 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	if ((pr->ps_flags & PS_ZOMBIE) == 0) {
 		if ((pr->ps_flags & PS_EMBRYO) == 0 && vm != NULL)
 			ki->p_vm_rssize = vm_resident_count(vm);
+		mtx_enter(&pr->ps_mtx);
 		calctsru(isthread ? &p->p_tu : &pr->ps_tu, &ut, &st, NULL);
+		mtx_leave(&pr->ps_mtx);
 		ki->p_uutime_sec = ut.tv_sec;
 		ki->p_uutime_usec = ut.tv_nsec/1000;
 		ki->p_ustime_sec = st.tv_sec;

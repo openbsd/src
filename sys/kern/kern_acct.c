@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.36 2018/04/28 03:13:04 visa Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.37 2019/05/31 19:51:09 mpi Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -179,7 +179,9 @@ acct_process(struct proc *p)
 	memcpy(acct.ac_comm, pr->ps_comm, sizeof acct.ac_comm);
 
 	/* (2) The amount of user and system time that was used */
+	mtx_enter(&pr->ps_mtx);
 	calctsru(&pr->ps_tu, &ut, &st, NULL);
+	mtx_leave(&pr->ps_mtx);
 	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_nsec);
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_nsec);
 

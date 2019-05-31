@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.265 2019/05/13 19:21:31 bluhm Exp $	*/
+/*	$OpenBSD: proc.h,v 1.266 2019/05/31 19:51:10 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -154,6 +154,11 @@ RBT_HEAD(unvname_rbt, unvname);
 struct futex;
 LIST_HEAD(futex_list, futex);
 struct unveil;
+
+/*
+ *  Locks used to protect struct members in this file:
+ *	m	this process' `ps_mtx'
+ */
 struct process {
 	/*
 	 * ps_mainproc is the original thread in the process.
@@ -181,6 +186,7 @@ struct process {
 
 	struct	futex_list ps_ftlist;	/* futexes attached to this process */
 	LIST_HEAD(, kqueue) ps_kqlist;	/* kqueues attached to this process */
+	struct	mutex	ps_mtx;		/* per-process mutex */
 
 /* The following fields are all zeroed upon creation in process_new. */
 #define	ps_startzero	ps_klist
@@ -200,7 +206,7 @@ struct process {
 	struct	ptrace_state *ps_ptstat;/* Ptrace state */
 
 	struct	rusage *ps_ru;		/* sum of stats for dead threads. */
-	struct	tusage ps_tu;		/* accumulated times. */
+	struct	tusage ps_tu;		/* [m] accumulated times. */
 	struct	rusage ps_cru;		/* sum of stats for reaped children */
 	struct	itimerval ps_timer[3];	/* timers, indexed by ITIMER_* */
 	struct	timeout ps_rucheck_to;	/* resource limit check timer */
@@ -301,12 +307,14 @@ struct lock_list_entry;
 /*
  *  Locks used to protect struct members in this file:
  *	s	scheduler lock
+ *	I	immutable after creation
+ *	pm	parent process `ps_mtx'
  */
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;	/* [s] current run/sleep queue */
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
-	struct	process *p_p;		/* The process of this thread. */
+	struct	process *p_p;		/* [I] The process of this thread. */
 	TAILQ_ENTRY(proc) p_thr_link;	/* Threads in a process linkage. */
 
 	TAILQ_ENTRY(proc) p_fut_link;	/* Threads in a futex linkage. */
@@ -337,17 +345,17 @@ struct proc {
 	int	p_cpticks;	 /* Ticks of cpu time. */
 	const volatile void *p_wchan;	/* [s] Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
+	struct	cpu_info * volatile p_cpu; /* [s] CPU we're running on. */
 	const char *p_wmesg;		/* [s] Reason for sleep. */
 	fixpt_t	p_pctcpu;		/* [s] %cpu for this thread */
 	u_int	p_slptime;		/* [s] Time since last blocked. */
-	u_int	p_uticks;		/* Statclock hits in user mode. */
-	u_int	p_sticks;		/* Statclock hits in system mode. */
-	u_int	p_iticks;		/* Statclock hits processing intr. */
-	struct	cpu_info * volatile p_cpu; /* [s] CPU we're running on. */
+	u_int	p_uticks;		/* [pm] Statclock hits in user mode */
+	u_int	p_sticks;		/* [pm] Statclock hits in system mode */
+	u_int	p_iticks;		/* [pm] Statclock hits in intr. */
 
 	struct	rusage p_ru;		/* Statistics */
-	struct	tusage p_tu;		/* accumulated times. */
-	struct	timespec p_rtime;	/* Real time. */
+	struct	tusage p_tu;		/* [pm] accumulated times. */
+	struct	timespec p_rtime;	/* [pm] Real time. */
 
 	int	 p_siglist;		/* Signals arrived but not delivered. */
 

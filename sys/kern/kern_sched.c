@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.56 2019/03/26 04:24:22 visa Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.57 2019/05/31 19:51:09 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -212,13 +212,17 @@ void
 sched_exit(struct proc *p)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	struct process *pr = p->p_p;
 	struct timespec ts;
 	struct proc *idle;
 	int s;
 
 	nanouptime(&ts);
 	timespecsub(&ts, &spc->spc_runtime, &ts);
+
+	mtx_enter(&pr->ps_mtx);
 	timespecadd(&p->p_rtime, &ts, &p->p_rtime);
+	mtx_leave(&pr->ps_mtx);
 
 	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
 
