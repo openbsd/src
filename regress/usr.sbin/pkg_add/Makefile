@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.61 2018/12/21 14:04:53 espie Exp $
+# $OpenBSD: Makefile,v 1.62 2019/05/31 09:13:34 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1-disabled collision-check2-disabled collision-check3 \
@@ -9,7 +9,8 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
 	qttest gstest exotest-disabled inter1 manual1 oldlib1 \
-	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug
+	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
+	tying-1 tying-2
 
 collision-check{1,2}-disabled:
 	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
@@ -50,15 +51,15 @@ LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwew
 LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
-.for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 \
-    26 27 28 29 30 31 32 33 34 35 36 37
+NUMBERS != jot 39
+.for i in ${NUMBERS}
 S$i ?= ${.OBJDIR}/src$i
 SRC$i ?= ${S$i}/usr/local
 D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D37, SRC24, plist22
+# current maxes (used): D39, SRC26, plist24, rep5
 pkgnames:
 	perl ${.CURDIR}/check-name
 
@@ -692,7 +693,7 @@ keys:
 	signify -G -n -s signify/test-pkg.sec -p signify/test-pkg.pub
 
 plist22:
-	@echo "@owner "`id -un` >>$@
+	@echo "@owner "`id -un` >$@
 	@echo "@group "`id -gn` >>$@
 	@echo '@lib lib/libnettle.so.$${LIBnettle_VERSION}' >>$@
 
@@ -731,7 +732,47 @@ nettle-bug: rep4/cups-libs-0.tgz rep4/gtk+3-cups-0.tgz rep4/gnutls-0.tgz \
 	@ROOT=${D37} ${ADD_PKG} rep4/gtk+3-cups
 	@ROOT=${D37} PKG_PATH=${.OBJDIR}/rep5 ${ADD_PKG} -u gtk+3-cups
 
-.PHONY: ${REGRESS_TARGETS}
+plist23:
+	@echo "@owner "`id -un` >$@
+	@echo "@group "`id -gn` >>$@
+	@echo "share/" >>$@
+	@echo "share/bg/" >>$@
+	@echo "share/bg/portrait" >>$@
+	@echo "share/bg/pictures/" >>$@
+	@echo "share/bg/pictures/a/" >>$@
+	@echo "share/bg/pictures/a/zoinx" >>$@
+
+plist24:
+	@echo "@owner "`id -un` >$@
+	@echo "@group "`id -gn` >>$@
+	@echo "share/" >>$@
+	@echo "share/bg/" >>$@
+	@echo "share/bg/portrait/" >>$@
+	@echo "share/bg/portrait/a/" >>$@
+	@echo "share/bg/portrait/a/zoinx" >>$@
+
+rep0/bg-0.tgz: plist23
+	@mkdir -p ${SRC25}/share/bg ${SRC25}/share/bg/pictures/a
+	@echo "a file" >${SRC25}/share/bg/portrait
+	@echo "zoinx" >${SRC25}/share/bg/pictures/a/zoinx
+	@${CREATE_PKG} -B src25 -f plist23 $@
+
+rep0/bg-1.tgz: plist24
+	@mkdir -p ${SRC26}/share/bg/portrait/a
+	@echo "zoinx" >${SRC26}/share/bg/portrait/a/zoinx
+	@${CREATE_PKG} -B src26 -f plist24 $@
+
+tying-1: rep0/bg-0.tgz rep0/bg-1.tgz
+	@-rm -rf ${D38}
+	@ROOT=${D38} ${ADD_PKG} rep0/bg-0.tgz
+	@ROOT=${D38} ${ADD_PKG} -r rep0/bg-1.tgz
+
+tying-2: rep0/bg-0.tgz rep0/bg-1.tgz
+	@-rm -rf ${D39}
+	@ROOT=${D39} ${ADD_PKG} rep0/bg-1.tgz
+	@ROOT=${D39} ${ADD_PKG} -r rep0/bg-0.tgz
+
+.PHONY: ${REGRESS_TARGETS} ${REGRESS_TARGETS:S/-disabled$//}
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out
