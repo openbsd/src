@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.7 2019/05/24 08:24:01 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.8 2019/05/31 10:36:32 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -318,11 +318,15 @@ pciecam_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	HWRITE4(sc, PCIE_ADDR_OFFSET(bus, dev, fn, reg & ~0x3), data);
 }
 
+#define PCI_INTX		0
+#define PCI_MSI			1
+#define PCI_MSIX		2
+
 struct pciecam_intr_handle {
 	pci_chipset_tag_t	ih_pc;
 	pcitag_t		ih_tag;
 	int			ih_intrpin;
-	int			ih_msi;
+	int			ih_type;
 };
 
 int
@@ -330,11 +334,12 @@ pciecam_intr_map(struct pci_attach_args *pa,
     pci_intr_handle_t *ihp)
 {
 	struct pciecam_intr_handle *ih;
+
 	ih = malloc(sizeof(struct pciecam_intr_handle), M_DEVBUF, M_WAITOK);
 	ih->ih_pc = pa->pa_pc;
 	ih->ih_tag = pa->pa_intrtag;
 	ih->ih_intrpin = pa->pa_intrpin;
-	ih->ih_msi = 0;
+	ih->ih_type = PCI_INTX;
 	*ihp = (pci_intr_handle_t)ih;
 	return 0;
 }
@@ -354,8 +359,7 @@ pciecam_intr_map_msi(struct pci_attach_args *pa,
 	ih = malloc(sizeof(struct pciecam_intr_handle), M_DEVBUF, M_WAITOK);
 	ih->ih_pc = pa->pa_pc;
 	ih->ih_tag = pa->pa_tag;
-	ih->ih_intrpin = pa->pa_intrpin;
-	ih->ih_msi = 1;
+	ih->ih_type = PCI_MSI;
 	*ihp = (pci_intr_handle_t)ih;
 
 	return 0;
@@ -365,8 +369,26 @@ int
 pciecam_intr_map_msix(struct pci_attach_args *pa,
     int vec, pci_intr_handle_t *ihp)
 {
-	*ihp = (pci_intr_handle_t) pa->pa_pc;
-	return -1;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	struct pciecam_intr_handle *ih;
+	pcireg_t reg;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		return -1;
+
+	if (vec > PCI_MSIX_MC_TBLSZ(reg))
+		return -1;
+
+	ih = malloc(sizeof(struct pciecam_intr_handle), M_DEVBUF, M_WAITOK);
+	ih->ih_pc = pa->pa_pc;
+	ih->ih_tag = pa->pa_tag;
+	ih->ih_intrpin = vec;
+	ih->ih_type = PCI_MSIX;
+	*ihp = (pci_intr_handle_t)ih;
+
+	return 0;
 }
 
 const char *
@@ -374,8 +396,12 @@ pciecam_intr_string(void *sc, pci_intr_handle_t ihp)
 {
 	struct pciecam_intr_handle *ih = (struct pciecam_intr_handle *)ihp;
 
-	if (ih->ih_msi)
+	switch (ih->ih_type) {
+	case PCI_MSI:
 		return "msi";
+	case PCI_MSIX:
+		return "msix";
+	}
 
 	return "irq";
 }
@@ -388,10 +414,8 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
 	struct pciecam_intr_handle *ih = (struct pciecam_intr_handle *)ihp;
 	void *cookie;
 
-	if (ih->ih_msi) {
+	if (ih->ih_type != PCI_INTX) {
 		uint64_t addr, data;
-		pcireg_t reg;
-		int off;
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
@@ -402,25 +426,11 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
 
 		/* TODO: translate address to the PCI device's view */
 
-		if (pci_get_capability(ih->ih_pc, ih->ih_tag, PCI_CAP_MSI,
-		    &off, &reg) == 0)
-			panic("%s: no msi capability", __func__);
-
-		if (reg & PCI_MSI_MC_C64) {
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MA, addr);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MAU32, addr >> 32);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MD64, data);
-		} else {
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MA, addr);
-			pci_conf_write(ih->ih_pc, ih->ih_tag,
-			    off + PCI_MSI_MD32, data);
-		}
-		pci_conf_write(ih->ih_pc, ih->ih_tag,
-		    off, reg | PCI_MSI_MC_MSIE);
+		if (ih->ih_type == PCI_MSIX) {
+			pci_msix_enable(ih->ih_pc, ih->ih_tag,
+			    &sc->sc_bus, ih->ih_intrpin, addr, data);
+		} else
+			pci_msi_enable(ih->ih_pc, ih->ih_tag, addr, data);
 	} else {
 		int bus, dev, fn;
 		uint32_t reg[4];
