@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.86 2019/05/23 14:12:06 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.87 2019/05/31 10:48:40 sthen Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 23 2019 $
+.Dd $Mdocdate: May 31 2019 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -202,6 +202,13 @@ and
 .Em inet6 .
 .It Cm reload
 Reload the configuration file.
+Changes to the following neighbor options in
+.Xr bgpd.conf 5
+only take effect when the session is reset:
+.Ic ipsec ,
+.Ic tcp md5sig ,
+and
+.Ic export Op none | default-route .
 .It Cm show fib Ar filter
 Show routes from
 .Xr bgpd 8 Ns 's
