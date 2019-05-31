@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.257 2019/05/31 15:15:37 reyk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.258 2019/05/31 15:25:57 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -714,6 +714,12 @@ struct relay_ticket_key {
 
 #define HTTPFLAG_WEBSOCKETS	0x01
 
+struct keyname {
+	TAILQ_ENTRY(keyname)	 entry;
+	char			*name;
+};
+TAILQ_HEAD(keynamelist, keyname);
+
 struct protocol {
 	objid_t			 id;
 	u_int32_t		 flags;
@@ -732,6 +738,7 @@ struct protocol {
 	char			 tlscacert[PATH_MAX];
 	char			 tlscakey[PATH_MAX];
 	char			*tlscapass;
+	struct keynamelist	 tlscerts;
 	char			 name[MAX_NAME_SIZE];
 	int			 tickets;
 	enum prototype		 type;
@@ -1312,7 +1319,8 @@ struct ca_pkey	*pkey_add(struct relayd *, EVP_PKEY *, char *hash);
 struct relay_cert *cert_add(struct relayd *, objid_t);
 struct relay_cert *cert_find(struct relayd *, objid_t);
 char		*relay_load_fd(int, off_t *);
-int		 relay_load_certfiles(struct relayd *, struct relay *);
+int		 relay_load_certfiles(struct relayd *, struct relay *,
+		    const char *);
 int		 expand_string(char *, size_t, const char *, const char *);
 void		 translate_string(char *);
 void		 purge_key(char **, off_t);
