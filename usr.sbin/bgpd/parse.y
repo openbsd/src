@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.388 2019/05/27 09:14:32 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.389 2019/05/31 08:22:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -868,7 +868,8 @@ network		: NETWORK prefix filter_set	{
 			filterset_move($3, &n->net.attrset);
 			free($3);
 			TAILQ_FOREACH(m, netconf, entry) {
-				if (n->net.prefixlen == m->net.prefixlen &&
+				if (n->net.type == m->net.type &&
+				    n->net.prefixlen == m->net.prefixlen &&
 				    prefix_compare(&n->net.prefix,
 				    &m->net.prefix, n->net.prefixlen) == 0)
 					yyerror("duplicate prefix "
