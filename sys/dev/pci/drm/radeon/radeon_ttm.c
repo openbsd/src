@@ -543,9 +543,6 @@ struct radeon_ttm_tt {
 	uint64_t			userptr;
 	struct mm_struct		*usermm;
 	uint32_t			userflags;
-
-	bus_dmamap_t			map;
-	bus_dma_segment_t		*segs;
 };
 
 /* prepare the sg table with the user pages */
@@ -693,8 +690,6 @@ static void radeon_ttm_backend_destroy(struct ttm_tt *ttm)
 {
 	struct radeon_ttm_tt *gtt = (void *)ttm;
 
-	bus_dmamap_destroy(gtt->rdev->dmat, gtt->map);
-	free(gtt->segs, M_DRM, 0);
 	ttm_dma_tt_fini(&gtt->ttm);
 	kfree(gtt);
 }
@@ -710,7 +705,6 @@ static struct ttm_tt *radeon_ttm_tt_create(struct ttm_buffer_object *bo,
 {
 	struct radeon_device *rdev;
 	struct radeon_ttm_tt *gtt;
-	unsigned long size = bo->num_pages << PAGE_SHIFT;
 
 	rdev = radeon_get_rdev(bo->bdev);
 #if IS_ENABLED(CONFIG_AGP)
@@ -730,18 +724,6 @@ static struct ttm_tt *radeon_ttm_tt_create(struct ttm_buffer_object *bo,
 		kfree(gtt);
 		return NULL;
 	}
-
-	gtt->segs = mallocarray(gtt->ttm.ttm.num_pages,
-	    sizeof(bus_dma_segment_t), M_DRM, M_WAITOK | M_ZERO);
-
-	if (bus_dmamap_create(rdev->dmat, size, gtt->ttm.ttm.num_pages, size,
-			      0, BUS_DMA_WAITOK, &gtt->map)) {
-		free(gtt->segs, M_DRM, 0);
-		ttm_dma_tt_fini(&gtt->ttm);
-		free(gtt, M_DRM, 0);
-		return NULL;
-	}
-
 	return &gtt->ttm.ttm;
 }
 
