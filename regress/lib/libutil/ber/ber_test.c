@@ -1,4 +1,4 @@
-/* $OpenBSD: ber_test.c,v 1.15 2019/05/12 22:17:25 rob Exp $
+/* $OpenBSD: ber_test.c,v 1.16 2019/05/31 22:34:14 rob Exp $
 */
 /*
  * Copyright (c) Rob Pierce <rob@openbsd.org>
@@ -274,20 +274,20 @@ struct test_vector test_vectors[] = {
 		SUCCEED,
 		0,
 		"max long form length octets (i.e. 8 bytes)", 
-		12,
+		11,
 		{
 			0x02, 0x88, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x01, 0x01
+			0x00, 0x01, 0x01
 		},
 	},
 	{
 		FAIL,
 		0,
 		"overflow long form length octets (expected failure)",
-		13,
+		12,
 		{
 			0x02, 0x89, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x01, 0x01
+			0x00, 0x00, 0x01, 0x01
 		},
 	},
 	{
