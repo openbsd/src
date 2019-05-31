@@ -101,7 +101,20 @@ bool ReturnProtectorLowering::determineReturnProtectorRegister(
 
   // For leaf functions, try to find a free register that is available
   // in every BB, so we do not need to store it in the frame at all.
-  if (!MFI.hasCalls() && !MFI.hasTailCall()) {
+  // We walk the entire function here because MFI.hasCalls() is unreliable.
+  bool hasCalls = false;
+  for (auto &MBB : MF) {
+    for (auto &MI : MBB) {
+      if (MI.isCall() && !MI.isReturn()) {
+        hasCalls = true;
+        break;
+      }
+    }
+    if (hasCalls)
+      break;
+  }
+
+  if (!hasCalls) {
     SmallSet<unsigned, 16> LeafUsed;
     SmallSet<int, 24> LeafVisited;
     markUsedRegsInSuccessors(MF.front(), LeafUsed, LeafVisited);

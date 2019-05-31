@@ -107,7 +107,7 @@ void AArch64ReturnProtectorLowering::saveReturnProtectorRegister(
     llvm_unreachable("Saving unset return protector register");
 
   unsigned Reg = MFI.getReturnProtectorRegister();
-  if (!true) {
+  if (!MFI.getReturnProtectorNeedsStore()) {
     for (auto &MBB : MF) {
       if (!MBB.isLiveIn(Reg))
         MBB.addLiveIn(Reg);
