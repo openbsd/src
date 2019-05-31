@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.34 2018/09/19 11:28:02 reyk Exp $	*/
+/*	$OpenBSD: ca.c,v 1.35 2019/05/31 15:15:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -108,56 +108,60 @@ hash_x509(X509 *cert, char *hash, size_t hashlen)
 void
 ca_launch(void)
 {
-	char		 hash[TLS_CERT_HASH_SIZE];
-	char		*buf;
-	BIO		*in = NULL;
-	EVP_PKEY	*pkey = NULL;
-	struct relay	*rlay;
-	X509		*cert = NULL;
-	off_t		 len;
+	char			 hash[TLS_CERT_HASH_SIZE];
+	char			*buf;
+	BIO			*in = NULL;
+	EVP_PKEY		*pkey = NULL;
+	struct relay		*rlay;
+	struct relay_cert	*cert;
+	X509			*x509 = NULL;
+	off_t			 len;
+
+	TAILQ_FOREACH(cert, env->sc_certs, cert_entry) {
+		if (cert->cert_fd == -1 || cert->cert_key_fd == -1)
+			continue;
+
+		if ((buf = relay_load_fd(cert->cert_fd, &len)) == NULL)
+			fatal("ca_launch: cert relay_load_fd");
+
+		if ((in = BIO_new_mem_buf(buf, len)) == NULL)
+			fatalx("ca_launch: cert BIO_new_mem_buf");
+
+		if ((x509 = PEM_read_bio_X509(in, NULL,
+		    NULL, NULL)) == NULL)
+			fatalx("ca_launch: cert PEM_read_bio_X509");
+
+		hash_x509(x509, hash, sizeof(hash));
+
+		BIO_free(in);
+		X509_free(x509);
+		purge_key(&buf, len);
+
+		if ((buf = relay_load_fd(cert->cert_key_fd, &len)) == NULL)
+			fatal("ca_launch: key relay_load_fd");
+
+		if ((in = BIO_new_mem_buf(buf, len)) == NULL)
+			fatalx("%s: key", __func__);
+
+		if ((pkey = PEM_read_bio_PrivateKey(in,
+		    NULL, NULL, NULL)) == NULL)
+			fatalx("%s: PEM", __func__);
+
+		cert->cert_pkey = pkey;
+
+		if (pkey_add(env, pkey, hash) == NULL)
+			fatalx("tls pkey");
+
+		BIO_free(in);
+		purge_key(&buf, len);
+	}
 
 	TAILQ_FOREACH(rlay, env->sc_relays, rl_entry) {
 		if ((rlay->rl_conf.flags & (F_TLS|F_TLSCLIENT)) == 0)
 			continue;
 
-		if (rlay->rl_tls_cert_fd != -1) {
-			if ((buf = relay_load_fd(rlay->rl_tls_cert_fd,
-			    &len)) == NULL)
-				fatal("ca_launch: cert relay_load_fd");
-
-			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
-				fatalx("ca_launch: cert BIO_new_mem_buf");
-
-			if ((cert = PEM_read_bio_X509(in, NULL,
-			    NULL, NULL)) == NULL)
-				fatalx("ca_launch: cert PEM_read_bio_X509");
-
-			hash_x509(cert, hash, sizeof(hash));
-
-			BIO_free(in);
-			X509_free(cert);
-			purge_key(&buf, len);
-		}
-		if (rlay->rl_conf.tls_key_len) {
-			if ((in = BIO_new_mem_buf(rlay->rl_tls_key,
-			    rlay->rl_conf.tls_key_len)) == NULL)
-				fatalx("%s: key", __func__);
-
-			if ((pkey = PEM_read_bio_PrivateKey(in,
-			    NULL, NULL, NULL)) == NULL)
-				fatalx("%s: PEM", __func__);
-			BIO_free(in);
-
-			rlay->rl_tls_pkey = pkey;
-
-			if (pkey_add(env, pkey, hash) == NULL)
-				fatalx("tls pkey");
-
-			purge_key(&rlay->rl_tls_key,
-			    rlay->rl_conf.tls_key_len);
-		}
-
-		if (rlay->rl_tls_cacert_fd != -1) {
+		if (rlay->rl_tls_cacert_fd != -1 &&
+		    rlay->rl_conf.tls_cakey_len) {
 			if ((buf = relay_load_fd(rlay->rl_tls_cacert_fd,
 			    &len)) == NULL)
 				fatal("ca_launch: cacert relay_load_fd");
@@ -165,17 +169,16 @@ ca_launch(void)
 			if ((in = BIO_new_mem_buf(buf, len)) == NULL)
 				fatalx("ca_launch: cacert BIO_new_mem_buf");
 
-			if ((cert = PEM_read_bio_X509(in, NULL,
+			if ((x509 = PEM_read_bio_X509(in, NULL,
 			    NULL, NULL)) == NULL)
 				fatalx("ca_launch: cacert PEM_read_bio_X509");
 
-			hash_x509(cert, hash, sizeof(hash));
+			hash_x509(x509, hash, sizeof(hash));
 
 			BIO_free(in);
-			X509_free(cert);
+			X509_free(x509);
 			purge_key(&buf, len);
-		}
-		if (rlay->rl_conf.tls_cakey_len) {
+
 			if ((in = BIO_new_mem_buf(rlay->rl_tls_cakey,
 			    rlay->rl_conf.tls_cakey_len)) == NULL)
 				fatalx("%s: key", __func__);

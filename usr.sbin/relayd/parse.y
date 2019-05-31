@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.236 2019/05/29 11:52:56 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.237 2019/05/31 15:15:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1710,7 +1710,6 @@ relay		: RELAY STRING	{
 			r->rl_proto = NULL;
 			r->rl_conf.proto = EMPTY_ID;
 			r->rl_conf.dstretry = 0;
-			r->rl_tls_cert_fd = -1;
 			r->rl_tls_ca_fd = -1;
 			r->rl_tls_cacert_fd = -1;
 			TAILQ_INIT(&r->rl_tables);
@@ -3269,11 +3268,8 @@ relay_inherit(struct relay *ra, struct relay *rb)
 	rb->rl_conf.flags =
 	    (ra->rl_conf.flags & ~F_TLS) | (rc.flags & F_TLS);
 	if (!(rb->rl_conf.flags & F_TLS)) {
-		rb->rl_tls_cert_fd = -1;
 		rb->rl_tls_cacert_fd = -1;
 		rb->rl_tls_ca_fd = -1;
-		rb->rl_tls_key = NULL;
-		rb->rl_conf.tls_key_len = 0;
 	}
 	TAILQ_INIT(&rb->rl_tables);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.246 2019/05/29 11:48:28 reyk Exp $	*/
+/*	$OpenBSD: relay.c,v 1.247 2019/05/31 15:15:37 reyk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2127,8 +2127,9 @@ relay_tls_ctx_create(struct relay *rlay)
 {
 	struct tls_config	*tls_cfg, *tls_client_cfg;
 	struct tls		*tls = NULL;
+	struct relay_cert	*cert;
 	const char		*fake_key;
-	int			 fake_keylen;
+	int			 fake_keylen, keyfound = 0;
 	char			*buf = NULL, *cabuf = NULL;
 	off_t			 len = 0, calen = 0;
 
@@ -2160,6 +2161,7 @@ relay_tls_ctx_create(struct relay *rlay)
 				log_warn("failed to read root certificates");
 				goto err;
 			}
+			rlay->rl_tls_ca_fd = -1;
 
 			if (tls_config_set_ca_mem(tls_client_cfg, buf, len) !=
 			    0) {
@@ -2188,24 +2190,47 @@ relay_tls_ctx_create(struct relay *rlay)
 		 */
 		tls_config_skip_private_key_check(tls_cfg);
 
-		if ((buf = relay_load_fd(rlay->rl_tls_cert_fd, &len)) == NULL) {
-			log_warn("failed to load tls certificate");
-			goto err;
-		}
+		TAILQ_FOREACH(cert, env->sc_certs, cert_entry) {
+			if (cert->cert_relayid != rlay->rl_conf.id ||
+			    cert->cert_fd == -1)
+				continue;
+			keyfound++;
 
-		if ((fake_keylen = ssl_ctx_fake_private_key(buf, len,
-		    &fake_key)) == -1) {
-			/* error already printed */
-			goto err;
-		}
+			if ((buf = relay_load_fd(cert->cert_fd,
+			    &len)) == NULL) {
+				log_warn("failed to load tls certificate");
+				goto err;
+			}
+			cert->cert_fd = -1;
 
-		if (tls_config_set_keypair_ocsp_mem(tls_cfg, buf, len,
-		    fake_key, fake_keylen, NULL, 0) != 0) {
-			log_warnx("failed to set tls certificate: %s",
-			    tls_config_error(tls_cfg));
-			goto err;
-		}
+			if ((fake_keylen = ssl_ctx_fake_private_key(buf, len,
+			    &fake_key)) == -1) {
+				/* error already printed */
+				goto err;
+			}
 
+			if (keyfound == 1 &&
+			    tls_config_set_keypair_ocsp_mem(tls_cfg, buf, len,
+			    fake_key, fake_keylen, NULL, 0) != 0) {
+				log_warnx("failed to set tls certificate: %s",
+				    tls_config_error(tls_cfg));
+				goto err;
+			}
+
+			/* loading certificate public key */
+			if (keyfound == 1 &&
+			    !ssl_load_pkey(buf, len, NULL, &rlay->rl_tls_pkey))
+				goto err;
+
+			if (tls_config_add_keypair_ocsp_mem(tls_cfg, buf, len,
+			    fake_key, fake_keylen, NULL, 0) != 0) {
+				log_warnx("failed to add tls certificate: %s",
+				    tls_config_error(tls_cfg));
+				goto err;
+			}
+
+			purge_key(&buf, len);
+		}
 
 		if (rlay->rl_tls_cacert_fd != -1) {
 			if ((cabuf = relay_load_fd(rlay->rl_tls_cacert_fd,
@@ -2217,11 +2242,8 @@ relay_tls_ctx_create(struct relay *rlay)
 			if (!ssl_load_pkey(cabuf, calen,
 			    &rlay->rl_tls_cacertx509, &rlay->rl_tls_capkey))
 				goto err;
-			/* loading certificate public key */
-			log_debug("%s: loading certificate", __func__);
-			if (!ssl_load_pkey(buf, len, NULL, &rlay->rl_tls_pkey))
-				goto err;
 		}
+		rlay->rl_tls_cacert_fd = -1;
 
 		tls = tls_server();
 		if (tls == NULL) {
@@ -2238,13 +2260,7 @@ relay_tls_ctx_create(struct relay *rlay)
 		rlay->rl_tls_ctx = tls;
 
 		purge_key(&cabuf, calen);
-		purge_key(&buf, len);
 	}
-
-	/* The fd for the keys/certs are not needed anymore */
-	close(rlay->rl_tls_cert_fd);
-	close(rlay->rl_tls_cacert_fd);
-	close(rlay->rl_tls_ca_fd);
 
 	if (rlay->rl_tls_client_cfg == NULL)
 		tls_config_free(tls_client_cfg);
