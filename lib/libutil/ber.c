@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.8 2019/05/21 13:29:44 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.9 2019/06/01 19:40:05 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1164,7 +1164,10 @@ get_len(struct ber *b, ssize_t *len)
 	}
 
 	n = u & ~BER_TAG_MORE;
-	if (sizeof(ssize_t) < n) {
+	/*
+	 * Limit to a decent size that works on all of our architectures.
+	 */
+	if (sizeof(int32_t) < n) {
 		errno = ERANGE;
 		return -1;
 	}
