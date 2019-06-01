@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.175 2019/05/31 19:51:09 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.176 2019/06/01 14:11:17 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ exit1(struct proc *p, int rv, int flags)
 
 	/* add thread's accumulated rusage into the process's total */
 	ruadd(rup, &p->p_ru);
-	tuagg(p, NULL);
+	tuagg(pr, p);
 
 	/*
 	 * clear %cpu usage during swap
@@ -296,9 +296,7 @@ exit1(struct proc *p, int rv, int flags)
 		 * Final thread has died, so add on our children's rusage
 		 * and calculate the total times
 		 */
-		mtx_enter(&pr->ps_mtx);
 		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
-		mtx_leave(&pr->ps_mtx);
 		ruadd(rup, &pr->ps_cru);
 
 		/* notify interested parties of our demise and clean up */

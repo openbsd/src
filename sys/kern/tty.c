@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.145 2019/05/31 19:51:10 mpi Exp $	*/
+/*	$OpenBSD: tty.c,v 1.146 2019/06/01 14:11:17 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2191,9 +2191,7 @@ update_pickpr:
 		rss = (pickpr->ps_flags & (PS_EMBRYO | PS_ZOMBIE)) ? 0 :
 		    vm_resident_count(pickpr->ps_vmspace);
 
-		mtx_enter(&pickpr->ps_mtx);
 		calctsru(&pickpr->ps_tu, &utime, &stime, NULL);
-		mtx_leave(&pickpr->ps_mtx);
 
 		/* Round up and print user time. */
 		utime.tv_nsec += 5000000;

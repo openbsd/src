@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.52 2019/05/31 19:51:10 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.53 2019/06/01 14:11:17 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -343,6 +343,7 @@ mi_switch(void)
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	struct proc *p = curproc;
 	struct proc *nextproc;
+	struct process *pr = p->p_p;
 	struct timespec ts;
 #ifdef MULTIPROCESSOR
 	int hold_count;
@@ -380,10 +381,11 @@ mi_switch(void)
 #endif
 	} else {
 		timespecsub(&ts, &spc->spc_runtime, &ts);
+		timespecadd(&p->p_rtime, &ts, &p->p_rtime);
 	}
 
 	/* add the time counts for this thread to the process's total */
-	tuagg(p, &ts);
+	tuagg_unlocked(pr, p);
 
 	/*
 	 * Process is about to yield the CPU; clear the appropriate
