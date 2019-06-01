@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.40 2019/05/28 20:32:30 patrick Exp $ */
+/* $OpenBSD: machdep.c,v 1.41 2019/06/01 11:45:01 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -1065,6 +1065,14 @@ initarm(struct arm64_bootparams *abp)
 			}
 		}
 	}
+
+	/*
+	 * Make sure that we have enough KVA to initialize UVM.  In
+	 * particular, we need enough KVA to be able to allocate the
+	 * vm_page structures.
+	 */
+	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 1024 * 1024 * 1024 +
+	    physmem * sizeof(struct vm_page));
 
 #ifdef DDB
 	db_machine_init();

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.62 2019/05/28 20:32:30 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.63 2019/06/01 11:45:01 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -963,6 +963,7 @@ pmap_vp_destroy(pmap_t pm)
 }
 
 vaddr_t virtual_avail, virtual_end;
+int	pmap_virtual_space_called;
 
 static inline uint64_t
 VP_Lx(paddr_t pa)
@@ -973,6 +974,12 @@ VP_Lx(paddr_t pa)
 	 */
 	return pa | Lx_TYPE_PT;
 }
+
+/*
+ * In pmap_bootstrap() we allocate the page tables for the first GB
+ * of the kernel address space.
+ */
+vaddr_t pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS + 1024 * 1024 * 1024;
 
 /*
  * Allocator for growing the kernel page tables.  We use a dedicated
@@ -990,7 +997,30 @@ const struct kmem_va_mode kv_kvp = {
 void *
 pmap_kvp_alloc(void)
 {
-	return km_alloc(sizeof(struct pmapvp0), &kv_kvp, &kp_zero, &kd_nowait);
+	void *kvp;
+
+	if (!uvm.page_init_done && !pmap_virtual_space_called) {
+		paddr_t pa[2];
+		vaddr_t va;
+
+		if (!uvm_page_physget(&pa[0]) || !uvm_page_physget(&pa[1]))
+			panic("%s: out of memory", __func__);
+
+		va = virtual_avail;
+		virtual_avail += 2 * PAGE_SIZE;
+		KASSERT(virtual_avail <= pmap_maxkvaddr);
+		kvp = (void *)va;
+
+		pmap_kenter_pa(va, pa[0], PROT_READ|PROT_WRITE);
+		pmap_kenter_pa(va + PAGE_SIZE, pa[1], PROT_READ|PROT_WRITE);
+		pagezero_cache(va);
+		pagezero_cache(va + PAGE_SIZE);
+	} else {
+		kvp = km_alloc(sizeof(struct pmapvp0), &kv_kvp, &kp_zero,
+		    &kd_nowait);
+	}
+
+	return kvp;
 }
 
 struct pte_desc *
@@ -1000,21 +1030,33 @@ pmap_kpted_alloc(void)
 	static int npted;
 
 	if (npted == 0) {
-		pted = km_alloc(PAGE_SIZE, &kv_kvp, &kp_zero, &kd_nowait);
-		if (pted == NULL)
-			return NULL;
+		if (!uvm.page_init_done && !pmap_virtual_space_called) {
+			paddr_t pa;
+			vaddr_t va;
+
+			if (!uvm_page_physget(&pa))
+				panic("%s: out of memory", __func__);
+
+			va = virtual_avail;
+			virtual_avail += PAGE_SIZE;
+			KASSERT(virtual_avail <= pmap_maxkvaddr);
+			pted = (struct pte_desc *)va;
+
+			pmap_kenter_pa(va, pa, PROT_READ|PROT_WRITE);
+			pagezero_cache(va);
+		} else {
+			pted = km_alloc(PAGE_SIZE, &kv_kvp, &kp_zero,
+			    &kd_nowait);
+			if (pted == NULL)
+				return NULL;
+		}
+				
 		npted = PAGE_SIZE / sizeof(struct pte_desc);
 	}
 
 	npted--;
 	return pted++;
 }
-
-/*
- * In pmap_bootstrap() we allocate the page tables for the first GB
- * of the kernel address space.
- */
-vaddr_t pmap_maxkvaddr = VM_MIN_KERNEL_ADDRESS + 1024 * 1024 * 1024;
 
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
@@ -1097,7 +1139,7 @@ void pmap_setup_avail(uint64_t ram_start, uint64_t ram_end, uint64_t kvo);
  * ALL of the code which deals with avail needs rewritten as an actual
  * memory allocation.
  */
-CTASSERT(sizeof(struct pmapvp0) == 8192);
+CTASSERT(sizeof(struct pmapvp0) == 2 * PAGE_SIZE);
 
 int mappings_allocated = 0;
 int pted_allocated = 0;
@@ -1911,6 +1953,9 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 	*start = virtual_avail;
 	*end = virtual_end;
+
+	/* Prevent further KVA stealing. */
+	pmap_virtual_space_called = 1;
 }
 
 void
