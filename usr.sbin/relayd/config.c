@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.38 2019/05/31 15:25:57 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.39 2019/06/01 09:54:19 reyk Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -237,6 +237,14 @@ config_setreset(struct relayd *env, u_int reset)
 		    id == privsep_process)
 			continue;
 		proc_compose(ps, id, IMSG_CTL_RESET, &reset, sizeof(reset));
+
+		/*
+		 * XXX Make sure that the reset message is sent
+		 * immediately by flushing the imsg output buffer, before
+		 * sending any other imsg that potentially include an fd.
+		 * This should better be fixed in the imsg API itself.
+		 */
+		proc_flush_imsg(ps, id, -1);
 	}
 
 	return (0);
