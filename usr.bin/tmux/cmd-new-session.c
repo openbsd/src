@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.118 2019/05/17 05:47:31 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.119 2019/06/01 16:21:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,8 +242,13 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 
 	/* Create the new session. */
 	oo = options_create(global_s_options);
-	if (args_has(args, 'x') || args_has(args, 'y'))
+	if (args_has(args, 'x') || args_has(args, 'y')) {
+		if (!args_has(args, 'x'))
+			dsx = sx;
+		if (!args_has(args, 'y'))
+			dsy = sy;
 		options_set_string(oo, "default-size", 0, "%ux%u", dsx, dsy);
+	}
 	env = environ_create();
 	if (c != NULL && !args_has(args, 'E'))
 		environ_update(global_s_options, c->environ, env);
