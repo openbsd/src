@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.11 2019/05/31 11:34:09 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.12 2019/06/01 06:20:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -23,6 +23,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
