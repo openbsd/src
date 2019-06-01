@@ -1,4 +1,4 @@
-/*	$OpenBSD: inffast.c,v 1.7 2005/07/20 15:56:41 millert Exp $	*/
+/*	$OpenBSD: inffast.c,v 1.8 2019/06/01 11:39:57 jca Exp $	*/
 /* inffast.c -- fast decoding
  * Copyright (C) 1995-2004 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -70,8 +70,8 @@ z_streamp strm;
 unsigned start;         /* inflate()'s starting value for strm->avail_out */
 {
     struct inflate_state FAR *state;
-    unsigned char FAR *in;      /* local strm->next_in */
-    unsigned char FAR *last;    /* while in < last, enough input available */
+    z_const unsigned char FAR *in;      /* local strm->next_in */
+    z_const unsigned char FAR *last;    /* while in < last, enough input available */
     unsigned char FAR *out;     /* local strm->next_out */
     unsigned char FAR *beg;     /* inflate()'s initial strm->next_out */
     unsigned char FAR *end;     /* while out < end, enough space available */
