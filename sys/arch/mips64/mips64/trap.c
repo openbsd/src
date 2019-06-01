@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.136 2019/05/15 03:17:20 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.137 2019/06/01 22:42:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -260,27 +260,10 @@ trap(struct trapframe *trapframe)
 #endif
 
 	if (type & T_USER) {
-		vaddr_t sp;
-
 		refreshcreds(p);
-
-		sp = trapframe->sp;
-		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
-		    p->p_spstart == 0 || sp < p->p_spstart ||
-		    sp >= p->p_spend) {
-			KERNEL_LOCK();
-			if (!uvm_map_check_stack_range(p, sp)) {
-				union sigval sv;
-
-				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
-				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid, type,
-				    sp, p->p_spstart, p->p_spend);
-
-				sv.sival_ptr = (void *)trapframe->pc;
-				trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
-			}
-			KERNEL_UNLOCK();
-		}
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			return;
 	}
 
 	itsa(trapframe, ci, p, type);

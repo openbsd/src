@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.99 2018/04/12 17:13:44 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.100 2019/06/01 22:42:21 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -348,7 +348,6 @@ trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 	struct proc *p;
 	struct pcb *pcb;
 	int pstate = (tstate>>TSTATE_PSTATE_SHIFT);
-	vaddr_t sp;
 	u_int64_t s;
 	int64_t n;
 	union sigval sv;
@@ -427,22 +426,10 @@ trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
 	refreshcreds(p);
+	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+		return;
 
-	sp = PROC_STACK(p);
-	if (p->p_vmspace->vm_map.serial != p->p_spserial ||
-	    p->p_spstart == 0 || sp < p->p_spstart ||
-	    sp >= p->p_spend) {
-		KERNEL_LOCK();
-		if (!uvm_map_check_stack_range(p, sp)) {
-			printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
-			    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
-			    (int)type, sp, p->p_spstart, p->p_spend);
-			sv.sival_ptr = (void *)PROC_PC(p);
-			trapsignal(p, SIGSEGV, type, SEGV_ACCERR, sv);
-		}
-
-		KERNEL_UNLOCK();
-	}
 
 	switch (type) {
 

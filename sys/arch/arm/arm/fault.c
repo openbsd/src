@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.36 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.37 2019/06/01 22:42:20 deraadt Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -206,26 +206,11 @@ data_abort_handler(trapframe_t *tf)
 	pcb = &p->p_addr->u_pcb;
 
 	if (user) {
-		vaddr_t sp;
-
 		pcb->pcb_tf = tf;
 		refreshcreds(p);
-
-		sp = PROC_STACK(p);
-		if (p->p_vmspace->vm_map.serial != p->p_spserial ||
-		    p->p_spstart == 0 || sp < p->p_spstart ||
-		    sp >= p->p_spend) {
-			KERNEL_LOCK();
-			if (!uvm_map_check_stack_range(p, sp)) {
-				printf("trap [%s]%d/%d type %d: sp %lx not inside %lx-%lx\n",
-				    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
-				    0, sp, p->p_spstart, p->p_spend);
-
-				sv.sival_ptr = (void *)PROC_PC(p);
-				trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
-			}
-			KERNEL_UNLOCK();
-		}
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			return;
 	}
 
 	/* Invoke the appropriate handler, if necessary */

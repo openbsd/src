@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.74 2019/02/03 01:45:57 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.75 2019/06/01 22:42:20 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -131,7 +131,6 @@ static inline void frame_dump(struct trapframe *_tf, struct proc *_p,
 static inline void verify_smap(const char *_func);
 static inline void debug_trap(struct trapframe *_frame, struct proc *_p,
     long _type);
-static inline void check_stack(struct proc *_p, long _type);
 
 /*
  * pageflttrap(frame, usermode): page fault handler
@@ -328,7 +327,10 @@ usertrap(struct trapframe *frame)
 
 	p->p_md.md_regs = frame;
 	refreshcreds(p);
-	check_stack(p, type);
+
+	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+		return;
 
 	switch (type) {
 	case T_PROTFLT:			/* protection fault */
@@ -454,28 +456,6 @@ debug_trap(struct trapframe *frame, struct proc *p, long type)
 	}
 #endif
 }
-
-static inline void
-check_stack(struct proc *p, long type)
-{
-	vaddr_t sp = PROC_STACK(p);
-
-	if (p->p_vmspace->vm_map.serial != p->p_spserial ||
-	    p->p_spstart == 0 || sp < p->p_spstart || sp >= p->p_spend) {
-		KERNEL_LOCK();
-		if (!uvm_map_check_stack_range(p, sp)) {
-			union sigval sv;
-
-			printf("trap [%s]%d/%d type %ld: sp %lx not inside"
-			    " %lx-%lx\n", p->p_p->ps_comm, p->p_p->ps_pid,
-			    p->p_tid, type, sp, p->p_spstart, p->p_spend);
-			sv.sival_ptr = (void *)PROC_PC(p);
-			trapsignal(p, SIGSEGV, type, SEGV_ACCERR, sv);
-		}
-		KERNEL_UNLOCK();
-	}
-}
-
 
 /*
  * ast(frame):

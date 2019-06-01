@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.267 2019/06/01 14:11:18 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.268 2019/06/01 22:42:18 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -298,6 +298,12 @@ struct process {
 struct kcov_dev;
 struct lock_list_entry;
 
+struct p_inentry {
+	u_long	 ie_serial;
+	vaddr_t	 ie_start;
+	vaddr_t	 ie_end;
+};
+
 /*
  *  Locks used to protect struct members in this file:
  *	s	scheduler lock
@@ -315,6 +321,8 @@ struct proc {
 	/* substructures: */
 	struct	filedesc *p_fd;		/* copy of p_p->ps_fd */
 	struct	vmspace *p_vmspace;	/* copy of p_p->ps_vmspace */
+	struct	p_inentry p_spinentry;
+	struct	p_inentry p_pcinentry;
 #define	p_rlimit	p_p->ps_limit->pl_rlimit
 
 	int	p_flag;			/* P_* flags. */
@@ -357,10 +365,6 @@ struct proc {
 /* The following fields are all copied upon creation in fork. */
 #define	p_startcopy	p_sigmask
 	sigset_t p_sigmask;	/* Current signal mask. */
-
-	u_int	 p_spserial;
-	vaddr_t	 p_spstart;
-	vaddr_t	 p_spend;
 
 	u_char	p_priority;	/* [s] Process priority. */
 	u_char	p_usrpri;	/* [s] User-prio based on p_estcpu & ps_nice. */

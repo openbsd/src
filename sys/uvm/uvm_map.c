@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.244 2019/05/16 04:24:14 kettenis Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.245 2019/06/01 22:42:20 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -91,7 +91,9 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/sysctl.h>
+#include <sys/signalvar.h>
 #include <sys/syslog.h>
+#include <sys/user.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -1071,10 +1073,12 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	entry->inheritance = inherit;
 	entry->wired_count = 0;
 	entry->advice = advice;
+	if (prot & PROT_WRITE)
+		map->wserial++;
 	if (flags & UVM_FLAG_STACK) {
 		entry->etype |= UVM_ET_STACK;
 		if (flags & (UVM_FLAG_FIXED | UVM_FLAG_UNMAP))
-			map->serial++;
+			map->sserial++;
 	}
 	if (flags & UVM_FLAG_COPYONW) {
 		entry->etype |= UVM_ET_COPYONWRITE;
@@ -1334,10 +1338,12 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	entry->inheritance = inherit;
 	entry->wired_count = 0;
 	entry->advice = advice;
+	if (prot & PROT_WRITE)
+		map->wserial++;
 	if (flags & UVM_FLAG_STACK) {
 		entry->etype |= UVM_ET_STACK;
 		if (flags & UVM_FLAG_UNMAP)
-			map->serial++;
+			map->sserial++;
 	}
 	if (uobj)
 		entry->etype |= UVM_ET_OBJ;
@@ -1779,42 +1785,100 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 }
 
 /*
- * Inside a vm_map find the sp address and verify MAP_STACK, and also
- * remember low and high regions of that of region  which is marked
- * with MAP_STACK.  Return TRUE.
- * If sp isn't in a non-guard MAP_STACK region return FALSE.
+ * Stack must be in a MAP_STACK entry. PROT_NONE indicates stack not yet
+ * grown -- then uvm_map_check_region_range() should not cache the entry
+ * because growth won't be seen.
+ */
+int
+uvm_map_inentry_sp(vm_map_entry_t entry)
+{
+	if ((entry->etype & UVM_ET_STACK) == 0) {
+		if (entry->protection == PROT_NONE)
+			return (-1);	/* don't update range */
+		return (0);
+	}
+	return (1);
+}
+
+/*
+ * If a syscall comes from a writeable entry, W^X is violated.
+ * (Would be nice if we can spot aliasing, which is also kind of bad)
+ */
+int
+uvm_map_inentry_pc(vm_map_entry_t entry)
+{
+	if (entry->protection & PROT_WRITE)
+		return (0);	/* not permitted */
+	return (1);
+}
+
+int
+uvm_map_inentry_recheck(u_long serial, vaddr_t addr, struct p_inentry *ie)
+{
+	return (serial != ie->ie_serial || ie->ie_start == 0 ||
+	    addr < ie->ie_start || addr >= ie->ie_end);
+}
+
+/*
+ * Inside a vm_map find the reg address and verify it via function.
+ * Remember low and high addresses of region if valid and return TRUE,
+ * else return FALSE.
  */
 boolean_t
-uvm_map_check_stack_range(struct proc *p, vaddr_t sp)
+uvm_map_inentry_fix(struct proc *p, struct p_inentry *ie, vaddr_t addr,
+    int (*fn)(vm_map_entry_t), u_long serial)
 {
 	vm_map_t map = &p->p_vmspace->vm_map;
 	vm_map_entry_t entry;
+	int ret;
 
-	if (sp < map->min_offset || sp >= map->max_offset)
-		return(FALSE);
+	if (addr < map->min_offset || addr >= map->max_offset)
+		return (FALSE);
 
 	/* lock map */
 	vm_map_lock_read(map);
 
 	/* lookup */
-	if (!uvm_map_lookup_entry(map, trunc_page(sp), &entry)) {
+	if (!uvm_map_lookup_entry(map, trunc_page(addr), &entry)) {
 		vm_map_unlock_read(map);
-		return(FALSE);
-	}
-
-	if ((entry->etype & UVM_ET_STACK) == 0) {
-		int protection = entry->protection;
-
-		vm_map_unlock_read(map);
-		if (protection == PROT_NONE)
-			return (TRUE);	/* don't update range */
 		return (FALSE);
 	}
-	p->p_spstart = entry->start;
-	p->p_spend = entry->end;
-	p->p_spserial = map->serial;
+
+	ret = (*fn)(entry);
+	if (ret == 0) {
+		vm_map_unlock_read(map);
+		return (FALSE);
+	} else if (ret == 1) {
+		ie->ie_start = entry->start;
+		ie->ie_end = entry->end;
+		ie->ie_serial = serial;
+	} else {
+		/* do not update, re-check later */
+	}
 	vm_map_unlock_read(map);
-	return(TRUE);
+	return (TRUE);
+}
+
+boolean_t
+uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr, char *name,
+    int (*fn)(vm_map_entry_t), u_long serial)
+{
+	union sigval sv;
+	boolean_t ok = TRUE;
+
+	if (uvm_map_inentry_recheck(serial, addr, ie)) {
+		KERNEL_LOCK();
+		ok = uvm_map_inentry_fix(p, ie, addr, fn, serial);
+		if (!ok) {
+			printf("[%s]%d/%d %s %lx not inside %lx-%lx\n",
+			    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+			    name, addr, ie->ie_start, ie->ie_end);
+			sv.sival_ptr = (void *)PROC_PC(p);
+			trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
+		}
+		KERNEL_UNLOCK();
+	}
+	return (ok);
 }
 
 /*
@@ -2139,7 +2203,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 		/* A stack has been removed.. */
 		if (UVM_ET_ISSTACK(entry) && (map->flags & VM_MAP_ISVMSPACE))
-			map->serial++;
+			map->sserial++;
 
 		/* Kill entry. */
 		uvm_unmap_kill_entry(map, entry);
@@ -3278,6 +3342,10 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		if (iter->protection != old_prot) {
 			mask = UVM_ET_ISCOPYONWRITE(iter) ?
 			    ~PROT_WRITE : PROT_MASK;
+
+			/* XXX should only wserial++ if no split occurs */
+			if (iter->protection & PROT_WRITE)
+				map->wserial++;
 
 			/* update pmap */
 			if ((iter->protection & mask) == PROT_NONE &&
