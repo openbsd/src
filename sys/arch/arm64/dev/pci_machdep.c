@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.1 2019/05/31 08:02:04 kettenis Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.2 2019/06/02 18:40:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -83,3 +83,44 @@ pci_msix_enable(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
 
 	pci_conf_write(pc, tag, off, reg | PCI_MSIX_MC_MSIXE);
 }
+
+int
+_pci_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
+		return -1;
+
+	ihp->ih_pc = pa->pa_pc;
+	ihp->ih_tag = pa->pa_tag;
+	ihp->ih_type = PCI_MSI;
+
+	return 0;
+}
+
+int
+_pci_intr_map_msix(struct pci_attach_args *pa, int vec,
+    pci_intr_handle_t *ihp)
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
+	pcireg_t reg;
+
+	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
+	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		return -1;
+
+	if (vec > PCI_MSIX_MC_TBLSZ(reg))
+		return -1;
+
+	ihp->ih_pc = pa->pa_pc;
+	ihp->ih_tag = pa->pa_tag;
+	ihp->ih_intrpin = vec;
+	ihp->ih_type = PCI_MSIX;
+
+	return 0;
+}
+

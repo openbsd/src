@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.4 2019/05/31 08:02:04 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.5 2019/06/02 18:40:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -28,7 +28,19 @@
 
 typedef struct arm64_pci_chipset *pci_chipset_tag_t;
 typedef u_long pcitag_t;
-typedef u_long pci_intr_handle_t;
+
+/* Supported interrupt types. */
+#define PCI_NONE		0
+#define PCI_INTX		1
+#define PCI_MSI			2
+#define PCI_MSIX		3
+
+typedef struct {
+	pci_chipset_tag_t	ih_pc;
+	pcitag_t		ih_tag;
+	int			ih_intrpin;
+	int			ih_type;
+} pci_intr_handle_t;
 
 struct pci_attach_args;
 
@@ -103,3 +115,5 @@ pci_chipset_tag_t pci_lookup_segment(int);
 void	pci_msi_enable(pci_chipset_tag_t, pcitag_t, bus_addr_t, uint32_t);
 void	pci_msix_enable(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
 	    int, bus_addr_t, uint32_t);
+int	_pci_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
+int	_pci_intr_map_msix(struct pci_attach_args *, int, pci_intr_handle_t *);
