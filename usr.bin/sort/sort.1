@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.60 2019/05/15 09:07:46 schwarze Exp $
+.\"	$OpenBSD: sort.1,v 1.61 2019/06/02 06:53:11 bentley Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 15 2019 $
+.Dd $Mdocdate: June 2 2019 $
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -52,7 +52,9 @@ The
 .Nm
 utility sorts text and binary files by lines.
 A line is a record separated from the subsequent record by a
-newline (default) or NUL \'\\0\' character
+newline (default) or NUL
+.Ql \e0
+character
 .Po
 .Fl z
 option
@@ -278,12 +280,14 @@ delimit an empty field; further, the initial blank space
 considered part of a field when determining key offsets.
 To use NUL as field separator, use
 .Fl t
-\'\\0\'.
+\(aq\e0\(aq.
 .It Fl z , Fl Fl zero-terminated
 Use NUL as the record separator.
 By default, records in the files are expected to be separated by
 the newline characters.
-With this option, NUL (\'\\0\') is used as the record separator character.
+With this option, NUL
+.Pq Ql \e0
+is used as the record separator character.
 .El
 .Pp
 Other options:

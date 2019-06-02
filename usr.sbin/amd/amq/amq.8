@@ -1,4 +1,4 @@
-.\"	$OpenBSD: amq.8,v 1.15 2017/08/22 17:08:43 schwarze Exp $
+.\"	$OpenBSD: amq.8,v 1.16 2019/06/02 06:53:11 bentley Exp $
 .\"
 .\" Copyright (c) 1990 Jan-Simon Pendry
 .\" Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -34,7 +34,7 @@
 .\"
 .\"     from: @(#)amq.8	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: August 22 2017 $
+.Dd $Mdocdate: June 2 2019 $
 .Dt AMQ 8
 .Os
 .Sh NAME
@@ -84,12 +84,12 @@ instead of providing information about them.
 Unmounts are requested, not forced.
 They merely cause the mounted filesystem to timeout,
 which will be picked up by
-.Xr amd 8 Ns \'s
+.Xr amd 8 Ns 's
 main scheduler thus causing the normal timeout action to be taken.
 .It Fl v
 Request the automounter to provide version information.
 This is a subset of the information provided by
-.Xr amd 8 Ns \'s Fl v
+.Xr amd 8 Ns 's Fl v
 option.
 .\".It Fl M
 .\"Request automounter to add the given map entry to the root map and then
