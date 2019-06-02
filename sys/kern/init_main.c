@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.287 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.288 2019/06/02 03:58:28 visa Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -191,8 +191,6 @@ main(void *framep)
 	struct proc *p;
 	struct process *pr;
 	struct pdevinit *pdev;
-	quad_t lim;
-	int i;
 	extern struct pdevinit pdevinit[];
 	extern void disk_init(void);
 
@@ -318,19 +316,8 @@ main(void *framep)
 	p->p_fd = pr->ps_fd = fdinit();
 
 	/* Create the limits structures. */
+	lim_startup(&limit0);
 	pr->ps_limit = &limit0;
-	for (i = 0; i < nitems(p->p_rlimit); i++)
-		limit0.pl_rlimit[i].rlim_cur =
-		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = NOFILE;
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = MIN(NOFILE_MAX,
-	    (maxfiles - NOFILE > NOFILE) ?  maxfiles - NOFILE : NOFILE);
-	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
-	lim = ptoa(uvmexp.free);
-	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
-	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
-	limit0.pl_refcnt = 1;
 
 	/* Allocate a prototype map so we have something to fork. */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),

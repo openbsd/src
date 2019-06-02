@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.62 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.63 2019/06/02 03:58:28 visa Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -532,6 +532,29 @@ rucheck(void *arg)
 
 struct pool plimit_pool;
 
+void
+lim_startup(struct plimit *limit0)
+{
+	rlim_t lim;
+	int i;
+
+	pool_init(&plimit_pool, sizeof(struct plimit), 0, IPL_MPFLOOR,
+	    PR_WAITOK, "plimitpl", NULL);
+
+	for (i = 0; i < nitems(limit0->pl_rlimit); i++)
+		limit0->pl_rlimit[i].rlim_cur =
+		    limit0->pl_rlimit[i].rlim_max = RLIM_INFINITY;
+	limit0->pl_rlimit[RLIMIT_NOFILE].rlim_cur = NOFILE;
+	limit0->pl_rlimit[RLIMIT_NOFILE].rlim_max = MIN(NOFILE_MAX,
+	    (maxfiles - NOFILE > NOFILE) ? maxfiles - NOFILE : NOFILE);
+	limit0->pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
+	lim = ptoa(uvmexp.free);
+	limit0->pl_rlimit[RLIMIT_RSS].rlim_max = lim;
+	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
+	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+	limit0->pl_refcnt = 1;
+}
+
 /*
  * Make a copy of the plimit structure.
  * We share these structures copy-on-write after fork,
@@ -541,13 +564,6 @@ struct plimit *
 limcopy(struct plimit *lim)
 {
 	struct plimit *newlim;
-	static int initialized;
-
-	if (!initialized) {
-		pool_init(&plimit_pool, sizeof(struct plimit), 0, IPL_NONE,
-		    PR_WAITOK, "plimitpl", NULL);
-		initialized = 1;
-	}
 
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
