@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.53 2019/04/02 07:01:29 jmatthew Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.54 2019/06/02 02:37:12 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -54,6 +54,7 @@ void dump_bars(int, int, int, int);
 void dump_caplist(int, int, int, u_int8_t);
 void dump_pci_powerstate(int, int, int, uint8_t);
 void dump_pcie_linkspeed(int, int, int, uint8_t);
+void dump_pcie_devserial(int, int, int, uint16_t);
 void dump_msi(int, int, int, uint8_t);
 void dump_msix(int, int, int, uint8_t);
 void print_pcie_ls(uint8_t);
@@ -400,6 +401,21 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 }
 
 void
+dump_pcie_devserial(int bus, int dev, int func, u_int16_t ptr)
+{
+	uint32_t lower, upper;
+	uint64_t serial;
+
+	if ((pci_read(bus, dev, func, ptr + 8, &upper) != 0) ||
+	    (pci_read(bus, dev, func, ptr + 4, &lower) != 0))
+		return;
+
+	serial = ((uint64_t)upper << 32) | (uint64_t)lower;
+
+	printf("\t\tSerial Number: %016llx\n", serial);
+}
+
+void
 dump_msi(int bus, int dev, int func, u_int8_t ptr)
 {
 	u_int32_t reg;
@@ -453,6 +469,12 @@ dump_pcie_enhanced_caplist(int bus, int dev, int func)
 
 		printf("\t0x%04x: Enhanced Capability 0x%02x: ", ptr, ecap);
 		printf("%s\n", pci_enhanced_capnames[capidx]);
+
+		switch (ecap) {
+		case 0x03:
+			dump_pcie_devserial(bus, dev, func, ptr);
+			break;
+		}
 
 		ptr = PCI_PCIE_ECAP_NEXT(reg);
 
