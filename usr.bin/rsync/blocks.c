@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.16 2019/05/08 21:30:11 benno Exp $ */
+/*	$Id: blocks.c,v 1.17 2019/06/02 14:30:51 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -55,7 +55,6 @@ blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
 	assert(remain);
 	osz = remain < (off_t)blks->len ? remain : (off_t)blks->len;
 	fhash = hash_fast(buf + offs, (size_t)osz);
-	have_md = 0;
 
 	/*
 	 * Start with our match hint.
