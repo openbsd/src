@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.2 2017/12/01 23:30:05 guenther Exp $	*/
+/*	$OpenBSD: tib.h,v 1.3 2019/06/02 01:03:01 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -38,6 +38,9 @@ extern int	_static_tls_align;
 /* base-offset alignment of static TLS allocation */
 extern int	_static_tls_align_offset;
 #endif
+
+/* saved handle to callbacks from ld.so */
+extern const dl_cb *_dl_cb;
 
 #if ! TCB_HAVE_MD_GET
 /*

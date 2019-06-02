@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.6 2017/12/01 23:30:05 guenther Exp $ */
+/*	$OpenBSD: init.c,v 1.7 2019/06/02 01:03:01 guenther Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -57,7 +57,7 @@ char	*__progname __attribute__((weak)) = NULL;
 
 
 #ifndef PIC
-struct dl_phdr_info	_static_phdr_info = { .dlpi_name = "a.out" };
+struct dl_phdr_info	_static_phdr_info __relro = { .dlpi_name = "a.out" };
 
 static inline void early_static_init(char **_argv, char **_envp);
 static inline void setup_static_tib(Elf_Phdr *_phdr, int _phnum);
@@ -66,13 +66,12 @@ static inline void setup_static_tib(Elf_Phdr *_phdr, int _phnum);
 extern Elf_Ehdr __executable_start[] __attribute__((weak));
 #endif /* PIC */
 
-/*
- * extract useful bits from the auxiliary vector and either
- * a) register ld.so's cleanup in dynamic links, or
- * b) init __progname, environ, and the TIB in static links.
- */
-char ***
-_csu_finish(char **argv, char **envp, void (*cleanup)(void))
+/* provide definitions for these */
+const dl_cb *_dl_cb __relro = NULL;
+
+void _libc_preinit(int, char **, char **, dl_cb_cb *) __dso_hidden;
+void
+_libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 {
 	AuxInfo	*aux;
 #ifndef PIC
@@ -80,9 +79,12 @@ _csu_finish(char **argv, char **envp, void (*cleanup)(void))
 	int phnum = 0;
 
 	/* static libc in a static link? */
-	if (cleanup == NULL)
+	if (cb == NULL)
 		early_static_init(argv, envp);
 #endif /* !PIC */
+
+	if (cb != NULL)
+		_dl_cb = cb(DL_CB_CUR);
 
 	/* Extract useful bits from the auxiliary vector */
 	while (*envp++ != NULL)
@@ -98,30 +100,73 @@ _csu_finish(char **argv, char **envp, void (*cleanup)(void))
 			break;
 		case AUX_phdr:
 			phdr = (void *)aux->au_v;
-			_static_phdr_info.dlpi_phdr = phdr;
 			break;
 		case AUX_phnum:
 			phnum = aux->au_v;
-			_static_phdr_info.dlpi_phnum = phnum;
 			break;
 #endif /* !PIC */
 		}
 	}
 
 #ifndef PIC
-	if (cleanup == NULL && phdr == NULL && __executable_start != NULL) {
+	if (cb == NULL && phdr == NULL && __executable_start != NULL) {
 		/*
 		 * Static non-PIE processes don't get an AUX vector,
 		 * so find the phdrs through the ELF header
 		 */
+		_static_phdr_info.dlpi_addr = (Elf_Addr)__executable_start;
 		phdr = (void *)((char *)__executable_start +
 		    __executable_start->e_phoff);
 		phnum = __executable_start->e_phnum;
 	}
+	_static_phdr_info.dlpi_phdr = phdr;
+	_static_phdr_info.dlpi_phnum = phnum;
+
 	/* static libc in a static link? */
-	if (cleanup == NULL)
+	if (cb == NULL)
 		setup_static_tib(phdr, phnum);
 #endif /* !PIC */
+}
+
+/* ARM just had to be different... */
+#ifndef __arm__
+# define TYPE	"@"
+#else
+# define TYPE	"%"
+#endif
+
+#ifdef __LP64__
+# define VALUE_ALIGN		".balign 8"
+# define VALUE_DIRECTIVE	".quad"
+#else
+# define VALUE_ALIGN		".balign 4"
+# ifdef __hppa__
+   /* hppa just had to be different: func pointers prefix with 'P%' */
+#  define VALUE_DIRECTIVE	".int P%"
+# else
+#  define VALUE_DIRECTIVE	".int"
+# endif
+#endif
+
+#define ADD_TO_ARRAY(func, which) \
+	__asm(	" .section ."#which",\"a\","TYPE#which"\n " \
+	VALUE_ALIGN"\n "VALUE_DIRECTIVE" "#func"\n .previous")
+
+#ifdef PIC
+ADD_TO_ARRAY(_libc_preinit, init_array);
+#else
+ADD_TO_ARRAY(_libc_preinit, preinit_array);
+#endif
+
+/*
+ * In dynamic links, invoke ld.so's dl_clean_boot() callback, if any,
+ * and register its cleanup.
+ */
+char ***
+_csu_finish(char **argv, char **envp, void (*cleanup)(void))
+{
+	if (_dl_cb != NULL && _dl_cb->dl_clean_boot != NULL)
+		_dl_cb->dl_clean_boot();
 
 	if (cleanup != NULL)
 		atexit(cleanup);
@@ -163,12 +208,12 @@ early_static_init(char **argv, char **envp)
 #define ELF_ROUND(x,malign)	(((x) + (malign)-1) & ~((malign)-1))
 
 /* for static binaries, the location and size of the TLS image */
-static void		*static_tls;
-static size_t		static_tls_fsize;
+static void		*static_tls __relro;
+static size_t		static_tls_fsize __relro;
 
-size_t			_static_tls_size = 0;
-int			_static_tls_align;
-int			_static_tls_align_offset;
+size_t			_static_tls_size __relro = 0;
+int			_static_tls_align __relro;
+int			_static_tls_align_offset __relro;
 
 static inline void
 setup_static_tib(Elf_Phdr *phdr, int phnum)

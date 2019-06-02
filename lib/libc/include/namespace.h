@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.13 2019/05/13 20:00:32 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.14 2019/06/02 01:03:01 guenther Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -58,6 +58,8 @@
 
 #define	MAKE_CLONE(dst, src)	__dso_hidden typeof(dst) HIDDEN(dst) \
 				__attribute__((alias (HIDDEN_STRING(src))))
+
+#define	__relro			__attribute__((section(".data.rel.ro")))
 
 
 /*

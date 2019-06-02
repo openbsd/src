@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.14 2016/09/06 18:49:34 guenther Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.15 2019/06/02 01:03:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -28,34 +28,19 @@
 
 #include <sys/types.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <link.h>
+#include <dlfcn.h>
+#include <tib.h>
 
 #include "init.h"
 
-/*
- *	All functions here are just stubs that will be overridden
- *	by the real functions in ld.so when dynamic loading is
- *	performed at exec. The symbols here are provided as a link
- *	helper so we can link a program using the dl functions
- *	without getting any unresolved references.
- */
-
-void	*dlopen(const char *libname, int how) __attribute__((weak));
-int	 dlclose(void *handle) __attribute__((weak));
-void	*dlsym(void *handle, const char *name) __attribute__((weak));
-int	 dlctl(void *handle, int command, void *data) __attribute__((weak));
-char 	*dlerror(void) __attribute__((weak));
-
-struct dl_info;
-int	dladdr(const void *addr, struct dl_info *info) __attribute__((weak));
-
-int	 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),	    void *date) __attribute__((weak));
-
-#include <stdio.h>
 
 void *
 dlopen(const char *libname, int how)
 {
+	if (_dl_cb != NULL && _dl_cb->dlopen != NULL)
+		return _dl_cb->dlopen(libname, how);
 	printf("Wrong dl symbols!\n");
 	return NULL;
 }
@@ -63,6 +48,8 @@ dlopen(const char *libname, int how)
 int
 dlclose(void *handle)
 {
+	if (_dl_cb != NULL && _dl_cb->dlclose != NULL)
+		return _dl_cb->dlclose(handle);
 	printf("Wrong dl symbols!\n");
 	return 0;
 }
@@ -70,6 +57,8 @@ dlclose(void *handle)
 void *
 dlsym(void *handle, const char *name)
 {
+	if (_dl_cb != NULL && _dl_cb->dlsym != NULL)
+		return _dl_cb->dlsym(handle, name);
 	printf("Wrong dl symbols!\n");
 	return NULL;
 }
@@ -77,12 +66,17 @@ dlsym(void *handle, const char *name)
 int
 dlctl(void *handle, int command, void *data)
 {
+	if (_dl_cb != NULL && _dl_cb->dlctl != NULL)
+		return _dl_cb->dlctl(handle, command, data);
 	return -1;
 }
+DEF_WEAK(dlctl);
 
 char *
 dlerror(void)
 {
+	if (_dl_cb != NULL && _dl_cb->dlerror != NULL)
+		return _dl_cb->dlerror();
 	return "Wrong dl symbols!\n";
 }
 
@@ -90,6 +84,8 @@ int
 dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 	void *data)
 {
+	if (_dl_cb != NULL && _dl_cb->dl_iterate_phdr != NULL)
+		return _dl_cb->dl_iterate_phdr(callback, data);
 #ifndef PIC
 	if (_static_phdr_info.dlpi_phdr != NULL)
 		return callback(&_static_phdr_info, sizeof(_static_phdr_info),
@@ -97,14 +93,18 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 #endif /* !PIC */
 	return -1;
 }
+DEF_WEAK(dl_iterate_phdr);
 
 int
 dladdr(const void *addr, struct dl_info *info)
 {
+	if (_dl_cb != NULL && _dl_cb->dladdr != NULL)
+		return _dl_cb->dladdr(addr, info);
 	printf("Wrong dl symbols!\n");
 	return -1;
 }
 
+#if 0
 /* Thread Local Storage argument structure */
 typedef struct {
 	unsigned long int ti_module;
@@ -131,3 +131,4 @@ ___tls_get_addr(tls_index *ti)
 }
 #endif /* __i386 */
 #endif /* arch with TLS support enabled */
+#endif

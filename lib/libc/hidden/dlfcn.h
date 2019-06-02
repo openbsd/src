@@ -1,6 +1,6 @@
-/*	$OpenBSD: thread_atexit.c,v 1.2 2019/06/02 01:03:01 guenther Exp $ */
+/*	$OpenBSD: dlfcn.h,v 1.1 2019/06/02 01:03:01 guenther Exp $	*/
 /*
- * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,30 +15,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <dlfcn.h>
-#include <stdlib.h>
-#include <tib.h>
+#ifndef	_LIBC_DLFCN_H_
+#define	_LIBC_DLFCN_H_
 
-#include "atexit.h"
+#include_next <dlfcn.h>
 
-__weak_alias(__cxa_thread_atexit, __cxa_thread_atexit_impl);
+PROTO_DEPRECATED(dladdr);
+PROTO_DEPRECATED(dlclose);
+PROTO_DEPRECATED(dlerror);
+PROTO_DEPRECATED(dlopen);
+PROTO_DEPRECATED(dlsym);
+PROTO_NORMAL(dlctl);
 
-int
-__cxa_thread_atexit_impl(void (*func)(void *), void *arg, void *dso)
-{
-	struct thread_atexit_fn *fnp;
-	struct tib *tib = TIB_GET();
-
-	fnp = calloc(1, sizeof(struct thread_atexit_fn));
-	if (fnp == NULL)
-		return -1;
-
-	dlctl(NULL, DL_REFERENCE, dso);
-
-	fnp->func = func;
-	fnp->arg = arg;
-	fnp->next = tib->tib_atexit;
-	tib->tib_atexit = fnp;
-
-	return 0;
-}
+#endif /* _LIBC_DLFCN_H_ */
