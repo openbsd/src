@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.18 2019/06/02 17:36:48 florian Exp $ */
+/*	$Id: blocks.c,v 1.19 2019/06/02 17:43:34 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,7 +32,7 @@
 
 struct	blkhash {
 	const struct blk	*blk;
-	TAILQ_ENTRY(blkhash) 	 entries;
+	TAILQ_ENTRY(blkhash)	 entries;
 };
 
 TAILQ_HEAD(blkhashq, blkhash);
@@ -100,8 +100,7 @@ blkhash_set(struct blktab *p, const struct blkset *bset)
 
 	/* Fill in the hashtable. */
 
-	p->blks = reallocarray(p->blks, 
-		bset->blksz, sizeof(struct blkhash));
+	p->blks = reallocarray(p->blks, bset->blksz, sizeof(struct blkhash));
 	if (p->blks == NULL) {
 		ERR("reallocarray");
 		return 0;
@@ -229,7 +228,7 @@ blk_find(struct sess *sess, struct blkstat *st,
 	if (osz < remain) {
 		st->s1 += map[osz];
 		st->s2 += st->s1;
-	} 
+	}
 
 	return NULL;
 }
@@ -521,8 +520,7 @@ blk_send(struct sess *sess, int fd, size_t idx,
 	io_buffer_int(buf, &pos, sz, p->rem);
 
 	for (i = 0; i < p->blksz; i++) {
-		io_buffer_int(buf, &pos,
-			sz, p->blks[i].chksum_short);
+		io_buffer_int(buf, &pos, sz, p->blks[i].chksum_short);
 		io_buffer_buf(buf, &pos, sz, p->blks[i].chksum_long, p->csum);
 	}
 
