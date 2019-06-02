@@ -1,4 +1,4 @@
-/*	$Id: flist.c,v 1.26 2019/05/08 21:30:11 benno Exp $ */
+/*	$Id: flist.c,v 1.27 2019/06/02 14:29:58 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -53,7 +53,7 @@
 #define FLIST_TIME_SAME  0x0080 /* time is repeat */
 
 /*
- * Requied way to sort a filename list.
+ * Required way to sort a filename list.
  */
 static int
 flist_cmp(const void *p1, const void *p2)
