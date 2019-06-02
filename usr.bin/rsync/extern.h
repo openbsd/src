@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.30 2019/05/08 21:30:11 benno Exp $ */
+/*	$Id: extern.h,v 1.31 2019/06/02 17:36:48 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -159,6 +159,9 @@ struct	blkstat {
 	off_t		 curpos; /* sending: position in file to send */
 	off_t		 curlen; /* sending: length of send */
 	int32_t		 curtok; /* sending: next matching token or zero */
+	struct blktab	*blktab; /* hashtable of blocks */
+	uint32_t	 s1; /* partial sum for computing fast hash */
+	uint32_t	 s2; /* partial sum for computing fast hash */
 };
 
 /*
@@ -327,6 +330,10 @@ void		  download_free(struct download *);
 struct upload	 *upload_alloc(const char *, int, int, size_t,
 			const struct flist *, size_t, mode_t);
 void		  upload_free(struct upload *);
+
+struct blktab	*blkhash_alloc(void);
+int		 blkhash_set(struct blktab *, const struct blkset *);
+void		 blkhash_free(struct blktab *);
 
 struct blkset	 *blk_recv(struct sess *, int, const char *);
 void		  blk_recv_ack(char [20], const struct blkset *, int32_t);

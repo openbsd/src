@@ -1,4 +1,4 @@
-/*	$Id: blocks.c,v 1.17 2019/06/02 14:30:51 deraadt Exp $ */
+/*	$Id: blocks.c,v 1.18 2019/06/02 17:36:48 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/queue.h>
 #include <sys/stat.h>
 
 #include <assert.h>
@@ -29,85 +30,206 @@
 
 #include "extern.h"
 
+struct	blkhash {
+	const struct blk	*blk;
+	TAILQ_ENTRY(blkhash) 	 entries;
+};
+
+TAILQ_HEAD(blkhashq, blkhash);
+
+/*
+ * Table used by the sender for looking up blocks.
+ * The blocks are those sent by the receiver; we're looking up using
+ * hashes computed from our local file.
+ */
+struct	blktab {
+	struct blkhashq	*q; /* entries in the hashtable */
+	size_t		 qsz; /* size of the hashtable */
+	struct blkhash	*blks; /* pre-allocated hashtable entries */
+};
+
+/*
+ * This is the number of buckets in the hashtable.
+ * Use the same that GPL rsync uses.
+ * (It should be dynamic?)
+ */
+#define	BLKTAB_SZ	  65536
+
+/*
+ * Initialise an empty hashtable with BLKTAB_SZ entries in it.
+ * Populate it for each file with blkhash_set.
+ * When we've processed all files, call blkhash_free.
+ * Returns NULL on allocation failure.
+ */
+struct blktab *
+blkhash_alloc(void)
+{
+	struct blktab	*p;
+
+	if ((p = calloc(1, sizeof(struct blktab))) == NULL) {
+		ERR("calloc");
+		return NULL;
+	}
+	p->qsz = BLKTAB_SZ;
+	p->q = calloc(p->qsz, sizeof(struct blkhashq));
+	if (p->q == NULL) {
+		ERR("calloc");
+		free(p);
+		return NULL;
+	}
+	return p;
+}
+
+/*
+ * Populate the hashtable with an incoming file's blocks.
+ * This will clear out any existing hashed data.
+ * Returns zero on allocation failure, non-zero otherwise.
+ */
+int
+blkhash_set(struct blktab *p, const struct blkset *bset)
+{
+	size_t	 i, idx;
+
+	if (bset == NULL)
+		return 1;
+
+	/* Wipe clean the table. */
+
+	for (i = 0; i < p->qsz; i++)
+		TAILQ_INIT(&p->q[i]);
+
+	/* Fill in the hashtable. */
+
+	p->blks = reallocarray(p->blks, 
+		bset->blksz, sizeof(struct blkhash));
+	if (p->blks == NULL) {
+		ERR("reallocarray");
+		return 0;
+	}
+	for (i = 0; i < bset->blksz; i++) {
+		p->blks[i].blk = &bset->blks[i];
+		idx = bset->blks[i].chksum_short % p->qsz;
+		assert(idx < p->qsz);
+		TAILQ_INSERT_TAIL(&p->q[idx], &p->blks[i], entries);
+	}
+
+	return 1;
+}
+
+/*
+ * Free as allocated with blkhash_alloc().
+ */
+void
+blkhash_free(struct blktab *p)
+{
+
+	free(p->blks);
+	free(p);
+}
+
 /*
  * From our current position of "offs" in buffer "buf" of total size
  * "size", see if we can find a matching block in our list of blocks.
  * The "hint" refers to the block that *might* work.
  * Returns the blk or NULL if no matching block was found.
  */
-static struct blk *
-blk_find(struct sess *sess, const void *buf, off_t size, off_t offs,
-	const struct blkset *blks, const char *path, size_t hint)
+static const struct blk *
+blk_find(struct sess *sess, struct blkstat *st,
+	const struct blkset *blks, const char *path, int recomp)
 {
 	unsigned char	 md[MD4_DIGEST_LENGTH];
 	uint32_t	 fhash;
 	off_t		 remain, osz;
-	size_t		 i;
 	int		 have_md = 0;
+	char		*map;
+	const struct blkhashq *q;
+	const struct blkhash *ent;
+
+	remain = st->mapsz - st->offs;
+	assert(remain);
+	osz = MINIMUM(remain, (off_t)blks->len);
 
 	/*
-	 * First, compute our fast hash.
-	 * FIXME: yes, this can be a rolling computation, but I'm
-	 * deliberately making it simple first.
+	 * First, compute our fast hash the hard way (if we're
+	 * reentering this function from a previous block match, or the
+	 * first time) or from our existing s1 and s2 values.
 	 */
 
-	remain = size - offs;
-	assert(remain);
-	osz = remain < (off_t)blks->len ? remain : (off_t)blks->len;
-	fhash = hash_fast(buf + offs, (size_t)osz);
+	if (!recomp) {
+		fhash = (st->s1 & 0xFFFF) | (st->s2 << 16);
+	} else {
+		fhash = hash_fast(st->map + st->offs, (size_t)osz);
+		st->s1 = fhash & 0xFFFF;
+		st->s2 = fhash >> 16;
+	}
 
 	/*
 	 * Start with our match hint.
 	 * This just runs the fast and slow check with the hint.
 	 */
 
-	if (hint < blks->blksz &&
-	    fhash == blks->blks[hint].chksum_short &&
-	    (size_t)osz == blks->blks[hint].len) {
-		hash_slow(buf + offs, (size_t)osz, md, sess);
+	if (st->hint < blks->blksz &&
+	    fhash == blks->blks[st->hint].chksum_short &&
+	    (size_t)osz == blks->blks[st->hint].len) {
+		hash_slow(st->map + st->offs, (size_t)osz, md, sess);
 		have_md = 1;
-		if (memcmp(md, blks->blks[hint].chksum_long, blks->csum) == 0) {
+		if (memcmp(md, blks->blks[st->hint].chksum_long, blks->csum) == 0) {
 			LOG4("%s: found matching hinted match: "
 			    "position %jd, block %zu (position %jd, size %zu)",
 			    path,
-			    (intmax_t)offs, blks->blks[hint].idx,
-			    (intmax_t)blks->blks[hint].offs,
-			    blks->blks[hint].len);
-			return &blks->blks[hint];
+			    (intmax_t)st->offs, blks->blks[st->hint].idx,
+			    (intmax_t)blks->blks[st->hint].offs,
+			    blks->blks[st->hint].len);
+			return &blks->blks[st->hint];
 		}
 	}
 
 	/*
-	 * Now loop and look for the fast hash.
-	 * If it's found, move on to the slow hash.
+	 * Look for the fast hash modulus in our hashtable, filter for
+	 * those matching the full hash and length, then move to the
+	 * slow hash.
+	 * The slow hash is computed only once.
 	 */
 
-	for (i = 0; i < blks->blksz; i++) {
-		if (fhash != blks->blks[i].chksum_short)
-			continue;
-		if ((size_t)osz != blks->blks[i].len)
+	q = &st->blktab->q[fhash % st->blktab->qsz];
+
+	TAILQ_FOREACH(ent, q, entries) {
+		if (fhash != ent->blk->chksum_short ||
+		    (size_t)osz != ent->blk->len)
 			continue;
 
 		LOG4("%s: found matching fast match: "
 		    "position %jd, block %zu (position %jd, size %zu)",
-		    path,
-		    (intmax_t)offs, blks->blks[i].idx,
-		    (intmax_t)blks->blks[i].offs,
-		    blks->blks[i].len);
-
-		/* Compute slow hash on demand. */
+		    path, (intmax_t)st->offs, ent->blk->idx,
+		    (intmax_t)ent->blk->offs, ent->blk->len);
 
 		if (have_md == 0) {
-			hash_slow(buf + offs, (size_t)osz, md, sess);
+			hash_slow(st->map + st->offs, (size_t)osz, md, sess);
 			have_md = 1;
 		}
 
-		if (memcmp(md, blks->blks[i].chksum_long, blks->csum))
+		if (memcmp(md, ent->blk->chksum_long, blks->csum))
 			continue;
 
 		LOG4("%s: sender verifies slow match", path);
-		return &blks->blks[i];
+		return ent->blk;
 	}
+
+	/*
+	 * Adjust our partial sums for the hashing.
+	 * We first remove the first byte from the sum.
+	 * We then, if we have space, add the first byte of the next
+	 * block in the sequence.
+	 */
+
+	map = st->map + st->offs;
+	st->s1 -= map[0];
+	st->s2 -= osz * map[0];
+
+	if (osz < remain) {
+		st->s1 += map[osz];
+		st->s2 += st->s1;
+	} 
 
 	return NULL;
 }
@@ -122,9 +244,10 @@ void
 blk_match(struct sess *sess, const struct blkset *blks,
 	const char *path, struct blkstat *st)
 {
-	off_t		 last, end, sz;
-	int32_t		 tok;
-	struct blk	*blk;
+	off_t		  last, end, sz;
+	int32_t		  tok;
+	size_t		  i;
+	const struct blk *blk;
 
 	/*
 	 * If the file's empty or we don't have any blocks from the
@@ -145,9 +268,8 @@ blk_match(struct sess *sess, const struct blkset *blks,
 		end = st->mapsz + 1 - blks->blks[blks->blksz - 1].len;
 		last = st->offs;
 
-		for ( ; st->offs < end; st->offs++) {
-			blk = blk_find(sess, st->map, st->mapsz,
-				st->offs, blks, path, st->hint);
+		for (i = 0; st->offs < end; st->offs++, i++) {
+			blk = blk_find(sess, st, blks, path, i == 0);
 			if (blk == NULL)
 				continue;
 

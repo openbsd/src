@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.23 2019/05/08 21:30:11 benno Exp $ */
+/*	$Id: sender.c,v 1.24 2019/06/02 17:36:48 florian Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -379,6 +379,7 @@ rsync_sender(struct sess *sess, int fdin,
 	TAILQ_INIT(&sdlq);
 	up.stat.fd = -1;
 	up.stat.map = MAP_FAILED;
+	up.stat.blktab = blkhash_alloc();
 
 	/*
 	 * Generate the list of files we want to send from our
@@ -622,8 +623,11 @@ rsync_sender(struct sess *sess, int fdin,
 
 			if ((up.cur = TAILQ_FIRST(&sdlq)) == NULL)
 				continue;
-
 			TAILQ_REMOVE(&sdlq, up.cur, entries);
+
+			/* Hash our blocks. */
+
+			blkhash_set(up.stat.blktab, up.cur->blks);
 
 			/*
 			 * End of phase: enable channel to receiver.
@@ -683,5 +687,6 @@ out:
 	}
 	flist_free(fl, flsz);
 	free(wbuf);
+	blkhash_free(up.stat.blktab);
 	return rc;
 }
