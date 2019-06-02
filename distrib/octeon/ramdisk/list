@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.25 2019/05/13 23:18:22 naddy Exp $
+#	$OpenBSD: list,v 1.26 2019/06/02 14:58:44 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -63,6 +63,9 @@ LINK	instbin					usr/bin/tee
 LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
 
+# firmware we might need
+# ...none yet untill USB works.
+
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
@@ -74,13 +77,11 @@ SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${DESTDIR}/etc/signify/openbsd-${OSrev}-base.pub	etc/signify/openbsd-${OSrev}-base.pub
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
+TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
+
 SYMLINK	/tmp/i/fstab.shadow			etc/fstab
 SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/i/hosts				etc/hosts
-TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
-
-# firmware we might need
-# ...none yet untill USB works.
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile

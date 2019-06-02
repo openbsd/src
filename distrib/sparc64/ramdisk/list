@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.62 2019/05/13 23:18:22 naddy Exp $
+#	$OpenBSD: list,v 1.63 2019/06/02 14:58:44 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -67,10 +67,11 @@ SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${DESTDIR}/etc/signify/openbsd-${OSrev}-base.pub	etc/signify/openbsd-${OSrev}-base.pub
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
+TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
+
 SYMLINK	/tmp/i/fstab.shadow			etc/fstab
 SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/i/hosts				etc/hosts
-TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
@@ -80,4 +81,5 @@ SPECIAL	chmod 755 install.sub
 SYMLINK	install.sub				autoinstall
 SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
+
 TZ
