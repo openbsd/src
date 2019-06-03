@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.49 2019/05/23 01:57:19 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.50 2019/06/03 01:52:53 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -187,9 +187,6 @@ alc_mii_readreg_813x(struct device *dev, int phy, int reg)
 	uint32_t v;
 	int i;
 
-	if (phy != sc->alc_phyaddr)
-		return (0);
-
 	/*
 	 * For AR8132 fast ethernet controller, do not report 1000baseT
 	 * capability to mii(4). Even though AR8132 uses the same
@@ -330,7 +327,6 @@ alc_miibus_statchg(struct device *dev)
 			break;
 		}
 	}
-	alc_stop_queue(sc);
 	/* Stop Rx/Tx MACs. */
 	alc_stop_mac(sc);
 
