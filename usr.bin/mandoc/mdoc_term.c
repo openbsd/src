@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_term.c,v 1.271 2019/01/04 03:37:42 schwarze Exp $ */
+/*	$OpenBSD: mdoc_term.c,v 1.272 2019/06/03 19:50:31 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010, 2012-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -350,6 +350,7 @@ print_mdoc_node(DECL_ARGS)
 	 * produce output.  Note that some pre-handlers do so.
 	 */
 
+	act = NULL;
 	switch (n->type) {
 	case ROFFT_TEXT:
 		if (n->flags & NODE_LINE) {
