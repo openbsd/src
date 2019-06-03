@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.18 2019/05/13 20:55:22 drahn Exp $ */
+/* $OpenBSD: agintc.c,v 1.19 2019/06/03 08:48:10 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1021,7 +1021,7 @@ agintc_intr_establish(int irqno, int level, int (*func)(void *),
 	} else {
 		uint8_t *prop = AGINTC_DMA_KVA(sc->sc_prop);
 
-		prop[irqno - LPI_BASE] = ((NIPL - ih->ih_ipl) << 4) |
+		prop[irqno - LPI_BASE] = (((0xff - ih->ih_ipl) << 4) & 0xff) |
 		    GICR_PROP_GROUP1 | GICR_PROP_ENABLE;
 
 		/* Make globally visible. */
