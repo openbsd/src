@@ -1,4 +1,4 @@
-/* $OpenBSD: bus.h,v 1.5 2018/08/20 19:38:07 kettenis Exp $ */
+/* $OpenBSD: bus.h,v 1.6 2019/06/03 13:09:56 patrick Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -95,6 +95,20 @@ struct bus_space {
 #define	bus_space_write_2(t, h, o, v) (*(t)->_space_write_2)((t), (h), (o), (v))
 #define	bus_space_write_4(t, h, o, v) (*(t)->_space_write_4)((t), (h), (o), (v))
 #define	bus_space_write_8(t, h, o, v) (*(t)->_space_write_8)((t), (h), (o), (v))
+
+#define	bus_space_read_raw_2(t, h, o) \
+	(*(t)->_space_read_2)((t), (h), (o))
+#define	bus_space_read_raw_4(t, h, o) \
+	(*(t)->_space_read_4)((t), (h), (o))
+#define	bus_space_read_raw_8(t, h, o) \
+	(*(t)->_space_read_8)((t), (h), (o))
+
+#define	bus_space_write_raw_2(t, h, o, v) \
+	(*(t)->_space_write_2)((t), (h), (o), (v))
+#define	bus_space_write_raw_4(t, h, o, v) \
+	(*(t)->_space_write_4)((t), (h), (o), (v))
+#define	bus_space_write_raw_8(t, h, o, v) \
+	(*(t)->_space_write_8)((t), (h), (o), (v))
 
 #define	bus_space_read_raw_multi_2(t, h, a, b, l) \
 	(*(t)->_space_read_raw_2)((t), (h), (a), (b), (l))
