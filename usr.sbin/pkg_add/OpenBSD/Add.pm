@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.179 2018/12/13 12:48:53 espie Exp $
+# $OpenBSD: Add.pm,v 1.180 2019/06/03 19:21:05 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -450,9 +450,32 @@ sub prepare_to_extract
 	$file->{destdir} = $destdir;
 }
 
+sub find_safe_dir
+{
+	my ($self, $filename) = @_;
+	# figure out a safe directory where to put the temp file
+	my $d = dirname($filename);
+
+	# we go back up until we find an existing directory.
+	# hopefully this will be on the same file system.
+	my @candidates = ();
+	while (!-d $d) {
+		push(@candidates, $d);
+		$d = dirname($d);
+	}
+	# and now we try to go back down, creating the best path we can
+	while (@candidates > 0) {
+		my $c = pop @candidates;
+		last if -e $c; # okay this exists, but is not a directory
+		$d = $c;
+	}
+	return $d;
+}
+
 sub create_temp
 {
 	my ($self, $d, $state, $fullname) = @_;
+	# XXX this takes over right after find_safe_dir
 	if (!-e _) {
 		$state->make_path($d, $fullname);
 	}
@@ -477,13 +500,7 @@ sub tie
 
 	$self->SUPER::extract($state);
 
-	# figure out a safe directory where to put the temp file
-	my $d = dirname($state->{destdir}.$self->fullname);
-	# we go back up until we find an existing directory.
-	# hopefully this will be on the same file system.
-	while (!-d $d && -e _) {
-		$d = dirname($d);
-	}
+	my $d = $self->find_safe_dir($state->{destdir}.$self->fullname);
 	if ($state->{not}) {
 		$state->say("link #1 -> #2", 
 		    $self->name, $d) if $state->verbose >= 3;
@@ -506,13 +523,7 @@ sub extract
 
 	$self->SUPER::extract($state);
 
-	# figure out a safe directory where to put the temp file
-	my $d = dirname($file->{destdir}.$file->name);
-	# we go back up until we find an existing directory.
-	# hopefully this will be on the same file system.
-	while (!-d $d && -e _) {
-		$d = dirname($d);
-	}
+	my $d = $self->find_safe_dir($file->{destdir}.$file->name);
 	if ($state->{not}) {
 		$state->say("extract #1 -> #2", 
 		    $self->name, $d) if $state->verbose >= 3;
