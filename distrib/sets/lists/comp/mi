@@ -2869,6 +2869,7 @@
 ./usr/share/man/man9/audio.9
 ./usr/share/man/man9/autoconf.9
 ./usr/share/man/man9/bemtoh32.9
+./usr/share/man/man9/bintimeadd.9
 ./usr/share/man/man9/bio_register.9
 ./usr/share/man/man9/boot.9
 ./usr/share/man/man9/bpf_mtap.9
