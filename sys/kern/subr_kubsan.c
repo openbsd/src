@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_kubsan.c,v 1.6 2019/05/24 18:51:05 anton Exp $	*/
+/*	$OpenBSD: subr_kubsan.c,v 1.7 2019/06/03 19:39:16 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -72,15 +72,15 @@ struct shift_out_of_bounds_data {
 	struct type_descriptor *d_rtype;
 };
 
-struct unreachable_data {
-	struct source_location d_src;
-};
-
 struct type_mismatch_data {
 	struct source_location d_src;
 	struct type_descriptor *d_type;
 	uint8_t d_align;	/* log2 alignment */
 	uint8_t d_kind;
+};
+
+struct unreachable_data {
+	struct source_location d_src;
 };
 
 void	kubsan_handle_load_invalid_value(struct invalid_value_data *,
