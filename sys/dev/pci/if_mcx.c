@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.13 2019/05/30 05:55:10 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.14 2019/06/03 04:38:30 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -82,6 +82,11 @@
 #define MCX_SQ_MAX_SEGMENTS	 \
 	1 + ((MCX_SQ_ENTRY_MAX_SLOTS-1) * MCX_SQ_SEGS_PER_SLOT)
 
+#define MCX_LOG_FLOW_TABLE_SIZE	 5
+#define MCX_NUM_STATIC_FLOWS	 4	/* promisc, allmulti, ucast, bcast */
+#define MCX_NUM_MCAST_FLOWS 	\
+	((1 << MCX_LOG_FLOW_TABLE_SIZE) - MCX_NUM_STATIC_FLOWS)
+
 #define MCX_SQ_INLINE_SIZE	 18
 
 /* doorbell offsets */
@@ -95,6 +100,10 @@
 #define MCX_UAR_EQ_DOORBELL_ARM	 0x40
 #define MCX_UAR_EQ_DOORBELL	 0x48
 #define MCX_UAR_BF		 0x800
+
+/* syndromes */
+#define MCX_SYNDROME_ENTRY_NOT_FOUND \
+				0x4EFC3D
 
 #define MCX_CMDQ_ADDR_HI		 0x0010
 #define MCX_CMDQ_ADDR_LO		 0x0014
@@ -1546,6 +1555,38 @@ struct mcx_cmd_set_flow_table_root_out {
 	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
+struct mcx_flow_match {
+	/* outer headers */
+	uint8_t			mc_src_mac[6];
+	uint16_t		mc_ethertype;
+	uint8_t			mc_dest_mac[6];
+	uint16_t		mc_first_vlan;
+	uint8_t			mc_ip_proto;
+	uint8_t			mc_ip_dscp_ecn;
+	uint8_t			mc_vlan_flags;
+	uint8_t			mc_tcp_flags;
+	uint16_t		mc_tcp_sport;
+	uint16_t		mc_tcp_dport;
+	uint32_t		mc_reserved0;
+	uint16_t		mc_udp_sport;
+	uint16_t		mc_udp_dport;
+	uint8_t			mc_src_ip[16];
+	uint8_t			mc_dest_ip[16];
+
+	/* misc parameters */
+	uint8_t			mc_reserved1[8];
+	uint16_t		mc_second_vlan;
+	uint8_t			mc_reserved2[2];
+	uint8_t			mc_second_vlan_flags;
+	uint8_t			mc_reserved3[15];
+	uint32_t		mc_outer_ipv6_flow_label;
+	uint8_t			mc_reserved4[32];
+
+	uint8_t			mc_reserved[384];
+} __packed __aligned(4);
+
+CTASSERT(sizeof(struct mcx_flow_match) == 512);
+
 struct mcx_cmd_create_flow_group_in {
 	uint16_t		cmd_opcode;
 	uint8_t			cmd_reserved0[4];
@@ -1566,7 +1607,7 @@ struct mcx_cmd_create_flow_group_mb_in {
 #define MCX_CREATE_FLOW_GROUP_CRIT_OUTER	(1 << 0)
 #define MCX_CREATE_FLOW_GROUP_CRIT_MISC		(1 << 1)
 #define MCX_CREATE_FLOW_GROUP_CRIT_INNER	(1 << 2)
-	uint8_t			cmd_match_criteria[512];
+	struct mcx_flow_match	cmd_match_criteria;
 	uint8_t			cmd_reserved4[448];
 } __packed __aligned(4);
 
@@ -1590,7 +1631,7 @@ struct mcx_flow_ctx {
 	uint32_t		fc_dest_list_size;
 	uint32_t		fc_counter_list_size;
 	uint8_t			fc_reserved1[40];
-	uint8_t			fc_match_value[512];
+	struct mcx_flow_match	fc_match_value;
 	uint8_t			fc_reserved2[192];
 } __packed __aligned(4);
 
@@ -1884,11 +1925,21 @@ struct mcx_softc {
 	int			 sc_eqn;
 	int			 sc_eq_cons;
 	struct mcx_dmamem	 sc_eq_mem;
-	int			 sc_flow_table_id;
-	int			 sc_flow_group_id;
-	uint16_t		 sc_flow_counter_id[4];
-	int			 sc_flow_table_entry;
 	int			 sc_hardmtu;
+
+	int			 sc_flow_table_id;
+#define MCX_FLOW_GROUP_PROMISC	 0
+#define MCX_FLOW_GROUP_ALLMULTI	 1
+#define MCX_FLOW_GROUP_MAC	 2
+#define MCX_NUM_FLOW_GROUPS	 3
+	int			 sc_flow_group_id[MCX_NUM_FLOW_GROUPS];
+	int			 sc_flow_group_size[MCX_NUM_FLOW_GROUPS];
+	int			 sc_flow_group_start[MCX_NUM_FLOW_GROUPS];
+	int			 sc_promisc_flow_enabled;
+	int			 sc_allmulti_flow_enabled;
+	int			 sc_first_mcast_flow_entry;
+	int			 sc_extra_mcast;
+	uint8_t			 sc_mcast_flows[MCX_NUM_MCAST_FLOWS][ETHER_ADDR_LEN];
 
 	struct mcx_cq		 sc_cq[MCX_MAX_CQS];
 	int			 sc_num_cq;
@@ -1957,13 +2008,15 @@ static int	mcx_create_tir(struct mcx_softc *);
 static int	mcx_destroy_tir(struct mcx_softc *);
 static int	mcx_create_tis(struct mcx_softc *);
 static int	mcx_destroy_tis(struct mcx_softc *);
-static int	mcx_create_flow_table(struct mcx_softc *);
+static int	mcx_create_flow_table(struct mcx_softc *, int);
 static int	mcx_set_flow_table_root(struct mcx_softc *);
 static int	mcx_destroy_flow_table(struct mcx_softc *);
-static int	mcx_create_flow_group(struct mcx_softc *);
-static int	mcx_destroy_flow_group(struct mcx_softc *);
-static int	mcx_set_flow_table_entry(struct mcx_softc *, int);
-static int	mcx_delete_flow_table_entry(struct mcx_softc *, int);
+static int	mcx_create_flow_group(struct mcx_softc *, int, int,
+		    int, int, struct mcx_flow_match *);
+static int	mcx_destroy_flow_group(struct mcx_softc *, int);
+static int	mcx_set_flow_table_entry(struct mcx_softc *, int, int,
+		    uint8_t *);
+static int	mcx_delete_flow_table_entry(struct mcx_softc *, int, int);
 
 #if 0
 static int	mcx_dump_flow_table(struct mcx_softc *);
@@ -2049,6 +2102,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	unsigned int cq_stride;
 	unsigned int cq_size;
 	const char *intrstr;
+	int i;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -2242,7 +2296,11 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_rx_refill, mcx_refill, sc);
 
 	sc->sc_flow_table_id = -1;
-	sc->sc_flow_group_id = -1;
+	for (i = 0; i < MCX_NUM_FLOW_GROUPS; i++) {
+		sc->sc_flow_group_id[i] = -1;
+		sc->sc_flow_group_size[i] = 0;
+		sc->sc_flow_group_start[i] = 0;
+	}
 
 	/* set interface admin down, so bringing it up will start autoneg */
 
@@ -3286,6 +3344,7 @@ free:
 static int
 mcx_iff(struct mcx_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_modify_nic_vport_context_in *in;
@@ -3295,7 +3354,34 @@ mcx_iff(struct mcx_softc *sc)
 	int token;
 	int insize;
 
-	/* calculate size of mcast address list */
+	/* enable or disable the promisc flow */
+	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
+		if (sc->sc_promisc_flow_enabled == 0) {
+			mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_PROMISC,
+			    0, NULL);
+			sc->sc_promisc_flow_enabled = 1;
+		}
+	} else if (sc->sc_promisc_flow_enabled != 0) {
+		mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_PROMISC, 0);
+		sc->sc_promisc_flow_enabled = 0;
+	}
+
+	/* enable or disable the all-multicast flow */
+	if (ISSET(ifp->if_flags, IFF_ALLMULTI)) {
+		if (sc->sc_allmulti_flow_enabled == 0) {
+			uint8_t mcast[ETHER_ADDR_LEN];
+
+			memset(mcast, 0, sizeof(mcast));
+			mcast[0] = 0x01;
+			mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_ALLMULTI,
+			    0, mcast);
+			sc->sc_allmulti_flow_enabled = 1;
+		}
+	} else if (sc->sc_allmulti_flow_enabled != 0) {
+		mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_ALLMULTI, 0);
+		sc->sc_allmulti_flow_enabled = 0;
+	}
+
 	insize = sizeof(struct mcx_nic_vport_ctx) + 240;
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
@@ -3308,17 +3394,20 @@ mcx_iff(struct mcx_softc *sc)
 	in->cmd_field_select = htobe32(
 	    MCX_CMD_MODIFY_NIC_VPORT_CONTEXT_FIELD_PROMISC |
 	    MCX_CMD_MODIFY_NIC_VPORT_CONTEXT_FIELD_MTU);
-	    /* add address list when we do mcast */
 
 	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
 		printf(", unable to allocate modify nic vport context mailboxen\n");
 		return (-1);
 	}
-	ctx = (struct mcx_nic_vport_ctx *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 240);
+	ctx = (struct mcx_nic_vport_ctx *)
+	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 240);
 	ctx->vp_mtu = htobe32(sc->sc_hardmtu);
-	ctx->vp_flags = htobe16(MCX_NIC_VPORT_CTX_PROMISC_UCAST |
-	    MCX_NIC_VPORT_CTX_PROMISC_MCAST |
-	    MCX_NIC_VPORT_CTX_PROMISC_ALL);
+	/*
+	 * always leave promisc-all enabled on the vport since we can't give it
+	 * a vlan list, and we're already doing multicast filtering in the flow
+	 * table.
+	 */
+	ctx->vp_flags = htobe16(MCX_NIC_VPORT_CTX_PROMISC_ALL);
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4400,7 +4489,7 @@ mcx_alloc_flow_counter(struct mcx_softc *sc, int i)
 #endif
 
 static int
-mcx_create_flow_table(struct mcx_softc *sc)
+mcx_create_flow_table(struct mcx_softc *sc, int log_size)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4425,7 +4514,7 @@ mcx_create_flow_table(struct mcx_softc *sc)
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
-	mbin->cmd_ctx.ft_log_size = 4;		/* how big should this be? */
+	mbin->cmd_ctx.ft_log_size = log_size;
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4563,7 +4652,8 @@ free:
 
 
 static int
-mcx_create_flow_group(struct mcx_softc *sc)
+mcx_create_flow_group(struct mcx_softc *sc, int group, int start, int size,
+    int match_enable, struct mcx_flow_match *match)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4575,13 +4665,15 @@ mcx_create_flow_group(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out),
+	    token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_FLOW_GROUP);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token)
+	    != 0) {
 		printf("%s: unable to allocate create flow group mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4589,10 +4681,11 @@ mcx_create_flow_group(struct mcx_softc *sc)
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
 	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
-	/* no match criteria, include flow index 0-2 */
-	mbin->cmd_start_flow_index = 0;
-	mbin->cmd_end_flow_index = htobe32(3);
-	mbin->cmd_match_criteria_enable = 0;
+	mbin->cmd_start_flow_index = htobe32(start);
+	mbin->cmd_end_flow_index = htobe32(start + (size - 1));
+
+	mbin->cmd_match_criteria_enable = match_enable;
+	memcpy(&mbin->cmd_match_criteria, match, sizeof(*match));
 
 	mcx_cmdq_mboxes_sign(&mxm, 2);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4614,7 +4707,9 @@ mcx_create_flow_group(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_flow_group_id = betoh32(out->cmd_group_id);
+	sc->sc_flow_group_id[group] = betoh32(out->cmd_group_id);
+	sc->sc_flow_group_size[group] = size;
+	sc->sc_flow_group_start[group] = start;
 
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -4622,7 +4717,7 @@ free:
 }
 
 static int
-mcx_destroy_flow_group(struct mcx_softc *sc)
+mcx_destroy_flow_group(struct mcx_softc *sc, int group)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4648,7 +4743,7 @@ mcx_destroy_flow_group(struct mcx_softc *sc)
 	mb = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mb->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
 	mb->cmd_table_id = htobe32(sc->sc_flow_table_id);
-	mb->cmd_group_id = htobe32(sc->sc_flow_group_id);
+	mb->cmd_group_id = htobe32(sc->sc_flow_group_id[group]);
 
 	mcx_cmdq_mboxes_sign(&mxm, 2);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4670,14 +4765,16 @@ mcx_destroy_flow_group(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_flow_group_id = -1;
+	sc->sc_flow_group_id[group] = -1;
+	sc->sc_flow_group_size[group] = 0;
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
 }
 
 static int
-mcx_set_flow_table_entry(struct mcx_softc *sc, int counter)
+mcx_set_flow_table_entry(struct mcx_softc *sc, int group, int index,
+    uint8_t *macaddr)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4697,7 +4794,8 @@ mcx_set_flow_table_entry(struct mcx_softc *sc, int counter)
 	in->cmd_opcode = htobe16(MCX_CMD_SET_FLOW_TABLE_ENTRY);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token)
+	    != 0) {
 		printf("%s: unable to allocate set flow table entry mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4705,32 +4803,21 @@ mcx_set_flow_table_entry(struct mcx_softc *sc, int counter)
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
 	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
-	mbin->cmd_flow_index = htobe32(sc->sc_flow_table_entry);
-	mbin->cmd_flow_ctx.fc_group_id = htobe32(sc->sc_flow_group_id);
+	mbin->cmd_flow_index = htobe32(sc->sc_flow_group_start[group] + index);
+	mbin->cmd_flow_ctx.fc_group_id = htobe32(sc->sc_flow_group_id[group]);
 
-	/* flow context ends at offset 0x330, which is 0x130 into the second mbox */
-	dest = (uint32_t *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 1))) + 0x130);
-	switch (counter) {
-	case -3:
-		mbin->cmd_flow_ctx.fc_action = htobe32(MCX_FLOW_CONTEXT_ACTION_ALLOW);
-		break;
-	case -2:
-		mbin->cmd_flow_ctx.fc_action = htobe32(MCX_FLOW_CONTEXT_ACTION_DROP);
-		break;
+	/* flow context ends at offset 0x330, 0x130 into the second mbox */
+	dest = (uint32_t *)
+	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 1))) + 0x130);
+	mbin->cmd_flow_ctx.fc_action = htobe32(MCX_FLOW_CONTEXT_ACTION_FORWARD);
+	mbin->cmd_flow_ctx.fc_dest_list_size = htobe32(1);
+	*dest = htobe32(sc->sc_tirn | MCX_FLOW_CONTEXT_DEST_TYPE_TIR);
 
-	case -1:
-		mbin->cmd_flow_ctx.fc_action = htobe32(MCX_FLOW_CONTEXT_ACTION_FORWARD);
-		mbin->cmd_flow_ctx.fc_dest_list_size = htobe32(1);
-		*dest = htobe32(sc->sc_tirn | MCX_FLOW_CONTEXT_DEST_TYPE_TIR);
-		break;
-
-	default:
-		mbin->cmd_flow_ctx.fc_action = htobe32(MCX_FLOW_CONTEXT_ACTION_ALLOW |
-		    MCX_FLOW_CONTEXT_ACTION_COUNT);
-		mbin->cmd_flow_ctx.fc_counter_list_size = htobe32(1);
-		*dest = htobe32(sc->sc_flow_counter_id[counter]);
+	/* the only thing we match on at the moment is the dest mac address */
+	if (macaddr != NULL) {
+		memcpy(mbin->cmd_flow_ctx.fc_match_value.mc_dest_mac, macaddr,
+		    ETHER_ADDR_LEN);
 	}
-	sc->sc_flow_table_entry++;
 
 	mcx_cmdq_mboxes_sign(&mxm, 2);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4759,7 +4846,7 @@ free:
 }
 
 static int
-mcx_delete_flow_table_entry(struct mcx_softc *sc, int index)
+mcx_delete_flow_table_entry(struct mcx_softc *sc, int group, int index)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4786,7 +4873,7 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int index)
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
 	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
-	mbin->cmd_flow_index = htobe32(index);
+	mbin->cmd_flow_index = htobe32(sc->sc_flow_group_start[group] + index);
 
 	mcx_cmdq_mboxes_sign(&mxm, 2);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4802,7 +4889,9 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int index)
 	}
 
 	out = mcx_cmdq_out(cqe);
-	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+	/* don't complain if the entry didn't exist */
+	if (out->cmd_status != MCX_CQ_STATUS_OK &&
+	    (betoh32(out->cmd_syndrome) != MCX_SYNDROME_ENTRY_NOT_FOUND)) {
 		printf("%s: delete flow table entry %d failed (%x, %x)\n",
 		    DEVNAME(sc), index, out->cmd_status,
 		    betoh32(out->cmd_syndrome));
@@ -5632,7 +5721,8 @@ mcx_up(struct mcx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mcx_slot *ms;
-	int i;
+	int i, start;
+	struct mcx_flow_match match_crit;
 
 	sc->sc_rx_slots = mallocarray(sizeof(*ms), (1 << MCX_LOG_RQ_SIZE),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
@@ -5687,15 +5777,49 @@ mcx_up(struct mcx_softc *sc)
 	if (mcx_create_tir(sc) != 0)
 		goto down;
 
-	/* receive flow table mapping everything to the rq */
-	if (mcx_create_flow_table(sc) != 0)
+	if (mcx_create_flow_table(sc, MCX_LOG_FLOW_TABLE_SIZE) != 0)
 		goto down;
 
-	if (mcx_create_flow_group(sc) != 0)
+	/* promisc flow group */
+	start = 0;
+	memset(&match_crit, 0, sizeof(match_crit));
+	if (mcx_create_flow_group(sc, MCX_FLOW_GROUP_PROMISC, start, 1,
+	    0, &match_crit) != 0)
+		goto down;
+	sc->sc_promisc_flow_enabled = 0;
+	start++;
+
+	/* all multicast flow group */
+	match_crit.mc_dest_mac[0] = 0x01;
+	if (mcx_create_flow_group(sc, MCX_FLOW_GROUP_ALLMULTI, start, 1,
+	    MCX_CREATE_FLOW_GROUP_CRIT_OUTER, &match_crit) != 0)
+		goto down;
+	sc->sc_allmulti_flow_enabled = 0;
+	start++;
+
+	/* mac address matching flow group */
+	memset(&match_crit.mc_dest_mac, 0xff, sizeof(match_crit.mc_dest_mac));
+	if (mcx_create_flow_group(sc, MCX_FLOW_GROUP_MAC, start,
+	    (1 << MCX_LOG_FLOW_TABLE_SIZE) - start,
+	    MCX_CREATE_FLOW_GROUP_CRIT_OUTER, &match_crit) != 0)
 		goto down;
 
-	if (mcx_set_flow_table_entry(sc, -1) != 0)
+	/* flow table entries for unicast and broadcast */
+	start = 0;
+	if (mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_MAC, start,
+	    sc->sc_ac.ac_enaddr) != 0)
 		goto down;
+	start++;
+
+	if (mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_MAC, start,
+	    etherbroadcastaddr) != 0)
+		goto down;
+	start++;
+
+	/* multicast entries go after that */
+	sc->sc_first_mcast_flow_entry = start;
+	sc->sc_extra_mcast = 0;
+	memset(sc->sc_mcast_flows, 0, sizeof(sc->sc_mcast_flows));
 
 	if (mcx_set_flow_table_root(sc) != 0)
 		goto down;
@@ -5736,7 +5860,7 @@ static void
 mcx_down(struct mcx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	int i;
+	int group, i;
 
 	CLR(ifp->if_flags, IFF_RUNNING);
 
@@ -5744,15 +5868,19 @@ mcx_down(struct mcx_softc *sc)
 	 * delete flow table entries first, so no packets can arrive
 	 * after the barriers
 	 */
-	for (i = 0; i < sc->sc_flow_table_entry; i++)
-		mcx_delete_flow_table_entry(sc, i);
-	sc->sc_flow_table_entry = 0;
+	for (group = 0; group < MCX_NUM_FLOW_GROUPS; group++) {
+		for (i = 0; i < sc->sc_flow_group_size[group]; i++)
+			mcx_delete_flow_table_entry(sc, group, i);
+	}
 
 	intr_barrier(&sc->sc_ih);
 	ifq_barrier(&ifp->if_snd);
 
-	if (sc->sc_flow_group_id != -1)
-		mcx_destroy_flow_group(sc);
+	for (group = 0; group < MCX_NUM_FLOW_GROUPS; group++) {
+		if (sc->sc_flow_group_id[group] != -1)
+			mcx_destroy_flow_group(sc,
+			    sc->sc_flow_group_id[group]);
+	}
 
 	if (sc->sc_flow_table_id != -1)
 		mcx_destroy_flow_table(sc);
@@ -5788,7 +5916,8 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mcx_softc *sc = (struct mcx_softc *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int s, error = 0;
+	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
+	int s, i, error = 0;
 
 	s = splnet();
 	switch (cmd) {
@@ -5819,6 +5948,68 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCGIFRXR:
 		error = mcx_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
+		break;
+
+	case SIOCADDMULTI:
+		if (ether_addmulti(ifr, &sc->sc_ac) == ENETRESET) {
+			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+			if (error != 0)
+				return (error);
+
+			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
+				if (sc->sc_mcast_flows[i][0] == 0) {
+					memcpy(sc->sc_mcast_flows[i], addrlo,
+					    ETHER_ADDR_LEN);
+					mcx_set_flow_table_entry(sc,
+					    MCX_FLOW_GROUP_MAC,
+					    sc->sc_first_mcast_flow_entry + i,
+					    sc->sc_mcast_flows[i]);
+					break;
+				}
+			}
+
+			if (!ISSET(ifp->if_flags, IFF_ALLMULTI)) {
+				if (i == MCX_NUM_MCAST_FLOWS) {
+					SET(ifp->if_flags, IFF_ALLMULTI);
+					sc->sc_extra_mcast++;
+					error = ENETRESET;
+				}
+
+				if (sc->sc_ac.ac_multirangecnt > 0) {
+					SET(ifp->if_flags, IFF_ALLMULTI);
+					error = ENETRESET;
+				}
+			}
+		}
+		break;
+
+	case SIOCDELMULTI:
+		if (ether_delmulti(ifr, &sc->sc_ac) == ENETRESET) {
+			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+			if (error != 0)
+				return (error);
+
+			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
+				if (memcmp(sc->sc_mcast_flows[i], addrlo,
+				    ETHER_ADDR_LEN) == 0) {
+					mcx_delete_flow_table_entry(sc,
+					    MCX_FLOW_GROUP_MAC,
+					    sc->sc_first_mcast_flow_entry + i);
+					sc->sc_mcast_flows[i][0] = 0;
+					break;
+				}
+			}
+
+			if (i == MCX_NUM_MCAST_FLOWS)
+				sc->sc_extra_mcast--;
+
+			if (ISSET(ifp->if_flags, IFF_ALLMULTI) &&
+			    (sc->sc_extra_mcast == 0) &&
+			    (sc->sc_ac.ac_multirangecnt == 0)) {
+				CLR(ifp->if_flags, IFF_ALLMULTI);
+				error = ENETRESET;
+			}
+		}
 		break;
 
 	default:
