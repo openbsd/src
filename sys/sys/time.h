@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.40 2019/01/19 01:53:44 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.41 2019/06/03 01:27:30 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -172,39 +172,38 @@ struct bintime {
 	uint64_t frac;
 };
 
-static __inline void
-bintime_addx(struct bintime *bt, uint64_t x)
-{
-	uint64_t u;
+#define bintimecmp(btp, ctp, cmp)					\
+	((btp)->sec == (ctp)->sec ?					\
+	    (btp)->frac cmp (ctp)->frac :				\
+	    (btp)->sec cmp (ctp)->sec)
 
-	u = bt->frac;
-	bt->frac += x;
-	if (u > bt->frac)
-		bt->sec++;
+static __inline void
+bintimeaddfrac(const struct bintime *bt, uint64_t x, struct bintime *ct)
+{
+	ct->sec = bt->sec;
+	if (bt->frac > bt->frac + x)
+		ct->sec++;
+	ct->frac = bt->frac + x;
 }
 
 static __inline void
-bintime_add(struct bintime *bt, const struct bintime *bt2)
+bintimeadd(const struct bintime *bt, const struct bintime *ct,
+    struct bintime *dt)
 {
-	uint64_t u;
-
-	u = bt->frac;
-	bt->frac += bt2->frac;
-	if (u > bt->frac)
-		bt->sec++;
-	bt->sec += bt2->sec;
+	dt->sec = bt->sec + ct->sec;
+	if (bt->frac > bt->frac + ct->frac)
+		dt->sec++;
+	dt->frac = bt->frac + ct->frac;
 }
 
 static __inline void
-bintime_sub(struct bintime *bt, const struct bintime *bt2)
+bintimesub(const struct bintime *bt, const struct bintime *ct,
+    struct bintime *dt)
 {
-	uint64_t u;
-
-	u = bt->frac;
-	bt->frac -= bt2->frac;
-	if (u < bt->frac)
-		bt->sec--;
-	bt->sec -= bt2->sec;
+	dt->sec = bt->sec - ct->sec;
+	if (bt->frac < bt->frac - ct->frac)
+		dt->sec--;
+	dt->frac = bt->frac - ct->frac;
 }
 
 /*-
@@ -222,34 +221,30 @@ bintime_sub(struct bintime *bt, const struct bintime *bt2)
  */
 
 static __inline void
-bintime2timespec(const struct bintime *bt, struct timespec *ts)
+BINTIME_TO_TIMESPEC(const struct bintime *bt, struct timespec *ts)
 {
-
 	ts->tv_sec = bt->sec;
 	ts->tv_nsec = (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
-timespec2bintime(const struct timespec *ts, struct bintime *bt)
+TIMESPEC_TO_BINTIME(const struct timespec *ts, struct bintime *bt)
 {
-
 	bt->sec = ts->tv_sec;
 	/* 18446744073 = int(2^64 / 1000000000) */
 	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL; 
 }
 
 static __inline void
-bintime2timeval(const struct bintime *bt, struct timeval *tv)
+BINTIME_TO_TIMEVAL(const struct bintime *bt, struct timeval *tv)
 {
-
 	tv->tv_sec = bt->sec;
 	tv->tv_usec = (long)(((uint64_t)1000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
 
 static __inline void
-timeval2bintime(const struct timeval *tv, struct bintime *bt)
+TIMEVAL_TO_BINTIME(const struct timeval *tv, struct bintime *bt)
 {
-
 	bt->sec = (time_t)tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;

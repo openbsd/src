@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.118 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.119 2019/06/03 01:27:30 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -116,8 +116,8 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 		break;
 	case CLOCK_UPTIME:
 		binuptime(&bt);
-		bintime_sub(&bt, &naptime);
-		bintime2timespec(&bt, tp);
+		bintimesub(&bt, &naptime, &bt);
+		BINTIME_TO_TIMESPEC(&bt, tp);
 		break;
 	case CLOCK_MONOTONIC:
 	case CLOCK_BOOTTIME:

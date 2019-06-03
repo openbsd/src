@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.293 2019/02/26 14:28:20 visa Exp $
+#	$OpenBSD: Makefile,v 1.294 2019/06/03 01:27:30 cheloha Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -7,8 +7,8 @@ MAN=	aml_evalnode.9 atomic_add_int.9 atomic_cas_uint.9 \
 	atomic_dec_int.9 atomic_inc_int.9 atomic_setbits_int.9 \
 	atomic_sub_int.9 atomic_swap_uint.9 \
 	audio.9 autoconf.9 \
-	bemtoh32.9 bio_register.9 boot.9 bpf_mtap.9 buffercache.9 bufq_init.9 \
-	bus_dma.9 bus_space.9 \
+	bemtoh32.9 bio_register.9 bintimeadd.9 boot.9 bpf_mtap.9 buffercache.9 \
+	bufq_init.9 bus_dma.9 bus_space.9 \
 	copy.9 cond_init.9 config_attach.9 config_defer.9 counters_alloc.9 \
 	cpumem_get.9 crypto.9 \
 	delay.9 disk.9 disklabel.9 dma_alloc.9 dohooks.9 \
