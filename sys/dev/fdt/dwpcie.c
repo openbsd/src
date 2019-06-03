@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.13 2019/05/31 10:35:49 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.14 2019/06/03 00:43:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -224,9 +224,6 @@ pcireg_t dwpcie_conf_read(void *, pcitag_t, int);
 void	dwpcie_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int	dwpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-int	dwpcie_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
-int	dwpcie_intr_map_msix(struct pci_attach_args *, int,
-	    pci_intr_handle_t *);
 const char *dwpcie_intr_string(void *, pci_intr_handle_t);
 void	*dwpcie_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *, char *);
@@ -453,8 +450,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = dwpcie_intr_map;
-	sc->sc_pc.pc_intr_map_msi = dwpcie_intr_map_msi;
-	sc->sc_pc.pc_intr_map_msix = dwpcie_intr_map_msix;
+	sc->sc_pc.pc_intr_map_msi = _pci_intr_map_msi;
+	sc->sc_pc.pc_intr_map_msix = _pci_intr_map_msix;
 	sc->sc_pc.pc_intr_string = dwpcie_intr_string;
 	sc->sc_pc.pc_intr_establish = dwpcie_intr_establish;
 	sc->sc_pc.pc_intr_disestablish = dwpcie_intr_disestablish;
@@ -903,21 +900,9 @@ dwpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 		    sc->sc_io_bus_addr, sc->sc_io_size);
 }
 
-#define PCI_INTX		0
-#define PCI_MSI			1
-#define PCI_MSIX		2
-
-struct dwpcie_intr_handle {
-	pci_chipset_tag_t	ih_pc;
-	pcitag_t		ih_tag;
-	int			ih_intrpin;
-	int			ih_type;
-};
-
 int
 dwpcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	struct dwpcie_intr_handle *ih;
 	int pin = pa->pa_rawintrpin;
 
 	if (pin == 0 || pin > PCI_INTERRUPT_PIN_MAX)
@@ -926,68 +911,18 @@ dwpcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	if (pa->pa_tag == 0)
 		return -1;
 
-	ih = malloc(sizeof(struct dwpcie_intr_handle), M_DEVBUF, M_WAITOK);
-	ih->ih_pc = pa->pa_pc;
-	ih->ih_tag = pa->pa_intrtag;
-	ih->ih_intrpin = pa->pa_intrpin;
-	ih->ih_type = PCI_INTX;
-	*ihp = (pci_intr_handle_t)ih;
-
-	return 0;
-}
-
-int
-dwpcie_intr_map_msi(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
-	struct dwpcie_intr_handle *ih;
-
-	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
-	    pci_get_capability(pc, tag, PCI_CAP_MSI, NULL, NULL) == 0)
-		return -1;
-
-	ih = malloc(sizeof(struct dwpcie_intr_handle), M_DEVBUF, M_WAITOK);
-	ih->ih_pc = pa->pa_pc;
-	ih->ih_tag = pa->pa_tag;
-	ih->ih_type = PCI_MSI;
-	*ihp = (pci_intr_handle_t)ih;
-
-	return 0;
-}
-
-int
-dwpcie_intr_map_msix(struct pci_attach_args *pa, int vec,
-    pci_intr_handle_t *ihp)
-{
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
-	struct dwpcie_intr_handle *ih;
-	pcireg_t reg;
-
-	if ((pa->pa_flags & PCI_FLAGS_MSI_ENABLED) == 0 ||
-	    pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
-		return -1;
-
-	if (vec > PCI_MSIX_MC_TBLSZ(reg))
-		return -1;
-
-	ih = malloc(sizeof(struct dwpcie_intr_handle), M_DEVBUF, M_WAITOK);
-	ih->ih_pc = pa->pa_pc;
-	ih->ih_tag = pa->pa_tag;
-	ih->ih_intrpin = vec;
-	ih->ih_type = PCI_MSIX;
-	*ihp = (pci_intr_handle_t)ih;
+	ihp->ih_pc = pa->pa_pc;
+	ihp->ih_tag = pa->pa_intrtag;
+	ihp->ih_intrpin = pa->pa_intrpin;
+	ihp->ih_type = PCI_INTX;
 
 	return 0;
 }
 
 const char *
-dwpcie_intr_string(void *v, pci_intr_handle_t ihp)
+dwpcie_intr_string(void *v, pci_intr_handle_t ih)
 {
-	struct dwpcie_intr_handle *ih = (struct dwpcie_intr_handle *)ihp;
-
-	switch (ih->ih_type) {
+	switch (ih.ih_type) {
 	case PCI_MSI:
 		return "msi";
 	case PCI_MSIX:
@@ -998,18 +933,19 @@ dwpcie_intr_string(void *v, pci_intr_handle_t ihp)
 }
 
 void *
-dwpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
+dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg, char *name)
 {
 	struct dwpcie_softc *sc = v;
-	struct dwpcie_intr_handle *ih = (struct dwpcie_intr_handle *)ihp;
 	void *cookie;
 
-	if (ih->ih_type != PCI_INTX) {
+	KASSERT(ih.ih_type != PCI_NONE);
+
+	if (ih.ih_type != PCI_INTX) {
 		uint64_t addr, data;
 
 		/* Assume hardware passes Requester ID as sideband data. */
-		data = pci_requester_id(ih->ih_pc, ih->ih_tag);
+		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
 		cookie = fdt_intr_establish_msi(sc->sc_node, &addr,
 		    &data, level, func, arg, (void *)name);
 		if (cookie == NULL)
@@ -1017,26 +953,25 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 
 		/* TODO: translate address to the PCI device's view */
 
-		if (ih->ih_type == PCI_MSIX) {
-			pci_msix_enable(ih->ih_pc, ih->ih_tag,
-			    &sc->sc_bus_memt, ih->ih_intrpin, addr, data);
+		if (ih.ih_type == PCI_MSIX) {
+			pci_msix_enable(ih.ih_pc, ih.ih_tag,
+			    &sc->sc_bus_memt, ih.ih_intrpin, addr, data);
 		} else
-			pci_msi_enable(ih->ih_pc, ih->ih_tag, addr, data);
+			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
 	} else {
 		int bus, dev, fn;
 		uint32_t reg[4];
 
-		dwpcie_decompose_tag(sc, ih->ih_tag, &bus, &dev, &fn);
+		dwpcie_decompose_tag(sc, ih.ih_tag, &bus, &dev, &fn);
 
 		reg[0] = bus << 16 | dev << 11 | fn << 8;
 		reg[1] = reg[2] = 0;
-		reg[3] = ih->ih_intrpin;
+		reg[3] = ih.ih_intrpin;
 
 		cookie = fdt_intr_establish_imap(sc->sc_node, reg,
 		    sizeof(reg), level, func, arg, name);
 	}
 
-	free(ih, M_DEVBUF, sizeof(struct dwpcie_intr_handle));
 	return cookie;
 }
 
