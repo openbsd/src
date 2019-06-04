@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.12 2019/02/16 20:14:14 patrick Exp $ */
+/* $OpenBSD: pmap.h,v 1.13 2019/06/04 14:07:22 patrick Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -117,13 +117,11 @@ void	pmap_map_early(paddr_t, psize_t);
 struct vm_page_md {
 	struct mutex pv_mtx;
 	LIST_HEAD(,pte_desc) pv_list;
-	int pvh_attrs;				/* page attributes */
 };
 
 #define VM_MDPAGE_INIT(pg) do {			\
 	mtx_init(&(pg)->mdpage.pv_mtx, IPL_VM);	\
-	LIST_INIT(&((pg)->mdpage.pv_list));     \
-	(pg)->mdpage.pvh_attrs = 0;		\
+	LIST_INIT(&((pg)->mdpage.pv_list));	\
 } while (0)
 #endif	/* _LOCORE */
 
