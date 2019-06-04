@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.262 2019/02/10 16:42:35 phessler Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.263 2019/06/04 23:00:43 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1581,6 +1581,8 @@ pfsync_sendout(void)
 	int offset;
 	int q, count = 0;
 
+	PF_ASSERT_LOCKED();
+
 	if (sc == NULL || sc->sc_len == PFSYNC_MINPKT)
 		return;
 
@@ -2472,7 +2474,9 @@ void
 pfsync_timeout(void *arg)
 {
 	NET_LOCK();
+	PF_LOCK();
 	pfsync_sendout();
+	PF_UNLOCK();
 	NET_UNLOCK();
 }
 
@@ -2480,7 +2484,9 @@ pfsync_timeout(void *arg)
 void
 pfsyncintr(void)
 {
+	PF_LOCK();
 	pfsync_sendout();
+	PF_UNLOCK();
 }
 
 int
