@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.115 2018/08/14 05:22:21 jmatthew Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.116 2019/06/04 06:49:19 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -785,16 +785,16 @@ mpii_load_xs_sas3(struct mpii_ccb *ccb)
 			csge->sg_flags = MPII_IEEE_SGE_CHAIN_ELEMENT |
 			    MPII_IEEE_SGE_ADDR_SYSTEM;
 			/* address of the next sge */
-			csge->sg_addr = htole64(ccb->ccb_cmd_dva +
+			htolem64(&csge->sg_addr, ccb->ccb_cmd_dva +
 			    ((caddr_t)nsge - (caddr_t)io));
-			csge->sg_len = htole32((dmap->dm_nsegs - i) *
+			htolem32(&csge->sg_len, (dmap->dm_nsegs - i) *
 			    sizeof(*sge));
 		}
 
 		sge = nsge;
 		sge->sg_flags = MPII_IEEE_SGE_ADDR_SYSTEM;
-		sge->sg_len = htole32(dmap->dm_segs[i].ds_len);
-		sge->sg_addr = htole64(dmap->dm_segs[i].ds_addr);
+		htolem32(&sge->sg_len, dmap->dm_segs[i].ds_len);
+		htolem64(&sge->sg_addr, dmap->dm_segs[i].ds_addr);
 	}
 
 	/* terminate list */
@@ -849,7 +849,7 @@ mpii_load_xs(struct mpii_ccb *ccb)
 			io->chain_offset = ((caddr_t)csge - (caddr_t)io) / 4;
 			/* length of the sgl segment we're pointing to */
 			len = (dmap->dm_nsegs - i) * sizeof(*sge);
-			csge->sg_hdr = htole32(MPII_SGE_FL_TYPE_CHAIN |
+			htolem32(&csge->sg_hdr, MPII_SGE_FL_TYPE_CHAIN |
 			    MPII_SGE_FL_SIZE_64 | len);
 			/* address of the next sge */
 			mpii_dvatosge(csge, ccb->ccb_cmd_dva +
@@ -857,7 +857,7 @@ mpii_load_xs(struct mpii_ccb *ccb)
 		}
 
 		sge = nsge;
-		sge->sg_hdr = htole32(flags | dmap->dm_segs[i].ds_len);
+		htolem32(&sge->sg_hdr, flags | dmap->dm_segs[i].ds_len);
 		mpii_dvatosge(sge, dmap->dm_segs[i].ds_addr);
 	}
 
@@ -1441,9 +1441,9 @@ mpii_iocinit(struct mpii_softc *sc)
 	DNPRINTF(MPII_D_MISC, "%s:  vf_id: 0x%02x vp_id: 0x%02x\n", DEVNAME(sc),
 	    iip.vf_id, iip.vp_id);
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-	    letoh16(iip.ioc_status));
+	    lemtoh16(&iip.ioc_status));
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(iip.ioc_loginfo));
+	    lemtoh32(&iip.ioc_loginfo));
 
 	if (lemtoh16(&iip.ioc_status) != MPII_IOCSTATUS_SUCCESS ||
 	    lemtoh32(&iip.ioc_loginfo))
@@ -1939,7 +1939,7 @@ mpii_event_process(struct mpii_softc *sc, struct mpii_rcb *rcb)
 	enp = (struct mpii_msg_event_reply *)rcb->rcb_reply;
 
 	DNPRINTF(MPII_D_EVT, "%s: mpii_event_process: %#x\n", DEVNAME(sc),
-	    letoh16(enp->event));
+	    lemtoh16(&enp->event));
 
 	switch (lemtoh16(&enp->event)) {
 	case MPII_EVENT_EVENT_CHANGE:
@@ -2219,14 +2219,14 @@ mpii_req_cfg_header(struct mpii_softc *sc, u_int8_t type, u_int8_t number,
 	    cp->sgl_flags, cp->msg_length, cp->function);
 	DNPRINTF(MPII_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
 	    "msg_flags: 0x%02x\n", DEVNAME(sc),
-	    letoh16(cp->ext_page_length), cp->ext_page_type,
+	    lemtoh16(&cp->ext_page_length), cp->ext_page_type,
 	    cp->msg_flags);
 	DNPRINTF(MPII_D_MISC, "%s:  vp_id: 0x%02x vf_id: 0x%02x\n", DEVNAME(sc),
 	    cp->vp_id, cp->vf_id);
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-	    letoh16(cp->ioc_status));
+	    lemtoh16(&cp->ioc_status));
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(cp->ioc_loginfo));
+	    lemtoh32(&cp->ioc_loginfo));
 	DNPRINTF(MPII_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
 	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
 	    cp->config_header.page_version,
@@ -2335,14 +2335,14 @@ mpii_req_cfg_page(struct mpii_softc *sc, u_int32_t address, int flags,
 	    cp->function);
 	DNPRINTF(MPII_D_MISC, "%s:  ext_page_length: %d ext_page_type: 0x%02x "
 	    "msg_flags: 0x%02x\n", DEVNAME(sc),
-	    letoh16(cp->ext_page_length), cp->ext_page_type,
+	    lemtoh16(&cp->ext_page_length), cp->ext_page_type,
 	    cp->msg_flags);
 	DNPRINTF(MPII_D_MISC, "%s:  vp_id: 0x%02x vf_id: 0x%02x\n", DEVNAME(sc),
 	    cp->vp_id, cp->vf_id);
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_status: 0x%04x\n", DEVNAME(sc),
-	    letoh16(cp->ioc_status));
+	    lemtoh16(&cp->ioc_status));
 	DNPRINTF(MPII_D_MISC, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(cp->ioc_loginfo));
+	    lemtoh32(&cp->ioc_loginfo));
 	DNPRINTF(MPII_D_MISC, "%s:  page_version: 0x%02x page_length: %d "
 	    "page_number: 0x%02x page_type: 0x%02x\n", DEVNAME(sc),
 	    cp->config_header.page_version,
@@ -2951,7 +2951,8 @@ mpii_scsi_cmd_tmo(void *xccb)
 	struct mpii_ccb		*ccb = xccb;
 	struct mpii_softc	*sc = ccb->ccb_sc;
 
-	printf("%s: mpii_scsi_cmd_tmo\n", DEVNAME(sc));
+	printf("%s: mpii_scsi_cmd_tmo (0x%08x)\n", DEVNAME(sc),
+	    mpii_read_db(sc));
 
 	mtx_enter(&sc->sc_ccb_mtx);
 	if (ccb->ccb_state == MPII_CCB_QUEUED) {
@@ -3053,25 +3054,25 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	    "flags 0x%x\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen,
 	    xs->flags);
 	DNPRINTF(MPII_D_CMD, "%s:  dev_handle: %d msg_length: %d "
-	    "function: 0x%02x\n", DEVNAME(sc), letoh16(sie->dev_handle),
+	    "function: 0x%02x\n", DEVNAME(sc), lemtoh16(&sie->dev_handle),
 	    sie->msg_length, sie->function);
 	DNPRINTF(MPII_D_CMD, "%s:  vp_id: 0x%02x vf_id: 0x%02x\n", DEVNAME(sc),
 	    sie->vp_id, sie->vf_id);
 	DNPRINTF(MPII_D_CMD, "%s:  scsi_status: 0x%02x scsi_state: 0x%02x "
 	    "ioc_status: 0x%04x\n", DEVNAME(sc), sie->scsi_status,
-	    sie->scsi_state, letoh16(sie->ioc_status));
+	    sie->scsi_state, lemtoh16(&sie->ioc_status));
 	DNPRINTF(MPII_D_CMD, "%s:  ioc_loginfo: 0x%08x\n", DEVNAME(sc),
-	    letoh32(sie->ioc_loginfo));
+	    lemtoh32(&sie->ioc_loginfo));
 	DNPRINTF(MPII_D_CMD, "%s:  transfer_count: %d\n", DEVNAME(sc),
-	    letoh32(sie->transfer_count));
+	    lemtoh32(&sie->transfer_count));
 	DNPRINTF(MPII_D_CMD, "%s:  sense_count: %d\n", DEVNAME(sc),
-	    letoh32(sie->sense_count));
+	    lemtoh32(&sie->sense_count));
 	DNPRINTF(MPII_D_CMD, "%s:  response_info: 0x%08x\n", DEVNAME(sc),
-	    letoh32(sie->response_info));
+	    lemtoh32(&sie->response_info));
 	DNPRINTF(MPII_D_CMD, "%s:  task_tag: 0x%04x\n", DEVNAME(sc),
-	    letoh16(sie->task_tag));
+	    lemtoh16(&sie->task_tag));
 	DNPRINTF(MPII_D_CMD, "%s:  bidirectional_transfer_count: 0x%08x\n",
-	    DEVNAME(sc), letoh32(sie->bidirectional_transfer_count));
+	    DEVNAME(sc), lemtoh32(&sie->bidirectional_transfer_count));
 
 	if (sie->scsi_state & MPII_SCSIIO_STATE_NO_SCSI_STATUS)
 		xs->status = SCSI_TERMINATED;
