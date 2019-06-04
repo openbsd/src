@@ -33,8 +33,6 @@ size(void)
 
 struct { void *p; size_t sz; } a[N];
 
-extern char *malloc_options;
-
 void
 fill(u_char *p, size_t sz)
 {
@@ -60,15 +58,6 @@ main(int argc, char *argv[])
 	int count, p, r, i;
 	void * q;
 	size_t sz;
-	char mo[20];
-
-	if (argc == 1)
-		errx(1, "usage: malloc_options");
-
-	/* first reset flags that might be set by env or sysctl */
-	strlcpy(mo, "cfgju", sizeof(mo));
-	strlcat(mo, argv[1], sizeof(mo));
-	malloc_options = mo;
 
 	for (count = 0; count < 800000; count++) {
 		if (count % 10000 == 0) {
