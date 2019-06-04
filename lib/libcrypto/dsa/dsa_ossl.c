@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.40 2018/11/06 07:02:33 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.41 2019/06/04 18:10:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,9 +165,9 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	if (!BN_mod_add(s, &bxr, &bm, dsa->q, ctx))		/* s = bm + bxr */
 		goto err;
-	if (!BN_mod_mul(s, s, &binv, dsa->q, ctx))		/* s = m + xr */
+	if (!BN_mod_mul(s, s, kinv, dsa->q, ctx))	/* s = b(m + xr)k^-1 */
 		goto err;
-	if (!BN_mod_mul(s, s, kinv, dsa->q, ctx))
+	if (!BN_mod_mul(s, s, &binv, dsa->q, ctx))	/* s = (m + xr)k^-1 */
 		goto err;
 
 	/*
