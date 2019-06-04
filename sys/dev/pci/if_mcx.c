@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.15 2019/06/04 03:19:42 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.16 2019/06/04 05:29:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -5778,7 +5778,8 @@ mcx_up(struct mcx_softc *sc)
 	for (i = 0; i < (1 << MCX_LOG_RQ_SIZE); i++) {
 		ms = &sc->sc_rx_slots[i];
 		if (bus_dmamap_create(sc->sc_dmat, sc->sc_hardmtu, 1,
-		    sc->sc_hardmtu, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    sc->sc_hardmtu, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &ms->ms_map) != 0) {
 			printf("%s: failed to allocate rx dma maps\n",
 			    DEVNAME(sc));
@@ -5796,8 +5797,9 @@ mcx_up(struct mcx_softc *sc)
 	for (i = 0; i < (1 << MCX_LOG_SQ_SIZE); i++) {
 		ms = &sc->sc_tx_slots[i];
 		if (bus_dmamap_create(sc->sc_dmat, sc->sc_hardmtu,
-		    MCX_SQ_MAX_SEGMENTS, sc->sc_hardmtu, 0, BUS_DMA_WAITOK |
-		    BUS_DMA_ALLOCNOW, &ms->ms_map) != 0) {
+		    MCX_SQ_MAX_SEGMENTS, sc->sc_hardmtu, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &ms->ms_map) != 0) {
 			printf("%s: failed to allocate tx dma maps\n",
 			    DEVNAME(sc));
 			goto destroy_tx_slots;
