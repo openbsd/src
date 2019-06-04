@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.19 2019/06/04 18:13:44 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.20 2019/06/04 18:15:27 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -329,7 +329,7 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		 * In order to reduce the possibility of a side-channel attack,
 		 * the following is calculated using a blinding value:
 		 *
-		 *  s = inv(k)inv(b)(bm + bxr) mod order
+		 *  s = inv(b)(bm + bxr)inv(k) mod order
 		 *
 		 * where b is a random value in the range [1, order-1].
 		 */
