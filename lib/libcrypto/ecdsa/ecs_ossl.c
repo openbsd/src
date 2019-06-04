@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.18 2019/01/19 01:12:48 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.19 2019/06/04 18:13:44 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -369,11 +369,11 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!BN_mod_mul(s, s, binv, order, ctx)) { /* s = m + xr */
+		if (!BN_mod_mul(s, s, ckinv, order, ctx)) { /* s = b(m + xr)k^-1 */
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!BN_mod_mul(s, s, ckinv, order, ctx)) {
+		if (!BN_mod_mul(s, s, binv, order, ctx)) { /* s = (m + xr)k^-1 */
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
