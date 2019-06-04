@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.36 2019/05/11 17:13:59 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.37 2019/06/04 12:08:22 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -902,6 +902,66 @@ unsigned int
 dma_fence_context_alloc(unsigned int num)
 {
 	return __sync_add_and_fetch(&drm_fence_count, num) - num;
+}
+
+static void
+dma_fence_default_wait_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	wakeup(fence);
+}
+
+long
+dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
+{
+	long ret = timeout ? timeout : 1;
+	int err;
+	struct dma_fence_cb cb;
+	bool was_set;
+
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		return ret;
+
+	mtx_enter(fence->lock);
+
+	was_set = test_and_set_bit(DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT,
+	    &fence->flags);
+
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+		goto out;
+
+	if (!was_set && fence->ops->enable_signaling) {
+		if (!fence->ops->enable_signaling(fence)) {
+			dma_fence_signal_locked(fence);
+			goto out;
+		}
+	}
+
+	if (timeout == 0) {
+		ret = 0;
+		goto out;
+	}
+
+	cb.func = dma_fence_default_wait_cb;
+	list_add(&cb.node, &fence->cb_list);
+
+	while (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
+		err = msleep(fence, fence->lock, intr ? PCATCH : 0, "dmafence",
+		    timeout);
+		if (err == EINTR || err == ERESTART) {
+			ret = -ERESTARTSYS;
+			break;
+		} else if (err == EWOULDBLOCK) {
+			ret = 0;
+			break;
+		}
+	}
+
+	if (!list_empty(&cb.node))
+		list_del(&cb.node);
+out:
+	mtx_leave(fence->lock);
+	
+	return ret;
 }
 
 static const char *
