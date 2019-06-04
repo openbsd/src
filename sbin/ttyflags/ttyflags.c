@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.14 2019/01/13 23:40:30 deraadt Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.15 2019/06/04 15:45:58 otto Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -114,7 +114,8 @@ all(int print)
 	rval = 0;
 	for (tep = getttyent(); tep != NULL; tep = getttyent()) {
 		/* pseudo-tty ignore TIOCSFLAGS, so don't bother */
-		if (strcmp(tep->ty_type, "network") == 0)
+		if (tep->ty_type == NULL ||
+		    strcmp(tep->ty_type, "network") == 0)
 			continue;
 		if (ttyflags(tep, print))
 			rval = 1;
