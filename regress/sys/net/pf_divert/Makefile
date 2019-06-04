@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2017/12/26 17:03:46 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.21 2019/06/04 11:01:33 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -180,16 +180,28 @@ run-regress-${inet}-reuse-${proto}-${first}-${second}:
 	${SUDO} tcpdrop \
 	    ${LOCAL_${addr}} `cat client.port` \
 	    ${FAKE_${addr}} `cat server.port`
+	# to avoid SYN retransmit, kill local tcp state that will be reused
+.if "inet" == ${inet}
+	${SUDO} pfctl -k key -k '${proto} ${LOCAL_${addr}}:'`cat client.port`' <- ${FAKE_${addr}}:'`cat server.port`''
+.elif "inet6" == ${inet}
+	${SUDO} pfctl -k key -k '${proto} ${LOCAL_${addr}}['`cat client.port`'] <- ${FAKE_${addr}}['`cat server.port`']'
+.endif
 .else # "to" == ${first}
+	# to avoid SYN retransmit, kill local tcp state that will be reused
+.if "inet" == ${inet}
+	${SUDO} pfctl -k key -k '${proto} ${LOCAL_${addr}}:'`cat server.port`' -> ${FAKE_${addr}}:'`cat client.port`''
+.elif "inet6" == ${inet}
+	${SUDO} pfctl -k key -k '${proto} ${LOCAL_${addr}}['`cat server.port`'] -> ${FAKE_${addr}}['`cat client.port`']'
+.endif
 	# tcp socket is in time wait so state must still exist
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
-	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`'\]? .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
 	ssh ${REMOTE_SSH} ${SUDO} tcpdrop \
 	    ${FAKE_${addr}} `cat client.port` \
 	    ${LOCAL_${addr}} `cat server.port`
 	# divert-to state disappeared when the tcp socket was dropped
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ! \
-	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat client.port`'\]? .. ${LOCAL_${addr}}:?\[?'`cat server.port`'\]? '
 .endif
 .endif
 .if "to" == ${first}
@@ -218,12 +230,12 @@ run-regress-${inet}-reuse-${proto}-${first}-${second}:
 .else # "to" == ${second}
 	# dropping the server tcp socket in time wait must remove the state
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | \
-	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`'\]? .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
 	ssh ${REMOTE_SSH} ${SUDO} tcpdrop \
 	    ${FAKE_${addr}} `cat server.port` \
 	    ${LOCAL_${addr}} `cat client.port`
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -ss | ! \
-	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`\]?' .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
+	    egrep 'all ${proto} ${FAKE_${addr}}:?\[?'`cat server.port`'\]? .. ${LOCAL_${addr}}:?\[?'`cat client.port`'\]? '
 .endif
 .endif
 	# states must disappear after connected socket has been closed
