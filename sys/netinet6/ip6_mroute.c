@@ -244,6 +244,9 @@ mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 	struct inpcb *inp = sotoinpcb(so);
 	int error;
 
+	if (inp == NULL)
+		return (ENOTCONN);
+
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
 		NET_RLOCK();

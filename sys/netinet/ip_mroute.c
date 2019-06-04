@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.125 2019/02/13 23:47:43 dlg Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.126 2019/06/04 16:11:13 anton Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -258,6 +258,9 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error;
+
+	if (inp == NULL)
+		return (ENOTCONN);
 
 	if (so != ip_mrouter[inp->inp_rtableid])
 		error = EINVAL;
