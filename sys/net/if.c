@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.583 2019/05/12 16:38:02 sashan Exp $	*/
+/*	$OpenBSD: if.c,v 1.584 2019/06/04 23:06:34 sashan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -976,14 +976,14 @@ if_netisr(void *unused)
 {
 	int n, t = 0;
 
-	NET_LOCK();
+	NET_RLOCK();
 
 	while ((n = netisr) != 0) {
 		/* Like sched_pause() but with a rwlock dance. */
 		if (curcpu()->ci_schedstate.spc_schedflags & SPCF_SHOULDYIELD) {
-			NET_UNLOCK();
+			NET_RUNLOCK();
 			yield();
-			NET_LOCK();
+			NET_RLOCK();
 		}
 
 		atomic_clearbits_int(&netisr, n);
@@ -1044,7 +1044,7 @@ if_netisr(void *unused)
 	}
 #endif
 
-	NET_UNLOCK();
+	NET_RUNLOCK();
 }
 
 void
