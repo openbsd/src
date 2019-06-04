@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.9 2018/04/18 03:39:22 schwarze Exp $
+.\" $OpenBSD: BIO_get_ex_new_index.3,v 1.10 2019/06/04 12:02:44 schwarze Exp $
 .\" full merge up to: OpenSSL a970b14f Jul 31 18:58:40 2017 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 18 2018 $
+.Dd $Mdocdate: June 4 2019 $
 .Dt BIO_GET_EX_NEW_INDEX 3
 .Os
 .Sh NAME
@@ -73,7 +73,12 @@
 .Nm ECDSA_get_ex_data
 .Nd application-specific data
 .Sh SYNOPSIS
+.In openssl/bio.h
+.In openssl/engine.h
+.In openssl/ui.h
 .In openssl/x509.h
+.In openssl/ecdh.h
+.In openssl/ecdsa.h
 .Ft int
 .Fo TYPE_get_ex_new_index
 .Fa "long argl"
@@ -99,8 +104,13 @@ In the description here,
 is used a placeholder for any of the OpenSSL datatypes listed in
 .Xr CRYPTO_get_ex_new_index 3 .
 .Pp
-These functions handle application-specific data for OpenSSL data
+These functions handle application-specific data in OpenSSL data
 structures.
+Their usage is identical to that of
+.Xr RSA_get_ex_new_index 3 ,
+.Xr RSA_set_ex_data 3 ,
+and
+.Xr RSA_get_ex_data 3 .
 .Pp
 .Fn TYPE_get_ex_new_index
 is a macro that calls
