@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.33 2019/06/05 06:40:13 gilles Exp $	*/
+/*	$OpenBSD: ca.c,v 1.34 2019/06/05 16:24:54 gilles Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -424,7 +424,7 @@ rsae_pub_enc(int flen,const unsigned char *from, unsigned char *to, RSA *rsa,
     int padding)
 {
 	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	return (rsa_default->rsa_pub_enc(flen, from, to, rsa, padding));
+	return (RSA_meth_get_pub_enc(rsa_default)(flen, from, to, rsa, padding));
 }
 
 static int
@@ -432,7 +432,7 @@ rsae_pub_dec(int flen,const unsigned char *from, unsigned char *to, RSA *rsa,
     int padding)
 {
 	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	return (rsa_default->rsa_pub_dec(flen, from, to, rsa, padding));
+	return (RSA_meth_get_pub_dec(rsa_default)(flen, from, to, rsa, padding));
 }
 
 static int
@@ -443,7 +443,7 @@ rsae_priv_enc(int flen, const unsigned char *from, unsigned char *to, RSA *rsa,
 	if (RSA_get_ex_data(rsa, 0) != NULL)
 		return (rsae_send_imsg(flen, from, to, rsa, padding,
 		    IMSG_CA_RSA_PRIVENC));
-	return (rsa_default->rsa_priv_enc(flen, from, to, rsa, padding));
+	return (RSA_meth_get_priv_enc(rsa_default)(flen, from, to, rsa, padding));
 }
 
 static int
@@ -455,14 +455,14 @@ rsae_priv_dec(int flen, const unsigned char *from, unsigned char *to, RSA *rsa,
 		return (rsae_send_imsg(flen, from, to, rsa, padding,
 		    IMSG_CA_RSA_PRIVDEC));
 
-	return (rsa_default->rsa_priv_dec(flen, from, to, rsa, padding));
+	return (RSA_meth_get_priv_dec(rsa_default)(flen, from, to, rsa, padding));
 }
 
 static int
 rsae_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
 	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	return (rsa_default->rsa_mod_exp(r0, I, rsa, ctx));
+	return (RSA_meth_get_mod_exp(rsa_default)(r0, I, rsa, ctx));
 }
 
 static int
@@ -470,32 +470,32 @@ rsae_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
 	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	return (rsa_default->bn_mod_exp(r, a, p, m, ctx, m_ctx));
+	return (RSA_meth_get_bn_mod_exp(rsa_default)(r, a, p, m, ctx, m_ctx));
 }
 
 static int
 rsae_init(RSA *rsa)
 {
 	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	if (rsa_default->init == NULL)
+	if (RSA_meth_get_init(rsa_default) == NULL)
 		return (1);
-	return (rsa_default->init(rsa));
+	return (RSA_meth_get_init(rsa_default)(rsa));
 }
 
 static int
 rsae_finish(RSA *rsa)
 {
 	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	if (rsa_default->finish == NULL)
+	if (RSA_meth_get_finish(rsa_default) == NULL)
 		return (1);
-	return (rsa_default->finish(rsa));
+	return (RSA_meth_get_finish(rsa_default)(rsa));
 }
 
 static int
 rsae_keygen(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
 {
 	log_debug("debug: %s: %s", proc_name(smtpd_process), __func__);
-	return (rsa_default->rsa_keygen(rsa, bits, e, cb));
+	return (RSA_meth_get_keygen(rsa_default)(rsa, bits, e, cb));
 }
 
 
@@ -637,22 +637,22 @@ rsa_engine_init(void)
 	if ((rsae_method = RSA_meth_new("RSA privsep engine", 0)) == NULL)
 		goto fail;
 
-	rsae_method->rsa_pub_enc = rsae_pub_enc;
-	rsae_method->rsa_pub_dec = rsae_pub_dec;
-	rsae_method->rsa_priv_enc = rsae_priv_enc;
-	rsae_method->rsa_priv_dec = rsae_priv_dec;
-	rsae_method->rsa_mod_exp = rsae_mod_exp;
-	rsae_method->bn_mod_exp = rsae_bn_mod_exp;
-	rsae_method->init = rsae_init;
-	rsae_method->finish = rsae_finish;
-	rsae_method->rsa_keygen = rsae_keygen;
+	RSA_meth_set_pub_enc(rsae_method, rsae_pub_enc);
+	RSA_meth_set_pub_dec(rsae_method, rsae_pub_dec);
+	RSA_meth_set_priv_enc(rsae_method, rsae_priv_enc);
+	RSA_meth_set_priv_dec(rsae_method, rsae_priv_dec);
+	RSA_meth_set_mod_exp(rsae_method, rsae_mod_exp);
+	RSA_meth_set_bn_mod_exp(rsae_method, rsae_bn_mod_exp);
+	RSA_meth_set_init(rsae_method, rsae_init);
+	RSA_meth_set_finish(rsae_method, rsae_finish);
+	RSA_meth_set_keygen(rsae_method, rsae_keygen);
 
 	if ((e = ENGINE_get_default_RSA()) == NULL) {
 		if ((e = ENGINE_new()) == NULL) {
 			errstr = "ENGINE_new";
 			goto fail;
 		}
-		if (!ENGINE_set_name(e, rsae_method->name)) {
+		if (!ENGINE_set_name(e, RSA_meth_get0_name(rsae_method))) {
 			errstr = "ENGINE_set_name";
 			goto fail;
 		}
@@ -670,15 +670,16 @@ rsa_engine_init(void)
 
 	log_debug("debug: %s: using %s", __func__, name);
 
-	if (rsa_default->rsa_mod_exp == NULL)
-		rsae_method->rsa_mod_exp = NULL;
-	if (rsa_default->bn_mod_exp == NULL)
-		rsae_method->bn_mod_exp = NULL;
-	if (rsa_default->rsa_keygen == NULL)
-		rsae_method->rsa_keygen = NULL;
-	rsae_method->flags = rsa_default->flags |
-	    RSA_METHOD_FLAG_NO_CHECK;
-	rsae_method->app_data = rsa_default->app_data;
+	if (RSA_meth_get_mod_exp(rsa_default) == NULL)
+		RSA_meth_set_mod_exp(rsae_method, NULL);
+	if (RSA_meth_get_bn_mod_exp(rsa_default) == NULL)
+		RSA_meth_set_bn_mod_exp(rsae_method, NULL);
+	if (RSA_meth_get_keygen(rsa_default) == NULL)
+		RSA_meth_set_keygen(rsae_method, NULL);
+	RSA_meth_set_flags(rsae_method,
+		RSA_meth_get_flags(rsa_default) | RSA_METHOD_FLAG_NO_CHECK);
+	RSA_meth_set0_app_data(rsae_method,
+		RSA_meth_get0_app_data(rsa_default));
 
 	if (!ENGINE_set_RSA(e, rsae_method)) {
 		errstr = "ENGINE_set_RSA";
