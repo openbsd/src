@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.224 2019/05/26 17:34:45 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.225 2019/06/05 19:00:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1668,9 +1668,11 @@ window_copy_cmd_search_backward_incremental(struct window_copy_cmd_state *cs)
 	struct window_mode_entry	*wme = cs->wme;
 	struct window_copy_mode_data	*data = wme->data;
 	const char			*argument = cs->args->argv[1];
-	enum window_copy_cmd_action	 action = WINDOW_COPY_CMD_NOTHING;
 	const char			*ss = data->searchstr;
+	char				 prefix;
+	enum window_copy_cmd_action	 action = WINDOW_COPY_CMD_NOTHING;
 
+	prefix = *argument++;
 	if (data->searchx == -1 || data->searchy == -1) {
 		data->searchx = data->cx;
 		data->searchy = data->cy;
@@ -1681,13 +1683,11 @@ window_copy_cmd_search_backward_incremental(struct window_copy_cmd_state *cs)
 		data->oy = data->searcho;
 		action = WINDOW_COPY_CMD_REDRAW;
 	}
-
 	if (*argument == '\0') {
 		window_copy_clear_marks(wme);
 		return (WINDOW_COPY_CMD_REDRAW);
 	}
-
-	switch (*argument++) {
+	switch (prefix) {
 	case '=':
 	case '-':
 		data->searchtype = WINDOW_COPY_SEARCHUP;
@@ -1717,9 +1717,11 @@ window_copy_cmd_search_forward_incremental(struct window_copy_cmd_state *cs)
 	struct window_mode_entry	*wme = cs->wme;
 	struct window_copy_mode_data	*data = wme->data;
 	const char			*argument = cs->args->argv[1];
-	enum window_copy_cmd_action	 action = WINDOW_COPY_CMD_NOTHING;
 	const char			*ss = data->searchstr;
+	char				 prefix;
+	enum window_copy_cmd_action	 action = WINDOW_COPY_CMD_NOTHING;
 
+	prefix = *argument++;
 	if (data->searchx == -1 || data->searchy == -1) {
 		data->searchx = data->cx;
 		data->searchy = data->cy;
@@ -1730,13 +1732,11 @@ window_copy_cmd_search_forward_incremental(struct window_copy_cmd_state *cs)
 		data->oy = data->searcho;
 		action = WINDOW_COPY_CMD_REDRAW;
 	}
-
 	if (*argument == '\0') {
 		window_copy_clear_marks(wme);
 		return (WINDOW_COPY_CMD_REDRAW);
 	}
-
-	switch (*argument++) {
+	switch (prefix) {
 	case '=':
 	case '+':
 		data->searchtype = WINDOW_COPY_SEARCHDOWN;
