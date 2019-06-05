@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.16 2019/06/04 05:29:30 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.17 2019/06/05 04:45:42 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -100,10 +100,6 @@
 #define MCX_UAR_EQ_DOORBELL_ARM	 0x40
 #define MCX_UAR_EQ_DOORBELL	 0x48
 #define MCX_UAR_BF		 0x800
-
-/* syndromes */
-#define MCX_SYNDROME_ENTRY_NOT_FOUND \
-				0x4EFC3D
 
 #define MCX_CMDQ_ADDR_HI		 0x0010
 #define MCX_CMDQ_ADDR_LO		 0x0014
@@ -4933,9 +4929,7 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int group, int index)
 	}
 
 	out = mcx_cmdq_out(cqe);
-	/* don't complain if the entry didn't exist */
-	if (out->cmd_status != MCX_CQ_STATUS_OK &&
-	    (betoh32(out->cmd_syndrome) != MCX_SYNDROME_ENTRY_NOT_FOUND)) {
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: delete flow table entry %d failed (%x, %x)\n",
 		    DEVNAME(sc), index, out->cmd_status,
 		    betoh32(out->cmd_syndrome));
@@ -5914,9 +5908,17 @@ mcx_down(struct mcx_softc *sc)
 	 * delete flow table entries first, so no packets can arrive
 	 * after the barriers
 	 */
-	for (group = 0; group < MCX_NUM_FLOW_GROUPS; group++) {
-		for (i = 0; i < sc->sc_flow_group_size[group]; i++)
-			mcx_delete_flow_table_entry(sc, group, i);
+	if (sc->sc_promisc_flow_enabled)
+		mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_PROMISC, 0);
+	if (sc->sc_allmulti_flow_enabled)
+		mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_ALLMULTI, 0);
+	mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_MAC, 0);
+	mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_MAC, 1);
+	for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
+		if (sc->sc_mcast_flows[i][0] != 0) {
+			mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_MAC,
+			    sc->sc_first_mcast_flow_entry + i);
+		}
 	}
 
 	intr_barrier(&sc->sc_ih);
