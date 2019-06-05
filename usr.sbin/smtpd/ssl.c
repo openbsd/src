@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.92 2019/05/24 16:29:41 gilles Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.93 2019/06/05 06:40:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -39,6 +39,7 @@
 #include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
+#include <openssl/ecdsa.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 
@@ -361,6 +362,7 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 	X509		*x509 = NULL;
 	EVP_PKEY	*pkey = NULL;
 	RSA		*rsa = NULL;
+	EC_KEY		*eckey = NULL;
 	void		*exdata = NULL;
 
 	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
@@ -383,15 +385,20 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 	in = NULL;
 
 	if (data != NULL && datalen) {
-		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL ||
+		if (((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL &&
+			(eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL) ||
 		    (exdata = malloc(datalen)) == NULL) {
 			SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY, ERR_R_EVP_LIB);
 			goto fail;
 		}
 
 		memcpy(exdata, data, datalen);
-		RSA_set_ex_data(rsa, 0, exdata);
+		if (rsa)
+			RSA_set_ex_data(rsa, 0, exdata);
+		if (eckey)
+			ECDSA_set_ex_data(eckey, 0, exdata);
 		RSA_free(rsa); /* dereference, will be cleaned up with pkey */
+		EC_KEY_free(eckey); /* dereference, will be cleaned up with pkey */
 	}
 
 	*x509ptr = x509;
@@ -401,6 +408,7 @@ ssl_load_pkey(const void *data, size_t datalen, char *buf, off_t len,
 
  fail:
 	RSA_free(rsa);
+	EC_KEY_free(eckey);
 	BIO_free(in);
 	EVP_PKEY_free(pkey);
 	X509_free(x509);

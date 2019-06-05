@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.621 2019/04/08 08:22:32 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.622 2019/06/05 06:40:13 gilles Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -327,8 +327,9 @@ enum imsg_type {
 	IMSG_FILTER_SMTP_DATA_BEGIN,
 	IMSG_FILTER_SMTP_DATA_END,
 
-	IMSG_CA_PRIVENC,
-	IMSG_CA_PRIVDEC
+	IMSG_CA_RSA_PRIVENC,
+	IMSG_CA_RSA_PRIVDEC,
+	IMSG_CA_ECDSA_SIGN,
 };
 
 enum smtp_proc_type {
