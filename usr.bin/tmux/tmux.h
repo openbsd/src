@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.908 2019/06/03 18:28:37 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.909 2019/06/05 20:00:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1324,6 +1324,7 @@ struct cmd_parse_input {
 #define CMD_PARSE_QUIET 0x1
 #define CMD_PARSE_PARSEONLY 0x2
 #define CMD_PARSE_NOALIAS 0x4
+#define CMD_PARSE_VERBOSE 0x8
 
 	const char		*file;
 	u_int			 line;
