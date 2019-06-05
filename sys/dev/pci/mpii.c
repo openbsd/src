@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.116 2019/06/04 06:49:19 dlg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.117 2019/06/05 00:36:20 dlg Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -2541,7 +2541,8 @@ mpii_alloc_ccbs(struct mpii_softc *sc)
 		ccb = &sc->sc_ccbs[i - 1];
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, sc->sc_max_sgl,
-		    MAXPHYS, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    MAXPHYS, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &ccb->ccb_dmamap) != 0) {
 			printf("%s: unable to create dma map\n", DEVNAME(sc));
 			goto free_maps;
