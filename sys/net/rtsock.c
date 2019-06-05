@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.286 2019/05/11 16:47:02 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.287 2019/06/05 12:53:43 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1359,15 +1359,8 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 	for (i = 0; i < sizeof(rtinfo->rti_addrs) * 8; i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
-		if (i >= RTAX_MAX || cp + sizeof(socklen_t) > cplim) {
-			/*
-			 * Clear invalid bits, userland code may set them.
-			 * After OpenBSD 6.5 release, fix OpenVPN, remove
-			 * this workaround, and return EINVAL.  XXX
-			 */
-			rtinfo->rti_addrs &= (1 << i) - 1;
-			break;
-		}
+		if (i >= RTAX_MAX || cp + sizeof(socklen_t) > cplim)
+			return (EINVAL);
 		sa = (struct sockaddr *)cp;
 		if (cp + sa->sa_len > cplim)
 			return (EINVAL);
