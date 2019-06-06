@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.18 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.19 2019/06/06 01:06:59 schwarze Exp $
 .\" full merge up to: OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\" selective merge up to: OpenSSL 7643a172 Apr 21 13:35:51 2017 +0200
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_STORE_CTX_NEW 3
 .Os
 .Sh NAME
@@ -316,7 +316,9 @@ returns 1 for success or 0 if an error occurred.
 .Fn X509_STORE_CTX_get0_untrusted
 returns an internal pointer.
 .Sh SEE ALSO
+.Xr X509_CRL_new 3 ,
 .Xr X509_STORE_CTX_get_error 3 ,
+.Xr X509_STORE_CTX_get_ex_new_index 3 ,
 .Xr X509_STORE_new 3 ,
 .Xr X509_STORE_set1_param 3 ,
 .Xr X509_verify_cert 3 ,

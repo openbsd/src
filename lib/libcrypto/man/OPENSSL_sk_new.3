@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_sk_new.3,v 1.10 2018/08/08 18:21:02 tb Exp $
+.\" $OpenBSD: OPENSSL_sk_new.3,v 1.11 2019/06/06 01:06:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt OPENSSL_SK_NEW 3
 .Os
 .Sh NAME
@@ -525,6 +525,8 @@ returns
 or
 .Dv NULL
 if it is not found.
+.Sh SEE ALSO
+.Xr STACK_OF 3
 .Sh HISTORY
 .Fn sk_new_null ,
 .Fn sk_new ,

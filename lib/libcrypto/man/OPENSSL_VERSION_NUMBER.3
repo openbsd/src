@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.11 2019/03/15 12:32:15 schwarze Exp $
+.\" $OpenBSD: OPENSSL_VERSION_NUMBER.3,v 1.12 2019/06/06 01:06:58 schwarze Exp $
 .\" full merge up to: OpenSSL 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
 .\" This file is a derived work.
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 15 2019 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt OPENSSL_VERSION_NUMBER 3
 .Os
 .Sh NAME
@@ -245,7 +245,8 @@ and
 .Fn SSLeay_version
 return pointers to static strings.
 .Sh SEE ALSO
-.Xr crypto 3
+.Xr crypto 3 ,
+.Xr OPENSSL_config 3
 .Sh HISTORY
 .Fn SSLeay ,
 .Fn SSLeay_version ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_set_RSA.3,v 1.3 2018/05/17 07:21:32 jmc Exp $
+.\" $OpenBSD: ENGINE_set_RSA.3,v 1.4 2019/06/06 01:06:58 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt ENGINE_SET_RSA 3
 .Os
 .Sh NAME
@@ -287,11 +287,15 @@ if
 .Fa e
 does not implement that digest.
 .Sh SEE ALSO
+.Xr DSA_new ,
 .Xr ENGINE_ctrl 3 ,
 .Xr ENGINE_new 3 ,
 .Xr ENGINE_register_RSA 3 ,
 .Xr ENGINE_set_default 3 ,
-.Xr ENGINE_set_flags 3
+.Xr ENGINE_set_flags 3 ,
+.Xr EVP_DigestInit 3 ,
+.Xr EVP_EncryptInit 3 ,
+.Xr RSA_new 3
 .Sh HISTORY
 .Fn ENGINE_set_RSA ,
 .Fn ENGINE_get_RSA ,

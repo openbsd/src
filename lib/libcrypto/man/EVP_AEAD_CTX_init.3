@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.8 2019/03/21 14:12:48 jmc Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.9 2019/06/06 01:06:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 21 2019 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt EVP_AEAD_CTX_INIT 3
 .Os
 .Sh NAME
@@ -275,7 +275,8 @@ EVP_AEAD_CTX_seal(&ctx, out, &out_len, BUFSIZE, nonce,
 EVP_AEAD_CTX_cleanup(&ctx);
 .Ed
 .Sh SEE ALSO
-.Xr evp 3
+.Xr evp 3 ,
+.Xr EVP_EncryptInit 3
 .Sh STANDARDS
 .Rs
 .%A A. Langley

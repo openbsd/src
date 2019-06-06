@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.8 2018/08/24 19:23:07 tb Exp $
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.9 2019/06/06 01:06:59 schwarze Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_OBJECT_GET0_X509 3
 .Os
 .Sh NAME
@@ -224,6 +224,8 @@ is
 .Dv NULL
 or no match is found.
 .Sh SEE ALSO
+.Xr X509_CRL_new 3 ,
+.Xr X509_NAME_new 3 ,
 .Xr X509_STORE_get0_objects 3 ,
 .Xr X509_STORE_load_locations 3 ,
 .Xr X509_STORE_new 3

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.9 2018/08/24 20:04:10 tb Exp $
+.\"	$OpenBSD: OCSP_cert_to_id.3,v 1.10 2019/06/06 01:06:58 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 24 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt OCSP_CERT_TO_ID 3
 .Os
 .Sh NAME
@@ -214,6 +214,7 @@ return 0 for a match or non-zero otherwise.
 .Fn OCSP_id_get0_info
 returns 1 for success or 0 for failure.
 .Sh SEE ALSO
+.Xr EVP_DigestInit 3 ,
 .Xr OCSP_request_add1_nonce 3 ,
 .Xr OCSP_REQUEST_new 3 ,
 .Xr OCSP_resp_find_status 3 ,

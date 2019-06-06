@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.15 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.16 2019/06/06 01:06:58 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL a95d7574 Jul 2 12:16:38 2017 -0400
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -617,7 +617,23 @@ main(int argc, char *argv[])
 }
 .Ed
 .Sh SEE ALSO
-.Xr evp 3
+.Xr BIO_f_md 3 ,
+.Xr evp 3 ,
+.Xr EVP_BytesToKey 3 ,
+.Xr EVP_DigestSignInit 3 ,
+.Xr EVP_DigestVerifyInit 3 ,
+.Xr EVP_PKEY_CTX_set_signature_md 3 ,
+.Xr EVP_PKEY_meth_set_signctx 3 ,
+.Xr EVP_SignInit 3 ,
+.Xr EVP_VerifyInit 3 ,
+.Xr HMAC 3 ,
+.Xr OCSP_basic_sign 3 ,
+.Xr OCSP_request_sign 3 ,
+.Xr PKCS5_PBKDF2_HMAC 3 ,
+.Xr PKCS7_sign_add_signer 3 ,
+.Xr X509_ALGOR_set_md 3 ,
+.Xr X509_digest 3 ,
+.Xr X509_sign 3
 .Sh HISTORY
 .Fn EVP_DigestInit ,
 .Fn EVP_DigestUpdate ,

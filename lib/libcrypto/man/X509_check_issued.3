@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_check_issued.3,v 1.3 2018/03/22 17:11:04 schwarze Exp $
+.\"	$OpenBSD: X509_check_issued.3,v 1.4 2019/06/06 01:06:59 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Victor B. Wagner <vitus@cryptocom.ru>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_CHECK_ISSUED 3
 .Os
 .Sh NAME
@@ -101,6 +101,7 @@ or some
 constant to indicate an error.
 .Sh SEE ALSO
 .Xr X509_check_ca 3 ,
+.Xr X509_new 3 ,
 .Xr X509_verify_cert 3
 .Sh HISTORY
 .Fn X509_check_issued

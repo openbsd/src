@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_CRLID_new.3,v 1.6 2018/05/13 14:36:05 schwarze Exp $
+.\"	$OpenBSD: OCSP_CRLID_new.3,v 1.7 2019/06/06 01:06:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 13 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt OCSP_CRLID_NEW 3
 .Os
 .Sh NAME
@@ -91,6 +91,7 @@ object or
 .Dv NULL
 if an error occurred.
 .Sh SEE ALSO
+.Xr OCSP_REQUEST_new 3 ,
 .Xr OCSP_resp_find_status 3 ,
 .Xr OCSP_response_status 3 ,
 .Xr X509_EXTENSION_new 3

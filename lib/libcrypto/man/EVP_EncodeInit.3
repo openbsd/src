@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncodeInit.3,v 1.6 2019/01/19 19:09:22 jmc Exp $
+.\" $OpenBSD: EVP_EncodeInit.3,v 1.7 2019/06/06 01:06:58 schwarze Exp $
 .\" full merge up to: OpenSSL f430ba31 Jun 19 19:39:01 2016 +0200
 .\" selective merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 19 2019 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt EVP_ENCODEINIT 3
 .Os
 .Sh NAME
@@ -316,6 +316,7 @@ returns -1 on error or 1 on success.
 .Fn EVP_DecodeBlock
 returns the length of the data decoded or -1 on error.
 .Sh SEE ALSO
+.Xr BIO_f_base64 3 ,
 .Xr evp 3
 .Sh HISTORY
 The

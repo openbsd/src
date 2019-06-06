@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_new.3,v 1.6 2018/07/29 20:29:32 tb Exp $
+.\"	$OpenBSD: X509_NAME_new.3,v 1.7 2019/06/06 01:06:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 29 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_NAME_NEW 3
 .Os
 .Sh NAME
@@ -81,9 +81,11 @@ if an error occurred.
 .Xr SSL_load_client_CA_file 3 ,
 .Xr X509_get_subject_name 3 ,
 .Xr X509_NAME_add_entry_by_txt 3 ,
+.Xr X509_NAME_digest 3 ,
 .Xr X509_NAME_ENTRY_new 3 ,
 .Xr X509_NAME_get_index_by_NID 3 ,
-.Xr X509_NAME_print_ex 3
+.Xr X509_NAME_print_ex 3 ,
+.Xr X509_new 3
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
 Certificate Revocation List (CRL) Profile

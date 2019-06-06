@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_set1_param.3,v 1.15 2018/04/02 01:35:37 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set1_param.3,v 1.16 2019/06/06 01:06:59 schwarze Exp $
 .\" content checked up to:
 .\" OpenSSL man3/X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\" OpenSSL man3/X509_STORE_get0_param e90fc053 Jul 15 09:39:45 2017 -0400
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 2 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_STORE_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -190,6 +190,7 @@ returns the application data or
 .Dv NULL
 on failure.
 .Sh SEE ALSO
+.Xr RSA_get_ex_new_index 3 ,
 .Xr SSL_set1_param 3 ,
 .Xr X509_OBJECT_get0_X509 3 ,
 .Xr X509_STORE_CTX_set0_param 3 ,

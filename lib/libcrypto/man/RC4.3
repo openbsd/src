@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RC4.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: RC4.3,v 1.7 2019/06/06 01:06:59 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt RC4 3
 .Os
 .Sh NAME
@@ -119,7 +119,8 @@ and
 do not return values.
 .Sh SEE ALSO
 .Xr blowfish 3 ,
-.Xr EVP_EncryptInit 3
+.Xr EVP_EncryptInit 3 ,
+.Xr EVP_rc4 3
 .Sh HISTORY
 .Fn RC4_set_key
 and

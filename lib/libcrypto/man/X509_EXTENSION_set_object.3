@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_EXTENSION_set_object.3,v 1.9 2018/05/19 21:09:19 schwarze Exp $
+.\"	$OpenBSD: X509_EXTENSION_set_object.3,v 1.10 2019/06/06 01:06:59 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_EXTENSION_SET_OBJECT 3
 .Os
 .Sh NAME
@@ -273,7 +273,9 @@ pointer.
 .Xr BASIC_CONSTRAINTS_new 3 ,
 .Xr d2i_X509_EXTENSION 3 ,
 .Xr DIST_POINT_new 3 ,
+.Xr ESS_SIGNING_CERT_new 3 ,
 .Xr EXTENDED_KEY_USAGE_new 3 ,
+.Xr GENERAL_NAME_new 3 ,
 .Xr NAME_CONSTRAINTS_new 3 ,
 .Xr OCSP_CRLID_new 3 ,
 .Xr OCSP_SERVICELOC_new 3 ,
@@ -281,6 +283,10 @@ pointer.
 .Xr POLICYINFO_new 3 ,
 .Xr PROXY_POLICY_new 3 ,
 .Xr SXNET_new 3 ,
+.Xr TS_REQ_new 3 ,
+.Xr X509_check_ca 3 ,
+.Xr X509_check_host 3 ,
+.Xr X509_check_issued 3 ,
 .Xr X509V3_get_d2i 3 ,
 .Xr X509v3_get_ext_by_NID 3
 .Sh STANDARDS

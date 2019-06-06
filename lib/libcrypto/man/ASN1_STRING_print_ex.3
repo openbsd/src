@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_print_ex.3,v 1.14 2018/04/25 15:17:52 schwarze Exp $
+.\" $OpenBSD: ASN1_STRING_print_ex.3,v 1.15 2019/06/06 01:06:58 schwarze Exp $
 .\" full merge up to: OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt ASN1_STRING_PRINT_EX 3
 .Os
 .Sh NAME
@@ -220,6 +220,7 @@ returns 1 on success or 0 on error.
 .Fn ASN1_tag2str
 returns a static string.
 .Sh SEE ALSO
+.Xr ASN1_STRING_new 3 ,
 .Xr X509_NAME_print_ex 3
 .Sh HISTORY
 .Fn ASN1_STRING_print

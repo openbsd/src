@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_check_host.3,v 1.3 2018/03/23 14:26:40 schwarze Exp $
+.\"	$OpenBSD: X509_check_host.3,v 1.4 2019/06/06 01:06:59 schwarze Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Florian Weimer <fweimer@redhat.com> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_CHECK_HOST 3
 .Os
 .Sh NAME
@@ -232,6 +232,9 @@ For example,
 returns -2 if the provided
 .Fa name
 contains embedded NUL bytes.
+.Sh SEE ALSO
+.Xr X509_EXTENSION_new 3 ,
+.Xr X509_new 3
 .Sh HISTORY
 These functions first appeared in OpenSSL 1.0.2
 and have been available since

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_CRL_new.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_CRL_new.3,v 1.8 2019/06/06 01:06:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2016, 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt X509_CRL_NEW 3
 .Os
 .Sh NAME
@@ -103,7 +103,10 @@ returns 1 on success or 0 on error.
 .Xr d2i_X509_CRL 3 ,
 .Xr DIST_POINT_new 3 ,
 .Xr PEM_read_X509_CRL 3 ,
+.Xr X509_CRL_digest 3 ,
 .Xr X509_CRL_get0_by_serial 3 ,
+.Xr X509_CRL_get0_lastUpdate 3 ,
+.Xr X509_CRL_get0_signature 3 ,
 .Xr X509_CRL_get_ext 3 ,
 .Xr X509_CRL_get_ext_d2i 3 ,
 .Xr X509_CRL_get_issuer 3 ,
@@ -112,6 +115,7 @@ returns 1 on success or 0 on error.
 .Xr X509_EXTENSION_new 3 ,
 .Xr X509_load_crl_file 3 ,
 .Xr X509_new 3 ,
+.Xr X509_OBJECT_get0_X509_CRL 3 ,
 .Xr X509_REVOKED_new 3 ,
 .Xr X509_STORE_CTX_set0_crls 3
 .Sh STANDARDS

@@ -1,4 +1,4 @@
-.\" $OpenBSD: DES_set_key.3,v 1.13 2018/12/21 21:36:21 schwarze Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.14 2019/06/06 01:06:58 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/DES_random_key 521738e9 Oct 5 14:58:30 2018 -0400
 .\"
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: December 21 2018 $
+.Dd $Mdocdate: June 6 2019 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -776,11 +776,8 @@ Both are allowed to return
 to indicate failure, but currently, they cannot fail.
 .Sh SEE ALSO
 .Xr crypt 3 ,
-.Xr RAND_bytes 3
-.Pp
-The
-.Xr evp 3
-library provides higher-level encryption functions.
+.Xr EVP_des_cbc 3 ,
+.Xr EVP_EncryptInit 3
 .Sh STANDARDS
 ANSI X3.106
 .Pp
