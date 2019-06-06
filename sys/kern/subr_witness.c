@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.32 2019/05/19 08:10:55 anton Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.33 2019/06/06 16:45:10 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -654,6 +654,8 @@ witness_ddb_display_descendants(int(*prnt)(const char *fmt, ...),
 	w->w_displayed = 1;
 	if (!w->w_acquired)
 		prnt(" -- never acquired\n");
+	else
+		prnt("\n");
 	indent++;
 	WITNESS_INDEX_ASSERT(w->w_index);
 	for (i = 1; i <= w_max_used_index; i++) {
