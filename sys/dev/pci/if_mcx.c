@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.17 2019/06/05 04:45:42 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.18 2019/06/06 03:11:58 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2271,6 +2271,26 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
+	/*
+	 * PRM makes no mention of msi interrupts, just legacy and msi-x.
+	 * mellanox support tells me legacy interrupts are not supported,
+	 * so we're stuck with just msi-x.
+	 */
+	if (pci_intr_map_msix(pa, 0, &sc->sc_ih) != 0) {
+		printf(": unable to map interrupt\n");
+		goto teardown;
+	}
+	intrstr = pci_intr_string(sc->sc_pc, sc->sc_ih);
+	sc->sc_ihc = pci_intr_establish(sc->sc_pc, sc->sc_ih,
+	    IPL_NET | IPL_MPSAFE, mcx_intr, sc, DEVNAME(sc));
+	if (sc->sc_ihc == NULL) {
+		printf(": unable to establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto teardown;
+	}
+
 	if (mcx_create_eq(sc) != 0) {
 		/* error printed by mcx_create_eq */
 		goto teardown;
@@ -2291,25 +2311,6 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
-	/*
-	 * PRM makes no mention of msi interrupts, just legacy and msi-x.
-	 * mellanox support tells me legacy interrupts are not supported,
-	 * so we're stuck with just msi-x.
-	 */
-	if (pci_intr_map_msix(pa, 0, &sc->sc_ih) != 0) {
-		printf(": unable to map interrupt\n");
-		goto teardown;
-	}
-	intrstr = pci_intr_string(sc->sc_pc, sc->sc_ih);
-	sc->sc_ihc = pci_intr_establish(sc->sc_pc, sc->sc_ih,
-	    IPL_NET | IPL_MPSAFE, mcx_intr, sc, DEVNAME(sc));
-	if (sc->sc_ihc == NULL) {
-		printf(": unable to establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto teardown;
-	}
 	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
