@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.18 2019/05/16 08:47:27 dtucker Exp $ */
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.19 2019/06/06 05:13:13 otto Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -313,7 +313,6 @@ main(int argc, char **argv)
 	extern char *__progname;
 	struct pollfd pfd[2];
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&pkcs11_keylist);
 
 	log_init(__progname, log_level, log_facility, log_stderr);
