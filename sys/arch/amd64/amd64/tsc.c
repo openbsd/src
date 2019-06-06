@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.10 2018/07/27 21:11:31 kettenis Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.11 2019/06/06 19:43:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2017 Adam Steen <adam@adamsteen.com.au>
@@ -172,8 +172,10 @@ calibrate_tsc_freq(void)
 		return;
 	tsc_frequency = freq;
 	tsc_timecounter.tc_frequency = freq;
+#ifndef MULTIPROCESSOR
 	if (tsc_is_invariant)
 		tsc_timecounter.tc_quality = 2000;
+#endif
 }
 
 void
@@ -209,7 +211,9 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 	/* Newer CPUs don't require recalibration */
 	if (tsc_frequency > 0) {
 		tsc_timecounter.tc_frequency = tsc_frequency;
+#ifndef MULTIPROCESSOR
 		tsc_timecounter.tc_quality = 2000;
+#endif
 	} else {
 		tsc_recalibrate = 1;
 		tsc_frequency = cpufreq;
