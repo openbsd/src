@@ -144,7 +144,9 @@ sub _get_podman_switches {
     #
     # See RT #77465
     #
-    #push @switches, 'utf8' => 1;
+    # Then again, do *not* comment it out on OpenBSD:
+    # mandoc handles UTF-8 input just fine.
+    push @switches, 'utf8' => 1;
 
 	$self->debug( "Pod::Man switches are [@switches]\n" );
 
@@ -225,6 +227,10 @@ sub _collect_nroff_switches {
 		my $c = $cols * 39 / 40;
 		$cols = $c > $cols - 2 ? $c : $cols -2;
 		push @render_switches, '-rLL=' . (int $c) . 'n' if $cols > 80;
+		}
+
+	if( $self->_is_mandoc ) {
+		push @render_switches, '-Owidth=' . $self->_get_columns;
 		}
 
 	# I hear persistent reports that adding a -c switch to $render
@@ -357,6 +363,9 @@ sub _filter_through_nroff {
 	$self->debug( sprintf "Done reading. Output is %d bytes\n",
 		length $done
 		);
+
+	# wait for it to exit
+	waitpid( $pid, 0 );
 
 	if( $? ) {
 		$self->warn( "Error from pipe to $render!\n" );
