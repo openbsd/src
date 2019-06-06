@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.18 2019/06/06 03:11:58 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.19 2019/06/06 03:17:49 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2087,6 +2087,8 @@ struct cfattach mcx_ca = {
 static const struct pci_matchid mcx_devices[] = {
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT27700 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT27710 },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT27800 },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800 },
 };
 
 static const uint64_t mcx_eth_cap_map[] = {
