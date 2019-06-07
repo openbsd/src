@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.19 2019/06/06 03:17:49 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.20 2019/06/07 06:47:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2035,8 +2035,8 @@ static void	mcx_cmdq_dump(const struct mcx_cmdq_entry *);
 static void	mcx_cmdq_mbox_dump(struct mcx_dmamem *, int);
 */
 static void	mcx_refill(void *);
-static void	mcx_process_rx(struct mcx_softc *, struct mcx_cq_entry *,
-		    struct mbuf_list *, int *);
+static int	mcx_process_rx(struct mcx_softc *, struct mcx_cq_entry *,
+		    struct mbuf_list *);
 static void	mcx_process_txeof(struct mcx_softc *, struct mcx_cq_entry *,
 		    int *);
 static void	mcx_process_cq(struct mcx_softc *, struct mcx_cq *);
@@ -5554,9 +5554,9 @@ mcx_process_txeof(struct mcx_softc *sc, struct mcx_cq_entry *cqe, int *txfree)
 	ms->ms_m = NULL;
 }
 
-void
+static int
 mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
-    struct mbuf_list *ml, int *slots)
+    struct mbuf_list *ml)
 {
 	struct mcx_slot *ms;
 	struct mbuf *m;
@@ -5571,10 +5571,12 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
 
 	m = ms->ms_m;
 	ms->ms_m = NULL;
-	m->m_pkthdr.len = m->m_len = betoh32(cqe->cq_byte_cnt);
-	(*slots)++;
+
+	m->m_pkthdr.len = m->m_len = bemtoh32(&cqe->cq_byte_cnt);
 
 	ml_enqueue(ml, m);
+
+	return (1);
 }
 
 static struct mcx_cq_entry *
@@ -5636,7 +5638,7 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 			mcx_process_txeof(sc, cqe, &txfree);
 			break;
 		case MCX_CQ_ENTRY_OPCODE_SEND:
-			mcx_process_rx(sc, cqe, &ml, &rxfree);
+			rxfree += mcx_process_rx(sc, cqe, &ml);
 			break;
 		case MCX_CQ_ENTRY_OPCODE_REQ_ERR:
 		case MCX_CQ_ENTRY_OPCODE_SEND_ERR:
