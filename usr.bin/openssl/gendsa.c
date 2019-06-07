@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: gendsa.c,v 1.11 2019/06/07 02:32:22 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,16 +74,114 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+static int set_enc(int argc, char **argv, int *argsused);
+static const EVP_CIPHER *get_cipher_by_name(char *name);
+
+static struct {
+	const EVP_CIPHER *enc;
+	char *outfile;
+	char *passargout;
+} gendsa_config;
+
+static struct option gendsa_options[] = {
+#ifndef OPENSSL_NO_AES
+	{
+		.name = "aes128",
+		.desc = "Encrypt PEM output with cbc aes",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+	{
+		.name = "aes192",
+		.desc = "Encrypt PEM output with cbc aes",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+	{
+		.name = "aes256",
+		.desc = "Encrypt PEM output with cbc aes",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{
+		.name = "camellia128",
+		.desc = "Encrypt PEM output with cbc camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+	{
+		.name = "camellia192",
+		.desc = "Encrypt PEM output with cbc camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+	{
+		.name = "camellia256",
+		.desc = "Encrypt PEM output with cbc camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+#endif
+#ifndef OPENSSL_NO_DES
+	{
+		.name = "des",
+		.desc = "Encrypt the generated key with DES in cbc mode",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+	{
+		.name = "des3",
+		.desc = "Encrypt the generated key with DES in ede cbc mode (168 bit key)",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+#endif
+#ifndef OPENSSL_NO_IDEA
+	{
+		.name = "idea",
+		.desc = "Encrypt the generated key with IDEA in cbc mode",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = set_enc,
+	},
+#endif
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output the key to 'file'",
+		.type = OPTION_ARG,
+		.opt.arg = &gendsa_config.outfile,
+	},
+	{
+		.name = "passout",
+		.argname = "src",
+		.desc = "Output file passphrase source",
+		.type = OPTION_ARG,
+		.opt.arg = &gendsa_config.passargout,
+	},
+	{ NULL },
+};
+
+static void
+gendsa_usage(void)
+{
+	fprintf(stderr, "usage: gendsa [-aes128 | -aes192 | -aes256 |\n");
+	fprintf(stderr, "    -camellia128 | -camellia192 | -camellia256 |\n");
+	fprintf(stderr, "    -des | -des3 | -idea] [-out file] [-passout src]");
+	fprintf(stderr, " paramfile\n\n");
+	options_usage(gendsa_options);
+	fprintf(stderr, "\n");
+}
+
 int
 gendsa_main(int argc, char **argv)
 {
 	DSA *dsa = NULL;
 	int ret = 1;
-	char *outfile = NULL;
 	char *dsaparams = NULL;
-	char *passargout = NULL, *passout = NULL;
+	char *passout = NULL;
 	BIO *out = NULL, *in = NULL;
-	const EVP_CIPHER *enc = NULL;
 
 	if (single_execution) {
 		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
@@ -92,80 +190,19 @@ gendsa_main(int argc, char **argv)
 		}
 	}
 
-	argv++;
-	argc--;
-	for (;;) {
-		if (argc <= 0)
-			break;
-		if (strcmp(*argv, "-out") == 0) {
-			if (--argc < 1)
-				goto bad;
-			outfile = *(++argv);
-		} else if (strcmp(*argv, "-passout") == 0) {
-			if (--argc < 1)
-				goto bad;
-			passargout = *(++argv);
-		}
-		else if (strcmp(*argv, "-") == 0)
-			goto bad;
-#ifndef OPENSSL_NO_DES
-		else if (strcmp(*argv, "-des") == 0)
-			enc = EVP_des_cbc();
-		else if (strcmp(*argv, "-des3") == 0)
-			enc = EVP_des_ede3_cbc();
-#endif
-#ifndef OPENSSL_NO_IDEA
-		else if (strcmp(*argv, "-idea") == 0)
-			enc = EVP_idea_cbc();
-#endif
-#ifndef OPENSSL_NO_AES
-		else if (strcmp(*argv, "-aes128") == 0)
-			enc = EVP_aes_128_cbc();
-		else if (strcmp(*argv, "-aes192") == 0)
-			enc = EVP_aes_192_cbc();
-		else if (strcmp(*argv, "-aes256") == 0)
-			enc = EVP_aes_256_cbc();
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-		else if (strcmp(*argv, "-camellia128") == 0)
-			enc = EVP_camellia_128_cbc();
-		else if (strcmp(*argv, "-camellia192") == 0)
-			enc = EVP_camellia_192_cbc();
-		else if (strcmp(*argv, "-camellia256") == 0)
-			enc = EVP_camellia_256_cbc();
-#endif
-		else if (**argv != '-' && dsaparams == NULL) {
-			dsaparams = *argv;
-		} else
-			goto bad;
-		argv++;
-		argc--;
+	memset(&gendsa_config, 0, sizeof(gendsa_config));
+
+	if (options_parse(argc, argv, gendsa_options, &dsaparams, NULL) != 0) {
+		gendsa_usage();
+		goto end;
 	}
 
 	if (dsaparams == NULL) {
- bad:
-		BIO_printf(bio_err, "usage: gendsa [args] dsaparam-file\n");
-		BIO_printf(bio_err, " -out file - output the key to 'file'\n");
-#ifndef OPENSSL_NO_DES
-		BIO_printf(bio_err, " -des      - encrypt the generated key with DES in cbc mode\n");
-		BIO_printf(bio_err, " -des3     - encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
-#endif
-#ifndef OPENSSL_NO_IDEA
-		BIO_printf(bio_err, " -idea     - encrypt the generated key with IDEA in cbc mode\n");
-#endif
-#ifndef OPENSSL_NO_AES
-		BIO_printf(bio_err, " -aes128, -aes192, -aes256\n");
-		BIO_printf(bio_err, "                 encrypt PEM output with cbc aes\n");
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-		BIO_printf(bio_err, " -camellia128, -camellia192, -camellia256\n");
-		BIO_printf(bio_err, "                 encrypt PEM output with cbc camellia\n");
-#endif
-		BIO_printf(bio_err, " dsaparam-file\n");
-		BIO_printf(bio_err, "           - a DSA parameter file as generated by the dsaparam command\n");
+		gendsa_usage();
 		goto end;
 	}
-	if (!app_passwd(bio_err, NULL, passargout, NULL, &passout)) {
+	if (!app_passwd(bio_err, NULL, gendsa_config.passargout, NULL,
+	    &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
@@ -185,11 +222,11 @@ gendsa_main(int argc, char **argv)
 	if (out == NULL)
 		goto end;
 
-	if (outfile == NULL) {
+	if (gendsa_config.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, outfile) <= 0) {
-			perror(outfile);
+		if (BIO_write_filename(out, gendsa_config.outfile) <= 0) {
+			perror(gendsa_config.outfile);
 			goto end;
 		}
 	}
@@ -199,7 +236,8 @@ gendsa_main(int argc, char **argv)
 	if (!DSA_generate_key(dsa))
 		goto end;
 
-	if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))
+	if (!PEM_write_bio_DSAPrivateKey(out, dsa, gendsa_config.enc, NULL, 0,
+	    NULL, passout))
 		goto end;
 	ret = 0;
  end:
@@ -211,4 +249,53 @@ gendsa_main(int argc, char **argv)
 	free(passout);
 
 	return (ret);
+}
+
+static int
+set_enc(int argc, char **argv, int *argsused)
+{
+	char *name = argv[0];
+
+	if (*name++ != '-')
+		return (1);
+
+	if ((gendsa_config.enc = get_cipher_by_name(name)) == NULL)
+		return (1);
+
+	*argsused = 1;
+	return (0);
+}
+
+static const EVP_CIPHER *get_cipher_by_name(char *name)
+{
+	if (name == NULL || strcmp(name, "") == 0)
+		return (NULL);
+#ifndef OPENSSL_NO_AES
+	else if (strcmp(name, "aes128") == 0)
+		return EVP_aes_128_cbc();
+	else if (strcmp(name, "aes192") == 0)
+		return EVP_aes_192_cbc();
+	else if (strcmp(name, "aes256") == 0)
+		return EVP_aes_256_cbc();
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	else if (strcmp(name, "camellia128") == 0)
+		return EVP_camellia_128_cbc();
+	else if (strcmp(name, "camellia192") == 0)
+		return EVP_camellia_192_cbc();
+	else if (strcmp(name, "camellia256") == 0)
+		return EVP_camellia_256_cbc();
+#endif
+#ifndef OPENSSL_NO_DES
+	else if (strcmp(name, "des") == 0)
+		return EVP_des_cbc();
+	else if (strcmp(name, "des3") == 0)
+		return EVP_des_ede3_cbc();
+#endif
+#ifndef OPENSSL_NO_IDEA
+	else if (strcmp(name, "idea") == 0)
+		return EVP_idea_cbc();
+#endif
+	else
+		return (NULL);
 }

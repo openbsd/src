@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.100 2019/02/04 11:21:05 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.101 2019/06/07 02:32:22 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: February 4 2019 $
+.Dd $Mdocdate: June 7 2019 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1682,10 +1682,13 @@ Print debugging statistics about various aspects of the hash table.
 .Nm "openssl gendsa"
 .Oo
 .Fl aes128 | aes192 | aes256 |
-.Fl des | des3
+.Fl camellia128 | camellia192 | camellia256 |
+.Fl des | des3 |
+.Fl idea
 .Oc
 .Op Fl out Ar file
-.Op Ar paramfile
+.Op Fl passout Ar arg
+.Ar paramfile
 .nr nS 0
 .Pp
 The
@@ -1703,15 +1706,19 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Xo
 .Fl aes128 | aes192 | aes256 |
-.Fl des | des3
+.Fl camellia128 | camellia192 | camellia256 |
+.Fl des | des3 |
+.Fl idea
 .Xc
-Encrypt the private key with the AES, DES,
-or the triple DES ciphers, respectively, before outputting it.
+Encrypt the private key with the AES, CAMELLIA, DES, triple DES
+or the IDEA ciphers, respectively, before outputting it.
 A pass phrase is prompted for.
 If none of these options are specified, no encryption is used.
 .It Fl out Ar file
 The output file to write to,
 or standard output if not specified.
+.It Fl passout Ar arg
+The output file password source.
 .It Ar paramfile
 Specify the DSA parameter file to use.
 The parameters in this file determine the size of the private key.
