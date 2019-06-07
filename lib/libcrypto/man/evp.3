@@ -1,4 +1,4 @@
-.\"	$OpenBSD: evp.3,v 1.11 2019/06/07 19:28:52 schwarze Exp $
+.\"	$OpenBSD: evp.3,v 1.12 2019/06/07 20:09:16 schwarze Exp $
 .\"	OpenSSL a9c85cea Nov 11 09:33:55 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -153,6 +153,10 @@ compatible implementation.
 However, new applications should typically not use this (preferring, for
 example, PBKDF2 from PCKS#5).
 .Pp
+The
+.Xr EVP_EncodeInit 3
+family of functions provides base64 encoding and decoding.
+.Pp
 All the symmetric algorithms (ciphers), digests and asymmetric
 algorithms (public key algorithms) can be replaced by
 .Vt ENGINE
@@ -185,6 +189,7 @@ operations are more efficient using the high level interfaces.
 .Xr EVP_des_cbc 3 ,
 .Xr EVP_DigestInit 3 ,
 .Xr EVP_DigestSignInit 3 ,
+.Xr EVP_EncodeInit 3 ,
 .Xr EVP_EncryptInit 3 ,
 .Xr EVP_OpenInit 3 ,
 .Xr EVP_PKEY_decrypt 3 ,
