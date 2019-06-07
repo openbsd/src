@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.20 2019/06/07 06:47:41 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.21 2019/06/07 06:53:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -1239,20 +1239,21 @@ struct mcx_cmd_destroy_cq_out {
 } __packed __aligned(4);
 
 struct mcx_cq_entry {
-	uint32_t		cq_reserved1;
+	uint32_t		__reserved__;
 	uint32_t		cq_lro;
 	uint32_t		cq_lro_ack_seq_num;
 	uint32_t		cq_rx_hash;
-	uint32_t		cq_rx_hash_type;
+	uint8_t			cq_rx_hash_type;
+	uint8_t			cq_ml_path;
+	uint16_t		__reserved__;
 	uint32_t		cq_checksum;
-	uint32_t		cq_reserved2;
+	uint32_t		__reserved__;
 	uint32_t		cq_flags;
 	uint32_t		cq_lro_srqn;
-	uint32_t		cq_reserved3[2];
+	uint32_t		__reserved__[2];
 	uint32_t		cq_byte_cnt;
-	uint32_t		cq_lro_ts_value;
-	uint32_t		cq_lro_ts_echo;
-	uint32_t		cq_flow_tag;
+	uint64_t		cq_timestamp;
+	uint32_t		cq_rx_drops;
 	uint16_t		cq_wqe_count;
 	uint8_t			cq_signature;
 	uint8_t			cq_opcode_owner;
