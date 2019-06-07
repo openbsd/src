@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.367 2019/05/12 15:52:52 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.368 2019/06/07 15:40:41 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -409,7 +409,7 @@ int
 acpi_inidev(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
-	int64_t st;
+	int64_t sta;
 
 	/*
 	 * Per the ACPI spec 6.5.1, only run _INI when device is there or
@@ -418,19 +418,18 @@ acpi_inidev(struct aml_node *node, void *arg)
 	 */
 
 	/* Evaluate _STA to decide _INI fate and walk fate */
-	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &st))
-		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
+	sta = acpi_getsta(sc, node->parent);
 
 	/* Evaluate _INI if we are present */
-	if (st & STA_PRESENT)
+	if (sta & STA_PRESENT)
 		aml_evalnode(sc, node, 0, NULL, NULL);
 
 	/* If we are functioning, we walk/search our children */
-	if (st & STA_DEV_OK)
+	if (sta & STA_DEV_OK)
 		return 0;
 
 	/* If we are not enabled, or not present, terminate search */
-	if (!(st & (STA_PRESENT|STA_ENABLED)))
+	if (!(sta & (STA_PRESENT|STA_ENABLED)))
 		return 1;
 
 	/* Default just continue search */
@@ -443,15 +442,13 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
 	struct device		*self = (struct device *)arg;
 	struct acpi_attach_args	aaa;
-	int64_t st = 0;
+	int64_t sta;
 
 	dnprintf(10, "found prt entry: %s\n", node->parent->name);
 
 	/* Evaluate _STA to decide _PRT fate and walk fate */
-	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &st))
-		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
-
-	if (st & STA_PRESENT) {
+	sta = acpi_getsta(sc, node->parent);
+	if (sta & STA_PRESENT) {
 		memset(&aaa, 0, sizeof(aaa));
 		aaa.aaa_iot = sc->sc_iot;
 		aaa.aaa_memt = sc->sc_memt;
@@ -462,11 +459,11 @@ acpi_foundprt(struct aml_node *node, void *arg)
 	}
 
 	/* If we are functioning, we walk/search our children */
-	if (st & STA_DEV_OK)
+	if (sta & STA_DEV_OK)
 		return 0;
 
 	/* If we are not enabled, or not present, terminate search */
-	if (!(st & (STA_PRESENT|STA_ENABLED)))
+	if (!(sta & (STA_PRESENT|STA_ENABLED)))
 		return 1;
 
 	/* Default just continue search */
@@ -552,6 +549,18 @@ acpi_matchhids(struct acpi_attach_args *aa, const char *hids[],
 	}
 
 	return (0);
+}
+
+int64_t
+acpi_getsta(struct acpi_softc *sc, struct aml_node *node)
+{
+	int64_t sta;
+
+	if (aml_evalinteger(sc, node, "_STA", 0, NULL, &sta))
+		sta = STA_PRESENT | STA_ENABLED | STA_SHOW_UI |
+		    STA_DEV_OK | STA_BATTERY;
+
+	return sta;
 }
 
 /* Map ACPI device node to PCI */
@@ -2290,9 +2299,7 @@ acpi_foundprw(struct aml_node *node, void *arg)
 	struct acpi_wakeq *wq;
 	int64_t sta;
 
-	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &sta))
-		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
-
+	sta = acpi_getsta(sc, node->parent);
 	if ((sta & STA_PRESENT) == 0)
 		return 0;
 
@@ -3098,9 +3105,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	if (acpi_parsehid(node, arg, cdev, dev, sizeof(dev)) != 0)
 		return (0);
 
-	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &sta))
-		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
-
+	sta = acpi_getsta(sc, node->parent);
 	if ((sta & STA_PRESENT) == 0)
 		return (0);
 
@@ -3188,9 +3193,7 @@ acpi_foundsbs(struct aml_node *node, void *arg)
 	if (acpi_parsehid(node, arg, cdev, dev, sizeof(dev)) != 0)
 		return (0);
 
-	if (aml_evalinteger(sc, node->parent, "_STA", 0, NULL, &sta))
-		sta = STA_PRESENT | STA_ENABLED | STA_DEV_OK | 0x1000;
-
+	sta = acpi_getsta(sc, node->parent);
 	if ((sta & STA_PRESENT) == 0)
 		return (0);
 
