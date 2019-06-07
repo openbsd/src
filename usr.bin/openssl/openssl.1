@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.101 2019/06/07 02:32:22 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.102 2019/06/07 05:53:46 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1681,10 +1681,8 @@ Print debugging statistics about various aspects of the hash table.
 .nr nS 1
 .Nm "openssl gendsa"
 .Oo
-.Fl aes128 | aes192 | aes256 |
-.Fl camellia128 | camellia192 | camellia256 |
-.Fl des | des3 |
-.Fl idea
+.Fl aes128 | aes192 | aes256 | camellia128 |
+.Fl camellia192 | camellia256 | des | des3 | idea
 .Oc
 .Op Fl out Ar file
 .Op Fl passout Ar arg
