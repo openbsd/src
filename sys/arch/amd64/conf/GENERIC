@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.472 2019/05/21 22:40:06 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.473 2019/06/07 16:06:59 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -224,6 +224,8 @@ uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
 ucom*	at uvscom?
 ubsa*	at uhub?		# Belkin serial adapter
 ucom*	at ubsa?
+ukspan* at uhub?		# Keyspan USA19HS serial adapter
+ucom*	at ukspan?
 uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi?
 uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
