@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.103 2019/05/11 14:43:27 patrick Exp $
+# $OpenBSD: GENERIC,v 1.104 2019/06/07 04:03:04 jmatthew Exp $
 #
 # GENERIC machine description file
 #
@@ -189,6 +189,7 @@ pci*		at ppb?
 bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
 em*		at pci?			# Intel Pro/1000 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
+mcx*		at pci?			# Mellanox ConnectX-4/5 Ethernet
 mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
