@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.181 2019/06/04 02:35:40 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.182 2019/06/07 16:27:47 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -209,7 +209,9 @@ void
 _dl_clean_boot(void)
 {
 	extern char boot_text_start[], boot_text_end[];
+#if 0	/* XXX breaks boehm-gc?!? */
 	extern char boot_data_start[], boot_data_end[];
+#endif
 
 	_dl_munmap(boot_text_start, boot_text_end - boot_text_start);
 #if 0	/* XXX breaks boehm-gc?!? */
