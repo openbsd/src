@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.10 2019/01/31 15:55:48 benno Exp $ */
+/*	$Id: extern.h,v 1.11 2019/06/07 08:07:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,7 @@ enum	acctop {
 	ACCT_STOP = 0,
 	ACCT_READY,
 	ACCT_SIGN,
+	ACCT_KID_SIGN,
 	ACCT_THUMBPRINT,
 	ACCT__MAX
 };
@@ -118,6 +119,8 @@ enum	comm {
 	COMM_CERT,
 	COMM_PAY,
 	COMM_NONCE,
+	COMM_KID,
+	COMM_URL,
 	COMM_TOK,
 	COMM_CHNG_OP,
 	COMM_CHNG_ACK,
@@ -149,7 +152,8 @@ enum	comm {
 enum	chngstatus {
 	CHNG_INVALID = -1,
 	CHNG_PENDING = 0,
-	CHNG_VALID = 1
+	CHNG_PROCESSING = 1,
+	CHNG_VALID = 2
 };
 
 struct	chng {
@@ -159,16 +163,32 @@ struct	chng {
 	enum chngstatus	 status; /* challenge accepted? */
 };
 
+enum	orderstatus {
+	ORDER_INVALID = -1,
+	ORDER_PENDING = 0,
+	ORDER_READY = 1,
+	ORDER_PROCESSING = 2,
+	ORDER_VALID = 3
+};
+
+struct	order {
+	char			*uri;		/* uri of the order request */
+	char			*finalize;	/* finalize uri */
+	char			*certificate;	/* uri for issued certificate */
+	enum orderstatus	 status;	/* status of order */
+	char			**auths;	/* authorization uris */
+	size_t			 authsz;
+};
+
 /*
  * This consists of the services offered by the CA.
  * They must all be filled in.
  */
 struct	capaths {
-	char		*newauthz; /* new authorisation */
-	char		*newcert;  /* sign certificate */
-	char		*newreg; /* new acme account */
+	char		*newaccount;	/* new acme account */
+	char		*newnonce;	/* new nonce */
+	char		*neworder;	/* order new certificate */
 	char		*revokecert; /* revoke certificate */
-	char		*agreement; /* terms of service */
 };
 
 struct	jsmnn;
@@ -189,7 +209,7 @@ int		 fileproc(int, const char *, const char *, const char *,
 			const char *);
 int		 keyproc(int, const char *,
 			const char **, size_t, int);
-int		 netproc(int, int, int, int, int, int, int, int,
+int		 netproc(int, int, int, int, int, int, int,
 			struct authority_c *, const char *const *,
 			size_t);
 
@@ -233,20 +253,23 @@ void		 json_free(struct jsmnn *);
 int		 json_parse_response(struct jsmnn *);
 void		 json_free_challenge(struct chng *);
 int		 json_parse_challenge(struct jsmnn *, struct chng *);
+void		 json_free_order(struct order *);
+int		 json_parse_order(struct jsmnn *, struct order *);
+int		 json_parse_upd_order(struct jsmnn *, struct order *);
 void		 json_free_capaths(struct capaths *);
 int		 json_parse_capaths(struct jsmnn *, struct capaths *);
 
-char		*json_fmt_challenge(const char *, const char *);
-char		*json_fmt_newauthz(const char *);
 char		*json_fmt_newcert(const char *);
-char		*json_fmt_newreg(const char *);
+char		*json_fmt_chkacc(void);
+char		*json_fmt_newacc(void);
+char		*json_fmt_neworder(const char *const *, size_t);
 char		*json_fmt_protected_rsa(const char *,
-			const char *, const char *);
-char		*json_fmt_revokecert(const char *);
-char		*json_fmt_header_rsa(const char *, const char *);
-char		*json_fmt_thumb_rsa(const char *, const char *);
-char		*json_fmt_signed(const char *,
 			const char *, const char *, const char *);
+char		*json_fmt_protected_kid(const char *, const char *,
+			const char *);
+char		*json_fmt_revokecert(const char *);
+char		*json_fmt_thumb_rsa(const char *, const char *);
+char		*json_fmt_signed(const char *, const char *, const char *);
 
 /*
  * Should we print debugging messages?

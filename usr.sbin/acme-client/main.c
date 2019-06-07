@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.45 2019/03/09 18:07:40 benno Exp $ */
+/*	$Id: main.c,v 1.46 2019/06/07 08:07:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 		c = netproc(key_fds[1], acct_fds[1],
 		    chng_fds[1], cert_fds[1],
 		    dns_fds[1], rvk_fds[1],
-		    (popts & ACME_OPT_NEWACCT), revocate, authority,
+		    revocate, authority,
 		    (const char *const *)alts, altsz);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}

@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.22 2019/02/01 10:16:04 benno Exp $ */
+/*	$Id: netproc.c,v 1.23 2019/06/07 08:07:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,10 +43,11 @@ struct	buf {
  * Used for CURL communications.
  */
 struct	conn {
-	const char	  *na; /* nonce authority */
+	const char	  *newnonce; /* nonce authority */
+	char		  *kid; /* kid when account exists */
 	int		   fd; /* acctproc handle */
 	int		   dfd; /* dnsproc handle */
-	struct buf	   buf; /* transfer buffer */
+	struct buf	   buf; /* http body buffer */
 };
 
 /*
@@ -198,7 +199,7 @@ again:
 	}
 	srcsz = ssz;
 
-	g = http_get(src, srcsz, host, port, path, NULL, 0);
+	g = http_get(src, srcsz, host, port, path, 0, NULL, 0);
 	free(host);
 	free(path);
 	if (g == NULL)
@@ -223,7 +224,6 @@ again:
 			return -1;
 		}
 
-		dodbg("Location: %s", st->val);
 		host = url2host(st->val, &port, &path);
 		http_get_free(g);
 		if (host == NULL)
@@ -254,7 +254,7 @@ again:
  * Return <0 on failure on the HTTP error code otherwise.
  */
 static long
-sreq(struct conn *c, const char *addr, const char *req)
+sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
 {
 	struct httpget	*g;
 	struct source	 src[MAX_SERVERS_DNS];
@@ -264,7 +264,7 @@ sreq(struct conn *c, const char *addr, const char *req)
 	ssize_t		 ssz;
 	long		 code;
 
-	if ((host = url2host(c->na, &port, &path)) == NULL)
+	if ((host = url2host(c->newnonce, &port, &path)) == NULL)
 		return -1;
 
 	if ((ssz = urlresolve(c->dfd, host, src)) < 0) {
@@ -273,7 +273,7 @@ sreq(struct conn *c, const char *addr, const char *req)
 		return -1;
 	}
 
-	g = http_get(src, (size_t)ssz, host, port, path, NULL, 0);
+	g = http_get(src, (size_t)ssz, host, port, path, 1, NULL, 0);
 	free(host);
 	free(path);
 	if (g == NULL)
@@ -281,7 +281,7 @@ sreq(struct conn *c, const char *addr, const char *req)
 
 	h = http_head_get("Replay-Nonce", g->head, g->headsz);
 	if (h == NULL) {
-		warnx("%s: no replay nonce", c->na);
+		warnx("%s: no replay nonce", c->newnonce);
 		http_get_free(g);
 		return -1;
 	} else if ((nonce = strdup(h->val)) == NULL) {
@@ -292,10 +292,10 @@ sreq(struct conn *c, const char *addr, const char *req)
 	http_get_free(g);
 
 	/*
-	 * Send the nonce and request payload to the acctproc.
+	 * Send the url, nonce and request payload to the acctproc.
 	 * This will create the proper JSON object we need.
 	 */
-	if (writeop(c->fd, COMM_ACCT, ACCT_SIGN) <= 0) {
+	if (writeop(c->fd, COMM_ACCT, kid ? ACCT_KID_SIGN : ACCT_SIGN) <= 0) {
 		free(nonce);
 		return -1;
 	} else if (writestr(c->fd, COMM_PAY, req) <= 0) {
@@ -304,8 +304,14 @@ sreq(struct conn *c, const char *addr, const char *req)
 	} else if (writestr(c->fd, COMM_NONCE, nonce) <= 0) {
 		free(nonce);
 		return -1;
+	} else if (writestr(c->fd, COMM_URL, addr) <= 0) {
+		free(nonce);
+		return -1;
 	}
 	free(nonce);
+
+	if (kid && writestr(c->fd, COMM_KID, c->kid) <= 0)
+		return -1;
 
 	/* Now read back the signed payload. */
 	if ((reqsn = readstr(c->fd, COMM_REQ)) == NULL)
@@ -322,7 +328,8 @@ sreq(struct conn *c, const char *addr, const char *req)
 		return -1;
 	}
 
-	g = http_get(src, (size_t)ssz, host, port, path, reqsn, strlen(reqsn));
+	g = http_get(src, (size_t)ssz, host, port, path, 0, reqsn,
+	    strlen(reqsn));
 
 	free(host);
 	free(path);
@@ -341,6 +348,16 @@ sreq(struct conn *c, const char *addr, const char *req)
 		code = -1;
 	} else
 		memcpy(c->buf.buf, g->bodypart, c->buf.sz);
+
+	if (loc != NULL) {
+		free(*loc);
+		*loc = NULL;
+		h = http_head_get("Location", g->head, g->headsz);
+		/* error checking done by caller */
+		if (h != NULL)
+			*loc = strdup(h->val);
+	}
+
 	http_get_free(g);
 	return code;
 }
@@ -351,28 +368,123 @@ sreq(struct conn *c, const char *addr, const char *req)
  * Returns non-zero on success.
  */
 static int
-donewreg(struct conn *c, const struct capaths *p)
+donewacc(struct conn *c, const struct capaths *p)
 {
 	int		 rc = 0;
 	char		*req;
 	long		 lc;
 
-	dodbg("%s: new-reg", p->newreg);
-
-	if ((req = json_fmt_newreg(p->agreement)) == NULL)
-		warnx("json_fmt_newreg");
-	else if ((lc = sreq(c, p->newreg, req)) < 0)
-		warnx("%s: bad comm", p->newreg);
+	if ((req = json_fmt_newacc()) == NULL)
+		warnx("json_fmt_newacc");
+	else if ((lc = sreq(c, p->newaccount, 0, req, &c->kid)) < 0)
+		warnx("%s: bad comm", p->newaccount);
 	else if (lc != 200 && lc != 201)
-		warnx("%s: bad HTTP: %ld", p->newreg, lc);
+		warnx("%s: bad HTTP: %ld", p->newaccount, lc);
 	else if (c->buf.buf == NULL || c->buf.sz == 0)
-		warnx("%s: empty response", p->newreg);
+		warnx("%s: empty response", p->newaccount);
 	else
 		rc = 1;
 
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
 	free(req);
+	return rc;
+}
+
+/*
+ * Check if our account already exists, if not create it.
+ * Populates conn->kid.
+ * Returns non-zero on success.
+ */
+static int
+dochkacc(struct conn *c, const struct capaths *p)
+{
+	int		 rc = 0;
+	char		*req;
+	long		 lc;
+
+	if ((req = json_fmt_chkacc()) == NULL)
+		warnx("json_fmt_chkacc");
+	else if ((lc = sreq(c, p->newaccount, 0, req, &c->kid)) < 0)
+		warnx("%s: bad comm", p->newaccount);
+	else if (lc != 200 && lc != 400)
+		warnx("%s: bad HTTP: %ld", p->newaccount, lc);
+	else if (c->buf.buf == NULL || c->buf.sz == 0)
+		warnx("%s: empty response", p->newaccount);
+	else if (lc == 400)
+		rc = donewacc(c, p);
+	else
+		rc = 1;
+
+	if (c->kid == NULL)
+		rc = 0;
+
+	if (rc == 0 || verbose > 1)
+		buf_dump(&c->buf);
+	free(req);
+	return rc;
+}
+
+/*
+ * Submit a new order for a certificate.
+ */
+static int
+doneworder(struct conn *c, const char *const *alts, size_t altsz,
+    struct order *order, const struct capaths *p)
+{
+	struct jsmnn	*j = NULL;
+	int		 rc = 0;
+	char		*req;
+	long		 lc;
+
+	if ((req = json_fmt_neworder(alts, altsz)) == NULL)
+		warnx("json_fmt_neworder");
+	else if ((lc = sreq(c, p->neworder, 1, req, &order->uri)) < 0)
+		warnx("%s: bad comm", p->neworder);
+	else if (lc != 201)
+		warnx("%s: bad HTTP: %ld", p->neworder, lc);
+	else if ((j = json_parse(c->buf.buf, c->buf.sz)) == NULL)
+		warnx("%s: bad JSON object", p->neworder);
+	else if (!json_parse_order(j, order))
+		warnx("%s: bad order", p->neworder);
+	else if (order->status == ORDER_INVALID)
+		warnx("%s: order invalid", p->neworder);
+	else
+		rc = 1;
+
+	if (rc == 0 || verbose > 1)
+		buf_dump(&c->buf);
+
+	free(req);
+	json_free(j);
+	return rc;
+}
+
+/*
+ * Update order status
+ */
+static int
+doupdorder(struct conn *c, struct order *order)
+{
+	struct jsmnn	*j = NULL;
+	int		 rc = 0;
+	long		 lc;
+
+	if ((lc = sreq(c, order->uri, 1, "", NULL)) < 0)
+		warnx("%s: bad comm", order->uri);
+	else if (lc != 200)
+		warnx("%s: bad HTTP: %ld", order->uri, lc);
+	else if ((j = json_parse(c->buf.buf, c->buf.sz)) == NULL)
+		warnx("%s: bad JSON object", order->uri);
+	else if (!json_parse_upd_order(j, order))
+		warnx("%s: bad order", order->uri);
+	else
+		rc = 1;
+
+	if (rc == 0 || verbose > 1)
+		buf_dump(&c->buf);
+
+	json_free(j);
 	return rc;
 }
 
@@ -382,33 +494,28 @@ donewreg(struct conn *c, const struct capaths *p)
  * On non-zero exit, fills in "chng" with the challenge.
  */
 static int
-dochngreq(struct conn *c, const char *alt, struct chng *chng,
-    const struct capaths *p)
+dochngreq(struct conn *c, const char *auth, struct chng *chng)
 {
 	int		 rc = 0;
-	char		*req;
 	long		 lc;
 	struct jsmnn	*j = NULL;
 
-	dodbg("%s: req-auth: %s", p->newauthz, alt);
+	dodbg("%s: %s", __func__, auth);
 
-	if ((req = json_fmt_newauthz(alt)) == NULL)
-		warnx("json_fmt_newauthz");
-	else if ((lc = sreq(c, p->newauthz, req)) < 0)
-		warnx("%s: bad comm", p->newauthz);
-	else if (lc != 200 && lc != 201)
-		warnx("%s: bad HTTP: %ld", p->newauthz, lc);
+	if ((lc = sreq(c, auth, 1, "", NULL)) < 0)
+		warnx("%s: bad comm", auth);
+	else if (lc != 200)
+		warnx("%s: bad HTTP: %ld", auth, lc);
 	else if ((j = json_parse(c->buf.buf, c->buf.sz)) == NULL)
-		warnx("%s: bad JSON object", p->newauthz);
+		warnx("%s: bad JSON object", auth);
 	else if (!json_parse_challenge(j, chng))
-		warnx("%s: bad challenge", p->newauthz);
+		warnx("%s: bad challenge", auth);
 	else
 		rc = 1;
 
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
 	json_free(j);
-	free(req);
 	return rc;
 }
 
@@ -416,17 +523,14 @@ dochngreq(struct conn *c, const char *alt, struct chng *chng,
  * Tell the CA that a challenge response is in place.
  */
 static int
-dochngresp(struct conn *c, const struct chng *chng, const char *th)
+dochngresp(struct conn *c, const struct chng *chng)
 {
 	int	 rc = 0;
 	long	 lc;
-	char	*req;
 
 	dodbg("%s: challenge", chng->uri);
 
-	if ((req = json_fmt_challenge(chng->token, th)) == NULL)
-		warnx("json_fmt_challenge");
-	else if ((lc = sreq(c, chng->uri, req)) < 0)
+	if ((lc = sreq(c, chng->uri, 1, "{}", NULL)) < 0)
 		warnx("%s: bad comm", chng->uri);
 	else if (lc != 200 && lc != 201 && lc != 202)
 		warnx("%s: bad HTTP: %ld", chng->uri, lc);
@@ -435,45 +539,62 @@ dochngresp(struct conn *c, const struct chng *chng, const char *th)
 
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
+	return rc;
+}
+
+/*
+ * Submit our csr to the CA.
+ */
+static int
+docert(struct conn *c, const char *uri, const char *csr)
+{
+	char	*req;
+	int	 rc = 0;
+	long	 lc;
+
+	dodbg("%s: certificate", uri);
+
+	if ((req = json_fmt_newcert(csr)) == NULL)
+		warnx("json_fmt_newcert");
+	else if ((lc = sreq(c, uri, 1, req, NULL)) < 0)
+		warnx("%s: bad comm", uri);
+	else if (lc != 200)
+		warnx("%s: bad HTTP: %ld", uri, lc);
+	else if (c->buf.sz == 0 || c->buf.buf == NULL)
+		warnx("%s: empty response", uri);
+	else
+		rc = 1;
+
+	if (rc == 0 || verbose > 1)
+		buf_dump(&c->buf);
 	free(req);
 	return rc;
 }
 
 /*
- * Check with the CA whether a challenge has been processed.
- * Note: we'll only do this a limited number of times, and pause for a
- * time between checks, but this happens in the caller.
+ * Get certificate from CA
  */
 static int
-dochngcheck(struct conn *c, struct chng *chng)
+dogetcert(struct conn *c, const char *uri)
 {
-	enum chngstatus	 cc;
-	long		 lc;
-	struct jsmnn	*j;
+	int	 rc = 0;
+	long	 lc;
 
-	dodbg("%s: status", chng->uri);
+	dodbg("%s: certificate", uri);
 
-	if ((lc = nreq(c, chng->uri)) < 0) {
-		warnx("%s: bad comm", chng->uri);
-		return 0;
-	} else if (lc != 200 && lc != 201 && lc != 202) {
-		warnx("%s: bad HTTP: %ld", chng->uri, lc);
-		buf_dump(&c->buf);
-		return 0;
-	} else if ((j = json_parse(c->buf.buf, c->buf.sz)) == NULL) {
-		warnx("%s: bad JSON object", chng->uri);
-		buf_dump(&c->buf);
-		return 0;
-	} else if ((cc = json_parse_response(j)) == -1) {
-		warnx("%s: bad response", chng->uri);
-		buf_dump(&c->buf);
-		json_free(j);
-		return 0;
-	} else if (cc > 0)
-		chng->status = CHNG_VALID;
+	if ((lc = sreq(c, uri, 1, "", NULL)) < 0)
+		warnx("%s: bad comm", uri);
+	else if (lc != 200)
+		warnx("%s: bad HTTP: %ld", uri, lc);
+	else if (c->buf.sz == 0 || c->buf.buf == NULL)
+		warnx("%s: empty response", uri);
+	else
+		rc = 1;
 
-	json_free(j);
-	return 1;
+	if (rc == 0 || verbose > 1)
+		buf_dump(&c->buf);
+
+	return rc;
 }
 
 static int
@@ -487,7 +608,7 @@ dorevoke(struct conn *c, const char *addr, const char *cert)
 
 	if ((req = json_fmt_revokecert(cert)) == NULL)
 		warnx("json_fmt_revokecert");
-	else if ((lc = sreq(c, addr, req)) < 0)
+	else if ((lc = sreq(c, addr, 1, req, NULL)) < 0)
 		warnx("%s: bad comm", addr);
 	else if (lc != 200 && lc != 201 && lc != 409)
 		warnx("%s: bad HTTP: %ld", addr, lc);
@@ -496,36 +617,6 @@ dorevoke(struct conn *c, const char *addr, const char *cert)
 
 	if (lc == 409)
 		warnx("%s: already revoked", addr);
-
-	if (rc == 0 || verbose > 1)
-		buf_dump(&c->buf);
-	free(req);
-	return rc;
-}
-
-/*
- * Submit our certificate to the CA.
- * This, upon success, will return the signed CA.
- */
-static int
-docert(struct conn *c, const char *addr, const char *cert)
-{
-	char	*req;
-	int	 rc = 0;
-	long	 lc;
-
-	dodbg("%s: certificate", addr);
-
-	if ((req = json_fmt_newcert(cert)) == NULL)
-		warnx("json_fmt_newcert");
-	else if ((lc = sreq(c, addr, req)) < 0)
-		warnx("%s: bad comm", addr);
-	else if (lc != 200 && lc != 201)
-		warnx("%s: bad HTTP: %ld", addr, lc);
-	else if (c->buf.sz == 0 || c->buf.buf == NULL)
-		warnx("%s: empty response", addr);
-	else
-		rc = 1;
 
 	if (rc == 0 || verbose > 1)
 		buf_dump(&c->buf);
@@ -563,42 +654,20 @@ dodirs(struct conn *c, const char *addr, struct capaths *paths)
 }
 
 /*
- * Request the full chain certificate.
- */
-static int
-dofullchain(struct conn *c, const char *addr)
-{
-	int	 rc = 0;
-	long	 lc;
-
-	dodbg("%s: full chain", addr);
-
-	if ((lc = nreq(c, addr)) < 0)
-		warnx("%s: bad comm", addr);
-	else if (lc != 200 && lc != 201)
-		warnx("%s: bad HTTP: %ld", addr, lc);
-	else
-		rc = 1;
-
-	if (rc == 0 || verbose > 1)
-		buf_dump(&c->buf);
-	return rc;
-}
-
-/*
  * Communicate with the ACME server.
  * We need the certificate we want to upload and our account key information.
  */
 int
 netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
-    int newacct, int revocate, struct authority_c *authority,
+    int revocate, struct authority_c *authority,
     const char *const *alts, size_t altsz)
 {
 	int		 rc = 0;
-	size_t		 i, done = 0;
-	char		*cert = NULL, *thumb = NULL, *url = NULL;
+	size_t		 i;
+	char		*cert = NULL, *thumb = NULL, *url = NULL, *token = NULL;
 	struct conn	 c;
 	struct capaths	 paths;
+	struct order	 order;
 	struct chng	*chngs = NULL;
 	long		 lval;
 
@@ -661,21 +730,19 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 		goto out;
 	}
 
-	/* Allocate main state. */
-	chngs = calloc(altsz, sizeof(struct chng));
-	if (chngs == NULL) {
-		warn("calloc");
-		goto out;
-	}
-
 	c.dfd = dfd;
 	c.fd = afd;
-	c.na = authority->api;
 
 	/*
 	 * Look up the API urls of the ACME server.
 	 */
-	if (!dodirs(&c, c.na, &paths))
+	if (!dodirs(&c, authority->api, &paths))
+		goto out;
+
+	c.newnonce = paths.newnonce;
+
+	/* Check if our account already exists or create it. */
+	if (!dochkacc(&c, &paths))
 		goto out;
 
 	/*
@@ -683,6 +750,8 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	 * the certificate (if it's found at all).
 	 * Following that, submit the request to the CA then notify the
 	 * certproc, which will in turn notify the fileproc.
+	 * XXX currently we can only sign with the account key, the RFC
+	 * also mentions signing with the privat key of the cert itself.
 	 */
 	if (revocate) {
 		if ((cert = readstr(rfd, COMM_CSR)) == NULL)
@@ -694,109 +763,115 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 		goto out;
 	}
 
-	/* If new, register with the CA server. */
-	if (newacct && ! donewreg(&c, &paths))
+	memset(&order, 0, sizeof(order));
+
+	if (!doneworder(&c, alts, altsz, &order, &paths))
 		goto out;
 
-	/* Pre-authorise all domains with CA server. */
-	for (i = 0; i < altsz; i++)
-		if (!dochngreq(&c, alts[i], &chngs[i], &paths))
-			goto out;
+	chngs = calloc(order.authsz, sizeof(struct chng));
+	if (chngs == NULL) {
+		warn("calloc");
+		goto out;
+	}
 
 	/*
-	 * We now have our challenges.
-	 * We need to ask the acctproc for the thumbprint.
-	 * We'll combine this to the challenge to create our response,
-	 * which will be orchestrated by the chngproc.
+	 * Get thumbprint from acctproc. We will need it to construct
+	 * a response to the challenge
 	 */
 	if (writeop(afd, COMM_ACCT, ACCT_THUMBPRINT) <= 0)
 		goto out;
 	else if ((thumb = readstr(afd, COMM_THUMB)) == NULL)
 		goto out;
 
-	/* We'll now ask chngproc to build the challenge. */
-	for (i = 0; i < altsz; i++) {
-		if (writeop(Cfd, COMM_CHNG_OP, CHNG_SYN) <= 0)
+	while(order.status != ORDER_VALID && order.status != ORDER_INVALID) {
+		switch (order.status) {
+		case ORDER_INVALID:
+			warnx("order invalid");
 			goto out;
-		else if (writestr(Cfd, COMM_THUMB, thumb) <= 0)
-			goto out;
-		else if (writestr(Cfd, COMM_TOK, chngs[i].token) <= 0)
-			goto out;
-
-		/* Read that the challenge has been made. */
-		if (readop(Cfd, COMM_CHNG_ACK) != CHNG_ACK)
-			goto out;
-
-		/* Write to the CA that it's ready. */
-		if (!dochngresp(&c, &chngs[i], thumb))
-			goto out;
-	}
-
-	/*
-	 * We now wait on the ACME server for each domain.
-	 * Connect to the server (assume it's the same server) once
-	 * every five seconds.
-	 */
-	for (;;) {
-		for (i = 0; i < altsz; i++) {
-			doddbg("%s: done %lu, altsz %lu, i %lu, status %d",
-			    __func__, done, altsz, i, chngs[i].status);
-
-			if (chngs[i].status == CHNG_VALID)
-				continue;
-
-			if (chngs[i].retry++ >= RETRY_MAX) {
-				warnx("%s: too many tries", chngs[i].uri);
+		case ORDER_VALID:
+			rc = 1;
+			continue;
+		case ORDER_PENDING:
+			if (order.authsz < 1) {
+				warnx("order is in state pending but no "
+				    "authorizations know");
 				goto out;
 			}
+			for (i = 0; i < order.authsz; i++) {
+				if (!dochngreq(&c, order.auths[i], &chngs[i]))
+					goto out;
 
-			sleep(RETRY_DELAY);
-			if (dochngcheck(&c, &chngs[i])) {
+				dodbg("challenge, token: %s, uri: %s, status: "
+				    "%d", chngs[i].token, chngs[i].uri,
+				    chngs[i].status);
+
 				if (chngs[i].status == CHNG_VALID)
-					done++;
-				continue;
-			} else
-				goto out;
-		}
+					continue;
 
-		if (done == altsz)
+				if (chngs[i].retry++ >= RETRY_MAX) {
+					warnx("%s: too many tries",
+					    chngs[i].uri);
+					goto out;
+				}
+
+				if (writeop(Cfd, COMM_CHNG_OP, CHNG_SYN) <= 0)
+					goto out;
+				else if (writestr(Cfd, COMM_THUMB, thumb) <= 0)
+					goto out;
+				else if (writestr(Cfd, COMM_TOK,
+				    chngs[i].token) <= 0)
+					goto out;
+
+				/* Read that the challenge has been made. */
+				if (readop(Cfd, COMM_CHNG_ACK) != CHNG_ACK)
+					goto out;
+
+				/* Write to the CA that it's ready. */
+				if (!dochngresp(&c, &chngs[i]))
+					goto out;
+			}
 			break;
+		case ORDER_READY:
+			/*
+			 * Write our acknowledgement that the challenges are
+			 * over.
+			 * The challenge process will remove all of the files.
+			 */
+			if (writeop(Cfd, COMM_CHNG_OP, CHNG_STOP) <= 0)
+				goto out;
+
+			/* Wait to receive the certificate itself. */
+			if ((cert = readstr(kfd, COMM_CERT)) == NULL)
+				goto out;
+			if (!docert(&c, order.finalize, cert))
+				goto out;
+			break;
+		default:
+			warnx("unhandled status: %d", order.status);
+			goto out;
+		}
+		if (!doupdorder(&c, &order))
+			goto out;
+
+		dodbg("order.status %d", order.status);
+		if (order.status == ORDER_PENDING)
+			sleep(RETRY_DELAY);
 	}
 
-	/*
-	 * Write our acknowledgement that the challenges are over.
-	 * The challenge process will remove all of the files.
-	 */
-	if (writeop(Cfd, COMM_CHNG_OP, CHNG_STOP) <= 0)
+	if (order.status != ORDER_VALID)
 		goto out;
 
-	/* Wait to receive the certificate itself. */
-	if ((cert = readstr(kfd, COMM_CERT)) == NULL)
+	if (order.certificate == NULL) {
+		warnx("no certificate url received");
 		goto out;
+	}
 
-	/*
-	 * Otherwise, submit the CA for signing, download the signed
-	 * copy, and ship that into the certificate process for copying.
-	 */
-	if (!docert(&c, paths.newcert, cert))
+	if (!dogetcert(&c, order.certificate))
 		goto out;
 	else if (writeop(cfd, COMM_CSR_OP, CERT_UPDATE) <= 0)
 		goto out;
 	else if (writebuf(cfd, COMM_CSR, c.buf.buf, c.buf.sz) <= 0)
 		goto out;
-
-	/*
-	 * Read back the issuer from the certproc.
-	 * Then contact the issuer to get the certificate chain.
-	 * Write this chain directly back to the certproc.
-	 */
-	if ((url = readstr(cfd, COMM_ISSUER)) == NULL)
-		goto out;
-	else if (!dofullchain(&c, url))
-		goto out;
-	else if (writebuf(cfd, COMM_CHAIN, c.buf.buf, c.buf.sz) <= 0)
-		goto out;
-
 	rc = 1;
 out:
 	close(cfd);
@@ -808,6 +883,8 @@ out:
 	free(cert);
 	free(url);
 	free(thumb);
+	free(token);
+	free(c.kid);
 	free(c.buf.buf);
 	if (chngs != NULL)
 		for (i = 0; i < altsz; i++)

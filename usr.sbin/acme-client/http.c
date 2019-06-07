@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.25 2019/03/04 10:59:04 florian Exp $ */
+/*	$Id: http.c,v 1.26 2019/06/07 08:07:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -333,26 +333,35 @@ err:
 }
 
 struct httpxfer *
-http_open(const struct http *http, const void *p, size_t psz)
+http_open(const struct http *http, int headreq, const void *p, size_t psz)
 {
 	char		*req;
 	int		 c;
 	struct httpxfer	*trans;
 
 	if (p == NULL) {
-		c = asprintf(&req,
-		    "GET %s HTTP/1.0\r\n"
-		    "Host: %s\r\n"
-		    "\r\n",
-		    http->path, http->host);
+		if (headreq)
+			c = asprintf(&req,
+			    "HEAD %s HTTP/1.0\r\n"
+			    "Host: %s\r\n"
+			    "\r\n",
+			    http->path, http->host);
+		else
+			c = asprintf(&req,
+			    "GET %s HTTP/1.0\r\n"
+			    "Host: %s\r\n"
+			    "\r\n",
+			    http->path, http->host);
 	} else {
 		c = asprintf(&req,
 		    "POST %s HTTP/1.0\r\n"
 		    "Host: %s\r\n"
 		    "Content-Length: %zu\r\n"
+		    "Content-Type: application/jose+json\r\n"
 		    "\r\n",
 		    http->path, http->host, psz);
 	}
+
 	if (c == -1) {
 		warn("asprintf");
 		return NULL;
@@ -676,7 +685,7 @@ http_get_free(struct httpget *g)
 
 struct httpget *
 http_get(const struct source *addrs, size_t addrsz, const char *domain,
-    short port, const char *path, const void *post, size_t postsz)
+    short port, const char *path, int headreq, const void *post, size_t postsz)
 {
 	struct http	*h;
 	struct httpxfer	*x;
@@ -690,7 +699,7 @@ http_get(const struct source *addrs, size_t addrsz, const char *domain,
 	if (h == NULL)
 		return NULL;
 
-	if ((x = http_open(h, post, postsz)) == NULL) {
+	if ((x = http_open(h, headreq, post, postsz)) == NULL) {
 		http_free(h);
 		return NULL;
 	} else if ((headr = http_head_read(h, x, &headrsz)) == NULL) {

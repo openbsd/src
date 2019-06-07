@@ -1,4 +1,4 @@
-/*	$Id: http.h,v 1.7 2018/11/06 20:40:49 jsing Exp $ */
+/*	$Id: http.h,v 1.8 2019/06/07 08:07:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,7 +65,7 @@ int		 http_init(void);
 
 /* Convenience functions. */
 struct httpget	*http_get(const struct source *, size_t,
-			const char *, short, const char *,
+			const char *, short, const char *, int,
 			const void *, size_t);
 void		 http_get_free(struct httpget *);
 
@@ -73,7 +73,7 @@ void		 http_get_free(struct httpget *);
 struct http	*http_alloc(const struct source *, size_t,
 			const char *, short, const char *);
 void		 http_free(struct http *);
-struct httpxfer	*http_open(const struct http *, const void *, size_t);
+struct httpxfer	*http_open(const struct http *, int, const void *, size_t);
 void		 http_close(struct httpxfer *);
 void		 http_disconnect(struct http *);
 

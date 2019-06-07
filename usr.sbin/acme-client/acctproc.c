@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.12 2018/07/28 15:25:23 tb Exp $ */
+/*	$Id: acctproc.c,v 1.13 2019/06/07 08:07:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -154,18 +154,16 @@ out:
 }
 
 static int
-op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
+op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 {
 	char	*exp = NULL, *mod = NULL;
 	int	rc = 0;
 	RSA	*r;
 
-	*head = NULL;
 	*prot = NULL;
 
 	/*
 	 * First, extract relevant portions of our private key.
-	 * Then construct the public header.
 	 * Finally, format the header combined with the nonce.
 	 */
 
@@ -175,9 +173,7 @@ op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
 		warnx("bn2string");
 	else if ((exp = bn2string(r->e)) == NULL)
 		warnx("bn2string");
-	else if ((*head = json_fmt_header_rsa(exp, mod)) == NULL)
-		warnx("json_fmt_header_rsa");
-	else if ((*prot = json_fmt_protected_rsa(exp, mod, nonce)) == NULL)
+	else if ((*prot = json_fmt_protected_rsa(exp, mod, nonce, url)) == NULL)
 		warnx("json_fmt_protected_rsa");
 	else
 		rc = 1;
@@ -192,11 +188,12 @@ op_sign_rsa(char **head, char **prot, EVP_PKEY *pkey, const char *nonce)
  * This requires the sender ("fd") to provide the payload and a nonce.
  */
 static int
-op_sign(int fd, EVP_PKEY *pkey)
+op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 {
 	char		*nonce = NULL, *pay = NULL, *pay64 = NULL;
-	char		*prot = NULL, *prot64 = NULL, *head = NULL;
+	char		*prot = NULL, *prot64 = NULL;
 	char		*sign = NULL, *dig64 = NULL, *fin = NULL;
+	char		*url = NULL, *kid = NULL;
 	unsigned char	*dig = NULL;
 	EVP_MD_CTX	*ctx = NULL;
 	int		 cc, rc = 0;
@@ -208,6 +205,12 @@ op_sign(int fd, EVP_PKEY *pkey)
 		goto out;
 	else if ((nonce = readstr(fd, COMM_NONCE)) == NULL)
 		goto out;
+	else if ((url = readstr(fd, COMM_URL)) == NULL)
+		goto out;
+
+	if (op == ACCT_KID_SIGN)
+		if ((kid = readstr(fd, COMM_KID)) == NULL)
+			goto out;
 
 	/* Base64-encode the payload. */
 
@@ -216,14 +219,21 @@ op_sign(int fd, EVP_PKEY *pkey)
 		goto out;
 	}
 
-	switch (EVP_PKEY_type(pkey->type)) {
-	case EVP_PKEY_RSA:
-		if (!op_sign_rsa(&head, &prot, pkey, nonce))
+	if (op == ACCT_KID_SIGN) {
+		if ((prot = json_fmt_protected_kid(kid, nonce, url)) == NULL) {
+			warnx("json_fmt_protected_kid");
 			goto out;
-		break;
-	default:
-		warnx("EVP_PKEY_type");
-		goto out;
+		}
+	} else {
+		switch (EVP_PKEY_type(pkey->type)) {
+		case EVP_PKEY_RSA:
+			if (!op_sign_rsa(&prot, pkey, nonce, url))
+				goto out;
+			break;
+		default:
+			warnx("EVP_PKEY_type");
+			goto out;
+		}
 	}
 
 	/* The header combined with the nonce, base64. */
@@ -275,7 +285,7 @@ op_sign(int fd, EVP_PKEY *pkey)
 	 * when we next enter the read loop).
 	 */
 
-	if ((fin = json_fmt_signed(head, prot64, pay64, dig64)) == NULL) {
+	if ((fin = json_fmt_signed(prot64, pay64, dig64)) == NULL) {
 		warnx("json_fmt_signed");
 		goto out;
 	} else if (writestr(fd, COMM_REQ, fin) < 0)
@@ -289,8 +299,9 @@ out:
 	free(pay);
 	free(sign);
 	free(pay64);
+	free(url);
 	free(nonce);
-	free(head);
+	free(kid);
 	free(prot);
 	free(prot64);
 	free(dig);
@@ -363,7 +374,8 @@ acctproc(int netsock, const char *acctkey, int newacct)
 		op = ACCT__MAX;
 		if ((lval = readop(netsock, COMM_ACCT)) == 0)
 			op = ACCT_STOP;
-		else if (lval == ACCT_SIGN || lval == ACCT_THUMBPRINT)
+		else if (lval == ACCT_SIGN || lval == ACCT_KID_SIGN ||
+		    lval == ACCT_THUMBPRINT)
 			op = lval;
 
 		if (ACCT__MAX == op) {
@@ -374,7 +386,8 @@ acctproc(int netsock, const char *acctkey, int newacct)
 
 		switch (op) {
 		case ACCT_SIGN:
-			if (op_sign(netsock, pkey))
+		case ACCT_KID_SIGN:
+			if (op_sign(netsock, pkey, op))
 				break;
 			warnx("op_sign");
 			goto out;
