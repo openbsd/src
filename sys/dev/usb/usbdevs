@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.699 2019/05/08 23:51:14 kettenis Exp $
+$OpenBSD: usbdevs,v 1.700 2019/06/07 16:05:55 jcs Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2454,6 +2454,7 @@ product KEYSPAN USA18XA_NF	0x0116	USA-18XA serial
 product KEYSPAN USA18XA		0x0117	USA-18XA serial
 product KEYSPAN USA19QW_NF	0x0118	USA-19WQ serial
 product KEYSPAN USA19QW		0x0119	USA-19WQ serial
+product KEYSPAN USA19HS		0x0121	USA-19HS serial
 product KEYSPAN UIA10		0x0201	UIA-10 remote control
 product KEYSPAN UIA11		0x0202	UIA-11 remote control
 
