@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.112 2019/05/31 09:46:31 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.113 2019/06/07 09:45:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -238,59 +238,84 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 }
 
 /* only for IPv4 */
-static in_addr_t
-up_get_nexthop(struct rde_peer *peer, struct filterstate *state)
+static struct bgpd_addr *
+up_get_nexthop(struct rde_peer *peer, struct filterstate *state, u_int8_t aid)
 {
-	in_addr_t	mask;
+	struct bgpd_addr *peer_local;
 
-	/* nexthop, already network byte order */
-	if (state->nhflags & NEXTHOP_NOMODIFY) {
-		/* no modify flag set */
-		if (state->nexthop == NULL)
-			return (peer->local_v4_addr.v4.s_addr);
-		else
-			return (state->nexthop->exit_nexthop.v4.s_addr);
-	} else if (state->nhflags & NEXTHOP_SELF)
-		return (peer->local_v4_addr.v4.s_addr);
-	else if (!peer->conf.ebgp) {
+	switch (aid) {
+	case AID_INET:
+	case AID_VPN_IPv4:
+		peer_local = &peer->local_v4_addr;
+		break;
+	case AID_INET6:
+	case AID_VPN_IPv6:
+		peer_local = &peer->local_v6_addr;
+		break;
+	default:
+		fatalx("%s, bad AID %s", __func__, aid2str(aid));
+	}
+
+	if (state->nhflags & NEXTHOP_SELF) {
 		/*
-		 * If directly connected use peer->local_v4_addr
-		 * this is only true for announced networks.
+		 * Forcing the nexthop to self is always possible
+		 * and has precedence over other flags.
 		 */
-		if (state->nexthop == NULL)
-			return (peer->local_v4_addr.v4.s_addr);
-		else if (state->nexthop->exit_nexthop.v4.s_addr ==
-		    peer->remote_addr.v4.s_addr)
-			/*
-			 * per RFC: if remote peer address is equal to
-			 * the nexthop set the nexthop to our local address.
-			 * This reduces the risk of routing loops.
-			 */
-			return (peer->local_v4_addr.v4.s_addr);
-		else
-			return (state->nexthop->exit_nexthop.v4.s_addr);
+		return (peer_local);
+	} else if (!peer->conf.ebgp) {
+		/*
+		 * in the ibgp case the nexthop is normally not
+		 * modified unless it points at the peer itself.
+		 */
+		if (state->nexthop == NULL) {
+			/* announced networks without explicit nexthop set */
+			return (peer_local);
+		}
+		/*
+		 * per RFC: if remote peer address is equal to the nexthop set
+		 * the nexthop to our local address. This reduces the risk of
+		 * routing loops. This overrides NEXTHOP_NOMODIFY.
+		 */
+		if (memcmp(&state->nexthop->exit_nexthop,
+		    &peer->remote_addr, sizeof(peer->remote_addr)) == 0) {
+			return (peer_local);
+		}
+		return (&state->nexthop->exit_nexthop);
 	} else if (peer->conf.distance == 1) {
-		/* ebgp directly connected */
-		if (state->nexthop != NULL &&
-		    state->nexthop->flags & NEXTHOP_CONNECTED) {
-			mask = htonl(
-			    prefixlen2mask(state->nexthop->nexthop_netlen));
-			if ((peer->remote_addr.v4.s_addr & mask) ==
-			    (state->nexthop->nexthop_net.v4.s_addr & mask))
-				/* nexthop and peer are in the same net */
-				return (state->nexthop->exit_nexthop.v4.s_addr);
-			else
-				return (peer->local_v4_addr.v4.s_addr);
-		} else
-			return (peer->local_v4_addr.v4.s_addr);
-	} else
-		/* ebgp multihop */
 		/*
-		 * For ebgp multihop nh->flags should never have
-		 * NEXTHOP_CONNECTED set so it should be possible to unify the
-		 * two ebgp cases. But this is safe and RFC compliant.
+		 * In the ebgp directly connected case never send
+		 * out a nexthop that is outside of the connected
+		 * network of the peer. No matter what flags are
+		 * set. This follows section 5.1.3 of RFC 4271.
+		 * So just check if the nexthop is in the same net
+		 * is enough here.
 		 */
-		return (peer->local_v4_addr.v4.s_addr);
+		if (state->nexthop != NULL &&
+		    state->nexthop->flags & NEXTHOP_CONNECTED &&
+		    prefix_compare(&peer->remote_addr,
+		    &state->nexthop->nexthop_net,
+		    state->nexthop->nexthop_netlen) == 0) {
+			/* nexthop and peer are in the same net */
+			return (&state->nexthop->exit_nexthop);
+		}
+		return (peer_local);
+	} else {
+		/*
+		 * For ebgp multihop make it possible to overrule
+		 * the sent nexthop by setting NEXTHOP_NOMODIFY.
+		 * Similar to the ibgp case there is no same net check
+		 * needed but still ensure that the nexthop is not
+		 * pointing to the peer itself.
+		 */
+		if (state->nhflags & NEXTHOP_NOMODIFY &&
+		    state->nexthop == NULL &&
+		    memcmp(&state->nexthop->exit_nexthop,
+		    &peer->remote_addr, sizeof(peer->remote_addr)) != 0) {
+			/* no modify flag set and nexthop not peer addr */
+			return (&state->nexthop->exit_nexthop);
+		}
+		return (peer_local);
+	}
 }
 
 static int
@@ -350,7 +375,8 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 		case ATTR_NEXTHOP:
 			switch (aid) {
 			case AID_INET:
-				nexthop = up_get_nexthop(peer, state);
+				nexthop =
+				    up_get_nexthop(peer, state, aid)->v4.s_addr;
 				if ((r = attr_write(buf + wlen, len,
 				    ATTR_WELL_KNOWN, ATTR_NEXTHOP, &nexthop,
 				    4)) == -1)
@@ -730,10 +756,10 @@ static int
 up_generate_mp_reach(u_char *buf, int len, struct rde_peer *peer,
     struct filterstate *state, u_int8_t aid)
 {
-	u_char		*attrbuf;
-	int		 r;
-	int		 wpos, attrlen;
-	u_int16_t	 tmp;
+	struct bgpd_addr	*nexthop;
+	u_char			*attrbuf;
+	int			 r, wpos, attrlen;
+	u_int16_t		 tmp;
 
 	if (len < 4)
 		return (-1);
@@ -756,54 +782,10 @@ up_generate_mp_reach(u_char *buf, int len, struct rde_peer *peer,
 		attrbuf[3] = sizeof(struct in6_addr);
 		attrbuf[20] = 0; /* Reserved must be 0 */
 
-		/* nexthop dance see also up_get_nexthop() */
+		/* write nexthop */
 		attrbuf += 4;
-		if (state->nhflags & NEXTHOP_NOMODIFY) {
-			/* no modify flag set */
-			if (state->nexthop == NULL)
-				memcpy(attrbuf, &peer->local_v6_addr.v6,
-				    sizeof(struct in6_addr));
-			else
-				memcpy(attrbuf,
-				    &state->nexthop->exit_nexthop.v6,
-				    sizeof(struct in6_addr));
-		} else if (state->nhflags & NEXTHOP_SELF)
-			memcpy(attrbuf, &peer->local_v6_addr.v6,
-			    sizeof(struct in6_addr));
-		else if (!peer->conf.ebgp) {
-			/* ibgp */
-			if (state->nexthop == NULL ||
-			    (state->nexthop->exit_nexthop.aid == AID_INET6 &&
-			    !memcmp(&state->nexthop->exit_nexthop.v6,
-			    &peer->remote_addr.v6, sizeof(struct in6_addr))))
-				memcpy(attrbuf, &peer->local_v6_addr.v6,
-				    sizeof(struct in6_addr));
-			else
-				memcpy(attrbuf,
-				    &state->nexthop->exit_nexthop.v6,
-				    sizeof(struct in6_addr));
-		} else if (peer->conf.distance == 1) {
-			/* ebgp directly connected */
-			if (state->nexthop != NULL &&
-			    state->nexthop->flags & NEXTHOP_CONNECTED)
-				if (prefix_compare(&peer->remote_addr,
-				    &state->nexthop->nexthop_net,
-				    state->nexthop->nexthop_netlen) == 0) {
-					/*
-					 * nexthop and peer are in the same
-					 * subnet
-					 */
-					memcpy(attrbuf,
-					    &state->nexthop->exit_nexthop.v6,
-					    sizeof(struct in6_addr));
-					break;
-				}
-			memcpy(attrbuf, &peer->local_v6_addr.v6,
-			    sizeof(struct in6_addr));
-		} else
-			/* ebgp multihop */
-			memcpy(attrbuf, &peer->local_v6_addr.v6,
-			    sizeof(struct in6_addr));
+		nexthop = up_get_nexthop(peer, state, aid);
+		memcpy(attrbuf, &nexthop->v6, sizeof(struct in6_addr));
 		break;
 	case AID_VPN_IPv4:
 		attrlen = 17; /* AFI + SAFI + NH LEN + NH + Reserved */
@@ -818,55 +800,10 @@ up_generate_mp_reach(u_char *buf, int len, struct rde_peer *peer,
 		bzero(attrbuf + 4, sizeof(u_int64_t));
 		attrbuf[16] = 0; /* Reserved must be 0 */
 
-		/* nexthop dance see also up_get_nexthop() */
+		/* write nexthop */
 		attrbuf += 12;
-		if (state->nhflags & NEXTHOP_NOMODIFY) {
-			/* no modify flag set */
-			if (state->nexthop == NULL)
-				memcpy(attrbuf, &peer->local_v4_addr.v4,
-				    sizeof(struct in_addr));
-			else
-				/* nexthops are stored as IPv4 addrs */
-				memcpy(attrbuf,
-				    &state->nexthop->exit_nexthop.v4,
-				    sizeof(struct in_addr));
-		} else if (state->nhflags & NEXTHOP_SELF) {
-			memcpy(attrbuf, &peer->local_v4_addr.v4,
-			    sizeof(struct in_addr));
-		} else if (!peer->conf.ebgp) {
-			/* ibgp */
-			if (state->nexthop == NULL ||
-			    (state->nexthop->exit_nexthop.aid == AID_INET &&
-			    !memcmp(&state->nexthop->exit_nexthop.v4,
-			    &peer->remote_addr.v4, sizeof(struct in_addr))))
-				memcpy(attrbuf, &peer->local_v4_addr.v4,
-				    sizeof(struct in_addr));
-			else
-				memcpy(attrbuf,
-				    &state->nexthop->exit_nexthop.v4,
-				    sizeof(struct in_addr));
-		} else if (peer->conf.distance == 1) {
-			/* ebgp directly connected */
-			if (state->nexthop != NULL &&
-			    state->nexthop->flags & NEXTHOP_CONNECTED)
-				if (prefix_compare(&peer->remote_addr,
-				    &state->nexthop->nexthop_net,
-				    state->nexthop->nexthop_netlen) == 0) {
-					/*
-					 * nexthop and peer are in the same
-					 * subnet
-					 */
-					memcpy(attrbuf,
-					    &state->nexthop->exit_nexthop.v4,
-					    sizeof(struct in_addr));
-					break;
-				}
-			memcpy(attrbuf, &peer->local_v4_addr.v4,
-			    sizeof(struct in_addr));
-		} else
-			/* ebgp multihop */
-			memcpy(attrbuf, &peer->local_v4_addr.v4,
-			    sizeof(struct in_addr));
+		nexthop = up_get_nexthop(peer, state, aid);
+		memcpy(attrbuf, &nexthop->v4, sizeof(struct in_addr));
 		break;
 	case AID_VPN_IPv6:
 		attrlen = 29; /* AFI + SAFI + NH LEN + NH + Reserved */
@@ -881,54 +818,10 @@ up_generate_mp_reach(u_char *buf, int len, struct rde_peer *peer,
 		bzero(attrbuf + 4, sizeof(u_int64_t));
 		attrbuf[28] = 0; /* Reserved must be 0 */
 
-		/* nexthop dance see also up_get_nexthop() */
+		/* write nexthop */
 		attrbuf += 12;
-		if (state->nhflags & NEXTHOP_NOMODIFY) {
-			/* no modify flag set */
-			if (state->nexthop == NULL)
-				memcpy(attrbuf, &peer->local_v6_addr.v6,
-				    sizeof(struct in6_addr));
-			else
-				memcpy(attrbuf,
-				    &state->nexthop->exit_nexthop.v6,
-				    sizeof(struct in6_addr));
-		} else if (state->nhflags & NEXTHOP_SELF)
-			memcpy(attrbuf, &peer->local_v6_addr.v6,
-			    sizeof(struct in6_addr));
-		else if (!peer->conf.ebgp) {
-			/* ibgp */
-			if (state->nexthop == NULL ||
-			    (state->nexthop->exit_nexthop.aid == AID_INET6 &&
-			    !memcmp(&state->nexthop->exit_nexthop.v6,
-			    &peer->remote_addr.v6, sizeof(struct in6_addr))))
-				memcpy(attrbuf, &peer->local_v6_addr.v6,
-				    sizeof(struct in6_addr));
-			else
-				memcpy(attrbuf,
-				    &state->nexthop->exit_nexthop.v6,
-				    sizeof(struct in6_addr));
-		} else if (peer->conf.distance == 1) {
-			/* ebgp directly connected */
-			if (state->nexthop != NULL &&
-			    state->nexthop->flags & NEXTHOP_CONNECTED)
-				if (prefix_compare(&peer->remote_addr,
-				    &state->nexthop->nexthop_net,
-				    state->nexthop->nexthop_netlen) == 0) {
-					/*
-					* nexthop and peer are in the same
-					* subnet
-					*/
-					memcpy(attrbuf,
-					    &state->nexthop->exit_nexthop.v6,
-					    sizeof(struct in6_addr));
-					break;
-				}
-			memcpy(attrbuf, &peer->local_v6_addr.v6,
-			    sizeof(struct in6_addr));
-		} else
-			/* ebgp multihop */
-			memcpy(attrbuf, &peer->local_v6_addr.v6,
-			    sizeof(struct in6_addr));
+		nexthop = up_get_nexthop(peer, state, aid);
+		memcpy(attrbuf, &nexthop->v6, sizeof(struct in6_addr));
 		break;
 	default:
 		fatalx("up_generate_mp_reach: unknown AID");

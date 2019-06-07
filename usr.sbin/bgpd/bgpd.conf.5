@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.189 2019/05/29 11:13:23 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.190 2019/06/07 09:45:48 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2019 $
+.Dd $Mdocdate: June 7 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1807,15 +1807,28 @@ Set the
 .Em NEXTHOP
 AS path attribute
 to a different nexthop address or use blackhole or reject routes.
-If set to
-.Em no-modify ,
-the nexthop attribute is not modified.
-Unless set to
-.Em self ,
-the nexthop is left unmodified for IBGP
-sessions.
+.Em blackhole
+and
+.Em reject
+only affect the FIB and will not alter the nexthop address.
 .Em self
 forces the nexthop to be set to the local interface address.
+If set to
+.Em no-modify ,
+the nexthop attribute is not modified for EBGP multihop sessions.
+By default EBGP multihop sessions use the local interface address.
+On other IBGP and directly connected EBGP sessions
+.Em no-modify
+is ignored.
+The set
+.Ar address
+is used on IBGP session and on directly connected EBGP session if the
+.Ar address
+is part of the connected network.
+On EBGP multihop session
+.Em no-modify
+has to be set to force the nexthop to
+.Ar address .
 .Bd -literal -offset indent
 set nexthop 192.168.0.1
 set nexthop blackhole
