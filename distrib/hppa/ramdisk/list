@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.15 2019/05/13 23:18:21 naddy Exp $
+#	$OpenBSD: list,v 1.16 2019/06/07 14:39:56 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -14,11 +14,9 @@ LINK	instbin					bin/df
 LINK	instbin					bin/ed
 LINK	instbin					bin/hostname
 LINK	instbin					bin/ksh bin/sh
-ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/md5 bin/sha256 bin/sha512
-SPECIAL	rm bin/md5
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
@@ -27,11 +25,13 @@ LINK	instbin					bin/rm
 LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
-LINK	instbin					sbin/disklabel
+LINK	instbin					sbin/bioctl
 LINK	instbin					sbin/dhclient
+LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ffs
+LINK	instbin					sbin/growfs
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/mknod
@@ -43,6 +43,7 @@ LINK	instbin					sbin/newfs
 LINK	instbin					sbin/ping sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
+LINK	instbin					sbin/slaacd
 LINK	instbin					sbin/sysctl
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/doas
@@ -54,12 +55,22 @@ LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
 LINK	instbin					usr/bin/tee
 LINK	instbin					usr/sbin/chroot
-LINK	instbin					usr/sbin/pwd_mkdb
 LINK	instbin					usr/sbin/installboot
+LINK	instbin					usr/sbin/pwd_mkdb
+ARGVLINK ksh					-sh
+SPECIAL	rm bin/md5
 
 SPECIAL awk -f ${UTILS}/trimcerts.awk ${DESTDIR}/etc/ssl/cert.pem etc/ssl/cert.pem
 LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
 SPECIAL	rm usr/bin/ftp-ssl
+
+# for disklabel(8) -B
+COPY	${DESTDIR}/usr/mdec/sdboot		usr/mdec/sdboot
+LINK	usr/mdec/sdboot				usr/mdec/boot.lif
+
+# copy the MAKEDEV script and make some devices
+SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../miniroot/group		etc/group
@@ -68,37 +79,19 @@ SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${DESTDIR}/etc/signify/openbsd-${OSrev}-base.pub	etc/signify/openbsd-${OSrev}-base.pub
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
+TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp700-wy,hp70092		usr/share/misc/termcap
 
-# for disklabel(8) -B
-COPY	${DESTDIR}/usr/mdec/sdboot		usr/mdec/sdboot
-LINK	usr/mdec/sdboot				usr/mdec/boot.lif
+SYMLINK	/tmp/i/fstab.shadow			etc/fstab
+SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/i/hosts				etc/hosts
 
-# and the installation scripts
+# and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
+SCRIPT	${CURDIR}/../install.md			install.md
 SPECIAL	chmod 755 install.sub
 SYMLINK	install.sub				autoinstall
 SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
 
-# hppa extra's
-LINK	instbin					sbin/disklabel
-LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin					usr/bin/more usr/bin/less
-LINK	instbin					sbin/bioctl
-LINK	instbin					sbin/growfs
-LINK	instbin					sbin/slaacd
-
-# copy the MAKEDEV script and make some devices
-SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV ramdisk
-
-# various files that we need in /etc for the install
-SYMLINK	/tmp/i/fstab.shadow			etc/fstab
-SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
-SYMLINK	/tmp/i/hosts				etc/hosts
-TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp700-wy,hp70092		usr/share/misc/termcap
-
-# and the installation tools (no upgrade from to 3.3)
-SCRIPT	${CURDIR}/../install.md			install.md
 TZ

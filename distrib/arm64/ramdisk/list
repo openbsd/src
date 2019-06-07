@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.10 2019/05/13 23:18:21 naddy Exp $
+#	$OpenBSD: list,v 1.11 2019/06/07 14:39:56 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -14,11 +14,9 @@ LINK	instbin					bin/df
 LINK	instbin					bin/ed
 LINK	instbin					bin/hostname
 LINK	instbin					bin/ksh bin/sh
-ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/md5 bin/sha256 bin/sha512
-SPECIAL	rm bin/md5
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
@@ -64,6 +62,8 @@ LINK	instbin					usr/bin/signify
 LINK	instbin					usr/bin/tee
 LINK	instbin					usr/sbin/chroot
 LINK	instbin					usr/sbin/pwd_mkdb
+ARGVLINK ksh					-sh
+SPECIAL	rm bin/md5
 
 SPECIAL awk -f ${UTILS}/trimcerts.awk ${DESTDIR}/etc/ssl/cert.pem etc/ssl/cert.pem
 LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
@@ -91,8 +91,15 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-int etc/firmware/atu-rfmd2958-int
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
-# this is the list from distrib/miniroot/makeconf.awk with -lz added.
-LIBS   -lstubs -lutil -lm -lc -ltls -lssl -lcrypto -levent -lz
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b.dtb usr/mdec/rpi/bcm2710-rpi-3-b.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b-plus.dtb usr/mdec/rpi/bcm2710-rpi-3-b-plus.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi/bcm2710-rpi-cm3.dtb
+COPY	/usr/local/share/raspberrypi-firmware/boot/bootcode.bin usr/mdec/rpi/bootcode.bin
+COPY	/usr/local/share/raspberrypi-firmware/boot/start.elf usr/mdec/rpi/start.elf
+COPY	/usr/local/share/raspberrypi-firmware/boot/fixup.dat usr/mdec/rpi/fixup.dat
+COPY	/usr/local/share/u-boot/rpi_3/u-boot.bin usr/mdec/rpi/u-boot.bin
+
+COPY	/usr/local/share/u-boot/pine64_plus/u-boot-sunxi-with-spl.bin usr/mdec/pine64/u-boot-sunxi-with-spl.bin
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
@@ -105,28 +112,19 @@ SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
 COPY	${DESTDIR}/etc/signify/openbsd-${OSrev}-base.pub	etc/signify/openbsd-${OSrev}-base.pub
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
+TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
+
 SYMLINK	/tmp/i/fstab.shadow			etc/fstab
 SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/i/hosts				etc/hosts
-TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
-SCRIPT	${CURDIR}/install.md			install.md
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
+SCRIPT	${CURDIR}/install.md			install.md
 SPECIAL	chmod 755 install.sub
 SYMLINK	install.sub				autoinstall
 SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
-
-COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b.dtb usr/mdec/rpi/bcm2710-rpi-3-b.dtb
-COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b-plus.dtb usr/mdec/rpi/bcm2710-rpi-3-b-plus.dtb
-COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi/bcm2710-rpi-cm3.dtb
-COPY	/usr/local/share/raspberrypi-firmware/boot/bootcode.bin usr/mdec/rpi/bootcode.bin
-COPY	/usr/local/share/raspberrypi-firmware/boot/start.elf usr/mdec/rpi/start.elf
-COPY	/usr/local/share/raspberrypi-firmware/boot/fixup.dat usr/mdec/rpi/fixup.dat
-COPY	/usr/local/share/u-boot/rpi_3/u-boot.bin usr/mdec/rpi/u-boot.bin
-
-COPY	/usr/local/share/u-boot/pine64_plus/u-boot-sunxi-with-spl.bin usr/mdec/pine64/u-boot-sunxi-with-spl.bin
 
 TZ

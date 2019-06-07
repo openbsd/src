@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.41 2019/05/13 23:18:21 naddy Exp $
+#	$OpenBSD: list,v 1.42 2019/06/07 14:39:56 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -14,11 +14,9 @@ LINK	instbin					bin/df
 LINK	instbin					bin/ed
 LINK	instbin					bin/hostname
 LINK	instbin					bin/ksh bin/sh
-ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/md5 bin/sha256 bin/sha512
-SPECIAL	rm bin/md5
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mt bin/eject
 LINK	instbin					bin/mv
@@ -63,8 +61,10 @@ LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
 LINK	instbin					usr/bin/tee
 LINK	instbin					usr/sbin/chroot
-LINK	instbin					usr/sbin/pwd_mkdb
 LINK	instbin					usr/sbin/mkuboot
+LINK	instbin					usr/sbin/pwd_mkdb
+ARGVLINK ksh					-sh
+SPECIAL	rm bin/md5
 
 SPECIAL awk -f ${UTILS}/trimcerts.awk ${DESTDIR}/etc/ssl/cert.pem etc/ssl/cert.pem
 LINK	instbin					usr/bin/ftp-ssl usr/bin/ftp
@@ -91,34 +91,6 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-ext etc/firmware/atu-rfmd2958-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-int etc/firmware/atu-rfmd2958-int
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
-
-# this is the list from distrib/miniroot/makeconf.awk with -lz added.
-LIBS   -lstubs -lutil -lm -lc -ltls -lssl -lcrypto -levent -lz
-
-# copy the MAKEDEV script and make some devices
-SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
-SPECIAL	cd dev; sh MAKEDEV ramdisk
-
-# various files that we need in /etc for the install
-COPY	${CURDIR}/../../miniroot/group		etc/group
-COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
-SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
-COPY	${DESTDIR}/etc/signify/openbsd-${OSrev}-base.pub	etc/signify/openbsd-${OSrev}-base.pub
-COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
-COPY	${CURDIR}/../../miniroot/services	etc/services
-SYMLINK	/tmp/i/fstab.shadow			etc/fstab
-SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
-SYMLINK	/tmp/i/hosts				etc/hosts
-TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
-
-# and the installation tools
-SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
-SCRIPT	${CURDIR}/install.md			install.md
-SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install.sub
-SYMLINK	install.sub				autoinstall
-SYMLINK	install.sub				install
-SYMLINK	install.sub				upgrade
 
 # u-boot and dtbs
 MKDIR						usr/mdec/am335x
@@ -187,5 +159,31 @@ COPY	/usr/local/share/dtb/arm/imx6q-wandboard.dtb	usr/mdec/wandboard/imx6q-wandb
 COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revb1.dtb	usr/mdec/wandboard/imx6q-wandboard-revb1.dtb
 COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revd1.dtb	usr/mdec/wandboard/imx6q-wandboard-revd1.dtb
 COPY	/usr/local/share/dtb/arm/imx6qp-wandboard-revd1.dtb	usr/mdec/wandboard/imx6qp-wandboard-revd1.dtb
+
+# copy the MAKEDEV script and make some devices
+SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV ramdisk
+
+# various files that we need in /etc for the install
+COPY	${CURDIR}/../../miniroot/group		etc/group
+COPY	${CURDIR}/../../miniroot/master.passwd	etc/master.passwd
+SPECIAL	pwd_mkdb -p -d etc master.passwd; rm etc/master.passwd
+COPY	${DESTDIR}/etc/signify/openbsd-${OSrev}-base.pub	etc/signify/openbsd-${OSrev}-base.pub
+COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
+COPY	${CURDIR}/../../miniroot/services	etc/services
+TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
+
+SYMLINK	/tmp/i/fstab.shadow			etc/fstab
+SYMLINK	/tmp/i/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/i/hosts				etc/hosts
+
+# and the installation tools
+SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
+SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
+SCRIPT	${CURDIR}/install.md			install.md
+SPECIAL	chmod 755 install.sub
+SYMLINK	install.sub				autoinstall
+SYMLINK	install.sub				install
+SYMLINK	install.sub				upgrade
 
 TZ

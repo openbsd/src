@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2019/05/03 20:03:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2019/06/07 14:39:56 deraadt Exp $
 
 FS=		floppy${OSrev}.fs
 FSSIZE=		2880
@@ -7,7 +7,7 @@ MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 RAMDISK=	RAMDISK
 
-LISTS=		${.CURDIR}/../common/list ${.CURDIR}/list.local
+LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
 
 EFIBOOT=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI

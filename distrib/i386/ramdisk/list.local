@@ -1,8 +1,0 @@
-# $OpenBSD: list.local,v 1.3 2019/04/30 17:46:04 deraadt Exp $
-
-LINK	instbin					sbin/fsck_msdos
-LINK	instbin					sbin/mount_msdos
-
-LINK	instbin					usr/bin/ftp
-
-#TZ		# this does not fit on the floppy
