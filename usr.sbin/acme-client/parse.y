@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.33 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.34 2019/06/08 07:52:55 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -69,7 +70,7 @@ struct domain_c		*conf_new_domain(struct acme_conf *, char *);
 struct keyfile		*conf_new_keyfile(struct acme_conf *, char *);
 void			 clear_config(struct acme_conf *);
 void			 print_config(struct acme_conf *);
-int			 conf_check_file(char *, int);
+int			 conf_check_file(char *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -270,8 +271,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 			}
 			if ((s = strdup($3)) == NULL)
 				err(EXIT_FAILURE, "strdup");
-			if (!conf_check_file(s,
-			    (conf->opts & ACME_OPT_NEWDKEY))) {
+			if (!conf_check_file(s)) {
 				free(s);
 				YYERROR;
 			}
@@ -1046,7 +1046,7 @@ domain_valid(const char *cp)
 }
 
 int
-conf_check_file(char *s, int dontstat)
+conf_check_file(char *s)
 {
 	struct stat st;
 
@@ -1054,9 +1054,9 @@ conf_check_file(char *s, int dontstat)
 		warnx("%s: not an absolute path", s);
 		return 0;
 	}
-	if (dontstat)
-		return 1;
 	if (stat(s, &st)) {
+		if (errno == ENOENT)
+			return 1;
 		warn("cannot stat %s", s);
 		return 0;
 	}

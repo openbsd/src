@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.11 2018/07/29 20:22:02 tb Exp $ */
+/*	$Id: keyproc.c,v 1.12 2019/06/08 07:52:55 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,7 +75,7 @@ add_ext(STACK_OF(X509_EXTENSION) *sk, int nid, const char *value)
  */
 int
 keyproc(int netsock, const char *keyfile,
-    const char **alts, size_t altsz, int newkey)
+    const char **alts, size_t altsz)
 {
 	char		*der64 = NULL, *der = NULL, *dercp;
 	char		*sans = NULL, *san = NULL;
@@ -85,7 +85,7 @@ keyproc(int netsock, const char *keyfile,
 	EVP_PKEY	*pkey = NULL;
 	X509_REQ	*x = NULL;
 	X509_NAME	*name = NULL;
-	int		 len, rc = 0, cc, nid;
+	int		 len, rc = 0, cc, nid, newkey = 0;
 	mode_t		 prev;
 	STACK_OF(X509_EXTENSION) *exts = NULL;
 
@@ -96,7 +96,10 @@ keyproc(int netsock, const char *keyfile,
 	 */
 
 	prev = umask((S_IWUSR | S_IXUSR) | S_IRWXG | S_IRWXO);
-	f = fopen(keyfile, newkey ? "wx" : "r");
+	if ((f = fopen(keyfile, "r")) == NULL && errno == ENOENT) {
+		f = fopen(keyfile, "wx");
+		newkey = 1;
+	}
 	umask(prev);
 
 	if (f == NULL) {

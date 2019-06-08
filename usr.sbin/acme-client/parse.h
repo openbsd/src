@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.h,v 1.9 2017/11/27 16:53:04 sthen Exp $ */
+/*	$OpenBSD: parse.h,v 1.10 2019/06/08 07:52:55 florian Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -58,9 +58,7 @@ struct keyfile {
 };
 
 #define ACME_OPT_VERBOSE	0x00000001
-#define ACME_OPT_NEWACCT	0x00000002
-#define ACME_OPT_NEWDKEY	0x00000004
-#define ACME_OPT_CHECK		0x00000008
+#define ACME_OPT_CHECK		0x00000004
 
 struct acme_conf {
 	int			 opts;

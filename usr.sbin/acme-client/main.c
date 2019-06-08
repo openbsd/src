@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.46 2019/06/07 08:07:52 florian Exp $ */
+/*	$Id: main.c,v 1.47 2019/06/08 07:52:55 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,14 +57,8 @@ main(int argc, char *argv[])
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
 
-	while ((c = getopt(argc, argv, "ADFnrvf:")) != -1)
+	while ((c = getopt(argc, argv, "Fnrvf:")) != -1)
 		switch (c) {
-		case 'A':
-			popts |= ACME_OPT_NEWACCT;
-			break;
-		case 'D':
-			popts |= ACME_OPT_NEWDKEY;
-			break;
 		case 'F':
 			force = 1;
 			break;
@@ -173,26 +167,9 @@ main(int argc, char *argv[])
 		ne++;
 	}
 
-	if (!(popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK) == -1) {
-		warnx("%s: domain key file must exist", domain->key);
-		ne++;
-	} else if ((popts & ACME_OPT_NEWDKEY) && access(domain->key, R_OK)
-	    != -1) {
-		dodbg("%s: domain key exists (not creating)", domain->key);
-		popts &= ~ACME_OPT_NEWDKEY;
-	}
-
 	if (access(chngdir, R_OK) == -1) {
 		warnx("%s: challenge directory must exist", chngdir);
 		ne++;
-	}
-
-	if (!(popts & ACME_OPT_NEWACCT) && access(acctkey, R_OK) == -1) {
-		warnx("%s: account key file must exist", acctkey);
-		ne++;
-	} else if ((popts & ACME_OPT_NEWACCT) && access(acctkey, R_OK) != -1) {
-		dodbg("%s: account key exists (not creating)", acctkey);
-		popts &= ~ACME_OPT_NEWACCT;
 	}
 
 	if (ne > 0)
@@ -276,7 +253,7 @@ main(int argc, char *argv[])
 		close(file_fds[0]);
 		close(file_fds[1]);
 		c = keyproc(key_fds[0], domain->key,
-		    (const char **)alts, altsz, (popts & ACME_OPT_NEWDKEY));
+		    (const char **)alts, altsz);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -295,7 +272,7 @@ main(int argc, char *argv[])
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = acctproc(acct_fds[0], acctkey, (popts & ACME_OPT_NEWACCT));
+		c = acctproc(acct_fds[0], acctkey);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
@@ -408,6 +385,6 @@ main(int argc, char *argv[])
 	return rc != COMP__MAX ? EXIT_FAILURE : (c == 2 ? EXIT_SUCCESS : 2);
 usage:
 	fprintf(stderr,
-	    "usage: acme-client [-ADFnrv] [-f configfile] domain\n");
+	    "usage: acme-client [-Fnrv] [-f configfile] domain\n");
 	return EXIT_FAILURE;
 }

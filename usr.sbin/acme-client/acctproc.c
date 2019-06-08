@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.13 2019/06/07 08:07:52 florian Exp $ */
+/*	$Id: acctproc.c,v 1.14 2019/06/08 07:52:55 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -311,13 +311,13 @@ out:
 }
 
 int
-acctproc(int netsock, const char *acctkey, int newacct)
+acctproc(int netsock, const char *acctkey)
 {
 	FILE		*f = NULL;
 	EVP_PKEY	*pkey = NULL;
 	long		 lval;
 	enum acctop	 op;
-	int		 rc = 0, cc;
+	int		 rc = 0, cc, newacct = 0;
 	mode_t		 prev;
 
 	/*
@@ -327,7 +327,10 @@ acctproc(int netsock, const char *acctkey, int newacct)
 	 */
 
 	prev = umask((S_IWUSR | S_IXUSR) | S_IRWXG | S_IRWXO);
-	f = fopen(acctkey, newacct ? "wx" : "r");
+	if ((f = fopen(acctkey, "r")) == NULL && errno == ENOENT) {
+		f = fopen(acctkey, "wx");
+		newacct = 1;
+	}
 	umask(prev);
 
 	if (f == NULL) {

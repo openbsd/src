@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.30 2019/06/07 08:07:52 florian Exp $
+.\"	$OpenBSD: acme-client.1,v 1.31 2019/06/08 07:52:55 florian Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2019 $
+.Dd $Mdocdate: June 8 2019 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd ACME client
 .Sh SYNOPSIS
 .Nm acme-client
-.Op Fl ADFnrv
+.Op Fl Fnrv
 .Op Fl f Ar configfile
 .Ar domain
 .Sh DESCRIPTION
@@ -39,16 +39,6 @@ which can be used to provide domain name validation
 The certificates are typically used to provide HTTPS for web servers,
 but can be used in any situation where domain name validation is required
 (such as mail servers).
-.Pp
-Before a certificate can be requested, an account key needs to be
-created using the
-.Fl A
-argument.
-The first time a certificate is requested, a domain key needs to be created with
-.Fl D .
-So a typical invocation the first time it's run would be:
-.Pp
-.Dl # acme-client -ADv example.com
 .Pp
 If the certificate already exists and is less than 30 days from expiry,
 .Nm
@@ -76,10 +66,6 @@ location "/.well-known/acme-challenge/*" {
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl A
-Create a new RSA account key if one does not already exist.
-.It Fl D
-Create a new RSA domain key if one does not already exist.
 .It Fl F
 Force certificate renewal, even if it's too soon.
 .It Fl f Ar configfile
@@ -127,7 +113,7 @@ and
 .Pa httpd.conf
 and run:
 .Pp
-.Dl # acme-client -ADv example.com && rcctl reload httpd
+.Dl # acme-client -v example.com && rcctl reload httpd
 .Pp
 A
 .Xr cron 8
