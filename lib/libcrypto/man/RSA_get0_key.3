@@ -1,7 +1,24 @@
-.\" $OpenBSD: RSA_get0_key.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: RSA_get0_key.3,v 1.5 2019/06/08 09:51:40 schwarze Exp $
 .\" selective merge up to: OpenSSL 665d899f Aug 2 02:19:43 2017 +0800
 .\"
-.\" This file was written by Richard Levitte <levitte@openssl.org>
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Richard Levitte <levitte@openssl.org>
 .\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: June 8 2019 $
 .Dt RSA_GET0_KEY 3
 .Os
 .Sh NAME
@@ -263,6 +280,62 @@ in
 any flags already set remain set.
 For all three functions, multiple flags can be passed in one call,
 OR'ed together bitwise.
+.Pp
+The following flags are supported:
+.Bl -tag -width Ds
+.It Dv RSA_FLAG_CACHE_PRIVATE No and Dv RSA_FLAG_CACHE_PUBLIC
+Precompute information needed for Montgomery multiplication
+from the private and public key, respectively, and cache it in
+.Fa r
+for repeated use.
+These two flags are set by default for the default RSA implementation,
+.Xr RSA_PKCS1_SSLeay 3 .
+.It Dv RSA_FLAG_EXT_PKEY
+The function set with
+.Xr RSA_meth_set_mod_exp 3
+is used for private key operations even if
+.Fa p ,
+.Fa q ,
+.Fa dmp1 ,
+.Fa dmq1 ,
+and
+.Fa iqmp
+are all
+.Dv NULL .
+This flag may be useful with RSA implementations that do not use the
+private key components stored in the standard fields, for example
+because they store the private key in external hardware.
+If this flag is unset, the function set with
+.Xr RSA_meth_set_bn_mod_exp 3
+is used with
+.Fa n
+and
+.Fa d
+instead.
+.It Dv RSA_FLAG_NO_BLINDING
+Turn off blinding during private key encryption and decryption.
+This flag is set by
+.Xr RSA_blinding_off 3 .
+.It Dv RSA_FLAG_SIGN_VER
+Enable the use of the functions set with
+.Xr RSA_meth_set_sign 3
+and
+.Xr RSA_meth_set_verify 3 .
+If unset, the functions set with
+.Xr RSA_meth_set_priv_enc 3
+and
+.Xr RSA_meth_set_pub_dec 3
+are used instead, respectively.
+.El
+.Pp
+The flags
+.Dv RSA_FLAG_BLINDING ,
+.Dv RSA_FLAG_CHECKED ,
+.Dv RSA_FLAG_FIPS_METHOD ,
+.Dv RSA_FLAG_NON_FIPS_ALLOW ,
+and
+.Dv RSA_FLAG_THREAD_SAFE
+are defined for compatibility with existing code but have no effect.
 .Sh RETURN VALUES
 .Fn RSA_set0_key ,
 .Fn RSA_set0_factors ,
