@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.368 2019/06/07 15:40:41 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.369 2019/06/08 12:25:19 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -574,7 +574,12 @@ acpi_getpci(struct aml_node *node, void *arg)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	uint64_t val;
+	int64_t sta;
 	uint32_t reg;
+
+	sta = acpi_getsta(sc, node);
+	if ((sta & STA_PRESENT) == 0)
+		return 0;
 
 	if (!node->value || node->value->type != AML_OBJTYPE_DEVICE)
 		return 0;
