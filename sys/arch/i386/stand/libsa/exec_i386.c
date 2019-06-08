@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.49 2019/04/10 04:17:35 deraadt Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.50 2019/06/08 02:52:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -224,7 +224,7 @@ ucode_load(void)
 		return;
 
 	buflen = sb.st_size;
-	if (buflen > 128*1024) {
+	if (buflen > 256*1024) {
 		printf("ucode too large\n");
 		return;
 	}
