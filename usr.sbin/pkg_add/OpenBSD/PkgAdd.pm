@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.111 2019/05/08 13:04:26 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.112 2019/06/09 09:36:24 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -184,6 +184,13 @@ sub updateset_from_location
 
 	return $self->updateset->add_newer(
 	    OpenBSD::Handle->from_location($location));
+}
+
+sub solve_dependency
+{
+	my ($self, $solver, $dep, $package) = @_;
+	# full dependency solving with everything
+	return $solver->really_solve_dependency($self, $dep, $package);
 }
 
 sub display_timestamp

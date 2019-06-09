@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.11 2018/12/11 10:18:37 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.12 2019/06/09 09:36:25 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -326,7 +326,8 @@ sub solve_dependency
 		$state->say("No cache hit on #1", $dep->{pattern});
 	}
 
-	$self->really_solve_dependency($state, $dep, $package);
+	# we need an indirection because deleting is simpler
+	$state->solve_dependency($self, $dep, $package);
 }
 
 sub solve_depends

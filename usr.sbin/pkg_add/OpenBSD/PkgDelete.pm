@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.46 2019/02/10 16:42:35 phessler Exp $
+# $OpenBSD: PkgDelete.pm,v 1.47 2019/06/09 09:36:24 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -129,6 +129,13 @@ sub deleteset_from_location
 {
 	my ($self, $location) = @_;
 	return $self->deleteset->add_older(OpenBSD::Handle->from_location($location));
+}
+
+sub solve_dependency
+{
+	my ($self, $solver, $dep, $package) = @_;
+	# simpler dependency solving
+	return $solver->find_dep_in_installed($self, $dep);
 }
 
 package OpenBSD::DeleteSet;
