@@ -261,6 +261,7 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 		    uint32_t page_flags)
 {
 	struct ttm_tt *ttm = &ttm_dma->ttm;
+	int flags = BUS_DMA_WAITOK;
 
 	ttm_tt_init_fields(ttm, bo, page_flags);
 
@@ -276,8 +277,10 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 
 	ttm_dma->dmat = bo->bdev->dmat;
 
+	if ((page_flags & TTM_PAGE_FLAG_DMA32) == 0)
+		flags |= BUS_DMA_64BIT;
 	if (bus_dmamap_create(ttm_dma->dmat, ttm->num_pages << PAGE_SHIFT,
-	    ttm->num_pages, ttm->num_pages << PAGE_SHIFT, 0, BUS_DMA_WAITOK,
+	    ttm->num_pages, ttm->num_pages << PAGE_SHIFT, 0, flags,
 	    &ttm_dma->map)) {
 		free(ttm_dma->segs, M_DRM, 0);
 		ttm_tt_destroy(ttm);
@@ -293,6 +296,7 @@ int ttm_sg_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 		   uint32_t page_flags)
 {
 	struct ttm_tt *ttm = &ttm_dma->ttm;
+	int flags = BUS_DMA_WAITOK;
 	int ret;
 
 	ttm_tt_init_fields(ttm, bo, page_flags);
@@ -313,8 +317,10 @@ int ttm_sg_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 
 	ttm_dma->dmat = bo->bdev->dmat;
 
+	if ((page_flags & TTM_PAGE_FLAG_DMA32) == 0)
+		flags |= BUS_DMA_64BIT;
 	if (bus_dmamap_create(ttm_dma->dmat, ttm->num_pages << PAGE_SHIFT,
-	    ttm->num_pages, ttm->num_pages << PAGE_SHIFT, 0, BUS_DMA_WAITOK,
+	    ttm->num_pages, ttm->num_pages << PAGE_SHIFT, 0, flags,
 	    &ttm_dma->map)) {
 		free(ttm_dma->segs, M_DRM, 0);
 		ttm_tt_destroy(ttm);

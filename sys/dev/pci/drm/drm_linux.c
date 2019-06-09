@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.37 2019/06/04 12:08:22 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.38 2019/06/09 12:58:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -293,16 +293,19 @@ struct vm_page *
 alloc_pages(unsigned int gfp_mask, unsigned int order)
 {
 	int flags = (gfp_mask & M_NOWAIT) ? UVM_PLA_NOWAIT : UVM_PLA_WAITOK;
+	struct uvm_constraint_range *constraint = &no_constraint;
 	struct pglist mlist;
 
 	if (gfp_mask & M_CANFAIL)
 		flags |= UVM_PLA_FAILOK;
 	if (gfp_mask & M_ZERO)
 		flags |= UVM_PLA_ZERO;
+	if (gfp_mask & __GFP_DMA32)
+		constraint = &dma_constraint;
 
 	TAILQ_INIT(&mlist);
-	if (uvm_pglistalloc(PAGE_SIZE << order, dma_constraint.ucr_low,
-	    dma_constraint.ucr_high, PAGE_SIZE, 0, &mlist, 1, flags))
+	if (uvm_pglistalloc(PAGE_SIZE << order, constraint->ucr_low,
+	    constraint->ucr_high, PAGE_SIZE, 0, &mlist, 1, flags))
 		return NULL;
 	return TAILQ_FIRST(&mlist);
 }
