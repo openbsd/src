@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.62 2019/05/31 09:13:34 espie Exp $
+# $OpenBSD: Makefile,v 1.63 2019/06/09 08:37:43 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1-disabled collision-check2-disabled collision-check3 \
@@ -10,7 +10,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
 	qttest gstest exotest-disabled inter1 manual1 oldlib1 \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
-	tying-1 tying-2
+	tying-1 tying-2 tag-delete
 
 collision-check{1,2}-disabled:
 	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
@@ -51,7 +51,7 @@ LONG2=iamanotherreallygfilenamethatcantberepresentedcorrectlyinatararchivebutwew
 LONG3=iamanotherreallylonglinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 LONG4=iamanotherreallylonghardlinkthatcantberepresentedcorrectlyinatararchivebutwewantittohappenanywaysohmygodaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa42
 
-NUMBERS != jot 39
+NUMBERS != jot 40
 .for i in ${NUMBERS}
 S$i ?= ${.OBJDIR}/src$i
 SRC$i ?= ${S$i}/usr/local
@@ -762,6 +762,7 @@ rep0/bg-1.tgz: plist24
 	@echo "zoinx" >${SRC26}/share/bg/portrait/a/zoinx
 	@${CREATE_PKG} -B src26 -f plist24 $@
 
+# these exemplify issues with directory moving around
 tying-1: rep0/bg-0.tgz rep0/bg-1.tgz
 	@-rm -rf ${D38}
 	@ROOT=${D38} ${ADD_PKG} rep0/bg-0.tgz
@@ -771,6 +772,18 @@ tying-2: rep0/bg-0.tgz rep0/bg-1.tgz
 	@-rm -rf ${D39}
 	@ROOT=${D39} ${ADD_PKG} rep0/bg-1.tgz
 	@ROOT=${D39} ${ADD_PKG} -r rep0/bg-0.tgz
+
+# this comes from solve_tags
+# pkg_delete finds new dependencies, and so the solver needs to be made
+# "safe" when it can't find them
+tag-delete: rep1/d-0.tgz
+	@-rm -rf ${D40}
+	@ROOT=${D40} ${ADD_PKG} rep1/d-0.tgz
+	# needs a tag to trigger the bug
+	echo "@tag zoinx" >> ${D40}/pkgdb/d-0/+CONTENTS
+	# and an "unsolved" dependency for DeleteSet to look harder
+	echo "@depend graphics/zoinx:zoinx-*:zoinx-2" >> ${D40}/pkgdb/d-0/+CONTENTS
+	@ROOT=${D40} ${DELETE_PKG} d
 
 .PHONY: ${REGRESS_TARGETS} ${REGRESS_TARGETS:S/-disabled$//}
 
