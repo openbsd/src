@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.333 2019/05/13 18:14:05 mpi Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.334 2019/06/09 17:40:34 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -285,7 +285,10 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ENOENT;
 			break;
 		}
-
+		if (ifs->if_type != IFT_ETHER) {
+			error = EINVAL;
+			break;
+		}
 		if (ifs->if_bridgeidx != 0) {
 			if (ifs->if_bridgeidx == ifp->if_index)
 				error = EEXIST;
@@ -304,20 +307,15 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 
-		if (ifs->if_type == IFT_ETHER) {
-			error = ifpromisc(ifs, 1);
-			if (error != 0)
-				break;
-		} else {
-			error = EINVAL;
+		bif = malloc(sizeof(*bif), M_DEVBUF, M_NOWAIT|M_ZERO);
+		if (bif == NULL) {
+			error = ENOMEM;
 			break;
 		}
 
-		bif = malloc(sizeof(*bif), M_DEVBUF, M_NOWAIT|M_ZERO);
-		if (bif == NULL) {
-			if (ifs->if_type == IFT_ETHER)
-				ifpromisc(ifs, 0);
-			error = ENOMEM;
+		error = ifpromisc(ifs, 1);
+		if (error != 0) {
+			free(bif, M_DEVBUF, sizeof(*bif));
 			break;
 		}
 
@@ -1201,8 +1199,6 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 	 */
 	bif0 = bif;
 	SMR_SLIST_FOREACH_LOCKED(bif, &sc->sc_iflist, bif_next) {
-		if (bif->ifp->if_type != IFT_ETHER)
-			continue;
 		if (bridge_ourether(bif->ifp, eh->ether_dhost)) {
 			if (bif0->bif_flags & IFBIF_LEARNING)
 				bridge_rtupdate(sc,
