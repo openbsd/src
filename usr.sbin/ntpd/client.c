@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.106 2019/05/29 18:48:33 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.107 2019/06/09 08:40:54 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,8 @@
 #include "ntpd.h"
 
 int	client_update(struct ntp_peer *);
+int	auto_cmp(const void *, const void *);
+void	handle_auto(double);
 void	set_deadline(struct ntp_peer *, time_t);
 
 void
@@ -213,7 +215,47 @@ client_query(struct ntp_peer *p)
 }
 
 int
-client_dispatch(struct ntp_peer *p, u_int8_t settime)
+auto_cmp(const void *a, const void *b)
+{
+	double at = *(const double *)a;
+	double bt = *(const double *)b;
+	return at < bt ? -1 : (at > bt ? 1 : 0);
+}
+
+void
+handle_auto(double offset)
+{
+	static int count;
+	static double v[AUTO_REPLIES];
+
+	/*
+	 * It happens the (constraint) resolves initially fail, don't give up
+	 * but see if we get validatd replies later.
+	 */
+	if (conf->constraint_median == 0)
+		return;
+
+	if (offset < AUTO_THRESHOLD) {
+		/* don't bother */
+		priv_settime(0);
+		return;
+	}
+	/* collect some more */
+	v[count++] = offset;
+	if (count < AUTO_REPLIES)
+		return;
+	
+	/* we have enough */
+	qsort(v, count, sizeof(double), auto_cmp);
+	if (AUTO_REPLIES % 2 == 0)
+		offset = (v[AUTO_REPLIES / 2 - 1] + v[AUTO_REPLIES / 2]) / 2;
+	else
+		offset = v[AUTO_REPLIES / 2];
+	priv_settime(offset);
+}
+
+int
+client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 {
 	struct ntp_msg		 msg;
 	struct msghdr		 somsg;
@@ -385,7 +427,9 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
 		interval = scale_interval(INTERVAL_QUERY_PATHETIC);
 	else if (p->trustlevel < TRUSTLEVEL_AGGRESSIVE)
-		interval = scale_interval(INTERVAL_QUERY_AGGRESSIVE);
+		interval = (conf->settime && conf->automatic) ?
+		    INTERVAL_QUERY_ULTRA_VIOLENCE :
+		    scale_interval(INTERVAL_QUERY_AGGRESSIVE);
 	else
 		interval = scale_interval(INTERVAL_QUERY_NORMAL);
 
@@ -408,8 +452,12 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	    (long long)interval);
 
 	client_update(p);
-	if (settime)
-		priv_settime(p->reply[p->shift].offset);
+	if (settime) {
+		if (automatic)
+			handle_auto(p->reply[p->shift].offset);
+		else
+			priv_settime(p->reply[p->shift].offset);
+	}
 
 	if (++p->shift >= OFFSET_ARRAY_SIZE)
 		p->shift = 0;

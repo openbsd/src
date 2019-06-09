@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.152 2019/05/30 13:42:19 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.153 2019/06/09 08:40:54 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -394,7 +394,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 			if (pfd[j].revents & (POLLIN|POLLERR)) {
 				nfds--;
 				if (client_dispatch(idx2peer[j - idx_peers],
-				    conf->settime) == -1) {
+				    conf->settime, conf->automatic) == -1) {
 					log_warn("pipe write error (settime)");
 					ntp_quit = 1;
 				}

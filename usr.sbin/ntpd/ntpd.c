@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.120 2019/01/14 16:30:21 florian Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.121 2019/06/09 08:40:54 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <netinet/in.h>
@@ -41,6 +42,7 @@
 
 void		sighdlr(int);
 __dead void	usage(void);
+int		auto_preconditions(const struct ntpd_conf *);
 int		main(int, char *[]);
 void		check_child(void);
 int		dispatch_imsg(struct ntpd_conf *, int, char **);
@@ -100,6 +102,19 @@ usage(void)
 		fprintf(stderr, "usage: %s [-dnSsv] [-f file]\n",
 		    __progname);
 	exit(1);
+}
+
+int
+auto_preconditions(const struct ntpd_conf *cnf)
+{
+	int mib[2] = { CTL_KERN, KERN_SECURELVL };
+	int constraints, securelevel;
+	size_t sz = sizeof(int);
+
+	if (sysctl(mib, 2, &securelevel, &sz, NULL, 0) < 0)
+		err(1, "sysctl");
+	constraints = !TAILQ_EMPTY(&cnf->constraints);
+	return !cnf->settime && constraints && securelevel == 0;
 }
 
 #define POLL_MAX		8
@@ -185,6 +200,10 @@ main(int argc, char *argv[])
 	if ((pw = getpwnam(NTPD_USER)) == NULL)
 		errx(1, "unknown user %s", NTPD_USER);
 
+	lconf.automatic = auto_preconditions(&lconf);
+	if (lconf.automatic)
+		lconf.settime = 1;
+
 	if (pname != NULL) {
 		/* Remove our proc arguments, so child doesn't need to. */
 		if (sanitize_argv(&argc0, &argv0) == -1)
@@ -209,7 +228,6 @@ main(int argc, char *argv[])
 
 	if (setpriority(PRIO_PROCESS, 0, -20) == -1)
 		warn("can't set priority");
-
 	reset_adjtime();
 	if (!lconf.settime) {
 		log_init(lconf.debug, LOG_DAEMON);
@@ -494,6 +512,9 @@ ntpd_settime(double d)
 	struct timeval	tv, curtime;
 	char		buf[80];
 	time_t		tval;
+
+	if (d == 0)
+		return;
 
 	if (gettimeofday(&curtime, NULL) == -1) {
 		log_warn("gettimeofday");

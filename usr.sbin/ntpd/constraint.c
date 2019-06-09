@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.44 2019/05/30 13:42:19 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.45 2019/06/09 08:40:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -157,8 +157,11 @@ constraint_query(struct constraint *cstr)
 		/* Proceed and query the time */
 		break;
 	case STATE_DNS_TEMPFAIL:
-		/* Retry resolving the address */
-		constraint_init(cstr);
+		if (now > cstr->last + CONSTRAINT_RETRY_INTERVAL) {
+			/* Retry resolving the address */
+			constraint_init(cstr);
+			return 0;
+		}
 		return (-1);
 	case STATE_QUERY_SENT:
 		if (cstr->last + CONSTRAINT_SCAN_TIMEOUT > now) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.140 2019/05/29 18:48:33 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.141 2019/06/09 08:40:54 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@
 #define	INTERVAL_QUERY_NORMAL		30	/* sync to peers every n secs */
 #define	INTERVAL_QUERY_PATHETIC		60
 #define	INTERVAL_QUERY_AGGRESSIVE	5
+#define	INTERVAL_QUERY_ULTRA_VIOLENCE	1	/* used at startup for auto */
 
 #define	TRUSTLEVEL_BADPEER		6
 #define	TRUSTLEVEL_PATHETIC		2
@@ -66,6 +67,9 @@
 #define	MAX_DISPLAY_WIDTH	80	/* max chars in ctl_show report line */
 
 #define FILTER_ADJFREQ		0x01	/* set after doing adjfreq */
+#define AUTO_REPLIES    	4	/* # of ntp replies we want for auto */
+#define AUTO_THRESHOLD		60	/* dont bother auto setting < this */
+
 
 #define	SENSOR_DATA_MAXAGE		(15*60)
 #define	SENSOR_QUERY_INTERVAL		15
@@ -74,6 +78,7 @@
 #define	SENSOR_DEFAULT_REFID		"HARD"
 
 #define CONSTRAINT_ERROR_MARGIN		(4)
+#define CONSTRAINT_RETRY_INTERVAL	(15)
 #define CONSTRAINT_SCAN_INTERVAL	(15*60)
 #define CONSTRAINT_SCAN_TIMEOUT		(10)
 #define CONSTRAINT_MARGIN		(2.0*60)
@@ -228,6 +233,7 @@ struct ntpd_conf {
 	int				        	verbose;
 	u_int8_t					listen_all;
 	u_int8_t					settime;
+	u_int8_t					automatic;
 	u_int8_t					noaction;
 	u_int8_t					filters;
 	time_t						constraint_last;
@@ -349,7 +355,7 @@ int	client_peer_init(struct ntp_peer *);
 int	client_addr_init(struct ntp_peer *);
 int	client_nextaddr(struct ntp_peer *);
 int	client_query(struct ntp_peer *);
-int	client_dispatch(struct ntp_peer *, u_int8_t);
+int	client_dispatch(struct ntp_peer *, u_int8_t, u_int8_t);
 void	client_log_error(struct ntp_peer *, const char *, int);
 void	set_next(struct ntp_peer *, time_t);
 
