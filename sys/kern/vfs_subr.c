@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.288 2019/04/19 09:41:07 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.289 2019/06/09 13:53:38 beck Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1922,6 +1922,7 @@ vinvalbuf(struct vnode *vp, int flags, struct ucred *cred, struct proc *p,
 loop:
 	s = splbio();
 	for (;;) {
+		int count = 0;
 		if ((blist = LIST_FIRST(&vp->v_cleanblkhd)) &&
 		    (flags & V_SAVEMETA))
 			while (blist && blist->b_lblkno < 0)
@@ -1963,6 +1964,22 @@ loop:
 			buf_acquire_nomap(bp);
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
+			count++;
+			/*
+			 * XXX Temporary workaround XXX
+			 *
+			 * If this is a gigantisch vnode and we are
+			 * trashing a ton of buffers, drop the lock
+			 * and yield every so often. The longer term
+			 * fix is to add a separate list for these
+			 * invalid buffers so we don't have to do the
+			 * work to free these here.
+			 */
+			if (count > 100) {
+				splx(s);
+				sched_pause(yield);
+				goto loop;
+			}
 		}
 	}
 	if (!(flags & V_SAVEMETA) &&
