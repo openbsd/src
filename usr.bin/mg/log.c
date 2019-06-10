@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.1 2019/06/10 06:52:44 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.2 2019/06/10 16:48:59 lum Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -27,10 +27,90 @@
 #include "log.h"
 #include "funmap.h"
 
-char	 	 mglogpath[20];
+char	*mglogfiles_create(char *);
+int	 mglog_lines(PF);
+int	 mglog_undo(void);
+
+char		*mglogdir;
+extern char	*mglogpath_lines;
+extern char	*mglogpath_undo;
+int		 mgloglevel;
 
 int
 mglog(PF funct)
+{
+	if(!mglog_lines(funct))
+		ewprintf("Problem logging lines");
+	if(!mglog_undo())
+		ewprintf("Problem logging undo");
+
+	return (TRUE);
+}
+
+
+int
+mglog_undo(void)
+{
+	struct undo_rec	*rec;
+	struct stat	 sb;
+	FILE		*fd;
+	char		 buf[4096], tmp[1024];
+	int      	 num;
+	char		*jptr;
+
+	jptr = "^J"; /* :) */
+
+	if(stat(mglogpath_undo, &sb))
+		return (FALSE);
+	fd = fopen(mglogpath_undo, "a");
+	
+	/*
+	 * From undo_dump()
+	 */
+	num = 0;
+	TAILQ_FOREACH(rec, &curbp->b_undo, next) {
+		num++;
+		if (fprintf(fd, "%d:\t %s at %d ", num,
+		    (rec->type == DELETE) ? "DELETE":
+		    (rec->type == DELREG) ? "DELREGION":
+		    (rec->type == INSERT) ? "INSERT":
+		    (rec->type == BOUNDARY) ? "----" :
+		    (rec->type == MODIFIED) ? "MODIFIED": "UNKNOWN",
+		    rec->pos) == -1) {
+			fclose(fd);
+			return (FALSE);
+		}
+		if (rec->content) {
+			(void)strlcat(buf, "\"", sizeof(buf));
+			snprintf(tmp, sizeof(tmp), "%.*s",
+			    *rec->content == '\n' ? 2 : rec->region.r_size,
+			    *rec->content == '\n' ? jptr : rec->content);
+			(void)strlcat(buf, tmp, sizeof(buf));
+			(void)strlcat(buf, "\"", sizeof(buf));
+		}
+		snprintf(tmp, sizeof(tmp), " [%d]", rec->region.r_size);
+		if (strlcat(buf, tmp, sizeof(buf)) >= sizeof(buf)) {
+			dobeep();
+			ewprintf("Undo record too large. Aborted.");
+			return (FALSE);
+		}
+		if (fprintf(fd, "%s\n", buf) == -1) {
+			fclose(fd);
+			return (FALSE);
+		}
+		tmp[0] = buf[0] = '\0';
+	}
+	if (fprintf(fd, "\t [end-of-undo]\n\n") == -1) {
+		fclose(fd);
+		return (FALSE);
+	}
+	fclose(fd);
+
+	return (TRUE);
+}
+
+int
+mglog_lines(PF funct)
 {
 	struct line     *lp;
 	struct stat      sb;
@@ -40,10 +120,10 @@ mglog(PF funct)
 
 	i = 0;
 
-	if(stat(mglogpath, &sb))
+	if(stat(mglogpath_lines, &sb))
 		return (FALSE);
 
-	fd = fopen(mglogpath, "a");
+	fd = fopen(mglogpath_lines, "a");
 	if (fprintf(fd, "%s\n", function_name(funct)) == -1) {
 		fclose(fd);
 		return (FALSE);
@@ -68,7 +148,7 @@ mglog(PF funct)
 				fclose(fd);
         	                return (FALSE);
 			}
-			if (fprintf(fd, "lines:raw%d buf%d wdot%d\n\n",
+			if (fprintf(fd, "lines:raw:%d buf:%d wdot:%d\n\n",
 			    i, curbp->b_lines, curwp->w_dotline)) {
 				fclose(fd);
         	                return (FALSE);
@@ -83,18 +163,24 @@ mglog(PF funct)
 
 
 /*
- * Make sure logging to log file can happen.
+ * Make sure logging to log files can happen.
  */
 int
 mgloginit(void)
 {
 	struct stat	 sb;
 	mode_t           dir_mode, f_mode, oumask;
-	char		*mglogdir, *mglogfile;
-	int     	 fd;
+	char		*mglogfile_lines, *mglogfile_undo;
 
 	mglogdir = "./log/";
-	mglogfile = "mg.log";
+	mglogfile_lines = "line.log";
+	mglogfile_undo = "undo.log";
+
+	/* 
+	 * Change mgloglevel for desired level of logging.
+	 * log.h has relevant level info.
+	 */
+	mgloglevel = 1;
 
 	oumask = umask(0);
 	f_mode = 0777& ~oumask;
@@ -106,22 +192,42 @@ mgloginit(void)
 		if (chmod(mglogdir, f_mode) < 0)
 			return (FALSE);
 	}
-	if (strlcpy(mglogpath, mglogdir, sizeof(mglogpath)) >
-	    sizeof(mglogpath))
+	mglogpath_lines = mglogfiles_create(mglogfile_lines);
+	if (mglogpath_lines == NULL)
 		return (FALSE);
-	if (strlcat(mglogpath, mglogfile, sizeof(mglogpath)) >
-	    sizeof(mglogpath))
+	mglogpath_undo = mglogfiles_create(mglogfile_undo);
+	if (mglogpath_undo == NULL)
 		return (FALSE);
 
-	if(stat(mglogpath, &sb))
-		fd = open(mglogpath, O_RDWR | O_CREAT | O_TRUNC, 0644);
+	return (TRUE);
+}	
+
+
+char *
+mglogfiles_create(char *mglogfile)
+{
+	struct stat	 sb;
+	char		 tmp[20], *tmp2;
+	int     	 fd;
+
+	if (strlcpy(tmp, mglogdir, sizeof(tmp)) >
+	    sizeof(tmp))
+		return (NULL);
+	if (strlcat(tmp, mglogfile, sizeof(tmp)) >
+	    sizeof(tmp))
+		return (NULL);
+	if ((tmp2 = strndup(tmp, 20)) == NULL)
+		return (NULL);
+
+	if(stat(tmp2, &sb))
+		fd = open(tmp2, O_RDWR | O_CREAT | O_TRUNC, 0644);
 	else
-		fd = open(mglogpath, O_RDWR | O_TRUNC, 0644);
+		fd = open(tmp2, O_RDWR | O_TRUNC, 0644);
 
 	if (fd == -1)
-		return (FALSE);
+		return (NULL);
 
 	close(fd);	
 
-	return (TRUE);
+	return (tmp2);
 }
