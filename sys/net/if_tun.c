@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.186 2019/05/12 16:38:02 sashan Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.187 2019/06/10 21:55:16 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -623,8 +623,9 @@ tun_dev_ioctl(struct tun_softc *tp, u_long cmd, caddr_t data, int flag,
 		tunp = (struct tuninfo *)data;
 		if (tunp->mtu < ETHERMIN || tunp->mtu > TUNMRU)
 			return (EINVAL);
+		if (tunp->type != tp->tun_if.if_type)
+			return (EINVAL);
 		tp->tun_if.if_mtu = tunp->mtu;
-		tp->tun_if.if_type = tunp->type;
 		tp->tun_if.if_flags =
 		    (tunp->flags & TUN_IFF_FLAGS) |
 		    (tp->tun_if.if_flags & ~TUN_IFF_FLAGS);
