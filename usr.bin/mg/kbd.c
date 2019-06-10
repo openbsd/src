@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.30 2015/09/26 21:51:58 jasper Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.31 2019/06/10 06:52:44 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -14,6 +14,10 @@
 #include "kbd.h"
 #include "key.h"
 #include "macro.h"
+
+#ifdef  MGLOG
+#include "log.h"
+#endif
 
 #define METABIT 0x80
 
@@ -151,6 +155,11 @@ doin(void)
 	while ((funct = doscan(curmap, (key.k_chars[key.k_count++] =
 	    getkey(TRUE)), &curmap)) == NULL)
 		/* nothing */;
+
+#ifdef  MGLOG
+	if (!mglog(funct))
+		ewprintf("Problem with logging");
+#endif
 
 	if (macrodef && macrocount < MAXMACRO)
 		macro[macrocount++].m_funct = funct;
