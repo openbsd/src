@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.342 2018/10/13 18:36:01 florian Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.343 2019/06/10 23:48:21 dlg Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1712,7 +1712,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
 
-		microtime(&tv);
+		m_microtime(m, &tv);
 		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)

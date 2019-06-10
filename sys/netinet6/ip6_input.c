@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.216 2018/11/09 14:14:32 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.217 2019/06/10 23:48:22 dlg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -947,7 +947,7 @@ ip6_savecontrol(struct inpcb *in6p, struct mbuf *m, struct mbuf **mp)
 	if (in6p->inp_socket->so_options & SO_TIMESTAMP) {
 		struct timeval tv;
 
-		microtime(&tv);
+		m_microtime(m, &tv);
 		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
 		    SCM_TIMESTAMP, SOL_SOCKET);
 		if (*mp)
