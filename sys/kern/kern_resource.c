@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.63 2019/06/02 03:58:28 visa Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.64 2019/06/10 03:15:53 visa Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -52,6 +52,9 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+
+/* SIGXCPU interval in seconds of process runtime */
+#define SIGXCPU_INTERVAL	5
 
 void	tuagg_sub(struct tusage *, struct proc *);
 
@@ -506,7 +509,7 @@ rucheck(void *arg)
 {
 	struct process *pr = arg;
 	struct rlimit *rlim;
-	rlim_t runtime;
+	time_t runtime;
 	int s;
 
 	KERNEL_ASSERT_LOCKED();
@@ -516,14 +519,12 @@ rucheck(void *arg)
 	SCHED_UNLOCK(s);
 
 	rlim = &pr->ps_limit->pl_rlimit[RLIMIT_CPU];
-	if (runtime >= rlim->rlim_cur) {
-		if (runtime >= rlim->rlim_max) {
+	if ((rlim_t)runtime >= rlim->rlim_cur) {
+		if ((rlim_t)runtime >= rlim->rlim_max) {
 			prsignal(pr, SIGKILL);
-		} else {
+		} else if (runtime >= pr->ps_nextxcpu) {
 			prsignal(pr, SIGXCPU);
-			if (rlim->rlim_cur < rlim->rlim_max)
-				rlim->rlim_cur = MIN(rlim->rlim_cur + 5,
-				    rlim->rlim_max);
+			pr->ps_nextxcpu = runtime + SIGXCPU_INTERVAL;
 		}
 	}
 
