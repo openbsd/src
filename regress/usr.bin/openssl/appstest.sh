@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.16 2019/02/16 02:39:18 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.17 2019/06/10 14:22:12 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -856,8 +856,11 @@ function test_smime {
 	section_message "S/MIME operations"
 	
 	smime_txt=$user1_dir/smime.txt
-	smime_msg=$user1_dir/smime.msg
+	smime_enc=$user1_dir/smime.enc
+	smime_sig=$user1_dir/smime.sig
+	smime_p7o=$user1_dir/smime.p7o
 	smime_ver=$user1_dir/smime.ver
+	smime_dec=$user1_dir/smime.dec
 	
 	cat << __EOF__ > $smime_txt
 Hello Bob,
@@ -865,18 +868,45 @@ Sincerely yours
 Alice
 __EOF__
 	
+	# encrypt
+	start_message "smime ... encrypt message"
+
+	$openssl_bin smime -encrypt -aes256 -binary -in $smime_txt \
+		-out $smime_enc $server_cert
+	check_exit_status $?
+
 	# sign
 	start_message "smime ... sign to message"
 	
-	$openssl_bin smime -sign -in $smime_txt -text -out $smime_msg \
-		-signer $user1_cert -inkey $user1_key -passin pass:$user1_pass
+	$openssl_bin smime -sign -in $smime_enc -text -out $smime_sig \
+		-signer $user1_cert -inkey $user1_key -passin pass:$user1_pass \
+		-md sha256 \
+		-from user1@test_dummy.com -to server@test_dummy.com \
+		-subject "test openssl smime"
 	check_exit_status $?
 	
+	# pk7out
+	start_message "smime ... pk7out from message"
+
+	$openssl_bin smime -pk7out -in $smime_sig -out $smime_p7o
+	check_exit_status $?
+
 	# verify
 	start_message "smime ... verify message"
 	
-	$openssl_bin smime -verify -in $smime_msg -signer $user1_cert \
-		-CAfile $ca_cert -out $smime_ver
+	$openssl_bin smime -verify -in $smime_sig -signer $user1_cert \
+		-CAfile $ca_cert -text -out $smime_ver \
+		-check_ss_sig -issuer_checks -policy_check -x509_strict
+	check_exit_status $?
+
+	# decrypt
+	start_message "smime ... decrypt message"
+
+	$openssl_bin smime -decrypt -in $smime_ver -out $smime_dec \
+		-recip $server_cert -inkey $server_key -passin pass:$server_pass
+	check_exit_status $?
+
+	diff $smime_dec $smime_txt
 	check_exit_status $?
 }
 
@@ -949,9 +979,11 @@ function test_pkcs {
 	start_message "pkcs12 ... create"
 	$openssl_bin pkcs12 -export -in $server_cert -inkey $server_key \
 		-passin pass:$server_pass -certfile $ca_cert -CAfile $ca_cert \
-		-caname "server_p12" -passout pass:$pkcs_pass \
+		-caname "caname_server_p12" \
 		-certpbe AES-256-CBC -keypbe AES-256-CBC -chain \
-		-out $server_cert.p12
+		-name "name_server_p12" -des3 -maciter -macalg sha256 \
+		-CSP "csp_server_p12" -LMK -keyex \
+		-passout pass:$pkcs_pass -out $server_cert.p12
 	check_exit_status $?
 	
 	start_message "pkcs12 ... verify"
