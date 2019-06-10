@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.74 2019/01/17 05:35:35 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.75 2019/06/10 18:11:27 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -289,13 +289,15 @@ main(int argc, char **argv)
 	const char *cmd;
 	char cmdline[LINE_MAX];
 	char myname[_PW_NAME_LEN + 1];
-	struct passwd *pw;
+	char mypwbuf[_PW_BUF_LEN], targpwbuf[_PW_BUF_LEN];
+	struct passwd mypwstore, targpwstore;
+	struct passwd *mypw, *targpw;
 	const struct rule *rule;
 	uid_t uid;
 	uid_t target = 0;
 	gid_t groups[NGROUPS_MAX + 1];
 	int ngroups;
-	int i, ch;
+	int i, ch, rv;
 	int sflag = 0;
 	int nflag = 0;
 	char cwdpath[PATH_MAX];
@@ -346,10 +348,10 @@ main(int argc, char **argv)
 	} else if ((!sflag && !argc) || (sflag && argc))
 		usage();
 
-	pw = getpwuid(uid);
-	if (!pw)
-		err(1, "getpwuid failed");
-	if (strlcpy(myname, pw->pw_name, sizeof(myname)) >= sizeof(myname))
+	rv = getpwuid_r(uid, &mypwstore, mypwbuf, sizeof(mypwbuf), &mypw);
+	if (rv != 0 || mypw == NULL)
+		err(1, "getpwuid_r failed");
+	if (strlcpy(myname, mypw->pw_name, sizeof(myname)) >= sizeof(myname))
 		errx(1, "pw_name too long");
 	ngroups = getgroups(NGROUPS_MAX, groups);
 	if (ngroups == -1)
@@ -359,7 +361,7 @@ main(int argc, char **argv)
 	if (sflag) {
 		sh = getenv("SHELL");
 		if (sh == NULL || *sh == '\0') {
-			shargv[0] = strdup(pw->pw_shell);
+			shargv[0] = strdup(mypw->pw_shell);
 			if (shargv[0] == NULL)
 				err(1, NULL);
 		} else
@@ -415,11 +417,11 @@ main(int argc, char **argv)
 	if (pledge("stdio rpath getpw exec id", NULL) == -1)
 		err(1, "pledge");
 
-	pw = getpwuid(target);
-	if (!pw)
+	rv = getpwuid_r(target, &targpwstore, targpwbuf, sizeof(targpwbuf), &targpw);
+	if (rv != 0 || targpw == NULL)
 		errx(1, "no passwd entry for target");
 
-	if (setusercontext(NULL, pw, target, LOGIN_SETGROUP |
+	if (setusercontext(NULL, targpw, target, LOGIN_SETGROUP |
 	    LOGIN_SETPRIORITY | LOGIN_SETRESOURCES | LOGIN_SETUMASK |
 	    LOGIN_SETUSER) != 0)
 		errx(1, "failed to set user context for target");
@@ -436,7 +438,7 @@ main(int argc, char **argv)
 		err(1, "pledge");
 
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
-	    myname, cmdline, pw->pw_name, cwd);
+	    myname, cmdline, targpw->pw_name, cwd);
 
 	envp = prepenv(rule);
 
