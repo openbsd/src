@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.55 2018/12/28 19:25:10 remi Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.56 2019/06/10 05:11:03 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2018 $
+.Dd $Mdocdate: June 10 2019 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -257,7 +257,7 @@ Areas are used for grouping interfaces.
 All interface-specific parameters can
 be configured per area, overruling the global settings.
 .Bl -tag -width Ds
-.It Ic area Ar address
+.It Ic area Ar id Ns | Ns Ar address
 Specify an area section, grouping one or more interfaces.
 .Bd -literal -offset indent
 area 0.0.0.0 {
