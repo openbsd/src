@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2019/06/10 16:48:59 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2019/06/10 18:55:15 lum Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -149,7 +149,7 @@ mglog_lines(PF funct)
         	                return (FALSE);
 			}
 			if (fprintf(fd, "lines:raw:%d buf:%d wdot:%d\n\n",
-			    i, curbp->b_lines, curwp->w_dotline)) {
+			    i, curbp->b_lines, curwp->w_dotline) == -1) {
 				fclose(fd);
         	                return (FALSE);
 			}
