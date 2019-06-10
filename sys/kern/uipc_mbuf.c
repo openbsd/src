@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.268 2019/02/10 22:45:58 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.269 2019/06/10 23:45:19 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1443,6 +1443,19 @@ m_dup_pkt(struct mbuf *m0, unsigned int adj, int wait)
 fail:
 	m_freem(m);
 	return (NULL);
+}
+
+void
+m_microtime(const struct mbuf *m, struct timeval *tv)
+{
+	if (ISSET(m->m_pkthdr.csum_flags, M_TIMESTAMP)) {
+		struct timeval btv, utv;
+
+		NSEC_TO_TIMEVAL(m->m_pkthdr.ph_timestamp, &utv);
+		microboottime(&btv);
+		timeradd(&btv, &utv, tv);
+	} else
+		microtime(tv);
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.243 2019/06/10 22:59:00 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.244 2019/06/10 23:45:19 dlg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -446,6 +446,8 @@ int	m_apply(struct mbuf *, int, int,
 	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
 struct mbuf *m_dup_pkt(struct mbuf *, unsigned int, int);
 int	m_dup_pkthdr(struct mbuf *, struct mbuf *, int);
+
+void	m_microtime(const struct mbuf *, struct timeval *);
 
 static inline struct mbuf *
 m_freemp(struct mbuf **mp)
