@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_new.3,v 1.15 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: BN_new.3,v 1.16 2019/06/10 09:49:48 schwarze Exp $
 .\" full merge up to: OpenSSL man3/BN_new 2457c19d Mar 6 08:43:36 2004 +0000
 .\" selective merge up to: man3/BN_new 681acb31 Sep 29 13:10:34 2017 +0200
 .\" full merge up to: OpenSSL man7/bn 05ea606a May 20 20:52:46 2016 -0400
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: June 10 2019 $
 .Dt BN_NEW 3
 .Os
 .Sh NAME
@@ -164,6 +164,7 @@ and sets an error code that can be obtained by
 .Xr BN_set_negative 3 ,
 .Xr BN_swap 3 ,
 .Xr BN_zero 3 ,
+.Xr crypto 3 ,
 .Xr get_rfc3526_prime_8192 3
 .Sh HISTORY
 .Fn BN_new ,

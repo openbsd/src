@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.6 2018/08/24 19:17:38 tb Exp $
+.\"	$OpenBSD: CRYPTO_get_mem_functions.3,v 1.7 2019/06/10 09:49:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2018 $
+.Dd $Mdocdate: June 10 2019 $
 .Dt CRYPTO_GET_MEM_FUNCTIONS 3
 .Os
 .Sh NAME
@@ -96,6 +96,8 @@ always returns
 and
 .Fn CRYPTO_mem_leaks_cb
 always return -1.
+.Sh SEE ALSO
+.Xr crypto 3
 .Sh HISTORY
 .Fn CRYPTO_mem_ctrl ,
 .Fn CRYPTO_mem_leaks ,
