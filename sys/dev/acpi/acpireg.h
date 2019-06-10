@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.43 2018/08/19 08:23:47 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.44 2019/06/10 14:38:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -184,7 +184,7 @@ struct acpi_fadt {
 	uint8_t		reset_value;
 	uint8_t		reserved2a;
 	uint8_t		reserved2b;
-	uint8_t		reserved2c;
+	uint8_t		fadt_minor;
 	uint64_t	x_firmware_ctl;
 	uint64_t	x_dsdt;
 	struct acpi_gas	x_pm1a_evt_blk;

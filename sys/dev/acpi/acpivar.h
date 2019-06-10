@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.100 2019/06/07 15:40:41 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.101 2019/06/10 14:38:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -264,7 +264,8 @@ struct acpi_softc {
 
 	struct timeout		sc_dev_timeout;
 
-	int			sc_revision;
+	int			sc_major;
+	int			sc_minor;
 
 	int			sc_pse;		/* passive cooling enabled */
 

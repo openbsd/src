@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.369 2019/06/08 12:25:19 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.370 2019/06/10 14:38:06 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -994,10 +994,7 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 		printf(": can't map memory\n");
 		return;
 	}
-
 	rsdp = (struct acpi_rsdp *)handle.va;
-	sc->sc_revision = (int)rsdp->rsdp_revision;
-	printf(": rev %d", sc->sc_revision);
 
 	SIMPLEQ_INIT(&sc->sc_tables);
 	SIMPLEQ_INIT(&sc->sc_wakedevs);
@@ -1009,14 +1006,14 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 #ifndef SMALL_KERNEL
 	sc->sc_note = malloc(sizeof(struct klist), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_note == NULL) {
-		printf(", can't allocate memory\n");
+		printf(": can't allocate memory\n");
 		acpi_unmap(&handle);
 		return;
 	}
 #endif /* SMALL_KERNEL */
 
 	if (acpi_loadtables(sc, rsdp)) {
-		printf(", can't load tables\n");
+		printf(": can't load tables\n");
 		acpi_unmap(&handle);
 		return;
 	}
@@ -1034,9 +1031,14 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 		}
 	}
 	if (sc->sc_fadt == NULL) {
-		printf(", no FADT\n");
+		printf(": no FADT\n");
 		return;
 	}
+
+	sc->sc_major = sc->sc_fadt->hdr.revision;
+	if (sc->sc_major > 4)
+		sc->sc_minor = sc->sc_fadt->fadt_minor;
+	printf(": ACPI %d.%d", sc->sc_major, sc->sc_minor);
 
 	/*
 	 * A bunch of things need to be done differently for
