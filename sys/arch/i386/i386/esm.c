@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.59 2015/09/08 07:12:56 deraadt Exp $ */
+/*	$OpenBSD: esm.c,v 1.60 2019/06/10 15:06:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -331,7 +331,7 @@ esm_watchdog(void *arg, int period)
 	 * should have a process context we can sleep in.
 	 */
 	while (sc->sc_step != 0) {
-		if (tsleep(sc, PUSER | PCATCH, "esm", 0) == EINTR) {
+		if (tsleep(sc, PWAIT | PCATCH, "esm", 0) == EINTR) {
 			splx(s);
 			return (sc->sc_wdog_period);
 		}
