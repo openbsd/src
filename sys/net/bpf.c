@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.175 2019/05/18 12:59:32 sashan Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.176 2019/06/10 23:49:45 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1289,8 +1289,14 @@ _bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction,
 		if (d->bd_fildrop != BPF_FILDROP_PASS)
 			drop = 1;
 		if (d->bd_fildrop != BPF_FILDROP_DROP) {
-			if (!gottime++)
-				microtime(&tv);
+			if (!gottime) {
+				if (ISSET(m->m_flags, M_PKTHDR))
+					m_microtime(m, &tv);
+				else
+					microtime(&tv);
+
+				gottime = 1;
+			}
 
 			mtx_enter(&d->bd_mtx);
 			bpf_catchpacket(d, (u_char *)m, pktlen, slen, cpfn,
