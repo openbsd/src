@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.337 2019/04/23 10:53:45 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.338 2019/06/10 16:32:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -814,9 +814,8 @@ carp_clone_create(struct if_clone *ifc, int unit)
 #ifdef INET6
 	sc->sc_im6o.im6o_hlim = CARP_DFLTTL;
 #endif /* INET6 */
-	sc->sc_imo.imo_membership = (struct in_multi **)malloc(
-	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
-	    M_WAITOK|M_ZERO);
+	sc->sc_imo.imo_membership = mallocarray(IP_MIN_MEMBERSHIPS,
+	    sizeof(struct in_multi *), M_IPMOPTS, M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 
 	LIST_INIT(&sc->carp_mc_listhead);
@@ -901,7 +900,8 @@ carp_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 	carp_destroy_vhosts(ifp->if_softc);
 	refcnt_finalize(&sc->sc_refcnt, "carpdtor");
-	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
+	free(sc->sc_imo.imo_membership, M_IPMOPTS,
+	    sc->sc_imo.imo_max_memberships * sizeof(struct in_multi *));
 	free(sc, M_DEVBUF, sizeof(*sc));
 	return (0);
 }

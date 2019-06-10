@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.243 2019/04/28 22:15:58 mpi Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.244 2019/06/10 16:32:51 mpi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1882,9 +1882,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 		 * No multicast option buffer attached to the pcb;
 		 * allocate one and initialize to default values.
 		 */
-		im6o = (struct ip6_moptions *)
-			malloc(sizeof(*im6o), M_IPMOPTS, M_WAITOK);
-
+		im6o = malloc(sizeof(*im6o), M_IPMOPTS, M_WAITOK);
 		if (im6o == NULL)
 			return (ENOBUFS);
 		*im6op = im6o;
@@ -2138,7 +2136,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 	    im6o->im6o_hlim == ip6_defmcasthlim &&
 	    im6o->im6o_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
 	    LIST_EMPTY(&im6o->im6o_memberships)) {
-		free(*im6op, M_IPMOPTS, 0);
+		free(*im6op, M_IPMOPTS, sizeof(**im6op));
 		*im6op = NULL;
 	}
 
@@ -2202,7 +2200,7 @@ ip6_freemoptions(struct ip6_moptions *im6o)
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}
-	free(im6o, M_IPMOPTS, 0);
+	free(im6o, M_IPMOPTS, sizeof(*im6o));
 }
 
 /*

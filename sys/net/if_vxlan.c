@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.72 2019/04/28 22:15:58 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.73 2019/06/10 16:32:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -131,9 +131,8 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	struct vxlan_softc	*sc;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
-	sc->sc_imo.imo_membership = malloc(
-	    (sizeof(struct in_multi *) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
-	    M_WAITOK|M_ZERO);
+	sc->sc_imo.imo_membership = mallocarray(IP_MIN_MEMBERSHIPS,
+	    sizeof(struct in_multi *), M_IPMOPTS, M_WAITOK|M_ZERO);
 	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
 	sc->sc_dstport = htons(VXLAN_PORT);
 	sc->sc_vnetid = VXLAN_VNI_UNSET;
@@ -199,7 +198,8 @@ vxlan_clone_destroy(struct ifnet *ifp)
 	if (!task_del(net_tq(ifp->if_index), &sc->sc_sendtask))
 		taskq_barrier(net_tq(ifp->if_index));
 
-	free(sc->sc_imo.imo_membership, M_IPMOPTS, 0);
+	free(sc->sc_imo.imo_membership, M_IPMOPTS,
+	    sc->sc_imo.imo_max_memberships * sizeof(struct in_multi *));
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);

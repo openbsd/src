@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.354 2019/04/28 22:15:58 mpi Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.355 2019/06/10 16:32:51 mpi Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1362,8 +1362,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * allocate one and initialize to default values.
 		 */
 		imo = malloc(sizeof(*imo), M_IPMOPTS, M_WAITOK|M_ZERO);
-		immp = (struct in_multi **)malloc(
-		    (sizeof(*immp) * IP_MIN_MEMBERSHIPS), M_IPMOPTS,
+		immp = mallocarray(IP_MIN_MEMBERSHIPS, sizeof(*immp), M_IPMOPTS,
 		    M_WAITOK|M_ZERO);
 		*imop = imo;
 		imo->imo_ifidx = 0;
@@ -1517,9 +1516,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			omships = imo->imo_membership;
 			newmax = ((imo->imo_max_memberships + 1) * 2) - 1;
 			if (newmax <= IP_MAX_MEMBERSHIPS) {
-				nmships = (struct in_multi **)mallocarray(
-				    newmax, sizeof(*nmships), M_IPMOPTS,
-				    M_NOWAIT|M_ZERO);
+				nmships = mallocarray(newmax, sizeof(*nmships),
+				    M_IPMOPTS, M_NOWAIT|M_ZERO);
 				if (nmships != NULL) {
 					memcpy(nmships, omships,
 					    sizeof(*omships) *
@@ -1623,7 +1621,8 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 	    imo->imo_ttl == IP_DEFAULT_MULTICAST_TTL &&
 	    imo->imo_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
-		free(imo->imo_membership , M_IPMOPTS, 0);
+		free(imo->imo_membership , M_IPMOPTS,
+		    imo->imo_max_memberships * sizeof(struct in_multi *));
 		free(*imop, M_IPMOPTS, sizeof(**imop));
 		*imop = NULL;
 	}
@@ -1688,7 +1687,8 @@ ip_freemoptions(struct ip_moptions *imo)
 	if (imo != NULL) {
 		for (i = 0; i < imo->imo_num_memberships; ++i)
 			in_delmulti(imo->imo_membership[i]);
-		free(imo->imo_membership, M_IPMOPTS, 0);
+		free(imo->imo_membership, M_IPMOPTS,
+		    imo->imo_max_memberships * sizeof(struct in_multi *));
 		free(imo, M_IPMOPTS, sizeof(*imo));
 	}
 }
