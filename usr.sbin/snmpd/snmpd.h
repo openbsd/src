@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.84 2019/06/11 05:33:01 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.85 2019/06/11 05:36:32 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,7 @@
 #define SNMPD_MAXUSERNAMELEN	32
 #define SNMPD_MAXCONTEXNAMELEN	32
 
-#define SNMP_USM_MAXDIGESTLEN	12
+#define SNMP_USM_MAXDIGESTLEN	48
 #define SNMP_USM_SALTLEN	8
 #define SNMP_USM_KEYLEN		64
 #define SNMP_CIPHER_KEYLEN	16
@@ -534,7 +534,11 @@ TAILQ_HEAD(socklist, listen_sock);
 enum usmauth {
 	AUTH_NONE = 0,
 	AUTH_MD5,	/* HMAC-MD5-96, RFC3414 */
-	AUTH_SHA1	/* HMAC-SHA-96, RFC3414 */
+	AUTH_SHA1,	/* HMAC-SHA-96, RFC3414 */
+	AUTH_SHA224,	/* usmHMAC128SHA224AuthProtocol. RFC7860 */
+	AUTH_SHA256,	/* usmHMAC192SHA256AuthProtocol. RFC7860 */
+	AUTH_SHA384,	/* usmHMAC256SHA384AuthProtocol. RFC7860 */
+	AUTH_SHA512	/* usmHMAC384SHA512AuthProtocol. RFC7860 */
 };
 
 #define AUTH_DEFAULT	AUTH_SHA1	/* Default digest */

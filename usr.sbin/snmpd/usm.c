@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.15 2019/06/11 05:33:01 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.16 2019/06/11 05:36:32 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -97,6 +97,14 @@ usm_get_md(enum usmauth ua)
 		return EVP_md5();
 	case AUTH_SHA1:
 		return EVP_sha1();
+	case AUTH_SHA224:
+		return EVP_sha224();
+	case AUTH_SHA256:
+		return EVP_sha256();
+	case AUTH_SHA384:
+		return EVP_sha384();
+	case AUTH_SHA512:
+		return EVP_sha512();
 	case AUTH_NONE:
 	default:
 		return NULL;
@@ -110,6 +118,14 @@ usm_get_digestlen(enum usmauth ua)
 	case AUTH_MD5:
 	case AUTH_SHA1:
 		return 12;
+	case AUTH_SHA224:
+		return 16;
+	case AUTH_SHA256:
+		return 24;
+	case AUTH_SHA384:
+		return 32;
+	case AUTH_SHA512:
+		return 48;
 	case AUTH_NONE:
 	default:
 		return 0;
@@ -136,6 +152,10 @@ usm_valid_digestlen(size_t digestlen)
 	switch (digestlen) {
 	case 0:
 	case 12:
+	case 16:
+	case 24:
+	case 32:
+	case 48:
 		return 1;
 	default:
 		return 0;
@@ -204,6 +224,18 @@ usm_checkuser(struct usmuser *up, const char **errp)
 		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
 		auth = "HMAC-SHA1-96";
 		break;
+	case AUTH_SHA224:
+		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
+		auth = "usmHMAC128SHA224AuthProtocol";
+	case AUTH_SHA256:
+		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
+		auth = "usmHMAC192SHA256AuthProtocol";
+	case AUTH_SHA384:
+		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
+		auth = "usmHMAC256SHA384AuthProtocol";
+	case AUTH_SHA512:
+		up->uu_seclevel |= SNMP_MSGFLAG_AUTH;
+		auth = "usmHMAC384SHA512AuthProtocol";
 	}
 
 	switch (up->uu_priv) {

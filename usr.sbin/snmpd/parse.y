@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.54 2019/02/13 22:57:08 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.55 2019/06/11 05:36:32 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -500,6 +500,18 @@ auth		: STRING			{
 			else if (strcasecmp($1, "hmac-sha1") == 0 ||
 			     strcasecmp($1, "hmac-sha1-96") == 0)
 				$$ = AUTH_SHA1;
+			else if (strcasecmp($1, "hmac-sha224") == 0 ||
+			    strcasecmp($1, "usmHMAC128SHA224AuthProtocol") == 0)
+				$$ = AUTH_SHA224;
+			else if (strcasecmp($1, "hmac-sha256") == 0 ||
+			    strcasecmp($1, "usmHMAC192SHA256AuthProtocol") == 0)
+				$$ = AUTH_SHA256;
+			else if (strcasecmp($1, "hmac-sha384") == 0 ||
+			    strcasecmp($1, "usmHMAC256SHA384AuthProtocol") == 0)
+				$$ = AUTH_SHA384;
+			else if (strcasecmp($1, "hmac-sha512") == 0 ||
+			    strcasecmp($1, "usmHMAC384SHA512AuthProtocol") == 0)
+				$$ = AUTH_SHA512;
 			else {
 				yyerror("syntax error, bad auth hmac");
 				free($1);
