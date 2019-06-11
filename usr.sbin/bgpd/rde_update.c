@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.113 2019/06/07 09:45:48 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.114 2019/06/11 19:43:56 florian Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -308,7 +308,7 @@ up_get_nexthop(struct rde_peer *peer, struct filterstate *state, u_int8_t aid)
 		 * pointing to the peer itself.
 		 */
 		if (state->nhflags & NEXTHOP_NOMODIFY &&
-		    state->nexthop == NULL &&
+		    state->nexthop != NULL &&
 		    memcmp(&state->nexthop->exit_nexthop,
 		    &peer->remote_addr, sizeof(peer->remote_addr)) != 0) {
 			/* no modify flag set and nexthop not peer addr */
