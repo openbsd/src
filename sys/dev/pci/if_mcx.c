@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.25 2019/06/11 06:17:23 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.26 2019/06/11 06:28:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6028,7 +6028,7 @@ mcx_down(struct mcx_softc *sc)
 		}
 	}
 
-	intr_barrier(&sc->sc_ih);
+	intr_barrier(sc->sc_ihc);
 	ifq_barrier(&ifp->if_snd);
 
 	timeout_del_barrier(&sc->sc_calibrate);
