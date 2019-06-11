@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.102 2019/04/14 10:23:36 jsg Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.103 2019/06/11 14:48:56 jcs Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -280,7 +280,7 @@ __devitem(wscons, wscons, Minimal wscons devices)dnl
 twrget(wscons, wscons, ttyC, cfg, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b)dnl
 target(wscons, wsmux)dnl
 target(wscons, wskbd, 0, 1, 2, 3)dnl
-target(wscons, wsmouse, 0, 1, 2, 3)dnl
+target(wscons, wsmouse, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)dnl
 _mkdev({-wscons-}, {-wscons-}, {-dnl
 show_target(wscons)dnl
 -})dnl
