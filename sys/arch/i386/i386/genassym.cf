@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.47 2018/06/22 13:21:14 bluhm Exp $
+#	$OpenBSD: genassym.cf,v 1.48 2019/06/11 15:23:41 mpi Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,7 +57,6 @@ if NISA > 0
 include <i386/isa/isa_machdep.h>
 endif
 
-export	SRUN
 export	SONPROC
 
 # values for page tables
@@ -72,11 +71,7 @@ export	VM_MAXUSER_ADDRESS
 # proc fields and values
 struct	proc
 member	p_addr
-member	p_priority
 member	p_stat
-member	p_wchan
-member	p_vmspace
-member	p_flag
 member	p_cpu
 member	P_MD_ASTPENDING	p_md.md_astpending
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2010/12/14 20:24:25 jasper Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2019/06/11 15:23:41 mpi Exp $
 #	$NetBSD: genassym.cf,v 1.10 2005/12/11 12:19:00 christos Exp $
 
 #-
@@ -49,7 +49,6 @@ member	tf_spc
 struct	proc
 member	p_addr
 member	p_stat
-member	p_wchan
 member	P_MD_UPTE	p_md.md_upte
 member	P_MD_PCB	p_md.md_pcb
 
@@ -67,7 +66,6 @@ member	pcb_onfault
 member	pcb_fp
 
 export	SONPROC
-export	SRUN
 
 struct	uvmexp		UVMEXP_
 member	intrs

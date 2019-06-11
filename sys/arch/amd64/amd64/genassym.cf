@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.40 2019/05/17 19:07:15 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.41 2019/06/11 15:23:41 mpi Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -19,7 +19,6 @@ include <machine/pic.h>
 include <machine/tss.h>
 include <machine/i82093var.h>
 
-export	SRUN
 export	SONPROC
 
 export	L4_SLOT_KERNBASE
@@ -32,9 +31,7 @@ export	VM_MIN_KERNEL_ADDRESS
 
 struct	proc
 member	p_addr
-member	p_priority
 member	p_stat
-member	p_wchan
 member	P_MD_REGS	p_md.md_regs
 member	P_MD_FLAGS	p_md.md_flags
 member	P_MD_ASTPENDING	p_md.md_astpending
