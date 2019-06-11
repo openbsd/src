@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: gelf_newehdr.3,v 1.1 2019/02/01 05:27:38 jsg Exp $
+.\" $Id: gelf_newehdr.3,v 1.2 2019/06/11 18:30:31 schwarze Exp $
 .\"
 .Dd October 22, 2007
 .Dt GELF_NEWEHDR 3
@@ -134,7 +134,9 @@ The
 function uses a type of
 .Ft "void *"
 for its returned value.
-This differs from some other implementations of the ELF(3) API, which use an
+This differs from some other implementations of the
+.Xr elf 3
+API, which use an
 .Ft "unsigned long"
 return type.
 .Sh ERRORS
