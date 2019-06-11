@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.amd64/MAKEDEV.md,v 1.70 2018/08/19 11:42:33 anton Exp 
-#	OpenBSD: MAKEDEV.common,v 1.102 2019/04/14 10:23:36 jsg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.103 2019/06/11 14:48:56 jcs Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -446,7 +446,8 @@ wskbd[0-9]*)
 	;;
 
 wscons)
-	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
+	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wsmouse4 wsmouse5
+	R wsmouse6 wsmouse7 wsmouse8 wsmouse9 wskbd0 wskbd1 wskbd2
 	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
 	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
