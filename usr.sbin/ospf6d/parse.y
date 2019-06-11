@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2019/05/26 09:27:09 remi Exp $ */
+/*	$OpenBSD: parse.y,v 1.45 2019/06/11 05:00:09 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -1203,6 +1203,16 @@ conf_check_rdomain(u_int rdomain)
 }
 
 void
+conf_clear_redist_list(struct redist_list *rl)
+{
+	struct redistribute *r;
+	while ((r = SIMPLEQ_FIRST(rl)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(rl, entry);
+		free(r);
+	}
+}
+
+void
 clear_config(struct ospfd_conf *xconf)
 {
 	struct area	*a;
@@ -1211,6 +1221,8 @@ clear_config(struct ospfd_conf *xconf)
 		LIST_REMOVE(a, entry);
 		area_del(a);
 	}
+
+	conf_clear_redist_list(&xconf->redist_list);
 
 	free(xconf);
 }

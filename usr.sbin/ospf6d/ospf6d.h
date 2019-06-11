@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.39 2018/12/29 16:04:31 remi Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.40 2019/06/11 05:00:09 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -364,13 +364,14 @@ struct redistribute {
 	u_int8_t			prefixlen;
 	char				dependon[IFNAMSIZ];
 };
+SIMPLEQ_HEAD(redist_list, redistribute);
 
 struct ospfd_conf {
 	struct event		ev;
 	struct in_addr		rtr_id;
 	LIST_HEAD(, area)	area_list;
 	LIST_HEAD(, vertex)	cand_list;
-	SIMPLEQ_HEAD(, redistribute) redist_list;
+	struct redist_list	redist_list;
 
 	u_int32_t		opts;
 #define OSPFD_OPT_VERBOSE	0x00000001
@@ -522,6 +523,7 @@ int		 carp_demote_set(char *, int);
 /* parse.y */
 struct ospfd_conf	*parse_config(char *, int);
 int			 cmdline_symset(char *);
+void			 conf_clear_redist_list(struct redist_list *);
 
 /* interface.c */
 int		 if_init(void);

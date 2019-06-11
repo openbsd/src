@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.79 2018/07/12 13:45:03 remi Exp $ */
+/*	$OpenBSD: rde.c,v 1.80 2019/06/11 05:00:09 remi Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -118,7 +118,6 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	struct event		 ev_sigint, ev_sigterm;
 	struct timeval		 now;
 	struct passwd		*pw;
-	struct redistribute	*r;
 	pid_t			 pid;
 
 	switch (pid = fork()) {
@@ -200,10 +199,8 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	cand_list_init();
 	rt_init();
 
-	while ((r = SIMPLEQ_FIRST(&rdeconf->redist_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&rdeconf->redist_list, entry);
-		free(r);
-	}
+	/* remove unneeded stuff from config */
+	conf_clear_redist_list(&rdeconf->redist_list);
 
 	gettimeofday(&now, NULL);
 	rdeconf->uptime = now.tv_sec;

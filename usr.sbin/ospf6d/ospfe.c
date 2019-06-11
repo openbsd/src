@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.55 2018/09/01 19:21:10 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.56 2019/06/11 05:00:09 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -74,7 +74,6 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 {
 	struct area	*area;
 	struct iface	*iface;
-	struct redistribute *r;
 	struct passwd	*pw;
 	struct event	 ev_sigint, ev_sigterm;
 	pid_t		 pid;
@@ -174,10 +173,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	event_add(&oeconf->ev, NULL);
 
 	/* remove unneeded config stuff */
-	while ((r = SIMPLEQ_FIRST(&oeconf->redist_list)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&oeconf->redist_list, entry);
-		free(r);
-	}
+	conf_clear_redist_list(&oeconf->redist_list);
 
 	/* listen on ospfd control socket */
 	TAILQ_INIT(&ctl_conns);
