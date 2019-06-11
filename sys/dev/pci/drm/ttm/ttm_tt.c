@@ -272,8 +272,8 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 		return -ENOMEM;
 	}
 
-	ttm_dma->segs =  mallocarray(ttm->num_pages,
-	    sizeof(bus_dma_segment_t), M_DRM, M_WAITOK | M_ZERO);
+	ttm_dma->segs = km_alloc(round_page(ttm->num_pages *
+	    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero, &kd_waitok);
 
 	ttm_dma->dmat = bo->bdev->dmat;
 
@@ -282,7 +282,8 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 	if (bus_dmamap_create(ttm_dma->dmat, ttm->num_pages << PAGE_SHIFT,
 	    ttm->num_pages, ttm->num_pages << PAGE_SHIFT, 0, flags,
 	    &ttm_dma->map)) {
-		free(ttm_dma->segs, M_DRM, 0);
+		km_free(ttm_dma->segs, round_page(ttm->num_pages *
+		    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero);
 		ttm_tt_destroy(ttm);
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
@@ -312,8 +313,8 @@ int ttm_sg_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 		return -ENOMEM;
 	}
 
-	ttm_dma->segs =  mallocarray(ttm->num_pages,
-	    sizeof(bus_dma_segment_t), M_DRM, M_WAITOK | M_ZERO);
+	ttm_dma->segs = km_alloc(round_page(ttm->num_pages *
+	    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero, &kd_waitok);
 
 	ttm_dma->dmat = bo->bdev->dmat;
 
@@ -322,7 +323,8 @@ int ttm_sg_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 	if (bus_dmamap_create(ttm_dma->dmat, ttm->num_pages << PAGE_SHIFT,
 	    ttm->num_pages, ttm->num_pages << PAGE_SHIFT, 0, flags,
 	    &ttm_dma->map)) {
-		free(ttm_dma->segs, M_DRM, 0);
+		km_free(ttm_dma->segs, round_page(ttm->num_pages *
+		    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero);
 		ttm_tt_destroy(ttm);
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
@@ -344,7 +346,8 @@ void ttm_dma_tt_fini(struct ttm_dma_tt *ttm_dma)
 	ttm_dma->dma_address = NULL;
 
 	bus_dmamap_destroy(ttm_dma->dmat, ttm_dma->map);
-	free(ttm_dma->segs, M_DRM, 0);
+	km_free(ttm_dma->segs, round_page(ttm->num_pages *
+	    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero);
 }
 EXPORT_SYMBOL(ttm_dma_tt_fini);
 
