@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.22 2019/06/10 23:05:52 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.23 2019/06/11 03:22:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -5652,6 +5652,11 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
 	ms->ms_m = NULL;
 
 	m->m_pkthdr.len = m->m_len = bemtoh32(&cqe->cq_byte_cnt);
+
+	if (cqe->cq_rx_hash_type) {
+		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
+		    betoh32(cqe->cq_rx_hash);
+	}
 
 	if (c->c_tdiff) {
 		uint64_t t = bemtoh64(&cqe->cq_timestamp) - c->c_timestamp;
