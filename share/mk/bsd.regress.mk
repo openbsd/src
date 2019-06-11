@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.18 2019/05/14 16:43:26 bluhm Exp $
+# $OpenBSD: bsd.regress.mk,v 1.19 2019/06/11 18:14:23 espie Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -23,6 +23,10 @@ REGRESS_SKIP_TARGETS?=
 REGRESS_SKIP_SLOW?=no
 REGRESS_FAIL_EARLY?=no
 
+.if ! ${REGRESS_LOG:M/*}
+ERRORS += "Fatal: REGRESS_LOG=${REGRESS_LOG} is not an absolute path"
+.endif
+
 _REGRESS_NAME=${.CURDIR:S/${BSDSRCDIR}\/regress\///}
 _REGRESS_TMP?=/dev/null
 _REGRESS_OUT= | tee -a ${REGRESS_LOG} ${_REGRESS_TMP} 2>&1 > /dev/null
@@ -30,6 +34,7 @@ _REGRESS_OUT= | tee -a ${REGRESS_LOG} ${_REGRESS_TMP} 2>&1 > /dev/null
 .if defined(PROG) && !empty(PROG)
 run-regress-${PROG}: ${PROG}
 	./${PROG}
+.PHONY: run-regress-${PROG}
 .endif
 
 .if defined(PROG) && !defined(REGRESS_TARGETS)
@@ -44,9 +49,9 @@ REGRESS_SKIP_TARGETS+=${REGRESS_SLOW_TARGETS}
 .endif
 
 .if ${REGRESS_FAIL_EARLY:L} != no
-_REGRESS_IGNORE_FAIL=
+_REGRESS_FAILED = false
 .else
-_REGRESS_IGNORE_FAIL=	-
+_REGRESS_FAILED = true
 .endif
 
 .if defined(REGRESS_ROOT_TARGETS)
@@ -54,16 +59,6 @@ _ROOTUSER!=id -g
 SUDO?=
 .  if (${_ROOTUSER} != 0) && empty(SUDO)
 REGRESS_SKIP_TARGETS+=${REGRESS_ROOT_TARGETS}
-.  endif
-.endif
-
-.if defined(ERRORS)
-.BEGIN:
-.  for _m in ${ERRORS}
-	@echo 1>&2 ${_m}
-.  endfor
-.  if !empty(ERRORS:M"Fatal\:*") || !empty(ERRORS:M'Fatal\:*')
-	@exit 1
 .  endif
 .endif
 
@@ -87,30 +82,33 @@ ${REGRESS_SETUP_ONCE:S/^/cleanup-stamp-/}: .SILENT
 .endif
 
 regress: .SILENT
-.if ! ${REGRESS_LOG:M/*}
-	echo =========================================================
-	echo REGRESS_LOG must contain an absolute path to the log-file.
-	echo It currently points to: ${REGRESS_LOG}
-	echo =========================================================
-	exit 1
-.endif
 .if !empty(REGRESS_SETUP_ONCE)
 	rm -f ${REGRESS_SETUP_ONCE:S/^/stamp-/}
 .endif
 .for RT in ${REGRESS_TARGETS} ${REGRESS_CLEANUP}
 .  if ${REGRESS_SKIP_TARGETS:M${RT}}
-	@echo -n "SKIP " ${_REGRESS_OUT}
-	@echo SKIPPED
+	echo -n "SKIP " ${_REGRESS_OUT}
+	echo SKIPPED
 .  else
-	${_REGRESS_IGNORE_FAIL} if ${MAKE} -C ${.CURDIR} ${RT}; then \
+	if ${MAKE} -C ${.CURDIR} ${RT}; then \
 	    echo -n "SUCCESS " ${_REGRESS_OUT} ; \
 	else \
 	    echo -n "FAIL " ${_REGRESS_OUT} ; \
 	    echo FAILED ; \
-	    false; \
+	    ${_REGRESS_FAILED}; \
 	fi
 .  endif
-	@echo ${_REGRESS_NAME}/${RT:S/^run-regress-//} ${_REGRESS_OUT}
+	echo ${_REGRESS_NAME}/${RT:S/^run-regress-//} ${_REGRESS_OUT}
 .endfor
+
+.if defined(ERRORS)
+.BEGIN:
+.  for _m in ${ERRORS}
+	@echo 1>&2 ${_m}
+.  endfor
+.  if !empty(ERRORS:M"Fatal\:*") || !empty(ERRORS:M'Fatal\:*')
+	@exit 1
+.  endif
+.endif
 
 .PHONY: regress
