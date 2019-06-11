@@ -1,0 +1,49 @@
+.\" $OpenBSD: shortlines.in,v 1.1 2019/06/11 15:40:41 schwarze Exp $
+.TH TBL-LAYOUT-SHORTLINES 1 "June 11, 2019"
+.SH NAME
+tbl-layout-shortlines \- table lines of different length
+.SH DESCRIPTION
+normal text
+.TS
+allbox tab(:);
+L L
+L
+L L.
+left:right
+short
+left:right
+.TE
+.sp
+.TS
+allbox tab(:);
+L L
+L
+L
+L L.
+left:right
+first short
+second short
+left:right
+.TE
+.sp
+.TS
+allbox tab(:);
+L L L
+L L
+L.
+left:middle:right
+short:line
+very short
+.TE
+.sp
+.TS
+allbox tab(:);
+L
+L L
+L L L.
+very short
+short:line
+left:middle:right
+.TE
+
+
