@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.83 2019/05/16 05:00:00 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.84 2019/06/11 05:33:01 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,7 @@
 #define SNMPD_MAXUSERNAMELEN	32
 #define SNMPD_MAXCONTEXNAMELEN	32
 
-#define SNMP_USM_DIGESTLEN	12
+#define SNMP_USM_MAXDIGESTLEN	12
 #define SNMP_USM_SALTLEN	8
 #define SNMP_USM_KEYLEN		64
 #define SNMP_CIPHER_KEYLEN	16
