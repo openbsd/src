@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.31 2015/07/30 08:03:49 jmc Exp $
+.\"	$OpenBSD: su.1,v 1.32 2019/06/12 08:29:17 schwarze Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
 .\"
-.Dd $Mdocdate: July 30 2015 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SU 1
 .Os
 .Sh NAME
@@ -49,6 +49,11 @@ The
 .Nm
 utility allows a user to run a shell with the user and group ID of another user
 without having to log out and in as that other user.
+If the target
+.Ar login
+name is not specified,
+.Dq root
+is used.
 .Pp
 By default, the environment is unmodified with the exception of
 .Ev LOGNAME ,
