@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.8 2017/07/03 22:21:47 espie Exp $
+#	$OpenBSD: Makefile,v 1.9 2019/06/12 11:09:25 gilles Exp $
 PROG=		acme-client
 SRCS=		acctproc.c base64.c certproc.c chngproc.c dbg.c dnsproc.c
 SRCS+=		fileproc.c http.c jsmn.c json.c keyproc.c main.c netproc.c
-SRCS+=		parse.y revokeproc.c rsa.c util.c
+SRCS+=		parse.y revokeproc.c key.c util.c
 
 MAN=		acme-client.1 acme-client.conf.5
 

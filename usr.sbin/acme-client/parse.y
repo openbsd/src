@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2019/06/08 07:52:55 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.35 2019/06/12 11:09:25 gilles Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -38,6 +38,7 @@
 #include <unistd.h>
 
 #include "parse.h"
+#include "extern.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -99,10 +100,11 @@ typedef struct {
 %}
 
 %token	AUTHORITY URL API ACCOUNT
-%token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
+%token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR KEYTYPE
 %token	YES NO
 %token	INCLUDE
 %token	ERROR
+%token	RSA ECDSA
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.string>	string
@@ -258,12 +260,21 @@ domain		: DOMAIN STRING {
 		}
 		;
 
+keytype		: RSA { 
+			domain->keytype = 0;
+		}
+		| ECDSA {
+			domain->keytype = 1;
+		}
+		| /* nothing */
+		;
+
 domainopts_l	: domainopts_l domainoptsl nl
 		| domainoptsl optnl
 		;
 
 domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
-		| DOMAIN KEY STRING {
+		| DOMAIN KEY STRING keytype {
 			char *s;
 			if (domain->key != NULL) {
 				yyerror("duplicate key");
@@ -427,10 +438,12 @@ lookup(char *s)
 		{"chain",		CHAIN},
 		{"challengedir",	CHALLENGEDIR},
 		{"domain",		DOMAIN},
+		{"ecdsa",		ECDSA},
 		{"full",		FULL},
 		{"include",		INCLUDE},
 		{"key",			KEY},
 		{"names",		NAMES},
+		{"rsa",			RSA},
 		{"sign",		SIGN},
 		{"url",			URL},
 		{"with",		WITH},

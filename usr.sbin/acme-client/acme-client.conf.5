@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.17 2019/01/08 06:46:29 florian Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.18 2019/06/12 11:09:25 gilles Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2019 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -109,8 +109,10 @@ Specify a list of alternative names for which the certificate will be valid.
 The common name is included automatically if this option is present,
 but there is no automatic conversion/inclusion between "www." and
 plain domain name forms.
-.It Ic domain key Ar file
+.It Ic domain key Ar file Op Ar keytype
 The private key file for which the certificate will be obtained.
+.Ar keytype
+can be rsa or ecdsa. Defaults to rsa.
 .It Ic domain certificate Ar file
 The filename of the certificate that will be issued.
 This is optional if

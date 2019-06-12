@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.14 2019/06/08 07:52:55 florian Exp $ */
+/*	$Id: acctproc.c,v 1.15 2019/06/12 11:09:25 gilles Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,7 +29,7 @@
 #include <openssl/err.h>
 
 #include "extern.h"
-#include "rsa.h"
+#include "key.h"
 
 /*
  * Converts a BIGNUM to the form used in JWK.
@@ -352,7 +352,9 @@ acctproc(int netsock, const char *acctkey)
 			goto out;
 		dodbg("%s: generated RSA account key", acctkey);
 	} else {
-		if ((pkey = rsa_key_load(f, acctkey)) == NULL)
+		if ((pkey = key_load(f, acctkey)) == NULL)
+			goto out;
+		if (EVP_PKEY_type(pkey->type) != EVP_PKEY_RSA) 
 			goto out;
 		doddbg("%s: loaded RSA account key", acctkey);
 	}

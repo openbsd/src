@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.47 2019/06/08 07:52:55 florian Exp $ */
+/*	$Id: main.c,v 1.48 2019/06/12 11:09:25 gilles Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -49,6 +49,7 @@ main(int argc, char *argv[])
 	int		  popts = 0;
 	pid_t		  pids[COMP__MAX];
 	extern int	  verbose;
+	extern int	  ecdsa;
 	extern enum comp  proccomp;
 	size_t		  i, altsz, ne;
 
@@ -145,6 +146,10 @@ main(int argc, char *argv[])
 		authority = authority_find(conf, auth);
 		if (authority == NULL)
 			errx(EXIT_FAILURE, "authority %s not found", auth);
+	}
+
+	if (domain->keytype == 1) {
+		ecdsa = 1;
 	}
 
 	acctkey = authority->account;

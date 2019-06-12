@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.h,v 1.10 2019/06/08 07:52:55 florian Exp $ */
+/*	$OpenBSD: parse.h,v 1.11 2019/06/12 11:09:25 gilles Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -38,6 +38,7 @@ struct domain_c {
 	TAILQ_ENTRY(domain_c)	 entry;
 	TAILQ_HEAD(, altname_c)	altname_list;
 	int			altname_count;
+	int		       	keytype;
 	char		       	*domain;
 	char		       	*key;
 	char		       	*cert;
