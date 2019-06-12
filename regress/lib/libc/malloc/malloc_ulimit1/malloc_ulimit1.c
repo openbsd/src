@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_ulimit1.c,v 1.4 2018/11/28 13:34:06 bluhm Exp $	*/
+/*	$OpenBSD: malloc_ulimit1.c,v 1.5 2019/06/12 11:31:36 bluhm Exp $	*/
 
 /* Public Domain, 2006, Otto Moerbeek <otto@drijf.net> */
 
@@ -22,6 +22,9 @@
 #define STARTI	1300
 #define FACTOR	1024
 
+/* This test takes forever with junking turned on. */
+char *malloc_options = "jj";
+
 int
 main()
 {
@@ -29,10 +32,6 @@ main()
 	size_t sz;
 	int i;
 	void *p;
-	extern char *malloc_options;
-
-	/* This test takes forever with junking turned on. */
-	malloc_options = "jj";
 
 	if (getrlimit(RLIMIT_DATA, &lim) == -1)
 		err(1, "getrlimit");
