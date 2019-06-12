@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_set1_param.3,v 1.4 2018/03/23 14:28:16 schwarze Exp $
+.\" $OpenBSD: SSL_set1_param.3,v 1.5 2019/06/12 09:36:30 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/SSL_CTX_get0_param 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SSL_SET1_PARAM 3
 .Os
 .Sh NAME
@@ -121,6 +121,7 @@ X509_VERIFY_PARAM *vpm = SSL_get0_param(ssl);
 X509_VERIFY_PARAM_set1_host(vpm, "www.foo.com", 0);
 .Ed
 .Sh SEE ALSO
+.Xr ssl 3 ,
 .Xr X509_VERIFY_PARAM_set_flags 3
 .Sh HISTORY
 .Fn SSL_CTX_set1_param

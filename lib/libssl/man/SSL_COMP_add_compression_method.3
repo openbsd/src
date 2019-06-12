@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_COMP_add_compression_method.3,v 1.4 2018/03/23 00:10:28 schwarze Exp $
+.\" $OpenBSD: SSL_COMP_add_compression_method.3,v 1.5 2019/06/12 09:36:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SSL_COMP_ADD_COMPRESSION_METHOD 3
 .Os
 .Sh NAME
@@ -46,6 +46,8 @@ always returns 1.
 .Fn SSL_COMP_get_compression_methods
 always returns
 .Dv NULL .
+.Sh SEE ALSO
+.Xr ssl 3
 .Sh HISTORY
 .Fn SSL_COMP_add_compression_method
 first appeared in OpenSSL 0.9.2b and has been available since

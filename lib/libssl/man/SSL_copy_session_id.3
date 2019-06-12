@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_copy_session_id.3,v 1.6 2018/08/24 21:29:51 jmc Exp $
+.\" $OpenBSD: SSL_copy_session_id.3,v 1.7 2019/06/12 09:36:30 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2018 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SSL_COPY_SESSION_ID 3
 .Os
 .Sh NAME
@@ -60,6 +60,7 @@ and by
 returns 1 on success and 0 on error.
 .Sh SEE ALSO
 .Xr BIO_ssl_copy_session_id 3 ,
+.Xr ssl 3 ,
 .Xr SSL_dup 3 ,
 .Xr SSL_get_session 3 ,
 .Xr SSL_SESSION_get_id 3 ,

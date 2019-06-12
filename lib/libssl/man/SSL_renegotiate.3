@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_renegotiate.3,v 1.8 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_renegotiate.3,v 1.9 2019/06/12 09:36:30 schwarze Exp $
 .\"	OpenSSL SSL_key_update.pod 4fbfe86a Feb 16 17:04:40 2017 +0000
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 12 2019 $
 .Dt SSL_RENEGOTIATE 3
 .Os
 .Sh NAME
@@ -147,6 +147,7 @@ return 1 on success or 0 on error.
 returns 1 if a renegotiation or renegotiation request has been
 scheduled but not yet acted on, or 0 otherwise.
 .Sh SEE ALSO
+.Xr ssl 3 ,
 .Xr SSL_do_handshake 3 ,
 .Xr SSL_num_renegotiations 3 ,
 .Xr SSL_read 3 ,
