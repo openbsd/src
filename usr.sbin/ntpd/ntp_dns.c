@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.21 2019/05/28 06:49:46 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.22 2019/06/12 05:04:45 otto Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -39,7 +39,7 @@ volatile sig_atomic_t	 quit_dns = 0;
 struct imsgbuf		*ibuf_dns;
 
 void	sighdlr_dns(int);
-int	dns_dispatch_imsg(void);
+int	dns_dispatch_imsg(struct ntpd_conf *);
 
 void
 sighdlr_dns(int sig)
@@ -62,12 +62,10 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 	if (setpriority(PRIO_PROCESS, 0, 0) == -1)
 		log_warn("could not set priority");
 
-	/* in this case the parent didn't init logging and didn't daemonize */
-	if (nconf->settime && !nconf->debug) {
-		log_init(nconf->debug, LOG_DAEMON);
-		if (setsid() == -1)
-			fatal("setsid");
-	}
+	log_init(nconf->debug, LOG_DAEMON);
+	log_setverbose(nconf->verbose);
+	if (!nconf->debug && setsid() == -1)
+		fatal("setsid");
 	log_procinit("dns");
 
 	if ((nullfd = open("/dev/null", O_RDWR, 0)) == -1)
@@ -119,7 +117,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 
 		if (nfds > 0 && pfd[0].revents & POLLIN) {
 			nfds--;
-			if (dns_dispatch_imsg() == -1)
+			if (dns_dispatch_imsg(nconf) == -1)
 				quit_dns = 1;
 		}
 	}
@@ -130,7 +128,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 }
 
 int
-dns_dispatch_imsg(void)
+dns_dispatch_imsg(struct ntpd_conf *nconf)
 {
 	struct imsg		 imsg;
 	int			 n, cnt;
@@ -164,7 +162,8 @@ dns_dispatch_imsg(void)
 			if (name[len] != '\0' ||
 			    strlen(name) != len)
 				fatalx("invalid %s received", str);
-			if ((cnt = host_dns(name, &hn)) == -1)
+			if ((cnt = host_dns(name, nconf->status.synced,
+			    &hn)) == -1)
 				break;
 			buf = imsg_create(ibuf_dns, imsg.hdr.type,
 			    imsg.hdr.peerid, 0,
@@ -189,6 +188,12 @@ dns_dispatch_imsg(void)
 			}
 			if (buf)
 				imsg_close(ibuf_dns, buf);
+			break;
+		case IMSG_SYNCED:
+			nconf->status.synced = 1;
+			break;
+		case IMSG_UNSYNCED:
+			nconf->status.synced = 0;
 			break;
 		default:
 			break;

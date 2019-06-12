@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.30 2019/05/28 06:49:46 otto Exp $ */
+/*	$OpenBSD: config.c,v 1.31 2019/06/12 05:04:45 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -126,13 +126,13 @@ host_dns1(const char *s, struct ntp_addr **hn, int notauth)
 }
 
 int
-host_dns(const char *s, struct ntp_addr **hn)
+host_dns(const char *s, int synced, struct ntp_addr **hn)
 {
 	int error, save_opts;
 	
 	log_debug("trying to resolve %s", s);
 	error = host_dns1(s, hn, 0);
-	if (error <= 0) {
+	if (!synced && error <= 0) {
 		log_debug("no luck, trying to resolve %s without checking", s);
 		save_opts = _res.options;
 		_res.options |= RES_USE_CD;

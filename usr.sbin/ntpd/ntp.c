@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.153 2019/06/09 08:40:54 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.154 2019/06/12 05:04:45 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -95,12 +95,10 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 	start_child(NTPDNS_PROC_NAME, pipe_dns[1], argc, argv);
 
-	/* in this case the parent didn't init logging and didn't daemonize */
-	if (nconf->settime && !nconf->debug) {
-		log_init(nconf->debug, LOG_DAEMON);
-		if (setsid() == -1)
-			fatal("setsid");
-	}
+	log_init(nconf->debug, LOG_DAEMON);
+	log_setverbose(nconf->verbose);
+	if (!nconf->debug && setsid() == -1)
+		fatal("setsid");
 	log_procinit("ntp");
 
 	if ((se = getservbyname("ntp", "udp")) == NULL)
@@ -446,9 +444,11 @@ ntp_dispatch_imsg(void)
 			if (n == 1 && !conf->status.synced) {
 				log_info("clock is now synced");
 				conf->status.synced = 1;
+				priv_dns(IMSG_SYNCED, NULL, 0);
 			} else if (n == 0 && conf->status.synced) {
 				log_info("clock is now unsynced");
 				conf->status.synced = 0;
+				priv_dns(IMSG_UNSYNCED, NULL, 0);
 			}
 			break;
 		case IMSG_CONSTRAINT_RESULT:
@@ -762,9 +762,10 @@ priv_settime(double offset)
 void
 priv_dns(int cmd, char *name, u_int32_t peerid)
 {
-	u_int16_t	dlen;
+	u_int16_t	dlen = 0;
 
-	dlen = strlen(name) + 1;
+	if (name != NULL)
+		dlen = strlen(name) + 1;
 	imsg_compose(ibuf_dns, cmd, peerid, 0, -1, name, dlen);
 }
 

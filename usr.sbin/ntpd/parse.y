@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.72 2019/06/12 05:04:45 otto Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -109,7 +109,7 @@ main		: LISTEN ON address listen_opts	{
 			struct ntp_addr		*h, *next;
 
 			if ((h = $3->a) == NULL &&
-			    (host_dns($3->name, &h) == -1 || !h)) {
+			    (host_dns($3->name, 0, &h) == -1 || !h)) {
 				yyerror("could not resolve \"%s\"", $3->name);
 				free($3->name);
 				free($3);

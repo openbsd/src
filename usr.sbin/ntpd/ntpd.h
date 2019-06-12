@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.141 2019/06/09 08:40:54 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.142 2019/06/12 05:04:45 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -305,7 +305,9 @@ enum imsg_type {
 	IMSG_CTL_SHOW_SENSORS,
 	IMSG_CTL_SHOW_SENSORS_END,
 	IMSG_CTL_SHOW_ALL,
-	IMSG_CTL_SHOW_ALL_END
+	IMSG_CTL_SHOW_ALL_END,
+	IMSG_SYNCED,
+	IMSG_UNSYNCED
 };
 
 enum ctl_actions {
@@ -335,7 +337,7 @@ int	 parse_config(const char *, struct ntpd_conf *);
 
 /* config.c */
 void			 host(const char *, struct ntp_addr **);
-int			 host_dns(const char *, struct ntp_addr **);
+int			 host_dns(const char *, int, struct ntp_addr **);
 void			 host_dns_free(struct ntp_addr *);
 struct ntp_peer		*new_peer(void);
 struct ntp_conf_sensor	*new_sensor(char *);
