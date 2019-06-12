@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.75 2019/06/10 18:11:27 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.76 2019/06/12 02:50:29 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -288,7 +288,6 @@ main(int argc, char **argv)
 	char *sh;
 	const char *cmd;
 	char cmdline[LINE_MAX];
-	char myname[_PW_NAME_LEN + 1];
 	char mypwbuf[_PW_BUF_LEN], targpwbuf[_PW_BUF_LEN];
 	struct passwd mypwstore, targpwstore;
 	struct passwd *mypw, *targpw;
@@ -349,10 +348,10 @@ main(int argc, char **argv)
 		usage();
 
 	rv = getpwuid_r(uid, &mypwstore, mypwbuf, sizeof(mypwbuf), &mypw);
-	if (rv != 0 || mypw == NULL)
+	if (rv != 0)
 		err(1, "getpwuid_r failed");
-	if (strlcpy(myname, mypw->pw_name, sizeof(myname)) >= sizeof(myname))
-		errx(1, "pw_name too long");
+	if (mypw == NULL)
+		errx(1, "no passwd entry for self");
 	ngroups = getgroups(NGROUPS_MAX, groups);
 	if (ngroups == -1)
 		err(1, "can't get groups");
@@ -361,9 +360,7 @@ main(int argc, char **argv)
 	if (sflag) {
 		sh = getenv("SHELL");
 		if (sh == NULL || *sh == '\0') {
-			shargv[0] = strdup(mypw->pw_shell);
-			if (shargv[0] == NULL)
-				err(1, NULL);
+			shargv[0] = mypw->pw_shell;
 		} else
 			shargv[0] = sh;
 		argv = shargv;
@@ -394,7 +391,7 @@ main(int argc, char **argv)
 	if (!permit(uid, groups, ngroups, &rule, target, cmd,
 	    (const char **)argv + 1)) {
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
-		    "failed command for %s: %s", myname, cmdline);
+		    "failed command for %s: %s", mypw->pw_name, cmdline);
 		errc(1, EPERM, NULL);
 	}
 
@@ -402,7 +399,7 @@ main(int argc, char **argv)
 		if (nflag)
 			errx(1, "Authorization required");
 
-		authuser(myname, login_style, rule->options & PERSIST);
+		authuser(mypw->pw_name, login_style, rule->options & PERSIST);
 	}
 
 	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
@@ -418,7 +415,9 @@ main(int argc, char **argv)
 		err(1, "pledge");
 
 	rv = getpwuid_r(target, &targpwstore, targpwbuf, sizeof(targpwbuf), &targpw);
-	if (rv != 0 || targpw == NULL)
+	if (rv != 0)
+		err(1, "getpwuid_r failed");
+	if (targpw == NULL)
 		errx(1, "no passwd entry for target");
 
 	if (setusercontext(NULL, targpw, target, LOGIN_SETGROUP |
@@ -438,7 +437,7 @@ main(int argc, char **argv)
 		err(1, "pledge");
 
 	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
-	    myname, cmdline, targpw->pw_name, cwd);
+	    mypw->pw_name, cmdline, targpw->pw_name, cwd);
 
 	envp = prepenv(rule);
 
