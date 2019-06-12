@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.26 2019/06/11 06:28:09 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.27 2019/06/12 01:38:30 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -74,6 +74,10 @@
 #define MCX_LOG_CQ_SIZE		 11
 #define MCX_LOG_RQ_SIZE		 10
 #define MCX_LOG_SQ_SIZE		 11
+
+/* completion event moderation - about 10khz, or 90% of the cq */
+#define MCX_CQ_MOD_PERIOD	50
+#define MCX_CQ_MOD_COUNTER	(((1 << (MCX_LOG_CQ_SIZE - 1)) * 9) / 10)
 
 #define MCX_LOG_SQ_ENTRY_SIZE	 6
 #define MCX_SQ_ENTRY_MAX_SLOTS	 4
@@ -3879,7 +3883,9 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 	mbin->cmd_cq_ctx.cq_uar_size = htobe32(
 	    (MCX_LOG_CQ_SIZE << MCX_CQ_CTX_LOG_CQ_SIZE_SHIFT) | sc->sc_uar);
 	mbin->cmd_cq_ctx.cq_eqn = htobe32(eqn);
-	/* set event moderation bits here */
+	mbin->cmd_cq_ctx.cq_period_max_count = htobe32(
+	    (MCX_CQ_MOD_PERIOD << MCX_CQ_CTX_PERIOD_SHIFT) |
+	    MCX_CQ_MOD_COUNTER);
 	mbin->cmd_cq_ctx.cq_doorbell = htobe64(
 	    MCX_DMA_DVA(&sc->sc_doorbell_mem) +
 	    MCX_CQ_DOORBELL_OFFSET + (MCX_CQ_DOORBELL_SIZE * sc->sc_num_cq));
