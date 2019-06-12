@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.18 2019/06/12 11:09:25 gilles Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.19 2019/06/12 11:36:32 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -112,7 +112,12 @@ plain domain name forms.
 .It Ic domain key Ar file Op Ar keytype
 The private key file for which the certificate will be obtained.
 .Ar keytype
-can be rsa or ecdsa. Defaults to rsa.
+can be
+.Cm rsa
+or
+.Cm ecdsa .
+It defaults to
+.Cm rsa .
 .It Ic domain certificate Ar file
 The filename of the certificate that will be issued.
 This is optional if
