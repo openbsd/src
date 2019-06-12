@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.100 2018/12/11 13:29:52 gilles Exp $
+#	$OpenBSD: Makefile,v 1.101 2019/06/12 17:42:53 eric Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -91,7 +91,7 @@ CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 CFLAGS+=	-Werror-implicit-function-declaration
 #CFLAGS+=	-Werror # during development phase (breaks some archs)
-CFLAGS+=	-DIO_SSL
+CFLAGS+=	-DIO_TLS
 CFLAGS+=	-DQUEUE_PROFILING
 YFLAGS=
 
