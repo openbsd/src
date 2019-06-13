@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.245 2019/05/17 19:07:15 guenther Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.246 2019/06/13 06:57:17 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6419,13 +6419,11 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 			*rdx = 0;
 		}
 		break;
-	case 0x16:	/* Processor frequency info (not supported) */
-		DPRINTF("%s: function 0x16 (frequency info) not supported\n",
-		    __func__);
-		*rax = 0;
-		*rbx = 0;
-		*rcx = 0;
-		*rdx = 0;
+	case 0x16:	/* Processor frequency info */
+		*rax = eax;
+		*rbx = ebx;
+		*rcx = ecx;
+		*rdx = edx;
 		break;
 	case 0x40000000:	/* Hypervisor information */
 		*rax = 0;
