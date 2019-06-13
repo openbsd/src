@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.176 2019/06/10 23:49:45 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.177 2019/06/13 21:14:53 mpi Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1585,9 +1585,9 @@ bpf_d_smr(void *smr)
 {
 	struct bpf_d	*bd = smr;
 
-	free(bd->bd_sbuf, M_DEVBUF, 0);
-	free(bd->bd_hbuf, M_DEVBUF, 0);
-	free(bd->bd_fbuf, M_DEVBUF, 0);
+	free(bd->bd_sbuf, M_DEVBUF, bd->bd_bufsize);
+	free(bd->bd_hbuf, M_DEVBUF, bd->bd_bufsize);
+	free(bd->bd_fbuf, M_DEVBUF, bd->bd_bufsize);
 
 	if (bd->bd_rfilter != NULL)
 		bpf_prog_smr(bd->bd_rfilter);
