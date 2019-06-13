@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.202 2019/06/13 19:46:00 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.203 2019/06/13 21:24:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1097,7 +1097,7 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 			envent = environ_find(ft->s->environ, key);
 		if (envent == NULL)
 			envent = environ_find(global_environ, key);
-		if (envent != NULL) {
+		if (envent != NULL && envent->value != NULL) {
 			found = xstrdup(envent->value);
 			goto found;
 		}
