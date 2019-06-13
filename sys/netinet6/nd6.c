@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.226 2018/08/03 09:11:56 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.227 2019/06/13 08:15:26 claudio Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -787,7 +787,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct ifaddr *ifa;
 
-	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_MULTICAST))
+	if (ISSET(rt->rt_flags, RTF_GATEWAY|RTF_MULTICAST|RTF_MPLS))
 		return;
 
 	if (nd6_need_cache(ifp) == 0 && (rt->rt_flags & RTF_HOST) == 0) {
