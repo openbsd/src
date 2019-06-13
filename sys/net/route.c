@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.384 2019/05/11 16:47:02 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.385 2019/06/13 08:12:10 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ int	rt_ifa_purge_walker(struct rtentry *, void *, unsigned int);
 struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
 int	rt_clone(struct rtentry **, struct sockaddr *, unsigned int);
 struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
+static int rt_copysa(struct sockaddr *, struct sockaddr *, struct sockaddr **);
 
 #ifdef DDB
 void	db_print_sa(struct sockaddr *);
@@ -809,7 +810,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 	struct sockaddr		*ndst;
 	struct sockaddr_rtlabel	*sa_rl, sa_rl2;
 	struct sockaddr_dl	 sa_dl = { sizeof(sa_dl), AF_LINK };
-	int			 dlen, error;
+	int			 error;
 
 	NET_ASSERT_LOCKED();
 
@@ -843,20 +844,14 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 		if (prio == 0)
 			prio = ifp->if_priority + RTP_STATIC;
 
-		dlen = info->rti_info[RTAX_DST]->sa_len;
-		ndst = malloc(dlen, M_RTABLE, M_NOWAIT);
-		if (ndst == NULL)
-			return (ENOBUFS);
-
-		if (info->rti_info[RTAX_NETMASK] != NULL)
-			rt_maskedcopy(info->rti_info[RTAX_DST], ndst,
-			    info->rti_info[RTAX_NETMASK]);
-		else
-			memcpy(ndst, info->rti_info[RTAX_DST], dlen);
+		error = rt_copysa(info->rti_info[RTAX_DST],
+		    info->rti_info[RTAX_NETMASK], &ndst);
+		if (error)
+			return (error);
 
 		rt = pool_get(&rtentry_pool, PR_NOWAIT | PR_ZERO);
 		if (rt == NULL) {
-			free(ndst, M_RTABLE, dlen);
+			free(ndst, M_RTABLE, ndst->sa_len);
 			return (ENOBUFS);
 		}
 
@@ -888,7 +883,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			error = rt_mpls_set(rt, info->rti_info[RTAX_SRC],
 			    info->rti_mpls);
 			if (error) {
-				free(ndst, M_RTABLE, dlen);
+				free(ndst, M_RTABLE, ndst->sa_len);
 				pool_put(&rtentry_pool, rt);
 				return (error);
 			}
@@ -920,7 +915,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rtfree(rt->rt_parent);
 			rt_putgwroute(rt);
 			free(rt->rt_gateway, M_RTABLE, 0);
-			free(ndst, M_RTABLE, dlen);
+			free(ndst, M_RTABLE, ndst->sa_len);
 			pool_put(&rtentry_pool, rt);
 			return (error);
 		}
@@ -951,7 +946,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rtfree(rt->rt_parent);
 			rt_putgwroute(rt);
 			free(rt->rt_gateway, M_RTABLE, 0);
-			free(ndst, M_RTABLE, dlen);
+			free(ndst, M_RTABLE, ndst->sa_len);
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
 		}
@@ -1027,6 +1022,54 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 		*cp2++ = *cp1++ & *cp3++;
 	if (cp2 < cplim2)
 		bzero(cp2, cplim2 - cp2);
+}
+
+/*
+ * allocate new sockaddr structure based on the user supplied src and mask
+ * that is useable for the routing table.
+ */
+static int
+rt_copysa(struct sockaddr *src, struct sockaddr *mask, struct sockaddr **dst)
+{
+	static const u_char maskarray[] = {
+	    0x0, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe };
+	struct sockaddr *ndst;
+	struct domain *dp;
+	u_char *csrc, *cdst;
+	int i, plen;
+
+	for (i = 0; (dp = domains[i]) != NULL; i++) {
+		if (dp->dom_rtoffset == 0)
+			continue;
+		if (src->sa_family == dp->dom_family)
+			break;
+	}
+	if (dp == NULL)
+		return (EAFNOSUPPORT);
+
+	if (src->sa_len < dp->dom_sasize)
+		return (EINVAL);
+
+	plen = rtable_satoplen(src->sa_family, mask);
+	if (plen == -1)
+		return (EINVAL);
+
+	ndst = malloc(dp->dom_sasize, M_RTABLE, M_NOWAIT|M_ZERO);
+	if (ndst == NULL)
+		return (ENOBUFS);
+
+	ndst->sa_family = src->sa_family;
+	ndst->sa_len = dp->dom_sasize;
+
+	csrc = (u_char *)src + dp->dom_rtoffset;
+	cdst = (u_char *)ndst + dp->dom_rtoffset;
+
+	memcpy(cdst, csrc, plen / 8);
+	if (plen % 8 != 0)
+		cdst[plen / 8] = csrc[plen / 8] & maskarray[plen % 8];
+
+	*dst = ndst;
+	return (0);
 }
 
 int

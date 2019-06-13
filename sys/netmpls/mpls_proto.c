@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_proto.c,v 1.17 2018/11/19 10:15:04 claudio Exp $	*/
+/*	$OpenBSD: mpls_proto.c,v 1.18 2019/06/13 08:12:11 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -48,6 +48,7 @@
 struct domain mplsdomain = {
   .dom_family = AF_MPLS,
   .dom_name = "mpls",
+  .dom_sasize = sizeof(struct sockaddr_mpls),
   .dom_rtoffset = offsetof(struct sockaddr_mpls, smpls_label),
   .dom_maxplen = 32
 };
