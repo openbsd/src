@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.99 2019/05/25 07:29:04 nicm Exp $
+# $OpenBSD: Makefile,v 1.100 2019/06/13 19:46:00 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -95,6 +95,7 @@ SRCS=	alerts.c \
 	paste.c \
 	proc.c \
 	procname.c \
+	regsub.c \
 	resize.c \
 	screen-redraw.c \
 	screen-write.c \
