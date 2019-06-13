@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.54 2018/08/27 11:03:34 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.55 2019/06/13 21:44:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -93,7 +93,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_WAIT);
 	}
 
-	file = server_client_get_path(c, path);
+	file = server_client_get_path(item->client, path);
 	free(path);
 
 	f = fopen(file, "rb");

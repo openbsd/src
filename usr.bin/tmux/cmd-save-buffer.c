@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-save-buffer.c,v 1.45 2018/07/31 13:06:44 nicm Exp $ */
+/* $OpenBSD: cmd-save-buffer.c,v 1.46 2019/06/13 21:44:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -105,7 +105,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(self->args, 'a'))
 		flags = "ab";
 
-	file = server_client_get_path(c, path);
+	file = server_client_get_path(item->client, path);
 	free(path);
 
 	f = fopen(file, flags);
