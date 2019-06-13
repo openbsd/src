@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.17 2019/06/10 14:22:12 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.18 2019/06/13 08:02:35 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -859,6 +859,7 @@ function test_smime {
 	smime_enc=$user1_dir/smime.enc
 	smime_sig=$user1_dir/smime.sig
 	smime_p7o=$user1_dir/smime.p7o
+	smime_sgr=$user1_dir/smime.sgr
 	smime_ver=$user1_dir/smime.ver
 	smime_dec=$user1_dir/smime.dec
 	
@@ -878,9 +879,10 @@ __EOF__
 	# sign
 	start_message "smime ... sign to message"
 	
-	$openssl_bin smime -sign -in $smime_enc -text -out $smime_sig \
-		-signer $user1_cert -inkey $user1_key -passin pass:$user1_pass \
-		-md sha256 \
+	$openssl_bin smime -sign -in $smime_enc -text -inform smime \
+		-out $smime_sig -outform smime \
+		-signer $user1_cert -inkey $user1_key -keyform pem \
+		-passin pass:$user1_pass -md sha256 \
 		-from user1@test_dummy.com -to server@test_dummy.com \
 		-subject "test openssl smime"
 	check_exit_status $?
@@ -894,9 +896,10 @@ __EOF__
 	# verify
 	start_message "smime ... verify message"
 	
-	$openssl_bin smime -verify -in $smime_sig -signer $user1_cert \
-		-CAfile $ca_cert -text -out $smime_ver \
-		-check_ss_sig -issuer_checks -policy_check -x509_strict
+	$openssl_bin smime -verify -in $smime_sig \
+		-CAfile $ca_cert -certfile $user1_cert -nointern \
+		-check_ss_sig -issuer_checks -policy_check -x509_strict \
+		-signer $smime_sgr -text -out $smime_ver
 	check_exit_status $?
 
 	# decrypt
@@ -991,9 +994,9 @@ function test_pkcs {
 		-noout
 	check_exit_status $?
 	
-	start_message "pkcs12 ... to PEM"
-	$openssl_bin pkcs12 -in $server_cert.p12 -passin pass:$pkcs_pass \
-		-passout pass:$pkcs_pass -out $server_cert.p12.pem
+	start_message "pkcs12 ... private key to PEM without encryption"
+	$openssl_bin pkcs12 -in $server_cert.p12 -password pass:$pkcs_pass \
+		-nocerts -nomacver -nodes -out $server_cert.p12.pem
 	check_exit_status $?
 }
 
