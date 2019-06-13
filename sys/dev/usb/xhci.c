@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.104 2019/05/21 09:20:40 stsp Exp $ */
+/* $OpenBSD: xhci.c,v 1.105 2019/06/13 21:03:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -2192,6 +2192,8 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (xhci_cmd_stop_ep(sc, xp->slot, xp->dci)) {
 		DPRINTF(("%s: error stopping endpoint\n", DEVNAME(sc)));
 		/* Assume the device is gone. */
+		xp->halted = 0;
+		xp->aborted_xfer = NULL;
 		xfer->status = status;
 		usb_transfer_complete(xfer);
 		return;
