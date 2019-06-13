@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.176 2019/06/01 14:11:17 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.177 2019/06/13 21:19:28 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ exit1(struct proc *p, int rv, int flags)
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
 		while (pr->ps_refcnt > 1)
-			tsleep(&pr->ps_threads, PUSER, "thrdeath", 0);
+			tsleep(&pr->ps_threads, PWAIT, "thrdeath", 0);
 		if (pr->ps_flags & PS_PROFIL)
 			stopprofclock(pr);
 	}
