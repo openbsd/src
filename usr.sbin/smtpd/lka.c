@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.233 2019/01/05 09:43:39 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.234 2019/06/13 11:45:34 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -102,6 +102,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_GETADDRINFO:
 	case IMSG_GETNAMEINFO:
+	case IMSG_RES_QUERY:
 		resolver_dispatch_request(p, imsg);
 		return;
 

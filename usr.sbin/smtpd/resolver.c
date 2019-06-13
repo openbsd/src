@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.4 2018/11/12 12:31:49 eric Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.5 2019/06/13 11:45:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2017-2018 Eric Faurot <eric@openbsd.org>
@@ -43,6 +43,7 @@ struct request {
 	uint32_t		 id;
 	void			(*cb_ai)(void *, int, struct addrinfo *);
 	void			(*cb_ni)(void *, int, const char *, const char *);
+	void			(*cb_res)(void *, int, int, int, const void *, int);
 	void			*arg;
 	struct addrinfo		*ai;
 };
@@ -59,6 +60,7 @@ SPLAY_HEAD(reqtree, request);
 static void resolver_init(void);
 static void resolver_getaddrinfo_cb(struct asr_result *, void *);
 static void resolver_getnameinfo_cb(struct asr_result *, void *);
+static void resolver_res_query_cb(struct asr_result *, void *);
 
 static int request_cmp(struct request *, struct request *);
 SPLAY_PROTOTYPE(reqtree, request, entry, request_cmp);
@@ -125,9 +127,37 @@ resolver_getnameinfo(const struct sockaddr *sa, int flags,
 }
 
 void
+resolver_res_query(const char *dname, int class, int type,
+    void (*cb)(void *, int, int, int, const void *, int), void *arg)
+{
+	struct request *req;
+
+	resolver_init();
+
+	req = calloc(1, sizeof(*req));
+	if (req == NULL) {
+		cb(arg, NETDB_INTERNAL, 0, 0, NULL, 0);
+		return;
+	}
+
+	while (req->id == 0 || SPLAY_FIND(reqtree, &reqs, req))
+		req->id = arc4random();
+	req->cb_res = cb;
+	req->arg = arg;
+
+	SPLAY_INSERT(reqtree, &reqs, req);
+
+	m_create(p_resolver, IMSG_RES_QUERY, req->id, 0, -1);
+	m_add_string(p_resolver, dname);
+	m_add_int(p_resolver, class);
+	m_add_int(p_resolver, type);
+	m_close(p_resolver);
+}
+
+void
 resolver_dispatch_request(struct mproc *proc, struct imsg *imsg)
 {
-	const char *hostname, *servname;
+	const char *hostname, *servname, *dname;
 	struct session *s;
 	struct asr_query *q;
 	struct addrinfo hints;
@@ -135,7 +165,7 @@ resolver_dispatch_request(struct mproc *proc, struct imsg *imsg)
 	struct sockaddr *sa;
 	struct msg m;
 	uint32_t reqid;
-	int flags, save_errno;
+	int class, type, flags, save_errno;
 
 	reqid = imsg->hdr.peerid;
 	m_msg(&m, imsg);
@@ -211,6 +241,37 @@ resolver_dispatch_request(struct mproc *proc, struct imsg *imsg)
 		m_close(proc);
 		break;
 
+	case IMSG_RES_QUERY:
+		m_get_string(&m, &dname);
+		m_get_int(&m, &class);
+		m_get_int(&m, &type);
+		m_end(&m);
+
+		s = NULL;
+		q = NULL;
+		if ((s = calloc(1, sizeof(*s))) &&
+		    (q = res_query_async(dname, class, type, NULL)) &&
+		    (event_asr_run(q, resolver_res_query_cb, s))) {
+			s->reqid = reqid;
+			s->proc = proc;
+			break;
+		}
+		save_errno = errno;
+
+		if (q)
+			asr_abort(q);
+		if (s)
+			free(s);
+
+		m_create(proc, IMSG_RES_QUERY, reqid, 0, -1);
+		m_add_int(proc, NETDB_INTERNAL);
+		m_add_int(proc, save_errno);
+		m_add_int(proc, 0);
+		m_add_int(proc, 0);
+		m_add_data(proc, NULL, 0);
+		m_close(proc);
+		break;
+
 	default:
 		fatalx("%s: %s", __func__, imsg_to_str(imsg->hdr.type));
 	}
@@ -224,7 +285,9 @@ resolver_dispatch_result(struct mproc *proc, struct imsg *imsg)
 	struct addrinfo *ai;
 	struct msg m;
 	const char *cname, *host, *serv;
-	int gai_errno;
+	const void *data;
+	size_t datalen;
+	int gai_errno, herrno, rcode, count;
 
 	key.id = imsg->hdr.peerid;
 	req = SPLAY_FIND(reqtree, &reqs, &key);
@@ -293,6 +356,19 @@ resolver_dispatch_result(struct mproc *proc, struct imsg *imsg)
 		req->cb_ni(req->arg, gai_errno, host, serv);
 		free(req);
 		break;
+
+	case IMSG_RES_QUERY:
+		m_get_int(&m, &herrno);
+		m_get_int(&m, &errno);
+		m_get_int(&m, &rcode);
+		m_get_int(&m, &count);
+		m_get_data(&m, &data, &datalen);
+		m_end(&m);
+
+		SPLAY_REMOVE(reqtree, &reqs, req);
+		req->cb_res(req->arg, herrno, rcode, count, data, datalen);
+		free(req);
+		break;
 	}
 }
 
@@ -348,6 +424,23 @@ resolver_getnameinfo_cb(struct asr_result *ar, void *arg)
 
 	free(s->host);
 	free(s->serv);
+	free(s);
+}
+
+static void
+resolver_res_query_cb(struct asr_result *ar, void *arg)
+{
+	struct session *s = arg;
+
+	m_create(s->proc, IMSG_RES_QUERY, s->reqid, 0, -1);
+	m_add_int(s->proc, ar->ar_h_errno);
+	m_add_int(s->proc, ar->ar_errno);
+	m_add_int(s->proc, ar->ar_rcode);
+	m_add_int(s->proc, ar->ar_count);
+	m_add_data(s->proc, ar->ar_data, ar->ar_datalen);
+	m_close(s->proc);
+
+	free(ar->ar_data);
 	free(s);
 }
 

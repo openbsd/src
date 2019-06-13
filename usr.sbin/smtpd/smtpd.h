@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.622 2019/06/05 06:40:13 gilles Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.623 2019/06/13 11:45:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -207,6 +207,7 @@ enum imsg_type {
 	IMSG_GETADDRINFO,
 	IMSG_GETADDRINFO_END,
 	IMSG_GETNAMEINFO,
+	IMSG_RES_QUERY,
 
 	IMSG_CERT_INIT,
 	IMSG_CERT_CERTIFICATE,
@@ -1530,6 +1531,8 @@ void resolver_getaddrinfo(const char *, const char *, const struct addrinfo *,
     void(*)(void *, int, struct addrinfo*), void *);
 void resolver_getnameinfo(const struct sockaddr *, int,
     void(*)(void *, int, const char *, const char *), void *);
+void resolver_res_query(const char *, int, int,
+    void (*cb)(void *, int, int, int, const void *, int), void *);
 void resolver_dispatch_request(struct mproc *, struct imsg *);
 void resolver_dispatch_result(struct mproc *, struct imsg *);
 

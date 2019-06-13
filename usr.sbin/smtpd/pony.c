@@ -1,4 +1,4 @@
-/*	$OpenBSD: pony.c,v 1.26 2018/12/23 16:37:53 eric Exp $	*/
+/*	$OpenBSD: pony.c,v 1.27 2019/06/13 11:45:35 eric Exp $	*/
 
 /*
  * Copyright (c) 2014 Gilles Chehade <gilles@poolp.org>
@@ -60,6 +60,7 @@ pony_imsg(struct mproc *p, struct imsg *imsg)
 	case IMSG_GETADDRINFO:
 	case IMSG_GETADDRINFO_END:
 	case IMSG_GETNAMEINFO:
+	case IMSG_RES_QUERY:
 		resolver_dispatch_result(p, imsg);
 		return;
 
