@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.27 2019/06/12 01:38:30 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.28 2019/06/13 00:37:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -1257,7 +1257,8 @@ struct mcx_cq_entry {
 	uint32_t		__reserved__[2];
 	uint32_t		cq_byte_cnt;
 	uint64_t		cq_timestamp;
-	uint32_t		cq_rx_drops;
+	uint8_t			cq_rx_drops;
+	uint8_t			cq_flow_tag[3];
 	uint16_t		cq_wqe_count;
 	uint8_t			cq_signature;
 	uint8_t			cq_opcode_owner;
