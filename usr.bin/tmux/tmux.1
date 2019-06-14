@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.665 2019/06/13 21:04:21 jmc Exp $
+.\" $OpenBSD: tmux.1,v 1.666 2019/06/14 12:04:11 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 13 2019 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -582,9 +582,9 @@ or
 .Ql %endif .
 For example:
 .Bd -literal -offset indent
-%if #{==:#{host},myhost}
+%if "#{==:#{host},myhost}"
 set -g status-style bg=red
-%elif #{==:#{host},myotherhost}
+%elif "#{==:#{host},myotherhost}"
 set -g status-style bg=green
 %else
 set -g status-style bg=blue
