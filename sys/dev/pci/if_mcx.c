@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.28 2019/06/13 00:37:04 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.29 2019/06/14 03:40:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -5716,7 +5716,8 @@ mcx_arm_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 	uval |= cq->cq_n;
 	bus_space_write_raw_8(sc->sc_memt, sc->sc_memh,
 	    offset + MCX_UAR_CQ_DOORBELL, htobe64(uval));
-	/* barrier? */
+	mcx_bar(sc, offset + MCX_UAR_CQ_DOORBELL, sizeof(uint64_t),
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 void
