@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_library_init.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_library_init.3,v 1.7 2019/06/14 13:41:31 schwarze Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt SSL_LIBRARY_INIT 3
 .Os
 .Sh NAME
@@ -65,8 +65,13 @@
 .Ft int
 .Fn SSLeay_add_ssl_algorithms void
 .Sh DESCRIPTION
+These functions are deprecated.
+It is never useful for any application program to call any of them explicitly.
+The library automatically calls them internally whenever needed.
+.Pp
 .Fn SSL_library_init
-registers the available SSL/TLS ciphers and digests.
+registers the available ciphers and digests
+which are used directly or indirectly by TLS.
 .Pp
 .Fn OpenSSL_add_ssl_algorithms
 and
@@ -74,28 +79,11 @@ and
 are synonyms for
 .Fn SSL_library_init
 and are implemented as macros.
-.Pp
-.Fn SSL_library_init
-must be called before any other action takes place.
-.Fn SSL_library_init
-is not reentrant.
-.Pp
-.Fn SSL_library_init
-adds ciphers and digests used directly and indirectly by SSL/TLS.
 .Sh RETURN VALUES
 .Fn SSL_library_init
-always returns 1, so it is safe to discard the return value.
-.Sh EXAMPLES
-A typical TLS/SSL application will start with the library initialization, and
-provide readable error messages.
-.Bd -literal
-SSL_load_error_strings();                /* readable error messages */
-SSL_library_init();                      /* initialize library */
-.Ed
+always returns 1.
 .Sh SEE ALSO
-.Xr RAND_add 3 ,
-.Xr ssl 3 ,
-.Xr SSL_load_error_strings 3
+.Xr ssl 3
 .Sh HISTORY
 .Fn SSLeay_add_ssl_algorithms
 first appeared in SSLeay 0.8.0 and has been available since

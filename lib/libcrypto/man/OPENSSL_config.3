@@ -1,4 +1,4 @@
-.\" $OpenBSD: OPENSSL_config.3,v 1.14 2019/06/10 09:49:48 schwarze Exp $
+.\" $OpenBSD: OPENSSL_config.3,v 1.15 2019/06/14 13:41:31 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt OPENSSL_CONFIG 3
 .Os
 .Sh NAME
@@ -82,12 +82,7 @@
 .Fn OPENSSL_no_config void
 .Sh DESCRIPTION
 .Fn OPENSSL_config
-initializes the crypto library with
-.Xr OPENSSL_init_crypto 3
-and then calls
-.Xr OPENSSL_load_builtin_modules 3 ,
-.Xr ENGINE_load_builtin_engines 3 ,
-and
+initializes the crypto library and calls
 .Xr CONF_modules_load_file 3
 with the standard configuration file and the given
 .Fa appname .
@@ -104,7 +99,7 @@ Further calls to
 have no effect.
 .Pp
 .Fn OPENSSL_no_config
-suppresses the loading of any configuration file, so that any
+suppresses the loading of the standard configuration file, so that any
 future calls to
 .Fn OPENSSL_config
 or to
@@ -115,6 +110,17 @@ file will be loaded.
 Calling these functions is optional.
 All required initialization of the crypto libraries happens
 automatically when needed.
+.Pp
+To use a non-standard configuration file, refer to
+.Xr CONF_modules_load_file 3 .
+.Pp
+Internally,
+.Fn OPENSSL_config
+calls
+.Xr OPENSSL_init_crypto 3 ,
+.Xr OPENSSL_load_builtin_modules 3 ,
+and
+.Xr ENGINE_load_builtin_engines 3 .
 .Pp
 If an application is compiled with the preprocessor symbol
 .Dv OPENSSL_LOAD_CONF
@@ -135,7 +141,6 @@ standard configuration file
 .Xr CONF_modules_free 3 ,
 .Xr CONF_modules_load_file 3 ,
 .Xr crypto 3 ,
-.Xr OPENSSL_init_crypto 3 ,
 .Xr OPENSSL_load_builtin_modules 3 ,
 .Xr OPENSSL_VERSION_NUMBER 3 ,
 .Xr openssl.cnf 5 ,
