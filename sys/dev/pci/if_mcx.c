@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.29 2019/06/14 03:40:55 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.30 2019/06/14 07:02:55 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -1958,7 +1958,7 @@ struct mcx_softc {
 	int			 sc_flow_group_start[MCX_NUM_FLOW_GROUPS];
 	int			 sc_promisc_flow_enabled;
 	int			 sc_allmulti_flow_enabled;
-	int			 sc_first_mcast_flow_entry;
+	int			 sc_mcast_flow_base;
 	int			 sc_extra_mcast;
 	uint8_t			 sc_mcast_flows[MCX_NUM_MCAST_FLOWS][ETHER_ADDR_LEN];
 
@@ -2372,6 +2372,8 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_flow_group_size[i] = 0;
 		sc->sc_flow_group_start[i] = 0;
 	}
+	sc->sc_extra_mcast = 0;
+	memset(sc->sc_mcast_flows, 0, sizeof(sc->sc_mcast_flows));
 	return;
 
 teardown:
@@ -4963,8 +4965,8 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int group, int index)
 
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
-		printf("%s: delete flow table entry %d failed (%x, %x)\n",
-		    DEVNAME(sc), index, out->cmd_status,
+		printf("%s: delete flow table entry %d:%d failed (%x, %x)\n",
+		    DEVNAME(sc), group, index, out->cmd_status,
 		    betoh32(out->cmd_syndrome));
 		error = -1;
 		goto free;
@@ -5970,9 +5972,16 @@ mcx_up(struct mcx_softc *sc)
 	start++;
 
 	/* multicast entries go after that */
-	sc->sc_first_mcast_flow_entry = start;
-	sc->sc_extra_mcast = 0;
-	memset(sc->sc_mcast_flows, 0, sizeof(sc->sc_mcast_flows));
+	sc->sc_mcast_flow_base = start;
+
+	/* re-add any existing multicast flows */
+	for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
+		if (sc->sc_mcast_flows[i][0] != 0) {
+			mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_MAC,
+			    sc->sc_mcast_flow_base + i,
+			    sc->sc_mcast_flows[i]);
+		}
+	}
 
 	if (mcx_set_flow_table_root(sc) != 0)
 		goto down;
@@ -6032,7 +6041,7 @@ mcx_down(struct mcx_softc *sc)
 	for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 		if (sc->sc_mcast_flows[i][0] != 0) {
 			mcx_delete_flow_table_entry(sc, MCX_FLOW_GROUP_MAC,
-			    sc->sc_first_mcast_flow_entry + i);
+			    sc->sc_mcast_flow_base + i);
 		}
 	}
 
@@ -6125,10 +6134,12 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				if (sc->sc_mcast_flows[i][0] == 0) {
 					memcpy(sc->sc_mcast_flows[i], addrlo,
 					    ETHER_ADDR_LEN);
-					mcx_set_flow_table_entry(sc,
-					    MCX_FLOW_GROUP_MAC,
-					    sc->sc_first_mcast_flow_entry + i,
-					    sc->sc_mcast_flows[i]);
+					if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+						mcx_set_flow_table_entry(sc,
+						    MCX_FLOW_GROUP_MAC,
+						    sc->sc_mcast_flow_base + i,
+						    sc->sc_mcast_flows[i]);
+					}
 					break;
 				}
 			}
@@ -6157,9 +6168,11 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 				if (memcmp(sc->sc_mcast_flows[i], addrlo,
 				    ETHER_ADDR_LEN) == 0) {
-					mcx_delete_flow_table_entry(sc,
-					    MCX_FLOW_GROUP_MAC,
-					    sc->sc_first_mcast_flow_entry + i);
+					if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+						mcx_delete_flow_table_entry(sc,
+						    MCX_FLOW_GROUP_MAC,
+						    sc->sc_mcast_flow_base + i);
+					}
 					sc->sc_mcast_flows[i][0] = 0;
 					break;
 				}
