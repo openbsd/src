@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.83 2019/04/25 01:52:14 kevlo Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.84 2019/06/14 13:20:49 kn Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -2014,7 +2014,6 @@ upgt_set_led(struct upgt_softc *sc, int action)
 	struct upgt_data *data_cmd = &sc->cmd_data;
 	struct upgt_lmac_mem *mem;
 	struct upgt_lmac_led *led;
-	struct timeval t;
 	int len;
 
 	/*
@@ -2063,9 +2062,7 @@ upgt_set_led(struct upgt_softc *sc, int action)
 		led->action_tmp_dur = htole16(UPGT_LED_ACTION_TMP_DUR);
 		/* lock blink */
 		sc->sc_led_blink = 1;
-		t.tv_sec = 0;
-		t.tv_usec = UPGT_LED_ACTION_TMP_DUR * 1000L;
-		timeout_add(&sc->led_to, tvtohz(&t));
+		timeout_add_msec(&sc->led_to, UPGT_LED_ACTION_TMP_DUR);
 		break;
 	default:
 		return;
