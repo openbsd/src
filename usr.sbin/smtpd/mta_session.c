@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.116 2019/06/12 17:42:53 eric Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.117 2019/06/14 19:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -352,7 +352,7 @@ mta_free(struct mta_session *s)
 
 	if (s->flags & MTA_HANGON) {
 		log_debug("debug: mta: %p: cancelling hangon timer", s);
-		runq_cancel(hangon, NULL, s);
+		runq_cancel(hangon, s);
 	}
 
 	if (s->io)
@@ -700,7 +700,7 @@ mta_enter_state(struct mta_session *s, int newstate)
 			    (long long)(s->relay->limits->sessdelay_keepalive -
 			    s->hangon));
 			s->flags |= MTA_HANGON;
-			runq_schedule(hangon, time(NULL) + 1, NULL, s);
+			runq_schedule(hangon, 1, s);
 			break;
 		}
 
@@ -1045,9 +1045,8 @@ mta_response(struct mta_session *s, char *line)
 				    (long long int)s->relay->limits->sessdelay_transaction);
 				s->hangon = s->relay->limits->sessdelay_transaction -1;
 				s->flags |= MTA_HANGON;
-				runq_schedule(hangon, time(NULL)
-				    + s->relay->limits->sessdelay_transaction,
-				    NULL, s);
+				runq_schedule(hangon,
+				    s->relay->limits->sessdelay_transaction, s);
 			}
 			else
 				mta_enter_state(s, MTA_READY);
@@ -1061,9 +1060,8 @@ mta_response(struct mta_session *s, char *line)
 			    (long long int)s->relay->limits->sessdelay_transaction);
 			s->hangon = s->relay->limits->sessdelay_transaction -1;
 			s->flags |= MTA_HANGON;
-			runq_schedule(hangon, time(NULL)
-			    + s->relay->limits->sessdelay_transaction,
-			    NULL, s);
+			runq_schedule(hangon,
+			    s->relay->limits->sessdelay_transaction, s);
 		}
 		else
 			mta_enter_state(s, MTA_READY);

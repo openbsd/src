@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.623 2019/06/13 11:45:35 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.624 2019/06/14 19:55:25 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1686,8 +1686,7 @@ void waitq_run(void *, void *);
 struct runq;
 
 int runq_init(struct runq **, void (*)(struct runq *, void *));
-int runq_schedule(struct runq *, time_t, void (*)(struct runq *, void *), void *);
-int runq_delay(struct runq *, unsigned int, void (*)(struct runq *, void *), void *);
-int runq_cancel(struct runq *, void (*)(struct runq *, void *), void *);
-int runq_pending(struct runq *, void (*)(struct runq *, void *), void *, time_t *);
-int runq_next(struct runq *, void (**)(struct runq *, void *), void **, time_t *);
+int runq_schedule(struct runq *, time_t, void *);
+int runq_schedule_at(struct runq *, time_t, void *);
+int runq_cancel(struct runq *, void *);
+int runq_pending(struct runq *, void *, time_t *);

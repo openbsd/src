@@ -1,7 +1,7 @@
-/*	$OpenBSD: runq.c,v 1.2 2015/01/20 17:37:54 deraadt Exp $	*/
+/*	$OpenBSD: runq.c,v 1.3 2019/06/14 19:55:25 eric Exp $	*/
 
 /*
- * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
+ * Copyright (c) 2013,2019 Eric Faurot <eric@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,7 +33,6 @@
 struct job {
 	TAILQ_ENTRY(job)	 entry;
 	time_t			 when;
-	void			(*cb)(struct runq *, void *);
 	void			*arg;
 };
 
@@ -81,10 +80,7 @@ runq_timeout(int fd, short ev, void *arg)
 		if (job->when > now)
 			break;
 		TAILQ_REMOVE(&runq->jobs, job, entry);
-		if (job->cb)
-			job->cb(runq, job->arg);
-		else
-			runq->cb(runq, job->arg);
+		runq->cb(runq, job->arg);
 		free(job);
 	}
 
@@ -111,8 +107,16 @@ runq_init(struct runq **runqp, void (*cb)(struct runq *, void *))
 }
 
 int
-runq_schedule(struct runq *runq, time_t when, void (*cb)(struct runq *, void *),
-    void *arg)
+runq_schedule(struct runq *runq, time_t delay, void *arg)
+{
+	time_t t;
+
+	time(&t);
+	return runq_schedule_at(runq, t + delay, arg);
+}
+
+int
+runq_schedule_at(struct runq *runq, time_t when, void *arg)
 {
 	struct job	*job, *tmpjob;
 
@@ -121,7 +125,6 @@ runq_schedule(struct runq *runq, time_t when, void (*cb)(struct runq *, void *),
 		return (0);
 
 	job->arg = arg;
-	job->cb = cb;
 	job->when = when;
 
 	TAILQ_FOREACH(tmpjob, &runq->jobs, entry) {
@@ -141,20 +144,13 @@ runq_schedule(struct runq *runq, time_t when, void (*cb)(struct runq *, void *),
 }
 
 int
-runq_delay(struct runq *runq, unsigned int delay,
-    void (*cb)(struct runq *, void *), void *arg)
-{
-	return runq_schedule(runq, time(NULL) + delay, cb, arg);
-}
-
-int
-runq_cancel(struct runq *runq, void (*cb)(struct runq *, void *), void *arg)
+runq_cancel(struct runq *runq, void *arg)
 {
 	struct job	*job, *first;
 
 	first = TAILQ_FIRST(&runq->jobs);
 	TAILQ_FOREACH(job, &runq->jobs, entry) {
-		if (job->cb == cb && job->arg == arg) {
+		if (job->arg == arg) {
 			TAILQ_REMOVE(&runq->jobs, job, entry);
 			free(job);
 			if (runq != active && job == first) {
@@ -169,13 +165,12 @@ runq_cancel(struct runq *runq, void (*cb)(struct runq *, void *), void *arg)
 }
 
 int
-runq_pending(struct runq *runq, void (*cb)(struct runq *, void *), void *arg,
-    time_t *when)
+runq_pending(struct runq *runq, void *arg, time_t *when)
 {
 	struct job	*job;
 
 	TAILQ_FOREACH(job, &runq->jobs, entry) {
-		if (job->cb == cb && job->arg == arg) {
+		if (job->arg == arg) {
 			if (when)
 				*when = job->when;
 			return (1);
@@ -183,23 +178,4 @@ runq_pending(struct runq *runq, void (*cb)(struct runq *, void *), void *arg,
 	}
 
 	return (0);
-}
-
-int
-runq_next(struct runq *runq, void (**cb)(struct runq *, void *), void **arg,
-    time_t *when)
-{
-	struct job	*job;
-
-	job = TAILQ_FIRST(&runq->jobs);
-	if (job == NULL)
-		return (0);
-	if (cb)
-		*cb = job->cb;
-	if (arg)
-		*arg = job->arg;
-	if (when)
-		*when = job->when;
-
-	return (1);
 }
