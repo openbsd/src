@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_get_serialNumber.3,v 1.3 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: X509_get_serialNumber.3,v 1.4 2019/06/14 13:59:32 schwarze Exp $
 .\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt X509_GET_SERIALNUMBER 3
 .Os
 .Sh NAME
@@ -91,10 +91,11 @@ returns an
 structure.
 .Pp
 .Fn X509_set_serialNumber
-returns 1 for success and 0 for failure.
+returns 1 for success or 0 for failure.
+In some cases of failure, the reason can be determined with
+.Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr d2i_X509 3 ,
-.Xr ERR_get_error 3 ,
 .Xr X509_CRL_get0_by_serial 3 ,
 .Xr X509_get_pubkey 3 ,
 .Xr X509_NAME_add_entry_by_txt 3 ,

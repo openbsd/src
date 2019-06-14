@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ASN1_STRING_TABLE_add.3,v 1.3 2018/03/22 16:06:33 schwarze Exp $
+.\"	$OpenBSD: ASN1_STRING_TABLE_add.3,v 1.4 2019/06/14 13:59:32 schwarze Exp $
 .\"	OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt ASN1_STRING_TABLE_ADD 3
 .Os
 .Sh NAME
@@ -75,8 +75,11 @@ The function
 .Fn ASN1_STRING_TABLE_cleanup
 removes and frees all entries except the predefined ones.
 .Sh RETURN VALUES
+The
 .Fn ASN1_STRING_TABLE_add
-returns 1 on success or 0 if an error occurred.
+function returns 1 if successful; otherwise 0 is returned
+and an error code can be retrieved with
+.Xr ERR_get_error 3 .
 .Pp
 .Fn ASN1_STRING_TABLE_get
 returns a valid
@@ -86,7 +89,6 @@ structure or
 if nothing is found.
 .Sh SEE ALSO
 .Xr ASN1_OBJECT_new 3 ,
-.Xr ERR_get_error 3 ,
 .Xr OBJ_nid2obj 3
 .Sh HISTORY
 .Fn ASN1_STRING_TABLE_add ,

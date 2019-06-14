@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_add_entry_by_txt.3,v 1.13 2019/06/06 01:06:59 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_add_entry_by_txt.3,v 1.14 2019/06/14 13:59:32 schwarze Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt X509_NAME_ADD_ENTRY_BY_TXT 3
 .Os
 .Sh NAME
@@ -229,6 +229,9 @@ returns either the deleted
 structure or
 .Dv NULL
 if an error occurred.
+.Pp
+In some cases of failure, the reason can be determined with
+.Xr ERR_get_error 3 .
 .Sh EXAMPLES
 Create an
 .Vt X509_NAME
@@ -252,7 +255,6 @@ if (!X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
 .Ed
 .Sh SEE ALSO
 .Xr d2i_X509_NAME 3 ,
-.Xr ERR_get_error 3 ,
 .Xr X509_NAME_ENTRY_get_object 3 ,
 .Xr X509_NAME_get_index_by_NID 3 ,
 .Xr X509_NAME_new 3

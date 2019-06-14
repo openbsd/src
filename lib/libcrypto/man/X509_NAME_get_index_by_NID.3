@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_get_index_by_NID.3,v 1.11 2019/06/06 01:06:59 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_get_index_by_NID.3,v 1.12 2019/06/14 13:59:32 schwarze Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt X509_NAME_GET_INDEX_BY_NID 3
 .Os
 .Sh NAME
@@ -119,14 +119,6 @@ after
 .Fa lastpos .
 .Fa lastpos
 should initially be set to -1.
-If there are no more entries, -1 is returned.
-If
-.Fa nid
-is invalid (doesn't correspond to a valid OID), -2 is returned.
-.Pp
-.Fn X509_NAME_entry_count
-returns the total number of entries in
-.Fa name .
 .Pp
 .Fn X509_NAME_get_entry
 retrieves the
@@ -140,7 +132,6 @@ Acceptable values for
 run from 0 to
 .Fn X509_NAME_entry_count name
 - 1.
-The value returned is an internal pointer which must not be freed.
 .Pp
 .Fn X509_NAME_get_text_by_NID
 and
@@ -151,21 +142,16 @@ which matches
 .Fa nid
 or
 .Fa obj .
-If no such entry exists, -1 is returned.
 At most
 .Fa len
 bytes will be written and the text written to
 .Fa buf
 will be NUL terminated.
-The length of the output string written is returned excluding the
-terminating NUL.
 If
 .Fa buf
 is
-.Dv NULL
-then the amount of space needed in
-.Fa buf
-(excluding the final NUL) is returned.
+.Dv NULL ,
+nothing is written, but the return value is calculated as usual.
 .Pp
 All relevant
 .Dv NID_*
@@ -185,19 +171,34 @@ is not
 .Dv NULL .
 .Sh RETURN VALUES
 .Fn X509_NAME_get_index_by_NID
-and
+returns the index of the next matching entry, -1 if not found, or -2 if the
+.Fa nid
+does not correspond to a valid OID.
+.Pp
 .Fn X509_NAME_get_index_by_OBJ
-return the index of the next matching entry or -1 if not found.
+returns the index of the next matching entry or -1 if not found.
 .Pp
 .Fn X509_NAME_entry_count
-returns the total number of entries.
+returns the total number of entries in
+.Fa name .
 .Pp
 .Fn X509_NAME_get_entry
-returns an
-.Vt X509_NAME
-pointer to the requested entry or
+returns an internal pointer which must not be freed by the caller or
 .Dv NULL
 if the index is invalid.
+.Pp
+.Fn X509_NAME_get_text_by_NID
+and
+.Fn X509_NAME_get_text_by_OBJ
+return the length of the output string written, not counting the
+terminating NUL, or -1 if no match is found.
+.Pp
+In some cases of failure of
+.Fn X509_NAME_get_index_by_NID
+and
+.Fn X509_NAME_get_text_by_NID ,
+the reason can be determined with
+.Xr ERR_get_error 3 .
 .Sh EXAMPLES
 Process all entries:
 .Bd -literal
@@ -225,7 +226,6 @@ for (;;) {
 .Ed
 .Sh SEE ALSO
 .Xr d2i_X509_NAME 3 ,
-.Xr ERR_get_error 3 ,
 .Xr X509_NAME_ENTRY_get_object 3 ,
 .Xr X509_NAME_new 3
 .Sh HISTORY

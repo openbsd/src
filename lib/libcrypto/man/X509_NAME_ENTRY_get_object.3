@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.12 2018/05/19 21:25:51 schwarze Exp $
+.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.13 2019/06/14 13:59:32 schwarze Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2018 $
+.Dd $Mdocdate: June 14 2019 $
 .Dt X509_NAME_ENTRY_GET_OBJECT 3
 .Os
 .Sh NAME
@@ -223,16 +223,14 @@ but in the case of
 the field type must be set first so the relevant field information
 can be looked up internally.
 .Sh RETURN VALUES
-.Fn X509_NAME_ENTRY_new ,
-.Fn X509_NAME_ENTRY_create_by_txt ,
-.Fn X509_NAME_ENTRY_create_by_NID ,
-and
-.Fn X509_NAME_ENTRY_create_by_OBJ
-return a valid
+The
+.Fn X509_NAME_ENTRY_new
+function returns a valid
 .Vt X509_NAME_ENTRY
-structure on success or
+structure if successful; otherwise
 .Dv NULL
-if an error occurred.
+is returned and an error code can be retrieved with
+.Xr ERR_get_error 3 .
 .Pp
 .Fn X509_NAME_ENTRY_get_object
 returns a valid
@@ -248,12 +246,29 @@ structure if it is set or
 .Dv NULL
 if an error occurred.
 .Pp
+The
 .Fn X509_NAME_ENTRY_set_object
-and
+function returns 1 if successful;
+otherwise 0 is returned and an error code can be retrieved with
+.Xr ERR_get_error 3 .
+.Pp
 .Fn X509_NAME_ENTRY_set_data
 return 1 on success or 0 on error.
+In some cases of failure, the reason can be determined with
+.Xr ERR_get_error 3 .
+.Pp
+.Fn X509_NAME_ENTRY_create_by_txt ,
+.Fn X509_NAME_ENTRY_create_by_NID ,
+and
+.Fn X509_NAME_ENTRY_create_by_OBJ
+return a valid
+.Vt X509_NAME_ENTRY
+structure on success or
+.Dv NULL
+if an error occurred.
+In some cases of failure, the reason can be determined with
+.Xr ERR_get_error 3 .
 .Sh SEE ALSO
-.Xr ERR_get_error 3 ,
 .Xr OBJ_nid2obj 3 ,
 .Xr X509_NAME_add_entry 3 ,
 .Xr X509_NAME_get_entry 3 ,
