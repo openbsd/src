@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1889 2019/05/10 15:28:45 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1890 2019/06/14 11:40:36 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17308,6 +17308,34 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Apollo Lake I2C",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_2,
+	    "Apollo Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_3,
+	    "Apollo Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_4,
+	    "Apollo Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_5,
+	    "Apollo Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_6,
+	    "Apollo Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_7,
+	    "Apollo Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_8,
+	    "Apollo Lake I2C",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_UART_1,
 	    "Apollo Lake HSUART",
 	},
@@ -17338,6 +17366,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_SMB,
 	    "Apollo Lake SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_4,
+	    "Apollo Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_5,
+	    "Apollo Lake PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_1,

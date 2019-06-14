@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1889 2019/05/10 15:28:45 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1890 2019/06/14 11:40:36 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4956,6 +4956,13 @@
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_TXE	0x5a9a		/* Apollo Lake TXE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_XHCI	0x5aa8		/* Apollo Lake xHCI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_1	0x5aac		/* Apollo Lake I2C */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_2	0x5aae		/* Apollo Lake I2C */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_3	0x5ab0		/* Apollo Lake I2C */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_4	0x5ab2		/* Apollo Lake I2C */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_5	0x5ab4		/* Apollo Lake I2C */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_6	0x5ab6		/* Apollo Lake I2C */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_7	0x5ab8		/* Apollo Lake I2C */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_I2C_8	0x5aba		/* Apollo Lake I2C */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_UART_1	0x5abc		/* Apollo Lake HSUART */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_1	0x5ac2		/* Apollo Lake SPI */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SPI_2	0x5ac4		/* Apollo Lake SPI */
@@ -4964,6 +4971,8 @@
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_EMMC	0x5acc		/* Apollo Lake eMMC */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SDIO	0x5ad0		/* Apollo Lake SDIO */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_SMB	0x5ad4		/* Apollo Lake SMBus */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_4	0x5ad6		/* Apollo Lake PCIE */
+#define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_5	0x5ad7		/* Apollo Lake PCIE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_1	0x5ad8		/* Apollo Lake PCIE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_2	0x5ad9		/* Apollo Lake PCIE */
 #define	PCI_PRODUCT_INTEL_APOLLOLAKE_PCIE_3	0x5ada		/* Apollo Lake PCIE */
