@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.h,v 1.11 2019/06/12 11:09:25 gilles Exp $ */
+/*	$OpenBSD: parse.h,v 1.12 2019/06/14 19:55:08 florian Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -27,6 +27,11 @@
  * limit all paths to PATH_MAX
  */
 
+enum keytype {
+	KT_RSA = 0,
+	KT_ECDSA
+};
+
 struct authority_c {
 	TAILQ_ENTRY(authority_c)	 entry;
 	char		       	*name;
@@ -36,16 +41,16 @@ struct authority_c {
 
 struct domain_c {
 	TAILQ_ENTRY(domain_c)	 entry;
-	TAILQ_HEAD(, altname_c)	altname_list;
-	int			altname_count;
-	int		       	keytype;
-	char		       	*domain;
-	char		       	*key;
-	char		       	*cert;
+	TAILQ_HEAD(, altname_c)	 altname_list;
+	int			 altname_count;
+	enum keytype		 keytype;
+	char			*domain;
+	char			*key;
+	char			*cert;
 	char			*chain;
 	char			*fullchain;
-	char		       	*auth;
-	char		       	*challengedir;
+	char			*auth;
+	char			*challengedir;
 };
 
 struct altname_c {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2019/06/12 11:09:25 gilles Exp $ */
+/*	$OpenBSD: parse.y,v 1.36 2019/06/14 19:55:08 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -100,7 +100,7 @@ typedef struct {
 %}
 
 %token	AUTHORITY URL API ACCOUNT
-%token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR KEYTYPE
+%token	DOMAIN ALTERNATIVE NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
 %token	ERROR
@@ -108,6 +108,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.string>	string
+%type	<v.number>	keytype
 
 %%
 
@@ -260,13 +261,9 @@ domain		: DOMAIN STRING {
 		}
 		;
 
-keytype		: RSA { 
-			domain->keytype = 0;
-		}
-		| ECDSA {
-			domain->keytype = 1;
-		}
-		| /* nothing */
+keytype		: RSA	{ $$ = KT_RSA; }
+		| ECDSA	{ $$ = KT_ECDSA; }
+		|	{ $$ = KT_RSA; }
 		;
 
 domainopts_l	: domainopts_l domainoptsl nl
@@ -292,6 +289,7 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 				YYERROR;
 			}
 			domain->key = s;
+			domain->keytype = $4;
 		}
 		| DOMAIN CERT STRING {
 			char *s;

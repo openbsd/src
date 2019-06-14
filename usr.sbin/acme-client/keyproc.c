@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.13 2019/06/12 11:09:25 gilles Exp $ */
+/*	$Id: keyproc.c,v 1.14 2019/06/14 19:55:08 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -74,8 +74,8 @@ add_ext(STACK_OF(X509_EXTENSION) *sk, int nid, const char *value)
  * jail and, on success, ship it to "netsock" as an X509 request.
  */
 int
-keyproc(int netsock, const char *keyfile,
-    const char **alts, size_t altsz)
+keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
+    enum keytype keytype)
 {
 	char		*der64 = NULL, *der = NULL, *dercp;
 	char		*sans = NULL, *san = NULL;
@@ -117,14 +117,17 @@ keyproc(int netsock, const char *keyfile,
 	}
 
 	if (newkey) {
-		if (ecdsa) {
+		switch (keytype) {
+		case KT_ECDSA:
 			if ((pkey = ec_key_create(f, keyfile)) == NULL)
 				goto out;
 			dodbg("%s: generated ECDSA domain key", keyfile);
-		} else {
+			break;
+		case KT_RSA:
 			if ((pkey = rsa_key_create(f, keyfile)) == NULL)
 				goto out;
 			dodbg("%s: generated RSA domain key", keyfile);
+			break;
 		}
 	} else {
 		if ((pkey = key_load(f, keyfile)) == NULL)
