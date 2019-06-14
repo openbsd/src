@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.73 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.74 2019/06/14 18:13:55 kettenis Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -174,6 +174,7 @@
  * EBX bits
  */
 #define	SEFF0EBX_FSGSBASE	0x00000001 /* {RD,WR}[FG]SBASE instructions */
+#define	SEFF0EBX_TSC_ADJUST	0x00000002 /* Has IA32_TSC_ADJUST MSR */
 #define	SEFF0EBX_SGX		0x00000004 /* Software Guard Extensions */
 #define	SEFF0EBX_BMI1		0x00000008 /* advanced bit manipulation */
 #define	SEFF0EBX_HLE		0x00000010 /* Hardware Lock Elision */

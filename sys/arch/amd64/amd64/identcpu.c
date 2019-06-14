@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.112 2019/05/28 18:20:01 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.113 2019/06/14 18:13:55 kettenis Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -172,6 +172,7 @@ const struct {
 	{ CPUIDECX_MWAITX,	"MWAITX" },
 }, cpu_seff0_ebxfeatures[] = {
 	{ SEFF0EBX_FSGSBASE,	"FSGSBASE" },
+	{ SEFF0EBX_TSC_ADJUST,	"TSC_ADJUST" },
 	{ SEFF0EBX_SGX,		"SGX" },
 	{ SEFF0EBX_BMI1,	"BMI1" },
 	{ SEFF0EBX_HLE,		"HLE" },
