@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.5 2019/01/28 10:29:35 patrick Exp $ */
+/* $OpenBSD: imxuart.c,v 1.6 2019/06/14 18:12:55 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -239,7 +239,7 @@ imxuart_intr(void *arg)
 		if (p >= sc->sc_ibufend) {
 			sc->sc_floods++;
 			if (sc->sc_errors++ == 0)
-				timeout_add(&sc->sc_diag_tmo, 60 * hz);
+				timeout_add_sec(&sc->sc_diag_tmo, 60);
 		} else {
 			*p++ = c;
 			if (p == sc->sc_ibufhigh &&
@@ -301,7 +301,7 @@ imxuart_param(struct tty *tp, struct termios *t)
 		while (ISSET(tp->t_state, TS_BUSY)) {
 			++sc->sc_halt;
 			error = ttysleep(tp, &tp->t_outq,
-			    TTOPRI | PCATCH, "imxuartprm", 0);
+			    TTOPRI | PCATCH, "imxuartprm");
 			--sc->sc_halt;
 			if (error) {
 				imxuart_start(tp);
@@ -468,7 +468,7 @@ imxuart_softint(void *arg)
 		if (ISSET(c, IMXUART_RX_OVERRUN)) {
 			sc->sc_overflows++;
 			if (sc->sc_errors++ == 0)
-				timeout_add(&sc->sc_diag_tmo, 60 * hz);
+				timeout_add_sec(&sc->sc_diag_tmo, 60);
 		}
 		/* This is ugly, but fast. */
 
@@ -598,7 +598,7 @@ imxuartopen(dev_t dev, int flag, int mode, struct proc *p)
 				!ISSET(tp->t_state, TS_CARR_ON))) {
 				SET(tp->t_state, TS_WOPEN);
 				error = ttysleep(tp, &tp->t_rawq,
-				    TTIPRI | PCATCH, ttopen, 0);
+				    TTIPRI | PCATCH, ttopen);
 				/*
 				 * If TS_WOPEN has been reset, that means the
 				 * cua device has been closed.  We don't want
@@ -640,7 +640,7 @@ imxuartclose(dev_t dev, int flag, int mode, struct proc *p)
 		/* tty device is waiting for carrier; drop dtr then re-raise */
 		CLR(sc->sc_ucr3, IMXUART_CR3_DSR);
 		bus_space_write_2(iot, ioh, IMXUART_UCR3, sc->sc_ucr3);
-		timeout_add(&sc->sc_dtr_tmo, hz * 2);
+		timeout_add_sec(&sc->sc_dtr_tmo, 2);
 	} else {
 		/* no one else waiting; turn off the uart */
 		imxuart_pwroff(sc);
