@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.15 2019/06/14 12:04:11 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.16 2019/06/14 13:34:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -517,7 +517,10 @@ cmd_parse_print_commands(struct cmd_parse_input *pi, u_int line,
 
 	if (pi->item != NULL && (pi->flags & CMD_PARSE_VERBOSE)) {
 		s = cmd_list_print(cmdlist, 0);
-		cmdq_print(pi->item, "%u: %s", line, s);
+		if (pi->file != NULL)
+			cmdq_print(pi->item, "%s:%u: %s", pi->file, line, s);
+		else
+			cmdq_print(pi->item, "%u: %s", line, s);
 		free(s);
 	}
 }
