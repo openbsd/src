@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.81 2019/05/17 20:08:38 beck Exp $
+#	$OpenBSD: Makefile,v 1.82 2019/06/14 19:23:53 cheloha Exp $
 
-SUBDIR+= __syscall access accept cmsgsize
+SUBDIR+= __syscall access accept cmsgsize clock_gettime
 SUBDIR+= dup2 dup2_accept dup2_self descrip
 SUBDIR+= exec_self execve exit extent
 SUBDIR+= fchdir
