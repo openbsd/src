@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.245 2019/06/01 22:42:20 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.246 2019/06/14 05:52:43 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1860,8 +1860,8 @@ uvm_map_inentry_fix(struct proc *p, struct p_inentry *ie, vaddr_t addr,
 }
 
 boolean_t
-uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr, char *name,
-    int (*fn)(vm_map_entry_t), u_long serial)
+uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr,
+    const char *fmt, int (*fn)(vm_map_entry_t), u_long serial)
 {
 	union sigval sv;
 	boolean_t ok = TRUE;
@@ -1870,9 +1870,8 @@ uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr, char *name,
 		KERNEL_LOCK();
 		ok = uvm_map_inentry_fix(p, ie, addr, fn, serial);
 		if (!ok) {
-			printf("[%s]%d/%d %s %lx not inside %lx-%lx\n",
-			    p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
-			    name, addr, ie->ie_start, ie->ie_end);
+			printf(fmt, p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
+			    addr, ie->ie_start, ie->ie_end);
 			sv.sival_ptr = (void *)PROC_PC(p);
 			trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
 		}

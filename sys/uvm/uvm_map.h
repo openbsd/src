@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.61 2019/06/01 22:42:20 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.62 2019/06/14 05:52:43 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -421,7 +421,7 @@ int		uvm_map_inentry_pc(vm_map_entry_t);
 boolean_t	uvm_map_inentry_fix(struct proc *, struct p_inentry *,
 		    vaddr_t addr, int (*fn)(vm_map_entry_t), u_long serial);
 boolean_t	uvm_map_inentry(struct proc *, struct p_inentry *, vaddr_t addr,
-		    char *name, int (*fn)(vm_map_entry_t), u_long serial);
+		    const char *fmt, int (*fn)(vm_map_entry_t), u_long serial);
 
 struct kinfo_vmentry;
 

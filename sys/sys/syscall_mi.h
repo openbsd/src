@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.20 2019/06/01 22:42:18 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.21 2019/06/14 05:52:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -68,12 +68,14 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 #endif
 
 	/* SP must be within MAP_STACK space */
-	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p), "sp",
+	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 		return (EPERM);
 
 	/* PC must not be in writeable memory */
-	if (!uvm_map_inentry(p, &p->p_pcinentry, PROC_PC(p), "pc",
+	if (!uvm_map_inentry(p, &p->p_pcinentry, PROC_PC(p),
+	    "[%s]%d/%d pc=%lx inside %lx-%lx: writeable syscall\n",
 	    uvm_map_inentry_pc, p->p_vmspace->vm_map.wserial))
 		return (EPERM);
 
