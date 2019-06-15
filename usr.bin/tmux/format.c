@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.203 2019/06/13 21:24:09 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.204 2019/06/15 06:33:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1700,7 +1700,7 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 			else
 				value = xstrdup("0");
 		} else if (strcmp(cmp->modifier, "m") == 0)
-			value = format_match(fm, left, right);
+			value = format_match(cmp, left, right);
 
 		free(right);
 		free(left);
