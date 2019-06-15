@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.317 2019/05/30 13:11:53 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.318 2019/06/15 15:28:55 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -879,6 +879,9 @@ sys___realpath(struct proc *p, void *v, register_t *retval)
 	struct nameidata nd;
 	size_t pathlen;
 	int error = 0;
+
+	if (SCARG(uap, pathname) == NULL)
+		return (EINVAL);
 
 	pathname = pool_get(&namei_pool, PR_WAITOK);
 	rpbuf = pool_get(&namei_pool, PR_WAITOK);
