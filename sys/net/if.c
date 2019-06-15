@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.584 2019/06/04 23:06:34 sashan Exp $	*/
+/*	$OpenBSD: if.c,v 1.585 2019/06/15 17:05:21 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -469,8 +469,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	 * now.  This is useful for interfaces that can change
 	 * link types, and thus switch link names often.
 	 */
-	if (ifp->if_sadl != NULL)
-		if_free_sadl(ifp);
+	if_free_sadl(ifp);
 
 	namelen = strlen(ifp->if_xname);
 	masklen = offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
@@ -498,7 +497,10 @@ if_alloc_sadl(struct ifnet *ifp)
 void
 if_free_sadl(struct ifnet *ifp)
 {
-	free(ifp->if_sadl, M_IFADDR, 0);
+	if (ifp->if_sadl == NULL)
+		return;
+
+	free(ifp->if_sadl, M_IFADDR, ifp->if_sadl->sdl_len);
 	ifp->if_sadl = NULL;
 }
 
@@ -1134,9 +1136,9 @@ if_detach(struct ifnet *ifp)
 		}
 	}
 
-	free(ifp->if_addrhooks, M_TEMP, 0);
-	free(ifp->if_linkstatehooks, M_TEMP, 0);
-	free(ifp->if_detachhooks, M_TEMP, 0);
+	free(ifp->if_addrhooks, M_TEMP, sizeof(*ifp->if_addrhooks));
+	free(ifp->if_linkstatehooks, M_TEMP, sizeof(*ifp->if_linkstatehooks));
+	free(ifp->if_detachhooks, M_TEMP, sizeof(*ifp->if_detachhooks));
 
 	for (i = 0; (dp = domains[i]) != NULL; i++) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
