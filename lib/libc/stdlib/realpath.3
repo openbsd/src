@@ -28,9 +28,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.19 2014/01/20 22:40:06 schwarze Exp $
+.\"	$OpenBSD: realpath.3,v 1.20 2019/06/15 15:40:44 deraadt Exp $
 .\"
-.Dd $Mdocdate: January 20 2014 $
+.Dd $Mdocdate: June 15 2019 $
 .Dt REALPATH 3
 .Os
 .Sh NAME
@@ -96,13 +96,43 @@ are undefined.
 .Sh ERRORS
 The function
 .Fn realpath
-may fail and set the external variable
-.Va errno
-for any of the errors specified for the library functions
-.Xr lstat 2 ,
-.Xr readlink 2 ,
-and
-.Xr getcwd 3 .
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EACCES
+Read or search permission was denied for a component of
+.Ar pathname .
+.It Bq Er EINVAL
+The
+.Ar pathname
+argument is a null pointer.
+.It Bq Er EIO
+An error occurred while reading from the file system.
+.It Bq Er ELOOP
+Too many symbolic links were encountered in translating
+.Ar pathname .
+.It Bq Er ENAMETOOLONG
+A component of
+.Ar pathname
+exceeded
+.Dv NAME_MAX
+characters, or the entire
+.Ar pathname
+(including the terminating NUL) exceeded
+.Dv PATH_MAX .
+.It Bq Er ENAMETOOLONG
+Pathname resolution of a symbolic link produced an intermediate
+result whose length exceeds
+.Dv PATH_MAX .
+.It Bq Er ENOENT
+A component of
+.Ar pathname
+does not name an existing file or
+.Ar pathname
+points to an empty string.
+.It Bq Er ENOTDIR
+A component of the path prefix is not a directory.
+.It Bq Er ENOMEM
+Sufficient storage space is unavailable for allocation.
 .Sh SEE ALSO
 .Xr readlink 1 ,
 .Xr getcwd 3
@@ -116,15 +146,3 @@ The
 .Fn realpath
 function call first appeared in
 .Bx 4.4 .
-.Sh CAVEATS
-This implementation of
-.Fn realpath
-differs slightly from the Solaris implementation.
-The
-.Bx 4.4
-version always returns absolute pathnames,
-whereas the Solaris implementation will,
-under certain circumstances, return a relative
-.Fa resolved
-when given a relative
-.Fa pathname .
