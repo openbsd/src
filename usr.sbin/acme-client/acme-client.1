@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.31 2019/06/08 07:52:55 florian Exp $
+.\"	$OpenBSD: acme-client.1,v 1.32 2019/06/15 17:06:44 florian Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2019 $
+.Dd $Mdocdate: June 15 2019 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -149,10 +149,3 @@ The
 .Nm
 utility was written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
-.Sh BUGS
-The challenge and certificate processes currently retain their (root)
-privileges.
-.Pp
-For the time being,
-.Nm
-only supports RSA as an account key format.
