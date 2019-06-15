@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2019/06/14 19:55:08 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.37 2019/06/15 12:51:19 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -70,6 +70,7 @@ struct authority_c	*conf_new_authority(struct acme_conf *, char *);
 struct domain_c		*conf_new_domain(struct acme_conf *, char *);
 struct keyfile		*conf_new_keyfile(struct acme_conf *, char *);
 void			 clear_config(struct acme_conf *);
+const char*		 kt2txt(enum keytype);
 void			 print_config(struct acme_conf *);
 int			 conf_check_file(char *);
 
@@ -993,6 +994,19 @@ clear_config(struct acme_conf *xconf)
 	free(xconf);
 }
 
+const char*
+kt2txt(enum keytype kt)
+{
+	switch (kt) {
+	case KT_RSA:
+		return "rsa";
+	case KT_ECDSA:
+		return "ecdsa";
+	default:
+		return "<unknown>";
+	}
+}
+
 void
 print_config(struct acme_conf *xconf)
 {
@@ -1023,7 +1037,8 @@ print_config(struct acme_conf *xconf)
 		if (f)
 			printf(" }\n");
 		if (d->key != NULL)
-			printf("\tdomain key \"%s\"\n", d->key);
+			printf("\tdomain key \"%s\" %s\n", d->key, kt2txt(
+			    d->keytype));
 		if (d->cert != NULL)
 			printf("\tdomain certificate \"%s\"\n", d->cert);
 		if (d->chain != NULL)
