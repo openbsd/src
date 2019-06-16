@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.15 2019/06/12 11:09:25 gilles Exp $ */
+/*	$Id: acctproc.c,v 1.16 2019/06/16 11:44:22 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -76,7 +76,7 @@ op_thumb_rsa(EVP_PKEY *pkey)
 	char	*exp = NULL, *mod = NULL, *json = NULL;
 	RSA	*r;
 
-	if ((r = EVP_PKEY_get1_RSA(pkey)) == NULL)
+	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
 		warnx("EVP_PKEY_get1_RSA");
 	else if ((mod = bn2string(r->n)) == NULL)
 		warnx("bn2string");
@@ -167,7 +167,7 @@ op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 	 * Finally, format the header combined with the nonce.
 	 */
 
-	if ((r = EVP_PKEY_get1_RSA(pkey)) == NULL)
+	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
 		warnx("EVP_PKEY_get1_RSA");
 	else if ((mod = bn2string(r->n)) == NULL)
 		warnx("bn2string");
