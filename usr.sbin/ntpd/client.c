@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.107 2019/06/09 08:40:54 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.108 2019/06/16 07:36:25 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -129,8 +129,11 @@ client_query(struct ntp_peer *p)
 	int	val;
 
 	if (p->addr == NULL && client_nextaddr(p) == -1) {
-		set_next(p, MAXIMUM(SETTIME_TIMEOUT,
-		    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
+		if (conf->settime)
+			set_next(p, INTERVAL_AUIO_DNSFAIL);
+		else
+			set_next(p, MAXIMUM(SETTIME_TIMEOUT,
+			    scale_interval(INTERVAL_QUERY_AGGRESSIVE)));
 		return (0);
 	}
 

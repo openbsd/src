@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.154 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.155 2019/06/16 07:36:25 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -520,6 +520,8 @@ ntp_dispatch_imsg_dns(void)
 			if (dlen == 0) {	/* no data -> temp error */
 				log_warnx("DNS lookup tempfail");
 				peer->state = STATE_DNS_TEMPFAIL;
+				if (++conf->tmpfail > TRIES_AUTO_DNSFAIL)
+					priv_settime(0);
 				break;
 			}
 

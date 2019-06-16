@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.45 2019/06/09 08:40:54 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.46 2019/06/16 07:36:25 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -157,7 +157,9 @@ constraint_query(struct constraint *cstr)
 		/* Proceed and query the time */
 		break;
 	case STATE_DNS_TEMPFAIL:
-		if (now > cstr->last + CONSTRAINT_RETRY_INTERVAL) {
+		if (now > cstr->last + (cstr->dnstries >= TRIES_AUTO_DNSFAIL ?
+		    CONSTRAINT_RETRY_INTERVAL : INTERVAL_AUIO_DNSFAIL)) {
+			cstr->dnstries++;
 			/* Retry resolving the address */
 			constraint_init(cstr);
 			return 0;

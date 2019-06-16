@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.142 2019/06/12 05:04:45 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.143 2019/06/16 07:36:25 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -69,6 +69,8 @@
 #define FILTER_ADJFREQ		0x01	/* set after doing adjfreq */
 #define AUTO_REPLIES    	4	/* # of ntp replies we want for auto */
 #define AUTO_THRESHOLD		60	/* dont bother auto setting < this */
+#define INTERVAL_AUIO_DNSFAIL	1	/* DNS tmpfail interval for auto */
+#define TRIES_AUTO_DNSFAIL	4	/* DNS tmpfail quick retries */
 
 
 #define	SENSOR_DATA_MAXAGE		(15*60)
@@ -199,6 +201,7 @@ struct constraint {
 	struct imsgbuf			 ibuf;
 	time_t				 last;
 	time_t				 constraint;
+	int				 dnstries;
 };
 
 struct ntp_conf_sensor {
@@ -241,6 +244,7 @@ struct ntpd_conf {
 	u_int						constraint_errors;
 	u_int8_t					*ca;
 	size_t						ca_len;
+	int						tmpfail;
 };
 
 struct ctl_show_status {
