@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.49 2019/06/14 19:55:08 florian Exp $ */
+/*	$Id: main.c,v 1.50 2019/06/16 07:24:28 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,7 +38,6 @@ main(int argc, char *argv[])
 	const char	 **alts = NULL;
 	char		 *certdir = NULL, *certfile = NULL;
 	char		 *chainfile = NULL, *fullchainfile = NULL;
-	char		 *acctkey = NULL;
 	char		 *chngdir = NULL, *auth = NULL;
 	char		 *conffile = CONF_FILE;
 	char		 *tmps, *tmpsd;
@@ -146,8 +145,6 @@ main(int argc, char *argv[])
 		if (authority == NULL)
 			errx(EXIT_FAILURE, "authority %s not found", auth);
 	}
-
-	acctkey = authority->account;
 
 	if ((chngdir = domain->challengedir) == NULL)
 		if ((chngdir = strdup(WWW_DIR)) == NULL)
@@ -273,7 +270,7 @@ main(int argc, char *argv[])
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = acctproc(acct_fds[0], acctkey);
+		c = acctproc(acct_fds[0], authority->account);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
