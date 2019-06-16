@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.242 2019/05/13 20:47:19 claudio Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.243 2019/06/16 09:30:15 mestre Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -94,13 +94,14 @@
 #include <ddb/db_var.h>
 #include <dev/rndvar.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <limits.h>
 #include <unistd.h>
 
 #include <machine/cpu.h>
@@ -161,6 +162,8 @@ struct list secondlevel[] = {
 };
 
 int	Aflag, aflag, nflag, qflag;
+
+time_t boottime;
 
 /*
  * Variables requiring special processing.
@@ -254,6 +257,15 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	ctime(&boottime); /* satisfy potential $TZ expansion before unveil() */
+
+	if (unveil(_PATH_DEVDB, "r") == -1)
+		err(1,"unveil");
+	if (unveil("/dev", "r") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	if (argc == 0 || (Aflag || aflag)) {
 		debuginit();
@@ -893,7 +905,6 @@ parse(char *string, int flags)
 	}
 	if (special & BOOTTIME) {
 		struct timeval *btp = (struct timeval *)buf;
-		time_t boottime;
 
 		if (!nflag) {
 			boottime = btp->tv_sec;
