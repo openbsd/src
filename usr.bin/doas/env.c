@@ -1,4 +1,4 @@
-/* $OpenBSD: env.c,v 1.6 2017/04/06 21:12:06 tedu Exp $ */
+/* $OpenBSD: env.c,v 1.7 2019/06/16 18:16:34 tedu Exp $ */
 /*
  * Copyright (c) 2016 Ted Unangst <tedu@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <err.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pwd.h>
 
 #include "doas.h"
 
@@ -37,6 +38,8 @@ struct env {
 	RB_HEAD(envtree, envnode) root;
 	u_int count;
 };
+
+static void fillenv(struct env *env, const char **envlist);
 
 static int
 envcmp(struct envnode *a, struct envnode *b)
@@ -68,8 +71,19 @@ freenode(struct envnode *node)
 	free(node);
 }
 
+static void
+addnode(struct env *env, const char *key, const char *value)
+{
+	struct envnode *node;
+
+	node = createnode(key, value);
+	RB_INSERT(envtree, &env->root, node);
+	env->count++;
+}
+
 static struct env *
-createenv(const struct rule *rule)
+createenv(const struct rule *rule, const struct passwd *mypw,
+    const struct passwd *targpw)
 {
 	struct env *env;
 	u_int i;
@@ -79,6 +93,8 @@ createenv(const struct rule *rule)
 		err(1, NULL);
 	RB_INIT(&env->root);
 	env->count = 0;
+
+	addnode(env, "DOAS_USER", mypw->pw_name);
 
 	if (rule->options & KEEPENV) {
 		extern const char **environ;
@@ -108,6 +124,19 @@ createenv(const struct rule *rule)
 				env->count++;
 			}
 		}
+	} else {
+		static const char *copyset[] = {
+			"DISPLAY", "TERM",
+			NULL
+		};
+
+		addnode(env, "HOME", targpw->pw_dir);
+		addnode(env, "LOGNAME", targpw->pw_name);
+		addnode(env, "PATH", getenv("PATH"));
+		addnode(env, "SHELL", targpw->pw_shell);
+		addnode(env, "USER", targpw->pw_name);
+
+		fillenv(env, copyset);
 	}
 
 	return env;
@@ -186,20 +215,12 @@ fillenv(struct env *env, const char **envlist)
 }
 
 char **
-prepenv(const struct rule *rule)
+prepenv(const struct rule *rule, const struct passwd *mypw,
+    const struct passwd *targpw)
 {
-	static const char *safeset[] = {
-		"DISPLAY", "HOME", "LOGNAME", "MAIL",
-		"PATH", "TERM", "USER", "USERNAME",
-		NULL
-	};
 	struct env *env;
 
-	env = createenv(rule);
-
-	/* if we started with blank, fill some defaults then apply rules */
-	if (!(rule->options & KEEPENV))
-		fillenv(env, safeset);
+	env = createenv(rule, mypw, targpw);
 	if (rule->envlist)
 		fillenv(env, rule->envlist);
 
