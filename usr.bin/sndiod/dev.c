@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.47 2018/06/26 07:49:44 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.48 2019/06/16 13:50:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -473,8 +473,7 @@ dev_midi_omsg(void *arg, unsigned char *msg, int len)
 			    (x->u.loc.hr & 0x1f) * 3600 * MTC_SEC +
 			     x->u.loc.min * 60 * MTC_SEC +
 			     x->u.loc.sec * MTC_SEC +
-			     x->u.loc.fr * (MTC_SEC / fps) +
-			     x->u.loc.cent * (MTC_SEC / 100 / fps));
+			     x->u.loc.fr * (MTC_SEC / fps));
 			break;
 		}
 		break;
