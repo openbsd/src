@@ -1,4 +1,4 @@
-/*	$Id: fileproc.c,v 1.15 2018/07/29 20:15:23 benno Exp $ */
+/*	$Id: fileproc.c,v 1.16 2019/06/16 19:49:13 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -86,12 +86,8 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	long		 lval;
 	enum fileop	 op;
 
-	if (chroot(certdir) == -1) {
-		warn("chroot");
-		goto out;
-	}
-	if (chdir("/") == -1) {
-		warn("chdir");
+	if (unveil(certdir, "rwc") == -1) {
+		warn("unveil");
 		goto out;
 	}
 
@@ -129,27 +125,26 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 	if (FILE_REMOVE == op) {
 		if (certfile) {
 			if (unlink(certfile) == -1 && errno != ENOENT) {
-				warn("%s/%s", certdir, certfile);
+				warn("%s", certfile);
 				goto out;
 			} else
-				dodbg("%s/%s: unlinked", certdir, certfile);
+				dodbg("%s: unlinked", certfile);
 		}
 
 		if (chainfile) {
 			if (unlink(chainfile) == -1 && errno != ENOENT) {
-				warn("%s/%s", certdir, chainfile);
+				warn("%s", chainfile);
 				goto out;
 			} else
-				dodbg("%s/%s: unlinked", certdir, chainfile);
+				dodbg("%s: unlinked", chainfile);
 		}
 
 		if (fullchainfile) {
 			if (unlink(fullchainfile) == -1 && errno != ENOENT) {
-				warn("%s/%s", certdir, fullchainfile);
+				warn("%s", fullchainfile);
 				goto out;
 			} else
-				dodbg("%s/%s: unlinked", certdir,
-				    fullchainfile);
+				dodbg("%s: unlinked", fullchainfile);
 		}
 
 		rc = 2;
@@ -168,7 +163,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 		if (!serialise(chainfile, ch, chsz, NULL, 0))
 			goto out;
 
-		dodbg("%s/%s: created", certdir, chainfile);
+		dodbg("%s: created", chainfile);
 	}
 
 	/*
@@ -185,7 +180,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 		if (!serialise(certfile, csr, csz, NULL, 0))
 			goto out;
 
-		dodbg("%s/%s: created", certdir, certfile);
+		dodbg("%s: created", certfile);
 	}
 
 	/*
@@ -199,7 +194,7 @@ fileproc(int certsock, const char *certdir, const char *certfile, const char
 		    chsz))
 			goto out;
 
-		dodbg("%s/%s: created", certdir, fullchainfile);
+		dodbg("%s: created", fullchainfile);
 	}
 
 	rc = 2;

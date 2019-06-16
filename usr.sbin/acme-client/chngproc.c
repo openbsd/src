@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.13 2019/04/01 04:18:54 naddy Exp $ */
+/*	$Id: chngproc.c,v 1.14 2019/06/16 19:49:13 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,14 +36,12 @@ chngproc(int netsock, const char *root)
 	enum chngop	  op;
 	void		 *pp;
 
-	if (chroot(root) == -1) {
-		warn("chroot");
+
+	if (unveil(root, "wc") == -1) {
+		warn("unveil");
 		goto out;
 	}
-	if (chdir("/") == -1) {
-		warn("chdir");
-		goto out;
-	}
+
 	if (pledge("stdio cpath wpath", NULL) == -1) {
 		warn("pledge");
 		goto out;
@@ -80,6 +78,11 @@ chngproc(int netsock, const char *root)
 		else if ((tok = readstr(netsock, COMM_TOK)) == NULL)
 			goto out;
 
+		if (asprintf(&fmt, "%s.%s", tok, th) == -1) {
+			warn("asprintf");
+			goto out;
+		}
+
 		/* Vector appending... */
 
 		pp = reallocarray(fs, (fsz + 1), sizeof(char *));
@@ -88,14 +91,13 @@ chngproc(int netsock, const char *root)
 			goto out;
 		}
 		fs = pp;
-		fs[fsz] = tok;
-		tok = NULL;
-		fsz++;
-
-		if (asprintf(&fmt, "%s.%s", fs[fsz - 1], th) == -1) {
+		if (asprintf(&fs[fsz], "%s/%s", root, tok) == -1) {
 			warn("asprintf");
 			goto out;
 		}
+		fsz++;
+		free(tok);
+		tok = NULL;
 
 		/*
 		 * Create and write to our challenge file.
@@ -121,7 +123,7 @@ chngproc(int netsock, const char *root)
 		free(fmt);
 		th = fmt = NULL;
 
-		dodbg("%s/%s: created", root, fs[fsz - 1]);
+		dodbg("%s: created", fs[fsz - 1]);
 
 		/*
 		 * Write our acknowledgement.
