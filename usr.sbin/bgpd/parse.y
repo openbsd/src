@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.389 2019/05/31 08:22:25 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.390 2019/06/17 11:02:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,8 +153,8 @@ int		 merge_filterset(struct filter_set_head *, struct filter_set *);
 void		 optimize_filters(struct filter_head *);
 struct filter_rule	*get_rule(enum action_types);
 
-int		 parsecommunity(struct filter_community *, int, char *);
-int		 parseextcommunity(struct filter_community *, char *,
+int		 parsecommunity(struct community *, int, char *);
+int		 parseextcommunity(struct community *, char *,
 		    char *);
 static int	 new_as_set(char *);
 static void	 add_as_set(u_int32_t);
@@ -1103,8 +1103,7 @@ l3vpnopts_l	: /* empty */
 		;
 
 l3vpnopts	: RD STRING {
-			struct filter_community	ext;
-			u_int64_t		rd;
+			struct community	ext;
 
 			memset(&ext, 0, sizeof(ext));
 			if (parseextcommunity(&ext, "rt", $2) == -1) {
@@ -1113,29 +1112,13 @@ l3vpnopts	: RD STRING {
 			}
 			free($2);
 			/*
-			 * RD is almost encode like an ext-community,
+			 * RD is almost encoded like an ext-community,
 			 * but only almost so convert here.
 			 */
-			if (community_ext_conv(&ext, NULL, &rd, NULL)) {
+			if (community_to_rd(&ext, &curvpn->rd) == -1) {
 				yyerror("bad encoding of rd");
 				YYERROR;
 			}
-			rd = be64toh(rd) & 0xffffffffffffULL;
-			switch (ext.c.e.type) {
-			case EXT_COMMUNITY_TRANS_TWO_AS:
-				rd |= (0ULL << 48);
-				break;
-			case EXT_COMMUNITY_TRANS_IPV4:
-				rd |= (1ULL << 48);
-				break;
-			case EXT_COMMUNITY_TRANS_FOUR_AS:
-				rd |= (2ULL << 48);
-				break;
-			default:
-				yyerror("bad encoding of rd");
-				YYERROR;
-			}
-			curvpn->rd = htobe64(rd);
 		}
 		| EXPORTTRGT STRING STRING	{
 			struct filter_set	*set;
@@ -2113,8 +2096,7 @@ filter_elm	: filter_prefix_h	{
 		| community STRING	{
 			int i;
 			for (i = 0; i < MAX_COMM_MATCH; i++) {
-				if (fmopts.m.community[i].type ==
-				    COMMUNITY_TYPE_NONE)
+				if (fmopts.m.community[i].flags == 0)
 					break;
 			}
 			if (i >= MAX_COMM_MATCH) {
@@ -2132,8 +2114,7 @@ filter_elm	: filter_prefix_h	{
 		| EXTCOMMUNITY STRING STRING {
 			int i;
 			for (i = 0; i < MAX_COMM_MATCH; i++) {
-				if (fmopts.m.community[i].type ==
-				    COMMUNITY_TYPE_NONE)
+				if (fmopts.m.community[i].flags == 0)
 					break;
 			}
 			if (i >= MAX_COMM_MATCH) {
@@ -2155,8 +2136,7 @@ filter_elm	: filter_prefix_h	{
 		| EXTCOMMUNITY OVS STRING {
 			int i;
 			for (i = 0; i < MAX_COMM_MATCH; i++) {
-				if (fmopts.m.community[i].type ==
-				    COMMUNITY_TYPE_NONE)
+				if (fmopts.m.community[i].flags == 0)
 					break;
 			}
 			if (i >= MAX_COMM_MATCH) {
@@ -2616,6 +2596,8 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			free($2);
 		}
 		| community delete STRING	{
+			u_int8_t f1, f2, f3;
+
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			if ($2)
@@ -2631,10 +2613,11 @@ filter_set_opt	: LOCALPREF NUMBER		{
 			}
 			free($3);
 			/* Don't allow setting of any match */
-			if (!$2 &&
-			    ($$->action.community.dflag1 == COMMUNITY_ANY ||
-			    $$->action.community.dflag2 == COMMUNITY_ANY ||
-			    $$->action.community.dflag3 == COMMUNITY_ANY)) {
+			f1 = $$->action.community.flags >> 8;
+			f2 = $$->action.community.flags >> 16;
+			f3 = $$->action.community.flags >> 24;
+			if (!$2 && (f1 == COMMUNITY_ANY ||
+			    f2 == COMMUNITY_ANY || f3 == COMMUNITY_ANY)) {
 				yyerror("'*' is not allowed in set community");
 				free($$);
 				YYERROR;
@@ -3450,7 +3433,7 @@ symget(const char *nam)
 }
 
 static int
-getcommunity(char *s, int large, u_int32_t *val, u_int8_t *flag)
+getcommunity(char *s, int large, u_int32_t *val, u_int32_t *flag)
 {
 	long long	 max = USHRT_MAX;
 	const char	*errstr;
@@ -3478,21 +3461,22 @@ getcommunity(char *s, int large, u_int32_t *val, u_int8_t *flag)
 }
 
 static void
-setcommunity(struct filter_community *c, u_int32_t as, u_int32_t data,
-    u_int8_t asflag, u_int8_t dataflag)
+setcommunity(struct community *c, u_int32_t as, u_int32_t data,
+    u_int32_t asflag, u_int32_t dataflag)
 {
-	memset(c, 0, sizeof(*c));
-	c->type = COMMUNITY_TYPE_BASIC;
-	c->dflag1 = asflag;
-	c->dflag2 = dataflag;
-	c->c.b.data1 = as;
-	c->c.b.data2 = data;
+	c->flags = COMMUNITY_TYPE_BASIC;
+	c->flags |= asflag << 8;
+	c->flags |= dataflag << 16;
+	c->data1 = as;
+	c->data2 = data;
+	c->data3 = 0;
 }
 
 static int
-parselargecommunity(struct filter_community *c, char *s)
+parselargecommunity(struct community *c, char *s)
 {
 	char *p, *q;
+	u_int32_t dflag1, dflag2, dflag3;
 
 	if ((p = strchr(s, ':')) == NULL) {
 		yyerror("Bad community syntax");
@@ -3506,20 +3490,22 @@ parselargecommunity(struct filter_community *c, char *s)
 	}
 	*q++ = 0;
 
-	if (getcommunity(s, 1, &c->c.l.data1, &c->dflag1) == -1 ||
-	    getcommunity(p, 1, &c->c.l.data2, &c->dflag2) == -1 ||
-	    getcommunity(q, 1, &c->c.l.data3, &c->dflag3) == -1)
+	if (getcommunity(s, 1, &c->data1, &dflag1) == -1 ||
+	    getcommunity(p, 1, &c->data2, &dflag2) == -1 ||
+	    getcommunity(q, 1, &c->data3, &dflag3) == -1)
 		return (-1);
-	c->type = COMMUNITY_TYPE_LARGE;
+	c->flags = COMMUNITY_TYPE_LARGE;
+	c->flags |= dflag1 << 8;;
+	c->flags |= dflag2 << 16;;
+	c->flags |= dflag3 << 24;;
 	return (0);
 }
 
 int
-parsecommunity(struct filter_community *c, int type, char *s)
+parsecommunity(struct community *c, int type, char *s)
 {
 	char *p;
-	u_int32_t as, data;
-	u_int8_t asflag, dataflag;
+	u_int32_t as, data, asflag, dataflag;
 
 	if (type == COMMUNITY_TYPE_LARGE)
 		return parselargecommunity(c, s);
@@ -3585,7 +3571,7 @@ parsesubtype(char *name, int *type, int *subtype)
 }
 
 static int
-parseextvalue(int type, char *s, u_int32_t *v, u_int8_t *flag)
+parseextvalue(int type, char *s, u_int32_t *v, u_int32_t *flag)
 {
 	const char 	*errstr;
 	char		*p;
@@ -3664,17 +3650,17 @@ parseextvalue(int type, char *s, u_int32_t *v, u_int8_t *flag)
 }
 
 int
-parseextcommunity(struct filter_community *c, char *t, char *s)
+parseextcommunity(struct community *c, char *t, char *s)
 {
 	const struct ext_comm_pairs *cp;
-	u_int64_t	 ullval;
-	u_int32_t	 uval, uval2;
 	char		*p, *ep;
+	u_int64_t	 ullval;
+	u_int32_t	 uval, uval2, dflag1 = 0, dflag2 = 0;
 	int		 type = 0, subtype = 0;
 
 	if (strcmp(t, "*") == 0 && strcmp(s, "*") == 0) {
-		c->type = COMMUNITY_TYPE_EXT;
-		c->dflag3 = COMMUNITY_ANY;
+		c->flags = COMMUNITY_TYPE_EXT;
+		c->flags |= COMMUNITY_ANY << 24;
 		return (0);
 	}
 	if (parsesubtype(t, &type, &subtype) == 0) {
@@ -3688,7 +3674,7 @@ parseextcommunity(struct filter_community *c, char *t, char *s)
 	case EXT_COMMUNITY_TRANS_IPV4:
 	case -1:
 		if (strcmp(s, "*") == 0) {
-			c->dflag1 = COMMUNITY_ANY;
+			dflag1 = COMMUNITY_ANY;
 			break;
 		}
 		if ((p = strchr(s, ':')) == NULL) {
@@ -3696,28 +3682,30 @@ parseextcommunity(struct filter_community *c, char *t, char *s)
 			return (-1);
 		}
 		*p++ = '\0';
-		if ((type = parseextvalue(type, s, &uval, &c->dflag1)) == -1)
+		if ((type = parseextvalue(type, s, &uval, &dflag1)) == -1)
 			return (-1);
+
 		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
-			if (getcommunity(p, 1, &uval2, &c->dflag2) == -1)
+			if (getcommunity(p, 1, &uval2, &dflag2) == -1)
 				return (-1);
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
-			if (getcommunity(p, 0, &uval2, &c->dflag2) == -1)
+			if (getcommunity(p, 0, &uval2, &dflag2) == -1)
 				return (-1);
 			break;
 		default:
 			fatalx("parseextcommunity: unexpected result");
 		}
-		c->c.e.data1 = uval;
-		c->c.e.data2 = uval2;
+
+		c->data1 = uval;
+		c->data2 = uval2;
 		break;
 	case EXT_COMMUNITY_TRANS_OPAQUE:
 	case EXT_COMMUNITY_TRANS_EVPN:
 		if (strcmp(s, "*") == 0) {
-			c->dflag1 = COMMUNITY_ANY;
+			dflag1 = COMMUNITY_ANY;
 			break;
 		}
 		errno = 0;
@@ -3730,40 +3718,44 @@ parseextcommunity(struct filter_community *c, char *t, char *s)
 			yyerror("Bad ext-community value too big");
 			return (-1);
 		}
-		c->c.e.data2 = ullval;
+		c->data1 = ullval >> 32;
+		c->data2 = ullval;
 		break;
 	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 		if (subtype == EXT_COMMUNITY_SUBTYPE_OVS) {
 			if (strcmp(s, "valid") == 0) {
-				c->c.e.data2 = EXT_COMMUNITY_OVS_VALID;
+				c->data2 = EXT_COMMUNITY_OVS_VALID;
 				break;
 			} else if (strcmp(s, "invalid") == 0) {
-				c->c.e.data2 = EXT_COMMUNITY_OVS_INVALID;
+				c->data2 = EXT_COMMUNITY_OVS_INVALID;
 				break;
 			} else if (strcmp(s, "not-found") == 0) {
-				c->c.e.data2 = EXT_COMMUNITY_OVS_NOTFOUND;
+				c->data2 = EXT_COMMUNITY_OVS_NOTFOUND;
 				break;
 			} else if (strcmp(s, "*") == 0) {
-				c->dflag1 = COMMUNITY_ANY;
+				dflag1 = COMMUNITY_ANY;
 				break;
 			}
 		}
 		yyerror("Bad ext-community %s", s);
 		return (-1);
 	}
-	c->c.e.type = type;
-	c->c.e.subtype = subtype;
+
+	c->data3 = type << 8 | subtype;
 
 	/* special handling of ext-community rt * since type is not known */
-	if (c->dflag1 == COMMUNITY_ANY && c->c.e.type == -1) {
-		c->type = COMMUNITY_TYPE_EXT;
+	if (dflag1 == COMMUNITY_ANY && type == -1) {
+		c->flags = COMMUNITY_TYPE_EXT;
+		c->flags |= dflag1 << 8;
 		return (0);
 	}
 		
 	/* verify type/subtype combo */
 	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
 		if (cp->type == type && cp->subtype == subtype) {
-			c->type = COMMUNITY_TYPE_EXT;
+			c->flags = COMMUNITY_TYPE_EXT;
+			c->flags |= dflag1 << 8;
+			c->flags |= dflag2 << 16;
 			return (0);
 		}
 	}

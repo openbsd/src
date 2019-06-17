@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.135 2019/05/27 09:14:32 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.136 2019/06/17 11:02:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,8 +30,8 @@
 #include "log.h"
 
 void		 print_prefix(struct filter_prefix *p);
-const char	*community_type(struct filter_community *c);
-void		 print_community(struct filter_community *c);
+const char	*community_type(struct community *c);
+void		 print_community(struct community *c);
 void		 print_origin(u_int8_t);
 void		 print_set(struct filter_set_head *);
 void		 print_mainconf(struct bgpd_config *);
@@ -105,9 +105,9 @@ print_prefix(struct filter_prefix *p)
 }
 
 const char *
-community_type(struct filter_community *c)
+community_type(struct community *c)
 {
-	switch (c->type) {
+	switch ((u_int8_t)c->flags) {
 	case COMMUNITY_TYPE_BASIC:
 		return "community";
 	case COMMUNITY_TYPE_LARGE:
@@ -120,13 +120,15 @@ community_type(struct filter_community *c)
 }
 
 void
-print_community(struct filter_community *c)
+print_community(struct community *c)
 {
 	struct in_addr addr;
+	short type;
+	u_int8_t subtype;
 
-	switch (c->type) {
+	switch ((u_int8_t)c->flags) {
 	case COMMUNITY_TYPE_BASIC:
-		switch (c->dflag1) {
+		switch ((c->flags >> 8) & 0xff) {
 		case COMMUNITY_ANY:
 			printf("*:");
 			break;
@@ -137,10 +139,10 @@ print_community(struct filter_community *c)
 			printf("local-as:");
 			break;
 		default:
-			printf("%u:", c->c.b.data1);
+			printf("%u:", c->data1);
 			break;
 		}
-		switch (c->dflag2) {
+		switch ((c->flags >> 16) & 0xff) {
 		case COMMUNITY_ANY:
 			printf("* ");
 			break;
@@ -151,12 +153,12 @@ print_community(struct filter_community *c)
 			printf("local-as ");
 			break;
 		default:
-			printf("%u ", c->c.b.data2);
+			printf("%u ", c->data2);
 			break;
 		}
 		break;
 	case COMMUNITY_TYPE_LARGE:
-		switch (c->dflag1) {
+		switch ((c->flags >> 8) & 0xff) {
 		case COMMUNITY_ANY:
 			printf("*:");
 			break;
@@ -167,10 +169,10 @@ print_community(struct filter_community *c)
 			printf("local-as:");
 			break;
 		default:
-			printf("%u:", c->c.l.data1);
+			printf("%u:", c->data1);
 			break;
 		}
-		switch (c->dflag2) {
+		switch ((c->flags >> 16) & 0xff) {
 		case COMMUNITY_ANY:
 			printf("*:");
 			break;
@@ -181,10 +183,10 @@ print_community(struct filter_community *c)
 			printf("local-as:");
 			break;
 		default:
-			printf("%u:", c->c.l.data2);
+			printf("%u:", c->data2);
 			break;
 		}
-		switch (c->dflag3) {
+		switch ((c->flags >> 24) & 0xff) {
 		case COMMUNITY_ANY:
 			printf("* ");
 			break;
@@ -195,58 +197,56 @@ print_community(struct filter_community *c)
 			printf("local-as ");
 			break;
 		default:
-			printf("%u ", c->c.l.data3);
+			printf("%u ", c->data3);
 			break;
 		}
 		break;
 	case COMMUNITY_TYPE_EXT:
-		if (c->dflag3 == COMMUNITY_ANY) {
+		if ((c->flags >> 24 & 0xff) == COMMUNITY_ANY) {
 			printf("* * ");
 			break;
 		}
-		printf("%s ", log_ext_subtype(c->c.e.type, c->c.e.subtype));
-		if (c->dflag1 == COMMUNITY_ANY) {
+		type = (int32_t)c->data3 >> 8;
+		subtype = c->data3;
+		printf("%s ", log_ext_subtype(type, subtype));
+		if ((c->flags >> 8 & 0xff) == COMMUNITY_ANY) {
 			printf("* ");
 			break;
 		}
 
-		switch (c->c.e.type) {
+		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
-			if (c->dflag1 == COMMUNITY_NEIGHBOR_AS)
+			if ((c->flags >> 8 & 0xff) == COMMUNITY_NEIGHBOR_AS)
 				printf("neighbor-as:");
-			else if (c->dflag1 == COMMUNITY_LOCAL_AS)
+			else if ((c->flags >> 8 & 0xff) == COMMUNITY_LOCAL_AS)
 				printf("local-as:");
 			else
-				printf("%s:", log_as(c->c.e.data1));
+				printf("%s:", log_as(c->data1));
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
-			addr.s_addr = htonl(c->c.e.data1);
+			addr.s_addr = htonl(c->data1);
 			printf("%s:", inet_ntoa(addr));
 			break;
 		}
 
-		switch (c->c.e.type) {
+		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
 		case EXT_COMMUNITY_TRANS_IPV4:
-			if (c->dflag2 == COMMUNITY_ANY)
+			if ((c->flags >> 16 & 0xff) == COMMUNITY_ANY)
 				printf("* ");
-			else if (c->dflag2 == COMMUNITY_NEIGHBOR_AS)
+			else if ((c->flags >> 16 & 0xff) ==
+			    COMMUNITY_NEIGHBOR_AS)
 				printf("neighbor-as ");
-			else if (c->dflag2 == COMMUNITY_LOCAL_AS)
+			else if ((c->flags >> 16 & 0xff) == COMMUNITY_LOCAL_AS)
 				printf("local-as ");
 			else
-				printf("%llu ",
-				    (unsigned long long)c->c.e.data2);
-			break;
-		case EXT_COMMUNITY_TRANS_OPAQUE:
-		case EXT_COMMUNITY_TRANS_EVPN:
-			printf("0x%llx ", (unsigned long long)c->c.e.data2);
+				printf("%u ", c->data2);
 			break;
 		case EXT_COMMUNITY_NON_TRANS_OPAQUE:
-			if (c->c.e.subtype == EXT_COMMUNITY_SUBTYPE_OVS) {
-				switch (c->c.e.data2) {
+			if (subtype == EXT_COMMUNITY_SUBTYPE_OVS) {
+				switch (c->data2) {
 				case EXT_COMMUNITY_OVS_VALID:
 					printf("valid ");
 					break;
@@ -259,10 +259,12 @@ print_community(struct filter_community *c)
 				}
 				break;
 			}
-			printf("0x%llx ", (unsigned long long)c->c.e.data2);
+			printf("0x%x%08x ", c->data1 & 0xffff, c->data2);
 			break;
+		case EXT_COMMUNITY_TRANS_OPAQUE:
+		case EXT_COMMUNITY_TRANS_EVPN:
 		default:
-			printf("0x%llx ", (unsigned long long)c->c.e.data2);
+			printf("0x%x%08x ", c->data1 & 0xffff, c->data2);
 			break;
 		}
 	}
@@ -865,8 +867,8 @@ print_rule(struct bgpd_config *conf, struct filter_rule *r)
 	}
 
 	for (i = 0; i < MAX_COMM_MATCH; i++) {
-		struct filter_community *c = &r->match.community[i];
-		if (c->type != COMMUNITY_TYPE_NONE) {
+		struct community *c = &r->match.community[i];
+		if (c->flags != 0) {
 			printf("%s ", community_type(c));
 			print_community(c);
 		}

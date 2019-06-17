@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.114 2019/06/11 19:43:56 florian Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.115 2019/06/17 11:02:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,20 +28,20 @@
 #include "rde.h"
 #include "log.h"
 
-static struct filter_community	comm_no_advertise = {
-	.type = COMMUNITY_TYPE_BASIC,
-	.c.b.data1 = COMMUNITY_WELLKNOWN,
-	.c.b.data2 = COMMUNITY_NO_ADVERTISE
+static struct community	comm_no_advertise = {
+	.flags = COMMUNITY_TYPE_BASIC,
+	.data1 = COMMUNITY_WELLKNOWN,
+	.data2 = COMMUNITY_NO_ADVERTISE
 };
-static struct filter_community	comm_no_export = {
-	.type = COMMUNITY_TYPE_BASIC,
-	.c.b.data1 = COMMUNITY_WELLKNOWN,
-	.c.b.data2 = COMMUNITY_NO_EXPORT
+static struct community	comm_no_export = {
+	.flags = COMMUNITY_TYPE_BASIC,
+	.data1 = COMMUNITY_WELLKNOWN,
+	.data2 = COMMUNITY_NO_EXPORT
 };
-static struct filter_community	comm_no_expsubconfed = {
-	.type = COMMUNITY_TYPE_BASIC,
-	.c.b.data1 = COMMUNITY_WELLKNOWN,
-	.c.b.data2 = COMMUNITY_NO_EXPSUBCONFED
+static struct community	comm_no_expsubconfed = {
+	.flags = COMMUNITY_TYPE_BASIC,
+	.data1 = COMMUNITY_WELLKNOWN,
+	.data2 = COMMUNITY_NO_EXPSUBCONFED
 };
 
 static int
@@ -49,6 +49,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 {
 	struct bgpd_addr	 addr;
 	struct rde_aspath	*asp;
+	struct rde_community	*comm;
 	struct rde_peer		*prefp;
 	struct attr		*attr;
 
@@ -58,6 +59,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 
 	prefp = prefix_peer(p);
 	asp = prefix_aspath(p);
+	comm = prefix_communities(p);
 
 	if (peer == prefp)
 		/* Do not send routes back to sender */
@@ -99,12 +101,12 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 	}
 
 	/* well known communities */
-	if (community_match(asp, &comm_no_advertise, NULL))
+	if (community_match(comm, &comm_no_advertise, NULL))
 		return (0);
 	if (peer->conf.ebgp) {
-		if (community_match(asp, &comm_no_export, NULL))
+		if (community_match(comm, &comm_no_export, NULL))
 			return (0);
-		if (community_match(asp, &comm_no_expsubconfed, NULL))
+		if (community_match(comm, &comm_no_expsubconfed, NULL))
 			return (0);
 	}
 
@@ -155,7 +157,8 @@ withdraw:
 		}
 
 		rde_filterstate_prep(&state, prefix_aspath(new),
-		    prefix_nexthop(new), prefix_nhflags(new));
+		    prefix_communities(new), prefix_nexthop(new),
+		    prefix_nhflags(new));
 		if (rde_filter(rules, peer, new, &state) == ACTION_DENY) {
 			rde_filterstate_clean(&state);
 			goto withdraw;
@@ -192,7 +195,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	if (peer->capa.mp[aid] == 0)
 		return;
 
-	rde_filterstate_prep(&state, NULL, NULL, 0);
+	rde_filterstate_prep(&state, NULL, NULL, NULL, 0);
 	asp = &state.aspath;
 	asp->aspath = aspath_get(NULL, 0);
 	asp->origin = ORIGIN_IGP;
@@ -323,6 +326,7 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
     struct filterstate *state, u_int8_t aid)
 {
 	struct rde_aspath *asp = &state->aspath;
+	struct rde_community *comm = &state->communities;
 	struct attr	*oa = NULL, *newaggr = NULL;
 	u_char		*pdata;
 	u_int32_t	 tmp32;
@@ -413,10 +417,21 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			}
 			break;
 		/*
-		 * multiprotocol attributes are handled elsewhere
+		 * Communities are stored in struct rde_community
 		 */
-		case ATTR_MP_REACH_NLRI:
-		case ATTR_MP_UNREACH_NLRI:
+		case ATTR_COMMUNITIES:
+			if ((r = community_write(comm, buf + wlen, len)) == -1)
+				return (-1);
+			break;
+		case ATTR_EXT_COMMUNITIES:
+			if ((r = community_ext_write(comm, peer->conf.ebgp,
+			    buf + wlen, len)) == -1)
+				return (-1);
+			break;
+		case ATTR_LARGE_COMMUNITIES:
+			if ((r = community_large_write(comm, buf + wlen,
+			    len)) == -1)
+				return (-1);
 			break;
 		/*
 		 * NEW to OLD conversion when sending stuff to a 2byte AS peer
@@ -451,6 +466,10 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 				    newaggr->len)) == -1)
 					return (-1);
 			}
+			break;
+		case ATTR_MP_REACH_NLRI:
+		case ATTR_MP_UNREACH_NLRI:
+			/* specially handled later one */
 			break;
 		/*
 		 * dump all other path attributes. Following rules apply:
@@ -501,10 +520,8 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 				break;
 			}
 			/* FALLTHROUGH */
-		case ATTR_COMMUNITIES:
 		case ATTR_ORIGINATOR_ID:
 		case ATTR_CLUSTER_LIST:
-		case ATTR_LARGE_COMMUNITIES:
 			if (oa == NULL || oa->type != type)
 				break;
 			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
@@ -516,33 +533,6 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			    oa->flags, oa->type, oa->data, oa->len)) == -1)
 				return (-1);
 			break;
-		case ATTR_EXT_COMMUNITIES:
-			if (oa == NULL || oa->type != type)
-				break;
-			/* handle (non-)transitive extended communities */
-			if (peer->conf.ebgp) {
-				u_char	*ndata;
-				u_int16_t nlen;
-
-				ndata = community_ext_delete_non_trans(oa->data,
-				    oa->len, &nlen);
-
-				if (nlen > 0) {
-					if ((r = attr_write(buf + wlen, len,
-					    oa->flags, oa->type, ndata,
-					    nlen)) == -1) {
-						free(ndata);
-						return (-1);
-					}
-					free(ndata);
-				}
-				/* else everything got removed */
-			} else {
-				if ((r = attr_write(buf + wlen, len, oa->flags,
-				    oa->type, oa->data, oa->len)) == -1)
-					return (-1);
-			}
-			break;
 		default:
 			if (oa == NULL && type >= ATTR_FIRST_UNKNOWN)
 				/* there is no attribute left to dump */
@@ -550,7 +540,6 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 
 			if (oa == NULL || oa->type != type)
 				break;
-
 			/* unknown attribute */
 			if (!(oa->flags & ATTR_TRANSITIVE)) {
 				/*
@@ -565,7 +554,6 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			    oa->flags | ATTR_PARTIAL, oa->type,
 			    oa->data, oa->len)) == -1)
 				return (-1);
-			break;
 		}
 		wlen += r;
 		len -= r;
@@ -721,8 +709,8 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	if (p == NULL)
 		goto done;
 
-	rde_filterstate_prep(&state, prefix_aspath(p), prefix_nexthop(p),
-	    prefix_nhflags(p));
+	rde_filterstate_prep(&state, prefix_aspath(p), prefix_communities(p),
+	    prefix_nexthop(p), prefix_nhflags(p));
 
 	r = up_generate_attr(buf + 2, len - 2, peer, &state, AID_INET);
 	rde_filterstate_clean(&state);
@@ -860,8 +848,8 @@ up_dump_mp_reach(u_char *buf, int len, struct rde_peer *peer, u_int8_t aid)
 
 	wpos = 4;	/* reserve space for length fields */
 
-	rde_filterstate_prep(&state, prefix_aspath(p), prefix_nexthop(p),
-	    prefix_nhflags(p));
+	rde_filterstate_prep(&state, prefix_aspath(p), prefix_communities(p),
+	    prefix_nexthop(p), prefix_nhflags(p));
 
 	/* write regular path attributes */
 	r = up_generate_attr(buf + wpos, len - wpos, peer, &state, aid);

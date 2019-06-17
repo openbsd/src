@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.212 2019/05/31 09:46:31 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.213 2019/06/17 11:02:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -174,6 +174,19 @@ struct mpattr {
 	u_int16_t	 unreach_len;
 };
 
+struct rde_community {
+	LIST_ENTRY(rde_community)	entry;
+	size_t				size;
+	size_t				nentries;
+	int				flags;
+	int				refcnt;
+	struct community	 	*communities;
+};
+
+#define	PARTIAL_COMMUNITIES		0x01
+#define	PARTIAL_LARGE_COMMUNITIES	0x02
+#define	PARTIAL_EXT_COMMUNITIES		0x04
+
 #define	F_ATTR_ORIGIN		0x00001
 #define	F_ATTR_ASPATH		0x00002
 #define	F_ATTR_NEXTHOP		0x00004
@@ -293,6 +306,7 @@ struct prefix {
 	RB_ENTRY(prefix)		 entry;
 	struct rib_entry		*re;
 	struct rde_aspath		*aspath;
+	struct rde_community		*communities;
 	struct rde_peer			*peer;
 	struct nexthop			*nexthop;	/* may be NULL */
 	time_t				 lastchange;
@@ -311,6 +325,7 @@ struct prefix {
 
 struct filterstate {
 	struct rde_aspath	 aspath;
+	struct rde_community	 communities;
 	struct nexthop		*nexthop;
 	u_int8_t		 nhflags;
 };
@@ -375,34 +390,60 @@ u_char		*aspath_override(struct aspath *, u_int32_t, u_int32_t,
 		    u_int16_t *);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
 
-int	 community_match(struct rde_aspath *, struct filter_community *,
+int	 community_match(struct rde_community *, struct community *,
 	    struct rde_peer *);
-int	 community_set(struct rde_aspath *, struct filter_community *,
+int	 community_set(struct rde_community *, struct community *,
 	    struct rde_peer *);
-void	 community_delete(struct rde_aspath *, struct filter_community *,
+void	 community_delete(struct rde_community *, struct community *,
 	    struct rde_peer *);
-int	 community_large_match(struct rde_aspath *, struct filter_community *,
-	    struct rde_peer *);
-int	 community_large_set(struct rde_aspath *, struct filter_community *,
-	    struct rde_peer *);
-void	 community_large_delete(struct rde_aspath *, struct filter_community *,
-	    struct rde_peer *);
-int	 community_ext_match(struct rde_aspath *,
-	    struct filter_community *, struct rde_peer *);
-int	 community_ext_set(struct rde_aspath *,
-	    struct filter_community *, struct rde_peer *);
-void	 community_ext_delete(struct rde_aspath *,
-	    struct filter_community *, struct rde_peer *);
-int	 community_ext_conv(struct filter_community *, struct rde_peer *,
-	    u_int64_t *, u_int64_t *);
-u_char	*community_ext_delete_non_trans(u_char *, u_int16_t, u_int16_t *);
+
+int	 community_add(struct rde_community *, int, void *, size_t);
+int	 community_large_add(struct rde_community *, int, void *, size_t);
+int	 community_ext_add(struct rde_community *, int, void *, size_t);
+
+int	 community_write(struct rde_community *, void *, u_int16_t);
+int	 community_large_write(struct rde_community *, void *, u_int16_t);
+int	 community_ext_write(struct rde_community *, int, void *, u_int16_t);
+
+void			 communities_init(u_int32_t);
+void			 communities_shutdown(void);
+void			 communities_hash_stats(struct rde_hashstats *);
+struct rde_community	*communities_lookup(struct rde_community *);
+struct rde_community	*communities_link(struct rde_community *);
+void	 		 communities_unlink(struct rde_community *);
+
+int	 communities_equal(struct rde_community *, struct rde_community *);
+void	 communities_copy(struct rde_community *, struct rde_community *);
+void	 communities_clean(struct rde_community *);
+
+static inline struct rde_community *
+communities_get(struct rde_community *comm)
+{
+	if (comm->refcnt == 0)
+		fatalx("%s: not-referenced community", __func__);
+	comm->refcnt++;
+	rdemem.comm_refs++;
+	return comm;
+}
+
+static inline void
+communities_put(struct rde_community *comm)
+{
+	if (comm == NULL)
+		return;
+	rdemem.comm_refs--;
+	if (--comm->refcnt == 1)
+		communities_unlink(comm);
+}
+
+int	 community_to_rd(struct community *, u_int64_t *);
 
 /* rde_decide.c */
 void		 prefix_evaluate(struct prefix *, struct rib_entry *);
 
 /* rde_filter.c */
 void		 rde_filterstate_prep(struct filterstate *, struct rde_aspath *,
-		     struct nexthop *, u_int8_t);
+		     struct rde_community *, struct nexthop *, u_int8_t);
 void		 rde_filterstate_clean(struct filterstate *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct filterstate *);
@@ -524,6 +565,12 @@ static inline struct rde_aspath *
 prefix_aspath(struct prefix *p)
 {
 	return (p->aspath);
+}
+
+static inline struct rde_community *
+prefix_communities(struct prefix *p)
+{
+	return (p->communities);
 }
 
 static inline struct nexthop *
