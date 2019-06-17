@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.18 2019/06/17 12:42:52 florian Exp $ */
+/*	$Id: acctproc.c,v 1.19 2019/06/17 15:03:34 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -164,8 +164,8 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 	if ((dig = malloc(EVP_MAX_MD_SIZE)) == NULL) {
 		warn("malloc");
 		goto out;
-	} else if ((ctx = EVP_MD_CTX_create()) == NULL) {
-		warnx("EVP_MD_CTX_create");
+	} else if ((ctx = EVP_MD_CTX_new()) == NULL) {
+		warnx("EVP_MD_CTX_new");
 		goto out;
 	} else if (!EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)) {
 		warnx("EVP_SignInit_ex");
@@ -185,7 +185,7 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 	rc = 1;
 out:
 	if (ctx != NULL)
-		EVP_MD_CTX_destroy(ctx);
+		EVP_MD_CTX_free(ctx);
 
 	free(thumb);
 	free(dig);
@@ -361,8 +361,8 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 	 * sign a SHA256 digest of our message.
 	 */
 
-	if ((ctx = EVP_MD_CTX_create()) == NULL) {
-		warnx("EVP_MD_CTX_create");
+	if ((ctx = EVP_MD_CTX_new()) == NULL) {
+		warnx("EVP_MD_CTX_new");
 		goto out;
 	} else if (!EVP_SignInit_ex(ctx, evp_md, NULL)) {
 		warnx("EVP_SignInit_ex");
@@ -441,9 +441,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 
 	rc = 1;
 out:
-	if (ctx != NULL)
-		EVP_MD_CTX_destroy(ctx);
-
+	EVP_MD_CTX_free(ctx);
 	free(pay);
 	free(sign);
 	free(pay64);
