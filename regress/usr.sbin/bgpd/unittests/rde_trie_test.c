@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.10 2019/03/03 08:53:04 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.11 2019/06/17 13:14:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -136,7 +136,7 @@ parse_file(FILE *in, struct trie_head *th)
 				else
 					maskmax = 32;
 				break;
-			case 1:	
+			case 1:
 				min = strtonum(s, 0, maskmax, &errstr);
 				if (errstr != NULL)
 					errx(1, "min is %s: %s", errstr, s);
@@ -309,7 +309,7 @@ test_roa_file(FILE *in, struct trie_head *th)
 static void
 usage(void)
 {
-        extern char *__progname;
+	extern char *__progname;
 	fprintf(stderr, "usage: %s [-or] prefixfile testfile\n", __progname);
 	exit(1);
 }

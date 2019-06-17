@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets_test.c,v 1.5 2018/11/01 14:20:41 claudio Exp $ */
+/*	$OpenBSD: rde_sets_test.c,v 1.6 2019/06/17 13:14:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -83,7 +83,7 @@ main(int argc, char **argv)
 		errx(1, "as_set_match(c, %u) failed to match", 42);
 	if (as_set_match(c, 7))
 		errx(1, "as_set_match(c, %u) matched but should not", 7);
-	
+
 	if (!set_equal(empty->set, empty->set))
 		errx(1, "set_equal(empty, empty) non equal");
 	if (as_set_match(empty, 42))
