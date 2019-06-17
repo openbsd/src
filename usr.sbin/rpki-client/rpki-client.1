@@ -1,0 +1,138 @@
+.\"	$OpenBSD: rpki-client.1,v 1.1.1.1 2019/06/17 14:31:31 job Exp $
+.\"
+.\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: June 17 2019 $
+.Dt RPKI-CLIENT 1
+.Os
+.Sh NAME
+.Nm rpki-client
+.Nd produce valid route announcements
+.Sh SYNOPSIS
+.Nm
+.Op Fl fnqrv
+.Op Fl e Ar rsync_prog
+.Ar tal ...
+.Sh DESCRIPTION
+The
+.Nm
+utility produces all route announcements starting with trust anchor
+locators.
+It uses
+.Xr openrsync 1
+to fetch certificates, manifests, revocation lists, and route
+announcements themselves.
+Its arguments are as follows:
+.Bl -tag -width Ds
+.It Fl e Ar rsync_prog
+Use
+.Ar rsync_prog
+instead of
+.Xr openrsync 1
+to fetch repositories.
+It must accept the
+.Fl rlt
+and
+.Fl -delete
+flags and connect with rsync-protocol locations.
+.It Fl f
+Accept out-of-date manifests.
+This will still report if a manifest has expired.
+.It Fl n
+Assume that all requested repositories exist: don't update.
+.It Fl q
+Don't emit any route statements.
+.It Fl r
+Don't parse certificate revocation files.
+This additional step can take a long time.
+.It Fl v
+Specified once, prints information about status.
+Twice, prints each filename as it's processed.
+.It Ar tal
+A trust anchor locator (TAL) file.
+.El
+.Pp
+.Nm
+produces a list of unique
+.Li roa-set
+statements as specified by
+.Xr bgpd.conf 5
+on standard output.
+.\" The following requests should be uncommented and used where appropriate.
+.\" .Sh CONTEXT
+.\" For section 9 functions only.
+.\" .Sh RETURN VALUES
+.\" For sections 2, 3, and 9 function return values only.
+.\" .Sh ENVIRONMENT
+.\" For sections 1, 6, 7, and 8 only.
+.\" .Sh FILES
+.Sh EXIT STATUS
+.Ex -std
+.\" For sections 1, 6, and 8 only.
+.\" .Sh EXAMPLES
+.\" .Sh DIAGNOSTICS
+.\" For sections 1, 4, 6, 7, 8, and 9 printf/stderr messages only.
+.\" .Sh ERRORS
+.\" For sections 2, 3, 4, and 9 errno settings only.
+.Sh SEE ALSO
+.Xr openrsync 1
+.Xr bgpd.conf 5
+.Sh STANDARDS
+The following standards are used or referenced in
+.Nm :
+.Bl -tag -width -Ds
+.It RFC 3370
+Cryptographic Message Syntax (CMS) Algorithms.
+.It RFC 3779
+X.509 Extensions for IP Addresses and AS Identifiers.
+.It RFC 4291
+IP Version 6 Addressing Architecture.
+.It RFC 4631
+Classless Inter-domain Routing (CIDR): The Internet Address Assignment
+and Aggregation Plan.
+.It RFC 5280
+Internet X.509 Public Key Infrastructure Certificate and Certificate
+Revocation List (CRL) Profile.
+.It RFC 5652
+Cryptographic Message Syntax (CMS).
+.It RFC 5781
+The rsync URI Scheme.
+.It RFC 5952
+A Recommendation for IPv6 Address Text Representation.
+.It RFC 6480
+An Infrastructure to Support Secure Internet Routing.
+.It RFC 6482
+A Profile for Route Origin Authorizations (ROAs).
+.It RFC 6485
+The Profile for Algorithms and Key Sizes for Use in the Resource Public Key
+Infrastructure (RPKI).
+.It RFC 6486
+Manifests for the Resource Public Key Infrastructure (RPKI).
+.It RFC 6487
+A Profile for X.509 PKIX Resource Certificates.
+.It RFC 6488
+Signed Object Template for the Resource Public Key Infrastructure
+(RPKI).
+.It RFC 7730
+Resource Public Key Infrastructure (RPKI) Trust Anchor Locator.
+.El
+.\" .Sh HISTORY
+.Sh AUTHORS
+The
+.Nm
+utility was written by
+.An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
+.\" .Sh CAVEATS
+.\" .Sh BUGS
