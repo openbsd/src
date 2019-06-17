@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.136 2019/06/17 11:02:19 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.137 2019/06/17 13:35:43 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -742,7 +742,7 @@ print_as(struct filter_rule *r)
 		printf("as-set \"%s\" ", r->match.as.name);
 		return;
 	}
-	switch(r->match.as.op) {
+	switch (r->match.as.op) {
 	case OP_RANGE:
 		printf("%s - ", log_as(r->match.as.as_min));
 		printf("%s ", log_as(r->match.as.as_max));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.390 2019/06/17 11:02:19 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.391 2019/06/17 13:35:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -54,7 +54,7 @@ static struct file {
 	TAILQ_ENTRY(file)	 entry;
 	FILE			*stream;
 	char			*name;
-	size_t	 		 ungetpos;
+	size_t			 ungetpos;
 	size_t			 ungetsize;
 	u_char			*ungetbuf;
 	int			 eof_reached;
@@ -1198,7 +1198,7 @@ neighbor	: {	curpeer = new_peer(); }
 		}
 		;
 
-group		: GROUP string 			{
+group		: GROUP string			{
 			curgroup = curpeer = new_group();
 			if (strlcpy(curgroup->conf.group, $2,
 			    sizeof(curgroup->conf.group)) >=
@@ -1309,7 +1309,7 @@ peeropts	: REMOTEAS as4number	{
 			    sizeof(curpeer->conf.rib)) >=
 			    sizeof(curpeer->conf.rib)) {
 				yyerror("rib name \"%s\" too long: max %zu",
-				   $2, sizeof(curpeer->conf.rib) - 1);
+				    $2, sizeof(curpeer->conf.rib) - 1);
 				free($2);
 				YYERROR;
 			}
@@ -1341,7 +1341,7 @@ peeropts	: REMOTEAS as4number	{
 					    afi != $2)
 						continue;
 					curpeer->conf.capabilities.mp[aid] = 0;
-				}	
+				}
 			} else {
 				if (afi2aid($2, $3, &aid) == -1) {
 					yyerror("unknown AFI/SAFI pair");
@@ -1813,7 +1813,7 @@ filter_peer	: ANY		{
 				YYERROR;
 			}
 		}
- 		| AS as4number	{
+		| AS as4number	{
 			if (($$ = calloc(1, sizeof(struct filter_peers_l))) ==
 			    NULL)
 				fatal(NULL);
@@ -2152,7 +2152,7 @@ filter_elm	: filter_prefix_h	{
 			}
 			free($3);
 		}
-		| NEXTHOP address 	{
+		| NEXTHOP address	{
 			if (fmopts.m.nexthop.flags) {
 				yyerror("nexthop already specified");
 				YYERROR;
@@ -2160,7 +2160,7 @@ filter_elm	: filter_prefix_h	{
 			fmopts.m.nexthop.addr = $2;
 			fmopts.m.nexthop.flags = FILTER_NEXTHOP_ADDR;
 		}
-		| NEXTHOP NEIGHBOR 	{
+		| NEXTHOP NEIGHBOR	{
 			if (fmopts.m.nexthop.flags) {
 				yyerror("nexthop already specified");
 				YYERROR;
@@ -3257,7 +3257,7 @@ parse_config(char *filename, struct peer_head *ph)
 {
 	struct sym		*sym, *next;
 	struct rde_rib		*rr;
-	struct network	       	*n;
+	struct network		*n;
 	int			 errors = 0;
 
 	conf = new_config();
@@ -3302,7 +3302,7 @@ parse_config(char *filename, struct peer_head *ph)
 			"%d is not allowed.",
 			n->net.priority, conf->fib_priority);
 	    }
-	
+
 	/* Free macros and check which have not been used. */
 	TAILQ_FOREACH_SAFE(sym, &symhead, entry, next) {
 		if ((cmd_opts & BGPD_OPT_VERBOSE2) && !sym->used)
@@ -3573,7 +3573,7 @@ parsesubtype(char *name, int *type, int *subtype)
 static int
 parseextvalue(int type, char *s, u_int32_t *v, u_int32_t *flag)
 {
-	const char 	*errstr;
+	const char	*errstr;
 	char		*p;
 	struct in_addr	 ip;
 	u_int32_t	 uvalh, uval;
@@ -3749,7 +3749,7 @@ parseextcommunity(struct community *c, char *t, char *s)
 		c->flags |= dflag1 << 8;
 		return (0);
 	}
-		
+
 	/* verify type/subtype combo */
 	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
 		if (cp->type == type && cp->subtype == subtype) {
@@ -3899,7 +3899,7 @@ add_rib(char *name, u_int rtableid, u_int16_t flags)
 	}
 	if (strlcpy(rr->name, name, sizeof(rr->name)) >= sizeof(rr->name)) {
 		yyerror("rib name \"%s\" too long: max %zu",
-		   name, sizeof(rr->name) - 1);
+		    name, sizeof(rr->name) - 1);
 		free(rr);
 		return (-1);
 	}
@@ -4356,7 +4356,7 @@ optimize_filters(struct filter_head *fh)
 		while (filter_equal(r, nr)) {
 			struct filter_set	*t;
 
-			while((t = TAILQ_FIRST(&nr->set)) != NULL) {
+			while ((t = TAILQ_FIRST(&nr->set)) != NULL) {
 				TAILQ_REMOVE(&nr->set, t, entry);
 				filterset_add(&r->set, t);
 			}

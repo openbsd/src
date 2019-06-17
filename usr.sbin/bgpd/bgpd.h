@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.385 2019/06/17 11:02:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.386 2019/06/17 13:35:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1263,7 +1263,7 @@ void		 as_sets_mark_dirty(struct as_set_head *, struct as_set_head *);
 int		 as_set_match(const struct as_set *, u_int32_t);
 
 struct set_table	*set_new(size_t, size_t);
-void		 	 set_free(struct set_table *);
+void			 set_free(struct set_table *);
 int			 set_add(struct set_table *, void *, size_t);
 void			*set_get(struct set_table *, size_t *);
 void			 set_prep(struct set_table *);

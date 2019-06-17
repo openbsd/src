@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.49 2019/04/10 15:21:54 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.50 2019/06/17 13:35:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -52,7 +52,7 @@ log_addr(const struct bgpd_addr *addr)
 		    sizeof(tbuf)) == NULL)
 			return ("?");
 		snprintf(buf, sizeof(buf), "%s %s", log_rd(addr->vpn4.rd),
-		   tbuf);
+		    tbuf);
 		return (buf);
 	case AID_VPN_IPv6:
 		if (inet_ntop(aid2af(addr->aid), &addr->vpn6.addr, tbuf,

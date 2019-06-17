@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.469 2019/06/17 11:02:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.470 2019/06/17 13:35:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2049,8 +2049,8 @@ rde_update_log(const char *message, u_int16_t rid,
 	char		*n = NULL;
 	char		*p = NULL;
 
-	if ( !((conf->log & BGPD_LOG_UPDATES) ||
-	       (peer->conf.flags & PEERFLAG_LOG_UPDATES)) )
+	if (!((conf->log & BGPD_LOG_UPDATES) ||
+	    (peer->conf.flags & PEERFLAG_LOG_UPDATES)))
 		return;
 
 	if (next != NULL)
@@ -3547,7 +3547,7 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 	time_t staletime = ((struct peer_flush *)arg)->staletime;
 	u_int32_t i;
 	u_int8_t prefixlen;
-	
+
 	pt_getaddr(re->prefix, &addr);
 	prefixlen = re->prefix->prefixlen;
 	LIST_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {
@@ -3919,7 +3919,7 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 	struct prefix *p, *np, *rp;
 	u_int32_t i;
 	u_int8_t prefixlen;
-	
+
 	pt_getaddr(re->prefix, &addr);
 	prefixlen = re->prefix->prefixlen;
 	LIST_FOREACH_SAFE(p, &re->prefix_h, rib_l, np) {

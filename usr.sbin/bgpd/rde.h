@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.213 2019/06/17 11:02:19 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.214 2019/06/17 13:35:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -180,7 +180,7 @@ struct rde_community {
 	size_t				nentries;
 	int				flags;
 	int				refcnt;
-	struct community	 	*communities;
+	struct community		*communities;
 };
 
 #define	PARTIAL_COMMUNITIES		0x01
@@ -410,7 +410,7 @@ void			 communities_shutdown(void);
 void			 communities_hash_stats(struct rde_hashstats *);
 struct rde_community	*communities_lookup(struct rde_community *);
 struct rde_community	*communities_link(struct rde_community *);
-void	 		 communities_unlink(struct rde_community *);
+void			 communities_unlink(struct rde_community *);
 
 int	 communities_equal(struct rde_community *, struct rde_community *);
 void	 communities_copy(struct rde_community *, struct rde_community *);
@@ -501,8 +501,8 @@ struct rib_entry *rib_lookup(struct rib *, struct bgpd_addr *);
 int		 rib_dump_pending(void);
 void		 rib_dump_runner(void);
 int		 rib_dump_new(u_int16_t, u_int8_t, unsigned int, void *,
-    		    void (*)(struct rib_entry *, void *),
-    		    void (*)(void *, u_int8_t),
+		    void (*)(struct rib_entry *, void *),
+		    void (*)(void *, u_int8_t),
 		    int (*)(void *));
 void		 rib_dump_terminate(u_int16_t, void *,
 		    void (*)(struct rib_entry *, void *));

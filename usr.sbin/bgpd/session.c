@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.383 2019/06/17 11:02:20 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.384 2019/06/17 13:35:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2270,7 +2270,7 @@ parse_notification(struct peer *peer)
 		if (datalen > 1) {
 			shutcomm_len = *p++;
 			datalen--;
-			if(datalen < shutcomm_len) {
+			if (datalen < shutcomm_len) {
 			    log_peer_warnx(&peer->conf,
 				"received truncated shutdown reason");
 			    return (0);
@@ -2555,7 +2555,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				fatalx("reconf request not from parent");
 			nconf = new_config();
 
-			copy_config(nconf, imsg.data); 
+			copy_config(nconf, imsg.data);
 			pending_reconf = 1;
 			break;
 		case IMSG_RECONF_PEER:
