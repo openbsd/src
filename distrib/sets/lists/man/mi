@@ -1211,6 +1211,7 @@
 ./usr/share/man/man4/ams.4
 ./usr/share/man/man4/an.4
 ./usr/share/man/man4/andl.4
+./usr/share/man/man4/aplgpio.4
 ./usr/share/man/man4/aps.4
 ./usr/share/man/man4/arc.4
 ./usr/share/man/man4/arcofi.4
