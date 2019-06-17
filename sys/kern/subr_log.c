@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.56 2018/07/30 12:22:14 mpi Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.57 2019/06/17 00:21:28 guenther Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -413,8 +413,7 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
     enum uio_seg sflg)
 {
 #ifdef KTRACE
-	struct iovec *ktriov = NULL;
-	int iovlen;
+	struct iovec ktriov;
 #endif
 	struct file *fp;
 	char pri[6], *kbuf;
@@ -470,13 +469,10 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov.iov_len;
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO)) {
-		ktriov = mallocarray(auio.uio_iovcnt, sizeof(struct iovec),
-		    M_TEMP, M_WAITOK);
-		iovlen = auio.uio_iovcnt * sizeof (struct iovec);
-
-		memcpy(ktriov, auio.uio_iov, iovlen);
-	}
+	if (sflg == UIO_USERSPACE && KTRPOINT(p, KTR_GENIO))
+		ktriov = aiov;
+	else
+		ktriov.iov_len = 0;
 #endif
 
 	len = auio.uio_resid;
@@ -523,11 +519,8 @@ dosendsyslog(struct proc *p, const char *buf, size_t nbyte, int flags,
 	}
 
 #ifdef KTRACE
-	if (ktriov != NULL) {
-		if (error == 0)
-			ktrgenio(p, -1, UIO_WRITE, ktriov, len);
-		free(ktriov, M_TEMP, iovlen);
-	}
+	if (error == 0 && ktriov.iov_len != 0)
+		ktrgenio(p, -1, UIO_WRITE, &ktriov, len);
 #endif
 	if (fp)
 		FRELE(fp, p);
