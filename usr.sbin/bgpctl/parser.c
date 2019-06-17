@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.95 2019/06/17 11:03:07 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.96 2019/06/17 13:46:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1229,7 +1229,7 @@ parsesubtype(const char *name, int *type, int *subtype)
 static int
 parseextvalue(int type, char *s, u_int32_t *v, u_int32_t *flag)
 {
-	const char 	*errstr;
+	const char	*errstr;
 	char		*p;
 	struct in_addr	 ip;
 	u_int32_t	 uvalh, uval;
@@ -1383,7 +1383,7 @@ parseextcommunity(struct community *c, const char *t, char *s)
 		c->flags |= dflag1 << 8;
 		return;
 	}
-		
+
 	/* verify type/subtype combo */
 	for (cp = iana_ext_comms; cp->subname != NULL; cp++) {
 		if (cp->type == type && cp->subtype == subtype) {

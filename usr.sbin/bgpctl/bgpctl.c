@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.239 2019/06/17 11:03:07 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.240 2019/06/17 13:46:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1778,7 +1778,7 @@ show_communities(u_char *data, size_t len, int flag0)
 				break;
 			}
 			ext = htobe64(ext);
-			
+
 			print_ext_community((void *)&ext);
 			break;
 		}
@@ -2113,7 +2113,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		/* filter by neighbor */
 		if (req->neighbor.addr.aid != AID_UNSPEC &&
 		    memcmp(&req->neighbor.addr, &ctl.remote_addr,
-		    sizeof(ctl.remote_addr)) != 0) 
+		    sizeof(ctl.remote_addr)) != 0)
 			continue;
 		/* filter by AF */
 		if (req->aid && req->aid != ctl.prefix.aid)
@@ -2132,7 +2132,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		}
 		/* filter by AS */
 		if (req->as.type != AS_UNDEF &&
-		   !match_aspath(mre->aspath, mre->aspath_len, &req->as))
+		    !match_aspath(mre->aspath, mre->aspath_len, &req->as))
 			continue;
 
 		if (req->flags & F_CTL_DETAIL) {
@@ -2177,7 +2177,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		/* filter by neighbor */
 		if (req->neighbor.addr.aid != AID_UNSPEC &&
 		    memcmp(&req->neighbor.addr, &ctl.remote_addr,
-		    sizeof(ctl.remote_addr)) != 0) 
+		    sizeof(ctl.remote_addr)) != 0)
 			continue;
 		/* filter by AF */
 		if (req->aid && req->aid != ctl.prefix.aid)
@@ -2196,7 +2196,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		}
 		/* filter by AS */
 		if (req->as.type != AS_UNDEF &&
-		   !match_aspath(mre->aspath, mre->aspath_len, &req->as))
+		    !match_aspath(mre->aspath, mre->aspath_len, &req->as))
 			continue;
 
 		bzero(&net, sizeof(net));
@@ -2483,7 +2483,7 @@ show_mrt_notification(u_char *p, u_int16_t len)
 		if (len > 1) {
 			shutcomm_len = *p++;
 			len--;
-			if(len < shutcomm_len) {
+			if (len < shutcomm_len) {
 				printf("truncated shutdown reason");
 				return;
 			}

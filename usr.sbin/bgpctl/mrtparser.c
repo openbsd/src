@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.10 2019/02/25 11:51:58 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.11 2019/06/17 13:46:33 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -466,7 +466,7 @@ mrt_parse_dump(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 		err(1, "calloc");
 	r->nentries = 1;
 	r->entries = re;
-	
+
 	if (len < 2 * sizeof(u_int16_t))
 		goto fail;
 	/* view */
@@ -580,7 +580,7 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 		err(1, "calloc");
 	r->nentries = 1;
 	r->entries = re;
-	
+
 	if (len < 4 * sizeof(u_int16_t))
 		goto fail;
 	/* source AS */
@@ -627,7 +627,7 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 		len -= sizeof(struct in6_addr);
 		break;
 	}
-	
+
 	if (len < 2 * sizeof(u_int16_t) + 2 * sizeof(u_int32_t))
 		goto fail;
 	/* view + status */
@@ -644,7 +644,7 @@ mrt_parse_dump_mp(struct mrt_hdr *hdr, void *msg, struct mrt_peer **pp,
 	b += sizeof(afi);
 	len -= sizeof(afi);
 	afi = ntohs(afi);
-	
+
 	/* safi */
 	safi = *b++;
 	len -= 1;
@@ -755,7 +755,7 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, u_int8_t aid,
 		alen -= 1;
 		type = *a++;
 		alen -= 1;
-		
+
 		if (flags & MRT_ATTR_EXTLEN) {
 			if (alen < 2)
 				return (-1);
@@ -1006,7 +1006,7 @@ mrt_parse_state(struct mrt_hdr *hdr, void *msg)
 	u_int16_t		 tmp16, afi;
 	int			 r;
 	u_int8_t		 aid;
-	
+
 	t.tv_sec = ntohl(hdr->timestamp);
 	t.tv_nsec = 0;
 
@@ -1122,7 +1122,7 @@ mrt_parse_msg(struct mrt_hdr *hdr, void *msg)
 	u_int16_t		 tmp16, afi;
 	int			 r;
 	u_int8_t		 aid;
-	
+
 	t.tv_sec = ntohl(hdr->timestamp);
 	t.tv_nsec = 0;
 
