@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.50 2019/04/23 18:34:06 kettenis Exp $
+#	$OpenBSD: files.acpi,v 1.51 2019/06/17 18:28:18 patrick Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -115,6 +115,11 @@ file	dev/acpi/acpipwrres.c		acpipwrres needs-flag
 device	aibs
 attach	aibs at acpi
 file	dev/acpi/atk0110.c		aibs
+
+# Intel Apollo Lake GPIO
+device	aplgpio
+attach	aplgpio at acpi
+file	dev/acpi/aplgpio.c		aplgpio
 
 # Intel Bay Trail GPIO
 device	bytgpio
