@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.114 2019/06/06 18:17:34 jmc Exp $
+.\"	$OpenBSD: mg.1,v 1.115 2019/06/17 11:39:26 lum Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -405,6 +405,7 @@ Paragraphs are delimited by <NL><NL> or <NL><TAB> or <NL><SPACE>.
 Move cursor backwards by the specified number of words.
 .It beginning-of-buffer
 Move cursor to the top of the buffer.
+If set, keep mark's position, otherwise set at current position.
 A numeric argument
 .Va n
 will move n/10th of the way from the top.
@@ -529,6 +530,7 @@ version string.
 Stop defining a keyboard macro.
 .It end-of-buffer
 Move cursor to the end of the buffer.
+If set, keep mark's position, otherwise set at current position.
 A numeric argument
 .Va n
 will move n/10th of the way from the end.
