@@ -1,4 +1,4 @@
-/*	$Id: ip.c,v 1.2 2019/06/17 15:04:59 deraadt Exp $ */
+/*	$Id: ip.c,v 1.3 2019/06/17 15:08:08 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <arpa/inet.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <assert.h>
 #include <err.h>
