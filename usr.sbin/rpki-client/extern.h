@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.1.1.1 2019/06/17 14:31:30 job Exp $ */
+/*	$Id: extern.h,v 1.2 2019/06/17 15:02:39 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,13 +16,6 @@
  */
 #ifndef EXTERN_H
 #define EXTERN_H
-
-#if !HAVE_PLEDGE
-# define pledge(x, y) (1)
-#endif
-#if !HAVE_UNVEIL
-# define unveil(x, y) (1)
-#endif
 
 enum	cert_as_type {
 	CERT_AS_ID, /* single identifier */
