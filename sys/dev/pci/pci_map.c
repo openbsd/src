@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.31 2015/03/14 03:38:48 jsg Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.32 2019/06/17 11:04:06 kettenis Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -316,12 +316,9 @@ pci_mapreg_info(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 }
 
 int
-pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int flags,
-    bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep,
-    bus_size_t *sizep, bus_size_t maxsize)
+pci_mapreg_assign(struct pci_attach_args *pa, int reg, pcireg_t type,
+    bus_addr_t *basep, bus_size_t *sizep)
 {
-	bus_space_tag_t tag;
-	bus_space_handle_t handle;
 	bus_addr_t base;
 	bus_size_t size;
 	pcireg_t csr;
@@ -368,6 +365,28 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int flags,
 	/* XXX Should this only be done for devices that do DMA?  */
 	csr |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+
+	if (basep != NULL)
+		*basep = base;
+	if (sizep != NULL)
+		*sizep = size;
+
+	return (0);
+}
+
+int
+pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type, int flags,
+    bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep,
+    bus_size_t *sizep, bus_size_t maxsize)
+{
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
+	bus_addr_t base;
+	bus_size_t size;
+	int rv;
+
+	if ((rv = pci_mapreg_assign(pa, reg, type, &base, &size)) != 0)
+		return (rv);
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0)
