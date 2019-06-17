@@ -1,4 +1,4 @@
-/*	$Id: as.c,v 1.1.1.1 2019/06/17 14:31:30 job Exp $ */
+/*	$Id: as.c,v 1.2 2019/06/17 15:04:59 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,7 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include "config.h"
 
 #include <sys/socket.h>
 
