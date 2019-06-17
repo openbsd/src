@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2019/06/15 12:51:19 florian Exp $ */
+/*	$OpenBSD: parse.y,v 1.38 2019/06/17 12:42:52 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -219,7 +219,7 @@ authorityoptsl	: API URL STRING {
 				err(EXIT_FAILURE, "strdup");
 			auth->api = s;
 		}
-		| ACCOUNT KEY STRING {
+		| ACCOUNT KEY STRING keytype{
 			char *s;
 			if (auth->account != NULL) {
 				yyerror("duplicate account");
@@ -228,6 +228,7 @@ authorityoptsl	: API URL STRING {
 			if ((s = strdup($3)) == NULL)
 				err(EXIT_FAILURE, "strdup");
 			auth->account = s;
+			auth->keytype = $4;
 		}
 		;
 
@@ -1020,7 +1021,8 @@ print_config(struct acme_conf *xconf)
 		if (a->api != NULL)
 			printf("\tapi url \"%s\"\n", a->api);
 		if (a->account != NULL)
-			printf("\taccount key \"%s\"\n", a->account);
+			printf("\taccount key \"%s\" %s\n", a->account,
+			    kt2txt(a->keytype));
 		printf("}\n\n");
 	}
 	TAILQ_FOREACH(d, &xconf->domain_list, entry) {

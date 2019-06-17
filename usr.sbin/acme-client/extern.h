@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.15 2019/06/16 19:49:13 florian Exp $ */
+/*	$Id: extern.h,v 1.16 2019/06/17 12:42:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -199,7 +199,7 @@ __BEGIN_DECLS
  * Start with our components.
  * These are all isolated and talk to each other using sockets.
  */
-int		 acctproc(int, const char *);
+int		 acctproc(int, const char *, enum keytype);
 int		 certproc(int, int);
 int		 chngproc(int, const char *);
 int		 dnsproc(int);
@@ -265,10 +265,13 @@ char		*json_fmt_newacc(void);
 char		*json_fmt_neworder(const char *const *, size_t);
 char		*json_fmt_protected_rsa(const char *,
 			const char *, const char *, const char *);
-char		*json_fmt_protected_kid(const char *, const char *,
+char		*json_fmt_protected_ec(const char *, const char *, const char *,
+			const char *);
+char		*json_fmt_protected_kid(const char*, const char *, const char *,
 			const char *);
 char		*json_fmt_revokecert(const char *);
 char		*json_fmt_thumb_rsa(const char *, const char *);
+char		*json_fmt_thumb_ec(const char *, const char *);
 char		*json_fmt_signed(const char *, const char *, const char *);
 
 /*

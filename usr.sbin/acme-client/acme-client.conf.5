@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.19 2019/06/12 11:36:32 jmc Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.20 2019/06/17 12:42:52 florian Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2019 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -83,10 +83,17 @@ is a string used to reference this certificate authority.
 .Pp
 It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Ic account key Ar file
+.It Ic account key Ar file Op Ar keytype
 Specify a
 .Ar file
 used to identify the user of this certificate authority.
+.Ar keytype
+can be
+.Cm rsa
+or
+.Cm ecdsa .
+It defaults to
+.Cm rsa .
 .It Ic api url Ar url
 Specify the
 .Ar url

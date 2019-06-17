@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.12 2019/06/07 08:07:52 florian Exp $ */
+/*	$Id: json.c,v 1.13 2019/06/17 12:42:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -733,18 +733,43 @@ json_fmt_protected_rsa(const char *exp, const char *mod, const char *nce,
  * Protected component of json_fmt_signed().
  */
 char *
-json_fmt_protected_kid(const char *kid, const char *nce, const char *url)
+json_fmt_protected_ec(const char *x, const char *y, const char *nce,
+    const char *url)
 {
 	int	 c;
 	char	*p;
 
 	c = asprintf(&p, "{"
-	    "\"alg\": \"RS256\", "
+	    "\"alg\": \"ES384\", "
+	    "\"jwk\": "
+	    "{\"crv\": \"P-384\", \"kty\": \"EC\", \"x\": \"%s\", "
+	    "\"y\": \"%s\"}, \"nonce\": \"%s\", \"url\": \"%s\""
+	    "}",
+	    x, y, nce, url);
+	if (c == -1) {
+		warn("asprintf");
+		p = NULL;
+	}
+	return p;
+}
+
+/*
+ * Protected component of json_fmt_signed().
+ */
+char *
+json_fmt_protected_kid(const char *alg, const char *kid, const char *nce,
+    const char *url)
+{
+	int	 c;
+	char	*p;
+
+	c = asprintf(&p, "{"
+	    "\"alg\": \"%s\", "
 	    "\"kid\": \"%s\", "
 	    "\"nonce\": \"%s\", "
 	    "\"url\": \"%s\""
 	    "}",
-	    kid, nce, url);
+	    alg, kid, nce, url);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;
@@ -790,6 +815,30 @@ json_fmt_thumb_rsa(const char *exp, const char *mod)
 
 	c = asprintf(&p, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}",
 	    exp, mod);
+	if (c == -1) {
+		warn("asprintf");
+		p = NULL;
+	}
+	return p;
+}
+
+/*
+ * Produce thumbprint input.
+ * This isn't technically a JSON string--it's the input we'll use for
+ * hashing and digesting.
+ * However, it's in the form of a JSON string, so do it here.
+ */
+char *
+json_fmt_thumb_ec(const char *x, const char *y)
+{
+	int	 c;
+	char	*p;
+
+	/*NOTE: WHITESPACE IS IMPORTANT. */
+
+	c = asprintf(&p, "{\"crv\":\"P-384\",\"kty\":\"EC\",\"x\":\"%s\","
+	    "\"y\":\"%s\"}",
+	    x, y);
 	if (c == -1) {
 		warn("asprintf");
 		p = NULL;

@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.51 2019/06/16 19:49:13 florian Exp $ */
+/*	$Id: main.c,v 1.52 2019/06/17 12:42:52 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -262,7 +262,8 @@ main(int argc, char *argv[])
 		close(chng_fds[0]);
 		close(file_fds[0]);
 		close(file_fds[1]);
-		c = acctproc(acct_fds[0], authority->account);
+		c = acctproc(acct_fds[0], authority->account,
+		    authority->keytype);
 		exit(c ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
