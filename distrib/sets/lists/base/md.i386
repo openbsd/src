@@ -84,8 +84,8 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd6.5/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/i386-unknown-openbsd6.5/4.2.1/specs
 ./usr/lib/libLLVM.so.0.0
-./usr/lib/libc++.so.2.2
-./usr/lib/libc++abi.so.0.1
+./usr/lib/libc++.so.3.0
+./usr/lib/libc++abi.so.1.0
 ./usr/lib/libcompiler_rt.a
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/i386-openbsd

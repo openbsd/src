@@ -32,6 +32,7 @@
 ./usr/include/c++/v1/any
 ./usr/include/c++/v1/array
 ./usr/include/c++/v1/atomic
+./usr/include/c++/v1/bit
 ./usr/include/c++/v1/bitset
 ./usr/include/c++/v1/cassert
 ./usr/include/c++/v1/ccomplex
@@ -77,7 +78,6 @@
 ./usr/include/c++/v1/experimental/chrono
 ./usr/include/c++/v1/experimental/coroutine
 ./usr/include/c++/v1/experimental/deque
-./usr/include/c++/v1/experimental/dynarray
 ./usr/include/c++/v1/experimental/filesystem
 ./usr/include/c++/v1/experimental/forward_list
 ./usr/include/c++/v1/experimental/functional
