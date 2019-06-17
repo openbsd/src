@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.384 2019/06/17 13:35:43 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.385 2019/06/17 21:17:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1119,8 +1119,10 @@ session_setup_socket(struct peer *p)
 		}
 
 		if (p->conf.ebgp) {
-			/* set TTL to foreign router's distance
-			   1=direct n=multihop with ttlsec, we always use 255 */
+			/*
+			 * set TTL to foreign router's distance
+			 * 1=direct n=multihop with ttlsec, we always use 255
+			 */
 			if (p->conf.ttlsec) {
 				ttl = 256 - p->conf.distance;
 				if (setsockopt(p->fd, IPPROTO_IP, IP_MINTTL,
@@ -1143,8 +1145,10 @@ session_setup_socket(struct peer *p)
 		break;
 	case AID_INET6:
 		if (p->conf.ebgp) {
-			/* set hoplimit to foreign router's distance
-			   1=direct n=multihop with ttlsec, we always use 255 */
+			/*
+			 * set hoplimit to foreign router's distance
+			 * 1=direct n=multihop with ttlsec, we always use 255
+			 */
 			if (p->conf.ttlsec) {
 				ttl = 256 - p->conf.distance;
 				if (setsockopt(p->fd, IPPROTO_IPV6,

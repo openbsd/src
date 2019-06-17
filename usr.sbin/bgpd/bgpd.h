@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.386 2019/06/17 13:35:42 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.387 2019/06/17 21:17:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -775,7 +775,7 @@ struct filter_ovs {
  * Communities are encoded depending on their type. The low byte of flags
  * is the COMMUNITY_TYPE (BASIC, LARGE, EXT). BASIC encoding is just using
  * data1 and data2, LARGE uses all data fields and EXT is also using all
- * data fields. The 4-byte flags fields consists of up to 3 data flags 
+ * data fields. The 4-byte flags fields consists of up to 3 data flags
  * for e.g. COMMUNITY_ANY and the low byte is the community type.
  * If flags is 0 the community struct is unused. If the upper 24bit of
  * flags is 0 a fast compare can be used.
