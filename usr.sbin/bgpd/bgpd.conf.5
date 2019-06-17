@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.190 2019/06/07 09:45:48 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.191 2019/06/17 14:00:45 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 7 2019 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -434,7 +434,7 @@ holds a collection of prefix/source-as pairs and can be used in place
 where a rules filter for source-as and prefix at the same time.
 .Bd -literal -offset indent
 origin-set private { 10.0.0.0/8 maxlen 24 source-as 64511
-          203.0.113.0/24 source-as 64496 }
+	203.0.113.0/24 source-as 64496 }
 .Ed
 .Pp
 .It Xo
@@ -483,7 +483,7 @@ Each received prefix is checked against the
 and the Origin Validation State (OVS) is set.
 .Bd -literal -offset indent
 roa-set { 192.0.2.0/24 maxlen 24 source-as 64511
-          203.0.113.0/24 source-as 64496 }
+	203.0.113.0/24 source-as 64496 }
 .Ed
 .El
 .Sh NETWORK ANNOUNCEMENTS
@@ -569,7 +569,7 @@ The vpn configuration section allows properties to be set specifically
 for that VPN:
 .Bd -literal -offset indent
 vpn "description" on mpe1 {
-        rd 65002:1
+	rd 65002:1
 	import-target rt 65002:42
 	export-target rt 65002:42
 	network 192.168.1/24
