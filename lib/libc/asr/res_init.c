@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.10 2016/04/05 04:29:21 guenther Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.11 2019/06/17 05:54:45 otto Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -52,6 +52,8 @@ res_init(void)
 	if (!(_res.options & RES_INIT)) {
 		if (_res.retry == 0)
 			_res.retry = ac->ac_nsretries;
+		if (_res.retrans == 0)
+			_res.retrans = ac->ac_nstimeout;
 		if (_res.options == 0)
 			_res.options = ac->ac_options;
 		if (_res.lookups[0] == '\0')
@@ -88,6 +90,7 @@ res_init(void)
 	 */
 	if (!__isthreaded) {
 		ac->ac_nsretries = _res.retry;
+		ac->ac_nstimeout = _res.retrans;
 		ac->ac_options = _res.options;
 		strlcpy(ac->ac_db, _res.lookups, sizeof(ac->ac_db));
 		ac->ac_dbcount = strlen(ac->ac_db);
