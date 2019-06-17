@@ -168,7 +168,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   mflo  $8
   sw    $8,  (4 * 34)($4)
 #ifdef __mips_hard_float
-#if __mips_fpr == 32
+#if __mips_fpr != 64
   sdc1  $f0, (4 * 36 + 8 * 0)($4)
   sdc1  $f2, (4 * 36 + 8 * 2)($4)
   sdc1  $f4, (4 * 36 + 8 * 4)($4)
@@ -995,9 +995,36 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   retl
    stx %g4, [%o0 + 0x100]
 
-#endif
+#elif defined(__sparc__)
 
+#
+# extern int unw_getcontext(unw_context_t* thread_state)
+#
+# On entry:
+#  thread_state pointer is in o0
+#
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+  ta 3
+  add %o7, 8, %o7
+  std %g0, [%o0 +   0]
+  std %g2, [%o0 +   8]
+  std %g4, [%o0 +  16]
+  std %g6, [%o0 +  24]
+  std %o0, [%o0 +  32]
+  std %o2, [%o0 +  40]
+  std %o4, [%o0 +  48]
+  std %o6, [%o0 +  56]
+  std %l0, [%o0 +  64]
+  std %l2, [%o0 +  72]
+  std %l4, [%o0 +  80]
+  std %l6, [%o0 +  88]
+  std %i0, [%o0 +  96]
+  std %i2, [%o0 + 104]
+  std %i4, [%o0 + 112]
+  std %i6, [%o0 + 120]
+  jmp %o7
+   clr %o0                   // return UNW_ESUCCESS
+#endif
 #endif /* !defined(__USING_SJLJ_EXCEPTIONS__) */
 
 NO_EXEC_STACK_DIRECTIVE
-

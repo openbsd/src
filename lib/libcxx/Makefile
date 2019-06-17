@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2019/05/07 05:20:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.14 2019/06/17 22:28:47 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -93,6 +93,7 @@ STD_HEADERS=	__bit_reference \
 		any \
 		array \
 		atomic \
+		bit \
 		bitset \
 		cassert \
 		ccomplex \
@@ -218,7 +219,6 @@ EXP_HEADERS=	__config \
 		chrono \
 		coroutine \
 		deque \
-		dynarray \
 		filesystem \
 		forward_list \
 		functional \

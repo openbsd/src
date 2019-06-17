@@ -57,6 +57,9 @@ enum {
   UNW_EINVAL        = -6547, /* unsupported operation or bad value */
   UNW_EBADVERSION   = -6548, /* unwind info has unsupported version */
   UNW_ENOINFO       = -6549  /* no unwind info found */
+#if defined(_LIBUNWIND_TARGET_AARCH64) && !defined(_LIBUNWIND_IS_NATIVE_ONLY)
+  , UNW_ECROSSRASIGNING = -6550 /* cross unwind with return address signing */
+#endif
 };
 
 struct unw_context_t {
@@ -547,6 +550,8 @@ enum {
   UNW_ARM64_X31 = 31,
   UNW_ARM64_SP  = 31,
   // reserved block
+  UNW_ARM64_RA_SIGN_STATE = 34,
+  // reserved block
   UNW_ARM64_D0  = 64,
   UNW_ARM64_D1  = 65,
   UNW_ARM64_D2  = 66,
@@ -816,6 +821,42 @@ enum {
   UNW_MIPS_F31 = 63,
   UNW_MIPS_HI = 64,
   UNW_MIPS_LO = 65,
+};
+
+// SPARC registers
+enum {
+  UNW_SPARC_G0 = 0,
+  UNW_SPARC_G1 = 1,
+  UNW_SPARC_G2 = 2,
+  UNW_SPARC_G3 = 3,
+  UNW_SPARC_G4 = 4,
+  UNW_SPARC_G5 = 5,
+  UNW_SPARC_G6 = 6,
+  UNW_SPARC_G7 = 7,
+  UNW_SPARC_O0 = 8,
+  UNW_SPARC_O1 = 9,
+  UNW_SPARC_O2 = 10,
+  UNW_SPARC_O3 = 11,
+  UNW_SPARC_O4 = 12,
+  UNW_SPARC_O5 = 13,
+  UNW_SPARC_O6 = 14,
+  UNW_SPARC_O7 = 15,
+  UNW_SPARC_L0 = 16,
+  UNW_SPARC_L1 = 17,
+  UNW_SPARC_L2 = 18,
+  UNW_SPARC_L3 = 19,
+  UNW_SPARC_L4 = 20,
+  UNW_SPARC_L5 = 21,
+  UNW_SPARC_L6 = 22,
+  UNW_SPARC_L7 = 23,
+  UNW_SPARC_I0 = 24,
+  UNW_SPARC_I1 = 25,
+  UNW_SPARC_I2 = 26,
+  UNW_SPARC_I3 = 27,
+  UNW_SPARC_I4 = 28,
+  UNW_SPARC_I5 = 29,
+  UNW_SPARC_I6 = 30,
+  UNW_SPARC_I7 = 31,
 };
 
 #endif

@@ -165,7 +165,7 @@ int DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
                                &cieInfo) == NULL) {
     PrologInfo prolog;
     if (CFI_Parser<A>::parseFDEInstructions(addressSpace, fdeInfo, cieInfo, pc,
-                                            &prolog)) {
+                                            R::getArch(), &prolog)) {
       // get pointer to cfa (architecture specific)
       pint_t cfa = getCFA(addressSpace, prolog, registers);
 
@@ -203,6 +203,42 @@ int DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
       // By definition, the CFA is the stack pointer at the call site, so
       // restoring SP means setting it to CFA.
       newRegisters.setSP(cfa);
+
+#if defined(_LIBUNWIND_TARGET_AARCH64)
+      // If the target is aarch64 then the return address may have been signed
+      // using the v8.3 pointer authentication extensions. The original
+      // return address needs to be authenticated before the return address is
+      // restored. autia1716 is used instead of autia as autia1716 assembles
+      // to a NOP on pre-v8.3a architectures.
+      if ((R::getArch() == REGISTERS_ARM64) &&
+          prolog.savedRegisters[UNW_ARM64_RA_SIGN_STATE].value) {
+#if !defined(_LIBUNWIND_IS_NATIVE_ONLY)
+        return UNW_ECROSSRASIGNING;
+#else
+        register unsigned long long x17 __asm("x17") = returnAddress;
+        register unsigned long long x16 __asm("x16") = cfa;
+
+        // These are the autia1716/autib1716 instructions. The hint instructions
+        // are used here as gcc does not assemble autia1716/autib1716 for pre
+        // armv8.3a targets.
+        if (cieInfo.addressesSignedWithBKey)
+          asm("hint 0xe" : "+r"(x17) : "r"(x16)); // autib1716
+        else
+          asm("hint 0xc" : "+r"(x17) : "r"(x16)); // autia1716
+        returnAddress = x17;
+#endif
+      }
+#endif
+
+#if defined(_LIBUNWIND_TARGET_SPARC)
+      if (R::getArch() == REGISTERS_SPARC) {
+        // Skip call site instruction and delay slot
+        returnAddress += 8;
+        // Skip unimp instruction if function returns a struct
+        if ((addressSpace.get32(returnAddress) & 0xC1C00000) == 0)
+          returnAddress += 4;
+      }
+#endif
 
       // Return address is address after call site instruction, so setting IP to
       // that does simualates a return.
