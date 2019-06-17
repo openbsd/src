@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.20 2019/06/15 07:30:26 espie Exp $
+# $OpenBSD: bsd.regress.mk,v 1.21 2019/06/17 17:20:24 espie Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -62,6 +62,7 @@ REGRESS_SKIP_TARGETS+=${REGRESS_ROOT_TARGETS}
 .  endif
 .endif
 
+REGRESS_EXPECTED_FAILURES?=
 REGRESS_SETUP?=
 REGRESS_SETUP_ONCE?=
 REGRESS_CLEANUP?=
@@ -86,6 +87,15 @@ regress: .SILENT
 .  if ${REGRESS_SKIP_TARGETS:M${RT}}
 	echo -n "SKIP " ${_REGRESS_OUT}
 	echo SKIPPED
+.  elif ${REGRESS_EXPECTED_FAILURES:M${RT}}
+	if ${MAKE} -C ${.CURDIR} ${RT}; then \
+	    echo -n "XPASS " ${_REGRESS_OUT} ; \
+	    echo UNEXPECTED_PASS; \
+	    ${_REGRESS_FAILED}; \
+	else \
+	    echo -n "XFAIL " ${_REGRESS_OUT} ; \
+	    echo EXPECTED_FAIL; \
+	fi
 .  else
 	if ${MAKE} -C ${.CURDIR} ${RT}; then \
 	    echo -n "SUCCESS " ${_REGRESS_OUT} ; \

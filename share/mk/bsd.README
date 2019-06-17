@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.81 2019/04/02 12:59:56 jsg Exp $
+#	$OpenBSD: bsd.README,v 1.82 2019/06/17 17:20:24 espie Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -11,11 +11,11 @@ bsd.lib.mk		- support for building libraries
 bsd.man.mk		- installing manual pages and their links
 bsd.obj.mk		- creating 'obj' directories and cleaning up
 bsd.own.mk		- define common variables
-bsd.port.mk		- building ports
+bsd.port.mk		- building ports (see bsd.port.mk(5)) 
 bsd.port.arch.mk	- glue for building ports with MD stuff
 bsd.port.subdir.mk	- targets for building subdirectories for ports
 bsd.prog.mk		- building programs from source files
-bsd.regress.mk		- regression tests
+bsd.regress.mk		- regression tests (see bsd.regress.mk(5))
 bsd.subdir.mk		- targets for building subdirectories
 bsd.sys.mk		- overrides for <sys.mk> for building OpenBSD
 sys.mk			- global default rules, mostly POSIX
