@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.73 2018/07/08 16:41:12 jca Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.74 2019/06/17 15:13:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -77,8 +77,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	if (unit > ENC_MAX_UNITS)
 		return (EINVAL);
 
-	if ((sc = malloc(sizeof(struct enc_softc),
-	    M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
+	if ((sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOBUFS);
 
 	sc->sc_unit = unit;
@@ -116,7 +115,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	if (error != 0) {
 		NET_UNLOCK();
 		if_detach(ifp);
-		free(sc, M_DEVBUF, 0);
+		free(sc, M_DEVBUF, sizeof(*sc));
 		return (error);
 	}
 
@@ -131,7 +130,8 @@ enc_clone_create(struct if_clone *ifc, int unit)
 		if (enc_allifps != NULL) {
 			memcpy(new, enc_allifps,
 			    sizeof(struct ifnet *) * (enc_max_unit + 1));
-			free(enc_allifps, M_DEVBUF, 0);
+			free(enc_allifps, M_DEVBUF,
+			    sizeof(struct ifnet *) * (enc_max_unit + 1));
 		}
 		enc_allifps = new;
 		enc_max_unit = unit;
@@ -157,7 +157,7 @@ enc_clone_destroy(struct ifnet *ifp)
 	NET_UNLOCK();
 
 	if_detach(ifp);
-	free(sc, M_DEVBUF, 0);
+	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
 }
@@ -280,7 +280,8 @@ enc_setif(struct ifnet *ifp, u_int rdomain)
 		if (enc_ifps != NULL) {
 			memcpy(new, enc_ifps,
 			    sizeof(struct ifnet *) * (enc_max_rdomain + 1));
-			free(enc_ifps, M_DEVBUF, 0);
+			free(enc_ifps, M_DEVBUF,
+			    sizeof(struct ifnet *) * (enc_max_rdomain + 1));
 		}
 		enc_ifps = new;
 		enc_max_rdomain = rdomain;
