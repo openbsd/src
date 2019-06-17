@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.16 2019/06/16 11:44:22 florian Exp $ */
+/*	$Id: acctproc.c,v 1.17 2019/06/17 08:59:33 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -77,7 +77,7 @@ op_thumb_rsa(EVP_PKEY *pkey)
 	RSA	*r;
 
 	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
-		warnx("EVP_PKEY_get1_RSA");
+		warnx("EVP_PKEY_get0_RSA");
 	else if ((mod = bn2string(r->n)) == NULL)
 		warnx("bn2string");
 	else if ((exp = bn2string(r->e)) == NULL)
@@ -168,7 +168,7 @@ op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 	 */
 
 	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
-		warnx("EVP_PKEY_get1_RSA");
+		warnx("EVP_PKEY_get0_RSA");
 	else if ((mod = bn2string(r->n)) == NULL)
 		warnx("bn2string");
 	else if ((exp = bn2string(r->e)) == NULL)
