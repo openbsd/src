@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.50 2019/06/03 01:52:53 kevlo Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.51 2019/06/17 08:17:21 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -652,6 +652,8 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 			if ((reg & SLD_START) == 0)
 				break;
 		}
+		if (i != 0)
+			reloaded++;
 	}
 
 	/* Try to reload station address from EEPROM or FLASH. */
