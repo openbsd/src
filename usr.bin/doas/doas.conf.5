@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.36 2019/06/16 18:16:34 tedu Exp $
+.\" $OpenBSD: doas.conf.5,v 1.37 2019/06/17 16:01:26 tedu Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 16 2019 $
+.Dd $Mdocdate: June 17 2019 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -54,6 +54,14 @@ The default is to reset the environment, except for the variables
 .Ev DISPLAY
 and
 .Ev TERM .
+The variables
+.Ev HOME ,
+.Ev LOGNAME ,
+.Ev PATH ,
+.Ev SHELL ,
+and
+.Ev USER
+are always reset.
 .It Ic setenv { Oo Ar variable ... Oc Oo Ar variable=value ... Oc Ic }
 In addition to the variables mentioned above, keep the space-separated
 specified variables.
