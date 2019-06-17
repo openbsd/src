@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.46 2019/03/23 18:48:15 beck Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.47 2019/06/17 17:11:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,53 +151,23 @@ BN_value_one(void)
 int
 BN_num_bits_word(BN_ULONG l)
 {
-	static const unsigned char bits[256] = {
-		0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
-		5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-		6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,  8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-		8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-	};
+	BN_ULONG x, mask;
+	int bits;
+	unsigned int shift;
 
-#ifdef _LP64
-	if (l & 0xffffffff00000000L) {
-		if (l & 0xffff000000000000L) {
-			if (l & 0xff00000000000000L) {
-				return (bits[(int)(l >> 56)] + 56);
-			} else
-				return (bits[(int)(l >> 48)] + 48);
-		} else {
-			if (l & 0x0000ff0000000000L) {
-				return (bits[(int)(l >> 40)] + 40);
-			} else
-				return (bits[(int)(l >> 32)] + 32);
-		}
-	} else
-#endif
-	{
-		if (l & 0xffff0000L) {
-			if (l & 0xff000000L)
-				return (bits[(int)(l >> 24L)] + 24);
-			else
-				return (bits[(int)(l >> 16L)] + 16);
-		} else {
-			if (l & 0xff00L)
-				return (bits[(int)(l >> 8)] + 8);
-			else
-				return (bits[(int)(l)]);
-		}
-	}
+	/* Constant time calculation of floor(log2(l)) + 1. */
+	bits = (l != 0);
+	shift = BN_BITS4;	/* On _LP64 this is 32, otherwise 16. */
+	do {
+		x = l >> shift;
+		/* If x is 0, set mask to 0, otherwise set it to all 1s. */
+		mask = ((~x & (x - 1)) >> (BN_BITS2 - 1)) - 1;
+		bits += shift & mask;
+		/* If x is 0, leave l alone, otherwise set l = x. */
+		l ^= (x ^ l) & mask;
+	} while ((shift /= 2) != 0);
+
+	return bits;
 }
 
 int
