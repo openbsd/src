@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.h,v 1.14 2019/06/16 18:16:34 tedu Exp $ */
+/* $OpenBSD: doas.h,v 1.15 2019/06/17 19:51:23 tedu Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -28,6 +28,8 @@ struct rule {
 extern struct rule **rules;
 extern int nrules;
 extern int parse_errors;
+
+extern const char *formerpath;
 
 struct passwd;
 
