@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.115 2019/06/17 11:02:20 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.116 2019/06/17 12:02:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -467,9 +467,11 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 					return (-1);
 			}
 			break;
+		/*
+		 * multiprotocol attributes are handled elsewhere
+		 */
 		case ATTR_MP_REACH_NLRI:
 		case ATTR_MP_UNREACH_NLRI:
-			/* specially handled later one */
 			break;
 		/*
 		 * dump all other path attributes. Following rules apply:
