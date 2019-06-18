@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.2 2019/06/18 05:48:54 deraadt Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.3 2019/06/18 13:28:37 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -15,16 +15,18 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: June 18 2019 $
-.Dt RPKI-CLIENT 1
+.Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
 .Nm rpki-client
-.Nd produce valid route announcements
+.Nd validates the RPKI tree and produces VRPs to be used in
+.Xr bgpd 8
+for Origin Validation.
 .Sh SYNOPSIS
 .Nm
 .Op Fl fnqrv
 .Op Fl e Ar rsync_prog
-.Ar tal ...
+.Ar tal1 tal2 ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -53,7 +55,7 @@ This will still report if a manifest has expired.
 .It Fl n
 Assume that all requested repositories exist: don't update.
 .It Fl q
-Don't emit any route statements.
+Don't emit any Validated RPKI Payloads (VRPs).
 .It Fl r
 Don't parse certificate revocation files.
 This additional step can take a long time.
