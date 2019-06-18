@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.148 2019/04/23 13:35:12 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.149 2019/06/18 15:53:11 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -329,8 +329,11 @@ sleep_finish_timeout(struct sleep_state *sls)
 	if (p->p_flag & P_TIMEOUT) {
 		atomic_clearbits_int(&p->p_flag, P_TIMEOUT);
 		return (EWOULDBLOCK);
-	} else
-		timeout_del(&p->p_sleep_to);
+	} else {
+		/* This must not sleep. */
+		timeout_del_barrier(&p->p_sleep_to);
+		KASSERT((p->p_flag & P_TIMEOUT) == 0);
+	}
 
 	return (0);
 }
