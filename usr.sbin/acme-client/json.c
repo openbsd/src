@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.13 2019/06/17 12:42:52 florian Exp $ */
+/*	$Id: json.c,v 1.14 2019/06/18 18:50:07 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -552,27 +552,31 @@ json_parse(const char *buf, size_t sz)
 {
 	struct jsmnn	*n;
 	jsmn_parser	 p;
-	jsmntok_t	*tok;
+	jsmntok_t	*tok, *ntok;
 	int		 r;
 	size_t		 tokcount;
 
 	jsmn_init(&p);
 	tokcount = 128;
 
-	/* Do this until we don't need any more tokens. */
-again:
-	tok = calloc(tokcount, sizeof(jsmntok_t));
-	if (tok == NULL) {
+	if ((tok = calloc(tokcount, sizeof(jsmntok_t))) == NULL) {
 		warn("calloc");
 		return NULL;
 	}
 
+	/* Do this until we don't need any more tokens. */
+again:
 	/* Actually try to parse the JSON into the tokens. */
-
 	r = jsmn_parse(&p, buf, sz, tok, tokcount);
 	if (r < 0 && r == JSMN_ERROR_NOMEM) {
+		if ((ntok = recallocarray(tok, tokcount, tokcount * 2,
+		    sizeof(jsmntok_t))) == NULL) {
+			warn("calloc");
+			free(tok);
+			return NULL;
+		}
+		tok = ntok;
 		tokcount *= 2;
-		free(tok);
 		goto again;
 	} else if (r < 0) {
 		warnx("jsmn_parse: %d", r);
