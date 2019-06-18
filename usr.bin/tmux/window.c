@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.232 2019/06/13 19:46:00 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.233 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1512,7 +1512,7 @@ window_pane_input_callback(struct client *c, int closed, void *data)
 		c->stdin_callback = NULL;
 		server_client_unref(c);
 
-		cdata->item->flags &= ~CMDQ_WAITING;
+		cmdq_continue(cdata->item);
 		free(cdata);
 
 		return;

@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.9 2019/05/28 09:50:54 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.10 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -161,7 +161,7 @@ menu_free_cb(struct client *c)
 	struct menu_data	*md = c->overlay_data;
 
 	if (md->item != NULL)
-		md->item->flags &= ~CMDQ_WAITING;
+		cmdq_continue(md->item);
 
 	if (md->cb != NULL)
 		md->cb(md->menu, UINT_MAX, KEYC_NONE, md->data);

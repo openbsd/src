@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-run-shell.c,v 1.58 2019/03/12 11:16:50 nicm Exp $ */
+/* $OpenBSD: cmd-run-shell.c,v 1.59 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -155,7 +155,7 @@ cmd_run_shell_callback(struct job *job)
 	free(msg);
 
 	if (cdata->item != NULL)
-		cdata->item->flags &= ~CMDQ_WAITING;
+		cmdq_continue(cdata->item);
 }
 
 static void

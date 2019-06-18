@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.73 2019/06/05 20:00:53 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.74 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -53,7 +53,7 @@ cfg_done(__unused struct cmdq_item *item, __unused void *data)
 		cfg_show_causes(RB_MIN(sessions, &sessions));
 
 	if (cfg_item != NULL)
-		cfg_item->flags &= ~CMDQ_WAITING;
+		cmdq_continue(cfg_item);
 
 	status_prompt_load_history();
 

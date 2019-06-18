@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.55 2019/06/13 21:44:13 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.56 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -176,7 +176,7 @@ cmd_load_buffer_callback(struct client *c, int closed, void *data)
 		free(cause);
 	}
 out:
-	cdata->item->flags &= ~CMDQ_WAITING;
+	cmdq_continue(cdata->item);
 
 	free(cdata->bufname);
 	free(cdata);

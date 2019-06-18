@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.27 2019/05/23 11:13:30 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.28 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -188,7 +188,7 @@ cmd_display_panes_free(struct client *c)
 	struct cmd_display_panes_data	*cdata = c->overlay_data;
 
 	if (cdata->item != NULL)
-		cdata->item->flags &= ~CMDQ_WAITING;
+		cmdq_continue(cdata->item);
 	free(cdata->command);
 	free(cdata);
 }

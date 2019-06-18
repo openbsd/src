@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.73 2019/05/31 21:41:17 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.74 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -154,6 +154,13 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 	}
 
 	free(name);
+}
+
+/* Continue processing command queue. */
+void
+cmdq_continue(struct cmdq_item *item)
+{
+	item->flags &= ~CMDQ_WAITING;
 }
 
 /* Remove an item. */

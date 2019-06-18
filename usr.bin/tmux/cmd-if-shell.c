@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-if-shell.c,v 1.63 2019/06/12 08:47:07 nicm Exp $ */
+/* $OpenBSD: cmd-if-shell.c,v 1.64 2019/06/18 11:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -196,7 +196,7 @@ cmd_if_shell_callback(struct job *job)
 
 out:
 	if (cdata->item != NULL)
-		cdata->item->flags &= ~CMDQ_WAITING;
+		cmdq_continue(cdata->item);
 }
 
 static void
