@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.14 2019/02/27 04:10:40 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.15 2019/06/18 21:04:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -510,6 +510,12 @@ ieee80211_mira_reset_driver_stats(struct ieee80211_mira_node *mn)
 /* Number of bytes which, alternatively, render a probe valid. */
 #define IEEE80211_MIRA_MIN_PROBE_BYTES IEEE80211_MAX_LEN
 
+/* Number of Tx failures which, alternatively, render a probe valid. */
+#define IEEE80211_MIRA_MAX_PROBE_TXFAIL 1
+
+/* Number of Tx retries which, alternatively, render a probe valid. */
+#define IEEE80211_MIRA_MAX_PROBE_RETRIES 4
+
 int
 ieee80211_mira_next_lower_intra_rate(struct ieee80211_mira_node *mn,
     struct ieee80211_node *ni)
@@ -719,7 +725,9 @@ ieee80211_mira_probe_valid(struct ieee80211_mira_node *mn,
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
 
 	return (g->nprobes >= IEEE80211_MIRA_MIN_PROBE_FRAMES ||
-	    g->nprobe_bytes >= IEEE80211_MIRA_MIN_PROBE_BYTES);
+	    g->nprobe_bytes >= IEEE80211_MIRA_MIN_PROBE_BYTES ||
+	    mn->txfail >= IEEE80211_MIRA_MAX_PROBE_TXFAIL ||
+	    mn->retries >= IEEE80211_MIRA_MAX_PROBE_RETRIES);
 }
 
 void
