@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2019/06/19 16:36:36 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.10 2019/06/19 16:39:02 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1386,15 +1386,6 @@ main(int argc, char *argv[])
 	pfd[0].events = pfd[1].events = POLLIN;
 
 	while (!TAILQ_EMPTY(&q)) {
-		/*
-		 * We want to be nonblocking while we wait for the
-		 * ability to read or write, but blocking when we
-		 * actually talk to the subprocesses.
-		 */
-
-		io_socket_nonblocking(pfd[0].fd);
-		io_socket_nonblocking(pfd[1].fd);
-
 		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) == -1)
 			err(EXIT_FAILURE, "poll");
 
@@ -1418,11 +1409,6 @@ main(int argc, char *argv[])
 		if ((pfd[0].revents & POLLHUP) ||
 		    (pfd[1].revents & POLLHUP))
 			errx(EXIT_FAILURE, "poll: hangup");
-
-		/* Reenable blocking. */
-
-		io_socket_blocking(pfd[0].fd);
-		io_socket_blocking(pfd[1].fd);
 
 		/*
 		 * Check the rsync process.
