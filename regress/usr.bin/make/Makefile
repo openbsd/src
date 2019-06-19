@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.48 2019/05/21 17:09:06 espie Exp $
+# $OpenBSD: Makefile,v 1.49 2019/06/19 12:53:26 espie Exp $
 
 REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 \
@@ -6,28 +6,8 @@ REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
 		t30 t31 t32 t33 t34 t35 t36 t37 t38 t38j t39 \
 		t40 t41 t42 t42bis t43 t44 t45 t46 t47 t48
 
+REGRESS_EXPECTED_FAILURES = t14 t17 t18 t20
 # We don't pass t14 t17 t18 t20
-# and t16 yields piss poor performance
-
-t14:
-	# make currently incorrectly uses annotations for suffixes
-	# rules for non-suffixes rules.
-	@echo DISABLED
-
-t17:
-	# Bug in cond-parser, ends up having too many open conds.
-	@echo DISABLED
-
-t18:
-	# Another test case: this one holds too many open conditionals,
-	# and exactly enough closes...
-	@echo DISABLED
-
-t20:
-	# Some posix tests we don't pass yet, and won't until I've
-	# added a `magic' status for variables (as SHELL is very,
-	# very special, according to POSIX/Single Unix).
-	@echo DISABLED
 
 MALLOC_OPTIONS?=J
 t1: t1.out
@@ -90,6 +70,9 @@ t12:
 t13:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk13 |diff - t13.out
 
+# make currently incorrectly uses annotations for suffixes rules 
+# for non-suffixes rules.
+# this is hard to fix without breaking something else
 t14:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk14 2>/dev/null || test $$? -ge 128; then false; fi
 
@@ -100,15 +83,21 @@ t15:
 t16:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk16
 
+# Bug in cond-parser, ends up having too many open conds.
 t17:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk17
 
+# bug in cond-parser again: this one holds too many open conditionals,
+# and exactly enough closes...
 t18:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk18
 
 t19:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} SHELL=/bin/zsh ${MAKE} -r -f mk19 | diff - t19.out
 
+# a POSIX test we don't pass yet.
+# would require adding a 'magic' status for variable (as SHELL is very, very
+# special according to POSIX)
 t20:
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} SHELL=/bin/sh -r -f mk20 | diff - t20.out
 
