@@ -1,4 +1,4 @@
-/*	$Id: cert.c,v 1.2 2019/06/17 15:04:59 deraadt Exp $ */
+/*	$Id: cert.c,v 1.3 2019/06/19 02:02:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1060,7 +1060,7 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 
 	for (i = 0; i < sk_ASN1_TYPE_num(sseq); i++) {
 		t = sk_ASN1_TYPE_value(sseq, i);
-		if (V_ASN1_SEQUENCE != t->type) {
+		if (t->type != V_ASN1_SEQUENCE) {
 			warnx("%s: RFC 3779 section 2.2.3.2: "
 				"IPAddressFamily: want ASN.1 sequence, "
 				"have %s (NID %d)", p->fn,
@@ -1309,7 +1309,7 @@ void
 cert_free(struct cert *p)
 {
 
-	if (NULL == p)
+	if (p == NULL)
 		return;
 
 	free(p->crl);

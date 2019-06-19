@@ -1,4 +1,4 @@
-/*	$Id: rsync.c,v 1.3 2019/06/17 15:08:08 deraadt Exp $ */
+/*	$Id: rsync.c,v 1.4 2019/06/19 02:02:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -86,7 +86,7 @@ rsync_uri_parse(const char **hostp, size_t *hostsz,
 
 	/* The non-zero-length module follows the hostname. */
 
-	if ('\0' == module[1]) {
+	if (module[1] == '\0') {
 		warnx("%s: zero-length rsync module", uri);
 		return 0;
 	}
@@ -96,7 +96,7 @@ rsync_uri_parse(const char **hostp, size_t *hostsz,
 	/* The path component is optional. */
 
 	if ((path = strchr(module, '/')) == NULL) {
-		assert('\0' != *module);
+		assert(*module != '\0');
 		if (modulep != NULL)
 			*modulep = module;
 		if (modulesz != NULL)

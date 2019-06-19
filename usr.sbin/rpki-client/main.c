@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.3 2019/06/18 14:55:14 deraadt Exp $ */
+/*	$Id: main.c,v 1.4 2019/06/19 02:02:28 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -328,7 +328,7 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
 	p->id = (*eid)++;
 	p->type = type;
 	p->uri = file;
-	p->repo = (NULL != rp) ? (ssize_t)rp->id : -1;
+	p->repo = (rp != NULL) ? (ssize_t)rp->id : -1;
 	p->has_dgst = dgst != NULL;
 	p->has_pkey = pkey != NULL;
 	if (p->has_dgst)
@@ -346,7 +346,7 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
 	 * been loaded.
 	 */
 
-	if (NULL == rp || rp->loaded)
+	if (rp == NULL || rp->loaded)
 		entity_write_req(fd, p);
 }
 
