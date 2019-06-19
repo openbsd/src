@@ -134,6 +134,11 @@
 ./etc/ppp
 ./etc/ppp/chatscript.sample
 ./etc/ppp/options.sample
+./etc/rpki
+./etc/rpki/afrinic.tal
+./etc/rpki/apnic.tal
+./etc/rpki/lacnic.tal
+./etc/rpki/ripe.tal
 ./etc/protocols
 ./etc/rc
 ./etc/rc.conf
