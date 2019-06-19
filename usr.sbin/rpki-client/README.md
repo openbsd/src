@@ -5,7 +5,7 @@ infrastructure) described in [RFC
 6480](https://tools.ietf.org/html/rfc6480).
 It implements the *client* side of RPKI, which is responsible for
 downloading and validating route origin statements.
-For usage, please read [rpki-client(1)](rpki-client.1).
+For usage, please read [rpki-client(8)](rpki-client.8).
 
 The design focus of **rpki-client** is simplicity and security.
 To wit, it implements RPKI components necessary for validating route
@@ -26,7 +26,7 @@ in general.
 ## Project background
 
 **rpki-client** is written as part of the
-[rpki-client(1)](https://medium.com/@jobsnijders/a-proposal-for-a-new-rpki-validator-openbsd-rpki-client-1-15b74e7a3f65)
+[rpki-client(8)](https://medium.com/@jobsnijders/a-proposal-for-a-new-rpki-validator-openbsd-rpki-client-1-15b74e7a3f65)
 project, an
 [RPKI](https://en.wikipedia.org/wiki/Resource_Public_Key_Infrastructure)
 validator for OpenBSD. 
@@ -65,7 +65,7 @@ You'll also need the [openrsync(1)](https://man.openbsd.org/openrsync.1)
 **-e** argument) executable installed.
 
 ```
-% ./rpki-client -v ./tals/*.tal
+% ./rpki-client -v ./tals/*.tal > bgpd-rpki.conf
 ```
 
 If you later want to uninstall the system, simply run
