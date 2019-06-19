@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2019/06/19 16:30:37 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.9 2019/06/19 16:36:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1340,6 +1340,7 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "fork");
 
 	if (rsyncpid == 0) {
+		close(proc);
 		close(fd[1]);
 		if (pledge("stdio proc exec rpath cpath unveil", NULL) == -1)
 			err(EXIT_FAILURE, "pledge");
