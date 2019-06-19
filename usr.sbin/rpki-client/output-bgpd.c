@@ -1,4 +1,4 @@
-/*	$Id: output-bgpd.c,v 1.5 2019/06/19 15:47:34 claudio Exp $ */
+/*	$Id: output-bgpd.c,v 1.6 2019/06/19 15:59:51 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -37,7 +37,7 @@ void
 output_bgpd(const struct roa **roas, size_t roasz,
     int quiet, size_t *vrps, size_t *unique)
 {
-	char		 buf1[64], buf2[32], linebuf[128];
+	char		 buf1[64], buf2[32];
 	char		**lines = NULL;
 	size_t		 i, j, k;
 
@@ -60,9 +60,8 @@ output_bgpd(const struct roa **roas, size_t roasz,
 				    roas[i]->ips[j].maxlength);
 			else
 				buf2[0] = '\0';
-			snprintf(linebuf, sizeof(linebuf),
-			    "%s %ssource-as %u", buf1, buf2, roas[i]->asid);
-			if ((lines[k++] = strdup(linebuf)) == NULL)
+			if (asprintf(&lines[k++], "%s %ssource-as %u",
+			    buf1, buf2, roas[i]->asid) == -1)
 				err(EXIT_FAILURE, NULL);
 		}
 
