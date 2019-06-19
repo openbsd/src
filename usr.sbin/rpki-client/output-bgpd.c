@@ -1,4 +1,4 @@
-/*	$Id: output-bgpd.c,v 1.7 2019/06/19 16:06:12 deraadt Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.8 2019/06/19 16:30:37 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

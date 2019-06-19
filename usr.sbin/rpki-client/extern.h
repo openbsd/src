@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.4 2019/06/19 15:47:34 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.5 2019/06/19 16:30:37 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

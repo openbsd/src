@@ -1,4 +1,4 @@
-/*	$Id: validate.c,v 1.3 2019/06/19 04:21:43 deraadt Exp $ */
+/*	$OpenBSD: validate.c,v 1.4 2019/06/19 16:30:37 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
