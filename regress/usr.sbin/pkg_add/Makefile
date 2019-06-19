@@ -1,46 +1,21 @@
-# $OpenBSD: Makefile,v 1.63 2019/06/09 08:37:43 espie Exp $
+# $OpenBSD: Makefile,v 1.64 2019/06/19 12:52:06 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
-	collision-check1-disabled collision-check2-disabled collision-check3 \
-	collision-check4 collision-check5-disabled collision-check6-disabled \
-	collision-check7-disabled \
+	collision-check1 collision-check2 collision-check3 \
+	collision-check4 collision-check5 collision-check6 \
+	collision-check7 \
 	update-check1 partial-update-test conflict-update \
 	merge-update split-update big-merge family-circus missing \
 	lib-report1 lib-report2 lib-report3 loop1 \
 	lib-report4 lib-report5 lib-report6 lib-report7 \
-	qttest gstest exotest-disabled inter1 manual1 oldlib1 \
+	qttest gstest exotest inter1 manual1 oldlib1 \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
 	tying-1 tying-2 tag-delete
 
-collision-check{1,2}-disabled:
-	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
-	# Failing test ${@:S/-disabled$//} added in rev 1.8.
-	# more half-baked regress-targets
-	@echo DISABLED
-
-collision-check5-disabled:
-	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
-	# Failing test ${@:S/-disabled$//} added in rev 1.35.
-	# new test for vstat
-	@echo DISABLED
-
-collision-check6-disabled:
-	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
-	# Failing test ${@:S/-disabled$//} added in rev 1.9.
-	# more tests
-	@echo DISABLED
-
-collision-check7-disabled:
-	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
-	# Failing test added in rev 1.48.
-	# pure display check, not linked since it fails
-	@echo DISABLED
-
-exotest-disabled:
-	@! ${MAKE} -C ${.CURDIR} ${@:S/-disabled$//}
-	# Failing test ${@:S/-disabled$//} added in rev 1.41.
-	# Workaround in ports/x11/xfce4/exo/Makefile rev 1.32.
-	@echo DISABLED
+# lots of tests that really require a vstat overhaul
+REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
+	collision-check5 collision-check6 collision-check7 \
+	exotest tying-2
 
 ADD_PKG=perl ${.CURDIR}/my add
 DELETE_PKG=perl ${.CURDIR}/my delete
@@ -785,7 +760,7 @@ tag-delete: rep1/d-0.tgz
 	echo "@depend graphics/zoinx:zoinx-*:zoinx-2" >> ${D40}/pkgdb/d-0/+CONTENTS
 	@ROOT=${D40} ${DELETE_PKG} d
 
-.PHONY: ${REGRESS_TARGETS} ${REGRESS_TARGETS:S/-disabled$//}
+.PHONY: ${REGRESS_TARGETS}
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out
