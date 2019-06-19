@@ -1,4 +1,4 @@
-/*	$Id: output-bgpd.c,v 1.6 2019/06/19 15:59:51 deraadt Exp $ */
+/*	$Id: output-bgpd.c,v 1.7 2019/06/19 16:06:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,7 +53,7 @@ output_bgpd(const struct roa **roas, size_t roasz,
 	for (i = k = 0; i < roasz; i++)
 		for (j = 0; j < roas[i]->ipsz; j++) {
 			ip_addr_print(&roas[i]->ips[j].addr,
-				roas[i]->ips[j].afi, buf1, sizeof(buf1));
+			    roas[i]->ips[j].afi, buf1, sizeof(buf1));
 			if (roas[i]->ips[j].maxlength >
 			    roas[i]->ips[j].addr.prefixlen)
 				snprintf(buf2, sizeof(buf2), "maxlen %zu ",
