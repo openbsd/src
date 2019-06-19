@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.6 2019/06/19 09:41:25 job Exp $ */
+/*	$Id: main.c,v 1.7 2019/06/19 16:29:19 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -466,7 +466,7 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
 
 	if (asprintf(&nfile, "%s/%s/%s/%s",
-	    BASE_DIR, repo->host, repo->module, uri) < 0)
+	    BASE_DIR, repo->host, repo->module, uri) == -1)
 		err(EXIT_FAILURE, "asprintf");
 
 	entityq_add(proc, q, nfile, RTYPE_CER, repo, NULL, tal->pkey,
@@ -495,7 +495,7 @@ queue_add_from_cert(int proc, int rsync, struct entityq *q,
 	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
 
 	if (asprintf(&nfile, "%s/%s/%s/%s",
-	    BASE_DIR, repo->host, repo->module, uri) < 0)
+	    BASE_DIR, repo->host, repo->module, uri) == -1)
 		err(EXIT_FAILURE, "asprintf");
 
 	entityq_add(proc, q, nfile, type, repo, NULL, NULL, 0, eid);
@@ -651,18 +651,18 @@ proc_rsync(const char *prog, int fd, int noop)
 		 * will not build the destination for us.
 		 */
 
-		if (asprintf(&dst, "%s/%s", BASE_DIR, host) < 0)
+		if (asprintf(&dst, "%s/%s", BASE_DIR, host) == -1)
 			err(EXIT_FAILURE, NULL);
-		if (mkdir(dst, 0700) < 0 && EEXIST != errno)
+		if (mkdir(dst, 0700) == -1 && EEXIST != errno)
 			err(EXIT_FAILURE, "%s", dst);
 		free(dst);
 
-		if (asprintf(&dst, "%s/%s/%s", BASE_DIR, host, mod) < 0)
+		if (asprintf(&dst, "%s/%s/%s", BASE_DIR, host, mod) == -1)
 			err(EXIT_FAILURE, NULL);
-		if (mkdir(dst, 0700) < 0 && EEXIST != errno)
+		if (mkdir(dst, 0700) == -1 && EEXIST != errno)
 			err(EXIT_FAILURE, "%s", dst);
 
-		if (asprintf(&uri, "rsync://%s/%s", host, mod) < 0)
+		if (asprintf(&uri, "rsync://%s/%s", host, mod) == -1)
 			err(EXIT_FAILURE, NULL);
 
 		/* Run process itself, wait for exit, check error. */
@@ -993,7 +993,7 @@ proc_parser(int fd, int force, int norev)
 	io_socket_nonblocking(pfd.fd);
 
 	for (;;) {
-		if (poll(&pfd, 1, INFTIM) < 0)
+		if (poll(&pfd, 1, INFTIM) == -1)
 			err(EXIT_FAILURE, "poll");
 		if ((pfd.revents & (POLLERR|POLLNVAL)))
 			errx(EXIT_FAILURE, "poll: bad descriptor");
@@ -1394,7 +1394,7 @@ main(int argc, char *argv[])
 		io_socket_nonblocking(pfd[0].fd);
 		io_socket_nonblocking(pfd[1].fd);
 
-		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) < 0)
+		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) == -1)
 			err(EXIT_FAILURE, "poll");
 
 		/* Debugging: print some statistics if we stall. */
