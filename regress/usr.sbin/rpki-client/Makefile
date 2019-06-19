@@ -1,14 +1,20 @@
-# $OpenBSD: Makefile,v 1.1 2019/06/18 12:09:07 claudio Exp $
+# $OpenBSD: Makefile,v 1.2 2019/06/19 07:14:16 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../usr.sbin/rpki-client
 
+.if ! exists(/usr/local/bin/eopenssl)
+regress:
+	# install openssl-1.0.2 from ports for interop tests
+	@echo SKIPPED
+.else
 PROGS += test-ip
 PROGS += test-cert
 PROGS += test-mft
 PROGS += test-roa
 PROGS += test-tal
+.endif
 
-.  for p in ${PROGS}
+.for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
 .endfor
 
