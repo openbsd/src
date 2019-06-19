@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.25 2019/03/26 13:41:40 beck Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.26 2019/06/19 16:55:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -799,7 +799,6 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 		printf("unveil: %s(%d): BYPASSUNVEIL.\n",
 		    p->p_p->ps_comm, p->p_p->ps_pid);
 #endif
-		CLR(ni->ni_pledge, PLEDGE_STATLIE);
 		return (0);
 	}
 	if (ni->ni_vp != NULL && ni->ni_vp->v_type == VDIR) {

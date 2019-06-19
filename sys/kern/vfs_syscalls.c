@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.318 2019/06/15 15:28:55 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.319 2019/06/19 16:55:51 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1991,16 +1991,6 @@ dofstatat(struct proc *p, int fd, const char *path, struct stat *buf, int flag)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	if (nd.ni_pledge & PLEDGE_STATLIE) {
-		if (S_ISDIR(sb.st_mode) || S_ISLNK(sb.st_mode)) {
-			if (sb.st_uid >= 1000) {
-				sb.st_uid = p->p_ucred->cr_uid;
-				sb.st_gid = p->p_ucred->cr_gid;;
-			}
-			sb.st_gen = 0;
-		} else
-			return (ENOENT);
-	}
 	/* Don't let non-root see generation numbers (for NFS security) */
 	if (suser(p))
 		sb.st_gen = 0;
