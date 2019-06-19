@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.25 2018/04/09 17:53:36 tobias Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.26 2019/06/19 18:18:22 millert Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -32,8 +32,7 @@
 			   "-L"|"-h"|"-S"|"-H";
 
 	binary-operator ::= "="|"=="|"!="|"-eq"|"-ne"|"-ge"|"-gt"|"-le"|"-lt"|
-			    "-nt"|"-ot"|"-ef"|
-			    "<"|">"	# rules used for [[ .. ]] expressions
+			    "-nt"|"-ot"|"-ef"|"<"|">"
 			    ;
 	operand ::= <any thing>
 */
@@ -195,9 +194,7 @@ test_isop(Test_env *te, Test_meta meta, const char *s)
 		sc1 = s[1];
 		for (; otab->op_text[0]; otab++)
 			if (sc1 == otab->op_text[1] &&
-			    strcmp(s, otab->op_text) == 0 &&
-			    ((te->flags & TEF_DBRACKET) ||
-			    (otab->op_num != TO_STLT && otab->op_num != TO_STGT)))
+			    strcmp(s, otab->op_text) == 0)
 				return otab->op_num;
 	}
 	return TO_NONOP;

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.203 2019/04/03 14:55:12 jca Exp $
+.\"	$OpenBSD: ksh.1,v 1.204 2019/06/19 18:18:22 millert Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: April 3 2019 $
+.Dd $Mdocdate: June 19 2019 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -750,12 +750,13 @@ expressions are patterns (e.g. the comparison
 .Ic [[ foobar = f*r ]]
 succeeds).
 .It
-There are two additional binary operators,
+The 
 .Ql <
 and
-.Ql > ,
-which return true if their first string operand is less than, or greater than,
-their second string operand, respectively.
+.Ql >
+binary operators do not need to be quoted with the
+.Ql \e
+character.
 .It
 The single argument form of
 .Ic test ,
@@ -3890,6 +3891,10 @@ Strings are equal.
 Strings are equal.
 .It Ar string No != Ar string
 Strings are not equal.
+.It Ar string No > Ar string
+Strings compare greater than based on the ASCII value of their characters.
+.It Ar string No < Ar string
+Strings compare less than based on the ASCII value of their characters.
 .It Ar number Fl eq Ar number
 Numbers compare equal.
 .It Ar number Fl ne Ar number
